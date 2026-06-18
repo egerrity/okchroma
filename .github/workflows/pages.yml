@@ -1,0 +1,58 @@
+name: Deploy demo to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Allow the deploy job to publish to Pages via OIDC.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time; let a newer push supersede an in-flight run.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # Bundles the engine + demo and generates the token CSS into dist/.
+      - run: npm run demo:build
+
+      # The demo entry (demo/index.html) references ../dist and ../tokens.
+      # Flatten into a Pages root: index.html at top, assets beside it, with
+      # the ../ rewritten to plain relative paths so it works under the
+      # /okchroma/ project subpath.
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          cp -r dist _site/dist
+          cp -r tokens _site/tokens
+          sed 's#\.\./dist/#dist/#g; s#\.\./tokens/#tokens/#g' demo/index.html > _site/index.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment
