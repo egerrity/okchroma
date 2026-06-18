@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "demo",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "npx serve . -l $PORT --no-clipboard"],
+      "autoPort": true,
+      "port": 3001
+    }
+  ]
+}

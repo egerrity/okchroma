@@ -1,0 +1,12 @@
+{
+  "name": "OKChroma",
+  "id": "com.okchroma.variables",
+  "api": "1.0.0",
+  "main": "dist/plugin-code.js",
+  "ui": "dist/plugin-ui.html",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": ["none"]
+  }
+}

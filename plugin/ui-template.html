@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 12px;
+  color: #1a1a1a;
+  background: #fff;
+  padding: 16px;
+  line-height: 1.45;
+  user-select: none;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin-bottom: 6px;
+}
+
+.section { margin-bottom: 14px; }
+
+/* ── Inputs ── */
+.input {
+  width: 100%;
+  height: 32px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 7px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-family: inherit;
+  color: #1a1a1a;
+  background: #fff;
+  outline: none;
+  transition: border-color .1s, box-shadow .1s;
+}
+.input:focus { border-color: #7c6fcd; box-shadow: 0 0 0 3px #7c6fcd1a; }
+.input.invalid { border-color: #e5484d; background: #fff8f8; }
+.input.invalid:focus { box-shadow: 0 0 0 3px #e5484d1a; }
+
+/* ── Color row ── */
+.color-row { display: flex; align-items: center; gap: 8px; }
+.swatch {
+  position: relative; width: 32px; height: 32px; flex-shrink: 0;
+  border-radius: 7px; border: 1.5px solid rgba(0,0,0,.12); cursor: pointer; overflow: hidden;
+}
+.swatch input[type="color"] {
+  position: absolute; inset: -6px; width: calc(100% + 12px); height: calc(100% + 12px);
+  opacity: 0; cursor: pointer;
+}
+.color-row .input { flex: 1; font-family: ui-monospace, 'SF Mono', monospace; }
+
+/* ── Accent area ── */
+.accent-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.accent-header .label { margin-bottom: 0; }
+.add-btn {
+  height: 24px; padding: 0 10px; border: 1.5px solid #e0e0e0; border-radius: 999px;
+  font-size: 11px; font-weight: 600; font-family: inherit; background: #fff;
+  color: #555; cursor: pointer;
+}
+.add-btn:hover { border-color: #7c6fcd; color: #7c6fcd; }
+.add-btn.on { border-color: #e5484d22; background: #fff8f8; color: #c62828; }
+.add-btn.on:hover { background: #fde8e8; }
+
+/* ── 2-col row ── */
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* ── Segmented control ── */
+.seg {
+  display: flex; background: #f2f2f2; border-radius: 8px; padding: 3px; gap: 2px;
+}
+.seg-btn {
+  flex: 1; height: 26px; border: none; border-radius: 6px;
+  font-size: 11px; font-weight: 500; font-family: inherit; cursor: pointer;
+  background: transparent; color: #777; transition: background .1s, color .1s, box-shadow .1s;
+}
+.seg-btn.active {
+  background: #fff; color: #1a1a1a;
+  box-shadow: 0 1px 3px rgba(0,0,0,.12), 0 0 0 1px rgba(0,0,0,.04);
+}
+
+/* ── Select ── */
+.select {
+  width: 100%; height: 32px; border: 1.5px solid #e0e0e0; border-radius: 7px;
+  padding: 0 8px; font-size: 12px; font-family: inherit; color: #1a1a1a;
+  background: #fff; outline: none; cursor: pointer;
+}
+.select:focus { border-color: #7c6fcd; box-shadow: 0 0 0 3px #7c6fcd1a; }
+
+/* ── Ramp preview ── */
+.divider { height: 1px; background: #f0f0f0; margin: 14px -16px; }
+.ramp { display: flex; border-radius: 6px; overflow: hidden; gap: 1px; background: #f0f0f0; }
+.stop { flex: 1; height: 24px; }
+.ramp-section { display: flex; flex-direction: column; gap: 6px; }
+.ramp-row { display: flex; flex-direction: column; gap: 3px; }
+.ramp-label { font-size: 10px; font-weight: 500; color: #aaa; letter-spacing: .3px; text-transform: uppercase; }
+
+/* ── Apply button ── */
+.apply-btn {
+  width: 100%; height: 36px; border: none; border-radius: 9px;
+  background: #7c6fcd; color: #fff;
+  font-size: 13px; font-weight: 600; font-family: inherit;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: background .1s, opacity .1s;
+  margin-top: 14px;
+}
+.apply-btn:hover:not(:disabled) { background: #6d5fc0; }
+.apply-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ── Status ── */
+.status { margin-top: 8px; font-size: 11px; text-align: center; min-height: 16px; color: #888; }
+.status.ok  { color: #16a34a; font-weight: 600; }
+.status.err { color: #dc2626; }
+</style>
+</head>
+<body>
+
+<div style="margin-bottom:14px;padding:8px 10px;background:#f6f6f7;border:1px solid #ececec;border-radius:7px;font-size:11px;color:#666;line-height:1.4;">
+  <b>mode</b> stores all the color values. <b>theme</b> is where the primitives get themed.
+</div>
+
+<div class="section">
+  <div class="label">Brand name</div>
+  <input class="input" id="collection-name" spellcheck="false" placeholder="Type a brand name…" />
+</div>
+
+<div class="section">
+  <div class="label">Brand color</div>
+  <div class="color-row">
+    <div class="swatch" id="primary-swatch" style="background:#E93D82">
+      <input type="color" id="primary-picker" value="#E93D82" />
+    </div>
+    <input class="input" id="primary-hex" value="#E93D82" spellcheck="false" placeholder="#E93D82" />
+  </div>
+</div>
+
+<div class="section">
+  <div class="accent-header">
+    <div class="label">Accent</div>
+    <div class="seg" style="width:110px;flex:none">
+      <button class="seg-btn active" data-acc="on">On</button>
+      <button class="seg-btn" data-acc="off">Off</button>
+    </div>
+  </div>
+  <div id="accent-custom">
+    <div class="accent-header" style="margin-top:8px">
+      <div class="label">Custom color</div>
+      <button class="add-btn" id="accent-btn">Add accent</button>
+    </div>
+    <div id="accent-row" style="display:none">
+      <div class="color-row">
+        <div class="swatch" id="accent-swatch" style="background:#ccc">
+          <input type="color" id="accent-picker" value="#6366f1" />
+        </div>
+        <input class="input" id="accent-hex" value="" spellcheck="false" placeholder="#6366F1" />
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row2 section">
+  <div>
+    <div class="label">Neutral</div>
+    <select class="select" id="neutral-select">
+      <option value="auto">Auto-match</option>
+      <option value="gray">Gray</option>
+      <option value="mauve">Mauve</option>
+      <option value="slate">Slate</option>
+      <option value="sage">Sage</option>
+      <option value="olive">Olive</option>
+      <option value="sand">Sand</option>
+    </select>
+  </div>
+  <div>
+    <div class="label">Engine</div>
+    <div class="seg">
+      <button class="seg-btn active" data-mode="recommended">Rec.</button>
+      <button class="seg-btn" data-mode="exact">Exact</button>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<div class="ramp-section">
+  <div class="ramp-row">
+    <div class="ramp-label">Brand · Light</div>
+    <div class="ramp" id="ramp-light"></div>
+  </div>
+  <div class="ramp-row">
+    <div class="ramp-label">Brand · Dark</div>
+    <div class="ramp" id="ramp-dark"></div>
+  </div>
+</div>
+
+<div class="ramp-section" id="accent-ramps" style="display:none;margin-top:10px">
+  <div class="ramp-row">
+    <div class="ramp-label">Accent · Light</div>
+    <div class="ramp" id="ramp-accent-light"></div>
+  </div>
+  <div class="ramp-row">
+    <div class="ramp-label">Accent · Dark</div>
+    <div class="ramp" id="ramp-accent-dark"></div>
+  </div>
+</div>
+
+<button class="apply-btn" id="apply-btn">Apply to Figma</button>
+<div class="status" id="status"></div>
+
+<script>__BUNDLE__</script>
+</body>
+</html>
