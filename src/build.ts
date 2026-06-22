@@ -6,6 +6,7 @@ import { SECONDARIES } from './secondaries'
 import { SIGNALS } from './engine/signals'
 import { resolveBrand, SIGNAL_SCALES } from './engine/resolve'
 import { brandCss, stopsToVars } from './engine/cssRender'
+import { onFillTokenName } from './engine/tokenNames'
 
 function generateBrandCss(brand: Brand): string {
   const { name, hex, slug } = brand
@@ -37,12 +38,12 @@ function generateNeutralCss(): string {
   return [
     `/* Neutral scale — shared across all brands (V1: no chroma tint) */`,
     `:root {`,
-    stopsToVars(scale.light, 'neutral'),
-    `  --neutral-on-fill: #ffffff;`,
+    stopsToVars(scale.light, 'neutral', 'neutral'),
+    `  --neutral-${onFillTokenName('neutral')}: #ffffff;`,
     `}`,
     `[data-theme="dark"] {`,
-    stopsToVars(scale.dark, 'neutral'),
-    `  --neutral-on-fill: #ffffff;`,
+    stopsToVars(scale.dark, 'neutral', 'neutral'),
+    `  --neutral-${onFillTokenName('neutral')}: #ffffff;`,
     `}`,
   ].join('\n')
 }
@@ -55,8 +56,8 @@ function generateSignalsCss(): string {
     const { scale } = SIGNAL_SCALES.get(sig.name)!
     const onFill = scale.onFillTextIsWhite ? '#ffffff' : '#000000'
     const onFillDark = scale.onFillTextIsWhiteDark ? '#ffffff' : '#000000'
-    lightBlocks.push(stopsToVars(scale.light, sig.name), `  --${sig.name}-on-fill: ${onFill};`)
-    darkBlocks.push(stopsToVars(scale.dark, sig.name), `  --${sig.name}-on-fill: ${onFillDark};`)
+    lightBlocks.push(stopsToVars(scale.light, sig.name, 'neutral'), `  --${sig.name}-${onFillTokenName('neutral')}: ${onFill};`)
+    darkBlocks.push(stopsToVars(scale.dark, sig.name, 'neutral'), `  --${sig.name}-${onFillTokenName('neutral')}: ${onFillDark};`)
   }
 
   return [

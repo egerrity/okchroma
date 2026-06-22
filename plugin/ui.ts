@@ -139,7 +139,7 @@ function buildAndSend() {
     // brand + accent: unique per brand → raw values under brand/<brand>/<role>.
     const brandRaw = [
       { role: 'primary', light: light.brand, dark: dark.brand },
-      { role: 'accent', light: light.accent, dark: dark.accent },
+      { role: 'secondary', light: light.secondary, dark: dark.secondary },
     ]
     // neutral + signals: shared → one copy in primitive at a variant-keyed
     // path, aliased from the theme collection's semantic group.

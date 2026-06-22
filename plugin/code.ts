@@ -68,8 +68,8 @@ figma.ui.onmessage = async (msg) => {
       const existingTheme = collections.find(c => c.getPluginData(OWNER_KEY) === THEME_NAME)
         ?? collections.find(c => c.name === THEME_NAME)
       const existingThemeVars = existingTheme ? await varsByName(existingTheme.id) : new Map<string, figma.Variable>()
-      const fileHasAccent = existingThemeVars.has('brand/accent/1')
-      const brandsExist = existingThemeVars.has('brand/primary/1')
+      const fileHasAccent = existingThemeVars.has('brand/secondary/paper-1')
+      const brandsExist = existingThemeVars.has('brand/primary/paper-1')
 
       // Nudge before two surprising changes: overwriting an existing brand, or
       // flipping the file's accent posture. Either needs a second Apply.
@@ -147,7 +147,7 @@ figma.ui.onmessage = async (msg) => {
         const created = !v
         if (!v) { v = figma.variables.createVariable(path, p.coll, 'COLOR'); primByName.set(path, v) }
         const dk = darkMap.get(t.path)
-        if (t.path === 'on-fill') {
+        if (t.path === 'on-cta' || t.path === 'on-highlight') {
           const inv = primByName.get(onFillInvariant(isWhite(t), isWhite(dk ?? t)))
           if (inv) {
             const alias = figma.variables.createVariableAlias(inv)
@@ -164,7 +164,7 @@ figma.ui.onmessage = async (msg) => {
       // per-brand ramps → brand/<brand>/<role>/* (refreshed). primary always;
       // accent's raw ramp only when we're writing a real accent for this brand.
       const primaryRamp = brandRaw.find(r => r.role === 'primary')
-      const accentRamp = brandRaw.find(r => r.role === 'accent')
+      const accentRamp = brandRaw.find(r => r.role === 'secondary')
       const writeRamp = (role: string, ramp: BrandRamp) => {
         const darkMap = new Map(flatten(ramp.dark).map(t => [t.path, t]))
         for (const t of flatten(ramp.light)) {
@@ -172,7 +172,7 @@ figma.ui.onmessage = async (msg) => {
         }
       }
       if (primaryRamp) writeRamp('primary', primaryRamp)
-      if (accentMode === 'real' && accentRamp) writeRamp('accent', accentRamp)
+      if (accentMode === 'real' && accentRamp) writeRamp('secondary', accentRamp)
       // shared neutral + signals → grown on demand, recorded as alias targets
       for (const grp of shared) {
         const darkMap = new Map(flatten(grp.dark).map(t => [t.path, t]))
@@ -206,14 +206,14 @@ figma.ui.onmessage = async (msg) => {
         aliasCount++
       }
 
-      // brand/primary always; brand/accent depends on the accent mode.
+      // brand/primary always; brand/secondary depends on the accent mode.
       const stops = primaryRamp ? flatten(primaryRamp.light) : []
       for (const t of stops) {
         aliasInto(`brand/primary/${t.path}`, `brand/${brand}/primary/${t.path}`)
         if (accentMode === 'real') {
-          aliasInto(`brand/accent/${t.path}`, `brand/${brand}/accent/${t.path}`)
+          aliasInto(`brand/secondary/${t.path}`, `brand/${brand}/secondary/${t.path}`)
         } else if (accentMode === 'mirror') {
-          aliasInto(`brand/accent/${t.path}`, `brand/${brand}/primary/${t.path}`) // mirror brand
+          aliasInto(`brand/secondary/${t.path}`, `brand/${brand}/primary/${t.path}`) // mirror brand
         }
       }
       // When accent first appears, give every pre-existing brand a mirrored
@@ -222,7 +222,7 @@ figma.ui.onmessage = async (msg) => {
         for (const m of th.coll.modes) {
           if (m.name === brand) continue
           for (const t of stops) {
-            aliasInto(`brand/accent/${t.path}`, `brand/${m.name}/primary/${t.path}`, m.modeId)
+            aliasInto(`brand/secondary/${t.path}`, `brand/${m.name}/primary/${t.path}`, m.modeId)
           }
         }
       }

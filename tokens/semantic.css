@@ -1,74 +1,74 @@
 /*
-  Semantic token layer — maps role names to primitive stop numbers.
-  This file never changes per brand. Only the primitives (--brand-N, --neutral-N) change.
+  Semantic token layer — maps role names to primitive tokens.
+  This file never changes per brand. Only the primitives (--brand-*, --neutral-*) change.
 */
 
 /* ─── Global surface / fg / border ─────────────────────────────────────────── */
 
 [data-brand] {
-  --surface-base:         var(--neutral-1);
-  --surface-sunken:       var(--neutral-2);
+  --surface-base:         var(--neutral-paper-1);
+  --surface-sunken:       var(--neutral-paper-2);
   --surface-raised:       #ffffff;
   --surface-card-overlay: #ffffff;
 
-  --fg-default:           var(--neutral-12);
-  --fg-subtle:            var(--neutral-11);
-  --fg-link:              var(--brand-11);
-  --fg-link-hover:        var(--brand-12);
+  --fg-default:           var(--neutral-ink);
+  --fg-subtle:            var(--neutral-ink-alt);
+  --fg-link:              var(--brand-ink-alt);
+  --fg-link-hover:        var(--brand-ink);
 
-  --border-default:       var(--neutral-9);
-  --border-subtle:        var(--neutral-5);
+  --border-default:       var(--neutral-highlight-9);
+  --border-subtle:        var(--neutral-wash-5);
 }
 
 [data-brand][data-theme="dark"] {
-  --surface-raised:       var(--neutral-3);
-  --surface-card-overlay: var(--neutral-2);
+  --surface-raised:       var(--neutral-wash-3);
+  --surface-card-overlay: var(--neutral-paper-2);
 }
 
 /* ─── role.brand ────────────────────────────────────────────────────────────── */
 
 [data-brand] {
-  --brand-fg:                    var(--brand-12);
-  --brand-fg-hover:              var(--brand-11);
-  --brand-fg-alt:                var(--brand-11);
-  --brand-fg-alt-hover:          var(--brand-12);
-  --brand-fg-on-emphasis:        var(--brand-on-fill);
+  --brand-fg:                    var(--brand-ink);
+  --brand-fg-hover:              var(--brand-ink-alt);
+  --brand-fg-alt:                var(--brand-ink-alt);
+  --brand-fg-alt-hover:          var(--brand-ink);
+  --brand-fg-on-emphasis:        var(--brand-on-cta);
 
-  --brand-bg-faint:              var(--brand-2);
-  --brand-bg-subtle:             var(--brand-3);
-  --brand-bg-subtle-hover:       var(--brand-4);
-  --brand-bg-emphasis:           var(--brand-9);
-  --brand-bg-emphasis-hover:     var(--brand-10);
+  --brand-bg-faint:              var(--brand-paper-2);
+  --brand-bg-subtle:             var(--brand-wash-3);
+  --brand-bg-subtle-hover:       var(--brand-wash-4);
+  --brand-bg-emphasis:           var(--brand-cta);
+  --brand-bg-emphasis-hover:     var(--brand-cta-hover);
 
-  --brand-border-subtle:         var(--brand-4);
-  --brand-border-subtle-hover:   var(--brand-5);
-  --brand-border-default:            var(--brand-6);
-  --brand-border-default-hover:      var(--brand-8);
-  --brand-border-emphasis:       var(--brand-9);
-  --brand-border-emphasis-hover: var(--brand-10);
+  --brand-border-subtle:         var(--brand-wash-4);
+  --brand-border-subtle-hover:   var(--brand-wash-5);
+  --brand-border-default:            var(--brand-accent-6);
+  --brand-border-default-hover:      var(--brand-accent-8);
+  --brand-border-emphasis:       var(--brand-cta);
+  --brand-border-emphasis-hover: var(--brand-cta-hover);
 }
 
-/* ─── role.brand-accent (V1: mirrors brand; swap in secondary later) ────────── */
+/* ─── role.secondary (the brand's secondary ramp; mirrors brand when none) ──── */
 
 [data-brand] {
-  --accent-fg:                    var(--accent-12);
-  --accent-fg-hover:              var(--accent-11);
-  --accent-fg-alt:                var(--accent-11);
-  --accent-fg-alt-hover:          var(--accent-12);
-  --accent-fg-on-emphasis:        var(--accent-on-fill);
+  --secondary-fg:                    var(--secondary-ink);
+  --secondary-fg-hover:              var(--secondary-ink-alt);
+  --secondary-fg-alt:                var(--secondary-ink-alt);
+  --secondary-fg-alt-hover:          var(--secondary-ink);
+  --secondary-fg-on-emphasis:        var(--secondary-on-cta);
 
-  --accent-bg-faint:              var(--accent-2);
-  --accent-bg-subtle:             var(--accent-3);
-  --accent-bg-subtle-hover:       var(--accent-4);
-  --accent-bg-emphasis:           var(--accent-9);
-  --accent-bg-emphasis-hover:     var(--accent-10);
+  --secondary-bg-faint:              var(--secondary-paper-2);
+  --secondary-bg-subtle:             var(--secondary-wash-3);
+  --secondary-bg-subtle-hover:       var(--secondary-wash-4);
+  --secondary-bg-emphasis:           var(--secondary-cta);
+  --secondary-bg-emphasis-hover:     var(--secondary-cta-hover);
 
-  --accent-border-subtle:         var(--accent-4);
-  --accent-border-subtle-hover:   var(--accent-5);
-  --accent-border-default:           var(--accent-6);
-  --accent-border-default-hover:     var(--accent-8);
-  --accent-border-emphasis:       var(--accent-9);
-  --accent-border-emphasis-hover: var(--accent-10);
+  --secondary-border-subtle:         var(--secondary-wash-4);
+  --secondary-border-subtle-hover:   var(--secondary-wash-5);
+  --secondary-border-default:           var(--secondary-accent-6);
+  --secondary-border-default-hover:     var(--secondary-accent-8);
+  --secondary-border-emphasis:       var(--secondary-cta);
+  --secondary-border-emphasis-hover: var(--secondary-cta-hover);
 }
 
 /* ─── role.illustration ──────────────────────────────────────────────────────
@@ -86,9 +86,9 @@
    mono when no real secondary exists. */
 
 [data-brand] {
-  --illus-ink:      var(--neutral-12);
-  --illus-muted:    var(--neutral-8);
-  --illus-paper:    var(--neutral-1);
+  --illus-ink:      var(--neutral-ink);
+  --illus-muted:    var(--neutral-accent-8);
+  --illus-paper:    var(--neutral-paper-1);
   --illus-alt:      var(--illus-alt-mono);
   --illus-alt-soft: var(--illus-alt-soft-mono);
 }
@@ -104,71 +104,71 @@
    alert-high → error, alert-med → warning, positive → success, info → info */
 
 [data-brand] {
-  --alert-high-fg:                    var(--error-12);
-  --alert-high-fg-hover:              var(--error-11);
-  --alert-high-fg-alt:                var(--error-11);
-  --alert-high-fg-alt-hover:          var(--error-12);
-  --alert-high-fg-on-emphasis:        var(--error-on-fill);
-  --alert-high-bg-faint:              var(--error-2);
-  --alert-high-bg-subtle:             var(--error-3);
-  --alert-high-bg-subtle-hover:       var(--error-4);
-  --alert-high-bg-emphasis:           var(--error-9);
-  --alert-high-bg-emphasis-hover:     var(--error-10);
-  --alert-high-border-subtle:         var(--error-4);
-  --alert-high-border-subtle-hover:   var(--error-5);
-  --alert-high-border-default:       var(--error-6);
-  --alert-high-border-default-hover: var(--error-8);
-  --alert-high-border-emphasis:       var(--error-9);
-  --alert-high-border-emphasis-hover: var(--error-10);
+  --alert-high-fg:                    var(--error-ink);
+  --alert-high-fg-hover:              var(--error-ink-alt);
+  --alert-high-fg-alt:                var(--error-ink-alt);
+  --alert-high-fg-alt-hover:          var(--error-ink);
+  --alert-high-fg-on-emphasis:        var(--error-on-highlight);
+  --alert-high-bg-faint:              var(--error-paper-2);
+  --alert-high-bg-subtle:             var(--error-wash-3);
+  --alert-high-bg-subtle-hover:       var(--error-wash-4);
+  --alert-high-bg-emphasis:           var(--error-highlight-9);
+  --alert-high-bg-emphasis-hover:     var(--error-highlight-10);
+  --alert-high-border-subtle:         var(--error-wash-4);
+  --alert-high-border-subtle-hover:   var(--error-wash-5);
+  --alert-high-border-default:       var(--error-accent-6);
+  --alert-high-border-default-hover: var(--error-accent-8);
+  --alert-high-border-emphasis:       var(--error-highlight-9);
+  --alert-high-border-emphasis-hover: var(--error-highlight-10);
 
-  --alert-med-fg:                     var(--warning-12);
-  --alert-med-fg-hover:               var(--warning-11);
-  --alert-med-fg-alt:                 var(--warning-11);
-  --alert-med-fg-alt-hover:           var(--warning-12);
-  --alert-med-fg-on-emphasis:         var(--warning-on-fill);
-  --alert-med-bg-faint:               var(--warning-2);
-  --alert-med-bg-subtle:              var(--warning-3);
-  --alert-med-bg-subtle-hover:        var(--warning-4);
-  --alert-med-bg-emphasis:            var(--warning-9);
-  --alert-med-bg-emphasis-hover:      var(--warning-10);
-  --alert-med-border-subtle:          var(--warning-4);
-  --alert-med-border-subtle-hover:    var(--warning-5);
-  --alert-med-border-default:        var(--warning-6);
-  --alert-med-border-default-hover:  var(--warning-8);
-  --alert-med-border-emphasis:        var(--warning-9);
-  --alert-med-border-emphasis-hover:  var(--warning-10);
+  --alert-med-fg:                     var(--warning-ink);
+  --alert-med-fg-hover:               var(--warning-ink-alt);
+  --alert-med-fg-alt:                 var(--warning-ink-alt);
+  --alert-med-fg-alt-hover:           var(--warning-ink);
+  --alert-med-fg-on-emphasis:         var(--warning-on-highlight);
+  --alert-med-bg-faint:               var(--warning-paper-2);
+  --alert-med-bg-subtle:              var(--warning-wash-3);
+  --alert-med-bg-subtle-hover:        var(--warning-wash-4);
+  --alert-med-bg-emphasis:            var(--warning-highlight-9);
+  --alert-med-bg-emphasis-hover:      var(--warning-highlight-10);
+  --alert-med-border-subtle:          var(--warning-wash-4);
+  --alert-med-border-subtle-hover:    var(--warning-wash-5);
+  --alert-med-border-default:        var(--warning-accent-6);
+  --alert-med-border-default-hover:  var(--warning-accent-8);
+  --alert-med-border-emphasis:        var(--warning-highlight-9);
+  --alert-med-border-emphasis-hover:  var(--warning-highlight-10);
 
-  --positive-fg:                      var(--success-12);
-  --positive-fg-hover:                var(--success-11);
-  --positive-fg-alt:                  var(--success-11);
-  --positive-fg-alt-hover:            var(--success-12);
-  --positive-fg-on-emphasis:          var(--success-on-fill);
-  --positive-bg-faint:                var(--success-2);
-  --positive-bg-subtle:               var(--success-3);
-  --positive-bg-subtle-hover:         var(--success-4);
-  --positive-bg-emphasis:             var(--success-9);
-  --positive-bg-emphasis-hover:       var(--success-10);
-  --positive-border-subtle:           var(--success-4);
-  --positive-border-subtle-hover:     var(--success-5);
-  --positive-border-default:         var(--success-6);
-  --positive-border-default-hover:   var(--success-8);
-  --positive-border-emphasis:         var(--success-9);
-  --positive-border-emphasis-hover:   var(--success-10);
+  --positive-fg:                      var(--success-ink);
+  --positive-fg-hover:                var(--success-ink-alt);
+  --positive-fg-alt:                  var(--success-ink-alt);
+  --positive-fg-alt-hover:            var(--success-ink);
+  --positive-fg-on-emphasis:          var(--success-on-highlight);
+  --positive-bg-faint:                var(--success-paper-2);
+  --positive-bg-subtle:               var(--success-wash-3);
+  --positive-bg-subtle-hover:         var(--success-wash-4);
+  --positive-bg-emphasis:             var(--success-highlight-9);
+  --positive-bg-emphasis-hover:       var(--success-highlight-10);
+  --positive-border-subtle:           var(--success-wash-4);
+  --positive-border-subtle-hover:     var(--success-wash-5);
+  --positive-border-default:         var(--success-accent-6);
+  --positive-border-default-hover:   var(--success-accent-8);
+  --positive-border-emphasis:         var(--success-highlight-9);
+  --positive-border-emphasis-hover:   var(--success-highlight-10);
 
-  --info-fg:                          var(--info-12);
-  --info-fg-hover:                    var(--info-11);
-  --info-fg-alt:                      var(--info-11);
-  --info-fg-alt-hover:                var(--info-12);
-  --info-fg-on-emphasis:              var(--info-on-fill);
-  --info-bg-faint:                    var(--info-2);
-  --info-bg-subtle:                   var(--info-3);
-  --info-bg-subtle-hover:             var(--info-4);
-  --info-bg-emphasis:                 var(--info-9);
-  --info-bg-emphasis-hover:           var(--info-10);
-  --info-border-subtle:               var(--info-4);
-  --info-border-subtle-hover:         var(--info-5);
-  --info-border-default:             var(--info-6);
-  --info-border-default-hover:       var(--info-8);
-  --info-border-emphasis:             var(--info-9);
-  --info-border-emphasis-hover:       var(--info-10);
+  --info-fg:                          var(--info-ink);
+  --info-fg-hover:                    var(--info-ink-alt);
+  --info-fg-alt:                      var(--info-ink-alt);
+  --info-fg-alt-hover:                var(--info-ink);
+  --info-fg-on-emphasis:              var(--info-on-highlight);
+  --info-bg-faint:                    var(--info-paper-2);
+  --info-bg-subtle:                   var(--info-wash-3);
+  --info-bg-subtle-hover:             var(--info-wash-4);
+  --info-bg-emphasis:                 var(--info-highlight-9);
+  --info-bg-emphasis-hover:           var(--info-highlight-10);
+  --info-border-subtle:               var(--info-wash-4);
+  --info-border-subtle-hover:         var(--info-wash-5);
+  --info-border-default:             var(--info-accent-6);
+  --info-border-default-hover:       var(--info-accent-8);
+  --info-border-emphasis:             var(--info-highlight-9);
+  --info-border-emphasis-hover:       var(--info-highlight-10);
 }

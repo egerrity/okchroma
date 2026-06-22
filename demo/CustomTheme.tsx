@@ -159,8 +159,8 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
       const H = generateScale(primary, 'x').brandH
       const scale = generateNeutralScale({ H, C: NEUTRAL_PEAK.branded })
       return [
-        `[data-brand="custom"] {`, stopsToVars(scale.light, 'neutral'), `}`,
-        `[data-brand="custom"][data-theme="dark"] {`, stopsToVars(scale.dark, 'neutral'), `}`,
+        `[data-brand="custom"] {`, stopsToVars(scale.light, 'neutral', 'neutral'), `}`,
+        `[data-brand="custom"][data-theme="dark"] {`, stopsToVars(scale.dark, 'neutral', 'neutral'), `}`,
       ].join('\n')
     }
     return radixNeutralCss('[data-brand="custom"]', neutral)

@@ -10,6 +10,7 @@
 //     file per mode; the filename becomes the Figma mode name)
 
 import { toHex } from './cssRender'
+import { stopTokenName, onFillTokenName, type RampKind } from './tokenNames'
 import { type GeneratedScale, type ColorStop } from './colorEngine'
 import type { ResolvedBrand } from './resolve'
 
@@ -42,11 +43,12 @@ function colorFromHexString(hex: string): FigmaColorToken {
   return { $type: 'color', $value: { colorSpace: 'srgb', components: [r, g, b], alpha: 1, hex: hex.toLowerCase() } }
 }
 
-// One ramp (stops 1–12 + on-fill) for a single mode.
-function rampGroup(stops: ColorStop[], onFillWhite: boolean): FigmaGroup {
+// One ramp (stops 1–12 + on-fill) for a single mode. `kind` selects the stop
+// 9/10 + on-fill names via the shared tokenNames source of truth.
+function rampGroup(stops: ColorStop[], onFillWhite: boolean, kind: RampKind): FigmaGroup {
   const g: FigmaGroup = {}
-  for (const s of stops) g[String(s.stop)] = colorFromStop(s)
-  g['on-fill'] = colorFromHex(onFillWhite)
+  for (const s of stops) g[stopTokenName(s.stop, kind)] = colorFromStop(s)
+  g[onFillTokenName(kind)] = colorFromHex(onFillWhite)
   return g
 }
 
@@ -54,8 +56,8 @@ function rampGroup(stops: ColorStop[], onFillWhite: boolean): FigmaGroup {
 // to hex by the caller). on-fill is always white, matching the CSS path.
 function neutralGroup(hexes: string[]): FigmaGroup {
   const g: FigmaGroup = {}
-  hexes.forEach((hex, i) => { g[String(i + 1)] = colorFromHexString(hex) })
-  g['on-fill'] = colorFromHex(true)
+  hexes.forEach((hex, i) => { g[stopTokenName(i + 1, 'neutral')] = colorFromHexString(hex) })
+  g[onFillTokenName('neutral')] = colorFromHex(true)
   return g
 }
 
@@ -81,12 +83,12 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
 
   const build = (mode: 'light' | 'dark'): FigmaGroup => {
     const g: FigmaGroup = {
-      brand: rampGroup(scale[mode], mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark),
-      accent: rampGroup(accent[mode], mode === 'light' ? accentOnFillLight : accentOnFillDark),
+      brand: rampGroup(scale[mode], mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark, 'brand'),
+      secondary: rampGroup(accent[mode], mode === 'light' ? accentOnFillLight : accentOnFillDark, 'brand'),
       neutral: neutralGroup(input.neutral[mode]),
     }
     for (const sig of input.signals) {
-      g[sig.name] = rampGroup(sig.scale[mode], mode === 'light' ? sig.scale.onFillTextIsWhite : sig.scale.onFillTextIsWhiteDark)
+      g[sig.name] = rampGroup(sig.scale[mode], mode === 'light' ? sig.scale.onFillTextIsWhite : sig.scale.onFillTextIsWhiteDark, 'neutral')
     }
     return g
   }

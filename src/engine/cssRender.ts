@@ -3,6 +3,7 @@
 // injected <style>) so both ship byte-identical rules.
 
 import { generateIllustrationScale, type GeneratedScale, type ColorStop } from './colorEngine'
+import { stopTokenName, onFillTokenName, type RampKind } from './tokenNames'
 import type { ResolvedBrand } from './resolve'
 
 export function toHex(r: number, g: number, b: number): string {
@@ -10,8 +11,8 @@ export function toHex(r: number, g: number, b: number): string {
   return `#${ch(r)}${ch(g)}${ch(b)}`
 }
 
-export function stopsToVars(stops: ColorStop[], prefix: string): string {
-  return stops.map(s => `  --${prefix}-${s.stop}: ${toHex(s.r, s.g, s.b)};`).join('\n')
+export function stopsToVars(stops: ColorStop[], prefix: string, kind: RampKind): string {
+  return stops.map(s => `  --${prefix}-${stopTokenName(s.stop, kind)}: ${toHex(s.r, s.g, s.b)};`).join('\n')
 }
 
 export function annotationNote(r: ResolvedBrand, opts?: { archetypeOverride?: string }): string {
@@ -70,27 +71,29 @@ export function brandCss(
     `  --illus-alt-soft-2c: var(--illus-alt-2);`,
   ]
 
+  // Secondary ramp (role formerly "accent"). on-fill is brand-kind → on-cta.
+  const secOnFill = `  --secondary-${onFillTokenName('brand')}`
   const accentLight = accent
-    ? [stopsToVars(accent.light, 'accent'), `  --accent-on-fill: ${accent.onFillTextIsWhite ? '#ffffff' : '#000000'};`]
-    : [...scale.light.map(s => `  --accent-${s.stop}: var(--brand-${s.stop});`), `  --accent-on-fill: ${onFill};`]
+    ? [stopsToVars(accent.light, 'secondary', 'brand'), `${secOnFill}: ${accent.onFillTextIsWhite ? '#ffffff' : '#000000'};`]
+    : [...scale.light.map(s => `  --secondary-${stopTokenName(s.stop, 'brand')}: var(--brand-${stopTokenName(s.stop, 'brand')});`), `${secOnFill}: ${onFill};`]
   const accentDark = accent
-    ? [stopsToVars(accent.dark, 'accent'), `  --accent-on-fill: ${accent.onFillTextIsWhiteDark ? '#ffffff' : '#000000'};`]
-    : [...scale.dark.map(s => `  --accent-${s.stop}: var(--brand-${s.stop});`), `  --accent-on-fill: ${onFillDark};`]
+    ? [stopsToVars(accent.dark, 'secondary', 'brand'), `${secOnFill}: ${accent.onFillTextIsWhiteDark ? '#ffffff' : '#000000'};`]
+    : [...scale.dark.map(s => `  --secondary-${stopTokenName(s.stop, 'brand')}: var(--brand-${stopTokenName(s.stop, 'brand')});`), `${secOnFill}: ${onFillDark};`]
 
   return [
     `/* ${displayName}${note} */`,
     `[data-brand="${slug}"] {`,
-    stopsToVars(scale.light, 'brand'),
-    `  --brand-on-fill: ${onFill};`,
+    stopsToVars(scale.light, 'brand', 'brand'),
+    `  --brand-${onFillTokenName('brand')}: ${onFill};`,
     ...illusVars,
     ...accentLight,
-    ...r.signalOverrides.map(o => stopsToVars(o.scale.light, o.name)),
+    ...r.signalOverrides.map(o => stopsToVars(o.scale.light, o.name, 'neutral')),
     `}`,
     `[data-brand="${slug}"][data-theme="dark"] {`,
-    stopsToVars(scale.dark, 'brand'),
-    `  --brand-on-fill: ${onFillDark};`,
+    stopsToVars(scale.dark, 'brand', 'brand'),
+    `  --brand-${onFillTokenName('brand')}: ${onFillDark};`,
     ...accentDark,
-    ...r.signalOverrides.map(o => stopsToVars(o.scale.dark, o.name)),
+    ...r.signalOverrides.map(o => stopsToVars(o.scale.dark, o.name, 'neutral')),
     `}`,
   ].join('\n')
 }
