@@ -54,12 +54,11 @@ function rampGroup(
   stops: ColorStop[],
   onFillWhite: boolean,
   kind: RampKind,
-  extra?: { ext?: ColorStop[]; onHighlightWhite?: boolean; identityHex?: string },
+  extra?: { onHighlightWhite?: boolean; identityHex?: string },
 ): FigmaGroup {
   const g: FigmaGroup = {}
   for (const s of stops) g[stopTokenName(s.stop, kind)] = colorFromStop(s)
   g[onFillTokenName(kind)] = colorFromHex(onFillWhite)
-  if (extra?.ext) for (const s of extra.ext) g[stopTokenName(s.stop, kind)] = colorFromStop(s)
   if (extra?.onHighlightWhite !== undefined) g[onFillTokenName('neutral')] = colorFromHex(extra.onHighlightWhite)
   if (extra?.identityHex) g['identity'] = colorFromHexString(extra.identityHex)
   return g
@@ -72,12 +71,12 @@ function rampGroup(
 // hardcoded white).
 function neutralGroup(
   hexes: string[],
-  extra: { ext: ColorStop[]; onHighlightWhite: boolean; onCtaWhite: boolean },
+  extra: { cta: ColorStop[]; onHighlightWhite: boolean; onCtaWhite: boolean },
 ): FigmaGroup {
   const g: FigmaGroup = {}
   hexes.forEach((hex, i) => { g[stopTokenName(i + 1, 'neutral')] = colorFromHexString(hex) })
   g[onFillTokenName('neutral')] = colorFromHex(extra.onHighlightWhite)
-  for (const s of extra.ext) g[stopTokenName(s.stop, 'neutral')] = colorFromStop(s)
+  for (const s of extra.cta) g[stopTokenName(s.stop, 'neutral')] = colorFromStop(s)
   g[onFillTokenName('brand')] = colorFromHex(extra.onCtaWhite) // on-cta
   return g
 }
@@ -103,19 +102,19 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
   const accentOnFillDark = input.accent ? input.accent.onFillTextIsWhiteDark : scale.onFillTextIsWhiteDark
 
   const brandExtra = (s: GeneratedScale, mode: 'light' | 'dark') => ({
-    ext: mode === 'light' ? s.extLight : s.extDark,
     onHighlightWhite: mode === 'light' ? s.onHighlightIsWhite : s.onHighlightIsWhiteDark,
     identityHex: s.identityHex,
   })
   // Neutral cta + on-text come from the engine neutral scale (the cta button is
-  // a fixed gray, independent of which family input.neutral carries).
+  // a fixed gray, independent of which family input.neutral carries). It lives
+  // at the tail of the one generated list (stops 13+ ⇒ slice(12)).
   const nScale = generateNeutralScale()
   const neutralExtra = (mode: 'light' | 'dark') => {
-    const ext = (mode === 'light' ? nScale.extLight : nScale.extDark) ?? []
+    const cta = (mode === 'light' ? nScale.light : nScale.dark).slice(12)
     return {
-      ext,
+      cta,
       onHighlightWhite: (mode === 'light' ? nScale.onHighlightIsWhite : nScale.onHighlightIsWhiteDark) ?? false,
-      onCtaWhite: ext.length ? fillWantsWhite(ext[0]) : true,
+      onCtaWhite: cta.length ? fillWantsWhite(cta[0]) : true,
     }
   }
   const build = (mode: 'light' | 'dark'): FigmaGroup => {

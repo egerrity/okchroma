@@ -76,12 +76,10 @@ export function brandCss(
   // block. Used for both the brand and the (real) secondary ramp.
   const brandKindBody = (prefix: string, s: GeneratedScale, mode: 'light' | 'dark'): string[] => {
     const stops = mode === 'light' ? s.light : s.dark
-    const ext = (mode === 'light' ? s.extLight : s.extDark) ?? []
     const onCta = mode === 'light' ? s.onFillTextIsWhite : s.onFillTextIsWhiteDark
     const onHl = mode === 'light' ? s.onHighlightIsWhite : s.onHighlightIsWhiteDark
     return [
       stopsToVars(stops, prefix, 'brand'),
-      stopsToVars(ext, prefix, 'brand'),
       `  --${prefix}-${onFillTokenName('brand')}: ${onColor(onCta)};`,
       `  --${prefix}-${onFillTokenName('neutral')}: ${onColor(onHl ?? true)};`,
     ]
@@ -90,12 +88,10 @@ export function brandCss(
   // (stops, highlight ext, and both on-text tokens).
   const mirrorBody = (prefix: string, mode: 'light' | 'dark'): string[] => {
     const stops = mode === 'light' ? scale.light : scale.dark
-    const ext = (mode === 'light' ? scale.extLight : scale.extDark) ?? []
     const alias = (x: ColorStop) =>
       `  --${prefix}-${stopTokenName(x.stop, 'brand')}: var(--brand-${stopTokenName(x.stop, 'brand')});`
     return [
       ...stops.map(alias),
-      ...ext.map(alias),
       `  --${prefix}-${onFillTokenName('brand')}: var(--brand-${onFillTokenName('brand')});`,
       `  --${prefix}-${onFillTokenName('neutral')}: var(--brand-${onFillTokenName('neutral')});`,
     ]

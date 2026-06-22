@@ -243,13 +243,11 @@ export interface GeneratedScale {
   onFillTextIsWhiteDark: boolean
   light: ColorStop[]
   dark: ColorStop[]
-  // ── Stage 2 additive role tokens (off the 12-stop scale, so scale.light/
-  // dark stay byte-identical and the blessed snapshot is untouched) ──
-  // Additive role stops with engine numbers 13+ (see tokenNames.EXT_NAMES):
-  // brand/secondary carry highlight-9/10 (13/14); neutral carries cta/cta-hover
-  // (15/16). Undefined when the ramp has none.
-  extLight?: ColorStop[]
-  extDark?: ColorStop[]
+  // ── Stage 2 additive role tokens ──
+  // highlight-9/10 (brand/secondary) and cta/cta-hover (neutral) are appended
+  // to light/dark with engine numbers 13+ — one uniform generated list per
+  // ramp, labeled by tokenNames. Consumers guarding only the original 1–12
+  // scale slice(0, 12).
   // on-highlight text polarity (universal token, all ramps). White normally;
   // black within the yellow band, where darkening would kill the hue.
   onHighlightIsWhite?: boolean
@@ -334,10 +332,10 @@ export interface GenerateOptions {
   // inside the semi-muted warm band (flag × band, never flag alone).
   // Plumbed but not yet wired to math — no-op until the deeper pass lands.
   style?: 'default' | 'deeper' | 'full-chroma'
-  // Stage 2: emit the brand/secondary highlight-9/10 fill pair (extLight/
-  // extDark + on-highlight polarity). resolveBrand passes this; signals don't
-  // (a signal's stop-9 highlight already IS its fill). Append-only: never
-  // touches stops 1–12.
+  // Stage 2: append the brand/secondary highlight-9/10 fill pair to light/dark
+  // (+ on-highlight polarity). resolveBrand passes this; signals don't (a
+  // signal's stop-9 highlight already IS its fill). Append-only: never touches
+  // stops 1–12.
   highlight?: boolean
 }
 
@@ -582,8 +580,6 @@ export function generateScale(
   // 4.5) EXCEPT within 1σ of the yellow center, where darkening would destroy
   // hue meaning (the warning-signal precedent). hover twin = hoverL (darker ⇒
   // still clears white). Dark mirrors the same construction in the dark hue.
-  let extLight: ColorStop[] | undefined
-  let extDark: ColorStop[] | undefined
   let onHighlightIsWhite: boolean | undefined
   let onHighlightIsWhiteDark: boolean | undefined
   if (opts?.highlight) {
@@ -622,14 +618,14 @@ export function generateScale(
     // Light: ladder-rung chroma blend (same math as stops 1–8).
     const hl9 = rung(13, HIGHLIGHT_LIGHT.rootL + yellowLift, true, lightHueAt, lightHlC)
     const hl10 = rung(14, hoverL(hl9.L), false, lightHueAt, lightHlC) // darker ⇒ still clears white
-    extLight = [hl9, hl10]
+    light.push(hl9, hl10)
 
     // Dark: pin the same target in the dark hue, saturated like the dark fill.
     const darkHueAt = (l: number) => torsionedHue(darkH, l, dark9L, gOffPath)
     const darkHlC = (l: number, h: number) => clampChromaToGamut(l, brandC, h)
     const dhl9 = rung(13, HIGHLIGHT_DARK.rootL, true, darkHueAt, darkHlC)
     const dhl10 = rung(14, hoverL(dhl9.L), false, darkHueAt, darkHlC)
-    extDark = [dhl9, dhl10]
+    dark.push(dhl9, dhl10)
 
     // on-highlight polarity: white unless the yellow band kept the fill bright.
     onHighlightIsWhite = !isYellow
@@ -639,7 +635,7 @@ export function generateScale(
   return {
     name: scaleName, archetype, brandL, brandC, brandH, lFlip, lFillMax,
     onFillTextIsWhite, onFillTextIsWhiteDark, light, dark,
-    extLight, extDark, onHighlightIsWhite, onHighlightIsWhiteDark,
+    onHighlightIsWhite, onHighlightIsWhiteDark,
     identityHex: hex.toUpperCase(),
   }
 }
@@ -745,8 +741,8 @@ export function generateNeutralScale(tint?: { H: number; C: number }): Generated
   }
   const ctaLightL = medianLForArchetype('near-black') // 0.125 — near-black button
   const ctaDarkL = medianLForArchetype('light')       // 0.925 — inverts to near-white
-  const extLight = [grayStop(15, ctaLightL), grayStop(16, hoverL(ctaLightL))]
-  const extDark = [grayStop(15, ctaDarkL), grayStop(16, hoverL(ctaDarkL))]
+  light.push(grayStop(15, ctaLightL), grayStop(16, hoverL(ctaLightL)))
+  dark.push(grayStop(15, ctaDarkL), grayStop(16, hoverL(ctaDarkL)))
 
   // on-highlight: the neutral highlight (stop 9) is a mid-gray, so white text
   // (the old hardcoded on-fill) actually fails WCAG — pick the polarity that
@@ -762,8 +758,6 @@ export function generateNeutralScale(tint?: { H: number; C: number }): Generated
     onFillTextIsWhiteDark: true,
     light,
     dark,
-    extLight,
-    extDark,
     onHighlightIsWhite: whiteWins(light[8]),
     onHighlightIsWhiteDark: whiteWins(dark[8]),
   }

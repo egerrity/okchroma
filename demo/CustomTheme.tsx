@@ -176,7 +176,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
     if (neutral === 'branded') {
       const scale = generateNeutralScale({ H: generateScale(primary, 'x').brandH, C: NEUTRAL_PEAK.branded })
       const toHexes = (stops: typeof scale.light) => stops.map(s => toHex(s.r, s.g, s.b))
-      return { light: toHexes(scale.light), dark: toHexes(scale.dark) }
+      return { light: toHexes(scale.light.slice(0, 12)), dark: toHexes(scale.dark.slice(0, 12)) }
     }
     return RADIX_NEUTRALS[neutral]
   }, [primary, neutral])

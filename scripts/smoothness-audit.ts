@@ -146,8 +146,8 @@ const METRICS = ['hueStep', 'drift', 'wobble'] as const
 
 function measureScale(scale: GeneratedScale): Record<RampName, RampMetrics> {
   return {
-    light: measureRamp(scale.light, scale.brandH, 8, 1),
-    dark: measureRamp(scale.dark, scale.brandH, 8, 0),
+    light: measureRamp(scale.light.slice(0, 12), scale.brandH, 8, 1),
+    dark: measureRamp(scale.dark.slice(0, 12), scale.brandH, 8, 0),
     illus: measureRamp(generateIllustrationScale(scale).stops, scale.brandH, 5, 1),
   }
 }
@@ -233,7 +233,7 @@ function summarize(label: string, recs: Rec[]) {
 
 function printWalk(label: string, scale: GeneratedScale) {
   console.log(`\n   ${label} — brand H ${scale.brandH.toFixed(1)} C ${scale.brandC.toFixed(3)} L ${scale.brandL.toFixed(2)} (light ramp walk)`)
-  for (const s of scale.light)
+  for (const s of scale.light.slice(0, 12))
     console.log(
       `     ${String(s.stop).padStart(2)}: L ${s.L.toFixed(3)}  C ${s.C.toFixed(4)}  H ${s.H.toFixed(1)}  (ΔH vs brand ${hueDelta(s.H, scale.brandH).toFixed(1)}°)`
     )

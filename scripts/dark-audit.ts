@@ -146,7 +146,7 @@ function snapshotOf(): Snap {
   const snap: Snap = {}
   for (const b of BRANDS) {
     const r = resolveBrand(b.hex, b.slug)
-    snap[b.slug] = [...r.scale.light, ...r.scale.dark].map(s => [s.L, s.C, s.H])
+    snap[b.slug] = [...r.scale.light.slice(0, 12), ...r.scale.dark.slice(0, 12)].map(s => [s.L, s.C, s.H])
     // Accents joined the snapshot 2026-06-11 (dark pass): the near-neutral
     // pink-ladder defect lived ONLY in accents and was invisible to a
     // primaries-only bless. Accents carry the brand's real flags, mirroring
@@ -156,12 +156,12 @@ function snapshotOf(): Snap {
     const sec = SECONDARIES[b.slug]
     if (sec) {
       const ra = resolveBrand(sec, `${b.slug} accent`, { exact: b.exact, style: b.style })
-      snap[`${b.slug}-accent`] = [...ra.scale.light, ...ra.scale.dark].map(s => [s.L, s.C, s.H])
+      snap[`${b.slug}-accent`] = [...ra.scale.light.slice(0, 12), ...ra.scale.dark.slice(0, 12)].map(s => [s.L, s.C, s.H])
     }
   }
   for (const sig of SIGNALS) {
     const s = SIGNAL_SCALES.get(sig.name)!.scale
-    snap[`signal:${sig.name}`] = [...s.light, ...s.dark].map(x => [x.L, x.C, x.H])
+    snap[`signal:${sig.name}`] = [...s.light.slice(0, 12), ...s.dark.slice(0, 12)].map(x => [x.L, x.C, x.H])
   }
   return snap
 }

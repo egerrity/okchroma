@@ -41,22 +41,20 @@ function fillWantsWhite(s: ColorStop): boolean {
 function generateNeutralCss(): string {
   const scale = generateNeutralScale()
   const onColor = (w: boolean) => (w ? '#ffffff' : '#000000')
-  // on-cta polarity from the cta fill (extLight/extDark[0]): white on the
-  // near-black light button, black on the near-white dark one.
-  const onCtaLight = onColor(fillWantsWhite(scale.extLight![0]))
-  const onCtaDark = onColor(fillWantsWhite(scale.extDark![0]))
+  // on-cta polarity from the cta fill (stop 15): white on the near-black light
+  // button, black on the near-white dark one.
+  const onCtaLight = onColor(fillWantsWhite(scale.light.find(s => s.stop === 15)!))
+  const onCtaDark = onColor(fillWantsWhite(scale.dark.find(s => s.stop === 15)!))
 
   return [
     `/* Neutral scale — shared across all brands (V1: no chroma tint) */`,
     `:root {`,
     stopsToVars(scale.light, 'neutral', 'neutral'),
-    stopsToVars(scale.extLight ?? [], 'neutral', 'neutral'),
     `  --neutral-${onFillTokenName('neutral')}: ${onColor(scale.onHighlightIsWhite ?? false)};`,
     `  --neutral-${onFillTokenName('brand')}: ${onCtaLight};`,
     `}`,
     `[data-theme="dark"] {`,
     stopsToVars(scale.dark, 'neutral', 'neutral'),
-    stopsToVars(scale.extDark ?? [], 'neutral', 'neutral'),
     `  --neutral-${onFillTokenName('neutral')}: ${onColor(scale.onHighlightIsWhiteDark ?? false)};`,
     `  --neutral-${onFillTokenName('brand')}: ${onCtaDark};`,
     `}`,

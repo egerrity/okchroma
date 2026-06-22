@@ -45,8 +45,8 @@ console.log(`=== highlight-9/10 across ${items.length} brand+secondary ramps ===
 console.log(`(yellow band = within ${YELLOW_L_LIFT.sigmaDeg}° of H${YELLOW_L_LIFT.centerH}; those keep black text)\n`)
 console.log('  ramp                    H     yel | LIGHT hl9            hl10           | DARK  hl9            hl10')
 for (const { name, hex, scale } of items) {
-  const el = scale.extLight, ed = scale.extDark
-  if (!el || !ed) { fails.push(`${name}: missing highlight ext`); continue }
+  const el = scale.light.slice(12), ed = scale.dark.slice(12)
+  if (el.length < 2 || ed.length < 2) { fails.push(`${name}: missing highlight stops`); continue }
   const [l9, l10] = el, [d9, d10] = ed
   const a8L = scale.light[7].L, a8Ld = scale.dark[7].L
   const yel = isYellow(scale)
@@ -73,7 +73,7 @@ for (const { name, hex, scale } of items) {
 
 // ── neutral cta + universal on-text (neutral + signals) ──────────────────────
 const neutral = generateNeutralScale()
-const nctaL = neutral.extLight![0], nctaD = neutral.extDark![0]
+const nctaL = neutral.light.slice(12)[0], nctaD = neutral.dark.slice(12)[0]
 console.log(`\n=== neutral cta ===`)
 console.log(`  light ${hx(nctaL)} L${f(nctaL.L)} white ${whiteWcag(nctaL).toFixed(1)}:1 | dark ${hx(nctaD)} L${f(nctaD.L)} black ${blackWcag(nctaD).toFixed(1)}:1`)
 ok(nctaL.L < 0.2, `neutral cta light not near-black (L ${f(nctaL.L)})`)
@@ -92,7 +92,7 @@ for (const sig of SIGNALS) {
   for (const [mode, st, pol] of [['light', s.light[8], s.onFillTextIsWhite], ['dark', s.dark[8], s.onFillTextIsWhiteDark]] as const) {
     ok((pol ? whiteWcag(st) : blackWcag(st)) >= 4.5, `signal ${sig.name} ${mode}: on-highlight ${pol ? 'white' : 'black'} fails (${(pol ? whiteWcag(st) : blackWcag(st)).toFixed(2)})`)
   }
-  ok(s.extLight === undefined && s.extDark === undefined, `signal ${sig.name} should carry no cta/highlight ext`)
+  ok(s.light.length === 12 && s.dark.length === 12, `signal ${sig.name} should carry no cta/highlight ext (light ${s.light.length}, dark ${s.dark.length})`)
 }
 
 // ── blessed-snapshot regression for the NEW tokens ───────────────────────────
@@ -103,8 +103,8 @@ const SNAP_PATH = path.join(process.cwd(), 'scripts', 'highlight-snapshot.json')
 const TOL = 0.015
 const snapshot = (): Record<string, number[]> => {
   const o: Record<string, number[]> = {}
-  for (const { name, scale } of items) o[name] = [...(scale.extLight ?? []), ...(scale.extDark ?? [])].flatMap(s => [s.L, s.C, s.H])
-  o['neutral'] = [...(neutral.extLight ?? []), ...(neutral.extDark ?? [])].flatMap(s => [s.L, s.C, s.H])
+  for (const { name, scale } of items) o[name] = [...scale.light.slice(12), ...scale.dark.slice(12)].flatMap(s => [s.L, s.C, s.H])
+  o['neutral'] = [...neutral.light.slice(12), ...neutral.dark.slice(12)].flatMap(s => [s.L, s.C, s.H])
   return o
 }
 if (process.argv.includes('--bless')) {

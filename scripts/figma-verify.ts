@@ -15,7 +15,7 @@ const r = resolveBrand(brand.hex, brand.name, { exact: brand.exact, archetypeOve
 const sec = SECONDARIES[brand.slug]
 const accent = sec ? resolveBrand(sec, `${brand.name} accent`, { exact: brand.exact, style: brand.style }).scale : null
 const neutral = generateNeutralScale()
-const neutralHexes = { light: neutral.light.map(s => toHex(s.r, s.g, s.b)), dark: neutral.dark.map(s => toHex(s.r, s.g, s.b)) }
+const neutralHexes = { light: neutral.light.slice(0, 12).map(s => toHex(s.r, s.g, s.b)), dark: neutral.dark.slice(0, 12).map(s => toHex(s.r, s.g, s.b)) }
 const signals = SIGNALS.map(s => {
   const o = r.signalOverrides.find(x => x.name === s.name)
   return { name: s.name, scale: o?.scale ?? SIGNAL_SCALES.get(s.name)!.scale }

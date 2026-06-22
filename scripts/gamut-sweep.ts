@@ -55,7 +55,8 @@ for (const H of HUES) {
 
         // 1. structural sanity
         const all = [...r.scale.light, ...r.scale.dark]
-        if (all.length !== 24 || all.some(s => !isFinite(s.L) || !isFinite(s.r))) {
+        const core = [...r.scale.light.slice(0, 12), ...r.scale.dark.slice(0, 12)]
+        if (core.length !== 24 || all.some(s => !isFinite(s.L) || !isFinite(s.r))) {
           crashed++
           continue
         }

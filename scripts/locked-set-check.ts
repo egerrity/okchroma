@@ -38,7 +38,7 @@ for (const b of BRANDS) {
   })
   const ref = blessed[b.slug]
   if (!ref) continue
-  const stops = [...r.scale.light, ...r.scale.dark]
+  const stops = [...r.scale.light.slice(0, 12), ...r.scale.dark.slice(0, 12)]
   let maxDE = 0
   let at = ''
   for (let i = 0; i < stops.length; i++) {
@@ -75,7 +75,7 @@ for (const sig of SIGNALS) {
   const ref = blessed[`signal:${sig.name}`]
   if (!ref) continue
   const s = SIGNAL_SCALES.get(sig.name)!.scale
-  const stops = [...s.light, ...s.dark]
+  const stops = [...s.light.slice(0, 12), ...s.dark.slice(0, 12)]
   let maxDE = 0
   for (let i = 0; i < stops.length; i++) {
     const [L, C, H] = ref[i]

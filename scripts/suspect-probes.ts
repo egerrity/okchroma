@@ -96,7 +96,7 @@ console.log('\n── A2: hue-separation retention for brand pairs 10° apart �
         if (Math.abs(dBrand) < 4) continue // hex rounding collapsed the pair
         const ramps: Array<[string, ColorStop[], ColorStop[]]> = [
           ['light 1–8', a.light.slice(0, 8), b.light.slice(0, 8)],
-          ['light 11–12', a.light.slice(10), b.light.slice(10)],
+          ['light 11–12', a.light.slice(10, 12), b.light.slice(10, 12)],
           ['dark 1–8', a.dark.slice(0, 8), b.dark.slice(0, 8)],
           ['illus', generateIllustrationScale(a).stops, generateIllustrationScale(b).stops],
         ]
