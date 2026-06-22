@@ -34,9 +34,21 @@ for (const mode of ['light', 'dark'] as const) {
   const m = figma[mode] as any
   for (const fam of ['brand', 'secondary', 'neutral', 'error', 'warning', 'success', 'info']) {
     ok(!!m[fam], `${mode}.${fam} missing`)
-    const isCta = fam === 'brand' || fam === 'secondary'
-    const tokens = isCta ? ['paper-1', 'cta', 'ink', 'on-cta'] : ['paper-1', 'highlight-9', 'ink', 'on-highlight']
+    // brand/secondary: full surface scale + cta + highlight + identity + both
+    // on-text tokens. neutral: surface scale (highlight at 9/10) + new cta +
+    // both on-text. signals: surface scale + on-highlight, but NO cta/identity.
+    const isBrand = fam === 'brand' || fam === 'secondary'
+    const tokens = isBrand
+      ? ['paper-1', 'cta', 'cta-hover', 'highlight-9', 'highlight-10', 'ink-alt', 'ink', 'on-cta', 'on-highlight', 'identity']
+      : fam === 'neutral'
+        ? ['paper-1', 'highlight-9', 'highlight-10', 'cta', 'cta-hover', 'ink', 'on-highlight', 'on-cta']
+        : ['paper-1', 'highlight-9', 'highlight-10', 'ink', 'on-highlight']
     for (const t of tokens) ok(!!m[fam][t], `${mode}.${fam}.${t} missing`)
+    // Structural "no error button" rule: signals get on-highlight but never cta.
+    if (!isBrand && fam !== 'neutral') {
+      ok(!m[fam]['cta'] && !m[fam]['on-cta'], `${mode}.${fam} should not have a cta`)
+      ok(!m[fam]['identity'], `${mode}.${fam} should not have identity`)
+    }
   }
 }
 // Color token shape (brand stop 9 is now `cta`)

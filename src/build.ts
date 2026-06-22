@@ -1,6 +1,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
-import { generateNeutralScale } from './engine/colorEngine'
+import { generateNeutralScale, type ColorStop } from './engine/colorEngine'
+import { contrastRatio, wcagY } from './engine/constraints'
 import { BRANDS, type Brand } from './brands'
 import { SECONDARIES } from './secondaries'
 import { SIGNALS } from './engine/signals'
@@ -32,18 +33,32 @@ function generateBrandCss(brand: Brand): string {
   return brandCss(slug, name, r, accent, noteSuffix)
 }
 
+// White text wins iff it out-contrasts black on this fill (WCAG).
+function fillWantsWhite(s: ColorStop): boolean {
+  return contrastRatio(1.0, wcagY(s.L, s.C, s.H)) >= contrastRatio(wcagY(s.L, s.C, s.H), 0)
+}
+
 function generateNeutralCss(): string {
   const scale = generateNeutralScale()
+  const onColor = (w: boolean) => (w ? '#ffffff' : '#000000')
+  // on-cta polarity from the cta fill (extLight/extDark[0]): white on the
+  // near-black light button, black on the near-white dark one.
+  const onCtaLight = onColor(fillWantsWhite(scale.extLight![0]))
+  const onCtaDark = onColor(fillWantsWhite(scale.extDark![0]))
 
   return [
     `/* Neutral scale — shared across all brands (V1: no chroma tint) */`,
     `:root {`,
     stopsToVars(scale.light, 'neutral', 'neutral'),
-    `  --neutral-${onFillTokenName('neutral')}: #ffffff;`,
+    stopsToVars(scale.extLight ?? [], 'neutral', 'neutral'),
+    `  --neutral-${onFillTokenName('neutral')}: ${onColor(scale.onHighlightIsWhite ?? false)};`,
+    `  --neutral-${onFillTokenName('brand')}: ${onCtaLight};`,
     `}`,
     `[data-theme="dark"] {`,
     stopsToVars(scale.dark, 'neutral', 'neutral'),
-    `  --neutral-${onFillTokenName('neutral')}: #ffffff;`,
+    stopsToVars(scale.extDark ?? [], 'neutral', 'neutral'),
+    `  --neutral-${onFillTokenName('neutral')}: ${onColor(scale.onHighlightIsWhiteDark ?? false)};`,
+    `  --neutral-${onFillTokenName('brand')}: ${onCtaDark};`,
     `}`,
   ].join('\n')
 }

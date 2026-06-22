@@ -44,9 +44,6 @@ export function brandCss(
   const { scale } = r
   const note = annotationNote(r) + noteSuffix
 
-  const onFill = scale.onFillTextIsWhite ? '#ffffff' : '#000000'
-  const onFillDark = scale.onFillTextIsWhiteDark ? '#ffffff' : '#000000'
-
   // Illustration palette (PoC 2026-06-11): FOUR fixed-L slots per color —
   // primary 1–4 from the brand, alt 1–4 from the secondary (falls back to
   // the brand's own slots when no secondary exists). Shapes in
@@ -71,27 +68,60 @@ export function brandCss(
     `  --illus-alt-soft-2c: var(--illus-alt-2);`,
   ]
 
-  // Secondary ramp (role formerly "accent"). on-fill is brand-kind → on-cta.
-  const secOnFill = `  --secondary-${onFillTokenName('brand')}`
-  const accentLight = accent
-    ? [stopsToVars(accent.light, 'secondary', 'brand'), `${secOnFill}: ${accent.onFillTextIsWhite ? '#ffffff' : '#000000'};`]
-    : [...scale.light.map(s => `  --secondary-${stopTokenName(s.stop, 'brand')}: var(--brand-${stopTokenName(s.stop, 'brand')});`), `${secOnFill}: ${onFill};`]
-  const accentDark = accent
-    ? [stopsToVars(accent.dark, 'secondary', 'brand'), `${secOnFill}: ${accent.onFillTextIsWhiteDark ? '#ffffff' : '#000000'};`]
-    : [...scale.dark.map(s => `  --secondary-${stopTokenName(s.stop, 'brand')}: var(--brand-${stopTokenName(s.stop, 'brand')});`), `${secOnFill}: ${onFillDark};`]
+  const onColor = (white: boolean) => (white ? '#ffffff' : '#000000')
+
+  // A brand-kind ramp body for one mode: the surface + text stops, the
+  // highlight-9/10 ext pair (Stage 2), and the on-cta / on-highlight text
+  // tokens. identity is mode-invariant — the caller emits it once in the light
+  // block. Used for both the brand and the (real) secondary ramp.
+  const brandKindBody = (prefix: string, s: GeneratedScale, mode: 'light' | 'dark'): string[] => {
+    const stops = mode === 'light' ? s.light : s.dark
+    const ext = (mode === 'light' ? s.extLight : s.extDark) ?? []
+    const onCta = mode === 'light' ? s.onFillTextIsWhite : s.onFillTextIsWhiteDark
+    const onHl = mode === 'light' ? s.onHighlightIsWhite : s.onHighlightIsWhiteDark
+    return [
+      stopsToVars(stops, prefix, 'brand'),
+      stopsToVars(ext, prefix, 'brand'),
+      `  --${prefix}-${onFillTokenName('brand')}: ${onColor(onCta)};`,
+      `  --${prefix}-${onFillTokenName('neutral')}: ${onColor(onHl ?? true)};`,
+    ]
+  }
+  // When no secondary ramp is given, secondary mirrors brand var-for-var
+  // (stops, highlight ext, and both on-text tokens).
+  const mirrorBody = (prefix: string, mode: 'light' | 'dark'): string[] => {
+    const stops = mode === 'light' ? scale.light : scale.dark
+    const ext = (mode === 'light' ? scale.extLight : scale.extDark) ?? []
+    const alias = (x: ColorStop) =>
+      `  --${prefix}-${stopTokenName(x.stop, 'brand')}: var(--brand-${stopTokenName(x.stop, 'brand')});`
+    return [
+      ...stops.map(alias),
+      ...ext.map(alias),
+      `  --${prefix}-${onFillTokenName('brand')}: var(--brand-${onFillTokenName('brand')});`,
+      `  --${prefix}-${onFillTokenName('neutral')}: var(--brand-${onFillTokenName('neutral')});`,
+    ]
+  }
+
+  const accentLight = accent ? brandKindBody('secondary', accent, 'light') : mirrorBody('secondary', 'light')
+  const accentDark = accent ? brandKindBody('secondary', accent, 'dark') : mirrorBody('secondary', 'dark')
+  // identity — literal input hex, mode-invariant (light block only). Secondary
+  // mirrors the brand's when no secondary ramp exists.
+  const brandIdentity = `  --brand-identity: ${scale.identityHex};`
+  const secondaryIdentity = accent
+    ? `  --secondary-identity: ${accent.identityHex};`
+    : `  --secondary-identity: var(--brand-identity);`
 
   return [
     `/* ${displayName}${note} */`,
     `[data-brand="${slug}"] {`,
-    stopsToVars(scale.light, 'brand', 'brand'),
-    `  --brand-${onFillTokenName('brand')}: ${onFill};`,
+    ...brandKindBody('brand', scale, 'light'),
+    brandIdentity,
     ...illusVars,
     ...accentLight,
+    secondaryIdentity,
     ...r.signalOverrides.map(o => stopsToVars(o.scale.light, o.name, 'neutral')),
     `}`,
     `[data-brand="${slug}"][data-theme="dark"] {`,
-    stopsToVars(scale.dark, 'brand', 'brand'),
-    `  --brand-${onFillTokenName('brand')}: ${onFillDark};`,
+    ...brandKindBody('brand', scale, 'dark'),
     ...accentDark,
     ...r.signalOverrides.map(o => stopsToVars(o.scale.dark, o.name, 'neutral')),
     `}`,

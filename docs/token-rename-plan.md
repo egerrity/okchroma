@@ -230,6 +230,26 @@ Plus a new `highlight-audit` (mirrors `dark-audit`), across all 35 scales:
 
 ---
 
+## Stage 2.5 — green/success signal forced to white text (own re-bless)
+
+Pulled out as its own stage on purpose (decided 2026-06-22). The green success
+signal currently lands where it needs **black** text to pass WCAG; the owner
+wants it forced darker so **white** passes (consistency with the other signal
+fills). This **reuses the highlight `enforceWhite` mechanism built in Stage 2**
+(`enforceOnFillContrast` darken-to-white-edge), applied to the success signal's
+fill stops.
+
+**Why separate, not folded into Stage 2:** it *moves an existing blessed stop*
+(success stop 9's L, its on-fill polarity, likely dark too). Stage 2's gate is
+`audit` staying byte-identical — `signal:success` is in that snapshot — so doing
+it inside Stage 2 would break Stage 2's own regression guard. It also can't go
+*before* Stage 2 (the mechanism doesn't exist yet). So it's the immediate next
+stage, with its **own intentional `audit:bless`** after the success change is
+visually approved. Stage 2 proves "added without disturbing"; 2.5 proves "moved
+exactly success-green and nothing else."
+
+---
+
 ## Stage 3 — demo (display/additive only; touches no engine)
 
 **Preserve** the working demo (`CustomTheme`): hex input, secondary/accent 2×2,

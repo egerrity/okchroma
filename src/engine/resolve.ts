@@ -120,6 +120,10 @@ export function resolveBrand(
     // dark mode keeps the red cool character (exact mode ships raw)
     coolRedDark: !opts?.exact,
     style: opts?.style,
+    // Stage 2: brand/secondary carry the highlight-9/10 fill (signals don't —
+    // a signal's stop-9 IS its highlight). Surface-scale token, emitted for
+    // every brand incl. exact (it's derived, not the shipped hex).
+    highlight: true,
   }
   // Rung-1 colliders deepen their 11/12 text stops ("opt3") so accent and
   // body text stand off error's own text register.

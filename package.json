@@ -9,6 +9,8 @@
     "dev": "node esbuild.config.js --watch",
     "audit": "esbuild scripts/dark-audit.ts --bundle --platform=node --outfile=dist/dark-audit.js && node dist/dark-audit.js",
     "audit:bless": "esbuild scripts/dark-audit.ts --bundle --platform=node --outfile=dist/dark-audit.js && node dist/dark-audit.js --bless",
+    "highlight-audit": "esbuild scripts/highlight-audit.ts --bundle --platform=node --outfile=dist/highlight-audit.js && node dist/highlight-audit.js",
+    "highlight-audit:bless": "esbuild scripts/highlight-audit.ts --bundle --platform=node --outfile=dist/highlight-audit.js && node dist/highlight-audit.js --bless",
     "sweep": "esbuild scripts/gamut-sweep.ts --bundle --platform=node --outfile=dist/gamut-sweep.js && node dist/gamut-sweep.js",
     "smooth": "esbuild scripts/smoothness-audit.ts --bundle --platform=node --outfile=dist/smoothness-audit.js && node dist/smoothness-audit.js",
     "smooth:baseline": "esbuild scripts/smoothness-audit.ts --bundle --platform=node --outfile=dist/smoothness-audit.js && node dist/smoothness-audit.js --baseline",

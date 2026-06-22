@@ -37,6 +37,18 @@ export const LIGHT_BASE_C = [0.004, 0.010, 0.022, 0.039, 0.053, 0.068, 0.086, 0.
 // brightness instead of being forced down the shared L ladder.
 export const YELLOW_L_LIFT = { max: 0.03, centerH: 92, sigmaDeg: 20 }
 
+// Stage 2 — brand/secondary highlight-9/10 (the surface scale's emphasis fill,
+// pulled out of cta). Generated as a ladder rung by the SAME 1–8 loop math
+// (lightHueAt + cream/envelope chroma blend), NOT a bespoke path. Light params
+// validated in sim (2026-06-22): rootL continues the accent-8 (0.738) → text
+// descent; baseC/satFraction continue the 1–8 trend. highlight-10 = hoverL of
+// highlight-9. White-text enforced (darken to the WCAG-4.5 edge) except within
+// 1σ of YELLOW_L_LIFT.centerH, where darkening would kill the hue (the warning
+// precedent — yellows stay bright, black text). Dark mode pins the same target
+// in the dark hue and lets the same white-enforcement do the work.
+export const HIGHLIGHT_LIGHT = { rootL: 0.62, baseC: 0.142, satFraction: 0.75 }
+export const HIGHLIGHT_DARK = { rootL: 0.62 }
+
 // Root L targets for dark mode stops 1–8.
 // Raised + chroma-boosted (2026-06-09 dark audit): the original roots
 // (0.13–0.42) read as undifferentiated murk — OKLab ΔE under-weights

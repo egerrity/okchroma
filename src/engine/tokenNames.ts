@@ -31,10 +31,25 @@ const SHARED_NAMES: Record<number, string> = {
   12: 'ink',
 }
 
-// Map an engine stop number (1–12) to its emitted token name for the ramp kind.
+// Additive Stage-2 role stops carry engine stop numbers ABOVE the 1–12 scale
+// (kept off scale.light/dark so the blessed 12-stop snapshot is untouched).
+// These names are kind-independent — a ramp only ever carries the ones it has:
+//   brand/secondary → 13/14 (highlight, new fill below their cta)
+//   neutral         → 15/16 (cta, the new near-black/near-white button)
+const EXT_NAMES: Record<number, string> = {
+  13: 'highlight-9',
+  14: 'highlight-10',
+  15: 'cta',
+  16: 'cta-hover',
+}
+
+// Map an engine stop number to its emitted token name for the ramp kind.
+// Stops 1–12 are the surface scale + pulled-out text roles; 13+ are the
+// Stage-2 additive role stops (see EXT_NAMES).
 export function stopTokenName(stop: number, kind: RampKind): string {
   if (stop === 9) return kind === 'brand' ? 'cta' : 'highlight-9'
   if (stop === 10) return kind === 'brand' ? 'cta-hover' : 'highlight-10'
+  if (EXT_NAMES[stop]) return EXT_NAMES[stop]
   const name = SHARED_NAMES[stop]
   if (!name) throw new Error(`stopTokenName: unexpected stop ${stop}`)
   return name
