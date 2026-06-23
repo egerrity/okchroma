@@ -14,10 +14,14 @@ import CustomTheme from './CustomTheme'
 import { OkchromaLogo } from './okchroma-logo'
 
 type View = 'custom' | 'gallery' | 'docs'
+// Stage 3: gallery + docs are HIDDEN (not deleted) — the demo presents the
+// custom-theme view only. The PaletteGallery and Docs components stay in place
+// below (and in the render switch) so this is a one-line revert. Docs in
+// particular still carries pre-rename 1–12 refs; it's hidden, not yet re-skinned.
 const VIEWS: Array<[View, string]> = [
   ['custom', 'Custom theme'],
-  ['gallery', 'Example palettes'],
-  ['docs', 'Documentation'],
+  // ['gallery', 'Example palettes'],
+  // ['docs', 'Documentation'],
 ]
 
 // Shell: ONE header row — the tab bar collapsed into a view dropdown next
@@ -334,7 +338,7 @@ const NAV_CSS = `
   font-size: 12px; font-weight: 600; letter-spacing: 0.005em; text-decoration: none;
   background: var(--surface-sunken); color: var(--fg-default);
 }
-.nav-pill:hover { background: var(--neutral-4); }
+.nav-pill:hover { background: var(--neutral-wash-4); }
 .app-footer {
   position: sticky; bottom: 0; z-index: 40;
   display: flex; align-items: center; gap: 16px;

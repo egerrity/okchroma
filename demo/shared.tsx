@@ -14,40 +14,45 @@ export const FONT_STACK = "'Inter', -apple-system, system-ui, sans-serif"
 
 // Secondary display modes are a 2×2: which family fills the PRIMARY
 // register (emphasis fills, accent text, links) × which fills the SUBTLE
-// register (tinted surfaces). Overrides reference PRIMITIVES (--accent-12),
+// register (tinted surfaces). Overrides reference PRIMITIVES (--secondary-ink),
 // never the other role's var — role-to-role references would cycle.
 //   default          primary: brand   subtle: brand   (no override)
 //   accented         primary: brand   subtle: accent
 //   inverse          primary: accent  subtle: accent
 //   accented-inverse primary: accent  subtle: brand
+// The "accent" Family is emitted as the `secondary` primitive prefix (the role
+// was renamed in the token rename); prim() maps Family → primitive prefix.
+// Stops are the post-rename token names: surface scale paper/wash/accent, the
+// cta-1/cta-2 fill pair, ink/ink-alt text, on-cta on-fill text.
 type Family = 'brand' | 'accent'
 function accentModeCss(mode: AccentMode, primary: Family, subtle: Family): string {
   const other = (f: Family): Family => (f === 'brand' ? 'accent' : 'brand')
+  const prim = (f: Family): string => (f === 'brand' ? 'brand' : 'secondary')
   const PRIMARY_ROLES: Array<[string, string]> = [
-    ['fg', '12'], ['fg-hover', '11'], ['fg-alt', '11'], ['fg-alt-hover', '12'], ['fg-on-emphasis', 'on-fill'],
-    ['bg-emphasis', '9'], ['bg-emphasis-hover', '10'],
-    ['border-default', '6'], ['border-default-hover', '8'],
-    ['border-emphasis', '9'], ['border-emphasis-hover', '10'],
+    ['fg', 'ink'], ['fg-hover', 'ink-alt'], ['fg-alt', 'ink-alt'], ['fg-alt-hover', 'ink'], ['fg-on-emphasis', 'on-cta'],
+    ['bg-emphasis', 'cta-1'], ['bg-emphasis-hover', 'cta-2'],
+    ['border-default', 'accent-6'], ['border-default-hover', 'accent-8'],
+    ['border-emphasis', 'cta-1'], ['border-emphasis-hover', 'cta-2'],
   ]
   const SUBTLE_ROLES: Array<[string, string]> = [
-    ['bg-faint', '2'], ['bg-subtle', '3'], ['bg-subtle-hover', '4'],
-    ['border-subtle', '4'], ['border-subtle-hover', '5'],
+    ['bg-faint', 'paper-2'], ['bg-subtle', 'wash-3'], ['bg-subtle-hover', 'wash-4'],
+    ['border-subtle', 'wash-4'], ['border-subtle-hover', 'wash-5'],
   ]
   const lines: string[] = [`[data-accent-mode="${mode}"][data-brand] {`]
-  for (const [suffix, stop] of PRIMARY_ROLES) {
-    lines.push(`  --brand-${suffix}: var(--${primary}-${stop});`)
-    lines.push(`  --accent-${suffix}: var(--${other(primary)}-${stop});`)
+  for (const [suffix, tok] of PRIMARY_ROLES) {
+    lines.push(`  --brand-${suffix}: var(--${prim(primary)}-${tok});`)
+    lines.push(`  --accent-${suffix}: var(--${prim(other(primary))}-${tok});`)
   }
-  for (const [suffix, stop] of SUBTLE_ROLES) {
-    lines.push(`  --brand-${suffix}: var(--${subtle}-${stop});`)
-    lines.push(`  --accent-${suffix}: var(--${other(subtle)}-${stop});`)
+  for (const [suffix, tok] of SUBTLE_ROLES) {
+    lines.push(`  --brand-${suffix}: var(--${prim(subtle)}-${tok});`)
+    lines.push(`  --accent-${suffix}: var(--${prim(other(subtle))}-${tok});`)
   }
-  lines.push(`  --fg-link: var(--${primary}-11);`)
-  lines.push(`  --fg-link-hover: var(--${primary}-12);`)
+  lines.push(`  --fg-link: var(--${prim(primary)}-ink-alt);`)
+  lines.push(`  --fg-link-hover: var(--${prim(primary)}-ink);`)
   lines.push(`}`)
   if (subtle !== primary) {
-    lines.push(`[data-accent-mode="${mode}"] .u-btn-subtle { color: var(--${subtle}-12); }`)
-    lines.push(`[data-accent-mode="${mode}"] .u-btn-ghost:hover { color: var(--${subtle}-12); }`)
+    lines.push(`[data-accent-mode="${mode}"] .u-btn-subtle { color: var(--${prim(subtle)}-ink); }`)
+    lines.push(`[data-accent-mode="${mode}"] .u-btn-ghost:hover { color: var(--${prim(subtle)}-ink); }`)
   }
   return lines.join('\n')
 }
@@ -92,7 +97,7 @@ export const COMPONENT_CSS = `
 .u-link:hover { color: var(--fg-link-hover); }
 /* Stop 8 IS the ramp's focus-ring role — never the OS default accent */
 [data-brand] :is(input, select, textarea, button, a):focus-visible {
-  outline: 2px solid var(--brand-8);
+  outline: 2px solid var(--brand-accent-8);
   outline-offset: 1px;
 }
 ${ACCENT_MODE_CSS}
@@ -402,13 +407,22 @@ export function ScaleStrip({ label, prefix }: { label: string; prefix: string })
   )
 }
 
+// Stage 3 INTERIM — the surface scale is now 1–8 (paper/wash/accent); the
+// emphasis fills (cta/highlight) and text roles (ink/ink-alt) were pulled OUT
+// of the scale into named roles. This renders the honest 1–8 surface ramp
+// (uniform across every ramp kind) with the new token names, so the display is
+// correct rather than dangling on old 1–12 numbers.
+// TODO(stage3): re-skin as categorized cards (surface 1–8 row + role chips for
+// cta-1/cta-2 · highlight-1/highlight-2 · ink/ink-alt, each on-fill chip in its
+// real on-cta/on-highlight polarity). PENDING THE OWNER MOCKUP.
+const SURFACE_SCALE = ['paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'accent-6', 'accent-7', 'accent-8']
 export function RampRow({ prefix }: { prefix: string }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 4 }}>
-      {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => (
-        <div key={n}>
-          <div style={{ height: 48, borderRadius: 4, background: `var(--${prefix}-${n})`, border: '1px solid var(--border-subtle)' }} />
-          <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--fg-subtle)', marginTop: 4 }}>{n}</div>
+    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${SURFACE_SCALE.length}, 1fr)`, gap: 4 }}>
+      {SURFACE_SCALE.map((tok, i) => (
+        <div key={tok}>
+          <div style={{ height: 48, borderRadius: 4, background: `var(--${prefix}-${tok})`, border: '1px solid var(--border-subtle)' }} />
+          <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--fg-subtle)', marginTop: 4 }}>{i + 1}</div>
         </div>
       ))}
     </div>

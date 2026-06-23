@@ -225,7 +225,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
         <div className="ct-label">Accent color</div>
         <div className="ct-field ct-field-color">
           <label className="ct-swatch-btn" title="Open color picker">
-            <span className="ct-swatch" style={{ background: secondary ?? 'var(--neutral-5)' }} />
+            <span className="ct-swatch" style={{ background: secondary ?? 'var(--neutral-wash-5)' }} />
             <input type="color" value={secondary ?? primary} onChange={e => { setSecondaryInput(e.target.value.toUpperCase()); setAccentOpen(true) }} />
           </label>
           <input value={secondaryInput} placeholder="enter a hex" onChange={e => { setSecondaryInput(e.target.value); setAccentOpen(true) }} spellCheck={false} />
@@ -264,7 +264,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
       <div className="ct-bar-field">
         <div className="ct-label">Neutral color</div>
         <div className="ct-field">
-          <span className="ct-swatch" style={{ background: 'var(--neutral-9)' }} />
+          <span className="ct-swatch" style={{ background: 'var(--neutral-highlight-1)' }} />
           <NeutralSelect value={neutral} onChange={setNeutralChoice} matchedBrand={matchedBrand} matchedAccent={matchedAccent} />
         </div>
       </div>
@@ -677,8 +677,8 @@ function CustomersTable({ hasSecondary }: { hasSecondary: boolean }) {
           const [label, tone] = CUST_STATUS[c.status]
           const premium = c.plan !== 'Starter'
           // Premium plans carry the accent when a secondary exists, else the brand.
-          const planBg = premium ? (hasSecondary ? 'var(--accent-3)' : 'var(--brand-bg-subtle)') : 'var(--surface-sunken)'
-          const planFg = premium ? (hasSecondary ? 'var(--accent-11)' : 'var(--brand-fg)') : 'var(--fg-subtle)'
+          const planBg = premium ? (hasSecondary ? 'var(--secondary-wash-3)' : 'var(--brand-bg-subtle)') : 'var(--surface-sunken)'
+          const planFg = premium ? (hasSecondary ? 'var(--secondary-ink-alt)' : 'var(--brand-fg)') : 'var(--fg-subtle)'
           return (
             <tr key={c.name}>
               <td>
@@ -793,18 +793,19 @@ const PAGE_CSS = `
 .ct-appnav {
   position: sticky; top: 0; z-index: 40;
   display: flex; align-items: center; gap: 20px; padding: 0 24px; height: 52px;
-  background: var(--brand-2); color: var(--brand-fg-alt);
+  background: var(--brand-paper-2); color: var(--brand-fg-alt);
   border-bottom: 1px solid var(--border-subtle);
   /* The product nav always shows the PRIMARY brand — ignore the accent-preview
      flip. accentModeCss remaps the --brand-* semantic tokens at the root; re-pin
-     the ones the chips use to primary primitives (--brand-N never get remapped). */
-  --brand-bg-emphasis: var(--brand-9);
-  --brand-bg-emphasis-hover: var(--brand-10);
-  --brand-fg-on-emphasis: var(--brand-on-fill);
-  --brand-fg: var(--brand-12);
-  --brand-fg-alt: var(--brand-11);
-  --brand-bg-subtle: var(--brand-3);
-  --brand-bg-subtle-hover: var(--brand-4);
+     the ones the chips use to the primary brand primitives (the named scale +
+     fill roles, post token-rename). */
+  --brand-bg-emphasis: var(--brand-cta-1);
+  --brand-bg-emphasis-hover: var(--brand-cta-2);
+  --brand-fg-on-emphasis: var(--brand-on-cta);
+  --brand-fg: var(--brand-ink);
+  --brand-fg-alt: var(--brand-ink-alt);
+  --brand-bg-subtle: var(--brand-wash-3);
+  --brand-bg-subtle-hover: var(--brand-wash-4);
 }
 .ct-download { margin-left: 4px; }
 .ct-logo-mark {
@@ -833,7 +834,7 @@ const PAGE_CSS = `
 .ct-alert-warn {
   display: flex; gap: 8px; align-items: flex-start; margin-top: 8px;
   padding: 8px 10px; border-radius: 8px; font-size: 12px; line-height: 1.45;
-  background: var(--warning-4); border: 1px solid var(--warning-8); color: var(--warning-12);
+  background: var(--warning-wash-4); border: 1px solid var(--warning-accent-8); color: var(--warning-ink);
 }
 .ct-alert-warn a { color: inherit; font-weight: 600; }
 .ct-alert-text {
@@ -869,7 +870,7 @@ const PAGE_CSS = `
   border-radius: 14px; padding: 18px 20px;
 }
 .ct-illus {
-  position: sticky; top: 140px; background: var(--brand-2); border-radius: 16px;
+  position: sticky; top: 140px; background: var(--brand-paper-2); border-radius: 16px;
   min-height: 380px; display: flex; align-items: center; justify-content: center; padding: 32px;
 }
 @media (max-width: 980px) {
@@ -897,7 +898,7 @@ const PAGE_CSS = `
 .ct-check:hover { background: var(--surface-sunken); border-radius: 6px; }
 .ct-tip {
   display: none; position: absolute; left: 0; bottom: calc(100% + 6px); z-index: 70;
-  width: 290px; background: var(--neutral-12); color: var(--neutral-1);
+  width: 290px; background: var(--neutral-ink); color: var(--neutral-paper-1);
   border-radius: 8px; padding: 9px 11px; font-size: 11px; line-height: 1.5;
   box-shadow: 0 8px 24px rgba(0,0,0,0.25); pointer-events: none;
 }
@@ -922,7 +923,7 @@ const PAGE_CSS = `
   background: var(--surface-raised); border: 1px solid var(--border-default); border-radius: 8px;
   padding: 9px 12px;
 }
-.ct-field:focus-within { border-color: var(--brand-8); box-shadow: 0 0 0 3px var(--brand-bg-subtle); }
+.ct-field:focus-within { border-color: var(--brand-accent-8); box-shadow: 0 0 0 3px var(--brand-bg-subtle); }
 .ct-field input, .ct-field select {
   border: none; outline: none; background: transparent; color: var(--fg-default);
   font-family: inherit; font-size: 13px; flex: 1; min-width: 0;
