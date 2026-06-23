@@ -1,5 +1,5 @@
 // Stage 2 highlight audit — mirrors dark-audit, but for the additive tokens.
-// Validates brand/secondary highlight-9/10 (the sim covered LIGHT only; this is
+// Validates brand/secondary highlight-1/2 (the sim covered LIGHT only; this is
 // where the DARK extension gets checked) across the real fleet:
 //   - monotonic surface: light accent-8 > hl9 > hl10; dark accent-8 < hl9
 //   - hover guard: hl9.L > hl10.L in BOTH modes (pair never inverts)
@@ -41,7 +41,7 @@ for (const slug of Object.keys(SECONDARIES)) {
   items.push({ name: `${slug}-secondary`, hex: SECONDARIES[slug], scale: resolveBrand(SECONDARIES[slug], `${slug} accent`, { exact: b.exact, style: b.style }).scale })
 }
 
-console.log(`=== highlight-9/10 across ${items.length} brand+secondary ramps ===`)
+console.log(`=== highlight-1/2 across ${items.length} brand+secondary ramps ===`)
 console.log(`(yellow band = within ${YELLOW_L_LIFT.sigmaDeg}° of H${YELLOW_L_LIFT.centerH}; those keep black text)\n`)
 console.log('  ramp                    H     yel | LIGHT hl9            hl10           | DARK  hl9            hl10')
 for (const { name, hex, scale } of items) {
@@ -80,7 +80,7 @@ ok(nctaL.L < 0.2, `neutral cta light not near-black (L ${f(nctaL.L)})`)
 ok(nctaD.L > 0.85, `neutral cta dark not near-white (L ${f(nctaD.L)})`)
 ok(whiteWcag(nctaL) >= 4.5, `neutral cta light: white text fails (${whiteWcag(nctaL).toFixed(2)})`)
 ok(blackWcag(nctaD) >= 4.5, `neutral cta dark: black text fails (${blackWcag(nctaD).toFixed(2)})`)
-ok(nctaL.L < neutral.light[8].L, `neutral cta (${f(nctaL.L)}) not darker than highlight-9 (${f(neutral.light[8].L)})`)
+ok(nctaL.L < neutral.light[8].L, `neutral cta (${f(nctaL.L)}) not darker than highlight-1 (${f(neutral.light[8].L)})`)
 // neutral on-highlight passes on the gray highlight fill (stop 9), both modes
 ok((neutral.onHighlightIsWhite ? whiteWcag(neutral.light[8]) : blackWcag(neutral.light[8])) >= 4.5, `neutral on-highlight light fails on gray fill`)
 ok((neutral.onHighlightIsWhiteDark ? whiteWcag(neutral.dark[8]) : blackWcag(neutral.dark[8])) >= 4.5, `neutral on-highlight dark fails on gray fill`)

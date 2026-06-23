@@ -120,8 +120,8 @@ export function resolveBrand(
     // dark mode keeps the red cool character (exact mode ships raw)
     coolRedDark: !opts?.exact,
     style: opts?.style,
-    // Stage 2: brand/secondary carry the highlight-9/10 fill (signals don't —
-    // a signal's stop-9 IS its highlight). Surface-scale token, emitted for
+    // Stage 2: brand/secondary carry the highlight-1/2 fill (signals don't —
+    // a signal's stop-9 IS its highlight). Emphasis-fill role token, emitted for
     // every brand incl. exact (it's derived, not the shipped hex).
     highlight: true,
   }

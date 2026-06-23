@@ -26,38 +26,38 @@ const figma = themeToFigma(r, { accent, neutral: neutralHexes, signals })
 const fails: string[] = []
 const ok = (cond: boolean, msg: string) => { if (!cond) fails.push(msg) }
 
-// Same families/modes. brand + secondary are CTA-bearing (stop 9 → cta,
+// Same families/modes. brand + secondary are CTA-bearing (stop 9 → cta-1,
 // on-fill → on-cta); neutral + signals are highlight-bearing (stop 9 →
-// highlight-9, on-fill → on-highlight). Surface stop 1 (paper-1) and text
+// highlight-1, on-fill → on-highlight). Surface stop 1 (paper-1) and text
 // role 12 (ink) are shared across all ramps.
 for (const mode of ['light', 'dark'] as const) {
   const m = figma[mode] as any
   for (const fam of ['brand', 'secondary', 'neutral', 'error', 'warning', 'success', 'info']) {
     ok(!!m[fam], `${mode}.${fam} missing`)
     // brand/secondary: full surface scale + cta + highlight + identity + both
-    // on-text tokens. neutral: surface scale (highlight at 9/10) + new cta +
-    // both on-text. signals: surface scale + on-highlight, but NO cta/identity.
+    // on-text tokens. neutral: surface scale + highlight fill + new cta +
+    // both on-text. signals: surface scale + highlight, but NO cta/identity.
     const isBrand = fam === 'brand' || fam === 'secondary'
     const tokens = isBrand
-      ? ['paper-1', 'cta', 'cta-hover', 'highlight-9', 'highlight-10', 'ink-alt', 'ink', 'on-cta', 'on-highlight', 'identity']
+      ? ['paper-1', 'cta-1', 'cta-2', 'highlight-1', 'highlight-2', 'ink-alt', 'ink', 'on-cta', 'on-highlight', 'identity']
       : fam === 'neutral'
-        ? ['paper-1', 'highlight-9', 'highlight-10', 'cta', 'cta-hover', 'ink', 'on-highlight', 'on-cta']
-        : ['paper-1', 'highlight-9', 'highlight-10', 'ink', 'on-highlight']
+        ? ['paper-1', 'highlight-1', 'highlight-2', 'cta-1', 'cta-2', 'ink', 'on-highlight', 'on-cta']
+        : ['paper-1', 'highlight-1', 'highlight-2', 'ink', 'on-highlight']
     for (const t of tokens) ok(!!m[fam][t], `${mode}.${fam}.${t} missing`)
     // Structural "no error button" rule: signals get on-highlight but never cta.
     if (!isBrand && fam !== 'neutral') {
-      ok(!m[fam]['cta'] && !m[fam]['on-cta'], `${mode}.${fam} should not have a cta`)
+      ok(!m[fam]['cta-1'] && !m[fam]['on-cta'], `${mode}.${fam} should not have a cta`)
       ok(!m[fam]['identity'], `${mode}.${fam} should not have identity`)
     }
   }
 }
-// Color token shape (brand stop 9 is now `cta`)
-const bcta = (figma.light as any).brand['cta']
-ok(bcta.$type === 'color', 'brand/cta not type color')
-ok(bcta.$value && bcta.$value.colorSpace === 'srgb' && Array.isArray(bcta.$value.components) && bcta.$value.components.length === 3, 'brand/cta $value not srgb-components object')
+// Color token shape (brand stop 9 is now `cta-1`)
+const bcta = (figma.light as any).brand['cta-1']
+ok(bcta.$type === 'color', 'brand/cta-1 not type color')
+ok(bcta.$value && bcta.$value.colorSpace === 'srgb' && Array.isArray(bcta.$value.components) && bcta.$value.components.length === 3, 'brand/cta-1 $value not srgb-components object')
 // Spot value vs known engine output (dark-roast brand cta light #07074f, dark #7f9aeb)
-ok((figma.light as any).brand['cta'].$value.hex === '#07074f', `brand/cta light hex ${(figma.light as any).brand['cta'].$value.hex} != #07074f`)
-ok((figma.dark as any).brand['cta'].$value.hex === '#7f9aeb', `brand/cta dark hex ${(figma.dark as any).brand['cta'].$value.hex} != #7f9aeb`)
+ok((figma.light as any).brand['cta-1'].$value.hex === '#07074f', `brand/cta-1 light hex ${(figma.light as any).brand['cta-1'].$value.hex} != #07074f`)
+ok((figma.dark as any).brand['cta-1'].$value.hex === '#7f9aeb', `brand/cta-1 dark hex ${(figma.dark as any).brand['cta-1'].$value.hex} != #7f9aeb`)
 // Identical token names across modes
 ok(JSON.stringify(Object.keys((figma.light as any).brand)) === JSON.stringify(Object.keys((figma.dark as any).brand)), 'brand keys differ across modes')
 

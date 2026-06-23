@@ -1,12 +1,15 @@
 // Single source of truth for the stop→name mapping shared by every emitter
 // (cssRender, figmaRender, and — transitively, via the demo's Figma export —
-// the plugin). The numbered 1–12 ramp becomes a monotonic surface scale plus
-// role tokens pulled out of the scale. The ONLY per-ramp asymmetry lives here:
+// the plugin). The numbered 1–12 ramp becomes a monotonic surface SCALE (1–8,
+// paper/wash/accent) plus role tokens pulled out of the scale. The emphasis
+// fills are roles, NOT scale steps: they're numbered -1 (base) / -2 (hover),
+// restarting from 1, the same move already made for ink/cta. The ONLY per-ramp
+// asymmetry lives here:
 //
 //   - brand-like ramps (brand, secondary) expose a CTA button:
-//       stop 9 → cta,  stop 10 → cta-hover
+//       stop 9 → cta-1,  stop 10 → cta-2
 //   - neutral & signal ramps expose a highlight fill:
-//       stop 9 → highlight-9,  stop 10 → highlight-10
+//       stop 9 → highlight-1,  stop 10 → highlight-2
 //
 // Everything else (paper/wash/accent surface scale, ink-alt/ink text roles) is
 // identical across ramps. This is a byte-identical rename of existing values —
@@ -37,18 +40,19 @@ const SHARED_NAMES: Record<number, string> = {
 //   brand/secondary → 13/14 (highlight, new fill below their cta)
 //   neutral         → 15/16 (cta, the new near-black/near-white button)
 const EXT_NAMES: Record<number, string> = {
-  13: 'highlight-9',
-  14: 'highlight-10',
-  15: 'cta',
-  16: 'cta-hover',
+  13: 'highlight-1',
+  14: 'highlight-2',
+  15: 'cta-1',
+  16: 'cta-2',
 }
 
 // Map an engine stop number to its emitted token name for the ramp kind.
-// Stops 1–12 are the surface scale + pulled-out text roles; 13+ are the
-// Stage-2 additive role stops (see EXT_NAMES).
+// Stops 1–8 are the surface scale; stops 9/10 are the emphasis fill roles
+// (cta-1/cta-2 on brands, highlight-1/highlight-2 on neutral+signals); 11/12 are
+// the pulled-out text roles; 13+ are the Stage-2 additive role stops (EXT_NAMES).
 export function stopTokenName(stop: number, kind: RampKind): string {
-  if (stop === 9) return kind === 'brand' ? 'cta' : 'highlight-9'
-  if (stop === 10) return kind === 'brand' ? 'cta-hover' : 'highlight-10'
+  if (stop === 9) return kind === 'brand' ? 'cta-1' : 'highlight-1'
+  if (stop === 10) return kind === 'brand' ? 'cta-2' : 'highlight-2'
   if (EXT_NAMES[stop]) return EXT_NAMES[stop]
   const name = SHARED_NAMES[stop]
   if (!name) throw new Error(`stopTokenName: unexpected stop ${stop}`)
@@ -63,16 +67,16 @@ export function onFillTokenName(kind: RampKind): string {
 }
 
 // Canonical emit order, uniform across every ramp (the white-label remap shape,
-// an explicit requirement of the original concept). The surface scale 1–10
-// reads as one contiguous linear ramp, THEN the pulled-out roles — regardless
-// of the historical engine stop numbers the values came from. A ramp simply
-// skips the tokens it doesn't have. Emitters sort by this, not by stop number.
+// an explicit requirement of the original concept). The surface scale 1–8
+// (paper/wash/accent) reads as one contiguous linear ramp, THEN the pulled-out
+// roles — the emphasis fills (cta/highlight) are NOT scale steps, so they emit
+// below the scale alongside their on-fill text. A ramp simply skips the tokens
+// it doesn't have. Emitters sort by this, not by stop number.
 const TOKEN_ORDER = [
   'paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'accent-6', 'accent-7', 'accent-8',
-  'highlight-9', 'highlight-10',
   'ink-alt', 'ink',
-  'cta', 'cta-hover',
-  'on-cta', 'on-highlight',
+  'cta-1', 'cta-2', 'on-cta',
+  'highlight-1', 'highlight-2', 'on-highlight',
   'identity',
 ]
 export function tokenOrder(name: string): number {
