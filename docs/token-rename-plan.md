@@ -309,12 +309,11 @@ screenshot as proof.
 
 ## Follow-ups (separate tasks)
 
-- **BEFORE Stage 3: yellow highlight-9/10 don't form a real scale.** The
-  white-text-edge darkening is skipped for the yellow band, so 9/10 stay bright
-  (lighter register + black text) and break scale uniformity / the white-label
-  remap promise — may force a naming/model rethink. Full context, data, and
-  options in [`handoff-2026-06-23.md`](./handoff-2026-06-23.md). Resolve together
-  with the green-signal enforcement below.
+- **BEFORE Stage 3: pull the fills out of the scale (decided 2026-06-23).** 9/10
+  are the emphasis fills, not scale steps (yellow/signals exposed it). Scale
+  becomes 1–8; fills rename to `cta-1/2` + `highlight-1/2` roles (no `fill-`
+  prefix; `-2` = hover). Pure rename, no value change. Full spec + rename map +
+  per-ramp inventory in [`handoff-2026-06-23.md`](./handoff-2026-06-23.md).
 - Green/success **signal** ramp forced darker for white text (same enforcement
   mechanism as highlight).
 - Rewrite `docs` view + `README` to the new vocabulary (currently hidden/stale).
