@@ -322,6 +322,15 @@ export interface GenerateOptions {
   // L 0.56–0.65 dead zone where WCAG and APCA disagree — a brand's
   // compliance review runs WCAG. Signals enforce this; brands TBD.
   enforceOnFillContrast?: boolean
+  // Stage 2.5: darken THIS ramp's light fill to the WCAG-4.5 white-compliant
+  // edge so the normal on-fill polarity generates WHITE on its own. A value
+  // move on the fill's lightness — NOT a polarity override: APCA already picks
+  // white on these mid-green fills, and once the darkened fill clears 4.5 the
+  // black-text fallback branch is simply never reached. The success signal sets
+  // this for consistency with the other non-yellow signal fills (error/info).
+  // LIGHT only (dark fills are black-first by design). Ramps that don't set it
+  // keep fillAnchorL === scaleL ⇒ byte-identical.
+  enforceWhiteFill?: boolean
   // Dark mode keeps the red cool character: generate the ENTIRE dark
   // pipeline from the cooled hue (brandH − RED_COOL_DEG·w_red) for
   // red-band brands. Render-time only — the light path and every decision
@@ -369,7 +378,15 @@ export function generateScale(
   // |Lc| on the stop-9 fill. The WCAG 2.x equal-contrast flip point picks
   // black on saturated mid-tone fills (error red, success green) where
   // convention and APCA both side with white.
-  const fill9 = oklchToSrgbUnclamped(scaleL, clampChromaToGamut(scaleL, brandC, brandH), brandH)
+  // Stage 2.5: enforceWhiteFill darkens the fill anchor to the white edge up
+  // front (success), so polarity below is read off the DARKENED green and picks
+  // white naturally — the flip-to-black branch never triggers. Default ramps:
+  // fillAnchorL === scaleL (no-op, byte-identical).
+  const fillAnchorL =
+    opts?.enforceWhiteFill && contrastRatio(1.0, wcagY(scaleL, brandC, brandH)) < 4.5
+      ? findLForContrast(scaleL, brandC, brandH, 1.0, 4.6)
+      : scaleL
+  const fill9 = oklchToSrgbUnclamped(fillAnchorL, clampChromaToGamut(fillAnchorL, brandC, brandH), brandH)
   const fill9ApcaY = apcaY(fill9.r, fill9.g, fill9.b)
   let onFillTextIsWhite =
     Math.abs(apcaLc(1.0, fill9ApcaY)) >= Math.abs(apcaLc(0.0, fill9ApcaY))
@@ -487,16 +504,20 @@ export function generateScale(
   // the other side passes BOTH standards (dead-zone brands keep their
   // fill, text goes black); only when neither side passes — error's case —
   // darken the fill to the white-compliant edge.
-  let light9L = scaleL
+  // Fill anchored on fillAnchorL: scaleL for every ramp, except an
+  // enforceWhiteFill ramp (success) whose green is already darkened to the
+  // white edge — so the WCAG check below passes and this block is a no-op for
+  // it (white stays, no flip). Byte-identical where fillAnchorL === scaleL.
+  let light9L = fillAnchorL
   if (opts?.enforceOnFillContrast && onFillTextIsWhite) {
-    if (contrastRatio(1.0, wcagY(scaleL, brandC, brandH)) < 4.5) {
-      const blackWcag = contrastRatio(wcagY(scaleL, brandC, brandH), 0)
+    if (contrastRatio(1.0, wcagY(fillAnchorL, brandC, brandH)) < 4.5) {
+      const blackWcag = contrastRatio(wcagY(fillAnchorL, brandC, brandH), 0)
       const blackLc = Math.abs(apcaLc(0.0, fill9ApcaY))
       if (blackWcag >= 4.5 && blackLc >= 45) {
         onFillTextIsWhite = false
       } else {
         // search to 4.6 — hex rounding must never land below 4.5
-        light9L = findLForContrast(scaleL, brandC, brandH, 1.0, 4.6)
+        light9L = findLForContrast(fillAnchorL, brandC, brandH, 1.0, 4.6)
       }
     }
   }

@@ -37,7 +37,10 @@ import { pickSignalShift } from './signalShift'
 export const SIGNAL_SCALES = new Map<SignalDef['name'], { def: SignalDef; scale: GeneratedScale }>(
   SIGNALS.map(def => [
     def.name,
-    { def, scale: generateScale(def.hex, def.name, undefined, { subtleChromaScale: def.subtleChromaBoost, darkStops: ACCENT_DARK_STOPS, darkFillMinL: def.darkFillMinL, enforceOnFillContrast: true }) },
+    // Stage 2.5: success darkens its light fill to hold WHITE, like the other
+    // non-yellow signal fills (error/info). Light-only value move; dark stays
+    // black-first. No other signal sets it ⇒ they're byte-identical.
+    { def, scale: generateScale(def.hex, def.name, undefined, { subtleChromaScale: def.subtleChromaBoost, darkStops: ACCENT_DARK_STOPS, darkFillMinL: def.darkFillMinL, enforceOnFillContrast: true, enforceWhiteFill: def.name === 'success' }) },
   ])
 )
 
