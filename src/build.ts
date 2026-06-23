@@ -50,13 +50,13 @@ function generateNeutralCss(): string {
     `/* Neutral scale — shared across all brands (V1: no chroma tint) */`,
     `:root {`,
     stopsToVars(scale.light, 'neutral', 'neutral'),
-    `  --neutral-${onFillTokenName('neutral')}: ${onColor(scale.onHighlightIsWhite ?? false)};`,
     `  --neutral-${onFillTokenName('brand')}: ${onCtaLight};`,
+    `  --neutral-${onFillTokenName('neutral')}: ${onColor(scale.onHighlightIsWhite ?? false)};`,
     `}`,
     `[data-theme="dark"] {`,
     stopsToVars(scale.dark, 'neutral', 'neutral'),
-    `  --neutral-${onFillTokenName('neutral')}: ${onColor(scale.onHighlightIsWhiteDark ?? false)};`,
     `  --neutral-${onFillTokenName('brand')}: ${onCtaDark};`,
+    `  --neutral-${onFillTokenName('neutral')}: ${onColor(scale.onHighlightIsWhiteDark ?? false)};`,
     `}`,
   ].join('\n')
 }

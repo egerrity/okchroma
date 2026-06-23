@@ -10,7 +10,7 @@
 //     file per mode; the filename becomes the Figma mode name)
 
 import { toHex } from './cssRender'
-import { stopTokenName, onFillTokenName, type RampKind } from './tokenNames'
+import { stopTokenName, onFillTokenName, tokenOrder, type RampKind } from './tokenNames'
 import { generateNeutralScale, type GeneratedScale, type ColorStop } from './colorEngine'
 import { contrastRatio, wcagY } from './constraints'
 import type { ResolvedBrand } from './resolve'
@@ -57,7 +57,8 @@ function rampGroup(
   extra?: { onHighlightWhite?: boolean; identityHex?: string },
 ): FigmaGroup {
   const g: FigmaGroup = {}
-  for (const s of stops) g[stopTokenName(s.stop, kind)] = colorFromStop(s)
+  for (const s of [...stops].sort((a, b) => tokenOrder(stopTokenName(a.stop, kind)) - tokenOrder(stopTokenName(b.stop, kind))))
+    g[stopTokenName(s.stop, kind)] = colorFromStop(s)
   g[onFillTokenName(kind)] = colorFromHex(onFillWhite)
   if (extra?.onHighlightWhite !== undefined) g[onFillTokenName('neutral')] = colorFromHex(extra.onHighlightWhite)
   if (extra?.identityHex) g['identity'] = colorFromHexString(extra.identityHex)
@@ -75,9 +76,9 @@ function neutralGroup(
 ): FigmaGroup {
   const g: FigmaGroup = {}
   hexes.forEach((hex, i) => { g[stopTokenName(i + 1, 'neutral')] = colorFromHexString(hex) })
-  g[onFillTokenName('neutral')] = colorFromHex(extra.onHighlightWhite)
   for (const s of extra.cta) g[stopTokenName(s.stop, 'neutral')] = colorFromStop(s)
   g[onFillTokenName('brand')] = colorFromHex(extra.onCtaWhite) // on-cta
+  g[onFillTokenName('neutral')] = colorFromHex(extra.onHighlightWhite) // on-highlight
   return g
 }
 

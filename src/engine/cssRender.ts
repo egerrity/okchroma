@@ -3,7 +3,7 @@
 // injected <style>) so both ship byte-identical rules.
 
 import { generateIllustrationScale, type GeneratedScale, type ColorStop } from './colorEngine'
-import { stopTokenName, onFillTokenName, type RampKind } from './tokenNames'
+import { stopTokenName, onFillTokenName, tokenOrder, type RampKind } from './tokenNames'
 import type { ResolvedBrand } from './resolve'
 
 export function toHex(r: number, g: number, b: number): string {
@@ -12,7 +12,10 @@ export function toHex(r: number, g: number, b: number): string {
 }
 
 export function stopsToVars(stops: ColorStop[], prefix: string, kind: RampKind): string {
-  return stops.map(s => `  --${prefix}-${stopTokenName(s.stop, kind)}: ${toHex(s.r, s.g, s.b)};`).join('\n')
+  return [...stops]
+    .sort((a, b) => tokenOrder(stopTokenName(a.stop, kind)) - tokenOrder(stopTokenName(b.stop, kind)))
+    .map(s => `  --${prefix}-${stopTokenName(s.stop, kind)}: ${toHex(s.r, s.g, s.b)};`)
+    .join('\n')
 }
 
 export function annotationNote(r: ResolvedBrand, opts?: { archetypeOverride?: string }): string {

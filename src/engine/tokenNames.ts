@@ -61,3 +61,21 @@ export function stopTokenName(stop: number, kind: RampKind): string {
 export function onFillTokenName(kind: RampKind): string {
   return kind === 'brand' ? 'on-cta' : 'on-highlight'
 }
+
+// Canonical emit order, uniform across every ramp (the white-label remap shape,
+// an explicit requirement of the original concept). The surface scale 1–10
+// reads as one contiguous linear ramp, THEN the pulled-out roles — regardless
+// of the historical engine stop numbers the values came from. A ramp simply
+// skips the tokens it doesn't have. Emitters sort by this, not by stop number.
+const TOKEN_ORDER = [
+  'paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'accent-6', 'accent-7', 'accent-8',
+  'highlight-9', 'highlight-10',
+  'ink-alt', 'ink',
+  'cta', 'cta-hover',
+  'on-cta', 'on-highlight',
+  'identity',
+]
+export function tokenOrder(name: string): number {
+  const i = TOKEN_ORDER.indexOf(name)
+  return i === -1 ? TOKEN_ORDER.length : i
+}
