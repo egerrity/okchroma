@@ -7,7 +7,7 @@ import { SECONDARIES } from './secondaries'
 import { SIGNALS } from './engine/signals'
 import { resolveBrand, SIGNAL_SCALES } from './engine/resolve'
 import { brandCss, stopsToVars } from './engine/cssRender'
-import { onFillTokenName } from './engine/tokenNames'
+import { onFillTokenName, stopTokenName } from './engine/tokenNames'
 
 function generateBrandCss(brand: Brand): string {
   const { name, hex, slug } = brand
@@ -69,7 +69,17 @@ function generateSignalsCss(): string {
     const { scale } = SIGNAL_SCALES.get(sig.name)!
     const onFill = scale.onFillTextIsWhite ? '#ffffff' : '#000000'
     const onFillDark = scale.onFillTextIsWhiteDark ? '#ffffff' : '#000000'
-    lightBlocks.push(stopsToVars(scale.light, sig.name, 'neutral'), `  --${sig.name}-${onFillTokenName('neutral')}: ${onFill};`)
+    lightBlocks.push(
+      stopsToVars(scale.light, sig.name, 'neutral'),
+      `  --${sig.name}-${onFillTokenName('neutral')}: ${onFill};`,
+      // Symmetric role structure: signals carry `cta` = a duplicate of their
+      // `highlight`. Aliased so it tracks per-brand signal shifts via the cascade;
+      // one :root declaration covers both modes. Identical values for now — whether
+      // signal cta should diverge from highlight is a deferred decision.
+      `  --${sig.name}-${stopTokenName(9, 'brand')}: var(--${sig.name}-${stopTokenName(9, 'neutral')});`,
+      `  --${sig.name}-${stopTokenName(10, 'brand')}: var(--${sig.name}-${stopTokenName(10, 'neutral')});`,
+      `  --${sig.name}-${onFillTokenName('brand')}: var(--${sig.name}-${onFillTokenName('neutral')});`,
+    )
     darkBlocks.push(stopsToVars(scale.dark, sig.name, 'neutral'), `  --${sig.name}-${onFillTokenName('neutral')}: ${onFillDark};`)
   }
 

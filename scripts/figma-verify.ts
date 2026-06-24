@@ -35,18 +35,20 @@ for (const mode of ['light', 'dark'] as const) {
   for (const fam of ['brand', 'secondary', 'neutral', 'error', 'warning', 'success', 'info']) {
     ok(!!m[fam], `${mode}.${fam} missing`)
     // brand/secondary: full surface scale + cta + highlight + identity + both
-    // on-text tokens. neutral: surface scale + highlight fill + new cta +
-    // both on-text. signals: surface scale + highlight, but NO cta/identity.
+    // on-text tokens. neutral: surface scale + highlight + cta + both on-text.
+    // signals: SYMMETRIC now — surface scale + highlight + cta (= a duplicate of
+    // highlight) + both on-text, but still NO identity (no user-input hex to echo).
     const isBrand = fam === 'brand' || fam === 'secondary'
     const tokens = isBrand
       ? ['paper-1', 'cta-1', 'cta-2', 'highlight-1', 'highlight-2', 'ink-alt', 'ink', 'on-cta', 'on-highlight', 'identity']
-      : fam === 'neutral'
-        ? ['paper-1', 'highlight-1', 'highlight-2', 'cta-1', 'cta-2', 'ink', 'on-highlight', 'on-cta']
-        : ['paper-1', 'highlight-1', 'highlight-2', 'ink', 'on-highlight']
+      : ['paper-1', 'highlight-1', 'highlight-2', 'cta-1', 'cta-2', 'ink', 'on-highlight', 'on-cta']
     for (const t of tokens) ok(!!m[fam][t], `${mode}.${fam}.${t} missing`)
-    // Structural "no error button" rule: signals get on-highlight but never cta.
+    // Signals carry cta as a DUPLICATE of highlight (symmetric roles, identical
+    // values for now); they still have no identity (no user-input hex).
     if (!isBrand && fam !== 'neutral') {
-      ok(!m[fam]['cta-1'] && !m[fam]['on-cta'], `${mode}.${fam} should not have a cta`)
+      ok(m[fam]['cta-1'].$value.hex === m[fam]['highlight-1'].$value.hex
+        && m[fam]['cta-2'].$value.hex === m[fam]['highlight-2'].$value.hex,
+        `${mode}.${fam} cta should duplicate highlight`)
       ok(!m[fam]['identity'], `${mode}.${fam} should not have identity`)
     }
   }
