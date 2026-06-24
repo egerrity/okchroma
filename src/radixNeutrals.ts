@@ -50,13 +50,3 @@ export function closestNeutralFamily(brandH: number, brandC: number): NeutralFam
   if (h >= 220 && h < 292) return 'slate' // cyan, blue, indigo, iris
   return 'mauve'                          // violet → purple → pink → red
 }
-
-// CSS blocks for a family, scoped to a brand selector
-export function radixNeutralCss(selector: string, family: NeutralFamily): string {
-  const fam = RADIX_NEUTRALS[family]
-  const vars = (hexes: string[]) => hexes.map((h, i) => `  --neutral-${i + 1}: ${h};`).join('\n')
-  return [
-    `${selector} {`, vars(fam.light), `}`,
-    `${selector}[data-theme="dark"] {`, vars(fam.dark), `}`,
-  ].join('\n')
-}

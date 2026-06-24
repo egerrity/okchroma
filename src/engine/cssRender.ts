@@ -2,8 +2,9 @@
 // build script (node, brands.css) and the demo's any-color tab (browser,
 // injected <style>) so both ship byte-identical rules.
 
-import { generateIllustrationScale, type GeneratedScale, type ColorStop } from './colorEngine'
+import { generateIllustrationScale, generateNeutralScale, type GeneratedScale, type ColorStop } from './colorEngine'
 import { stopTokenName, onFillTokenName, tokenOrder, type RampKind } from './tokenNames'
+import { contrastRatio, wcagY } from './constraints'
 import type { ResolvedBrand } from './resolve'
 
 export function toHex(r: number, g: number, b: number): string {
@@ -124,5 +125,46 @@ export function brandCss(
     ...accentDark,
     ...r.signalOverrides.map(o => stopsToVars(o.scale.dark, o.name, 'neutral')),
     `}`,
+  ].join('\n')
+}
+
+// Demo-only: render a chosen Radix neutral family (12 hex strings per mode) as
+// CSS vars under the REAL stopTokenName scheme (--neutral-paper-1 … -highlight-1
+// … -cta-1 … -ink). This mirrors the Figma path (figmaRender.neutralGroup) so the
+// preview matches the product. The cta button + on-text are family-independent (a
+// fixed gray sourced from the engine neutral scale), exactly as the export does.
+// (Replaces the old radixNeutralCss, which emitted the dead flat --neutral-1..12
+// names that nothing consumed — so family changes never showed in the demo.)
+export function neutralRadixCss(
+  selector: string,
+  hexes: { light: string[]; dark: string[] },
+): string {
+  const nScale = generateNeutralScale()
+  const onColor = (white: boolean) => (white ? '#ffffff' : '#000000')
+  const fillWantsWhite = (s: ColorStop) =>
+    contrastRatio(1.0, wcagY(s.L, s.C, s.H)) >= contrastRatio(wcagY(s.L, s.C, s.H), 0)
+
+  const block = (sel: string, fam: string[], mode: 'light' | 'dark'): string => {
+    const cta = (mode === 'light' ? nScale.light : nScale.dark).slice(12)
+    const onHl = (mode === 'light' ? nScale.onHighlightIsWhite : nScale.onHighlightIsWhiteDark) ?? false
+    const onCta = cta.length ? fillWantsWhite(cta[0]) : true
+    const vars = [
+      ...fam.map((hex, i) => ({ name: stopTokenName(i + 1, 'neutral'), hex })),
+      ...cta.map(s => ({ name: stopTokenName(s.stop, 'neutral'), hex: toHex(s.r, s.g, s.b) })),
+    ]
+      .sort((a, b) => tokenOrder(a.name) - tokenOrder(b.name))
+      .map(x => `  --neutral-${x.name}: ${x.hex};`)
+    return [
+      `${sel} {`,
+      ...vars,
+      `  --neutral-${onFillTokenName('brand')}: ${onColor(onCta)};`, // on-cta
+      `  --neutral-${onFillTokenName('neutral')}: ${onColor(onHl)};`, // on-highlight
+      `}`,
+    ].join('\n')
+  }
+
+  return [
+    block(selector, hexes.light, 'light'),
+    block(`${selector}[data-theme="dark"]`, hexes.dark, 'dark'),
   ].join('\n')
 }

@@ -6,7 +6,7 @@ import {
 import { resolveBrand, SIGNAL_SCALES } from '../src/engine/resolve'
 import { checkAllCollisions } from '../src/engine/collision'
 import { SIGNALS } from '../src/engine/signals'
-import { brandCss, stopsToVars, toHex } from '../src/engine/cssRender'
+import { brandCss, stopsToVars, toHex, neutralRadixCss } from '../src/engine/cssRender'
 import { themeToFigma } from '../src/engine/figmaRender'
 import { makeZip } from './zip'
 import { generateScale, generateNeutralScale, inRedBand } from '../src/engine/colorEngine'
@@ -18,7 +18,7 @@ import {
   NEUTRAL_PEAK, type RungMode, type AccentMode,
 } from './shared'
 import { TokenCards, type RampKind } from './TokenCards'
-import { closestNeutralFamily, radixNeutralCss, RADIX_NEUTRALS, type NeutralFamily } from '../src/radixNeutrals'
+import { closestNeutralFamily, RADIX_NEUTRALS, type NeutralFamily } from '../src/radixNeutrals'
 import { classifyArchetype } from '../src/engine/archetypes'
 import type { ResolvedBrand } from '../src/engine/resolve'
 
@@ -163,7 +163,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
         `[data-brand="custom"][data-theme="dark"] {`, stopsToVars(scale.dark, 'neutral', 'neutral'), `}`,
       ].join('\n')
     }
-    return radixNeutralCss('[data-brand="custom"]', neutral)
+    return neutralRadixCss('[data-brand="custom"]', RADIX_NEUTRALS[neutral])
   }, [primary, neutral])
 
   const overrideCss = computed.css + (neutralCss ? '\n' + neutralCss : '')

@@ -51,9 +51,11 @@ consume it:
   `[0.08, 0.15, 0.25, 0.33, 0.42, 0.55, 0.68, 0.95, 1.0, 0.95, 0.83, 0.60]`
   (≈8% of peak on step 1, peaks at steps 8–9, tapers into 12).
 - [`src/radixNeutrals.ts`](../../src/radixNeutrals.ts) → the families +
-  `closestNeutralFamily()`. Note `radixNeutralCss` emits numeric `--neutral-1..12`,
-  while the Figma path renames the same hexes to `paper`/`wash`/…/`ink` — a known
-  CSS/Figma name divergence for the neutral ramp (engine-spec open question).
+  `closestNeutralFamily()`. The chosen family is rendered to CSS by
+  `neutralRadixCss` ([`src/engine/cssRender.ts`](../../src/engine/cssRender.ts)),
+  which maps the 12 hexes through the shared `stopTokenName` scheme
+  (`paper`/`wash`/…/`highlight`/`cta`/`ink`) — the same names the Figma path emits,
+  so CSS and Figma now agree on the neutral ramp.
 
 **Worked example.** With a peak chroma of 0.016 (Radix slate's level), step 1
 carries 0.08 × 0.016 ≈ 0.0013 chroma (essentially white), while step 9 carries the
