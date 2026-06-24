@@ -5,7 +5,7 @@ import { Sparkles } from 'lucide-react'
 // DEMONSTRATES its register in context using the LIVE primitives, so it themes
 // (light/dark) and picks the right on-fill polarity for free. Reads
 // var(--<prefix>-<token>); prefix is the ramp's primitive family
-// ('brand' | 'secondary' | 'neutral' | 'error' | 'warning' | ...). Layout +
+// ('brand' | 'secondary' | 'neutral' | 'red' | 'yellow' | ...). Layout +
 // copy mirror the owner's Figma (node 15:624): a dense 6×6 grid, every card
 // filled with the ramp's paper-1 / bordered wash-4, accent + highlight as the
 // emphasis heroes.

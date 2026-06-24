@@ -124,20 +124,9 @@ function buildAndSend() {
 
     const { light, dark } = themeToFigma(r, { accent, neutral, signals })
 
-    // Which primitive each engine signal stores its values under. Named for the
-    // primitive's own identity — color name when hue-locked (red/yellow/green),
-    // <slot>-color when the hue floats across brands (info) — so the primitive
-    // path agrees with the theme group it's aliased into, not with any role.
-    const signalPrim: Record<string, (v: string) => string> = {
-      error: v => `system/red/${v}`,
-      warning: v => `system/yellow/${v}`,
-      success: v => `system/green/${v}`,
-      info: v => `system/info-color/${v}`,
-    }
-    // Theme-collection group name for each signal (color-named, per the docs).
-    const themeName: Record<string, string> = {
-      error: 'red', warning: 'yellow', success: 'green', info: 'info-color',
-    }
+    // The engine now names signals by identity (red / yellow / green /
+    // info-color), so both the primitive path (system/<identity>/<variant>) and
+    // the theme-collection group name are just s.name — no role→identity remap.
 
     // brand + accent: unique per brand → raw values under brand/<brand>/<role>.
     const brandRaw = [
@@ -149,8 +138,8 @@ function buildAndSend() {
     const shared = [
       { theme: 'neutral', prim: `system/neutral/${resolvedFamily}`, light: light.neutral, dark: dark.neutral },
       ...signals.map(s => ({
-        theme: themeName[s.name],
-        prim: signalPrim[s.name](s.variant),
+        theme: s.name,
+        prim: `system/${s.name}/${s.variant}`,
         light: light[s.name],
         dark: dark[s.name],
       })),

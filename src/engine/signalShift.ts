@@ -35,29 +35,29 @@ interface SignalShiftRule {
   atOrAbove: Side // brand.brandH >= splitH
 }
 
-// Per-signal direction + targets. Error is deliberately absent — red stays
+// Per-signal direction + targets. Red is deliberately absent — red stays
 // with the engine's rung-1 / component handling.
 const SHIFT_RULES: Partial<Record<SignalDef['name'], SignalShiftRule>> = {
-  // = collision.YELLOW_SPLIT_H. Unchanged warning behavior: warm-yellow
+  // = collision.YELLOW_SPLIT_H. Unchanged yellow behavior: warm-yellow
   // brand → lemon; cool-yellow brand keeps canonical macaroni.
-  warning: {
+  yellow: {
     splitH: 96,
-    below: { kind: 'shift', note: 'warning → lemon' },
+    below: { kind: 'shift', note: 'yellow → lemon' },
     atOrAbove: { kind: 'none' },
   },
   // yellow-green brand → flip toward teal (H158); teal brand → toward
   // yellow-green (H139). Iso-L/iso-C with canonical #46A758.
-  success: {
+  green: {
     splitH: 147,
-    below: { kind: 'swap', note: 'success → teal-side', baseHex: '#18AA6C' },
-    atOrAbove: { kind: 'swap', note: 'success → yellow-side', baseHex: '#5DA447' },
+    below: { kind: 'swap', note: 'green → teal-side', baseHex: '#18AA6C' },
+    atOrAbove: { kind: 'swap', note: 'green → yellow-side', baseHex: '#5DA447' },
   },
   // blue-side brand → flee warm toward magenta (H322, short of full pink — a
   // muted pink read too musty); indigo/violet brand → flee cool to blue.
-  info: {
+  'info-color': {
     splitH: 273,
-    below: { kind: 'swap', note: 'info → magenta', baseHex: '#AB4ABA' },
-    atOrAbove: { kind: 'swap', note: 'info → blue', baseHex: '#0090FF' },
+    below: { kind: 'swap', note: 'info-color → magenta', baseHex: '#AB4ABA' },
+    atOrAbove: { kind: 'swap', note: 'info-color → blue', baseHex: '#0090FF' },
   },
 }
 

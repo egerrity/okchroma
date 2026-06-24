@@ -17,8 +17,8 @@ the accent toward the gamut floor; it was too aggressive for a user-chosen color
 
 Run the same collision check (hue gate plus ΔE, in light and dark) on the resolved
 accent against all four signals. If it collides with any, show a dismissible toast
-that names the signal: "reads close to the Med-alert signal color, consider a more
-distinct accent." It fires in both Recommended and Exact mode and never changes
+that names the signal (e.g. "reads close to the `yellow` signal — consider a more
+distinct accent"). It fires in both Recommended and Exact mode and never changes
 the accent.
 
 ## Engineering
@@ -29,8 +29,8 @@ the accent.
 - Reuses [`src/engine/collision.ts`](../../src/engine/collision.ts) →
   `checkAllCollisions()` (light plus dark, deduped).
 
-**Worked example.** Accent `#F7C980` (gold) warns: "reads close to the Med-alert
-signal color." Accent `#0076A8` (teal) does not warn (no signal within the gate).
+**Worked example.** Accent `#F7C980` (gold) warns that it reads close to the
+`yellow` signal. Accent `#0076A8` (teal) does not warn (no signal within the gate).
 
 ---
 

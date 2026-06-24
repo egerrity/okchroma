@@ -4,7 +4,7 @@
 
 Dark mode isn't a separate palette; it's the same engine run against a dark
 background. Fills keep their identity and only *lift* when they'd vanish, text
-flips, and a brand that would now collide with the error red floats to a pastel
+flips, and a brand that would now collide with `red` floats to a pastel
 register.
 
 ## Why
@@ -13,7 +13,7 @@ A brand should still look like itself in dark mode. Naive approaches either inve
 the scale (wrong colors) or re-tint fills (which manufactures mustard golds and
 brown oranges). The rule is conservative: keep the brand's hue and chroma, and fix
 only the two things that actually break in the dark: a fill too dark to see on a
-dark background, and a red that can no longer be told apart from error.
+dark background, and a red-family brand that can no longer be told apart from the `red` signal.
 
 ## How
 
@@ -22,7 +22,7 @@ dark background, and a red that can no longer be told apart from error.
 - **Fills (step 9)** keep hue and chroma and only **LIFT** to a floor so they stand
   off the dark background; they're never pulled *down* (that's what made mustard).
   On-fill text goes black-first once the lifted fill is light enough.
-- **Red colliders** can't be separated from error in dark mode, so they **float**
+- **Red-family colliders** can't be separated from the `red` signal in dark mode, so they **float**
   to a pastel rose register (reduced chroma) and take black on-fill text, a second
   differentiation channel beyond hue.
 

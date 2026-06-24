@@ -70,7 +70,7 @@ for (const H of HUES) {
 
         // 2. error guarantee: any residual collision must carry the
         // component-rule flag (orange-side, intentional identity keep)
-        const err = SIGNAL_SCALES.get('error')!
+        const err = SIGNAL_SCALES.get('red')!
         if (checkCollision(r.scale, err.scale, err.def, 'light').collides && !r.errorComponentRule) {
           errorResidual.push(`${hex} (L${L} C${C} H${H})`)
         }
@@ -87,7 +87,7 @@ for (const H of HUES) {
         }
 
         // 4. warning collisions always resolve to a variant
-        const warn = SIGNAL_SCALES.get('warning')!
+        const warn = SIGNAL_SCALES.get('yellow')!
         if (checkCollision(r.scale, warn.scale, warn.def, 'light').collides && r.warningVariant === null) {
           warningUnhandled.push(hex)
         }

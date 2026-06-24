@@ -37,10 +37,10 @@ import { pickSignalShift } from './signalShift'
 export const SIGNAL_SCALES = new Map<SignalDef['name'], { def: SignalDef; scale: GeneratedScale }>(
   SIGNALS.map(def => [
     def.name,
-    // Stage 2.5: success darkens its light fill to hold WHITE, like the other
-    // non-yellow signal fills (error/info). Light-only value move; dark stays
+    // Stage 2.5: green darkens its light fill to hold WHITE, like the other
+    // non-yellow signal fills (red/info-color). Light-only value move; dark stays
     // black-first. No other signal sets it ⇒ they're byte-identical.
-    { def, scale: generateScale(def.hex, def.name, undefined, { subtleChromaScale: def.subtleChromaBoost, darkStops: ACCENT_DARK_STOPS, darkFillMinL: def.darkFillMinL, enforceOnFillContrast: true, enforceWhiteFill: def.name === 'success' }) },
+    { def, scale: generateScale(def.hex, def.name, undefined, { subtleChromaScale: def.subtleChromaBoost, darkStops: ACCENT_DARK_STOPS, darkFillMinL: def.darkFillMinL, enforceOnFillContrast: true, enforceWhiteFill: def.name === 'green' }) },
   ])
 )
 
@@ -90,7 +90,7 @@ function collisionStatus(scale: GeneratedScale): { trigger: SignalDef['name'] | 
   const pending: SignalDef['name'][] = []
   for (const { def, scale: sigScale } of SIGNAL_SCALES.values()) {
     if (checkCollision(scale, sigScale, def, 'light').collides) {
-      if (def.name === 'error') trigger = def.name
+      if (def.name === 'red') trigger = def.name
       else pending.push(def.name)
     }
   }
@@ -161,7 +161,7 @@ export function resolveBrand(
   // the earlier apricot float was another flavor of identity loss).
   let darkCollider: 'muted' | null = null
   if (!opts?.exact) {
-    const err = SIGNAL_SCALES.get('error')!
+    const err = SIGNAL_SCALES.get('red')!
     if (checkCollision(scale, err.scale, err.def, 'dark').collides) {
       if (inRedBand(scale.brandH)) {
         darkCollider = 'muted'
@@ -181,17 +181,17 @@ export function resolveBrand(
   // Kept for ResolvedBrand back-compat: the demo chips and cssRender note
   // copy read .warningVariant. Derived from the SAME light-mode collision +
   // split that drives the override; the override itself is materialized by
-  // pickSignalShift (warning's 'shift' side = the former generateLemonWarning).
+  // pickSignalShift (yellow's 'shift' side = the former generateLemonWarning).
   let warnVariant: 'lemon' | 'macaroni' | null = null
 
   if (!opts?.exact) {
-    const warn = SIGNAL_SCALES.get('warning')!
+    const warn = SIGNAL_SCALES.get('yellow')!
     warnVariant = warningVariant(scale, warn.scale, warn.def)
-    if (warnVariant) pending = pending.filter(n => n !== 'warning')
+    if (warnVariant) pending = pending.filter(n => n !== 'yellow')
 
-    // Uniform signal-shift layer (warning lemon, success, info — never error).
+    // Uniform signal-shift layer (yellow lemon, green, info-color — never red).
     // Output-only: only appends to signalOverrides. See signalShift.ts.
-    for (const sigName of ['warning', 'success', 'info'] as const) {
+    for (const sigName of ['yellow', 'green', 'info-color'] as const) {
       const { def, scale: canonical } = SIGNAL_SCALES.get(sigName)!
       const shift = pickSignalShift(scale, canonical, def)
       if (shift) {

@@ -129,30 +129,30 @@ export function checkCollision(
 // differently per hue family (for amber, cool is +H toward green-yellow;
 // for violet, cool is −H toward blue).
 const SIGNAL_SHIFT_CAPS: Record<SignalDef['name'], { plus: number; minus: number }> = {
-  error: { plus: 0, minus: 0 }, // error never yields
-  warning: {
-    plus: SIGNALS.find(s => s.name === 'warning')!.hueShift.cool,
-    minus: SIGNALS.find(s => s.name === 'warning')!.hueShift.warm,
+  red: { plus: 0, minus: 0 }, // red never yields
+  yellow: {
+    plus: SIGNALS.find(s => s.name === 'yellow')!.hueShift.cool,
+    minus: SIGNALS.find(s => s.name === 'yellow')!.hueShift.warm,
   },
-  success: {
-    plus: SIGNALS.find(s => s.name === 'success')!.hueShift.cool,
-    minus: SIGNALS.find(s => s.name === 'success')!.hueShift.warm,
+  green: {
+    plus: SIGNALS.find(s => s.name === 'green')!.hueShift.cool,
+    minus: SIGNALS.find(s => s.name === 'green')!.hueShift.warm,
   },
-  info: {
-    plus: SIGNALS.find(s => s.name === 'info')!.hueShift.warm, // +H → magenta
-    minus: SIGNALS.find(s => s.name === 'info')!.hueShift.cool, // −H → blue
+  'info-color': {
+    plus: SIGNALS.find(s => s.name === 'info-color')!.hueShift.warm, // +H → magenta
+    minus: SIGNALS.find(s => s.name === 'info-color')!.hueShift.cool, // −H → blue
   },
 }
 
 // Yield direction policy. 'away' = whichever side of the signal the brand
 // is NOT on. 'cool' = always +H, even crossing past the brand hue —
-// warning's rule: gold brands own the warm yellow register, warning goes
+// yellow's rule: gold brands own the warm yellow register, yellow goes
 // lemon, and the L/C character difference does the rest.
 const YIELD_DIRECTION: Record<SignalDef['name'], 'away' | 'cool'> = {
-  error: 'away', // unused — error never yields
-  warning: 'cool',
-  success: 'away',
-  info: 'away',
+  red: 'away', // unused — red never yields
+  yellow: 'cool',
+  green: 'away',
+  'info-color': 'away',
 }
 
 // Smallest signal hue shift (signed degrees) that clears the distance gate

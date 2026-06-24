@@ -98,14 +98,14 @@ function audit(name: string, hex: string, scale: GeneratedScale, errorComponentR
     }
   }
 
-  // E: dark-mode error collision on the resolved scale. Orange-side
+  // E: dark-mode red collision on the resolved scale. Orange-side
   // colliders are exempt — they intentionally keep identity; separation is
   // the uniform destructive component rule (outline in groups + icon).
-  const err = SIGNAL_SCALES.get('error')!
-  if (name !== 'error' && !errorComponentRule && checkCollision(scale, err.scale, err.def, 'dark').collides) {
+  const err = SIGNAL_SCALES.get('red')!
+  if (name !== 'red' && !errorComponentRule && checkCollision(scale, err.scale, err.def, 'dark').collides) {
     findings['E dark error collision'].push({
       name, hex, severity: 1,
-      detail: `resolved scale still collides with error in dark mode`,
+      detail: `resolved scale still collides with red in dark mode`,
     })
   }
 }

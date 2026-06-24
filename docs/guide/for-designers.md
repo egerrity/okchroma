@@ -14,7 +14,7 @@ what you'll see, and what you decide. Follow the links for the math.
 
 **12 steps, reserved roles.** Each color has 12 steps pre-reserved for roles (backgrounds, components, borders, solid fill, text). This keeps accessibility simple, avoids bloating the system with unnecessary colors, and removes bespoke per-brand aliasing. The role-by-step breakdown is in [Recommendations](#recommendations-for-using-your-primitives). ([eng](./the-12-stop-ramp.md))
 
-**Brand identity, preserved where safe.** Your brand color anchors the system at step 9, the solid fill. The engine keeps your exact hex wherever it safely can, and only adjusts when the literal color would break a UX expectation: a near-red brand that could be mistaken for the error/destructive color, or a fill that can't carry legible text (see How color shifting works). Recommended mode applies those adjustments; Exact mode turns them off and hands the tradeoffs to you. ([eng](./escape-hatches.md))
+**Brand identity, preserved where safe.** Your brand color anchors the system at step 9, the solid fill. The engine keeps your exact hex wherever it safely can, and only adjusts when the literal color would break a UX expectation: a near-red brand that could be mistaken for `red` (the destructive signal), or a fill that can't carry legible text (see How color shifting works). Recommended mode applies those adjustments; Exact mode turns them off and hands the tradeoffs to you. ([eng](./escape-hatches.md))
 
 **Accessibility is guaranteed.** Every fill ships with readable text (black or white, whichever passes) in both light and dark mode, by construction. The one exception is Exact mode, which ships your hex untouched and hands accessibility back to you. ([eng](./compliance.md))
 
@@ -80,23 +80,23 @@ fill; neutral leads with a `highlight` and also exposes a near-black/near-white
 and `highlight` for emphasis/selection — both come accessibility-paired with their
 own on-fill text.
 
-**Status and neutrals are their own ramps.** The four status colors (error,
-warning, success, info) and the neutrals come as separate, complete ramps in the
+**Status and neutrals are their own ramps.** The four signal colors (`red`,
+`yellow`, `green`, `info-color`) and the neutrals come as separate, complete ramps in the
 same 12-step shape. Treat them as fixed: they don't move with the brand, and they
 give you an accessible status set without extra work.
 
 **Destructive styling.** Style destructive interactions differently from ordinary
 ones (an outline with a required icon rather than a solid red fill), especially
-when the brand color collides with error. See [UX considerations for red
+when the brand color collides with `red`. See [UX considerations for red
 hues](#ux-considerations-for-red-hues).
 
 ## How color shifting works
 ### Collisions & signals
 
 **When your brand sits near a status color.** Your brand can land near a signal
-color (error red, warning yellow, and so on). When it does, the engine keeps them
+color (`red`, `yellow`, and so on). When it does, the engine keeps them
 apart on purpose, so a brand element never gets mistaken for a status. For example,
-the warning yellow may shift toward lemon so it reads distinct from a gold brand.
+`yellow` may shift toward lemon so it reads distinct from a gold brand.
 The red case is the big one (see [UX considerations for red
 hues](#ux-considerations-for-red-hues)). ([eng](./collisions.md))
 
@@ -112,13 +112,13 @@ carries the error and destructive meaning and that has to stay unmistakable. Whe
 a brand sits in the red register, three things happen:
 
 - **We move the brand's lightness.** A red-family brand is darkened so its solid
-  fill can't be confused with the error red on a destructive control. The hue is
+  fill can't be confused with `red` on a destructive control. The hue is
   kept; the lightness moves.
 - **We shift the brand cooler.** Warm reds rotate a few degrees cooler so they read
-  as the brand rather than fire-engine error red.
+  as the brand rather than fire-engine red.
 - **We recommend diverging destructive styling.** Style destructive interactions
   differently from ordinary ones (an outline with a required icon, not a solid red
-  fill), especially when the brand collides with error. Don't let "destructive"
+  fill), especially when the brand collides with `red`. Don't let "destructive"
   ride on color alone.
 
 The first two are automatic in Recommended mode; the third is a recommendation for
@@ -162,7 +162,7 @@ display modes.
 
 **Dark mode keeps your identity.** Fills don't invert or change hue; a too-dark
 fill just lifts enough to read on a dark background. The one special case: a red
-brand that would clash with the error red floats to a softer pastel so the two
+brand that would clash with `red` floats to a softer pastel so the two
 stay distinct. ([eng](./dark-mode.md))
 
 **Illustrations.** Illustrations get their own 4-color palette (wash, tint, mid,

@@ -22,12 +22,12 @@ export function annotationNote(r: ResolvedBrand, opts?: { archetypeOverride?: st
   let note = ''
   if (r.shearDeg !== 0) note += ` · shear ${r.shearDeg > 0 ? '+' : ''}${r.shearDeg.toFixed(1)}°`
   if (opts?.archetypeOverride) note += ` · archetype override → ${opts.archetypeOverride}`
-  if (r.rung1) note += ` · conflict with ${r.rung1} red resolved — primary darkened`
-  if (r.darkCollider) note += ` · dark mode: fill shifts to a softer register to stay distinct from error red`
-  if (r.errorComponentRule) note += ` · neighbors error red — destructive actions use outline styling in groups`
-  if (r.warningVariant === 'lemon') note += ` · warning signal shifted to a cooler yellow`
-  if (r.warningVariant === 'macaroni') note += ` · warning signal kept standard amber (cool-yellow brand)`
-  for (const o of r.signalOverrides.filter(o => o.name !== 'warning')) note += ` · ${o.note}`
+  if (r.rung1) note += ` · conflict with red resolved — primary darkened`
+  if (r.darkCollider) note += ` · dark mode: fill shifts to a softer register to stay distinct from red`
+  if (r.errorComponentRule) note += ` · neighbors red — destructive actions use outline styling in groups`
+  if (r.warningVariant === 'lemon') note += ` · yellow signal shifted to a cooler lemon`
+  if (r.warningVariant === 'macaroni') note += ` · yellow signal kept standard amber (cool-yellow brand)`
+  for (const o of r.signalOverrides.filter(o => o.name !== 'yellow')) note += ` · ${o.note}`
   if (r.pending.length) note += ` · overlaps ${r.pending.join(', ')} — softened treatment still in design`
   return note
 }

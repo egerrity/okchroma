@@ -32,7 +32,7 @@ const ok = (cond: boolean, msg: string) => { if (!cond) fails.push(msg) }
 // role 12 (ink) are shared across all ramps.
 for (const mode of ['light', 'dark'] as const) {
   const m = figma[mode] as any
-  for (const fam of ['brand', 'secondary', 'neutral', 'error', 'warning', 'success', 'info']) {
+  for (const fam of ['brand', 'secondary', 'neutral', 'red', 'yellow', 'green', 'info-color']) {
     ok(!!m[fam], `${mode}.${fam} missing`)
     // brand/secondary: full surface scale + cta + highlight + identity + both
     // on-text tokens. neutral: surface scale + highlight + cta + both on-text.

@@ -37,7 +37,8 @@ Named by identity (the color), not by severity/function.
 
 *exact mode ships your input color/bypasses the engine
 
-Engine-internal keys remain `error/warning/success/info` (implementation detail). 
+Engine-internal keys are identity too — `red`/`yellow`/`green`/`info-color` end to
+end. The `role` column is the *use* (what the color signals), not a name.
 
 ## Pipeline
 
@@ -48,9 +49,9 @@ separate step in the consumer (plugin/demo).
 |---|---|---|
 | 1 | Assign archetype from brand L (`classifyArchetype`) → anchor L | colorEngine.ts:362 |
 | 2 | Generate base scale (raw hue) | resolve.ts:134 |
-| 3 | Light collision vs signals: error + red-band → rung-1 (regen, deepen `ink-alt`/`ink`); error + pink/orange → component rule | resolve.ts:142–156 |
-| 4 | Dark collision vs error: red-band → dark "muted" collider (regen); else component rule | resolve.ts:162–178 |
-| 5 | Warning variant: lemon (warm) / macaroni (cool) | resolve.ts:189 |
+| 3 | Light collision vs signals: brand near `red` + red-band → rung-1 (regen, deepen `ink-alt`/`ink`); near `red` + pink/orange → component rule | resolve.ts:142–156 |
+| 4 | Dark collision vs `red`: red-band → dark "muted" collider (regen); else component rule | resolve.ts:162–178 |
+| 5 | `yellow` variant: lemon (warm) / macaroni (cool) | resolve.ts:189 |
 | 6 | Signal shifts (output-only): `yellow`/`green`/`info-color` swap off the brand; `red` never | resolve.ts:194–201 |
 | 7 | Red-cool render (last): warm-red brands rotate `cta` cooler | resolve.ts:210–212 |
 | — | Neutral family assigned by brand hue (`closestNeutralFamily`) — separate, consumer | plugin/ui.ts |
@@ -91,10 +92,10 @@ follow. Per-palette and dark-mode differences are in *Per-palette deviations*.
 | brand-primary | generated from brand hex | brand's own L | ~0.62 (white-edge) | input hex | `ACCENT_DARK_STOPS` | red-band → rung-1, dark muted collider, cool-render |
 | brand-secondary | generated from secondary hex | secondary's own L | ~0.62 | input hex | `ACCENT_DARK_STOPS` | none (beta; no signal shift; mirrors brand if absent) |
 | neutral | assigned Radix family | near-black / near-white gray | 0.57 gray | — | `DARK_STOPS` (lower) | — |
-| red | generated (canonical + knobs) | = `highlight` | error's own L (white-edge) | — | `ACCENT_DARK_STOPS` | never shifts (collision reference) |
+| red | generated (canonical + knobs) | = `highlight` | red's own L (white-edge) | — | `ACCENT_DARK_STOPS` | never shifts (collision reference) |
 | yellow | generated (canonical + knobs) | = `highlight` | stays bright (black text) | — | `ACCENT_DARK_STOPS` | lemon (warm) / macaroni (cool) |
-| green | generated (canonical + knobs) | = `highlight` | success's own L (white-edge) | — | `ACCENT_DARK_STOPS` | swap on collision (teal / yellow-green per side) |
-| info-color | generated (canonical + knobs) | = `highlight` | info's own L (white-edge) | — | `ACCENT_DARK_STOPS` | swap on collision (magenta / blue per side) |
+| green | generated (canonical + knobs) | = `highlight` | green's own L (white-edge) | — | `ACCENT_DARK_STOPS` | swap on collision (teal / yellow-green per side) |
+| info-color | generated (canonical + knobs) | = `highlight` | info-color's own L (white-edge) | — | `ACCENT_DARK_STOPS` | swap on collision (magenta / blue per side) |
 
 
 Neutral's `DARK_STOPS` vs the chromatics' `ACCENT_DARK_STOPS` is a documented deviation —
@@ -106,7 +107,7 @@ tint-generation machinery is wired but unexercised (generative-neutral opportuni
 - **Yellow** — cream-gate, yellow L lift, chroma boost/fade, lemon yield. Tuned and
   load-bearing.
 - **Red-band** — rung-1 re-anchor, `ink-alt`/`ink` deepen, cool-render, dark muted
-  collider, the red-band watershed. Deliberate brand↔error separation.
+  collider, the red-band watershed. Deliberate brand↔`red` separation.
 
 ## Engineering topics
 

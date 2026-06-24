@@ -110,7 +110,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   // Signals the accent reads too close to (hue gate + ΔE, light AND dark).
   // We don't reshape the accent — it's the user's pick — so a collision is
   // surfaced as advice to choose a more distinct hex.
-  const accentCollisions = useMemo<Array<'error' | 'warning' | 'success' | 'info'>>(() => {
+  const accentCollisions = useMemo<Array<'red' | 'yellow' | 'green' | 'info-color'>>(() => {
     if (!rRecAccent) return []
     const sigScales = new Map([...SIGNAL_SCALES].map(([n, v]) => [n, v.scale]))
     return checkAllCollisions(rRecAccent.scale, sigScales).collidesWith
@@ -133,7 +133,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
       text: 'Exact mode: your hex ships untouched. Accessibility outcomes are reviewed with you rather than guaranteed by the engine.',
     })
     if (accentCollisions.length) {
-      const LABEL = { error: 'High-alert', warning: 'Med-alert', success: 'Positive', info: 'Info' } as const
+      const LABEL = { red: 'High-alert', yellow: 'Med-alert', green: 'Positive', 'info-color': 'Info' } as const
       const names = accentCollisions.map(n => LABEL[n]).join(' and ')
       const plural = accentCollisions.length > 1
       list.push({
@@ -307,14 +307,14 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
     </div>
   )
 
-  // Signal ramps, so the per-brand signal shifts (warning/success/info) are
+  // Signal ramps, so the per-brand signal shifts (yellow/green/info-color) are
   // visually checkable in-app. Override note shown when this brand shifted a
-  // signal away for extra distance. error is never shifted (engine owns red).
-  const SIGNAL_ROWS: Array<{ name: 'error' | 'warning' | 'success' | 'info'; label: string }> = [
-    { name: 'error', label: 'High-alert' },
-    { name: 'warning', label: 'Med-alert' },
-    { name: 'success', label: 'Positive' },
-    { name: 'info', label: 'Info' },
+  // signal away for extra distance. red is never shifted (engine owns red).
+  const SIGNAL_ROWS: Array<{ name: 'red' | 'yellow' | 'green' | 'info-color'; label: string }> = [
+    { name: 'red', label: 'High-alert' },
+    { name: 'yellow', label: 'Med-alert' },
+    { name: 'green', label: 'Positive' },
+    { name: 'info-color', label: 'Info' },
   ]
   const signalBlock = () => (
     <div className="ct-colorblock">
@@ -835,7 +835,7 @@ const PAGE_CSS = `
 .ct-alert-warn {
   display: flex; gap: 8px; align-items: flex-start; margin-top: 8px;
   padding: 8px 10px; border-radius: 8px; font-size: 12px; line-height: 1.45;
-  background: var(--warning-wash-4); border: 1px solid var(--warning-accent-8); color: var(--warning-ink);
+  background: var(--yellow-wash-4); border: 1px solid var(--yellow-accent-8); color: var(--yellow-ink);
 }
 .ct-alert-warn a { color: inherit; font-weight: 600; }
 .ct-alert-text {

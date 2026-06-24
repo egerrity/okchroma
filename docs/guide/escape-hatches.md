@@ -31,7 +31,7 @@ lever](./style-lever.md) is a third, narrower dial.)
   { exact?, archetypeOverride?, style? })`. `exact` gates the whole resolution
   block; `archetypeOverride` feeds `generateScale()` and the rung-1 anchor.
 
-**Worked example.** Red `#D8261C` in Recommended mode → `rung1 = 'error'` (the
+**Worked example.** Red `#D8261C` in Recommended mode → `rung1 = 'red'` (the
 brand re-anchors so destructive stays unmistakable). The same hex in Exact mode →
 `rung1 = null`, so the engine ships the hex untouched and the resolution is
 skipped. (Reproduce: `resolveBrand('#D8261C')` vs `resolveBrand('#D8261C', n,
