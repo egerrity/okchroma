@@ -124,12 +124,15 @@ function buildAndSend() {
 
     const { light, dark } = themeToFigma(r, { accent, neutral, signals })
 
-    // Where each engine signal lands in the primitive taxonomy.
+    // Which primitive each engine signal stores its values under. Named for the
+    // primitive's own identity — color name when hue-locked (red/yellow/green),
+    // <slot>-color when the hue floats across brands (info) — so the primitive
+    // path agrees with the theme group it's aliased into, not with any role.
     const signalPrim: Record<string, (v: string) => string> = {
-      error: v => `system/alert/high/${v}`,
-      warning: v => `system/alert/med/${v}`,
-      success: v => `system/positive/${v}`,
-      info: v => `system/info/${v}`,
+      error: v => `system/red/${v}`,
+      warning: v => `system/yellow/${v}`,
+      success: v => `system/green/${v}`,
+      info: v => `system/info-color/${v}`,
     }
     // Theme-collection group name for each signal (color-named, per the docs).
     const themeName: Record<string, string> = {
