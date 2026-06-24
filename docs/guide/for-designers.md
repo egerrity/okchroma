@@ -31,38 +31,54 @@ Each step has a reserved role, so your tokens map cleanly and the mapping holds
 across every brand.
 
 **The step roles.** Following Radix's scale model, each step is meant for a
-specific job:
+specific job. Steps 1–8 are a linear *surface scale*; the solid fill, its hover,
+and the two text shades are *roles* pulled out of the scale and given their own
+names (so they don't read as "just another step"):
 
-| Step | Role |
-|----:|------|
-| 1-2 | surfaces and backgrounds |
-| 3–5 | low-hierarchy/surface component backgrounds (rest / hover / active) |
-| 6–8 | borders and dividers (subtle / border / strong + hover) |
-| 9 | solid fill components **main vehicle for brand identity** |
-| 10 | hover for solid fill components |
-| 11 | lower-contrast text |
-| 12 | higher-contrast text |
+| Step | Role | Token name |
+|----:|------|------|
+| 1-2 | surfaces and backgrounds | `paper-1`, `paper-2` |
+| 3–5 | low-hierarchy/surface component backgrounds (rest / hover / active) | `wash-3`, `wash-4`, `wash-5` |
+| 6–8 | borders and dividers (subtle / border / strong + hover) | `accent-6`, `accent-7`, `accent-8` |
+| 9 | emphasis fill — **main vehicle for brand identity** | `cta-1` (brand) / `highlight-1` (neutral, signals) |
+| 10 | hover for the emphasis fill | `cta-2` / `highlight-2` |
+| 11 | lower-contrast text | `ink-alt` |
+| 12 | higher-contrast text | `ink` |
+
+So the emphasis fill is `cta` on brand/secondary ramps and `highlight` on
+neutral/signal ramps — same step 9/10, different name by ramp. (Some ramps carry
+*both*; see **Two emphasis fills** below.)
 
 Further reading: Radix's [Understanding the
 scale](https://www.radix-ui.com/colors/docs/palette-composition/understanding-the-scale).
 
 **White-label considerations.** Because every brand's step N lands at the same
-lightness and the same role, you define your tokens against step numbers once
-(solid fill = 9, default border = 6, body text = 12) and they hold for every
-brand, with no per-brand re-aliasing. A recommended three-tier setup:
+lightness and the same role, you define your tokens against those roles once
+(emphasis fill, default border = `accent-6`, body text = `ink`) and they hold for
+every brand, with no per-brand re-aliasing. A recommended three-tier setup:
 
-- **Primitive** (what we give you): `--brand-9`, `--accent-9`, the status and
-  neutral ramps.
-- **Semantic** (roles you define): names pinned to steps, e.g. `solid-fill` → step
-  9, stable across brands.
+- **Primitive** (what we give you): the surface scale (`paper`/`wash`/`accent`),
+  the emphasis fill (`cta-1`/`cta-2` on brand, `highlight-1`/`highlight-2` on
+  neutral + signals), text (`ink-alt`/`ink`), and the status + neutral ramps.
+- **Semantic** (roles you define): names pinned to those primitives, e.g.
+  `solid-fill` → `cta-1`, stable across brands.
 - **Component** (what your components consume): points at semantic roles, and is
   the only place you'd swap brand for accent in an "accented" display mode.
 
 **Build the on-emphasis text per brand.** We generate an on-fill text color for
-each palette (black or white, whichever stays legible on that brand's step-9
-fill). A pale-gold brand gets dark on-fill text; a deep navy gets light. When you
-define your "text on solid fill" token, point it at that per-brand value, not one
+each palette (black or white, whichever stays legible on that ramp's emphasis
+fill). A pale-gold brand gets dark on-fill text; a deep navy gets light. This
+token is split by fill kind: `on-cta` (text on the brand/secondary cta fill) and
+`on-highlight` (text on the neutral/signal highlight fill). When you define your
+"text on emphasis fill" tokens, point them at those per-brand values, not one
 global color.
+
+**Two emphasis fills.** Brand and neutral ramps each carry *both* emphasis fills,
+not one. Brand/secondary lead with a `cta` and also expose a `highlight`
+fill; neutral leads with a `highlight` and also exposes a near-black/near-white
+`cta` button. Signals carry a `highlight`. Reach for `cta` for the primary action
+and `highlight` for emphasis/selection — both come accessibility-paired with their
+own on-fill text.
 
 **Status and neutrals are their own ramps.** The four status colors (error,
 warning, success, info) and the neutrals come as separate, complete ramps in the
@@ -166,8 +182,9 @@ power-user knob for the collision-resolution direction.)
 
 The system is meant to leave the demo and go into your tools. Two paths:
 
-- **CSS custom properties:** the full set of primitives and semantic roles as CSS
-  variables (`--brand-9`, `--brand-bg-emphasis`, and so on), for light and dark.
+- **CSS custom properties:** the full set of primitives as CSS variables
+  (`--brand-cta-1`, `--brand-highlight-1`, `--neutral-ink`, and so on), for light
+  and dark. (Semantic names like `solid-fill` are yours to define on top.)
 - **Figma variables:** export the system as Figma variables to drop into a Figma
   library.
 

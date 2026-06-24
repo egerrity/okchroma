@@ -3,9 +3,14 @@
 ## Concept
 
 Give the engine one brand color and it generates a 12-step scale. Steps run from
-near-white tints (step 1) to the solid brand fill (step 9) to dark text shades
-(step 12), and each step has a fixed role (backgrounds, borders, fill, hover,
-text), so the same step number does the same job for every brand.
+near-white tints (step 1) to the brand-anchored emphasis fill (step 9) to dark
+text shades (step 12), and each step has a fixed role (backgrounds, borders, fill,
+hover, text), so the same step number does the same job for every brand.
+
+The 12 steps are how the scale is *generated*; the *emitted* tokens split into a
+surface scale (1–8) plus roles pulled out of the scale (emphasis fill, text). The
+"step 9 = solid fill" shorthand below is the generation view — its emitted name is
+a role (`cta`/`highlight`), covered under [Engineering](#engineering).
 
 The engine works in OKLCH, not hex/RGB. OKLCH names a color by Lightness, Chroma
 (saturation), and Hue, in a perceptually uniform space: equal number-steps look
@@ -66,7 +71,7 @@ so the same formula produces the quiet→vivid curve in the swatches. (Detail in
   (orchestrates the scale), `maxChromaAt()` (gamut envelope), `makeStop()`
   (builds + gamut-clamps one step).
 - [`src/engine/stopTable.ts`](../../src/engine/stopTable.ts) → the fixed lightness
-  ladder.
+  ladder and `satFraction(step)` (`LIGHT_STOPS`).
 - [`src/engine/constraints.ts`](../../src/engine/constraints.ts) → `clampChromaToGamut()`.
 
 **Worked example.** Brand hex `#003865` (a navy) → `generateScale()` reports brand
@@ -82,10 +87,13 @@ hue 249.9°, brand chroma 0.095:
 | 6 | 0.860 | 0.050 | 249.9 | `#B9D4F1` | subtle border |
 | 7 | 0.806 | 0.063 | 249.9 | `#A1C3E7` | border |
 | 8 | 0.738 | 0.082 | 249.9 | `#83AFDC` | strong border / hover |
-| **9** | **0.335** | **0.095** | **249.9** | **`#003865`** | **solid brand fill** |
-| 10 | 0.404 | 0.095 | 249.9 | `#184B7A` | hovered fill |
-| 11 | 0.530 | 0.090 | 249.9 | `#416F9E` | low-contrast text |
-| 12 | 0.300 | 0.047 | 249.9 | `#1A2F45` | high-contrast text |
+| **9** | **0.335** | **0.095** | **249.9** | **`#003865`** | **emphasis fill** → `cta-1` |
+| 10 | 0.404 | 0.095 | 249.9 | `#184B7A` | fill hover → `cta-2` |
+| 11 | 0.530 | 0.090 | 249.9 | `#416F9E` | low-contrast text → `ink-alt` |
+| 12 | 0.300 | 0.047 | 249.9 | `#1A2F45` | high-contrast text → `ink` |
+
+(`Role` shows the generation job and the emitted token name. Steps 1–8 emit as the
+surface scale `paper-1/2`, `wash-3/4/5`, `accent-6/7/8`.)
 
 Things to notice:
 
@@ -95,12 +103,36 @@ Things to notice:
   curve), then the brand's 0.095 carries the solid and dark end.
 - **Step 9 is `#003865` here** because this input is in-gamut and trips no
   collision rule, so the fill stays the exact hex. That is **not guaranteed**:
-  gamut clamping, a collision re-anchor, or the warm-red cool-shift can move step 9
-  in Recommended mode. Exact mode is what ships a hex untouched.
+  gamut clamping, a red-band rung-1 re-anchor, or the warm-red cool-shift can move
+  step 9 in Recommended mode. The cool-shift (`applyRedCoolRender`) is the
+  unconditional **last** step, mutating stops 9/10 in place for warm-red brands —
+  skipped only for exact mode, archetype override, and rung-1 re-anchors. Exact
+  mode is what ships a hex untouched.
 - This brand is **dark**, so step 9's lightness (0.335) sits below step 8's
   (0.738): steps 1–8 are the light ramp; 9–12 the brand-anchored solid and text
   shades. A light brand places step 9 high and derives 10–12 downward.
   (Reproduce: run `#003865` through `generateScale()`.)
+
+**Emitted names: scale vs roles.** The 12 generated stops do not emit as
+`--brand-1..12`. Stops 1–8 are a surface scale (`paper`/`wash`/`accent`); 11/12
+are the text roles `ink-alt`/`ink`; and stops **9/10 are emphasis-fill ROLES
+pulled out of the scale**, not numbered steps. What they're called depends on the
+ramp kind ([`tokenNames.ts`](../../src/engine/tokenNames.ts)):
+
+- **brand / secondary** → `cta-1` (stop 9) / `cta-2` (stop 10), text on `on-cta`.
+- **neutral / signals** → `highlight-1` / `highlight-2`, text on `on-highlight`.
+
+**Additive role stops (above the 1–12 scale).** Some ramps also carry the *other*
+emphasis fill, as engine stops 13–16 kept off the blessed 1–12 snapshot:
+
+- brand / secondary additionally get a **highlight** fill → engine stops 13/14
+  (`highlight-1`/`highlight-2`).
+- neutral additionally gets a **cta** button → engine stops 15/16
+  (`cta-1`/`cta-2`, near-black / near-white).
+
+So brand and neutral ramps each expose both a cta and a highlight; signals expose
+a highlight. The cta/highlight role split (and its asymmetry) is the spec's, not
+the scale math's.
 
 ---
 

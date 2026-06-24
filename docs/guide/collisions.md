@@ -42,38 +42,53 @@ warningDef, 'light')`.)
 
 ## Resolving a collision
 
-Resolution is a ladder. The engine makes the smallest move that restores
-separation while preserving brand identity. The error case is handled
-automatically; for warning, success, and info the signal moves instead of the
-brand.
+There is no offered choice ladder. Resolution is two **automatic** mechanisms,
+split by which signal is involved: the brand yields to **error**, the **signal**
+yields for warning / success / info.
 
-- **Rung 1 (automatic).** A brand in the error-red register re-anchors to the dark
-  archetype, darkened so a destructive action stays unmistakable. The brand hue is
-  kept. Ships in Recommended mode.
-- **Component rule.** A warm neighbor on the orange side of error keeps its exact
-  color. Instead, destructive buttons render as outline plus a required icon, so
-  meaning never rides on hue alone (WCAG 1.4.1).
-- **Signal yield (warning / success / info).** The signal moves, not the brand.
-  Warning resolves binary: a warm-yellow brand pushes warning to a cooler lemon; a
-  cool-yellow brand keeps the standard macaroni amber. Success and info shift
-  within a tolerance cap; any residual is left to component rules.
-- **Rungs 2–3 (offered, not automatic).** Brand-shifts-cool / signal-shifts-warm,
-  then Exact mode (component treatment only). These are choices the brand owner
-  makes, not gate-driven.
+**Error → the brand yields (brand-side).** Gated by the red band `(12, 35.5]` on
+the *raw* brand hue:
+
+- **In-band (maroon/red).** Rung-1 re-anchor: the whole scale is regenerated forced
+  to the **dark** archetype, with the 11/12 text stops deepened ("opt3", L −0.07 /
+  −0.05) so brand and body text stand off error's own text register. The hue is
+  kept; only lightness moves. Ships in Recommended mode.
+- **Out-of-band (pink below 12, orange above 35.5).** Left alone by *value* —
+  instead `errorComponentRule` flags that destructive controls should render as an
+  outline plus a required icon, so meaning never rides on hue alone (WCAG 1.4.1).
+  (That component treatment is enforced in the consumer, not the color engine.)
+
+**Warning / success / info → the signal yields (signal-side).** The brand is
+untouched; the *signal* swaps to a different base, chosen by which side of a
+per-signal hue split the brand sits on (`pickSignalShift` / `SHIFT_RULES`):
+
+| signal | split H | brand below split | brand at/above split |
+|---|---|---|---|
+| warning | 96 | shift to **lemon** | keep canonical **macaroni** |
+| success | 147 | swap to **teal-side** `#18AA6C` | swap to **yellow-side** `#5DA447` |
+| info | 273 | swap to **magenta** `#AB4ABA` | swap to **blue** `#0090FF` |
+
+**error never shifts** — it is the reference everything else is kept distinct from.
+Crucially, these signal moves are **output-only** (`signalOverrides`): they change
+the emitted signal scale but never re-enter any engine decision, which is why a
+shift can't cascade into a new collision.
 
 **Engineering.**
 - **Brand-side:** [`src/engine/resolve.ts`](../../src/engine/resolve.ts) →
-  `collisionStatus()`, rung-1 re-anchor (`RUNG1_ARCHETYPE = 'dark'`),
+  rung-1 re-anchor (`RUNG1_ARCHETYPE = 'dark'`, gated by `inRedBand`),
   `errorComponentRule`.
-- **Signal-side:** [`src/engine/collision.ts`](../../src/engine/collision.ts) →
-  `signalYieldShift()` (smallest whole-degree shift that clears the gate, capped),
-  `warningVariant()` (`YELLOW_SPLIT_H = 96`), `SIGNAL_SHIFT_CAPS`. Applied as
-  `signalOverrides` via [`src/engine/signalShift.ts`](../../src/engine/signalShift.ts).
+- **Signal-side:** [`src/engine/signalShift.ts`](../../src/engine/signalShift.ts) →
+  `pickSignalShift()` over `SHIFT_RULES` (the split table above), applied as
+  output-only `signalOverrides`.
+- **Superseded (dead):** `signalYieldShift()` / `SIGNAL_SHIFT_CAPS` /
+  `YIELD_DIRECTION` and `warningVariant()` in `collision.ts` — the old
+  "smallest capped whole-degree shift" / binary-chooser framing. Still defined,
+  no longer called; warning now routes through `pickSignalShift`'s shift side.
 
 **Worked examples** (from `resolveBrand()`):
-- Warm gold `#C8A35D` (H 82.1°, under 96) → `warningVariant = 'lemon'`. The warning
-  signal shifts cooler; the brand is untouched.
-- Red `#D8261C` (H 29.1°) → `rung1 = 'error'`. The brand re-anchors to the dark
+- Warm gold `#C8A35D` (H 82.1°, under the 96 split) → warning shifts to **lemon**;
+  the brand is untouched.
+- Red `#D8261C` (H 29.1°, inside the red band) → rung-1 re-anchor to the dark
   archetype; hue kept.
 
 ---
