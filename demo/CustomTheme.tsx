@@ -133,8 +133,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
       text: 'Exact mode: your hex ships untouched. Accessibility outcomes are reviewed with you rather than guaranteed by the engine.',
     })
     if (accentCollisions.length) {
-      const LABEL = { red: 'High-alert', yellow: 'Med-alert', green: 'Positive', 'info-color': 'Info' } as const
-      const names = accentCollisions.map(n => LABEL[n]).join(' and ')
+      const names = accentCollisions.join(' and ')
       const plural = accentCollisions.length > 1
       list.push({
         key: `ac:${secondary}:${accentCollisions.join(',')}`, kind: 'warn',
@@ -310,33 +309,21 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   // Signal ramps, so the per-brand signal shifts (yellow/green/info-color) are
   // visually checkable in-app. Override note shown when this brand shifted a
   // signal away for extra distance. red is never shifted (engine owns red).
-  const SIGNAL_ROWS: Array<{ name: 'red' | 'yellow' | 'green' | 'info-color'; label: string }> = [
-    { name: 'red', label: 'High-alert' },
-    { name: 'yellow', label: 'Med-alert' },
-    { name: 'green', label: 'Positive' },
-    { name: 'info-color', label: 'Info' },
-  ]
-  const signalBlock = () => (
-    <div className="ct-colorblock">
-      <div className="ct-label" style={{ marginBottom: 8 }}>Signal scales</div>
-      <div style={{ display: 'grid', gap: 14 }}>
-        {SIGNAL_ROWS.map(({ name, label }) => {
-          const override = computed.r.signalOverrides.find(o => o.name === name)
-          return (
-            <div key={name}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
-                <span style={{ fontSize: 12, color: 'var(--fg-subtle)' }}>{label}</span>
-                {override && (
-                  <span style={{ fontSize: 11, color: 'var(--info-fg)' }}>shifted · {override.note}</span>
-                )}
-              </div>
-              <TokenCards prefix={name} kind="signal" />
-            </div>
-          )
-        })}
+  const SIGNAL_NAMES = ['red', 'yellow', 'green', 'info-color'] as const
+  // Each signal gets its OWN card block (like brand/neutral) — titled by its real
+  // token name. "shifted · …" shows when this brand pushed the signal off-canonical.
+  const signalBlocks = () => SIGNAL_NAMES.map(name => {
+    const override = computed.r.signalOverrides.find(o => o.name === name)
+    return (
+      <div className="ct-colorblock" key={name}>
+        <div className="ct-label" style={{ marginBottom: 8, display: 'flex', alignItems: 'baseline', gap: 8 }}>
+          <span>{name}</span>
+          {override && <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--info-fg)' }}>shifted · {override.note}</span>}
+        </div>
+        <TokenCards prefix={name} kind="signal" />
       </div>
-    </div>
-  )
+    )
+  })
 
   // TEMP — flat swatch grid of every generated color (all ramps × all stops),
   // for eyeballing during the corrections pass. Themes with the page toggle.
@@ -430,7 +417,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
             {colorBlock('Primary scale', 'brand', 'brand', rRec, primary, primaryExtras)}
             {secondary && colorBlock('Secondary scale', 'secondary', 'brand', rRecAccent, secondary)}
             {colorBlock(neutral === 'branded' ? 'Neutral scale — branded tint' : `Neutral scale — ${neutral} tint`, 'neutral', 'neutral', null, primary)}
-            {signalBlock()}
+            {signalBlocks()}
             {swatchMatrix()}
           </div>
           <div className="ct-illus">

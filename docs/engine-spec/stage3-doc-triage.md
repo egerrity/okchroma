@@ -14,9 +14,10 @@ collision/shift facts verified against `signalShift.ts` / `resolve.ts` /
 at the source (`signals.ts` + all logic sites, scripts, plugin; CSS regenerated),
 so the engine OUTPUT is identity everywhere — CSS now matches the Figma path (the
 drift is gone). Name-only: snapshot values byte-identical (dark-audit re-blessed
-keys only, zero value drift). The demo's own semantic vocabulary (`--alert-high-*`,
-"High-alert", etc.) is deliberately untouched — the demo is a consumer/preview, not
-the product. Product docs reconciled to identity.
+keys only, zero value drift). The demo's `tokens/semantic.css` token NAMES
+(`--alert-high-*` etc.) are left as the demo's own alias layer; but any UI string that
+LABELS a token (signal card titles, the collision toast) uses the real identity name.
+Product docs reconciled to identity.
 
 ## Summary
 
@@ -133,7 +134,7 @@ Stale/wrong:
 - radixNeutralCss emits --neutral-1..12 numeric while Figma renames the same hexes to paper/wash/.../ink (code-truth open-q #4) — CSS/Figma name divergence.
 
 ### [KEEP] accent-warning.md (high)
-Accurate: accent (secondary) is not reshaped on collision, warn-only via checkAllCollisions in both modes, checked against all signals. The 'Med-alert' wording flagged by the blind reader is NOT stale — it is the demo's intentional user-facing label for the warning signal (demo/CustomTheme.tsx LABEL map), so the toast text matches the product.
+Accurate: accent (secondary) is not reshaped on collision, warn-only via checkAllCollisions in both modes, checked against all signals. (The blind reader flagged 'Med-alert' in the toast — that was a stale invented label; the toast now names the signal by identity. Corrected 2026-06-24.)
 
 Stale/wrong:
 - Verify the symbol checkAllCollisions and rRecAccent.scale naming still exist in current demo/CustomTheme.tsx (collision.ts confirms checkCollision/stopDeltaE; checkAllCollisions not spot-checked) — low-risk naming verification only.
