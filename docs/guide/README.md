@@ -1,66 +1,124 @@
-# OKChroma: how the engine thinks
+# OKChroma — engine guide
 
-This guide explains the logic behind OKChroma's color engine. It comes in two
-tracks:
+The trusted account of the color engine: vocabulary, pipeline order, base structure,
+and per-palette deviations. Two tracks:
 
-- **Engineering:** one file per topic below (mechanic, core formula, source
-  pointers, a worked example). Each opens with a plain `Concept` / `Why` / `How`.
-- **Design:** a single consolidated doc, **[For designers](./for-designers.md)**,
-  reframing the same topics around what a designer does, sees, and decides.
+- **Engineering** — one file per topic (mechanic, formula, source pointers, example).
+- **Design** — a single consolidated **[For designers](./for-designers.md)**.
 
-## Lineage: built on Radix, extended for white-label
+This README is the spine; deep math lives in the linked topic docs.
 
-OKChroma is **inspired by [Radix Colors](https://www.radix-ui.com/colors)** and
-extends it. Radix gives us the model we start from: a perceptual, 12-step scale
-where each step has a fixed *role* (backgrounds, borders, a solid fill, text),
-calibrated so steps line up across hues. We measure and validate against Radix's
-families (see [`src/radixNeutrals.ts`](../../src/radixNeutrals.ts),
-[`src/engine/stopTable.ts`](../../src/engine/stopTable.ts)).
+## Lineage
 
-What Radix does **not** do is what a white-label product needs:
+Inspired by [Radix Colors](https://www.radix-ui.com/colors), extended for white-label.
 
-- **Radix ships fixed, hand-tuned palettes.** A white-label tool can't hand-tune
-  one palette per client. OKChroma **generates** a complete 12-step system from a
-  single brand hex, automatically, for any input color.
-- **Fidelity to the brand's actual color.** The brand's real hex anchors the
-  scale (step 9) instead of being snapped to a pre-made palette.
-- **Collision-awareness.** Generated brand colors can collide with the fixed
-  signal colors (error/warning/success/info). OKChroma detects and navigates that
-  automatically; Radix's static palettes never face the problem.
+| dimension | Radix | OKChroma |
+|---|---|---|
+| input | ~30 pre-made scales; pick one | any brand hex |
+| scales | hand-tuned per hue | generated from gamut geometry |
+| your color | snapped to the nearest scale | reproduced true-to-brand |
+| roles | 12-step scale with pre-reserved roles | non-linear collection of pseudo-semantic colors designed to support effortless theming |
+| modes | light only | light + dark |
+| collisions | unaware | detects + resolves brand↔signal |
 
-Honest framing: **Radix is a reference, not a spec.** We derive scales from gamut
-geometry first and validate them against Radix; where we diverge, it's a
-deliberate decision, not an error. (Radix is MIT-licensed; see the repo
-acknowledgment.)
+## Vocabulary
+
+Named by identity (the color), not by severity/function.
+
+| role | group | name | output |
+|---|---|---|---|
+| error | signal | `red` | always red |
+| warning | signal | `yellow` | always yellow (lemon/macaroni variant) |
+| success | signal | `green` | always green |
+| info | signal | `info-color` | blue / indigo / violet |
+| primary | brand | `brand-primary` | resolved primary brand color* |
+| secondary | brand | `brand-secondary` | resolved secondary brand color* |
+| neutral | neutral | `neutral` | tinted gray |
+
+*exact mode ships your input color/bypasses the engine
+
+Engine-internal keys remain `error/warning/success/info` (implementation detail). 
+
+## Pipeline
+
+`resolveBrand(hex)` order. Neutral assignment is **not** in `resolveBrand` — it's a
+separate step in the consumer (plugin/demo).
+
+| # | step | source |
+|---|---|---|
+| 1 | Assign archetype from brand L (`classifyArchetype`) → anchor L | colorEngine.ts:362 |
+| 2 | Generate base scale (raw hue) | resolve.ts:134 |
+| 3 | Light collision vs signals: error + red-band → rung-1 (regen, deepen `ink-alt`/`ink`); error + pink/orange → component rule | resolve.ts:142–156 |
+| 4 | Dark collision vs error: red-band → dark "muted" collider (regen); else component rule | resolve.ts:162–178 |
+| 5 | Warning variant: lemon (warm) / macaroni (cool) | resolve.ts:189 |
+| 6 | Signal shifts (output-only): `yellow`/`green`/`info-color` swap off the brand; `red` never | resolve.ts:194–201 |
+| 7 | Red-cool render (last): warm-red brands rotate `cta` cooler | resolve.ts:210–212 |
+| — | Neutral family assigned by brand hue (`closestNeutralFamily`) — separate, consumer | plugin/ui.ts |
+
+Every *decision* (collision, red-band, archetype, on-fill polarity) reads the raw brand
+hue; render-time presentation (cool rotation, warm-hue drift) never feeds a decision,
+which is why the cool render is last. `brand-secondary` (beta) does not shift signals.
+
+## Base palette (light target L)
+
+Stops 1–8 share the same light L across every palette; the emphasis fills and text
+follow. Per-palette and dark-mode differences are in *Per-palette deviations*.
+
+| token | light target L |
+|---|---|
+| `paper-1` | 0.993 |
+| `paper-2` | 0.982 |
+| `wash-3` | 0.960 |
+| `wash-4` | 0.936 |
+| `wash-5` | 0.903 |
+| `accent-6` | 0.860 |
+| `accent-7` | 0.806 |
+| `accent-8` | 0.738 |
+| `highlight-1` | ~0.57–0.62 (then white-edge darken, exc. yellow) |
+| `highlight-2` | `hoverL` of `highlight-1` |
+| `ink-alt` | 0.53 |
+| `ink` | 0.30 |
+| `cta-1` | n/a (= the source color's own L) |
+| `cta-2` | n/a (`hoverL` of `cta-1`) |
+| `on-cta` | n/a (black/white text) |
+| `on-highlight` | n/a (black/white text) |
+| `identity` | n/a (verbatim input hex) |
+
+## Per-palette deviations
+
+| palette | scale 1–8 | cta | highlight | identity | dark stops | collision / shift |
+|---|---|---|---|---|---|---|
+| brand-primary | generated from brand hex | brand's own L | ~0.62 (white-edge) | input hex | `ACCENT_DARK_STOPS` | red-band → rung-1, dark muted collider, cool-render |
+| brand-secondary | generated from secondary hex | secondary's own L | ~0.62 | input hex | `ACCENT_DARK_STOPS` | none (beta; no signal shift; mirrors brand if absent) |
+| neutral | assigned Radix family | near-black / near-white gray | 0.57 gray | — | `DARK_STOPS` (lower) | — |
+| red | generated (canonical + knobs) | = `highlight` | error's own L (white-edge) | — | `ACCENT_DARK_STOPS` | never shifts (collision reference) |
+| yellow | generated (canonical + knobs) | = `highlight` | stays bright (black text) | — | `ACCENT_DARK_STOPS` | lemon (warm) / macaroni (cool) |
+| green | generated (canonical + knobs) | = `highlight` | success's own L (white-edge) | — | `ACCENT_DARK_STOPS` | swap on collision (teal / yellow-green per side) |
+| info-color | generated (canonical + knobs) | = `highlight` | info's own L (white-edge) | — | `ACCENT_DARK_STOPS` | swap on collision (magenta / blue per side) |
+
+
+Neutral's `DARK_STOPS` vs the chromatics' `ACCENT_DARK_STOPS` is a documented deviation —
+neutral sits lower so large surfaces don't read milky (revisit candidate). Neutral's
+tint-generation machinery is wired but unexercised (generative-neutral opportunity).
+
+## Intentional mechanisms (not bugs)
+
+- **Yellow** — cream-gate, yellow L lift, chroma boost/fade, lemon yield. Tuned and
+  load-bearing.
+- **Red-band** — rung-1 re-anchor, `ink-alt`/`ink` deepen, cool-render, dark muted
+  collider, the red-band watershed. Deliberate brand↔error separation.
 
 ## Engineering topics
 
-Read in order for a first pass, or jump to one. (Designers: start with [For
-designers](./for-designers.md).)
+**Foundations** — [Lineage](./lineage.md) · [OKLCH](./oklch.md) ·
+[The OKLCH ramp](./the-12-stop-ramp.md) · [Stop ladder](./stop-ladder.md) ·
+[Chroma envelope](./chroma-envelope.md) · [Compliance (WCAG + APCA)](./compliance.md)
 
-**Foundations**
-1. [Lineage: built on Radix, extended](./lineage.md)
-2. [Why OKLCH, not hex/RGB](./oklch.md)
-3. [The 12-step OKLCH ramp](./the-12-stop-ramp.md)
-4. [The luminance-first stop ladder](./stop-ladder.md)
-5. [Saturation-preserving chroma & the gamut envelope](./chroma-envelope.md)
-6. [Dark anchors & the compliance ladder (WCAG + APCA)](./compliance.md)
+**Collisions & signals** — [Collisions](./collisions.md) ·
+[Accent-collision warning](./accent-warning.md)
 
-**Collisions & signals**
-7. [Signal collisions](./collisions.md): [detecting](./collisions.md#detecting-a-collision) · [resolving](./collisions.md#resolving-a-collision)
-8. [The accent-collision warning](./accent-warning.md)
+**Warm-hue logic** — [Warm hues](./warm-hues.md) · [Relative spine](./relative-spine.md) ·
+[Style lever](./style-lever.md)
 
-**Warm-hue logic**
-9. [Why dark yellow goes gold, not olive](./warm-hues.md)
-10. [The relative spine & gaussian attenuation](./relative-spine.md)
-11. [The style lever (deeper / full-chroma)](./style-lever.md)
-
-**Modes & extras**
-12. [Dark mode: lifting & the red pastel float](./dark-mode.md)
-13. [Illustration palettes (4-slot ramp)](./illustrations.md)
-14. [Neutral tinting](./neutrals.md)
-15. [Escape hatches: exact mode & archetype override](./escape-hatches.md)
-
-> Authoring against [`_TEMPLATE.md`](./_TEMPLATE.md). Engineering sections first;
-> design sections follow. Each topic cites the internal decision record(s) it
-> draws from as provenance.
+**Modes & extras** — [Dark mode](./dark-mode.md) · [Illustrations](./illustrations.md) ·
+[Neutrals](./neutrals.md) · [Escape hatches](./escape-hatches.md)
