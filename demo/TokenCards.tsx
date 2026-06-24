@@ -12,15 +12,15 @@ import { Sparkles } from 'lucide-react'
 //
 // Per-ramp inventory → which cards appear and how they tile:
 //   brand / secondary → all (incl. cta + identity)
-//   neutral           → no identity (wash + cta grow to fill its column)
-//   signal            → no cta, no identity (a signal's highlight IS its alert)
+//   neutral / signal  → no identity (signal cta = highlight duplicate). Signals
+//                       reuse the neutral layout so every ramp shows the same card.
 export type RampKind = 'brand' | 'neutral' | 'signal'
 
 type Place = { c: string; r: string }
 type CardKey = 'paper' | 'wash' | 'accent' | 'cta' | 'highlight' | 'ink' | 'inkAlt' | 'identity'
 
-// brand & neutral render the full card grid; each layout tiles to a flat 6-row
-// bottom edge (every column sums to 6). Signals use the compact strip (below).
+// Every ramp renders the full card grid; each layout tiles to a flat 6-row
+// bottom edge (every column sums to 6). Signals reuse the neutral layout.
 const LAYOUTS: Record<'brand' | 'neutral', Array<{ k: CardKey; c: string; r: string }>> = {
   brand: [
     { k: 'paper', c: '1 / span 2', r: '1 / span 2' },
@@ -43,36 +43,8 @@ const LAYOUTS: Record<'brand' | 'neutral', Array<{ k: CardKey; c: string; r: str
   ],
 }
 
-// The surface scale (1–8), uniform across every ramp.
-const SURFACE = ['paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'accent-6', 'accent-7', 'accent-8']
-
 export function TokenCards({ prefix, kind }: { prefix: string; kind: RampKind }) {
   const v = (t: string) => `var(--${prefix}-${t})`
-
-  // Signals are reference (and repeat ×4), so they collapse to a single strip:
-  // the highlight fill pair (with its on-highlight polarity shown by "Aa"), the
-  // 1–8 surface scale, and the ink / ink-alt text — each swatch named.
-  if (kind === 'signal') {
-    // border = light surface swatch needs a hairline; onText = show "Aa" in the
-    // on-highlight color to demonstrate the fill's text polarity.
-    const swatch = (bg: string, label: string, opts?: { border?: boolean; onText?: string }) => (
-      <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-        <div style={{ width: 30, height: 30, borderRadius: 6, background: bg, border: opts?.border ? '1px solid var(--neutral-wash-4)' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: opts?.onText }}>{opts?.onText ? 'Aa' : ''}</div>
-        <div style={{ fontSize: 9, color: 'var(--fg-subtle)', whiteSpace: 'nowrap' }}>{label}</div>
-      </div>
-    )
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
-        {swatch(v('highlight-1'), 'highlight-1', { onText: v('on-highlight') })}
-        {swatch(v('highlight-2'), 'highlight-2')}
-        {SURFACE.map(t => swatch(v(t), t, { border: true }))}
-        <div style={{ display: 'flex', gap: 10, marginLeft: 8, fontSize: 14, fontWeight: 600 }}>
-          <span style={{ color: v('ink') }}>ink</span>
-          <span style={{ color: v('ink-alt') }}>ink-alt</span>
-        </div>
-      </div>
-    )
-  }
 
   const owner = prefix === 'brand' ? 'brand-primary' : prefix
 
@@ -179,9 +151,11 @@ export function TokenCards({ prefix, kind }: { prefix: string; kind: RampKind })
     ),
   }
 
+  // Signals reuse the neutral layout — same token set (no identity).
+  const layoutKind = kind === 'brand' ? 'brand' : 'neutral'
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gridTemplateRows: 'repeat(6, 64px)', gap: 10 }}>
-      {LAYOUTS[kind].map(({ k, c, r }) => cards[k]({ c, r }))}
+      {LAYOUTS[layoutKind].map(({ k, c, r }) => cards[k]({ c, r }))}
     </div>
   )
 }

@@ -338,6 +338,33 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
     </div>
   )
 
+  // TEMP — flat swatch grid of every generated color (all ramps × all stops),
+  // for eyeballing during the corrections pass. Themes with the page toggle.
+  const SWATCH_STOPS = ['paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'accent-6', 'accent-7', 'accent-8', 'highlight-1', 'highlight-2', 'cta-1', 'cta-2', 'ink-alt', 'ink']
+  const swatchRamps: Array<[string, string]> = [
+    ['brand', 'brand'],
+    ...(secondary ? [['secondary', 'secondary'] as [string, string]] : []),
+    ['neutral', 'neutral'],
+    ['red', 'red'], ['yellow', 'yellow'], ['green', 'green'], ['info-color', 'info-color'],
+  ]
+  const swatchMatrix = () => (
+    <div className="ct-colorblock">
+      <div className="ct-label" style={{ marginBottom: 8 }}>All generated colors — temp compare grid</div>
+      <div style={{ display: 'grid', gridTemplateColumns: `72px repeat(${SWATCH_STOPS.length}, 1fr)`, gap: 4, alignItems: 'end' }}>
+        <div />
+        {SWATCH_STOPS.map(s => (
+          <div key={s} style={{ fontSize: 9, color: 'var(--fg-subtle)', writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', height: 58, justifySelf: 'center' }}>{s}</div>
+        ))}
+        {swatchRamps.flatMap(([prefix, label]) => [
+          <div key={`${prefix}-label`} style={{ fontSize: 11, fontWeight: 700, color: 'var(--fg-default)', whiteSpace: 'nowrap', alignSelf: 'center' }}>{label}</div>,
+          ...SWATCH_STOPS.map(s => (
+            <div key={`${prefix}-${s}`} title={`--${prefix}-${s}`} style={{ height: 30, borderRadius: 3, background: `var(--${prefix}-${s})`, border: '1px solid var(--border-subtle)' }} />
+          )),
+        ])}
+      </div>
+    </div>
+  )
+
   const primaryExtras = (
     <>
       {primaryInvalid && (
@@ -404,6 +431,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
             {secondary && colorBlock('Secondary scale', 'secondary', 'brand', rRecAccent, secondary)}
             {colorBlock(neutral === 'branded' ? 'Neutral scale — branded tint' : `Neutral scale — ${neutral} tint`, 'neutral', 'neutral', null, primary)}
             {signalBlock()}
+            {swatchMatrix()}
           </div>
           <div className="ct-illus">
             <div style={{ width: 'min(440px, 92%)' }} dangerouslySetInnerHTML={{ __html: HERO_ILLO }} />
