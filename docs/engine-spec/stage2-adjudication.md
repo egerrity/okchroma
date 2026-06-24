@@ -39,6 +39,13 @@ uncertain is a spec decision; intentional mechanisms are off-limits.
   passes a tint (neutrals are hardcoded Radix). May be the seed for moving neutrals from
   hardcoded → **generative**. Evaluate cost/benefit in the spec; unclear if worth it.
 
+## Structural questions for the spec (owner-flagged)
+- **cta/highlight asymmetry.** `highlight` exists in EVERY palette (brand, secondary,
+  neutral, signals); `cta` does NOT (brand/secondary/neutral only — signals have none).
+  Both are ROLES pulled out of the 1-12 scale; do not describe by stop number. This
+  asymmetry keeps resurfacing as a bug source — the spec must address it head-on
+  (define the role model + why the asymmetry exists or how to resolve it), not paper over.
+
 ## Byte-compat posture
 Not sacred, but caveated: holistic fixes may move output values, re-blessing snapshots
 with owner visual approval — EXCEPT never the yellow/red-band intentional mechanisms;
