@@ -13,10 +13,11 @@ import { generateScale, generateNeutralScale, inRedBand } from '../src/engine/co
 import { wcagY, contrastRatio } from '../src/engine/constraints'
 import { HERO_ILLO } from './heroIllo'
 import {
-  RampRow, BanIcon, Segmented,
+  BanIcon, Segmented,
   normalizeHex, rybRotate,
   NEUTRAL_PEAK, type RungMode, type AccentMode,
 } from './shared'
+import { TokenCards, type RampKind } from './TokenCards'
 import { closestNeutralFamily, radixNeutralCss, RADIX_NEUTRALS, type NeutralFamily } from '../src/radixNeutrals'
 import { classifyArchetype } from '../src/engine/archetypes'
 import type { ResolvedBrand } from '../src/engine/resolve'
@@ -297,10 +298,10 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
 
   // A color's scale + its collapsed engine decisions. Signals surface as
   // rows INSIDE each checklist (error/warning collisions), never as cards.
-  const colorBlock = (label: string, prefix: string, r: ResolvedBrand | null, hex: string, extras?: React.ReactNode) => (
+  const colorBlock = (label: string, prefix: string, kind: RampKind, r: ResolvedBrand | null, hex: string, extras?: React.ReactNode) => (
     <div className="ct-colorblock">
       <div className="ct-label" style={{ marginBottom: 8 }}>{label}</div>
-      <RampRow prefix={prefix} />
+      <TokenCards prefix={prefix} kind={kind} />
       {extras}
       {r && <EngineChecklist rRec={r} rung={rung} primaryHex={hex} />}
     </div>
@@ -329,7 +330,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
                   <span style={{ fontSize: 11, color: 'var(--info-fg)' }}>shifted · {override.note}</span>
                 )}
               </div>
-              <RampRow prefix={name} />
+              <TokenCards prefix={name} kind="signal" />
             </div>
           )
         })}
@@ -399,9 +400,9 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
       {view === 'palette' && (
         <div className="ct-pane">
           <div className="ct-pane-main">
-            {colorBlock('Primary scale', 'brand', rRec, primary, primaryExtras)}
-            {secondary && colorBlock('Secondary scale', 'accent', rRecAccent, secondary)}
-            {colorBlock(neutral === 'branded' ? 'Neutral scale — branded tint' : `Neutral scale — ${neutral} tint`, 'neutral', null, primary)}
+            {colorBlock('Primary scale', 'brand', 'brand', rRec, primary, primaryExtras)}
+            {secondary && colorBlock('Secondary scale', 'secondary', 'brand', rRecAccent, secondary)}
+            {colorBlock(neutral === 'branded' ? 'Neutral scale — branded tint' : `Neutral scale — ${neutral} tint`, 'neutral', 'neutral', null, primary)}
             {signalBlock()}
           </div>
           <div className="ct-illus">
@@ -861,7 +862,7 @@ const PAGE_CSS = `
 .ct-bar .ct-field-color > input { flex: 1; min-width: 0; }
 .ct-bar .ct-field > select { width: 132px; }
 .ct-pane {
-  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.5fr);
   gap: 24px; padding: 24px; align-items: start;
 }
 .ct-pane-main { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
