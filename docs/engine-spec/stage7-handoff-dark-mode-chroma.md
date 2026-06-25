@@ -164,7 +164,9 @@ until the neutral's new structure lands; then only the *neutral* output moves.
 ### Step 3 — Verify + produce review artifacts (this is the ~70% line, then STOP)
 All gates green: `typecheck` · `audit` (dark) · `highlight-audit` · `figma:verify` · `plugin:build` ·
 `demo:build`. Generate clean before/after **neutral swatches from the generated ramps directly** (NOT
-the demo — it confounds via signal-shift), across representative hues × levels × light/dark. Then stop.
+the demo — it confounds via signal-shift), across representative hues × levels × light/dark, and
+**verify they reproduce `docs/engine-spec/approved-neutrals-reference.md`** (the owner-approved target;
+the wired neutral must match it). Then stop.
 
 ### STOP-and-present at — never cross these autonomously
 - Any **re-bless** (highlight-snapshot, dark-audit) → owner visual sign-off only.
