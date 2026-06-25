@@ -12,6 +12,18 @@
 > Do not merge to `main`.
 >
 > **Status discipline:** every step below carries a Status line. Update it the moment it changes.
+>
+> **Problem catalog:** [`CATALOG.md`](./CATALOG.md) is the running list of issues found mid-execution.
+> Log there as you go and fix them **holistically**, not piecemeal — do not inline-fix a found-problem
+> mid-phase.
+
+> ## ▶ Resume here (next session)
+> **Where:** `~/okchroma` on `scope/dark-chroma` (the `okchroma-dark` worktree was removed — one
+> folder; do not recreate it; `~/okchroma/dist` is a stale build, run `npm run build` before any preview).
+> **Ground in §1–§3 of this file only.** Then continue at the first phase in **§5** whose Status
+> isn't DONE — currently **Phase 1, step 1: computed `ons`** (§4 item 1). **Honor §7** — especially:
+> explain any engine change and WAIT for the owner's "go"; review on a DARK background in
+> `demo/TokenCards.tsx` (full role set); re-bless only on owner visual approval.
 
 ---
 
@@ -131,8 +143,10 @@ Everything in §3 is KEEP. These four are the unfinished Stage-6 work + the forc
 
 ## 5. Implementation phases
 
-- **Phase 0 — doc hygiene.** Status: this file written; **quarantine of `stage*` + stale `guide/*`
-  into `docs/engine-spec/_archive/` pending owner OK.**
+- **Phase 0 — doc hygiene.** Status: **DONE** (commit `6cdbe7b`) — ENGINE-SPEC written; stage1–10 +
+  dark-mode explorations archived to `_archive/` with a do-not-ground README; `guide/*` kept but
+  subordinated via banner (Phase-4 rewrite pending); owner hand-flags salvaged into Phase 4.
+  Worktree consolidated — work now lives in `~/okchroma` on `scope/dark-chroma`.
 - **Phase 1 — engine** (`colorEngine.ts`, `resolve.ts`, `signalShift.ts`, `signals.ts`). Status: not
   started. Computed `ons`; signals through the scale + loud cta (`loudCta` flag so the dark cta keeps
   full chroma); optional `heat` multiplier in `cAt` (default 1); drop `subtleChromaScale` +
