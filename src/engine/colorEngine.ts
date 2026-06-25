@@ -358,6 +358,16 @@ export interface GenerateOptions {
   // every chroma argument falls through to its native value ⇒ byte-identical
   // for brand/secondary/signals.
   chromaCurve?: (L: number, mode: 'light' | 'dark') => number
+  // Dark-only chroma reduction (dark mode reads LOUDER than light; this pulls it
+  // back). A terminal multiply applied to each DARK stop's rendered chroma, keyed
+  // by lightness, that stop's rendered chroma, AND hue — so the cut can be
+  // hue-aware (blue/violet glow, gamut won't clamp them) and chroma-aware (loud
+  // saturated fills cut harder than already-muted stops). Lightness is NEVER
+  // touched. The highlight rung is exempt (its own hold-white machinery); the
+  // generated neutral is exempt (it never sets this). Unset ⇒ every dark chroma
+  // falls through unchanged ⇒ byte-identical. Reduce is expected to return a
+  // factor in (0,1]; clamping/flooring lives in the supplied curve.
+  darkChromaReduce?: (L: number, C: number, H: number) => number
 }
 
 export function generateScale(
@@ -376,6 +386,14 @@ export function generateScale(
   // identity ⇒ byte-identical; set ⇒ the curve drives chroma, gamut-clamped.
   const cAt = (mode: 'light' | 'dark', L: number, nativeC: number): number =>
     opts?.chromaCurve ? opts.chromaCurve(L, mode) : nativeC
+  // Dark-stop chroma with the optional dark-only reduction layered on top of cAt.
+  // Reduce sees the RENDERED chroma (post-cAt) so a chroma-aware curve targets the
+  // stops that are actually loud. Unset ⇒ returns cAt verbatim ⇒ byte-identical.
+  // makeStop gamut-clamps after, as always. Highlight rung does NOT use this.
+  const darkCAt = (L: number, H: number, C: number): number => {
+    const c = cAt('dark', L, C)
+    return opts?.darkChromaReduce ? c * opts.darkChromaReduce(L, c, H) : c
+  }
   const archetype = forcedArchetype ?? classifyArchetype(brandL)
   const scaleL = forcedArchetype ? medianLForArchetype(forcedArchetype) : brandL
   // Dark-floor strength: 0 at/below hue-noise chroma (gray ladder), full
@@ -581,17 +599,19 @@ export function generateScale(
     let L = findLForY(darkRefY[i], C, darkH)
     const H = torsionedHue(darkH, L, dark9L, gOffPath)
     if (H !== darkH) L = findLForY(darkRefY[i], C, H)
-    dark.push(makeStop(i + 1, L, cAt('dark', L, C), H))
+    dark.push(makeStop(i + 1, L, darkCAt(L, H, C), H))
   }
 
-  dark.push(makeStop(9, dark9L, cAt('dark', dark9L, darkC9), darkH))
-  dark.push(makeStop(10, hoverL(dark9L), cAt('dark', hoverL(dark9L), darkC9), darkH))
+  dark.push(makeStop(9, dark9L, darkCAt(dark9L, darkH, darkC9), darkH))
+  dark.push(makeStop(10, hoverL(dark9L), darkCAt(hoverL(dark9L), darkH, darkC9), darkH))
 
   const darkC11 = applyChromaFloor(brandC, DARK_STOP_11.chromaMultiplier, 10, darkFloorStrength)
-  dark.push(makeStop(11, DARK_STOP_11.rootL, cAt('dark', DARK_STOP_11.rootL, darkC11), torsionedHue(darkH, DARK_STOP_11.rootL, dark9L, gOffPath)))
+  const darkH11 = torsionedHue(darkH, DARK_STOP_11.rootL, dark9L, gOffPath)
+  dark.push(makeStop(11, DARK_STOP_11.rootL, darkCAt(DARK_STOP_11.rootL, darkH11, darkC11), darkH11))
 
   const darkC12 = applyChromaFloor(brandC, DARK_STOP_12.chromaMultiplier, 11, darkFloorStrength)
-  dark.push(makeStop(12, DARK_STOP_12.rootL, cAt('dark', DARK_STOP_12.rootL, darkC12), torsionedHue(darkH, DARK_STOP_12.rootL, dark9L, gOffPath)))
+  const darkH12 = torsionedHue(darkH, DARK_STOP_12.rootL, dark9L, gOffPath)
+  dark.push(makeStop(12, DARK_STOP_12.rootL, darkCAt(DARK_STOP_12.rootL, darkH12, darkC12), darkH12))
 
   // Dark on-fill is black-first — white only when black is genuinely
   // too weak on the fill.
@@ -605,8 +625,8 @@ export function generateScale(
     if (contrastRatio(1.0, wcagY(dark[8].L, dark[8].C, dark[8].H)) < 4.5) {
       // search to 4.6 — hex rounding must never land below 4.5
       const compliantL = findLForContrast(dark[8].L, darkC9, darkH, 1.0, 4.6)
-      dark[8] = makeStop(9, compliantL, cAt('dark', compliantL, darkC9), darkH)
-      dark[9] = makeStop(10, hoverL(compliantL), cAt('dark', hoverL(compliantL), darkC9), darkH)
+      dark[8] = makeStop(9, compliantL, darkCAt(compliantL, darkH, darkC9), darkH)
+      dark[9] = makeStop(10, hoverL(compliantL), darkCAt(hoverL(compliantL), darkH, darkC9), darkH)
     }
   }
 
