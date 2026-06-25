@@ -1,10 +1,10 @@
-// Renders the dark-mode chroma-reduction OPTIONS for review (directly from the
-// ramps). For each loud subject — the 4 signals (with their subtle boost) plus a
-// blue/violet-heavy brand hue spread — shows the LIGHT ramp (the quiet target),
-// the DARK ramp BEFORE, then DARK under each candidate curve (A/B/C/D). Plus a
-// per-subject fill-chroma metric (light vs dark, and the reduction each option
-// applies) and an aggregate "how much louder is dark" headline.
-//   npm-style:  esbuild scripts/dark-swatches.ts --bundle --platform=node ... && node ...
+// Dark-mode chroma-reduction options for review — rendered DIRECTLY from the
+// ramps, on a DARK canvas (dark-mode output is unjudgeable on white). Two views,
+// both GROUPED BY OPTION (all of A together, all of B together, …) so each
+// option's whole-fleet character is scannable:
+//   1. Ramps   — every subject's dark ramp under that option.
+//   2. Buttons — a real-use row of solid fill buttons (one per colour).
+// Plus a light-mode reference group and an aggressive D+ comparison.
 import * as fs from 'fs'
 import * as path from 'path'
 import { generateScale, type GenerateOptions, type GeneratedScale, type ColorStop } from '../src/engine/colorEngine'
@@ -15,102 +15,104 @@ const hx = (s: ColorStop) => {
   return `#${c(s.r)}${c(s.g)}${c(s.b)}`
 }
 
-// Loud subjects. Signals carry their subtle boost (yellow 1.45 is THE loud case)
-// and dark fill-min lift; brand hues fill the wheel, weighted to blue/violet.
-interface Subject { name: string; hex: string; opts?: GenerateOptions }
+interface Subject { name: string; short: string; hex: string; opts?: GenerateOptions }
 const SUBJECTS: Subject[] = [
-  { name: 'red signal (H33)', hex: '#E54D2E', opts: { subtleChromaScale: 1.2 } },
-  { name: 'yellow signal (H84)', hex: '#FFC53D', opts: { subtleChromaScale: 1.45 } },
-  { name: 'green signal (H147)', hex: '#46A758', opts: { subtleChromaScale: 1.3, darkFillMinL: 0.75 } },
-  { name: 'info-color signal (H288)', hex: '#6E56CF', opts: { subtleChromaScale: 1.0, darkFillMinL: 0.70 } },
-  { name: 'brand cyan (H215)', hex: '#00A2C7' },
-  { name: 'brand indigo (H266)', hex: '#3E63DD' },
-  { name: 'brand purple (H310)', hex: '#8E4EC6' },
-  { name: 'brand pink (H358)', hex: '#E93D82' },
+  { name: 'red signal (H33)', short: 'red', hex: '#E54D2E', opts: { subtleChromaScale: 1.2 } },
+  { name: 'yellow signal (H84)', short: 'yellow', hex: '#FFC53D', opts: { subtleChromaScale: 1.45 } },
+  { name: 'green signal (H147)', short: 'green', hex: '#46A758', opts: { subtleChromaScale: 1.3, darkFillMinL: 0.75 } },
+  { name: 'info-color signal (H288)', short: 'info', hex: '#6E56CF', opts: { subtleChromaScale: 1.0, darkFillMinL: 0.70 } },
+  { name: 'brand cyan (H215)', short: 'cyan', hex: '#00A2C7' },
+  { name: 'brand indigo (H266)', short: 'indigo', hex: '#3E63DD' },
+  { name: 'brand purple (H310)', short: 'purple', hex: '#8E4EC6' },
+  { name: 'brand pink (H358)', short: 'pink', hex: '#E93D82' },
 ]
 
 const gen = (s: Subject, curve: CurveDef): GeneratedScale =>
   generateScale(s.hex, 'x', undefined, { ...(s.opts ?? {}), darkChromaReduce: curve.fn ?? undefined })
-
 const fillC = (sc: GeneratedScale, mode: 'light' | 'dark') => (mode === 'light' ? sc.light : sc.dark)[8].C
 
 const OPTIONS = ['before', 'A', 'B', 'C', 'D'].map(k => ({ key: k, ...DARK_CURVES[k] }))
 
-const cell = (s: ColorStop) =>
-  `<div class="sw" title="C ${s.C.toFixed(3)}"><div class="box" style="background:${hx(s)}"></div></div>`
-const ramp = (label: string, stops: ColorStop[], sub = '') =>
-  `<div class="ramp"><div class="lab">${label}<span>${sub}</span></div><div class="row">${stops.slice(0, 12).map(cell).join('')}</div></div>`
+// Precompute every subject under every option.
+const data = SUBJECTS.map(s => ({
+  s,
+  light: gen(s, DARK_CURVES.before),
+  byOpt: Object.fromEntries(OPTIONS.map(o => [o.key, gen(s, o)])) as Record<string, GeneratedScale>,
+}))
+const lFillOf = (d: typeof data[number]) => fillC(d.light, 'light')
 
-let body = ''
-const agg: Record<string, number[]> = { before: [], A: [], B: [], C: [], D: [] }
+const swatch = (st: ColorStop) => `<span class="sw" title="C ${st.C.toFixed(3)}" style="background:${hx(st)}"></span>`
+const rampRow = (label: string, stops: ColorStop[], meta = '') =>
+  `<div class="ramp"><span class="lab">${label}</span><span class="strip">${stops.slice(0, 12).map(swatch).join('')}</span><span class="meta">${meta}</span></div>`
+const button = (label: string, fill: ColorStop, white: boolean) =>
+  `<span class="btn" style="background:${hx(fill)};color:${white ? '#fff' : '#000'}">${label}</span>`
 
-for (const s of SUBJECTS) {
-  const light = gen(s, DARK_CURVES.before)
-  const lFill = fillC(light, 'light')
-  let rows = ramp('light', light.light, 'the quiet target')
-  let darkRows = ''
-  const metrics: string[] = []
-  for (const o of OPTIONS) {
-    const sc = gen(s, o)
-    const dFill = fillC(sc, 'dark')
-    agg[o.key].push(dFill / lFill)
-    const tag = o.key === 'before' ? `${(dFill / lFill).toFixed(2)}× light` : `${(dFill / fillC(gen(s, DARK_CURVES.before), 'dark') * 100).toFixed(0)}% of before`
-    metrics.push(`<b>${o.label.split(' · ')[0]}</b> ${dFill.toFixed(3)} <i>${tag}</i>`)
-    darkRows += ramp(o.label, sc.dark, o.desc)
-  }
-  body += `<div class="subj"><h3>${s.name} <span class="hex">${s.hex}</span></h3>
-    ${rows}
-    <div class="dark">${darkRows}</div>
-    <div class="metric">fill chroma — light <b>${lFill.toFixed(3)}</b> · dark: ${metrics.join(' &nbsp;·&nbsp; ')}</div>
+// ── View 1: ramps grouped by option (+ light reference first) ────────────────
+const lightGroup = `<div class="grp"><h3>Light mode <span>the quiet target — reference</span></h3>${
+  data.map(d => rampRow(d.s.short, d.light.light, `fill C ${lFillOf(d).toFixed(3)}`)).join('')}</div>`
+const rampsByOption = OPTIONS.map(o => `<div class="grp"><h3>${o.label} <span>${o.desc}</span></h3>${
+  data.map(d => {
+    const sc = d.byOpt[o.key]; const f = fillC(sc, 'dark')
+    const meta = o.key === 'before' ? `fill C ${f.toFixed(3)} · ${(f / lFillOf(d)).toFixed(2)}× light`
+      : `fill C ${f.toFixed(3)} · ${Math.round((f / fillC(d.byOpt.before, 'dark')) * 100)}% of before`
+    return rampRow(d.s.short, sc.dark, meta)
+  }).join('')}</div>`).join('')
+
+// ── View 2: buttons grouped by option ────────────────────────────────────────
+const lightBtns = `<div class="grp"><h3>Light mode <span>reference</span></h3><div class="btnrow">${
+  data.map(d => button(d.s.short, d.light.light[8], d.light.onFillTextIsWhite)).join('')}</div></div>`
+const btnsByOption = OPTIONS.map(o => `<div class="grp"><h3>${o.label}</h3><div class="btnrow">${
+  data.map(d => button(d.s.short, d.byOpt[o.key].dark[8], d.byOpt[o.key].onFillTextIsWhiteDark)).join('')}</div></div>`).join('')
+
+// ── Aggressive D+ on the blue/violet offenders ───────────────────────────────
+const aggr = [data[3], data[5], data[6]].map(d => {
+  const dplus = gen(d.s, AGGRESSIVE)
+  return `<div class="grp2"><h4>${d.s.name}</h4>
+    ${rampRow('before', d.byOpt.before.dark)}${rampRow('D', d.byOpt.D.dark)}${rampRow('D+', dplus.dark)}
+    <div class="btnrow">${button('before', d.byOpt.before.dark[8], d.byOpt.before.onFillTextIsWhiteDark)}${button('D', d.byOpt.D.dark[8], d.byOpt.D.onFillTextIsWhiteDark)}${button('D+', dplus.dark[8], dplus.onFillTextIsWhiteDark)}</div>
   </div>`
-}
+}).join('')
 
-// Aggregate headline: mean dark-fill-C / light-fill-C across subjects.
 const mean = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length
-const headline = OPTIONS.map(o => `${o.label.split(' · ')[0]}: <b>${mean(agg[o.key]).toFixed(2)}×</b>`).join(' &nbsp; ')
-
-// Aggressive variant on the worst offenders (blue/violet) for "how far can it go".
-let aggrBody = ''
-for (const s of [SUBJECTS[3], SUBJECTS[5], SUBJECTS[6]]) {
-  const before = gen(s, DARK_CURVES.before)
-  const d = gen(s, DARK_CURVES.D)
-  const dplus = gen(s, AGGRESSIVE)
-  aggrBody += `<div class="subj"><h4>${s.name}</h4><div class="dark">
-    ${ramp('before', before.dark)}${ramp('D (default)', d.dark, DARK_CURVES.D.desc)}${ramp('D+ aggressive', dplus.dark, AGGRESSIVE.desc)}
-  </div></div>`
-}
+const headline = OPTIONS.map(o => `${o.label.split(' · ')[0]}: <b>${mean(data.map(d => fillC(d.byOpt[o.key], 'dark') / lFillOf(d))).toFixed(2)}×</b>`).join(' &nbsp; ')
 
 const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Dark-mode chroma reduction — options</title>
 <style>
-  body { font-family:-apple-system,system-ui,sans-serif; margin:24px; color:#1a1a1a; background:#fafafa; }
-  h1 { font-size:20px; } h2 { font-size:15px; margin:26px 0 6px; border-bottom:1px solid #ddd; padding-bottom:6px; }
-  h3 { font-size:13px; margin:18px 0 6px; } h3 .hex,h4 .hex { color:#999; font-family:ui-monospace,monospace; font-weight:400; }
-  h4 { font-size:12px; margin:12px 0 4px; }
-  .note { font-size:12px; color:#555; max-width:820px; line-height:1.55; }
-  .head { font-size:12px; background:#fff; border:1px solid #e3e3e3; border-radius:8px; padding:10px 12px; margin:8px 0 4px; }
-  .subj { margin-bottom:14px; }
-  .ramp { display:flex; align-items:center; gap:8px; margin:2px 0; }
-  .lab { width:120px; font-size:10px; color:#666; flex-shrink:0; } .lab span { display:block; color:#aaa; font-size:9px; }
-  .row { display:flex; gap:2px; } .sw .box { width:30px; height:26px; border-radius:3px; border:1px solid rgba(0,0,0,.1); }
-  .dark { background:#141619; border-radius:6px; padding:4px 8px; margin:3px 0; }
-  .dark .lab { color:#bbb; } .dark .lab span { color:#777; }
-  .metric { font-size:11px; color:#444; margin-top:4px; font-family:ui-monospace,monospace; } .metric i { color:#888; font-style:normal; }
+  :root { color-scheme: dark; }
+  body { font-family:-apple-system,system-ui,sans-serif; margin:0; padding:24px; background:#15171a; color:#e6e6e6; }
+  h1 { font-size:20px; margin:0 0 8px; } h2 { font-size:15px; margin:30px 0 8px; color:#fff; border-bottom:1px solid #2c2f34; padding-bottom:6px; }
+  h3 { font-size:13px; margin:14px 0 6px; color:#fff; } h3 span { color:#888; font-weight:400; font-size:11px; }
+  h4 { font-size:12px; margin:10px 0 4px; color:#ddd; }
+  .note { font-size:12px; color:#aaa; max-width:840px; line-height:1.55; }
+  .head { font-size:12px; background:#1d2024; border:1px solid #2c2f34; border-radius:8px; padding:10px 12px; margin:10px 0; }
+  .views { display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start; }
+  @media (max-width:1100px){ .views { grid-template-columns:1fr; } }
+  .grp { margin-bottom:10px; } .grp2 { margin-bottom:12px; }
+  .ramp { display:flex; align-items:center; gap:10px; margin:2px 0; }
+  .lab { width:52px; font-size:11px; color:#bbb; flex-shrink:0; text-align:right; }
+  .strip { display:flex; gap:2px; }
+  .sw { width:26px; height:24px; border-radius:3px; border:1px solid rgba(255,255,255,.14); display:inline-block; }
+  .meta { font-size:10px; color:#888; font-family:ui-monospace,monospace; white-space:nowrap; }
+  .btnrow { display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 2px; }
+  .btn { padding:9px 16px; border-radius:8px; font-size:13px; font-weight:600; display:inline-flex; align-items:center; box-shadow:0 1px 2px rgba(0,0,0,.4); }
 </style></head><body>
 <h1>Dark-mode chroma reduction — options to review</h1>
-<p class="note">Dark currently reads <b>louder</b> than light. Each option is a hue+chroma+L-aware
-multiply on dark stop chroma (lightness untouched, highlight rung &amp; neutral exempt, byte-identical
-when off). Numbers 1–12 are the scale; hover a swatch for its chroma. Goal: dark fill chroma should
-sit near (or below) its light sibling — the headline below is the mean dark/light fill-chroma ratio
-across all subjects (Before &gt; 1 = louder; lower = quieter).</p>
+<p class="note">Grouped by OPTION so each option's whole-fleet character is scannable. Dark canvas
+(dark-mode output is unjudgeable on white). Goal: dark fill chroma sits near/below its light sibling.
+Loudness is PERCEPTUAL — mean dark/light fill chroma is already ~1.0×, so this compensates for
+saturated colour glowing more on dark (worst blue/violet). Hover a swatch for its chroma.</p>
 <div class="head"><b>Mean dark fill chroma ÷ light fill chroma</b> &nbsp; ${headline}</div>
-<h2>Per subject — light target, then dark: before / A / B / C / D</h2>
-${body}
-<h2>How far it can go — hybrid D vs an aggressive D+ (blue/violet offenders)</h2>
-${aggrBody}
+
+<div class="views">
+  <div><h2>Ramps — by option</h2>${lightGroup}${rampsByOption}</div>
+  <div><h2>Buttons — by option</h2>${lightBtns}${btnsByOption}</div>
+</div>
+
+<h2>How far it can go — before / D / D+ (blue-violet offenders)</h2>
+${aggr}
 </body></html>`
 
 const out = path.join(process.cwd(), 'dist', 'dark-swatches.html')
 fs.mkdirSync(path.dirname(out), { recursive: true })
 fs.writeFileSync(out, html)
 console.log(`wrote ${out}`)
-console.log(`mean dark/light fill chroma: ` + OPTIONS.map(o => `${o.key} ${mean(agg[o.key]).toFixed(2)}`).join('  '))
