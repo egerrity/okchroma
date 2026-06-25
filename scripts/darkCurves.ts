@@ -15,6 +15,8 @@
 //   D  hybrid           — gentle PRODUCT of L-taper x hue x chroma. The
 //                         everything-balanced option.
 
+import { darkChromaReduce } from '../src/engine/darkReduce'
+
 export type DarkCurve = (L: number, C: number, H: number) => number
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
@@ -66,8 +68,8 @@ export const DARK_CURVES: Record<string, CurveDef> = {
   },
   D: {
     label: 'D · hybrid',
-    desc: 'gentle product of L-taper × hue × chroma',
-    fn: (L, C, H) => clamp(retain(L, 0.16) * hueFactor(H, 0.16) * chromaFactor(C, 0.22), MIN_RETAIN, 1),
+    desc: 'gentle product of L-taper × hue × chroma — THE SHIPPED curve',
+    fn: darkChromaReduce,
   },
 }
 

@@ -394,6 +394,12 @@ export function generateScale(
     const c = cAt('dark', L, C)
     return opts?.darkChromaReduce ? c * opts.darkChromaReduce(L, c, H) : c
   }
+  // The muted-rose collider fill is already deliberately muted (×0.55, for
+  // red↔error separation) — the quietest fill in the system, not a loudness
+  // offender — so it is EXEMPT from the dark reduction. Every other fill (and the
+  // subtle/text stops) goes through darkCAt. (Owner decision 2026-06-25.)
+  const fillCAt = (L: number, H: number, C: number): number =>
+    opts?.darkColliderFill === 'muted' ? cAt('dark', L, C) : darkCAt(L, H, C)
   const archetype = forcedArchetype ?? classifyArchetype(brandL)
   const scaleL = forcedArchetype ? medianLForArchetype(forcedArchetype) : brandL
   // Dark-floor strength: 0 at/below hue-noise chroma (gray ladder), full
@@ -602,8 +608,8 @@ export function generateScale(
     dark.push(makeStop(i + 1, L, darkCAt(L, H, C), H))
   }
 
-  dark.push(makeStop(9, dark9L, darkCAt(dark9L, darkH, darkC9), darkH))
-  dark.push(makeStop(10, hoverL(dark9L), darkCAt(hoverL(dark9L), darkH, darkC9), darkH))
+  dark.push(makeStop(9, dark9L, fillCAt(dark9L, darkH, darkC9), darkH))
+  dark.push(makeStop(10, hoverL(dark9L), fillCAt(hoverL(dark9L), darkH, darkC9), darkH))
 
   const darkC11 = applyChromaFloor(brandC, DARK_STOP_11.chromaMultiplier, 10, darkFloorStrength)
   const darkH11 = torsionedHue(darkH, DARK_STOP_11.rootL, dark9L, gOffPath)
@@ -623,10 +629,13 @@ export function generateScale(
   // a dark background the way a 0.2 one does.
   if (opts?.enforceOnFillContrast && onFillTextIsWhiteDark) {
     if (contrastRatio(1.0, wcagY(dark[8].L, dark[8].C, dark[8].H)) < 4.5) {
-      // search to 4.6 — hex rounding must never land below 4.5
-      const compliantL = findLForContrast(dark[8].L, darkC9, darkH, 1.0, 4.6)
-      dark[8] = makeStop(9, compliantL, darkCAt(compliantL, darkH, darkC9), darkH)
-      dark[9] = makeStop(10, hoverL(compliantL), darkCAt(hoverL(compliantL), darkH, darkC9), darkH)
+      // search to 4.6 — hex rounding must never land below 4.5. Solve against the
+      // REDUCED rendered chroma (dark[8].C), not the pre-reduction darkC9, so the
+      // post-reduction fill genuinely clears 4.5 (darkChromaReduce can shave ~0.05
+      // off a fill's white contrast). Unset ⇒ dark[8].C === darkC9 ⇒ byte-identical.
+      const compliantL = findLForContrast(dark[8].L, dark[8].C, darkH, 1.0, 4.6)
+      dark[8] = makeStop(9, compliantL, fillCAt(compliantL, darkH, darkC9), darkH)
+      dark[9] = makeStop(10, hoverL(compliantL), fillCAt(hoverL(compliantL), darkH, darkC9), darkH)
     }
   }
 

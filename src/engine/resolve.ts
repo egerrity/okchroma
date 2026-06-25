@@ -23,6 +23,7 @@
 // archetypeOverride (brand-owner-chosen rung-1 direction).
 
 import { generateScale, applyRedCoolRender, inRedBand, type GeneratedScale } from './colorEngine'
+import { darkChromaReduce } from './darkReduce'
 import type { Archetype } from './archetypes'
 import { SIGNALS, type SignalDef } from './signals'
 import { DARK_BRAND_FILL_MIN_L, ACCENT_DARK_STOPS } from './stopTable'
@@ -40,7 +41,7 @@ export const SIGNAL_SCALES = new Map<SignalDef['name'], { def: SignalDef; scale:
     // Stage 2.5: green darkens its light fill to hold WHITE, like the other
     // non-yellow signal fills (red/info-color). Light-only value move; dark stays
     // black-first. No other signal sets it ⇒ they're byte-identical.
-    { def, scale: generateScale(def.hex, def.name, undefined, { subtleChromaScale: def.subtleChromaBoost, darkStops: ACCENT_DARK_STOPS, darkFillMinL: def.darkFillMinL, enforceOnFillContrast: true, enforceWhiteFill: def.name === 'green' }) },
+    { def, scale: generateScale(def.hex, def.name, undefined, { subtleChromaScale: def.subtleChromaBoost, darkStops: ACCENT_DARK_STOPS, darkFillMinL: def.darkFillMinL, enforceOnFillContrast: true, enforceWhiteFill: def.name === 'green', darkChromaReduce }) },
   ])
 )
 
@@ -122,6 +123,10 @@ export function resolveBrand(
     enforceOnFillContrast: !opts?.exact,
     // dark mode keeps the red cool character (exact mode ships raw)
     coolRedDark: !opts?.exact,
+    // Dark-mode chroma reduction (option D) — recommended only; exact mode ships
+    // the raw dark chroma, like coolRedDark. The collider muted fill is exempt
+    // inside generateScale.
+    darkChromaReduce: opts?.exact ? undefined : darkChromaReduce,
     style: opts?.style,
     // Stage 2: brand/secondary carry the highlight-1/2 fill (signals don't —
     // a signal's stop-9 IS its highlight). Emphasis-fill role token, emitted for

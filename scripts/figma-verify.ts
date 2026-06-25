@@ -55,9 +55,10 @@ for (const mode of ['light', 'dark'] as const) {
 const bcta = (figma.light as any).brand['cta-1']
 ok(bcta.$type === 'color', 'brand/cta-1 not type color')
 ok(bcta.$value && bcta.$value.colorSpace === 'srgb' && Array.isArray(bcta.$value.components) && bcta.$value.components.length === 3, 'brand/cta-1 $value not srgb-components object')
-// Spot value vs known engine output (dark-roast brand cta light #07074f, dark #7f9aeb)
+// Spot value vs known engine output (dark-roast brand cta light #07074f; dark
+// #8b9dce — was #7f9aeb pre-darkChromaReduce; D trims the dark cta chroma).
 ok((figma.light as any).brand['cta-1'].$value.hex === '#07074f', `brand/cta-1 light hex ${(figma.light as any).brand['cta-1'].$value.hex} != #07074f`)
-ok((figma.dark as any).brand['cta-1'].$value.hex === '#7f9aeb', `brand/cta-1 dark hex ${(figma.dark as any).brand['cta-1'].$value.hex} != #7f9aeb`)
+ok((figma.dark as any).brand['cta-1'].$value.hex === '#8b9dce', `brand/cta-1 dark hex ${(figma.dark as any).brand['cta-1'].$value.hex} != #8b9dce`)
 // Identical token names across modes
 ok(JSON.stringify(Object.keys((figma.light as any).brand)) === JSON.stringify(Object.keys((figma.dark as any).brand)), 'brand keys differ across modes')
 
