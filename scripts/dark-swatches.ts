@@ -73,6 +73,25 @@ const aggr = [data[3], data[5], data[6]].map(d => {
   </div>`
 }).join('')
 
+// ── Collider × D: does the reduction compose on the muted-rose collider fill? ─
+// A red-band brand that collides with the error signal gets the muted-rose
+// collider fill (darkColliderFill:'muted', chroma ×0.55 — a deliberate
+// red↔error separation). Show: collider only / D composed on top (default:
+// darkCAt hits the fill, so 0.55 × D) / D with the collider FILL exempt.
+const dFn = DARK_CURVES.D.fn ?? undefined
+const colHex = '#E5484D'
+const colBeforeS = generateScale(colHex, 'x', undefined, { darkColliderFill: 'muted' })
+const colDS = generateScale(colHex, 'x', undefined, { darkColliderFill: 'muted', darkChromaReduce: dFn })
+const colBefore = colBeforeS.dark, colD = colDS.dark
+const colExempt = colD.map((s, i) => (i === 8 || i === 9 ? colBefore[i] : s)) // D everywhere except the collider fill
+const pctC = (a: ColorStop, b: ColorStop) => `${Math.round((a.C / b.C) * 100)}% of collider`
+const colliderSection = `<div class="grp2"><h4>red-colliding brand ${colHex} — muted-rose collider fill (the only place fills are pre-muted)</h4>
+  ${rampRow('collider', colBefore, `fill C ${colBefore[8].C.toFixed(3)} · collider only, no reduction`)}
+  ${rampRow('D composed', colD, `fill C ${colD[8].C.toFixed(3)} · ${pctC(colD[8], colBefore[8])} — dustier rose`)}
+  ${rampRow('D, fill exempt', colExempt, `fill C ${colExempt[8].C.toFixed(3)} · collider fill kept, D on the rest`)}
+  <div class="btnrow">${button('collider', colBefore[8], colBeforeS.onFillTextIsWhiteDark)}${button('D composed', colD[8], colDS.onFillTextIsWhiteDark)}${button('D, fill exempt', colExempt[8], colBeforeS.onFillTextIsWhiteDark)}</div>
+</div>`
+
 const mean = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length
 const headline = OPTIONS.map(o => `${o.label.split(' · ')[0]}: <b>${mean(data.map(d => fillC(d.byOpt[o.key], 'dark') / lFillOf(d))).toFixed(2)}×</b>`).join(' &nbsp; ')
 
@@ -108,6 +127,11 @@ saturated colour glowing more on dark (worst blue/violet). Hover a swatch for it
   <div><h2>Buttons — by option</h2>${lightBtns}${btnsByOption}</div>
 </div>
 
+<h2>Collider × D — compose on the muted-rose fill, or exempt it?</h2>
+<p class="note">The dark muted-rose collider fill (red-band brands, ×0.55 chroma for red↔error separation)
+is the ONE place a fill is already pre-muted. By default D composes on top (dustier). "Fill exempt"
+keeps the collider fill and applies D to the rest. Your call.</p>
+${colliderSection}
 <h2>How far it can go — before / D / D+ (blue-violet offenders)</h2>
 ${aggr}
 </body></html>`
