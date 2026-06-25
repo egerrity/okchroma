@@ -42,7 +42,7 @@ for (const slug of Object.keys(SECONDARIES)) {
 }
 
 console.log(`=== highlight-1/2 across ${items.length} brand+secondary ramps ===`)
-console.log(`(yellow band = within ${YELLOW_L_LIFT.sigmaDeg}° of H${YELLOW_L_LIFT.centerH}; those keep black text)\n`)
+console.log(`(yellow band = within ${YELLOW_L_LIFT.sigmaDeg}° of H${YELLOW_L_LIFT.centerH}; flagged for reference — the highlight now holds white for every hue)\n`)
 console.log('  ramp                    H     yel | LIGHT hl9            hl10           | DARK  hl9            hl10')
 for (const { name, hex, scale } of items) {
   const el = scale.light.slice(12), ed = scale.dark.slice(12)
@@ -56,9 +56,10 @@ for (const { name, hex, scale } of items) {
   ok(a8Ld < d9.L, `${name}: dark hl9 (${f(d9.L)}) not above accent-8 (${f(a8Ld)})`)
   ok(d9.L > d10.L, `${name}: dark hover inverted (hl9 ${f(d9.L)} <= hl10 ${f(d10.L)})`)
 
-  // white-text holds for non-yellow (both modes); yellow keeps black
+  // white-text holds for EVERY hue (the universal rung darkens to the 4.6 edge,
+  // incl. yellow), both modes. The WCAG check below proves it actually clears.
   const polL = scale.onHighlightIsWhite, polD = scale.onHighlightIsWhiteDark
-  ok(polL === !yel && polD === !yel, `${name}: on-highlight polarity != !isYellow`)
+  ok(polL === true && polD === true, `${name}: on-highlight not universally white (the rung must hold white for every hue)`)
   for (const [mode, s, pol] of [['light', l9, polL], ['dark', d9, polD]] as const) {
     const passes = pol ? whiteWcag(s) >= 4.5 : blackWcag(s) >= 4.5
     ok(passes, `${name} ${mode}: on-highlight ${pol ? 'white' : 'black'} fails WCAG on hl9 (${pol ? whiteWcag(s).toFixed(2) : blackWcag(s).toFixed(2)}:1)`)
