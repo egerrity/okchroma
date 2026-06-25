@@ -346,6 +346,15 @@ export interface GenerateOptions {
   // signal's stop-9 highlight already IS its fill). Append-only: never touches
   // stops 1–12.
   highlight?: boolean
+  // Neutral seam: when set, REPLACES the per-stop native chroma with
+  // chromaCurve(L, mode) at every generation site (stops 1–12, the fill, text
+  // stops, the rung) and the fill-polarity precompute. makeStop still
+  // gamut-clamps after, so the curve states intent and the gamut is the
+  // backstop. Evaluated by LIGHTNESS (not stop index) so it also covers the
+  // off-grid roles — the archetype cta and the rung-shifted highlight. Unset ⇒
+  // every chroma argument falls through to its native value ⇒ byte-identical
+  // for brand/secondary/signals.
+  chromaCurve?: (L: number, mode: 'light' | 'dark') => number
 }
 
 export function generateScale(
@@ -359,6 +368,11 @@ export function generateScale(
   const brandC = rawC * (opts?.chromaScale ?? 1)
   // Subtle-tier chroma (stops 1–8); anchor and text stops use brandC.
   const subtleC = brandC * (opts?.subtleChromaScale ?? 1)
+  // Neutral chroma seam: native chroma unless an explicit curve overrides it
+  // (by lightness + mode). Wrap EVERY chroma argument with this — unset ⇒
+  // identity ⇒ byte-identical; set ⇒ the curve drives chroma, gamut-clamped.
+  const cAt = (mode: 'light' | 'dark', L: number, nativeC: number): number =>
+    opts?.chromaCurve ? opts.chromaCurve(L, mode) : nativeC
   const archetype = forcedArchetype ?? classifyArchetype(brandL)
   const scaleL = forcedArchetype ? medianLForArchetype(forcedArchetype) : brandL
   // Dark-floor strength: 0 at/below hue-noise chroma (gray ladder), full
@@ -386,7 +400,7 @@ export function generateScale(
     opts?.enforceWhiteFill && contrastRatio(1.0, wcagY(scaleL, brandC, brandH)) < 4.5
       ? findLForContrast(scaleL, brandC, brandH, 1.0, 4.6)
       : scaleL
-  const fill9 = oklchToSrgbUnclamped(fillAnchorL, clampChromaToGamut(fillAnchorL, brandC, brandH), brandH)
+  const fill9 = oklchToSrgbUnclamped(fillAnchorL, clampChromaToGamut(fillAnchorL, cAt('light', fillAnchorL, brandC), brandH), brandH)
   const fill9ApcaY = apcaY(fill9.r, fill9.g, fill9.b)
   let onFillTextIsWhite =
     Math.abs(apcaLc(1.0, fill9ApcaY)) >= Math.abs(apcaLc(0.0, fill9ApcaY))
@@ -494,7 +508,7 @@ export function generateScale(
     // warm brands blend toward the saturation-preserving cream envelope.
     const cLadder = vSubtle * chromaBoost * LIGHT_BASE_C[i]
     const cEnv = brandSat * satFraction * maxChromaAt(L, H)
-    light.push(makeStop(i + 1, L, cLadder + u * (cEnv - cLadder), H))
+    light.push(makeStop(i + 1, L, cAt('light', L, cLadder + u * (cEnv - cLadder)), H))
   }
 
   const stop2Y = wcagY(light[1].L, light[1].C, light[1].H)
@@ -521,8 +535,8 @@ export function generateScale(
       }
     }
   }
-  light.push(makeStop(9, light9L, brandC, brandH))
-  light.push(makeStop(10, hoverL(light9L), brandC, brandH))
+  light.push(makeStop(9, light9L, cAt('light', light9L, brandC), brandH))
+  light.push(makeStop(10, hoverL(light9L), cAt('light', hoverL(light9L), brandC), brandH))
 
   // Stops 11/12 — text stops anchored at their dark roots (0.53 / 0.30,
   // plus the yellow lift), with the AA/AAA ratio against stop 2 as a
@@ -539,7 +553,7 @@ export function generateScale(
     C = clampChromaToGamut(L, cMult * brandC, H)
     L = Math.min(anchorL, findMaxLForContrast(C, H, stop2Y, ratio))
     L = Math.min(L - deepen, findMaxLForContrast(C, lightHueAt(L - deepen), stop2Y, ratio))
-    return makeStop(stop, L, cMult * brandC, lightHueAt(L))
+    return makeStop(stop, L, cAt('light', L, cMult * brandC), lightHueAt(L))
   }
   light.push(lightTextStop(11, STOP_11.rootL, STOP_11.chromaMultiplier, STOP_11_CONTRAST, opts?.stop11DeepenL ?? 0))
   light.push(lightTextStop(12, STOP_12.rootL, STOP_12.chromaMultiplier, STOP_12_CONTRAST_FLOOR, opts?.stop12DeepenL ?? 0))
@@ -564,17 +578,17 @@ export function generateScale(
     let L = findLForY(darkRefY[i], C, darkH)
     const H = torsionedHue(darkH, L, dark9L, gOffPath)
     if (H !== darkH) L = findLForY(darkRefY[i], C, H)
-    dark.push(makeStop(i + 1, L, C, H))
+    dark.push(makeStop(i + 1, L, cAt('dark', L, C), H))
   }
 
-  dark.push(makeStop(9, dark9L, darkC9, darkH))
-  dark.push(makeStop(10, hoverL(dark9L), darkC9, darkH))
+  dark.push(makeStop(9, dark9L, cAt('dark', dark9L, darkC9), darkH))
+  dark.push(makeStop(10, hoverL(dark9L), cAt('dark', hoverL(dark9L), darkC9), darkH))
 
   const darkC11 = applyChromaFloor(brandC, DARK_STOP_11.chromaMultiplier, 10, darkFloorStrength)
-  dark.push(makeStop(11, DARK_STOP_11.rootL, darkC11, torsionedHue(darkH, DARK_STOP_11.rootL, dark9L, gOffPath)))
+  dark.push(makeStop(11, DARK_STOP_11.rootL, cAt('dark', DARK_STOP_11.rootL, darkC11), torsionedHue(darkH, DARK_STOP_11.rootL, dark9L, gOffPath)))
 
   const darkC12 = applyChromaFloor(brandC, DARK_STOP_12.chromaMultiplier, 11, darkFloorStrength)
-  dark.push(makeStop(12, DARK_STOP_12.rootL, darkC12, torsionedHue(darkH, DARK_STOP_12.rootL, dark9L, gOffPath)))
+  dark.push(makeStop(12, DARK_STOP_12.rootL, cAt('dark', DARK_STOP_12.rootL, darkC12), torsionedHue(darkH, DARK_STOP_12.rootL, dark9L, gOffPath)))
 
   // Dark on-fill is black-first — white only when black is genuinely
   // too weak on the fill.
@@ -588,8 +602,8 @@ export function generateScale(
     if (contrastRatio(1.0, wcagY(dark[8].L, dark[8].C, dark[8].H)) < 4.5) {
       // search to 4.6 — hex rounding must never land below 4.5
       const compliantL = findLForContrast(dark[8].L, darkC9, darkH, 1.0, 4.6)
-      dark[8] = makeStop(9, compliantL, darkC9, darkH)
-      dark[9] = makeStop(10, hoverL(compliantL), darkC9, darkH)
+      dark[8] = makeStop(9, compliantL, cAt('dark', compliantL, darkC9), darkH)
+      dark[9] = makeStop(10, hoverL(compliantL), cAt('dark', hoverL(compliantL), darkC9), darkH)
     }
   }
 
@@ -611,7 +625,7 @@ export function generateScale(
     // ACTUAL rendered chroma (vivid warms like Chai blow past the gamut here,
     // and an unclamped check would mis-target the white edge).
     const lightHlC = (l: number, hh: number) =>
-      clampChromaToGamut(l, hlLadderC + u * (brandSat * HIGHLIGHT_LIGHT.satFraction * maxChromaAt(l, hh) - hlLadderC), hh)
+      clampChromaToGamut(l, cAt('light', l, hlLadderC + u * (brandSat * HIGHLIGHT_LIGHT.satFraction * maxChromaAt(l, hh) - hlLadderC)), hh)
     // A highlight rung: hue + chroma from the ladder math, then darkened to
     // hold white (every hue). Chroma depends on L, so enforcement re-searches
     // to convergence — searching once and recomputing C drifts off-target
@@ -642,7 +656,7 @@ export function generateScale(
 
     // Dark: pin the same target in the dark hue, saturated like the dark fill.
     const darkHueAt = (l: number) => torsionedHue(darkH, l, dark9L, gOffPath)
-    const darkHlC = (l: number, h: number) => clampChromaToGamut(l, brandC, h)
+    const darkHlC = (l: number, h: number) => clampChromaToGamut(l, cAt('dark', l, brandC), h)
     const dhl9 = rung(13, HIGHLIGHT_DARK.rootL, true, darkHueAt, darkHlC)
     const dhl10 = rung(14, hoverL(dhl9.L), false, darkHueAt, darkHlC)
     dark.push(dhl9, dhl10)
