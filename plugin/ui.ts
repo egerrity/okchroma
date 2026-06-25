@@ -107,11 +107,16 @@ function buildAndSend() {
       ? resolveBrand(accentHex, 'Accent', opts).scale
       : null
 
-    // The neutral is generated per brand (tinted to the brand hue) at the chosen
-    // level — keyed in the shared primitive by level + hue so two brands with
-    // different hues don't collapse onto one neutral. (A fuller per-brand dedup
-    // model is a follow-up; 2b keeps the shared message shape.)
-    const neutralKey = `${neutralLevel}-h${Math.round(r.scale.brandH)}`
+    // The neutral's shared-primitive key. 'pure' is a true grey (C=0), identical
+    // for every brand — so it's keyed hue-INDEPENDENTLY as one shared
+    // system/neutral/pure that the plugin reuses across brands (the backend
+    // writes shared prims refresh=false ⇒ an existing path is reused, never
+    // recreated) instead of duplicating an identical grey ramp per brand (heavy
+    // in Figma). The tinted levels genuinely vary by hue, so they key by level +
+    // hue (same-hue brands still dedup onto one primitive).
+    const neutralKey = neutralLevel === 'pure'
+      ? 'pure'
+      : `${neutralLevel}-h${Math.round(r.scale.brandH)}`
     // Per-signal variant key for Foundations dedup. An override note reads
     // "warning → lemon" / "success → teal-side"; we key on the right-hand side
     // (lemon, teal-side, …). No override → the canonical ramp, keyed 'base'.
