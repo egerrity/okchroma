@@ -16,7 +16,6 @@
 // one shape covering success and info too.
 
 import { generateScale, type GeneratedScale } from './colorEngine'
-import { darkChromaReduce } from './darkReduce'
 import { ACCENT_DARK_STOPS } from './stopTable'
 import { checkCollision } from './collision'
 import type { SignalDef } from './signals'
@@ -76,7 +75,6 @@ function swapScale(baseHex: string, def: SignalDef): GeneratedScale {
     darkStops: ACCENT_DARK_STOPS,
     darkFillMinL: def.darkFillMinL,
     enforceOnFillContrast: true,
-    darkChromaReduce,
   })
 }
 
@@ -90,7 +88,6 @@ function lemonScale(def: SignalDef): GeneratedScale {
     subtleChromaScale: def.subtleChromaBoost,
     darkStops: ACCENT_DARK_STOPS,
     enforceOnFillContrast: true,
-    darkChromaReduce,
   })
 }
 

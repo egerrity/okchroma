@@ -2,11 +2,11 @@
 // Validates brand/secondary highlight-1/2 (the sim covered LIGHT only; this is
 // where the DARK extension gets checked) across the real fleet:
 //   - monotonic surface: light accent-8 > hl9 > hl10; dark accent-8 < hl9
-//   - hover guard: hl9.L > hl10.L in BOTH modes (pair never inverts)
-//   - white-text holds WCAG >= 4.5 for every non-yellow hue, both modes
-//   - yellow-band hues correctly keep black text (white may fail there)
+//   - hover guard: light hl9.L > hl10.L (white-text chip darkens on hover);
+//     dark black-flip hl10.L > hl9.L (black-text chip lightens on hover)
+//   - on-highlight polarity: light = white, dark = BLACK (the blessed dark
+//     black-flip highlight) — each actually passes WCAG >= 4.5 on its fill
 //   - identity === input hex
-//   - on-highlight polarity actually passes WCAG >= 4.5 on its fill, both modes
 // Reports numbers first (so dark is inspectable), then PASS/FAIL.
 
 import { BRANDS } from '../src/brands'
@@ -42,7 +42,7 @@ for (const slug of Object.keys(SECONDARIES)) {
 }
 
 console.log(`=== highlight-1/2 across ${items.length} brand+secondary ramps ===`)
-console.log(`(yellow band = within ${YELLOW_L_LIFT.sigmaDeg}° of H${YELLOW_L_LIFT.centerH}; flagged for reference — the highlight now holds white for every hue)\n`)
+console.log(`(yellow band = within ${YELLOW_L_LIFT.sigmaDeg}° of H${YELLOW_L_LIFT.centerH}; flagged for reference — highlight holds white in light, flips to black in dark)\n`)
 console.log('  ramp                    H     yel | LIGHT hl9            hl10           | DARK  hl9            hl10')
 for (const { name, hex, scale } of items) {
   const el = scale.light.slice(12), ed = scale.dark.slice(12)
@@ -54,12 +54,17 @@ for (const { name, hex, scale } of items) {
   // monotonic + hover guard
   ok(a8L > l9.L && l9.L > l10.L, `${name}: light surface not monotonic (a8 ${f(a8L)} > hl9 ${f(l9.L)} > hl10 ${f(l10.L)})`)
   ok(a8Ld < d9.L, `${name}: dark hl9 (${f(d9.L)}) not above accent-8 (${f(a8Ld)})`)
-  ok(d9.L > d10.L, `${name}: dark hover inverted (hl9 ${f(d9.L)} <= hl10 ${f(d10.L)})`)
+  // Dark highlight flips to a BLACK-text chip pinned at the legibility floor
+  // (~L0.58); its hover LIGHTENS to stay black-legible. Inverse of light, where
+  // the white-text chip darkens. Guard: pair stays distinct in its own direction.
+  ok(d10.L > d9.L, `${name}: dark black-flip hover not lighter (hl9 ${f(d9.L)} >= hl10 ${f(d10.L)})`)
 
-  // white-text holds for EVERY hue (the universal rung darkens to the 4.6 edge,
-  // incl. yellow), both modes. The WCAG check below proves it actually clears.
+  // on-highlight polarity differs by mode now: LIGHT holds white for every hue
+  // (the rung darkens to the 4.6 edge, incl. yellow); DARK flips to black (the
+  // blessed black-flip chip). The WCAG check below proves each clears on its fill.
   const polL = scale.onHighlightIsWhite, polD = scale.onHighlightIsWhiteDark
-  ok(polL === true && polD === true, `${name}: on-highlight not universally white (the rung must hold white for every hue)`)
+  ok(polL === true, `${name}: light on-highlight should be white (got ${polL})`)
+  ok(polD === false, `${name}: dark on-highlight should flip to black (got white) — blessed black-flip highlight`)
   for (const [mode, s, pol] of [['light', l9, polL], ['dark', d9, polD]] as const) {
     const passes = pol ? whiteWcag(s) >= 4.5 : blackWcag(s) >= 4.5
     ok(passes, `${name} ${mode}: on-highlight ${pol ? 'white' : 'black'} fails WCAG on hl9 (${pol ? whiteWcag(s).toFixed(2) : blackWcag(s).toFixed(2)}:1)`)

@@ -16,6 +16,7 @@ import {
   LIGHT_STOPS,
   LIGHT_BASE_C,
   DARK_STOPS,
+  DARK_NEUTRAL_L,
   type StopSpec,
   STOP_11,
   STOP_12,
@@ -35,6 +36,7 @@ import {
   REFERENCE_H,
 } from './stopTable'
 import { neutralChromaCurve, type NeutralLevel } from './neutralCurve'
+import { darkCtaTrim } from './darkChromaCurve'
 
 // Re-export so callers can pull the neutral level alongside generateNeutralScale.
 export type { NeutralLevel } from './neutralCurve'
@@ -358,16 +360,13 @@ export interface GenerateOptions {
   // every chroma argument falls through to its native value ⇒ byte-identical
   // for brand/secondary/signals.
   chromaCurve?: (L: number, mode: 'light' | 'dark') => number
-  // Dark-only chroma reduction (dark mode reads LOUDER than light; this pulls it
-  // back). A terminal multiply applied to each DARK stop's rendered chroma, keyed
-  // by lightness, that stop's rendered chroma, AND hue — so the cut can be
-  // hue-aware (blue/violet glow, gamut won't clamp them) and chroma-aware (loud
-  // saturated fills cut harder than already-muted stops). Lightness is NEVER
-  // touched. The highlight rung is exempt (its own hold-white machinery); the
-  // generated neutral is exempt (it never sets this). Unset ⇒ every dark chroma
-  // falls through unchanged ⇒ byte-identical. Reduce is expected to return a
-  // factor in (0,1]; clamping/flooring lives in the supplied curve.
-  darkChromaReduce?: (L: number, C: number, H: number) => number
+  // Phase-3 dark chroma curve (greenfield). When set, REPLACES the proportional
+  // dark chroma (subtleC × chromaMultiplier) at the dark SURFACE (1–8) and TEXT
+  // (11/12) stops with an absolute peak×shape×cap value (see darkChromaCurve.ts).
+  // Dark-only — light is untouched; the fill (9/10) keeps brandC identity. makeStop
+  // gamut-clamps after. Unset ⇒ every dark chroma falls through unchanged ⇒
+  // byte-identical.
+  darkChromaCurve?: (L: number, H: number, brandC: number) => number
 }
 
 export function generateScale(
@@ -386,20 +385,6 @@ export function generateScale(
   // identity ⇒ byte-identical; set ⇒ the curve drives chroma, gamut-clamped.
   const cAt = (mode: 'light' | 'dark', L: number, nativeC: number): number =>
     opts?.chromaCurve ? opts.chromaCurve(L, mode) : nativeC
-  // Dark-stop chroma with the optional dark-only reduction layered on top of cAt.
-  // Reduce sees the RENDERED chroma (post-cAt) so a chroma-aware curve targets the
-  // stops that are actually loud. Unset ⇒ returns cAt verbatim ⇒ byte-identical.
-  // makeStop gamut-clamps after, as always. Highlight rung does NOT use this.
-  const darkCAt = (L: number, H: number, C: number): number => {
-    const c = cAt('dark', L, C)
-    return opts?.darkChromaReduce ? c * opts.darkChromaReduce(L, c, H) : c
-  }
-  // The muted-rose collider fill is already deliberately muted (×0.55, for
-  // red↔error separation) — the quietest fill in the system, not a loudness
-  // offender — so it is EXEMPT from the dark reduction. Every other fill (and the
-  // subtle/text stops) goes through darkCAt. (Owner decision 2026-06-25.)
-  const fillCAt = (L: number, H: number, C: number): number =>
-    opts?.darkColliderFill === 'muted' ? cAt('dark', L, C) : darkCAt(L, H, C)
   const archetype = forcedArchetype ?? classifyArchetype(brandL)
   const scaleL = forcedArchetype ? medianLForArchetype(forcedArchetype) : brandL
   // Dark-floor strength: 0 at/below hue-noise chroma (gray ladder), full
@@ -522,9 +507,6 @@ export function generateScale(
       : brandH
 
   const darkStops = opts?.darkStops ?? DARK_STOPS
-  const darkRefY = darkStops.map(({ rootL, chromaMultiplier }) =>
-    wcagY(rootL, brandC * chromaMultiplier, REFERENCE_H)
-  )
   const light: ColorStop[] = []
 
   for (let i = 0; i < LIGHT_STOPS.length; i++) {
@@ -593,31 +575,44 @@ export function generateScale(
   // Computed before stops 1–8: the dark fill L is the relative spine's
   // anchor for the whole dark ramp (the L where the pin holds darkH exact).
   let dark9L = Math.max(scaleL, opts?.darkFillMinL ?? DARK_STOP_9_MIN_L)
-  let darkC9 = brandC
+  // cta keeps brand identity but trims gently on bloom-prone hues under the curve.
+  let darkC9 = opts?.darkChromaCurve ? brandC * darkCtaTrim(darkH) : brandC
   if (opts?.darkColliderFill === 'muted') {
     dark9L = DARK_COLLIDER_MUTED_L
     darkC9 = brandC * DARK_COLLIDER_MUTED_CHROMA_SCALE
   }
 
+  // Lightness is the blessed DARK_NEUTRAL_L scaffold, emitted DIRECTLY (the old
+  // darkRefY blue-referenced luminance solve is retired). Hue torsion still runs
+  // — it rotates hue at the fixed L, it never moves L. Chroma rides
+  // darkStops[i].chromaMultiplier for now (Phase 3 rebuilds the chroma model; the
+  // darkStops rootL column is now vestigial).
   for (let i = 0; i < darkStops.length; i++) {
     const { chromaMultiplier } = darkStops[i]
-    const C = applyChromaFloor(subtleC, chromaMultiplier, i, darkFloorStrength)
-    let L = findLForY(darkRefY[i], C, darkH)
+    const L = DARK_NEUTRAL_L[i]
     const H = torsionedHue(darkH, L, dark9L, gOffPath)
-    if (H !== darkH) L = findLForY(darkRefY[i], C, H)
-    dark.push(makeStop(i + 1, L, darkCAt(L, H, C), H))
+    const C = opts?.darkChromaCurve
+      ? opts.darkChromaCurve(L, H, brandC)
+      : applyChromaFloor(subtleC, chromaMultiplier, i, darkFloorStrength)
+    dark.push(makeStop(i + 1, L, cAt('dark', L, C), H))
   }
 
-  dark.push(makeStop(9, dark9L, fillCAt(dark9L, darkH, darkC9), darkH))
-  dark.push(makeStop(10, hoverL(dark9L), fillCAt(hoverL(dark9L), darkH, darkC9), darkH))
+  dark.push(makeStop(9, dark9L, cAt('dark', dark9L, darkC9), darkH))
+  dark.push(makeStop(10, hoverL(dark9L), cAt('dark', hoverL(dark9L), darkC9), darkH))
 
-  const darkC11 = applyChromaFloor(brandC, DARK_STOP_11.chromaMultiplier, 10, darkFloorStrength)
-  const darkH11 = torsionedHue(darkH, DARK_STOP_11.rootL, dark9L, gOffPath)
-  dark.push(makeStop(11, DARK_STOP_11.rootL, darkCAt(DARK_STOP_11.rootL, darkH11, darkC11), darkH11))
+  const dark11L = DARK_NEUTRAL_L[10]
+  const darkH11 = torsionedHue(darkH, dark11L, dark9L, gOffPath)
+  const darkC11 = opts?.darkChromaCurve
+    ? opts.darkChromaCurve(dark11L, darkH11, brandC)
+    : applyChromaFloor(brandC, DARK_STOP_11.chromaMultiplier, 10, darkFloorStrength)
+  dark.push(makeStop(11, dark11L, cAt('dark', dark11L, darkC11), darkH11))
 
-  const darkC12 = applyChromaFloor(brandC, DARK_STOP_12.chromaMultiplier, 11, darkFloorStrength)
-  const darkH12 = torsionedHue(darkH, DARK_STOP_12.rootL, dark9L, gOffPath)
-  dark.push(makeStop(12, DARK_STOP_12.rootL, darkCAt(DARK_STOP_12.rootL, darkH12, darkC12), darkH12))
+  const dark12L = DARK_NEUTRAL_L[11]
+  const darkH12 = torsionedHue(darkH, dark12L, dark9L, gOffPath)
+  const darkC12 = opts?.darkChromaCurve
+    ? opts.darkChromaCurve(dark12L, darkH12, brandC)
+    : applyChromaFloor(brandC, DARK_STOP_12.chromaMultiplier, 11, darkFloorStrength)
+  dark.push(makeStop(12, dark12L, cAt('dark', dark12L, darkC12), darkH12))
 
   // Dark on-fill is black-first — white only when black is genuinely
   // too weak on the fill.
@@ -629,13 +624,10 @@ export function generateScale(
   // a dark background the way a 0.2 one does.
   if (opts?.enforceOnFillContrast && onFillTextIsWhiteDark) {
     if (contrastRatio(1.0, wcagY(dark[8].L, dark[8].C, dark[8].H)) < 4.5) {
-      // search to 4.6 — hex rounding must never land below 4.5. Solve against the
-      // REDUCED rendered chroma (dark[8].C), not the pre-reduction darkC9, so the
-      // post-reduction fill genuinely clears 4.5 (darkChromaReduce can shave ~0.05
-      // off a fill's white contrast). Unset ⇒ dark[8].C === darkC9 ⇒ byte-identical.
+      // search to 4.6 — hex rounding must never land below 4.5.
       const compliantL = findLForContrast(dark[8].L, dark[8].C, darkH, 1.0, 4.6)
-      dark[8] = makeStop(9, compliantL, fillCAt(compliantL, darkH, darkC9), darkH)
-      dark[9] = makeStop(10, hoverL(compliantL), fillCAt(hoverL(compliantL), darkH, darkC9), darkH)
+      dark[8] = makeStop(9, compliantL, cAt('dark', compliantL, darkC9), darkH)
+      dark[9] = makeStop(10, hoverL(compliantL), cAt('dark', hoverL(compliantL), darkC9), darkH)
     }
   }
 
@@ -686,17 +678,34 @@ export function generateScale(
     const hl10 = rung(14, hoverL(hl9.L), false, lightHueAt, lightHlC) // darker ⇒ still clears white
     light.push(hl9, hl10)
 
-    // Dark: pin the same target in the dark hue, saturated like the dark fill.
     const darkHueAt = (l: number) => torsionedHue(darkH, l, dark9L, gOffPath)
-    const darkHlC = (l: number, h: number) => clampChromaToGamut(l, cAt('dark', l, brandC), h)
-    const dhl9 = rung(13, HIGHLIGHT_DARK.rootL, true, darkHueAt, darkHlC)
-    const dhl10 = rung(14, hoverL(dhl9.L), false, darkHueAt, darkHlC)
-    dark.push(dhl9, dhl10)
-
-    // on-highlight polarity: always white — the rung darkens every hue (incl.
-    // yellow) to hold it; the vivid yellow lives in the cta, not the highlight.
-    onHighlightIsWhite = true
-    onHighlightIsWhiteDark = true
+    // Dark highlight chroma TARGET: the light rung's baseC construction in the dark
+    // hue (predictable moderate), not the full brand chroma.
+    const darkHlTargetC = (l: number, h: number) =>
+      clampChromaToGamut(l, hlLadderC + u * (brandSat * HIGHLIGHT_LIGHT.satFraction * maxChromaAt(l, h) - hlLadderC), h)
+    if (opts?.darkChromaCurve) {
+      // Dark highlight FLIPS to BLACK on-text: a tinted chip held at the black-
+      // legibility lightness floor, carrying the MOST chroma that still clears black
+      // 4.5 (reduce CHROMA, not lightness — so it stays as un-light and as saturated
+      // as black allows). Predictable, draws attention, doesn't scream.
+      const flipHl = (stop: number, L: number): ColorStop => {
+        const H = darkHueAt(L)
+        // Midway between a surface-y tint and the full baseC rung — a moderate
+        // tinted chip; reduce only if black 4.5 needs it.
+        let C = 0.7 * darkHlTargetC(L, H)
+        for (let p = 0; p < 12 && contrastRatio(wcagY(L, C, H), 0) < 4.5; p++) C *= 0.92
+        return makeStop(stop, L, C, H)
+      }
+      dark.push(flipHl(13, 0.58), flipHl(14, 0.62))
+      onHighlightIsWhiteDark = false
+    } else {
+      // Legacy (no curve): the white-darkened rung from rootL.
+      const darkHlC = (l: number, h: number) => clampChromaToGamut(l, cAt('dark', l, brandC), h)
+      const dhl9 = rung(13, HIGHLIGHT_DARK.rootL, true, darkHueAt, darkHlC)
+      dark.push(dhl9, rung(14, hoverL(dhl9.L), false, darkHueAt, darkHlC))
+      onHighlightIsWhiteDark = true
+    }
+    onHighlightIsWhite = true // light highlight always holds white
   }
 
   return {

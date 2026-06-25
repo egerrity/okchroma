@@ -74,8 +74,8 @@ export const BRANDS: Brand[] = [
   b('Honey Lemon',      '#FDCB6E'),                     // light warm pastel (synthetic)
 ]
 
-// Exercise the exact flag and archetypeOverride on specific brands
-BRANDS.find(b => b.slug === 'turmeric-latte')!.exact = true
+// Exercise the archetypeOverride escape hatch on a specific brand. (No brand
+// ships `exact` — exact is an API-level escape hatch, not a fleet default.)
 BRANDS.find(b => b.slug === 'rooibos')!.archetypeOverride = 'rich'
 
 export const DEMO_BRANDS = BRANDS.filter(b => b.demo)

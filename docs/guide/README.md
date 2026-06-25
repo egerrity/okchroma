@@ -1,6 +1,11 @@
 # OKChroma — engine guide
 
-The trusted account of the color engine: vocabulary, pipeline order, base structure,
+> ⚠️ **Source of truth is [`../engine-spec/ENGINE-SPEC.md`](../engine-spec/ENGINE-SPEC.md), not this
+> guide.** These pages are human-facing product docs that currently **lag** the engine spec and are
+> being aligned (ENGINE-SPEC Phase 4). Until then, do **not** ground engineering decisions here —
+> read ENGINE-SPEC and reconcile.
+
+This is the designer/engineer guide: vocabulary, pipeline order, base structure,
 and per-palette deviations. Two tracks:
 
 - **Engineering** — one file per topic (mechanic, formula, source pointers, example).

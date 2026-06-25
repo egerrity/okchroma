@@ -83,6 +83,23 @@ export const ACCENT_DARK_STOPS: StopSpec[] = [
   { rootL: 0.54,  chromaMultiplier: 0.84 }, // 8
 ]
 
+// ── GREENFIELD dark mode (Stage 10, owner-blessed 2026-06-25) ────────────────
+// The UNIVERSAL dark lightness scaffold: every palette's dark stops 1–8 + 11/12
+// sit at these Ls (chroma + hue vary by brand; lightness is shared). Radix's
+// compressed deep floor (1–6) spliced to Material 3's airy crown (7–12), with
+// the low-contrast text pulled to 0.80 so cool links keep chroma, and a soft
+// 0.93 ceiling (anti-halation). Blessed on a dark canvas; clears APCA Lc65/Lc90
+// over a step-2 bg where the old engine failed (text Lc57, focus border 2.88).
+// Emitted DIRECTLY (the old darkRefY blue-referenced luminance solve is retired)
+// — so DARK_STOPS / ACCENT_DARK_STOPS rootL columns are now VESTIGIAL (only the
+// chromaMultiplier column still feeds chroma, until the Phase-3 chroma rebuild).
+// Stops 9/10 (0.66/0.72) are the neutral-solid target — NOT yet wired; dark
+// fills still ride the dark9L lift until the fill-pin fork is decided.
+export const DARK_NEUTRAL_L = [
+  0.178, 0.213, 0.252, 0.285, 0.313, 0.348, // 1–6  compressed deep floor (Radix)
+  0.42,  0.55,  0.66,  0.72,  0.80,  0.93,  // 7–12 airy crown (Material), text-low 0.80
+]
+
 // Stop 11 — accent text / links: luminance-anchored at the dark root,
 // with AA against stop 2 as a BOUND (take the darker of the two).
 // Until 2026-06-10 it anchored at exactly 4.5:1 — the lightest legal
