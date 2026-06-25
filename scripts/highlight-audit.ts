@@ -72,19 +72,28 @@ for (const { name, hex, scale } of items) {
   console.log(`  ${name.padEnd(22)} ${scale.brandH.toFixed(0).padStart(3)}   ${yflag}  | ${hx(l9)} L${f(l9.L)} w${whiteWcag(l9).toFixed(1)}  ${hx(l10)} L${f(l10.L)} | ${hx(d9)} L${f(d9.L)} w${whiteWcag(d9).toFixed(1)}  ${hx(d10)} L${f(d10.L)}`)
 }
 
-// ── neutral cta + universal on-text (neutral + signals) ──────────────────────
-const neutral = generateNeutralScale()
-const nctaL = neutral.light.slice(12)[0], nctaD = neutral.dark.slice(12)[0]
-console.log(`\n=== neutral cta ===`)
-console.log(`  light ${hx(nctaL)} L${f(nctaL.L)} white ${whiteWcag(nctaL).toFixed(1)}:1 | dark ${hx(nctaD)} L${f(nctaD.L)} black ${blackWcag(nctaD).toFixed(1)}:1`)
-ok(nctaL.L < 0.2, `neutral cta light not near-black (L ${f(nctaL.L)})`)
-ok(nctaD.L > 0.85, `neutral cta dark not near-white (L ${f(nctaD.L)})`)
-ok(whiteWcag(nctaL) >= 4.5, `neutral cta light: white text fails (${whiteWcag(nctaL).toFixed(2)})`)
-ok(blackWcag(nctaD) >= 4.5, `neutral cta dark: black text fails (${blackWcag(nctaD).toFixed(2)})`)
-ok(nctaL.L < neutral.light[8].L, `neutral cta (${f(nctaL.L)}) not darker than highlight-1 (${f(neutral.light[8].L)})`)
-// neutral on-highlight passes on the gray highlight fill (stop 9), both modes
-ok((neutral.onHighlightIsWhite ? whiteWcag(neutral.light[8]) : blackWcag(neutral.light[8])) >= 4.5, `neutral on-highlight light fails on gray fill`)
-ok((neutral.onHighlightIsWhiteDark ? whiteWcag(neutral.dark[8]) : blackWcag(neutral.dark[8])) >= 4.5, `neutral on-highlight dark fails on gray fill`)
+// ── neutral (now GENERATED per brand, brand-kind: cta = stop 9, highlight = the
+// rung 13/14). cta is the subtle near-white button in BOTH modes — it does not
+// flip (the owner-accepted non-flipping cta). highlight holds white like every
+// other rung. Checked across representative hues. ──
+const NEUTRAL_HUES = [30, 90, 143, 210, 270, 320]
+const neutralByHue = NEUTRAL_HUES.map(h => ({ h, s: generateNeutralScale(h, 'default') }))
+console.log(`\n=== neutral cta (stop 9) + highlight (rung) — default level, ${NEUTRAL_HUES.length} hues ===`)
+for (const { h, s } of neutralByHue) {
+  const ctaL = s.light[8], ctaD = s.dark[8]    // stop 9 = cta-1
+  const hlL = s.light[12], hlD = s.dark[12]    // rung 13 = highlight-1
+  // cta = subtle near-white button, both modes (does NOT flip)
+  ok(ctaL.L > 0.85, `neutral h${h} cta light not near-white (L ${f(ctaL.L)})`)
+  ok(ctaD.L > 0.85, `neutral h${h} cta dark not near-white (L ${f(ctaD.L)})`)
+  // on-cta passes WCAG on the near-white cta, both modes
+  ok((s.onFillTextIsWhite ? whiteWcag(ctaL) : blackWcag(ctaL)) >= 4.5, `neutral h${h} on-cta light fails`)
+  ok((s.onFillTextIsWhiteDark ? whiteWcag(ctaD) : blackWcag(ctaD)) >= 4.5, `neutral h${h} on-cta dark fails`)
+  // highlight holds white, both modes (universal rung)
+  ok(s.onHighlightIsWhite === true && s.onHighlightIsWhiteDark === true, `neutral h${h}: highlight not universally white`)
+  ok(whiteWcag(hlL) >= 4.5, `neutral h${h} light: highlight white fails WCAG (${whiteWcag(hlL).toFixed(2)})`)
+  ok(whiteWcag(hlD) >= 4.5, `neutral h${h} dark: highlight white fails WCAG (${whiteWcag(hlD).toFixed(2)})`)
+  console.log(`  h${String(h).padStart(3)}  cta ${hx(ctaL)} L${f(ctaL.L)}/${hx(ctaD)} L${f(ctaD.L)}  |  hl ${hx(hlL)} w${whiteWcag(hlL).toFixed(1)}/${hx(hlD)} w${whiteWcag(hlD).toFixed(1)}`)
+}
 
 // signals: on-highlight (= on-fill polarity) must pass on stop 9 both modes;
 // and a signal must carry NO cta/highlight ext (the "no error button" rule).
@@ -105,7 +114,8 @@ const TOL = 0.015
 const snapshot = (): Record<string, number[]> => {
   const o: Record<string, number[]> = {}
   for (const { name, scale } of items) o[name] = [...scale.light.slice(12), ...scale.dark.slice(12)].flatMap(s => [s.L, s.C, s.H])
-  o['neutral'] = [...neutral.light.slice(12), ...neutral.dark.slice(12)].flatMap(s => [s.L, s.C, s.H])
+  // Neutral is now per-brand-hue — snapshot each representative hue's rung pair.
+  for (const { h, s } of neutralByHue) o[`neutral-h${h}`] = [...s.light.slice(12), ...s.dark.slice(12)].flatMap(st => [st.L, st.C, st.H])
   return o
 }
 if (process.argv.includes('--bless')) {

@@ -2,26 +2,24 @@
 // Roast), exercising the same merge the demo handler does. Checks structure +
 // spot values against ground truth, then discards output (verification only).
 
-import { generateNeutralScale } from '../src/engine/colorEngine'
 import { BRANDS } from '../src/brands'
 import { SECONDARIES } from '../src/secondaries'
 import { SIGNALS } from '../src/engine/signals'
 import { resolveBrand, SIGNAL_SCALES } from '../src/engine/resolve'
-import { toHex } from '../src/engine/cssRender'
 import { themeToFigma } from '../src/engine/figmaRender'
 
 const brand = BRANDS.find(b => b.slug === 'dark-roast')!
 const r = resolveBrand(brand.hex, brand.name, { exact: brand.exact, archetypeOverride: brand.archetypeOverride, style: brand.style })
 const sec = SECONDARIES[brand.slug]
 const accent = sec ? resolveBrand(sec, `${brand.name} accent`, { exact: brand.exact, style: brand.style }).scale : null
-const neutral = generateNeutralScale()
-const neutralHexes = { light: neutral.light.slice(0, 12).map(s => toHex(s.r, s.g, s.b)), dark: neutral.dark.slice(0, 12).map(s => toHex(s.r, s.g, s.b)) }
 const signals = SIGNALS.map(s => {
   const o = r.signalOverrides.find(x => x.name === s.name)
   return { name: s.name, scale: o?.scale ?? SIGNAL_SCALES.get(s.name)!.scale }
 })
 
-const figma = themeToFigma(r, { accent, neutral: neutralHexes, signals })
+// The neutral is now generated per brand (tinted to the brand hue) at a level —
+// no longer passed as hex strings.
+const figma = themeToFigma(r, { accent, neutralLevel: 'default', signals })
 
 const fails: string[] = []
 const ok = (cond: boolean, msg: string) => { if (!cond) fails.push(msg) }

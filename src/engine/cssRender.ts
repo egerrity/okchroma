@@ -2,9 +2,8 @@
 // build script (node, brands.css) and the demo's any-color tab (browser,
 // injected <style>) so both ship byte-identical rules.
 
-import { generateIllustrationScale, generateNeutralScale, type GeneratedScale, type ColorStop } from './colorEngine'
+import { generateIllustrationScale, generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel } from './colorEngine'
 import { stopTokenName, onFillTokenName, tokenOrder, type RampKind } from './tokenNames'
-import { contrastRatio, wcagY } from './constraints'
 import type { ResolvedBrand } from './resolve'
 
 export function toHex(r: number, g: number, b: number): string {
@@ -17,6 +16,41 @@ export function stopsToVars(stops: ColorStop[], prefix: string, kind: RampKind):
     .sort((a, b) => tokenOrder(stopTokenName(a.stop, kind)) - tokenOrder(stopTokenName(b.stop, kind)))
     .map(s => `  --${prefix}-${stopTokenName(s.stop, kind)}: ${toHex(s.r, s.g, s.b)};`)
     .join('\n')
+}
+
+const onColor = (white: boolean) => (white ? '#ffffff' : '#000000')
+
+// A brand-kind ramp body for one mode: the surface + text stops, the
+// highlight-13/14 ext pair (Stage 2), and the on-cta / on-highlight text
+// tokens. identity is mode-invariant — the caller emits it once (the neutral
+// has none). Used for the brand, the (real) secondary, AND the generated
+// neutral — all three are brand-kind (cta = stop 9, highlight = rung).
+function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' | 'dark'): string[] {
+  const stops = mode === 'light' ? s.light : s.dark
+  const onCta = mode === 'light' ? s.onFillTextIsWhite : s.onFillTextIsWhiteDark
+  const onHl = mode === 'light' ? s.onHighlightIsWhite : s.onHighlightIsWhiteDark
+  return [
+    stopsToVars(stops, prefix, 'brand'),
+    `  --${prefix}-${onFillTokenName('brand')}: ${onColor(onCta)};`,
+    `  --${prefix}-${onFillTokenName('neutral')}: ${onColor(onHl ?? true)};`,
+  ]
+}
+
+// The neutral as its own light+dark block under `selector` — the demo's
+// brandless contexts (the app chrome :root, where there is no [data-brand]
+// theme to carry a per-brand neutral) reuse this. The product emits the
+// neutral inline per brand (see brandCss); this is the same brand-kind body,
+// just scoped to an arbitrary selector.
+export function neutralCss(selector: string, brandH: number, level: NeutralLevel = 'default'): string {
+  const s = generateNeutralScale(brandH, level)
+  return [
+    `${selector} {`,
+    ...brandKindBody('neutral', s, 'light'),
+    `}`,
+    `${selector}[data-theme="dark"] {`,
+    ...brandKindBody('neutral', s, 'dark'),
+    `}`,
+  ].join('\n')
 }
 
 export function annotationNote(r: ResolvedBrand, opts?: { archetypeOverride?: string }): string {
@@ -43,7 +77,8 @@ export function brandCss(
   displayName: string,
   r: ResolvedBrand,
   accent?: GeneratedScale | null,
-  noteSuffix = ''
+  noteSuffix = '',
+  neutralLevel: NeutralLevel = 'default'
 ): string {
   const { scale } = r
   const note = annotationNote(r) + noteSuffix
@@ -72,22 +107,11 @@ export function brandCss(
     `  --illus-alt-soft-2c: var(--illus-alt-2);`,
   ]
 
-  const onColor = (white: boolean) => (white ? '#ffffff' : '#000000')
+  // The neutral is now GENERATED per brand (tinted toward the brand hue), so it
+  // rides inside this brand's block as a brand-kind ramp — no longer a shared
+  // global :root block.
+  const nScale = generateNeutralScale(scale.brandH, neutralLevel)
 
-  // A brand-kind ramp body for one mode: the surface + text stops, the
-  // highlight-9/10 ext pair (Stage 2), and the on-cta / on-highlight text
-  // tokens. identity is mode-invariant — the caller emits it once in the light
-  // block. Used for both the brand and the (real) secondary ramp.
-  const brandKindBody = (prefix: string, s: GeneratedScale, mode: 'light' | 'dark'): string[] => {
-    const stops = mode === 'light' ? s.light : s.dark
-    const onCta = mode === 'light' ? s.onFillTextIsWhite : s.onFillTextIsWhiteDark
-    const onHl = mode === 'light' ? s.onHighlightIsWhite : s.onHighlightIsWhiteDark
-    return [
-      stopsToVars(stops, prefix, 'brand'),
-      `  --${prefix}-${onFillTokenName('brand')}: ${onColor(onCta)};`,
-      `  --${prefix}-${onFillTokenName('neutral')}: ${onColor(onHl ?? true)};`,
-    ]
-  }
   // When no secondary ramp is given, secondary mirrors brand var-for-var
   // (stops, highlight ext, and both on-text tokens).
   const mirrorBody = (prefix: string, mode: 'light' | 'dark'): string[] => {
@@ -118,53 +142,15 @@ export function brandCss(
     ...illusVars,
     ...accentLight,
     secondaryIdentity,
+    ...brandKindBody('neutral', nScale, 'light'),
     ...r.signalOverrides.map(o => stopsToVars(o.scale.light, o.name, 'neutral')),
     `}`,
     `[data-brand="${slug}"][data-theme="dark"] {`,
     ...brandKindBody('brand', scale, 'dark'),
     ...accentDark,
+    ...brandKindBody('neutral', nScale, 'dark'),
     ...r.signalOverrides.map(o => stopsToVars(o.scale.dark, o.name, 'neutral')),
     `}`,
   ].join('\n')
 }
 
-// Demo-only: render a chosen Radix neutral family (12 hex strings per mode) as
-// CSS vars under the REAL stopTokenName scheme (--neutral-paper-1 … -highlight-1
-// … -cta-1 … -ink). This mirrors the Figma path (figmaRender.neutralGroup) so the
-// preview matches the product. The cta button + on-text are family-independent (a
-// fixed gray sourced from the engine neutral scale), exactly as the export does.
-// (Replaces the old radixNeutralCss, which emitted the dead flat --neutral-1..12
-// names that nothing consumed — so family changes never showed in the demo.)
-export function neutralRadixCss(
-  selector: string,
-  hexes: { light: string[]; dark: string[] },
-): string {
-  const nScale = generateNeutralScale()
-  const onColor = (white: boolean) => (white ? '#ffffff' : '#000000')
-  const fillWantsWhite = (s: ColorStop) =>
-    contrastRatio(1.0, wcagY(s.L, s.C, s.H)) >= contrastRatio(wcagY(s.L, s.C, s.H), 0)
-
-  const block = (sel: string, fam: string[], mode: 'light' | 'dark'): string => {
-    const cta = (mode === 'light' ? nScale.light : nScale.dark).slice(12)
-    const onHl = (mode === 'light' ? nScale.onHighlightIsWhite : nScale.onHighlightIsWhiteDark) ?? false
-    const onCta = cta.length ? fillWantsWhite(cta[0]) : true
-    const vars = [
-      ...fam.map((hex, i) => ({ name: stopTokenName(i + 1, 'neutral'), hex })),
-      ...cta.map(s => ({ name: stopTokenName(s.stop, 'neutral'), hex: toHex(s.r, s.g, s.b) })),
-    ]
-      .sort((a, b) => tokenOrder(a.name) - tokenOrder(b.name))
-      .map(x => `  --neutral-${x.name}: ${x.hex};`)
-    return [
-      `${sel} {`,
-      ...vars,
-      `  --neutral-${onFillTokenName('brand')}: ${onColor(onCta)};`, // on-cta
-      `  --neutral-${onFillTokenName('neutral')}: ${onColor(onHl)};`, // on-highlight
-      `}`,
-    ].join('\n')
-  }
-
-  return [
-    block(selector, hexes.light, 'light'),
-    block(`${selector}[data-theme="dark"]`, hexes.dark, 'dark'),
-  ].join('\n')
-}

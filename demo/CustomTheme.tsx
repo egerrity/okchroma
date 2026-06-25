@@ -6,42 +6,36 @@ import {
 import { resolveBrand, SIGNAL_SCALES } from '../src/engine/resolve'
 import { checkAllCollisions } from '../src/engine/collision'
 import { SIGNALS } from '../src/engine/signals'
-import { brandCss, stopsToVars, toHex, neutralRadixCss } from '../src/engine/cssRender'
+import { brandCss, toHex } from '../src/engine/cssRender'
 import { themeToFigma } from '../src/engine/figmaRender'
 import { makeZip } from './zip'
-import { generateScale, generateNeutralScale, inRedBand } from '../src/engine/colorEngine'
+import { inRedBand, type NeutralLevel } from '../src/engine/colorEngine'
 import { wcagY, contrastRatio } from '../src/engine/constraints'
 import { HERO_ILLO } from './heroIllo'
 import {
   BanIcon, Segmented,
   normalizeHex, rybRotate,
-  NEUTRAL_PEAK, type RungMode, type AccentMode,
+  type RungMode, type AccentMode,
 } from './shared'
 import { TokenCards, type RampKind } from './TokenCards'
-import { closestNeutralFamily, RADIX_NEUTRALS, type NeutralFamily } from '../src/radixNeutrals'
 import { classifyArchetype } from '../src/engine/archetypes'
 import type { ResolvedBrand } from '../src/engine/resolve'
 
-// Neutrals are Radix's hand-tuned families, shipped verbatim — the menu
-// starts on the family matched to the brand, with tags marking the brand
-// and accent matches. 'branded' keeps the engine's intense-tint experiment.
-type NeutralChoice = NeutralFamily | 'branded'
-
-function NeutralSelect({ value, onChange, matchedBrand, matchedAccent }: {
-  value: NeutralChoice
-  onChange: (v: NeutralChoice) => void
-  matchedBrand: NeutralFamily
-  matchedAccent: NeutralFamily | null
+// The neutral is GENERATED from the brand hue (no more Radix families) — the
+// menu picks the tint LEVEL: pure (flat gray), default (the Radix-measured
+// tint), or branded (an amplified, intentionally-tinted neutral).
+function NeutralSelect({ value, onChange }: {
+  value: NeutralLevel
+  onChange: (v: NeutralLevel) => void
 }) {
-  const families: NeutralFamily[] = ['gray', 'mauve', 'slate', 'sage', 'olive', 'sand']
-  const tag = (f: NeutralFamily) =>
-    f === matchedBrand || f === matchedAccent ? ' 🪄' : ''
+  const levels: Array<[NeutralLevel, string]> = [
+    ['pure', 'Pure (gray)'],
+    ['default', 'Default (brand-tinted)'],
+    ['branded', 'Branded (intense tint)'],
+  ]
   return (
-    <select value={value} onChange={e => onChange(e.target.value as NeutralChoice)}>
-      {families.map(f => (
-        <option key={f} value={f}>{f[0].toUpperCase() + f.slice(1)}{tag(f)}</option>
-      ))}
-      <option value="branded">Branded (intense tint)</option>
+    <select value={value} onChange={e => onChange(e.target.value as NeutralLevel)}>
+      {levels.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
     </select>
   )
 }
@@ -62,8 +56,8 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   // Default = 'accented', Inverse = 'accented-inverse'. Init 'accented' so
   // adding an accent shows it immediately.
   const [accentMode, setAccentMode] = useState<AccentMode>('accented')
-  // null = auto: follow the brand match until the user explicitly picks
-  const [neutralChoice, setNeutralChoice] = useState<NeutralChoice | null>(null)
+  // Neutral tint level (the neutral is always generated from the brand hue now).
+  const [neutralLevel, setNeutralLevel] = useState<NeutralLevel>('default')
   const [view, setView] = useState<View>('palette')
 
   // Suggestions and the theme always derive from the last VALID hex, so a
@@ -96,8 +90,9 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
     const opts = rung === 'exact' ? { exact: true } : undefined
     const r = resolveBrand(primary, 'Custom brand', opts)
     const accent = secondary ? resolveBrand(secondary, 'Custom accent', opts).scale : null
-    return { r, accent, css: brandCss('custom', 'Custom brand', r, accent) }
-  }, [primary, secondary, rung])
+    // brandCss now emits the per-brand neutral too, at the chosen level.
+    return { r, accent, css: brandCss('custom', 'Custom brand', r, accent, '', neutralLevel) }
+  }, [primary, secondary, rung, neutralLevel])
 
   // The RECOMMENDED resolution, always — exact mode skips the rules, so the
   // checklist and toasts need to know what WOULD have fired to flag it red.
@@ -143,43 +138,9 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
     return list
   }, [primary, rung, rRec, secondary, accentCollisions])
 
-  const matchedBrand = useMemo(() => {
-    const s = generateScale(primary, 'x')
-    return closestNeutralFamily(s.brandH, s.brandC)
-  }, [primary])
-  const matchedAccent = useMemo(() => {
-    if (!secondary) return null
-    const s = generateScale(secondary, 'x')
-    return closestNeutralFamily(s.brandH, s.brandC)
-  }, [secondary])
-  const neutral: NeutralChoice = neutralChoice ?? matchedBrand
-
-  const neutralCss = useMemo(() => {
-    if (neutral === 'branded') {
-      const H = generateScale(primary, 'x').brandH
-      const scale = generateNeutralScale({ H, C: NEUTRAL_PEAK.branded })
-      return [
-        `[data-brand="custom"] {`, stopsToVars(scale.light, 'neutral', 'neutral'), `}`,
-        `[data-brand="custom"][data-theme="dark"] {`, stopsToVars(scale.dark, 'neutral', 'neutral'), `}`,
-      ].join('\n')
-    }
-    return neutralRadixCss('[data-brand="custom"]', RADIX_NEUTRALS[neutral])
-  }, [primary, neutral])
-
-  const overrideCss = computed.css + (neutralCss ? '\n' + neutralCss : '')
-
-  // Figma export — the SAME engine data the preview renders, emitted as
-  // Figma-native variable JSON (two mode files). The neutral mirrors the
-  // CHOSEN neutral so the export matches what's on screen: the branded scale
-  // when 'branded', else the Radix family's hexes.
-  const neutralHexes = useMemo<{ light: string[]; dark: string[] }>(() => {
-    if (neutral === 'branded') {
-      const scale = generateNeutralScale({ H: generateScale(primary, 'x').brandH, C: NEUTRAL_PEAK.branded })
-      const toHexes = (stops: typeof scale.light) => stops.map(s => toHex(s.r, s.g, s.b))
-      return { light: toHexes(scale.light.slice(0, 12)), dark: toHexes(scale.dark.slice(0, 12)) }
-    }
-    return RADIX_NEUTRALS[neutral]
-  }, [primary, neutral])
+  // brandCss already includes the per-brand neutral, so the injected CSS is the
+  // whole theme — no separate neutral block.
+  const overrideCss = computed.css
 
   const handleExportFigma = () => {
     // Merge base signals with this brand's per-signal overrides, so the export
@@ -188,7 +149,8 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
       const override = computed.r.signalOverrides.find(o => o.name === s.name)
       return { name: s.name, scale: override?.scale ?? SIGNAL_SCALES.get(s.name)!.scale }
     })
-    const figma = themeToFigma(computed.r, { accent: computed.accent, neutral: neutralHexes, signals })
+    // The neutral is generated per brand at the chosen level (matches the preview).
+    const figma = themeToFigma(computed.r, { accent: computed.accent, neutralLevel, signals })
     // One ZIP, not two downloads — browsers block multiple programmatic
     // downloads from a single click. The filenames inside become the Figma
     // mode names on import (Light / Dark).
@@ -265,7 +227,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
         <div className="ct-label">Neutral color</div>
         <div className="ct-field">
           <span className="ct-swatch" style={{ background: 'var(--neutral-highlight-1)' }} />
-          <NeutralSelect value={neutral} onChange={setNeutralChoice} matchedBrand={matchedBrand} matchedAccent={matchedAccent} />
+          <NeutralSelect value={neutralLevel} onChange={setNeutralLevel} />
         </div>
       </div>
 
@@ -416,7 +378,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
           <div className="ct-pane-main">
             {colorBlock('Primary scale', 'brand', 'brand', rRec, primary, primaryExtras)}
             {secondary && colorBlock('Secondary scale', 'secondary', 'brand', rRecAccent, secondary)}
-            {colorBlock(neutral === 'branded' ? 'Neutral scale — branded tint' : `Neutral scale — ${neutral} tint`, 'neutral', 'neutral', null, primary)}
+            {colorBlock(`Neutral scale — ${neutralLevel} tint`, 'neutral', 'neutral', null, primary)}
             {signalBlocks()}
             {swatchMatrix()}
           </div>

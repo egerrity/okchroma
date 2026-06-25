@@ -31,10 +31,13 @@ import {
   YELLOW_L_LIFT,
   HIGHLIGHT_LIGHT,
   HIGHLIGHT_DARK,
-  NEUTRAL_TINT_CURVE,
   ILLUS_STOPS,
   REFERENCE_H,
 } from './stopTable'
+import { neutralChromaCurve, type NeutralLevel } from './neutralCurve'
+
+// Re-export so callers can pull the neutral level alongside generateNeutralScale.
+export type { NeutralLevel } from './neutralCurve'
 
 // Gold-spine path hue at a given lightness — piecewise-linear
 // interpolation over GOLD_SPINE (clamped at the ends).
@@ -733,67 +736,27 @@ export function generateIllustrationScale(scale: GeneratedScale): IllustrationSc
   return { stops }
 }
 
-// Neutral scale: same luminance profile as brand stops, C=0 (pure gray) by
-// default. `tint` adds chroma at a chosen hue, curved per stop by
-// NEUTRAL_TINT_CURVE (Radix-slate shape: near-zero on the paper stops,
-// peak at 8–9, tapered text stops) — tint.C is the PEAK chroma.
-export function generateNeutralScale(tint?: { H: number; C: number }): GeneratedScale {
-  const tH = tint?.H ?? 0
-  const tC = tint?.C ?? 0
-  function makeNeutral(stop: number, L: number): ColorStop {
-    const C = clampChromaToGamut(L, tC * NEUTRAL_TINT_CURVE[stop - 1], tH)
-    const { r, g, b } = oklchToSrgbUnclamped(L, C, tH)
-    return { stop, L, C, H: tH, r, g, b }
-  }
-
-  // Stops 1–8: rootL values map directly to pure grays (no hue correction needed at C=0)
-  const light: ColorStop[] = LIGHT_STOPS.map((s, i) => makeNeutral(i + 1, s.rootL))
-  const stop2Y = wcagY(LIGHT_STOPS[1].rootL, 0, 0)
-
-  // Stop 9: neutral fill (medium gray)
-  const l9light = 0.57
-  light.push(makeNeutral(9, l9light))
-  light.push(makeNeutral(10, hoverL(l9light)))
-
-  // Stops 11, 12: contrast-enforced against stop 2
-  light.push(makeNeutral(11, findMaxLForContrast(0, 0, stop2Y, STOP_11_CONTRAST)))
-  light.push(makeNeutral(12, STOP_12.rootL))
-
-  const dark: ColorStop[] = DARK_STOPS.map((s, i) => makeNeutral(i + 1, s.rootL))
-  dark.push(makeNeutral(9, DARK_STOP_9_MIN_L))
-  dark.push(makeNeutral(10, hoverL(DARK_STOP_9_MIN_L)))
-  dark.push(makeNeutral(11, DARK_STOP_11.rootL))
-  dark.push(makeNeutral(12, DARK_STOP_12.rootL))
-
-  // Stage 2 — neutral cta/cta-hover: a near-black button in light (the gray-9
-  // highlight isn't dark enough for a primary action), inverting to near-white
-  // in dark. Pure gray (C=0), reusing the archetype median Ls — no new
-  // perceptual math. The tint curve only spans the 12 scale stops, so cta uses
-  // a direct gray maker rather than makeNeutral.
-  const grayStop = (stop: number, L: number): ColorStop => {
-    const { r, g, b } = oklchToSrgbUnclamped(L, 0, 0)
-    return { stop, L, C: 0, H: 0, r, g, b }
-  }
-  const ctaLightL = medianLForArchetype('near-black') // 0.125 — near-black button
-  const ctaDarkL = medianLForArchetype('light')       // 0.925 — inverts to near-white
-  light.push(grayStop(15, ctaLightL), grayStop(16, hoverL(ctaLightL)))
-  dark.push(grayStop(15, ctaDarkL), grayStop(16, hoverL(ctaDarkL)))
-
-  // on-highlight: the neutral highlight (stop 9) is a mid-gray, so white text
-  // (the old hardcoded on-fill) actually fails WCAG — pick the polarity that
-  // passes (black, both modes). Computed from the fill so it self-corrects.
-  const whiteWins = (s: ColorStop) => contrastRatio(1.0, wcagY(s.L, s.C, s.H)) >= contrastRatio(wcagY(s.L, s.C, s.H), 0)
-
-  return {
-    name: 'neutral',
-    archetype: 'rich',
-    brandL: 0.5, brandC: 0, brandH: 0,
-    lFlip: 0.5, lFillMax: 0.53,
-    onFillTextIsWhite: true,
-    onFillTextIsWhiteDark: true,
-    light,
-    dark,
-    onHighlightIsWhite: whiteWins(light[8]),
-    onHighlightIsWhiteDark: whiteWins(dark[8]),
-  }
+// Neutral scale: a REUSE of generateScale, not a bespoke ramp. A faint gray at
+// the brand hue feeds the 'light' archetype, and neutralChromaCurve overrides
+// every rendered chroma by lightness — so the only thing differing from a brand
+// ramp is the chroma profile (a quiet Radix-derived tint, not the brand's vivid
+// ladder). Emits BRAND-KIND: stop 9 is the near-white cta button, the rung
+// (13/14) is the highlight. Levels: pure (C=0) / default (Radix-measured) /
+// branded (amplified). The grayHex carries only the hue — its C0.006 sits below
+// HUE_NOISE_C so every lightness-domain decision stays achromatic; the curve
+// drives all chroma. Owner-approved output:
+// docs/engine-spec/approved-neutrals-reference.md (the verification target).
+export function generateNeutralScale(
+  brandH: number,
+  level: NeutralLevel = 'default',
+): GeneratedScale {
+  const h = ((brandH % 360) + 360) % 360
+  const { r, g, b } = oklchToSrgbUnclamped(0.5, 0.006, h)
+  const ch = (v: number) => Math.round(Math.min(1, Math.max(0, v)) * 255).toString(16).padStart(2, '0')
+  const grayHex = `#${ch(r)}${ch(g)}${ch(b)}`
+  return generateScale(grayHex, 'neutral', 'light', {
+    chromaCurve: neutralChromaCurve(brandH, level),
+    highlight: true,
+    enforceOnFillContrast: true,
+  })
 }

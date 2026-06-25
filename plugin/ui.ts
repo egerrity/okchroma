@@ -1,8 +1,7 @@
 import { resolveBrand, SIGNAL_SCALES } from '../src/engine/resolve'
-import { generateScale } from '../src/engine/colorEngine'
+import { type NeutralLevel } from '../src/engine/colorEngine'
 import { themeToFigma } from '../src/engine/figmaRender'
 import { SIGNALS } from '../src/engine/signals'
-import { closestNeutralFamily, RADIX_NEUTRALS, type NeutralFamily } from '../src/radixNeutrals'
 import { toHex } from '../src/engine/cssRender'
 
 // ─── State ───────────────────────────────────────────────────────────────────
@@ -10,7 +9,7 @@ import { toHex } from '../src/engine/cssRender'
 let primaryHex = '#E93D82'
 let accentHex: string | null = null
 let accentEnabled = false
-let neutralChoice: NeutralFamily | 'auto' = 'auto'
+let neutralLevel: NeutralLevel = 'default'
 let engineMode: 'recommended' | 'exact' = 'recommended'
 let pendingName: string | null = null // brand armed for overwrite confirmation
 let accentInclude = true // global accent switch (kill-switch)
@@ -108,11 +107,11 @@ function buildAndSend() {
       ? resolveBrand(accentHex, 'Accent', opts).scale
       : null
 
-    const resolvedFamily: NeutralFamily = neutralChoice === 'auto'
-      ? closestNeutralFamily(generateScale(primaryHex, 'x').brandH, generateScale(primaryHex, 'x').brandC)
-      : neutralChoice
-
-    const neutral = RADIX_NEUTRALS[resolvedFamily]
+    // The neutral is generated per brand (tinted to the brand hue) at the chosen
+    // level — keyed in the shared primitive by level + hue so two brands with
+    // different hues don't collapse onto one neutral. (A fuller per-brand dedup
+    // model is a follow-up; 2b keeps the shared message shape.)
+    const neutralKey = `${neutralLevel}-h${Math.round(r.scale.brandH)}`
     // Per-signal variant key for Foundations dedup. An override note reads
     // "warning → lemon" / "success → teal-side"; we key on the right-hand side
     // (lemon, teal-side, …). No override → the canonical ramp, keyed 'base'.
@@ -122,7 +121,7 @@ function buildAndSend() {
       return { name: s.name, scale: ov?.scale ?? SIGNAL_SCALES.get(s.name)!.scale, variant }
     })
 
-    const { light, dark } = themeToFigma(r, { accent, neutral, signals })
+    const { light, dark } = themeToFigma(r, { accent, neutralLevel, signals })
 
     // The engine now names signals by identity (red / yellow / green /
     // info-color), so both the primitive path (system/<identity>/<variant>) and
@@ -136,7 +135,7 @@ function buildAndSend() {
     // neutral + signals: shared → one copy in primitive at a variant-keyed
     // path, aliased from the theme collection's semantic group.
     const shared = [
-      { theme: 'neutral', prim: `system/neutral/${resolvedFamily}`, light: light.neutral, dark: dark.neutral },
+      { theme: 'neutral', prim: `system/neutral/${neutralKey}`, light: light.neutral, dark: dark.neutral },
       ...signals.map(s => ({
         theme: s.name,
         prim: `system/${s.name}/${s.variant}`,
@@ -210,7 +209,7 @@ accentPicker.addEventListener('input', () => {
 })
 
 neutralSelect.addEventListener('change', () => {
-  neutralChoice = neutralSelect.value as typeof neutralChoice
+  neutralLevel = neutralSelect.value as NeutralLevel
 })
 
 segBtns.forEach(btn => {

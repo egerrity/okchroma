@@ -11,13 +11,10 @@
 
 import { toHex } from './cssRender'
 import { stopTokenName, onFillTokenName, tokenOrder, type RampKind } from './tokenNames'
-import { generateNeutralScale, type GeneratedScale, type ColorStop } from './colorEngine'
-import { contrastRatio, wcagY } from './constraints'
+import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel } from './colorEngine'
 import type { ResolvedBrand } from './resolve'
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v))
-const fillWantsWhite = (s: ColorStop) =>
-  contrastRatio(1.0, wcagY(s.L, s.C, s.H)) >= contrastRatio(wcagY(s.L, s.C, s.H), 0)
 
 export interface FigmaColorToken {
   $type: 'color'
@@ -65,30 +62,14 @@ function rampGroup(
   return g
 }
 
-// Neutral ramp from a 12-hex array (Radix family or branded scale, normalized
-// to hex by the caller), plus the Stage-2 additive cta pair + on-text tokens.
-// cta is a family-independent gray button (sourced from the engine neutral
-// scale); on-highlight follows the gray highlight fill (black, not the old
-// hardcoded white).
-function neutralGroup(
-  hexes: string[],
-  extra: { cta: ColorStop[]; onHighlightWhite: boolean; onCtaWhite: boolean },
-): FigmaGroup {
-  const g: FigmaGroup = {}
-  hexes.forEach((hex, i) => { g[stopTokenName(i + 1, 'neutral')] = colorFromHexString(hex) })
-  for (const s of extra.cta) g[stopTokenName(s.stop, 'neutral')] = colorFromStop(s)
-  g[onFillTokenName('brand')] = colorFromHex(extra.onCtaWhite) // on-cta
-  g[onFillTokenName('neutral')] = colorFromHex(extra.onHighlightWhite) // on-highlight
-  return g
-}
-
 export interface ThemeInput {
   // Secondary ramp when present; when null, accent mirrors brand (matching cssRender).
   accent?: GeneratedScale | null
-  // The CHOSEN neutral, as 12 hex strings per mode (Radix family or the
-  // engine's branded scale, normalized to hex by the caller) — so the export
-  // matches what the demo shows.
-  neutral: { light: string[]; dark: string[] }
+  // The neutral is GENERATED per brand (tinted toward the brand hue) at this
+  // level — pure / default / branded. Defaults to 'default'. No longer passed
+  // as hex strings; themeToFigma derives it from the brand hue, just like the
+  // CSS path.
+  neutralLevel?: NeutralLevel
   // Final per-signal scales (base signals already merged with the brand's
   // signalOverrides by the caller), e.g. error / warning / success / info.
   signals: Array<{ name: string; scale: GeneratedScale }>
@@ -106,23 +87,18 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     onHighlightWhite: mode === 'light' ? s.onHighlightIsWhite : s.onHighlightIsWhiteDark,
     identityHex: s.identityHex,
   })
-  // Neutral cta + on-text come from the engine neutral scale (the cta button is
-  // a fixed gray, independent of which family input.neutral carries). It lives
-  // at the tail of the one generated list (stops 13+ ⇒ slice(12)).
-  const nScale = generateNeutralScale()
-  const neutralExtra = (mode: 'light' | 'dark') => {
-    const cta = (mode === 'light' ? nScale.light : nScale.dark).slice(12)
-    return {
-      cta,
-      onHighlightWhite: (mode === 'light' ? nScale.onHighlightIsWhite : nScale.onHighlightIsWhiteDark) ?? false,
-      onCtaWhite: cta.length ? fillWantsWhite(cta[0]) : true,
-    }
-  }
+  // Neutral is generated per brand (tinted toward the brand hue) and emitted
+  // BRAND-KIND — same rampGroup path as brand/secondary (cta = stop 9, highlight
+  // = rung 13/14), minus identity (no user-input hex to echo).
+  const nScale = generateNeutralScale(scale.brandH, input.neutralLevel ?? 'default')
+  const neutralExtra = (mode: 'light' | 'dark') => ({
+    onHighlightWhite: mode === 'light' ? nScale.onHighlightIsWhite : nScale.onHighlightIsWhiteDark,
+  })
   const build = (mode: 'light' | 'dark'): FigmaGroup => {
     const g: FigmaGroup = {
       brand: rampGroup(scale[mode], mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark, 'brand', brandExtra(scale, mode)),
       secondary: rampGroup(accent[mode], mode === 'light' ? accentOnFillLight : accentOnFillDark, 'brand', brandExtra(accent, mode)),
-      neutral: neutralGroup(input.neutral[mode], neutralExtra(mode)),
+      neutral: rampGroup(nScale[mode], mode === 'light' ? nScale.onFillTextIsWhite : nScale.onFillTextIsWhiteDark, 'brand', neutralExtra(mode)),
     }
     for (const sig of input.signals) {
       const sg = rampGroup(sig.scale[mode], mode === 'light' ? sig.scale.onFillTextIsWhite : sig.scale.onFillTextIsWhiteDark, 'neutral')

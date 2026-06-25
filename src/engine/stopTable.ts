@@ -173,15 +173,5 @@ export const ILLUS_STOPS: StopSpec[] = [
   { rootL: 0.47, chromaMultiplier: 0.80 }, // 4 deep — emphasis / ink
 ]
 
-// Neutral tint chroma curve, per stop 1–12. Derived from Radix slate
-// (their tinted grays): tint is nearly absent on the paper stops (1–2 sit
-// at ~8–15% of peak), climbs with depth, peaks at stops 8–9, and tapers
-// into 12 so body text stays ink-like. The `C` passed to
-// generateNeutralScale is the PEAK; each stop applies its multiplier.
-// (Radix slate peaks at C ≈ 0.0165; sage ≈ 0.010.)
-export const NEUTRAL_TINT_CURVE = [
-  0.08, 0.15, 0.25, 0.33, 0.42, 0.55, 0.68, 0.95, 1.0, 0.95, 0.83, 0.60,
-]
-
 // H=245 (blue) is the reference hue for luminance calibration — offset is 0
 export const REFERENCE_H = 245

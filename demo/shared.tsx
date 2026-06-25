@@ -177,12 +177,6 @@ export function rybRotate(hex: string, deg: number): string {
   return hslToHex(wheelMap(ryb, 1), s, l)
 }
 
-export type NeutralSource = 'pure' | 'brand' | 'secondary' | 'complementary'
-export type NeutralLevel = 'subtle' | 'branded'
-// Peak chroma per level (NEUTRAL_TINT_CURVE shapes it per stop). Values
-// bracket Radix: sage peaks ~0.010, slate ~0.016.
-export const NEUTRAL_PEAK: Record<NeutralLevel, number> = { subtle: 0.012, branded: 0.028 }
-
 // ─── Showcase (the component-gallery page body) ──────────────────────────────
 
 export function Showcase(props: {

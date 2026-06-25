@@ -3,9 +3,7 @@ import { ChevronDown, Lock } from 'lucide-react'
 import { DEMO_BRANDS } from '../src/brands'
 import { SECONDARIES } from '../src/secondaries'
 import { resolveBrand } from '../src/engine/resolve'
-import { brandCss } from '../src/engine/cssRender'
-import { generateScale } from '../src/engine/colorEngine'
-import { closestNeutralFamily } from '../src/radixNeutrals'
+import { brandCss, neutralCss } from '../src/engine/cssRender'
 import {
   ALL_BRANDS, COMPONENT_CSS, FONT_STACK, Showcase, Segmented, rungDescription,
   type RungMode, type AccentMode,
@@ -33,6 +31,10 @@ export default function App() {
 
   return (
     <div data-brand="chrome" data-theme={dark ? 'dark' : 'light'} style={{ fontFamily: FONT_STACK, minHeight: '100vh', background: 'var(--surface-base)', display: 'flex', flexDirection: 'column' }}>
+      {/* The neutral is no longer a global :root block — it's per-brand now. The
+          demo's own chrome (footer, nav) isn't a brand, so give it a plain
+          generated neutral (pure gray) as its base. */}
+      <style>{neutralCss('[data-brand="chrome"]', 0, 'pure')}</style>
       <style>{COMPONENT_CSS}</style>
       <style>{NAV_CSS}</style>
 
@@ -108,12 +110,6 @@ function PaletteGallery({ dark, onToggleDark }: { dark: boolean; onToggleDark: (
 
   const current = ALL_BRANDS.find(b => b.slug === brandSlug) ?? ALL_BRANDS[0]
   const secondary = SECONDARIES[current.slug]
-  // Brand-matched neutral family, shown locked (the gallery doesn't expose the
-  // neutral choice) — same 🪄 "match" affordance as custom-theme.
-  const matchedNeutral = useMemo(() => {
-    const s = generateScale(current.hex, 'x')
-    return closestNeutralFamily(s.brandH, s.brandC)
-  }, [current])
 
   // Recommended mode ships from the pre-built CSS; exact recomputes in
   // the browser via the same engine + renderer the build uses.
@@ -158,7 +154,7 @@ function PaletteGallery({ dark, onToggleDark }: { dark: boolean; onToggleDark: (
         <>
           <LockedField label="Primary color" swatch={current.hex} text={current.hex.toUpperCase()} />
           {secondary && <LockedField label="Accent color" swatch={secondary} text={secondary.toUpperCase()} />}
-          <LockedField label="Neutral color" text={`${matchedNeutral[0].toUpperCase()}${matchedNeutral.slice(1)} 🪄`} width={132} />
+          <LockedField label="Neutral color" text="Default (brand-tinted)" width={132} />
           {/* keep preview + engine-mode together; wrap as one group, left-aligned */}
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px 18px', flexWrap: 'wrap' }}>
             {secondary && (
