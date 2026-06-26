@@ -287,27 +287,39 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
     )
   })
 
-  // TEMP — flat swatch grid of every generated color (all ramps × all stops),
-  // for eyeballing during the corrections pass. Themes with the page toggle.
-  const SWATCH_STOPS = ['paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'accent-6', 'accent-7', 'accent-8', 'highlight-9', 'highlight-10', 'cta-1', 'cta-2', 'ink-11', 'ink-12']
-  const swatchRamps: Array<[string, string]> = [
-    ['brand', 'brand'],
-    ...(secondary ? [['secondary', 'secondary'] as [string, string]] : []),
-    ['neutral', 'neutral'],
-    ['red', 'red'], ['yellow', 'yellow'], ['green', 'green'], ['info-color', 'info-color'],
+  // TEMP — flat compare grid of every generated color (all ramps × all stops), for
+  // eyeballing the scale. cta-1/2 sit at the END so the 1–12 ladder reads unbroken.
+  // Each cell shows the token representatively: surfaces as plain swatches,
+  // highlight/cta as "Aa" on their on-color, ink as "Aa" text, identity as an "ID"
+  // chip (blank-but-spaced when a ramp has none, so columns stay justified). Themes
+  // with the page toggle.
+  const SWATCH_STOPS = ['paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'accent-6', 'accent-7', 'accent-8', 'highlight-9', 'highlight-10', 'ink-11', 'ink-12', 'cta-1', 'cta-2']
+  const swatchRamps: Array<[string, string, boolean]> = [
+    ['brand', 'brand', true],
+    ...(secondary ? [['secondary', 'secondary', true] as [string, string, boolean]] : []),
+    ['neutral', 'neutral', false],
+    ['red', 'red', false], ['yellow', 'yellow', false], ['green', 'green', false], ['info-color', 'info-color', false],
   ]
+  const swatchCell = (prefix: string, stop: string) => {
+    const cv = (t: string) => `var(--${prefix}-${t})`
+    const aa: React.CSSProperties = { height: 36, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700 }
+    if (stop.startsWith('highlight')) return <div style={{ ...aa, background: cv(stop), color: cv('on-highlight') }}>Aa</div>
+    if (stop.startsWith('cta')) return <div style={{ ...aa, background: cv(stop), color: cv('on-cta') }}>Aa</div>
+    if (stop.startsWith('ink')) return <div style={{ ...aa, color: cv(stop) }}>Aa</div>
+    return <div style={{ height: 36, borderRadius: 6, background: cv(stop), border: '1px solid var(--border-subtle)' }} />
+  }
   const swatchMatrix = () => (
     <div className="ct-colorblock">
-      <div className="ct-label" style={{ marginBottom: 8 }}>All generated colors — temp compare grid</div>
-      <div style={{ display: 'grid', gridTemplateColumns: `72px repeat(${SWATCH_STOPS.length}, 1fr)`, gap: 4, alignItems: 'end' }}>
-        <div />
-        {SWATCH_STOPS.map(s => (
-          <div key={s} style={{ fontSize: 9, color: 'var(--fg-subtle)', writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', height: 58, justifySelf: 'center' }}>{s}</div>
-        ))}
-        {swatchRamps.flatMap(([prefix, label]) => [
-          <div key={`${prefix}-label`} style={{ fontSize: 11, fontWeight: 700, color: 'var(--fg-default)', whiteSpace: 'nowrap', alignSelf: 'center' }}>{label}</div>,
+      <div style={{ display: 'grid', gridTemplateColumns: `64px repeat(${SWATCH_STOPS.length + 1}, 1fr)`, gap: 5, alignItems: 'center' }}>
+        {swatchRamps.flatMap(([prefix, label, hasId]) => [
+          <div key={`${prefix}-l`} style={{ fontSize: 11, fontWeight: 700, color: 'var(--fg-default)', whiteSpace: 'nowrap' }}>{label}</div>,
+          <div key={`${prefix}-id`} title={hasId ? `--${prefix}-identity` : undefined}>
+            {hasId
+              ? <div style={{ height: 36, borderRadius: 6, background: `var(--${prefix}-identity)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#fff' }}>ID</div>
+              : <div style={{ height: 36 }} />}
+          </div>,
           ...SWATCH_STOPS.map(s => (
-            <div key={`${prefix}-${s}`} title={`--${prefix}-${s}`} style={{ height: 30, borderRadius: 3, background: `var(--${prefix}-${s})`, border: '1px solid var(--border-subtle)' }} />
+            <div key={`${prefix}-${s}`} title={`--${prefix}-${s}`}>{swatchCell(prefix, s)}</div>
           )),
         ])}
       </div>
@@ -376,11 +388,11 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
       {view === 'palette' && (
         <div className="ct-pane">
           <div className="ct-pane-main">
+            {swatchMatrix()}
             {colorBlock('Primary scale', 'brand', 'brand', rRec, primary, primaryExtras)}
             {secondary && colorBlock('Secondary scale', 'secondary', 'brand', rRecAccent, secondary)}
             {colorBlock(`Neutral scale — ${neutralLevel} tint`, 'neutral', 'neutral', null, primary)}
             {signalBlocks()}
-            {swatchMatrix()}
           </div>
           <div className="ct-illus">
             <div style={{ width: 'min(440px, 92%)' }} dangerouslySetInnerHTML={{ __html: HERO_ILLO }} />

@@ -28,6 +28,7 @@ const SIGNAL_ICON: Record<string, typeof AlertCircle> = {
 export function TokenCards({ prefix, kind }: { prefix: string; kind: RampKind }) {
   const v = (t: string) => `var(--${prefix}-${t})`
   const isSignal = kind === 'signal'
+  const [ctaHover, setCtaHover] = React.useState(false) // cta-1 → cta-2 on hover
   // Only brand & secondary preserve an exact input hex (identity); neutral and
   // signals are generated and carry none.
   const hasIdentity = prefix === 'brand' || prefix === 'secondary'
@@ -77,13 +78,17 @@ export function TokenCards({ prefix, kind }: { prefix: string; kind: RampKind })
         The <span style={{ color: v('ink-11') }}>ink family</span> is designed to contrast with surfaces and is perfect for text. It can also be used as a dark surface.
       </p>
 
-      {/* cta in context — the pill (hidden on signals, where cta lives in the alert) */}
+      {/* cta in context — the pill (hidden on signals, where cta lives in the alert).
+          Hover swaps cta-1 → cta-2 and updates the label, demonstrating both. */}
       {!isSignal && (
-        <button style={{
-          alignSelf: 'flex-start', background: v('cta-1'), color: v('on-cta'), border: 'none',
-          borderRadius: 999, padding: '12px 28px', fontSize: 15, fontWeight: 600, fontFamily: 'inherit',
-          cursor: 'default', marginBottom: 18,
-        }}>Get started</button>
+        <button
+          onMouseEnter={() => setCtaHover(true)}
+          onMouseLeave={() => setCtaHover(false)}
+          style={{
+            alignSelf: 'flex-start', background: ctaHover ? v('cta-2') : v('cta-1'), color: v('on-cta'), border: 'none',
+            borderRadius: 999, padding: '12px 28px', fontSize: 15, fontWeight: 600, fontFamily: 'inherit',
+            cursor: 'pointer', marginBottom: 18,
+          }}>{ctaHover ? 'cta-2 on hover' : 'cta-1 button'}</button>
       )}
 
       {/* surfaces — the wash inset, plus the highlight surface OR the signal alert */}
