@@ -270,6 +270,9 @@ export interface GeneratedScale {
 // rendered a PINK dark ladder). Gray brands now render gray dark ladders,
 // matching the light ramp's HUE_NOISE_C doctrine; the fade is smooth so
 // no two near-identical accents land on opposite sides of a cliff.
+// KEEP (cf. catalog C7): the dark curve now has its OWN identity-proportional surface
+// floor (darkChromaCurve's ctaC arg), so this path serves EXACT / ships-raw brands
+// only (they don't pass darkChromaCurve). Not redundant — do not delete.
 function applyChromaFloor(C: number, multiplier: number, stopIndex: number, floorStrength: number): number {
   const raw = C * multiplier
   if (floorStrength <= 0) return raw
@@ -366,7 +369,9 @@ export interface GenerateOptions {
   // Dark-only — light is untouched; the fill (9/10) keeps brandC identity. makeStop
   // gamut-clamps after. Unset ⇒ every dark chroma falls through unchanged ⇒
   // byte-identical.
-  darkChromaCurve?: (L: number, H: number, brandC: number) => number
+  // ctaC (4th arg) is the resolved dark cta chroma — when passed, the curve floors
+  // surface chroma at an identity-proportional fraction of it (see darkChromaCurve.ts).
+  darkChromaCurve?: (L: number, H: number, brandC: number, ctaC?: number) => number
   // Signal "loud cta": keep the dark cta at full brand chroma (skip the per-hue
   // darkCtaTrim that brands get). §3.1 — signals are vivid/louder. Default off ⇒ unchanged.
   loudCta?: boolean
@@ -612,7 +617,7 @@ export function generateScale(
     const L = DARK_NEUTRAL_L[i]
     const H = torsionedHue(darkH, L, dark9L, gOffPath)
     const C = opts?.darkChromaCurve
-      ? opts.darkChromaCurve(L, H, brandC)
+      ? opts.darkChromaCurve(L, H, brandC, darkC9) // ctaC = resolved dark cta chroma → surface floor
       : applyChromaFloor(subtleC, chromaMultiplier, i, darkFloorStrength)
     dark.push(makeStop(i + 1, L, cAt('dark', L, C), H))
   }

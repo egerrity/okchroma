@@ -8,7 +8,14 @@
 // is an ABSOLUTE chroma per stop, gamut-clamped by makeStop — replacing the old
 // proportional darkStops.chromaMultiplier as the dark loudness source.
 //
-//   C(L, H, brandC) = brandC · shape(L) · capMix(L, H)
+//   C(L, H, brandC, ctaC?) = capMix(L, H) · max( brandC · shape(L),  floorFracAt(L) · ctaC )
+//
+// The FLOOR (when ctaC is given) keeps deep dark SURFACES from washing out to grey —
+// the bare shape multiplies brandC by only ~0.125 at the deepest stops. It's a
+// fraction of the RESOLVED cta chroma (identity-proportional: scales with each family
+// and auto-fades to a grey ladder as cta chroma → 0), and it's capped by the same
+// loudnessCap so it never re-loudens the bloom-prone hues. ctaC omitted ⇒ bare curve
+// (byte-identical for any caller that doesn't pass it).
 //
 // Dark-only; light mode is untouched. Lightness is the fixed blessed scaffold
 // (Phase 2) — this only sets chroma.
@@ -72,11 +79,33 @@ const bandWeight = (L: number): number => {
 }
 const capMix = (L: number, H: number): number => 1 - (1 - loudnessCap(H)) * bandWeight(L)
 
+// Identity-proportional surface chroma FLOOR — a FRACTION of the resolved cta chroma
+// (passed in as ctaC). The DEEP surfaces (app-bg / subtle-bg, stops ~1–3) wash out
+// worst because their shape factor is only ~0.125–0.16; the floor lifts those. Mid+
+// surfaces already carry enough from the shape, so the fraction tapers to 0 by ~0.50
+// (the curve naturally exceeds the floor there) — and so the floor never touches the
+// fill (0.66), text (0.80/0.93), or the highlight rung. The fraction must EXCEED the
+// deep shape (~0.125) to bite. Coefficients tuned against the dark swatch grid.
+const FLOOR_FRAC = 0.22       // deep-surface floor as a fraction of ctaC (stops 1–3)
+const FLOOR_TAPER_LO = 0.30   // full floor at/below this L
+const FLOOR_TAPER_HI = 0.50   // floor gone at/above this L (curve carries mid+)
+const floorFracAt = (L: number): number => {
+  if (L <= FLOOR_TAPER_LO) return FLOOR_FRAC
+  if (L >= FLOOR_TAPER_HI) return 0
+  return FLOOR_FRAC * (1 - smoothstep((L - FLOOR_TAPER_LO) / (FLOOR_TAPER_HI - FLOOR_TAPER_LO)))
+}
+
 // Absolute dark chroma at a stop. peak = brandC (pinned, fill identity); shape is
 // Radix's colored-dark distribution (tinted surfaces, text collapse); the cap calms
-// the mid-band surfaces of the bloom-prone hues only. makeStop gamut-clamps after.
-export const darkChromaCurve = (L: number, H: number, brandC: number): number =>
-  brandC * shapeAt(L) * capMix(L, H)
+// the mid-band surfaces of the bloom-prone hues only. When ctaC is given, the surface
+// chroma can't fall below the identity-proportional floor (also capped). makeStop
+// gamut-clamps after.
+export const darkChromaCurve = (L: number, H: number, brandC: number, ctaC?: number): number => {
+  const uncapped = ctaC === undefined
+    ? brandC * shapeAt(L)
+    : Math.max(brandC * shapeAt(L), floorFracAt(L) * ctaC)
+  return uncapped * capMix(L, H)
+}
 
 // The cta fill keeps MOST of its loudness (it's the primary action, brand-true) but
 // trims gently on the bloom-prone hues — halfway to the surface cap, so cool ctas

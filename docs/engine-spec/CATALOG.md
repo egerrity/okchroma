@@ -57,12 +57,45 @@
 - [x] **F3** — `ons` one-rule (same polarity rule for cta + highlight, both modes) → **C1, C6, C23, C20, C10**
 - [x] **F4** — delete dead/inert code → **C14, C15, C18**
 - [x] **F5** — single-source yellow lemon/macaroni → **C16**
+- [x] **F6** — identity-proportional dark chroma floor in the curve (fixes the F1 signal-surface washout; **flips C7** — keep `applyChromaFloor` for exact, do NOT delete)
 
 **Owner-visual decisions (not mechanical fixes):** rung-L value · **C8** (dark-cta-L) · **C19** (neutral rung intent).
 **Verified keeps (no action, re-verify on execution):** **C5, C11, C12, C17.**
 **Execution-time only (re-bless under owner approval):** **C21, C22** (+ the C9 guard re-bless).
 
-**✅ Triage complete — all of C1–C23 bucketed: 5 fixes (F1–F5) · 3 decisions · 4 keeps · 2 re-bless.**
+**✅ Triage complete — all of C1–C23 bucketed: 6 fixes (F1–F6) · 3 decisions · 4 keeps · 2 re-bless.**
+
+**⚙️ EXECUTED 2026-06-25 — commit `ac81b36` on `scope/dark-chroma` (plan checkpoint `7fa3e8b`).**
+Gates: `typecheck` / `figma:verify` (canary `#07074f`/`#869cda`) / `plugin:build` **GREEN**.
+brand/secondary surfaces + cta + text **byte-identical** (diff-verified); on-cta + on-highlight polarity
+**unchanged**; only the dark highlight *value* moved (F2, 30 brands). `audit` + `highlight-audit` **RED** on
+intended changes (signals now carry a 14-stop rung; signal/rung values moved) + snapshot drift — **NOT
+re-blessed.** Awaits owner visual approval → then re-bless (C21/C22) + the `highlight-audit` rewrite (C10).
+The 3 decisions (rung-L, C8, C19) remain at current values. Sub-4.5 highlights persist (the deferred rung-L).
+
+**⚙️ F6 (dark chroma floor) 2026-06-25.** Folded an identity-proportional surface chroma floor into
+`darkChromaCurve` — `capMix · max(brandC·shape, floorFracAt(L)·ctaC)`, scaled by the resolved cta chroma
+(`FLOOR_FRAC 0.22`, taper L0.30→0.50; surfaces 1–8 only). Fixes the F1 signal-surface washout — deep
+paper/wash now carry proportional tint; neutral auto-stays gray (`ctaC→0 ⇒ floor→0`). **Flips C7:**
+`applyChromaFloor` is KEPT for exact / ships-raw brands — do NOT delete. Gates `typecheck` / `figma:verify`
+GREEN (cta canary untouched — the floor lifts *surfaces*, not the cta). Owner reviewed the dark grid: "much better."
+
+## ⏸ DEFERRED — owner's curve-perceptual follow-up (NOT this unification; a separate pass)
+Surfaced while reviewing the floor. The owner will fix these — recorded so they aren't lost or half-done.
+- **C24 — dark chroma is hue-adjusted only by a cap *multiplier*, not a per-hue *shape*.** `SHAPE_DARK` is one
+  array for every hue; red (H33 → cap 0.625) and blue (H288 → cap 0.549) ride the SAME shape, differing only
+  by the modest loudness-cap factor. Likely not enough perceptual hue-differentiation — "the math isn't really
+  adjusting the chroma per hue."
+- **C25 — `SHAPE_DARK` peaks at the fill and drops off a cliff.** "Looks arbitrary and peaks randomly instead
+  of curving to maintain perceptual appearance." Consequence: the highlight rung's hover (`highlight-2`, L0.578)
+  slides down the steep cap-ease-off slope (multiplier 0.78 → 0.52) → ~33–38% desaturated vs `highlight-1`. The
+  "hold rung chroma across the pair" idea is a band-aid; the curve itself wants re-deriving for perceptual
+  chroma-constancy across L. (F2 routed the rung onto this curve, which exposed it.)
+- **C26 — red signal reads orange in dark.** Every dark red stop sits at the raw hex H≈33 (warm vermillion),
+  while LIGHT cools the surfaces to ~H26–27 (truer red) — a light/dark hue inconsistency; the floor made it
+  visible by restoring chroma. Lever: `coolRedDark` for signals (render-only). Owner: "leave it for now."
+
+**Re-bless (C21/C22) waits for the curve-perceptual pass** — blessing now would bake in C25's known-wrong `highlight-2`.
 
 ---
 
