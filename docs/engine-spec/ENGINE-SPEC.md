@@ -22,11 +22,13 @@
 > folder; do not recreate it). **`npm run build` (the `--full` one) is authoritative** — `demo:build`
 > / `generate` run a STALE `dist/build-script.js` that clobbers `signals.css` with old `error/warning`
 > names; rebuild that bundle or avoid those scripts.
-> **Ground in §1–§3 of this file only.** Unification **Phases 1+2 LANDED** (`ac81b36` + floor `8aa3237`);
-> next is **Phase 3.5 — the owner-led curve-perceptual pass** (`CATALOG.md` C24–C26: non-perceptual
-> `SHAPE_DARK`, the `highlight-2` cliff, red-reads-orange) → THEN re-bless (C21/C22) + the `highlight-audit`
-> rewrite (C10). **Honor §7** — explain any engine change and WAIT for the owner's "go"; review on a DARK
-> background; re-bless only on owner visual approval.
+> **Ground in §1–§3 of this file only**, then read **`CATALOG.md` → ⛔ HANDOFF** (the authoritative
+> not-done list). Unification **Phases 1+2 LANDED** (`ac81b36` + floor `8aa3237`) but NOT all of it is done:
+> the **text-color (`ons`) calc is unfinished** — it ships non-compliant `on-highlight` (3.72:1), the **C23
+> one-rule guard was never built, and the C10 `highlight-audit` rewrite isn't done** (both were mistakenly
+> ticked). Still open: those, the **3 owner-visual decisions** (rung-L / C8 / C19), the **curve-perceptual
+> pass** (C24–C26), and **re-bless** (C21/C22, deferred until the rest settles). **Honor §7** — explain any
+> engine change and WAIT for the owner's "go"; review on a DARK background; re-bless only on owner visual approval.
 
 ---
 

@@ -17,6 +17,37 @@
 > in `colorEngine.ts`: `subtleC ~:384`, `fillAnchorL ~:411–414`, on-cta `~:535–546` (light) /
 > `~:619–620` (dark), on-highlight `~:670` (light) / `~:685` (dark).
 
+---
+
+## ⛔ HANDOFF — what's NOT done (start here)
+
+> Unification **Phases 1+2 are committed** (`ac81b36` + chroma floor `8aa3237` + spec `8de5466`). Gates:
+> `typecheck` / `build` / `figma:verify` (cta canary `#07074f`/`#869cda`) / `plugin:build` **GREEN**;
+> `audit` + `highlight-audit` **RED** for the A–E reasons below (all intended/deferred — not a code break).
+> Working tree clean. **I over-claimed "done" mid-session — this block is the correction.**
+
+**A — Text-color (`ons`) calc: NOT finished (the heart of C1).** Shared rule `onTextIsWhite`
+(`colorEngine.ts:389`) exists and all four sites call it (F3), BUT:
+- it emits only **binary `#ffffff`/`#000000`** (`cssRender.ts:21`) and in the conflict zone ships a
+  **non-compliant** `on-highlight` (dark-roast white = **3.72:1 < 4.5**) — it picks a polarity, never guarantees
+  a compliant result. Open: move the value (curve / rung-L) and/or allow a tinted/darkened on-text — **decision needed.**
+- **C23 — the guard asserting on-cta & on-highlight resolve by ONE rule — was NEVER built** (wrongly ticked under F3; no such assertion exists).
+- **C10 — the `highlight-audit` rewrite — NOT done** (still asserts the retired forced model → why it's RED).
+- **C20** — engine comments updated; the `highlight-audit` comment blocks NOT.
+
+**B — Owner-visual DECISIONS (3), undecided:** rung-L value (drives A's sub-4.5 highlights) · **C8** dark-cta-L · **C19** neutral rung intent.
+
+**C — Curve-perceptual pass (owner-led): C24 / C25 / C26.** Non-perceptual `SHAPE_DARK` (hue-adjusted by a cap
+*multiplier* only, not a per-hue shape), the `highlight-2` cap-slope cliff, red-reads-orange in dark.
+
+**D — Re-bless (C21 / C22): deferred** until A–C settle (blessing now bakes in C25's `highlight-2` + A's 3.72:1 on-highlight).
+
+**E — `dark-audit` metric-D: 7 failures (11/12 text-stop convergence)** — pre-existing (was 8), NOT introduced here; revisit with the curve work.
+
+**Tooling gotcha:** `demo:build` / `generate` run a STALE `dist/build-script.js` that clobbers `signals.css` with old `error/warning` names. **`npm run build` (--full) is authoritative** — or rebuild that bundle.
+
+---
+
 ## Index
 | ID | Title | Kind | Drift | Conf |
 |---|---|---|---|---|
@@ -54,7 +85,7 @@
 **Fixes recorded (pending joint review):**
 - [x] **F1** — signal route → **C2, C3, C4, C7** (guard **C9** rides with it)
 - [x] **F2** — dark highlight rung onto the curve → **C13**
-- [x] **F3** — `ons` one-rule (same polarity rule for cta + highlight, both modes) → **C1, C6, C23, C20, C10**
+- [~] **F3** — `ons` one-rule: shared `onTextIsWhite` → **C1, C6 done**; **C20 partial**; **C23 (guard) + C10 (audit rewrite) NOT done** (see HANDOFF A) — and the calc still ships non-compliant on-highlight
 - [x] **F4** — delete dead/inert code → **C14, C15, C18**
 - [x] **F5** — single-source yellow lemon/macaroni → **C16**
 - [x] **F6** — identity-proportional dark chroma floor in the curve (fixes the F1 signal-surface washout; **flips C7** — keep `applyChromaFloor` for exact, do NOT delete)
