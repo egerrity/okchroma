@@ -98,3 +98,21 @@ marked **OPEN**), the internal-index wrinkle, the historical root (cta *was* 9/1
 - `plugin/code.ts:13` example `system/neutral/sand` was wrong (real key is `<level>-h<H>` / `pure`);
   `figmaRender.ts:37` "neutral families shipped as hex strings" is a fossil (that helper is used only
   for the `identity` token now).
+
+## Radix-framing follow-up (2026-06-26)
+Code + docs + memory sweep on Radix framing (adversarial pass confirmed: **Radix is not a dependency**
+— no npm dep, no imports, every `radix` in `src/` is a comment):
+- **Reframed "built on / extension of Radix"** (a foundation it never was) in `guide/lineage.md`
+  (title + concept + how), `guide/for-designers.md`, `guide/README.md` → Radix is a one-time
+  reverse-engineering reference; the reserved-12-step convention is the owner's own pre-existing idea.
+- **Fixed the remaining false "neutral ships a Radix family"** claims (`guide/neutrals.md:5,18-30`,
+  `guide/README.md:99`) the earlier plugin pass missed — the neutral is generated; the Radix-family
+  path is deleted.
+- **Verified H-K vs Radix:** H-K (`perceptualL.ts`, Nayatani 1997) replaced the hand-tuned per-hue
+  patches (`YELLOW_L_LIFT`/`loudnessCap`), but the base constants (`LIGHT_STOPS`, `DARK_NEUTRAL_L`,
+  `SHAPE_DARK`, `GOLD_SPINE`/`WARM_TORSION`, `neutralCurve.ts`) are **still Radix-fit and live** —
+  recorded in ENGINE-SPEC §0. So "Radix is gone" holds for the dependency + the patches, **not yet**
+  for the base skeleton (migrating those off Radix is a next step).
+- **Memory reframes:** `MEMORY.md`, `neutral-generation-from-brand-hue`, `no-corrective-patch-layers`,
+  `engine-color-rules`, `engine-spec-effort` — "replace/assign Radix" → "deleted the Radix-family
+  PICKER; constants fit-from-Radix; Radix not a dependency."

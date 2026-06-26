@@ -1,11 +1,14 @@
-# Lineage: built on Radix, extended
+# Lineage: reverse-engineered from Radix (not built on it)
 
 ## Concept
 
-OKChroma is inspired by [Radix Colors](https://www.radix-ui.com/colors). It keeps
-Radix's model (a 12-step scale where each step is reserved for a role) and
-replaces Radix's hand-tuned, fixed palettes with a generator that produces that
-structure from any single brand color.
+OKChroma is **inspired by** [Radix Colors](https://www.radix-ui.com/colors), but it is **not built on
+Radix** — Radix is not a dependency and appears nowhere in the runtime or output. The reserved
+12-step-role convention is the owner's own pre-existing idea (Radix happens to use a similar one).
+OKChroma's numeric constants (the lightness ladder, dark scaffold, neutral chroma curve) were
+**reverse-engineered by fitting to** Radix's hand-tuned palettes as a one-time reference; the engine
+then generates the whole structure from any single brand color, with a principled
+Helmholtz–Kohlrausch solve increasingly replacing the Radix-fit pieces.
 
 ## Why
 
@@ -15,9 +18,10 @@ scales generated to a guaranteed standard, not crafted one at a time.
 
 ## How
 
-Radix gives the model we start from: 12 steps, each mapped to the contrast a
-reserved role needs (backgrounds, borders, a solid fill, text), calibrated so the
-steps line up across hues. We keep that model and add what a generator needs:
+The reserved-role model — 12 steps, each mapped to the contrast a reserved role needs (backgrounds,
+borders, a solid fill, text), calibrated so the steps line up across hues — was the reference point
+(Radix popularized the same convention). OKChroma re-derives that structure from gamut geometry and an
+H-K perceptual solve, retaining no Radix artifact at runtime, and adds what a generator needs:
 
 - **Generation.** The full 12-step system is computed from one hex, for any input.
 - **Brand fidelity.** The brand's real color anchors the scale (step 9) instead of

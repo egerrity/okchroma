@@ -6,7 +6,7 @@ what you'll see, and what you decide. Follow the links for the math.
 
 ## About the color engine
 
-**Built on Radix, generated per brand.** OKChroma uses Radix's reserved-step model, where each of the 12 steps has a perceptual target tied to a role. Where Radix hand-tunes a fixed set of palettes, OKChroma generates that structure from any brand color, so contrast pairings are predictable before you build a single token. ([eng](./lineage.md))
+**Reserved-step model, generated per brand.** OKChroma follows the reserved-step convention Radix popularized (each of the 12 steps has a perceptual target tied to a role) — but it is *not* built on Radix; Radix is only a one-time reference, absent from the runtime. Where Radix hand-tunes a fixed set of palettes, OKChroma generates that structure from any brand color, so contrast pairings are predictable before you build a single token. ([eng](./lineage.md))
 
 **Perceptual color (OKLCH).** The engine works in a perceptual color space, so the steps appear evenly spaced regardless of hue and a scale holds one hue from light to dark. ([eng](./oklch.md))
 

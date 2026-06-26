@@ -15,7 +15,7 @@ This README is the spine; deep math lives in the linked topic docs.
 
 ## Lineage
 
-Inspired by [Radix Colors](https://www.radix-ui.com/colors), extended for white-label.
+Inspired by [Radix Colors](https://www.radix-ui.com/colors); re-derived as a per-brand generator for white-label. Radix is a one-time reverse-engineering reference, not a dependency (see [lineage](./lineage.md)).
 
 | dimension | Radix | OKChroma |
 |---|---|---|
@@ -96,7 +96,7 @@ follow. Per-palette and dark-mode differences are in *Per-palette deviations*.
 |---|---|---|---|---|---|---|
 | brand-primary | generated from brand hex | brand's own L | ~0.62 (white-edge) | input hex | `ACCENT_DARK_STOPS` | red-band → rung-1, dark muted collider, cool-render |
 | brand-secondary | generated from secondary hex | secondary's own L | ~0.62 | input hex | `ACCENT_DARK_STOPS` | none (beta; no signal shift; mirrors brand if absent) |
-| neutral | assigned Radix family | near-black / near-white gray | 0.57 gray | — | `DARK_STOPS` (lower) | — |
+| neutral | generated per brand hue (`generateNeutralScale`) | near-black / near-white gray | 0.57 gray | — | `DARK_STOPS` (lower) | — |
 | red | generated (canonical + knobs) | = `highlight` | red's own L (white-edge) | — | `ACCENT_DARK_STOPS` | never shifts (collision reference) |
 | yellow | generated (canonical + knobs) | = `highlight` | stays bright (black text) | — | `ACCENT_DARK_STOPS` | lemon (warm) / macaroni (cool) |
 | green | generated (canonical + knobs) | = `highlight` | green's own L (white-edge) | — | `ACCENT_DARK_STOPS` | swap on collision (teal / yellow-green per side) |

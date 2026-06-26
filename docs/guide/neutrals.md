@@ -2,9 +2,9 @@
 
 ## Concept
 
-The neutral (gray) scale is either a ready-made Radix family or a brand-tinted
-gray: a near-gray carrying a whisper of the brand's hue, so the UI's grays feel
-related to the brand instead of dead.
+The neutral (gray) scale is a **generated** near-gray carrying a whisper of the brand's hue, so the
+UI's grays feel related to the brand instead of dead. (It used to offer a ready-made Radix family;
+that path was deleted — the neutral is now generated per brand, always.)
 
 ## Why
 
@@ -15,19 +15,18 @@ paper-white backgrounds, a touch more through the mids, gone again by body text.
 
 ## How
 
-Two options exist in principle:
+The neutral is **generated per brand** from the brand hue — both the core build (`cssRender.ts:113`)
+and the plugin/Figma path (`figmaRender.ts:93`) call the same `generateNeutralScale(brandH, level)`.
+There is **no Radix-family path** any more (`src/radixNeutrals.ts` / `closestNeutralFamily` was
+deleted). What is selectable is the **tint LEVEL**, not Radix-vs-generated:
 
-- **A Radix neutral family** (gray, mauve, slate, sage, olive, or sand), chosen by
-  the brand's hue. This is what actually ships today.
-- **A branded neutral:** gray tinted with the brand's hue at a tiny peak chroma,
-  shaped by a per-step curve.
+- **`pure`** — a flat gray (no brand tint).
+- **`default`** — a whisper of the brand hue, shaped per step by the neutral chroma curve.
+- **`branded`** — more tint (the stretch level).
 
-> **Status: the brand-tinted path is wired but unexercised.** `generateNeutralScale`
-> takes an optional tint, but **no caller passes one** — the core build emits a pure
-> gray and the plugin/Figma path assigns a Radix family. The tint machinery and its
-> per-step curve are real code, but nothing exercises them; treat the branded
-> neutral as a *generative-neutral opportunity* the spec hasn't yet turned on, not a
-> live option. (See [stage-2 adjudication](../engine-spec/stage2-adjudication.md).)
+> **Status:** `pure` and `default` ship. The neutral chroma curve (`neutralCurve.ts`) is the live
+> shaping; its constants were fit from Radix family measurements (a derivation input, not a runtime
+> lookup).
 
 And when the chosen secondary is itself near-gray, it informs the neutral rather
 than becoming an accent.
