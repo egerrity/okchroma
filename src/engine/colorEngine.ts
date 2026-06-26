@@ -677,46 +677,62 @@ export function generateScale(
     // chroma (vivid warms like Chai blow past the gamut here).
     const lightHlC = (l: number, hh: number) =>
       clampChromaToGamut(l, cAt('light', l, hlLadderC + u * (brandSat * HIGHLIGHT_LIGHT.satFraction * maxChromaAt(l, hh) - hlLadderC)), hh)
-    // A highlight rung: L is the spine's 9b/10b target; hue + chroma from the
-    // ladder math. No enforcement loop — the value falls out, polarity computed.
+    // A highlight rung: hue + chroma from the ladder math at L.
     const rung = (
       stop: number, Lt: number,
       hueAt: (l: number) => number, chromaAt: (l: number, h: number) => number,
-    ): ColorStop => {
-      const L = Lt
-      const H = hueAt(L)
-      const C = chromaAt(L, H)
-      return makeStop(stop, L, C, H)
+    ): ColorStop => makeStop(stop, Lt, chromaAt(Lt, hueAt(Lt)), hueAt(Lt))
+
+    // Legibility bound — a VALUE move, never a forced text. Place the rung, read
+    // its COMPUTED on-text polarity (shared `ons` rule), and if that side fails
+    // WCAG 4.5 move L toward it (darken for white / lighten for black) until it
+    // clears. Mirrors the cta's enforceOnFillContrast: on-highlight then falls out
+    // of a legible value (resolves the C25 dead-zone where the rung sat at an L
+    // that left white text sub-4.5).
+    const placeLegibleRung = (
+      stop: number, L0: number,
+      hueAt: (l: number) => number, chromaAt: (l: number, h: number) => number,
+    ): { s: ColorStop; white: boolean } => {
+      const at = (L: number) => rung(stop, L, hueAt, chromaAt)
+      let s = at(L0)
+      let white = onTextIsWhite(apcaY(s.r, s.g, s.b), s.L, s.C, s.H, !!opts?.enforceOnFillContrast)
+      const passes = (st: ColorStop, w: boolean) =>
+        w ? contrastRatio(1.0, wcagY(st.L, st.C, st.H)) >= 4.6
+          : contrastRatio(wcagY(st.L, st.C, st.H), 0) >= 4.6
+      if (!opts?.enforceOnFillContrast || passes(s, white)) return { s, white }
+      // white clears as the fill darkens; black clears as it lightens.
+      let lo = white ? 0.2 : s.L
+      let hi = white ? s.L : 0.95
+      for (let i = 0; i < 24; i++) {
+        const mid = (lo + hi) / 2
+        const ok = passes(at(mid), white)
+        white ? (ok ? (lo = mid) : (hi = mid)) : (ok ? (hi = mid) : (lo = mid))
+      }
+      s = at(white ? lo : hi)
+      white = onTextIsWhite(apcaY(s.r, s.g, s.b), s.L, s.C, s.H, true)
+      return { s, white }
     }
 
-    // Light: ladder-rung placed perceptually (same curve as stops 1–8).
-    const hl9 = rung(13, perceptualRungL(HIGHLIGHT_LIGHT.rootL, lightHlC(HIGHLIGHT_LIGHT.rootL, lightHueAt(HIGHLIGHT_LIGHT.rootL)), lightHueAt(HIGHLIGHT_LIGHT.rootL)), lightHueAt, lightHlC)
+    // Light: ladder-rung placed perceptually (same curve as stops 1–8), then
+    // bound to a legible value.
+    const hl = placeLegibleRung(13, perceptualRungL(HIGHLIGHT_LIGHT.rootL, lightHlC(HIGHLIGHT_LIGHT.rootL, lightHueAt(HIGHLIGHT_LIGHT.rootL)), lightHueAt(HIGHLIGHT_LIGHT.rootL)), lightHueAt, lightHlC)
+    const hl9 = hl.s
     const hl10 = rung(14, hoverL(hl9.L), lightHueAt, lightHlC)
     light.push(hl9, hl10)
-    // on-highlight COMPUTED from the rung's luminance — mirror light on-cta
-    // (whichever of white/black scores the higher APCA |Lc|).
-    const hl9ApcaY = apcaY(hl9.r, hl9.g, hl9.b)
-    onHighlightIsWhite = onTextIsWhite(hl9ApcaY, hl9.L, hl9.C, hl9.H, !!opts?.enforceOnFillContrast)
+    onHighlightIsWhite = hl.white
 
-    // Dark: the SAME rung in the dark hue. Chroma TARGET is the light rung's
-    // baseC construction in the dark hue (predictable moderate, not the full
-    // brand chroma — that lives in the cta). One construction for every brand
-    // (the old exact/curve fork is gone); the value falls out, polarity computed.
+    // Dark: the SAME construction in the dark hue (chroma from the shared dark
+    // curve), also bound to a legible value.
     const darkHueAt = (l: number) => torsionedHue(darkH, l, dark9L, gOffPath)
-    // F2: the dark rung is just another L on the spine — its chroma comes from the
-    // SAME dark curve the surrounding stops use, not a parallel light-derived
-    // construction. Falls back to the moderate ladder target for exact/no-curve
-    // brands (which ship raw).
     const darkHlC = (l: number, h: number) =>
       opts?.darkChromaCurve
         ? clampChromaToGamut(l, opts.darkChromaCurve(l, h, brandC), h)
         : clampChromaToGamut(l, hlLadderC + u * (brandSat * HIGHLIGHT_LIGHT.satFraction * maxChromaAt(l, h) - hlLadderC), h)
-    const dhl9 = rung(13, HIGHLIGHT_DARK.rootL, darkHueAt, darkHlC)
+    const dhl = placeLegibleRung(13, HIGHLIGHT_DARK.rootL, darkHueAt, darkHlC)
+    const dhl9 = dhl.s
     const dhl10 = rung(14, hoverL(dhl9.L), darkHueAt, darkHlC)
     dark.push(dhl9, dhl10)
-    // on-highlight-dark COMPUTED via the shared ons rule (identical to on-cta).
-    const dhl9ApcaY = apcaY(dhl9.r, dhl9.g, dhl9.b)
-    onHighlightIsWhiteDark = onTextIsWhite(dhl9ApcaY, dhl9.L, dhl9.C, dhl9.H, !!opts?.enforceOnFillContrast)
+    onHighlightIsWhiteDark = dhl.white
   }
 
   return {

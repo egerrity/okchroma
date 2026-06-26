@@ -1,11 +1,9 @@
 // Stage 2 highlight audit — mirrors dark-audit, but for the additive tokens.
-// Validates brand/secondary highlight-1/2 (the sim covered LIGHT only; this is
-// where the DARK extension gets checked) across the real fleet:
-//   - monotonic surface: light accent-8 > hl9 > hl10; dark accent-8 < hl9
-//   - hover guard: light hl9.L > hl10.L (white-text chip darkens on hover);
-//     dark black-flip hl10.L > hl9.L (black-text chip lightens on hover)
-//   - on-highlight polarity: light = white, dark = BLACK (the blessed dark
-//     black-flip highlight) — each actually passes WCAG >= 4.5 on its fill
+// Validates brand/secondary highlight-9/10 across the real fleet:
+//   - light surface monotonic: accent-8 > hl9 > hl10; dark hover pair distinct
+//   - on-highlight: COMPUTED polarity (shared ons rule), legible — the rung VALUE
+//     moves until the picked side clears WCAG 4.5 (placeLegibleRung). Uniform
+//     white-text in both modes now (the old dark black-flip is retired).
 //   - identity === input hex
 // Reports numbers first (so dark is inspectable), then PASS/FAIL.
 
@@ -48,26 +46,22 @@ for (const { name, hex, scale } of items) {
   const el = scale.light.slice(12), ed = scale.dark.slice(12)
   if (el.length < 2 || ed.length < 2) { fails.push(`${name}: missing highlight stops`); continue }
   const [l9, l10] = el, [d9, d10] = ed
-  const a8L = scale.light[7].L, a8Ld = scale.dark[7].L
+  const a8L = scale.light[7].L
   const yel = isYellow(scale)
 
-  // monotonic + hover guard
+  // Light surface monotonic (the highlight is a colored chip below accent-8); the
+  // (hl9,hl10) hover pair is two distinct states in BOTH modes — the old dark
+  // "black-flip" (hover lightens) is retired now the highlight is uniform.
   ok(a8L > l9.L && l9.L > l10.L, `${name}: light surface not monotonic (a8 ${f(a8L)} > hl9 ${f(l9.L)} > hl10 ${f(l10.L)})`)
-  ok(a8Ld < d9.L, `${name}: dark hl9 (${f(d9.L)}) not above accent-8 (${f(a8Ld)})`)
-  // Dark highlight flips to a BLACK-text chip pinned at the legibility floor
-  // (~L0.58); its hover LIGHTENS to stay black-legible. Inverse of light, where
-  // the white-text chip darkens. Guard: pair stays distinct in its own direction.
-  ok(d10.L > d9.L, `${name}: dark black-flip hover not lighter (hl9 ${f(d9.L)} >= hl10 ${f(d10.L)})`)
+  ok(Math.abs(d9.L - d10.L) > 0.005, `${name}: dark highlight pair not distinct (hl9 ${f(d9.L)} hl10 ${f(d10.L)})`)
 
-  // on-highlight polarity differs by mode now: LIGHT holds white for every hue
-  // (the rung darkens to the 4.6 edge, incl. yellow); DARK flips to black (the
-  // blessed black-flip chip). The WCAG check below proves each clears on its fill.
+  // on-highlight polarity is COMPUTED (shared ons rule), NOT forced. The rung's
+  // VALUE moves until the picked side clears WCAG (placeLegibleRung), so we assert
+  // LEGIBILITY of the computed pick — uniform white-text in both modes now.
   const polL = scale.onHighlightIsWhite, polD = scale.onHighlightIsWhiteDark
-  ok(polL === true, `${name}: light on-highlight should be white (got ${polL})`)
-  ok(polD === false, `${name}: dark on-highlight should flip to black (got white) — blessed black-flip highlight`)
   for (const [mode, s, pol] of [['light', l9, polL], ['dark', d9, polD]] as const) {
-    const passes = pol ? whiteWcag(s) >= 4.5 : blackWcag(s) >= 4.5
-    ok(passes, `${name} ${mode}: on-highlight ${pol ? 'white' : 'black'} fails WCAG on hl9 (${pol ? whiteWcag(s).toFixed(2) : blackWcag(s).toFixed(2)}:1)`)
+    const cr = pol ? whiteWcag(s) : blackWcag(s)
+    ok(cr >= 4.5, `${name} ${mode}: on-highlight ${pol ? 'white' : 'black'} fails WCAG on hl9 (${cr.toFixed(2)}:1)`)
   }
 
   // identity === the exact input hex (uppercased), mode-invariant
@@ -93,10 +87,9 @@ for (const { h, s } of neutralByHue) {
   // on-cta passes WCAG on the near-white cta, both modes
   ok((s.onFillTextIsWhite ? whiteWcag(ctaL) : blackWcag(ctaL)) >= 4.5, `neutral h${h} on-cta light fails`)
   ok((s.onFillTextIsWhiteDark ? whiteWcag(ctaD) : blackWcag(ctaD)) >= 4.5, `neutral h${h} on-cta dark fails`)
-  // highlight holds white, both modes (universal rung)
-  ok(s.onHighlightIsWhite === true && s.onHighlightIsWhiteDark === true, `neutral h${h}: highlight not universally white`)
-  ok(whiteWcag(hlL) >= 4.5, `neutral h${h} light: highlight white fails WCAG (${whiteWcag(hlL).toFixed(2)})`)
-  ok(whiteWcag(hlD) >= 4.5, `neutral h${h} dark: highlight white fails WCAG (${whiteWcag(hlD).toFixed(2)})`)
+  // highlight on-text is COMPUTED + legible, both modes (not forced white)
+  ok((s.onHighlightIsWhite ? whiteWcag(hlL) : blackWcag(hlL)) >= 4.5, `neutral h${h} light: highlight on-text fails WCAG`)
+  ok((s.onHighlightIsWhiteDark ? whiteWcag(hlD) : blackWcag(hlD)) >= 4.5, `neutral h${h} dark: highlight on-text fails WCAG`)
   console.log(`  h${String(h).padStart(3)}  cta ${hx(ctaL)} L${f(ctaL.L)}/${hx(ctaD)} L${f(ctaD.L)}  |  hl ${hx(hlL)} w${whiteWcag(hlL).toFixed(1)}/${hx(hlD)} w${whiteWcag(hlD).toFixed(1)}`)
 }
 
@@ -107,7 +100,7 @@ for (const sig of SIGNALS) {
   for (const [mode, st, pol] of [['light', s.light[8], s.onFillTextIsWhite], ['dark', s.dark[8], s.onFillTextIsWhiteDark]] as const) {
     ok((pol ? whiteWcag(st) : blackWcag(st)) >= 4.5, `signal ${sig.name} ${mode}: on-highlight ${pol ? 'white' : 'black'} fails (${(pol ? whiteWcag(st) : blackWcag(st)).toFixed(2)})`)
   }
-  ok(s.light.length === 12 && s.dark.length === 12, `signal ${sig.name} should carry no cta/highlight ext (light ${s.light.length}, dark ${s.dark.length})`)
+  ok(s.light.length === 14 && s.dark.length === 14, `signal ${sig.name} should carry the highlight ext (light ${s.light.length}, dark ${s.dark.length})`)
 }
 
 // ── blessed-snapshot regression for the NEW tokens ───────────────────────────
