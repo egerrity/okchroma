@@ -29,7 +29,6 @@ import {
   DARK_STOP_12,
   GOLD_SPINE,
   WARM_TORSION,
-  YELLOW_L_LIFT,
   HIGHLIGHT_LIGHT,
   HIGHLIGHT_DARK,
   ILLUS_STOPS,
@@ -37,6 +36,7 @@ import {
 } from './stopTable'
 import { neutralChromaCurve, type NeutralLevel } from './neutralCurve'
 import { darkCtaTrim } from './darkChromaCurve'
+import { perceptualRungL } from './perceptualL'
 
 // Re-export so callers can pull the neutral level alongside generateNeutralScale.
 export type { NeutralLevel } from './neutralCurve'
@@ -492,9 +492,6 @@ export function generateScale(
   const gWarm = gauss(hueDelta(brandH, 83), 28)
   const wDrift = S * (gWarm + (1 - gWarm) * mutedness * creamGate)
   const driftCapDeg = 24 + 8 * u
-  const yellowLift = hueIsNoise
-    ? 0
-    : YELLOW_L_LIFT.max * gauss(hueDelta(brandH, YELLOW_L_LIFT.centerH), YELLOW_L_LIFT.sigmaDeg)
   // Yellow-band chroma boost on the base ladder (gaussian at H 90, σ35) —
   // yellow's gamut is wide where other hues' is narrow. ABOVE the cream
   // edge the boost excess fades with vividness, so a muted yellow-green's
@@ -539,13 +536,18 @@ export function generateScale(
 
   for (let i = 0; i < LIGHT_STOPS.length; i++) {
     const { rootL, satFraction } = LIGHT_STOPS[i]
-    const L = rootL + yellowLift * (i / 7)
-    const H = lightHueAt(L)
-    // Chroma: vivid brands ride the base ladder (yellow-boosted); muted
-    // warm brands blend toward the saturation-preserving cream envelope.
-    const cLadder = vSubtle * chromaBoost * LIGHT_BASE_C[i]
-    const cEnv = brandSat * satFraction * maxChromaAt(L, H)
-    light.push(makeStop(i + 1, L, cAt('light', L, cLadder + u * (cEnv - cLadder)), H))
+    // Chroma at a candidate L: vivid brands ride the base ladder (yellow-boosted);
+    // muted warm brands blend toward the saturation-preserving cream envelope. Hue
+    // follows L along the gold spine.
+    const chromaAt = (L: number): number => {
+      const cLadder = vSubtle * chromaBoost * LIGHT_BASE_C[i]
+      const cEnv = brandSat * satFraction * maxChromaAt(L, lightHueAt(L))
+      return cAt('light', L, cLadder + u * (cEnv - cLadder))
+    }
+    // Perceptual placement (replaces the yellowLift hack): solve the L whose rung
+    // reads at its target perceived lightness; re-derive hue + chroma at that L.
+    const L = perceptualRungL(rootL, chromaAt(rootL), lightHueAt(rootL))
+    light.push(makeStop(i + 1, L, chromaAt(L), lightHueAt(L)))
   }
 
   const stop2Y = wcagY(light[1].L, light[1].C, light[1].H)
@@ -579,7 +581,9 @@ export function generateScale(
   // re-runs after each refinement; `deepen` (rung-1 "opt3") subtracts
   // extra depth and is itself re-bounded.
   const lightTextStop = (stop: number, rootL: number, cMult: number, ratio: number, deepen: number): ColorStop => {
-    const anchorL = rootL + yellowLift
+    // Perceptual anchor (replaces yellowLift); the WCAG contrast bound below still
+    // takes the darker, so legibility is unchanged.
+    const anchorL = perceptualRungL(rootL, clampChromaToGamut(rootL, cMult * brandC, lightHueAt(rootL)), lightHueAt(rootL))
     let H = lightHueAt(anchorL)
     let C = clampChromaToGamut(anchorL, cMult * brandC, H)
     let L = Math.min(anchorL, findMaxLForContrast(C, H, stop2Y, ratio))
@@ -685,8 +689,8 @@ export function generateScale(
       return makeStop(stop, L, C, H)
     }
 
-    // Light: ladder-rung at the spine target (same math as stops 1–8).
-    const hl9 = rung(13, HIGHLIGHT_LIGHT.rootL + yellowLift, lightHueAt, lightHlC)
+    // Light: ladder-rung placed perceptually (same curve as stops 1–8).
+    const hl9 = rung(13, perceptualRungL(HIGHLIGHT_LIGHT.rootL, lightHlC(HIGHLIGHT_LIGHT.rootL, lightHueAt(HIGHLIGHT_LIGHT.rootL)), lightHueAt(HIGHLIGHT_LIGHT.rootL)), lightHueAt, lightHlC)
     const hl10 = rung(14, hoverL(hl9.L), lightHueAt, lightHlC)
     light.push(hl9, hl10)
     // on-highlight COMPUTED from the rung's luminance — mirror light on-cta

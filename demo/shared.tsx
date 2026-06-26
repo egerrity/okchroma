@@ -29,7 +29,7 @@ function accentModeCss(mode: AccentMode, primary: Family, subtle: Family): strin
   const other = (f: Family): Family => (f === 'brand' ? 'accent' : 'brand')
   const prim = (f: Family): string => (f === 'brand' ? 'brand' : 'secondary')
   const PRIMARY_ROLES: Array<[string, string]> = [
-    ['fg', 'ink'], ['fg-hover', 'ink-alt'], ['fg-alt', 'ink-alt'], ['fg-alt-hover', 'ink'], ['fg-on-emphasis', 'on-cta'],
+    ['fg', 'ink-12'], ['fg-hover', 'ink-11'], ['fg-alt', 'ink-11'], ['fg-alt-hover', 'ink-12'], ['fg-on-emphasis', 'on-cta'],
     ['bg-emphasis', 'cta-1'], ['bg-emphasis-hover', 'cta-2'],
     ['border-default', 'accent-6'], ['border-default-hover', 'accent-8'],
     ['border-emphasis', 'cta-1'], ['border-emphasis-hover', 'cta-2'],
@@ -47,12 +47,12 @@ function accentModeCss(mode: AccentMode, primary: Family, subtle: Family): strin
     lines.push(`  --brand-${suffix}: var(--${prim(subtle)}-${tok});`)
     lines.push(`  --accent-${suffix}: var(--${prim(other(subtle))}-${tok});`)
   }
-  lines.push(`  --fg-link: var(--${prim(primary)}-ink-alt);`)
-  lines.push(`  --fg-link-hover: var(--${prim(primary)}-ink);`)
+  lines.push(`  --fg-link: var(--${prim(primary)}-ink-11);`)
+  lines.push(`  --fg-link-hover: var(--${prim(primary)}-ink-12);`)
   lines.push(`}`)
   if (subtle !== primary) {
-    lines.push(`[data-accent-mode="${mode}"] .u-btn-subtle { color: var(--${prim(subtle)}-ink); }`)
-    lines.push(`[data-accent-mode="${mode}"] .u-btn-ghost:hover { color: var(--${prim(subtle)}-ink); }`)
+    lines.push(`[data-accent-mode="${mode}"] .u-btn-subtle { color: var(--${prim(subtle)}-ink-12); }`)
+    lines.push(`[data-accent-mode="${mode}"] .u-btn-ghost:hover { color: var(--${prim(subtle)}-ink-12); }`)
   }
   return lines.join('\n')
 }

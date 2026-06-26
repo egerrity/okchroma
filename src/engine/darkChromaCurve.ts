@@ -1,26 +1,23 @@
-// Phase-3 dark CHROMA curve (greenfield dark rebuild, Stage 10). Reuses the
-// neutralChromaCurve architecture (peak × shape, evaluated by lightness) but
-// rebuilt for brands: peak is the BRAND's chroma (pinned at the fill, identity),
-// shape is re-derived from Radix's COLORED dark scales (it collapses the text
-// tiers — s11 0.745 ≫ s12 0.20 — so 11↔12 separates by CHROMA, not lightness),
-// and a per-hue loudness cap (CIECAM02 surround × an H-K / chromostereopsis
-// U-shape) folds into the surfaces + text while the fill stays loud. The result
-// is an ABSOLUTE chroma per stop, gamut-clamped by makeStop — replacing the old
-// proportional darkStops.chromaMultiplier as the dark loudness source.
+// Dark CHROMA curve. The lightness is the fixed DARK_NEUTRAL_L scaffold, so this
+// sets only chroma. Two pieces:
 //
-//   C(L, H, brandC, ctaC?) = capMix(L, H) · max( brandC · shape(L),  floorFracAt(L) · ctaC )
+//   nativeC(L) = max( brandC · shape(L),  floorFracAt(L) · ctaC )   — the brand's
+//               intended dark chroma: a per-stop shape (Radix's colored-dark
+//               distribution; rises across surfaces, peaks at the fill, collapses
+//               at text) with an identity-proportional deep-surface floor so the
+//               app/subtle backgrounds don't wash to grey.
+//   C(L,H)    = perceptualDarkC(L, H, nativeC)   — the per-hue REDISTRIBUTION that
+//               replaces the old hand-tuned loudnessCap: it holds nativeC's hue-
+//               average prominence and solves chroma per hue so every hue reads at
+//               the same prominence on dark (bloom-prone blue/violet/red come down,
+//               perceptually-quiet yellow/green come up — fixing the "reads grey"
+//               surfaces). Falls out of the H-K predictor; no per-hue constants.
 //
-// The FLOOR (when ctaC is given) keeps deep dark SURFACES from washing out to grey —
-// the bare shape multiplies brandC by only ~0.125 at the deepest stops. It's a
-// fraction of the RESOLVED cta chroma (identity-proportional: scales with each family
-// and auto-fades to a grey ladder as cta chroma → 0), and it's capped by the same
-// loudnessCap so it never re-loudens the bloom-prone hues. ctaC omitted ⇒ bare curve
-// (byte-identical for any caller that doesn't pass it).
-//
-// Dark-only; light mode is untouched. Lightness is the fixed blessed scaffold
-// (Phase 2) — this only sets chroma.
+// The cta is NOT a surface — darkCtaTrim (below) is unchanged, so the dark cta and
+// its #869cda canary are untouched. ctaC omitted ⇒ no floor. gamut-clamped by makeStop.
 
 import { DARK_NEUTRAL_L } from './stopTable'
+import { perceptualDarkC } from './perceptualL'
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
 const rad = (d: number) => (d * Math.PI) / 180
@@ -35,15 +32,14 @@ const lobe = (h: number, c: number, w: number) => Math.pow(Math.max(0, Math.cos(
 // subtle-bg carry a touch more brand tint (they were reading slightly grey).
 const SHAPE_DARK = [0.125, 0.16, 0.305, 0.429, 0.483, 0.522, 0.57, 0.674, 1, 0.94, 0.745, 0.2]
 
-const FILL_L = 0.66        // the blessed stop-9 lightness; cap eases to 0 above it
 const GLOBAL_TRIM = 0.76   // CIECAM02 dark-surround colorfulness trim
 const BLUE_DEPTH = 0.30    // blue/violet (~265°) trough depth
 const REDMAG_DEPTH = 0.26  // red/magenta (~345°) trough depth
 
 // Per-hue loudness cap (0..1): deepest at blue/violet and red/magenta (they
-// bloom/halo on near-black), ≈1 at yellow/green (perceptually quiet + the gamut
-// self-clamps them anyway). Two lobes combined with max() so the violet overlap
-// isn't double-cut.
+// bloom/halo on near-black), ≈1 at yellow/green. Two lobes combined with max() so
+// the violet overlap isn't double-cut. NOW drives ONLY the cta trim (darkCtaTrim);
+// the surfaces use the perceptual redistribution instead.
 const loudnessCap = (H: number): number => {
   const h = norm(H)
   return GLOBAL_TRIM * (1 - Math.max(BLUE_DEPTH * lobe(h, 265, 115), REDMAG_DEPTH * lobe(h, 345, 110)))
@@ -64,21 +60,6 @@ const shapeAt = (L: number): number => {
   return pts[pts.length - 1].s
 }
 
-// The per-hue loudness cap bites only in the SURFACE MID-BAND (≈ stops 3–8). It
-// eases to 1.0 (NO cap) at the DEEP darks (1–2): near-black, they don't bloom —
-// they just need their tint, and capping them greyed them out. It is also 1.0
-// above the fill, so text-low (11) keeps its hue (reads as a colored link) while
-// text-high (12) is left to the shape's collapse. So the cap calms exactly the
-// mid-lightness saturated surfaces where bloom happens, and nowhere else.
-const bandWeight = (L: number): number => {
-  if (L <= 0.22) return 0
-  if (L < 0.30) return smoothstep((L - 0.22) / 0.08)
-  if (L <= 0.55) return 1
-  if (L < FILL_L) return 1 - smoothstep((L - 0.55) / (FILL_L - 0.55))
-  return 0
-}
-const capMix = (L: number, H: number): number => 1 - (1 - loudnessCap(H)) * bandWeight(L)
-
 // Identity-proportional surface chroma FLOOR — a FRACTION of the resolved cta chroma
 // (passed in as ctaC). The DEEP surfaces (app-bg / subtle-bg, stops ~1–3) wash out
 // worst because their shape factor is only ~0.125–0.16; the floor lifts those. Mid+
@@ -95,16 +76,14 @@ const floorFracAt = (L: number): number => {
   return FLOOR_FRAC * (1 - smoothstep((L - FLOOR_TAPER_LO) / (FLOOR_TAPER_HI - FLOOR_TAPER_LO)))
 }
 
-// Absolute dark chroma at a stop. peak = brandC (pinned, fill identity); shape is
-// Radix's colored-dark distribution (tinted surfaces, text collapse); the cap calms
-// the mid-band surfaces of the bloom-prone hues only. When ctaC is given, the surface
-// chroma can't fall below the identity-proportional floor (also capped). makeStop
-// gamut-clamps after.
+// Absolute dark chroma at a stop: the brand's intended chroma (shape + identity-
+// proportional floor), redistributed per hue for equal prominence on dark (see
+// perceptualDarkC). makeStop gamut-clamps after.
 export const darkChromaCurve = (L: number, H: number, brandC: number, ctaC?: number): number => {
-  const uncapped = ctaC === undefined
+  const nativeC = ctaC === undefined
     ? brandC * shapeAt(L)
     : Math.max(brandC * shapeAt(L), floorFracAt(L) * ctaC)
-  return uncapped * capMix(L, H)
+  return perceptualDarkC(L, H, nativeC)
 }
 
 // The cta fill keeps MOST of its loudness (it's the primary action, brand-true) but

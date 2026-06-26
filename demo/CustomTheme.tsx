@@ -226,7 +226,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
       <div className="ct-bar-field">
         <div className="ct-label">Neutral color</div>
         <div className="ct-field">
-          <span className="ct-swatch" style={{ background: 'var(--neutral-highlight-1)' }} />
+          <span className="ct-swatch" style={{ background: 'var(--neutral-highlight-9)' }} />
           <NeutralSelect value={neutralLevel} onChange={setNeutralLevel} />
         </div>
       </div>
@@ -289,7 +289,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
 
   // TEMP — flat swatch grid of every generated color (all ramps × all stops),
   // for eyeballing during the corrections pass. Themes with the page toggle.
-  const SWATCH_STOPS = ['paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'accent-6', 'accent-7', 'accent-8', 'highlight-1', 'highlight-2', 'cta-1', 'cta-2', 'ink-alt', 'ink']
+  const SWATCH_STOPS = ['paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'accent-6', 'accent-7', 'accent-8', 'highlight-9', 'highlight-10', 'cta-1', 'cta-2', 'ink-11', 'ink-12']
   const swatchRamps: Array<[string, string]> = [
     ['brand', 'brand'],
     ...(secondary ? [['secondary', 'secondary'] as [string, string]] : []),
@@ -656,7 +656,7 @@ function CustomersTable({ hasSecondary }: { hasSecondary: boolean }) {
           const premium = c.plan !== 'Starter'
           // Premium plans carry the accent when a secondary exists, else the brand.
           const planBg = premium ? (hasSecondary ? 'var(--secondary-wash-3)' : 'var(--brand-bg-subtle)') : 'var(--surface-sunken)'
-          const planFg = premium ? (hasSecondary ? 'var(--secondary-ink-alt)' : 'var(--brand-fg)') : 'var(--fg-subtle)'
+          const planFg = premium ? (hasSecondary ? 'var(--secondary-ink-11)' : 'var(--brand-fg)') : 'var(--fg-subtle)'
           return (
             <tr key={c.name}>
               <td>
@@ -780,8 +780,8 @@ const PAGE_CSS = `
   --brand-bg-emphasis: var(--brand-cta-1);
   --brand-bg-emphasis-hover: var(--brand-cta-2);
   --brand-fg-on-emphasis: var(--brand-on-cta);
-  --brand-fg: var(--brand-ink);
-  --brand-fg-alt: var(--brand-ink-alt);
+  --brand-fg: var(--brand-ink-12);
+  --brand-fg-alt: var(--brand-ink-11);
   --brand-bg-subtle: var(--brand-wash-3);
   --brand-bg-subtle-hover: var(--brand-wash-4);
 }
@@ -812,7 +812,7 @@ const PAGE_CSS = `
 .ct-alert-warn {
   display: flex; gap: 8px; align-items: flex-start; margin-top: 8px;
   padding: 8px 10px; border-radius: 8px; font-size: 12px; line-height: 1.45;
-  background: var(--yellow-wash-4); border: 1px solid var(--yellow-accent-8); color: var(--yellow-ink);
+  background: var(--yellow-wash-4); border: 1px solid var(--yellow-accent-8); color: var(--yellow-ink-12);
 }
 .ct-alert-warn a { color: inherit; font-weight: 600; }
 .ct-alert-text {
@@ -876,7 +876,7 @@ const PAGE_CSS = `
 .ct-check:hover { background: var(--surface-sunken); border-radius: 6px; }
 .ct-tip {
   display: none; position: absolute; left: 0; bottom: calc(100% + 6px); z-index: 70;
-  width: 290px; background: var(--neutral-ink); color: var(--neutral-paper-1);
+  width: 290px; background: var(--neutral-ink-12); color: var(--neutral-paper-1);
   border-radius: 8px; padding: 9px 11px; font-size: 11px; line-height: 1.5;
   box-shadow: 0 8px 24px rgba(0,0,0,0.25); pointer-events: none;
 }
