@@ -71,9 +71,22 @@ scale-rung names — but the generator kept producing cta in the 9/10 slot and *
 (and stale comments) carry the old shape. A future *cta pull-out* refactor may align the internals;
 it is **not** required for correct output and is **out of scope** for routine work.
 
-**Open naming discrepancy:** §1/§2 below still call the rung `highlight-1/2` and the text steps
-`ink-alt`/`ink`; the **code emits `highlight-9/10` and `ink-11/12`**. Token-name streamlining is a
-separate horizon task — until it lands, **the emitted names in the table above are canonical.**
+**Naming — RESOLVED (owner, 2026-06-26):** the **emitted names are canonical** — `highlight-9/10`
+stays *in* the scale (keeps its scale number); `cta` is pulled out by **name AND number** (`cta-1/2`,
+not a scale stop). §1/§2 below still use the older `highlight-1/2` / `ink-alt` / `ink` labels and
+should be updated to the emitted `highlight-9/10` / `ink-11/12` (a doc text edit, not a code change).
+
+**Plugin / Figma handoff model — VERIFIED against the plugin + build (2026-06-26):** Figma holds a
+*representative sample* (a few edge-case brands + a default), **not** the source of truth for color.
+Colors are **generated at runtime** from the brand hue — `plugin/ui.ts` calls `resolveBrand` +
+`themeToFigma` live, and `manifest.json` allows no network, so generation must be local — and the
+handoff is by **semantic token name** ("make this `wash-3`"), never a baked exact hex. The **neutral
+is generated per brand** via `generateNeutralScale(brandH, level)` — **not Radix**: the old
+`src/radixNeutrals.ts` lookup is **deleted**; the only Radix residue is the *numeric* `neutralCurve.ts`
+constants once **fit from** Radix family measurements (a derivation input, not a runtime lookup).
+Same-hue brands **dedup** onto one shared primitive keyed by a rounded hue bucket
+(`system/neutral/<level>-h<round(brandH)>`, or `pure` for grey). Material-style theming is a possible
+*future* direction, not current.
 
 ---
 

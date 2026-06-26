@@ -10,7 +10,7 @@ type TokenNode = TokenLeaf | { [k: string]: TokenNode }
 interface BrandRamp { role: string; light: TokenNode; dark: TokenNode }
 
 // A shared ramp (neutral / signal). Written ONCE into `primitive` at `prim`
-// (e.g. system/neutral/sand, system/yellow/lemon) and aliased from the
+// (e.g. system/neutral/default-h330 or system/neutral/pure, system/yellow/lemon) and aliased from the
 // `theme` collection's `theme` group (neutral, yellow, …). light/dark are
 // only consulted the first time a variant is created (grow-on-demand).
 interface SharedRamp { theme: string; prim: string; light: TokenNode; dark: TokenNode }

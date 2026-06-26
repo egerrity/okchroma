@@ -34,7 +34,7 @@ function colorFromHex(white: boolean): FigmaColorToken {
   return { $type: 'color', $value: { colorSpace: 'srgb', components: [v, v, v], alpha: 1, hex: white ? '#ffffff' : '#000000' } }
 }
 
-// Parse "#rrggbb" → a color token (for neutral families shipped as hex strings).
+// Parse "#rrggbb" → a color token (used only for the user-input identity hex).
 function colorFromHexString(hex: string): FigmaColorToken {
   const h = hex.replace('#', '')
   const r = parseInt(h.slice(0, 2), 16) / 255

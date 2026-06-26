@@ -59,7 +59,7 @@ separate step in the consumer (plugin/demo).
 | 5 | `yellow` variant: lemon (warm) / macaroni (cool) | resolve.ts:189 |
 | 6 | Signal shifts (output-only): `yellow`/`green`/`info-color` swap off the brand; `red` never | resolve.ts:194–201 |
 | 7 | Red-cool render (last): warm-red brands rotate `cta` cooler | resolve.ts:210–212 |
-| — | Neutral family assigned by brand hue (`closestNeutralFamily`) — separate, consumer | plugin/ui.ts |
+| — | Neutral GENERATED per brand hue (`generateNeutralScale`); plugin dedups same-hue brands onto one shared primitive (`<level>-h<round(brandH)>`) | plugin/ui.ts |
 
 Every *decision* (collision, red-band, archetype, on-fill polarity) reads the raw brand
 hue; render-time presentation (cool rotation, warm-hue drift) never feeds a decision,

@@ -78,10 +78,23 @@ marked **OPEN**), the internal-index wrinkle, the historical root (cta *was* 9/1
    for a deliberate gate-verified pass).
 6. **Archive tombstones** (`_archive/README`, `docs/archive/*`) — not strengthened.
 
-## Open questions for the owner (flagged, not guessed)
-- **Plugin neutral:** the engine emitters generate the neutral, but a hardcoded-Radix neutral path
-  may still exist in the demo/plugin. Does the shipped plugin use the generated neutral or Radix?
-  (If Radix, that's a real engine-vs-plugin divergence to track.)
-- **Naming:** keep emitted `highlight-9/10`/`ink-11/12`, or move to the spec's `highlight-1/2`/
-  `ink-alt`/`ink`? (Horizon: token-name streamlining.)
-- **Neutral cta value:** still OPEN (may become transparent; must not be a scale alias).
+## Owner questions — RESOLVED (2026-06-26, plugin claim verified by workflow)
+- **Plugin neutral — RESOLVED (verified, adversarial pass could not refute):** the plugin
+  **GENERATES** the neutral per brand at runtime from the brand hue (`plugin/ui.ts` →
+  `resolveBrand`/`themeToFigma` → `generateNeutralScale`; `manifest.json` allows no network).
+  **NOT Radix** — the old `src/radixNeutrals.ts` / `closestNeutralFamily()` lookup is **deleted**;
+  the only Radix residue is the numeric `neutralCurve.ts` constants once *fit from* Radix families (a
+  derivation input). Dedups same-hue brands onto a shared primitive keyed by a rounded hue bucket
+  (`system/neutral/<level>-h<round(brandH)>`, or `pure` for grey). **No live engine-vs-plugin
+  divergence.** (See ENGINE-SPEC §0.)
+- **Naming — RESOLVED:** emitted names canonical (`highlight-9/10` in-scale; `cta-1/2` pulled out by
+  name + number). Spec §1/§2 `highlight-1/2`/`ink-alt` text should be updated to the emitted names
+  (doc edit, queued).
+- **Neutral cta value — still OPEN:** target undecided (may become transparent; must not be a scale alias).
+
+### New poison pellets found during plugin verification — docs referencing DELETED code (FIXED this pass)
+- `docs/guide/neutrals.md`, `lineage.md`, `README.md` referenced the **deleted** `src/radixNeutrals.ts`
+  + `closestNeutralFamily()` + `neutralRadixCss` (a Radix-family neutral the code no longer has).
+- `plugin/code.ts:13` example `system/neutral/sand` was wrong (real key is `<level>-h<H>` / `pure`);
+  `figmaRender.ts:37` "neutral families shipped as hex strings" is a fossil (that helper is used only
+  for the `identity` token now).

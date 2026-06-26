@@ -45,17 +45,16 @@ consume it:
 ## Engineering
 
 - [`src/engine/colorEngine.ts`](../../src/engine/colorEngine.ts) →
-  `generateNeutralScale({ H, C })` (C is the peak; each step scales it).
-- [`src/engine/stopTable.ts`](../../src/engine/stopTable.ts) →
-  `NEUTRAL_TINT_CURVE`, the per-step tint multipliers derived from Radix slate:
-  `[0.08, 0.15, 0.25, 0.33, 0.42, 0.55, 0.68, 0.95, 1.0, 0.95, 0.83, 0.60]`
-  (≈8% of peak on step 1, peaks at steps 8–9, tapers into 12).
-- [`src/radixNeutrals.ts`](../../src/radixNeutrals.ts) → the families +
-  `closestNeutralFamily()`. The chosen family is rendered to CSS by
-  `neutralRadixCss` ([`src/engine/cssRender.ts`](../../src/engine/cssRender.ts)),
-  which maps the 12 hexes through the shared `stopTokenName` scheme
-  (`paper`/`wash`/…/`highlight`/`cta`/`ink`) — the same names the Figma path emits,
-  so CSS and Figma now agree on the neutral ramp.
+  `generateNeutralScale(brandH, level)`: synthesizes a faint gray AT the brand hue and runs it
+  through `generateScale` with the neutral chroma curve. **The neutral is GENERATED, not selected
+  from a Radix family** — the old `src/radixNeutrals.ts` / `closestNeutralFamily()` / `neutralRadixCss`
+  lookup was **deleted**.
+- [`src/engine/neutralCurve.ts`](../../src/engine/neutralCurve.ts) →
+  `neutralChromaCurve(brandH, level)`: the per-hue, per-level chroma curve. Its numeric constants
+  were *fit from* Radix family measurements — a derivation input, **not** a runtime color lookup.
+- Both emitters call the SAME `generateNeutralScale` (`cssRender.ts:113`, `figmaRender.ts:93`), so
+  CSS and Figma agree; the plugin dedups same-hue brands onto one shared primitive
+  (`plugin/ui.ts` key `<level>-h<round(brandH)>`, or `pure` for grey).
 
 **Worked example.** With a peak chroma of 0.016 (Radix slate's level), step 1
 carries 0.08 × 0.016 ≈ 0.0013 chroma (essentially white), while step 9 carries the

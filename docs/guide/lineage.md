@@ -37,9 +37,10 @@ Radix shows up in two places in the code:
 - [`src/engine/stopTable.ts`](../../src/engine/stopTable.ts): the light-stop
   lightness ladder (`LIGHT_STOPS`) is the median OKLCH lightness of Radix's 11
   chromatic scales; `REFERENCE_H = 245` is the calibration hue.
-- [`src/radixNeutrals.ts`](../../src/radixNeutrals.ts): Radix's neutral families
-  (gray/mauve/slate/sage/olive/sand), offered directly and used to validate the
-  generated neutral tinting.
+- [`src/engine/neutralCurve.ts`](../../src/engine/neutralCurve.ts): the neutral chroma curve's
+  numeric constants (lightness anchors, shape, per-hue peak chroma) were **fit from** Radix's neutral
+  families — a derivation input only. (The old `src/radixNeutrals.ts` family-lookup was deleted;
+  neutrals are now GENERATED per brand hue, not selected.)
 
 This topic is orientation. The mechanics it points at are covered in [the stop
 ladder](./stop-ladder.md), [chroma & the gamut envelope](./chroma-envelope.md),
