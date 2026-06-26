@@ -101,14 +101,14 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
       neutral: rampGroup(nScale[mode], mode === 'light' ? nScale.onFillTextIsWhite : nScale.onFillTextIsWhiteDark, 'brand', neutralExtra(mode)),
     }
     for (const sig of input.signals) {
-      const sg = rampGroup(sig.scale[mode], mode === 'light' ? sig.scale.onFillTextIsWhite : sig.scale.onFillTextIsWhiteDark, 'neutral')
-      // Symmetric role structure: signals carry `cta` = a duplicate of their
-      // `highlight` (stops 9/10 + on-text). Identical values for now; whether signal
-      // cta should diverge from highlight is a deferred decision.
-      sg[stopTokenName(9, 'brand')] = sg[stopTokenName(9, 'neutral')]
-      sg[stopTokenName(10, 'brand')] = sg[stopTokenName(10, 'neutral')]
-      sg[onFillTokenName('brand')] = sg[onFillTokenName('neutral')]
-      g[sig.name] = sg
+      // F1: signals are brand-kind — a loud cta (stop 9) AND a distinct highlight
+      // rung (13/14), with computed on-cta + on-highlight and no identity. No alias.
+      g[sig.name] = rampGroup(
+        sig.scale[mode],
+        mode === 'light' ? sig.scale.onFillTextIsWhite : sig.scale.onFillTextIsWhiteDark,
+        'brand',
+        { onHighlightWhite: mode === 'light' ? sig.scale.onHighlightIsWhite : sig.scale.onHighlightIsWhiteDark },
+      )
     }
     return g
   }

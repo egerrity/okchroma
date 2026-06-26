@@ -16,8 +16,8 @@
 // one shape covering success and info too.
 
 import { generateScale, type GeneratedScale } from './colorEngine'
-import { ACCENT_DARK_STOPS } from './stopTable'
-import { checkCollision } from './collision'
+import { darkChromaCurve } from './darkChromaCurve'
+import { checkCollision, YELLOW_SPLIT_H } from './collision'
 import type { SignalDef } from './signals'
 
 // One side of a split. Three forms:
@@ -38,10 +38,10 @@ interface SignalShiftRule {
 // Per-signal direction + targets. Red is deliberately absent — red stays
 // with the engine's rung-1 / component handling.
 const SHIFT_RULES: Partial<Record<SignalDef['name'], SignalShiftRule>> = {
-  // = collision.YELLOW_SPLIT_H. Unchanged yellow behavior: warm-yellow
+  // F5: the SINGLE split constant (imported, was a duplicated `96`). Warm-yellow
   // brand → lemon; cool-yellow brand keeps canonical macaroni.
   yellow: {
-    splitH: 96,
+    splitH: YELLOW_SPLIT_H,
     below: { kind: 'shift', note: 'yellow → lemon' },
     atOrAbove: { kind: 'none' },
   },
@@ -71,8 +71,9 @@ export interface ShiftResult {
 // dark character is preserved.
 function swapScale(baseHex: string, def: SignalDef): GeneratedScale {
   return generateScale(baseHex, def.name, undefined, {
-    subtleChromaScale: def.subtleChromaBoost,
-    darkStops: ACCENT_DARK_STOPS,
+    highlight: true,
+    darkChromaCurve,
+    loudCta: true,
     darkFillMinL: def.darkFillMinL,
     enforceOnFillContrast: true,
   })
@@ -85,8 +86,9 @@ function lemonScale(def: SignalDef): GeneratedScale {
   return generateScale(def.hex, def.name, 'light', {
     hueShiftDeg: def.hueShift.cool,
     chromaScale: def.yieldChromaScale,
-    subtleChromaScale: def.subtleChromaBoost,
-    darkStops: ACCENT_DARK_STOPS,
+    highlight: true,
+    darkChromaCurve,
+    loudCta: true,
     enforceOnFillContrast: true,
   })
 }

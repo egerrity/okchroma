@@ -36,14 +36,11 @@ const SHARED_NAMES: Record<number, string> = {
 
 // Additive Stage-2 role stops carry engine stop numbers ABOVE the 1–12 scale
 // (kept off scale.light/dark so the blessed 12-stop snapshot is untouched).
-// These names are kind-independent — a ramp only ever carries the ones it has:
-//   brand/secondary → 13/14 (highlight, new fill below their cta)
-//   neutral         → 15/16 (cta, the new near-black/near-white button)
+// Every brand-kind ramp (brand/secondary/neutral/signals) carries 13/14 — the
+// highlight rung below the cta.
 const EXT_NAMES: Record<number, string> = {
   13: 'highlight-1',
   14: 'highlight-2',
-  15: 'cta-1',
-  16: 'cta-2',
 }
 
 // Map an engine stop number to its emitted token name for the ramp kind.

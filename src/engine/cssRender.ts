@@ -25,14 +25,14 @@ const onColor = (white: boolean) => (white ? '#ffffff' : '#000000')
 // tokens. identity is mode-invariant — the caller emits it once (the neutral
 // has none). Used for the brand, the (real) secondary, AND the generated
 // neutral — all three are brand-kind (cta = stop 9, highlight = rung).
-function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' | 'dark'): string[] {
+export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' | 'dark'): string[] {
   const stops = mode === 'light' ? s.light : s.dark
   const onCta = mode === 'light' ? s.onFillTextIsWhite : s.onFillTextIsWhiteDark
   const onHl = mode === 'light' ? s.onHighlightIsWhite : s.onHighlightIsWhiteDark
   return [
     stopsToVars(stops, prefix, 'brand'),
     `  --${prefix}-${onFillTokenName('brand')}: ${onColor(onCta)};`,
-    `  --${prefix}-${onFillTokenName('neutral')}: ${onColor(onHl ?? true)};`,
+    `  --${prefix}-${onFillTokenName('neutral')}: ${onColor(onHl!)};`,
   ]
 }
 
@@ -143,13 +143,13 @@ export function brandCss(
     ...accentLight,
     secondaryIdentity,
     ...brandKindBody('neutral', nScale, 'light'),
-    ...r.signalOverrides.map(o => stopsToVars(o.scale.light, o.name, 'neutral')),
+    ...r.signalOverrides.flatMap(o => brandKindBody(o.name, o.scale, 'light')),
     `}`,
     `[data-brand="${slug}"][data-theme="dark"] {`,
     ...brandKindBody('brand', scale, 'dark'),
     ...accentDark,
     ...brandKindBody('neutral', nScale, 'dark'),
-    ...r.signalOverrides.map(o => stopsToVars(o.scale.dark, o.name, 'neutral')),
+    ...r.signalOverrides.flatMap(o => brandKindBody(o.name, o.scale, 'dark')),
     `}`,
   ].join('\n')
 }

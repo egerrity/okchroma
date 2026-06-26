@@ -38,10 +38,10 @@ import { pickSignalShift } from './signalShift'
 export const SIGNAL_SCALES = new Map<SignalDef['name'], { def: SignalDef; scale: GeneratedScale }>(
   SIGNALS.map(def => [
     def.name,
-    // Stage 2.5: green darkens its light fill to hold WHITE, like the other
-    // non-yellow signal fills (red/info-color). Light-only value move; dark stays
-    // black-first. No other signal sets it ⇒ they're byte-identical.
-    { def, scale: generateScale(def.hex, def.name, undefined, { subtleChromaScale: def.subtleChromaBoost, darkStops: ACCENT_DARK_STOPS, darkFillMinL: def.darkFillMinL, enforceOnFillContrast: true, enforceWhiteFill: def.name === 'green' }) },
+    // F1: signals run the brand generation path — a signal is a brand whose input
+    // hex is the canonical stoplight color. cta = the hex (archetype); the highlight
+    // rung + ons fall out; dark via the curve; loudCta keeps the dark cta vivid (§3.1).
+    { def, scale: generateScale(def.hex, def.name, undefined, { highlight: true, darkChromaCurve, loudCta: true, darkFillMinL: def.darkFillMinL, enforceOnFillContrast: true }) },
   ])
 )
 

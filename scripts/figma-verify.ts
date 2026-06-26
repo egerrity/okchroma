@@ -44,9 +44,8 @@ for (const mode of ['light', 'dark'] as const) {
     // Signals carry cta as a DUPLICATE of highlight (symmetric roles, identical
     // values for now); they still have no identity (no user-input hex).
     if (!isBrand && fam !== 'neutral') {
-      ok(m[fam]['cta-1'].$value.hex === m[fam]['highlight-1'].$value.hex
-        && m[fam]['cta-2'].$value.hex === m[fam]['highlight-2'].$value.hex,
-        `${mode}.${fam} cta should duplicate highlight`)
+      ok(m[fam]['cta-1'].$value.hex !== m[fam]['highlight-1'].$value.hex,
+        `${mode}.${fam} cta-1 should now DIVERGE from highlight-1 (F1 — signals routed through the scale)`)
       ok(!m[fam]['identity'], `${mode}.${fam} should not have identity`)
     }
   }

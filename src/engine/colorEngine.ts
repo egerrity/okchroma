@@ -367,6 +367,30 @@ export interface GenerateOptions {
   // gamut-clamps after. Unset ⇒ every dark chroma falls through unchanged ⇒
   // byte-identical.
   darkChromaCurve?: (L: number, H: number, brandC: number) => number
+  // Signal "loud cta": keep the dark cta at full brand chroma (skip the per-hue
+  // darkCtaTrim that brands get). §3.1 — signals are vivid/louder. Default off ⇒ unchanged.
+  loudCta?: boolean
+  // Optional "alerts run hotter" multiplier on the chroma wrapper (cAt). Default
+  // 1 ⇒ byte-identical. Owner reviews signals with-vs-without; no family sets it yet.
+  heat?: number
+}
+
+// ── Shared `ons` polarity — ONE rule for on-cta AND on-highlight, both modes ──
+// APCA picks the polarity (whichever of white/black scores the higher |Lc| on the
+// fill); when `enforce`, a WCAG bound flips it to the other side when the APCA pick
+// fails 4.5 and the other side complies (WCAG 4.5 + APCA |Lc| ≥ 45). Polarity ONLY —
+// the cta's value-darken fallback for the "neither complies" case stays on the cta
+// (the highlight relies on its background being resolved by the curve instead).
+function onTextIsWhite(Y: number, L: number, C: number, H: number, enforce: boolean): boolean {
+  let white = Math.abs(apcaLc(1.0, Y)) >= Math.abs(apcaLc(0.0, Y))
+  if (enforce) {
+    if (white && contrastRatio(1.0, wcagY(L, C, H)) < 4.5) {
+      if (contrastRatio(wcagY(L, C, H), 0) >= 4.5 && Math.abs(apcaLc(0.0, Y)) >= 45) white = false
+    } else if (!white && contrastRatio(wcagY(L, C, H), 0) < 4.5) {
+      if (contrastRatio(1.0, wcagY(L, C, H)) >= 4.5 && Math.abs(apcaLc(1.0, Y)) >= 45) white = true
+    }
+  }
+  return white
 }
 
 export function generateScale(
@@ -384,7 +408,7 @@ export function generateScale(
   // (by lightness + mode). Wrap EVERY chroma argument with this — unset ⇒
   // identity ⇒ byte-identical; set ⇒ the curve drives chroma, gamut-clamped.
   const cAt = (mode: 'light' | 'dark', L: number, nativeC: number): number =>
-    opts?.chromaCurve ? opts.chromaCurve(L, mode) : nativeC
+    (opts?.chromaCurve ? opts.chromaCurve(L, mode) : nativeC) * (opts?.heat ?? 1)
   const archetype = forcedArchetype ?? classifyArchetype(brandL)
   const scaleL = forcedArchetype ? medianLForArchetype(forcedArchetype) : brandL
   // Dark-floor strength: 0 at/below hue-noise chroma (gray ladder), full
@@ -414,8 +438,7 @@ export function generateScale(
       : scaleL
   const fill9 = oklchToSrgbUnclamped(fillAnchorL, clampChromaToGamut(fillAnchorL, cAt('light', fillAnchorL, brandC), brandH), brandH)
   const fill9ApcaY = apcaY(fill9.r, fill9.g, fill9.b)
-  let onFillTextIsWhite =
-    Math.abs(apcaLc(1.0, fill9ApcaY)) >= Math.abs(apcaLc(0.0, fill9ApcaY))
+  let onFillTextIsWhite = onTextIsWhite(fill9ApcaY, fillAnchorL, brandC, brandH, !!opts?.enforceOnFillContrast)
 
   // ─── Light ramp: minimal OKLCH model (2026-06, designer-approved) ─────────
   // ORDERING INVARIANT (architectural): every DECISION — collision gates,
@@ -531,18 +554,15 @@ export function generateScale(
   // enforceWhiteFill ramp (success) whose green is already darkened to the
   // white edge — so the WCAG check below passes and this block is a no-op for
   // it (white stays, no flip). Byte-identical where fillAnchorL === scaleL.
+  // Polarity is resolved at init (onTextIsWhite already flips white→black when
+  // white fails WCAG and black complies). Here only the cta's value-darken
+  // fallback remains: white survived but still fails WCAG (the "neither" case) ⇒
+  // darken the fill to the white-compliant edge (search 4.6 so hex rounding never
+  // dips below 4.5). Byte-identical where fillAnchorL === scaleL and white holds.
   let light9L = fillAnchorL
-  if (opts?.enforceOnFillContrast && onFillTextIsWhite) {
-    if (contrastRatio(1.0, wcagY(fillAnchorL, brandC, brandH)) < 4.5) {
-      const blackWcag = contrastRatio(wcagY(fillAnchorL, brandC, brandH), 0)
-      const blackLc = Math.abs(apcaLc(0.0, fill9ApcaY))
-      if (blackWcag >= 4.5 && blackLc >= 45) {
-        onFillTextIsWhite = false
-      } else {
-        // search to 4.6 — hex rounding must never land below 4.5
-        light9L = findLForContrast(fillAnchorL, brandC, brandH, 1.0, 4.6)
-      }
-    }
+  if (opts?.enforceOnFillContrast && onFillTextIsWhite
+      && contrastRatio(1.0, wcagY(fillAnchorL, brandC, brandH)) < 4.5) {
+    light9L = findLForContrast(fillAnchorL, brandC, brandH, 1.0, 4.6)
   }
   light.push(makeStop(9, light9L, cAt('light', light9L, brandC), brandH))
   light.push(makeStop(10, hoverL(light9L), cAt('light', hoverL(light9L), brandC), brandH))
@@ -576,7 +596,7 @@ export function generateScale(
   // anchor for the whole dark ramp (the L where the pin holds darkH exact).
   let dark9L = Math.max(scaleL, opts?.darkFillMinL ?? DARK_STOP_9_MIN_L)
   // cta keeps brand identity but trims gently on bloom-prone hues under the curve.
-  let darkC9 = opts?.darkChromaCurve ? brandC * darkCtaTrim(darkH) : brandC
+  let darkC9 = opts?.darkChromaCurve && !opts?.loudCta ? brandC * darkCtaTrim(darkH) : brandC
   if (opts?.darkColliderFill === 'muted') {
     dark9L = DARK_COLLIDER_MUTED_L
     darkC9 = brandC * DARK_COLLIDER_MUTED_CHROMA_SCALE
@@ -617,7 +637,7 @@ export function generateScale(
   // Dark on-fill is black-first — white only when black is genuinely
   // too weak on the fill.
   const dark9ApcaY0 = apcaY(dark[8].r, dark[8].g, dark[8].b)
-  const onFillTextIsWhiteDark = Math.abs(apcaLc(0.0, dark9ApcaY0)) < 45
+  const onFillTextIsWhiteDark = onTextIsWhite(dark9ApcaY0, dark[8].L, dark[8].C, dark[8].H, !!opts?.enforceOnFillContrast)
 
   // WCAG bound on the dark fill: same rule as light. Deliberately allowed
   // to undercut the dark lift floor — a 0.55 vivid fill doesn't vanish on
@@ -667,22 +687,27 @@ export function generateScale(
     // on-highlight COMPUTED from the rung's luminance — mirror light on-cta
     // (whichever of white/black scores the higher APCA |Lc|).
     const hl9ApcaY = apcaY(hl9.r, hl9.g, hl9.b)
-    onHighlightIsWhite = Math.abs(apcaLc(1.0, hl9ApcaY)) >= Math.abs(apcaLc(0.0, hl9ApcaY))
+    onHighlightIsWhite = onTextIsWhite(hl9ApcaY, hl9.L, hl9.C, hl9.H, !!opts?.enforceOnFillContrast)
 
     // Dark: the SAME rung in the dark hue. Chroma TARGET is the light rung's
     // baseC construction in the dark hue (predictable moderate, not the full
     // brand chroma — that lives in the cta). One construction for every brand
     // (the old exact/curve fork is gone); the value falls out, polarity computed.
     const darkHueAt = (l: number) => torsionedHue(darkH, l, dark9L, gOffPath)
-    const darkHlTargetC = (l: number, h: number) =>
-      clampChromaToGamut(l, hlLadderC + u * (brandSat * HIGHLIGHT_LIGHT.satFraction * maxChromaAt(l, h) - hlLadderC), h)
-    const dhl9 = rung(13, HIGHLIGHT_DARK.rootL, darkHueAt, darkHlTargetC)
-    const dhl10 = rung(14, hoverL(dhl9.L), darkHueAt, darkHlTargetC)
+    // F2: the dark rung is just another L on the spine — its chroma comes from the
+    // SAME dark curve the surrounding stops use, not a parallel light-derived
+    // construction. Falls back to the moderate ladder target for exact/no-curve
+    // brands (which ship raw).
+    const darkHlC = (l: number, h: number) =>
+      opts?.darkChromaCurve
+        ? clampChromaToGamut(l, opts.darkChromaCurve(l, h, brandC), h)
+        : clampChromaToGamut(l, hlLadderC + u * (brandSat * HIGHLIGHT_LIGHT.satFraction * maxChromaAt(l, h) - hlLadderC), h)
+    const dhl9 = rung(13, HIGHLIGHT_DARK.rootL, darkHueAt, darkHlC)
+    const dhl10 = rung(14, hoverL(dhl9.L), darkHueAt, darkHlC)
     dark.push(dhl9, dhl10)
-    // on-highlight-dark COMPUTED — mirror dark on-cta (black-first: white only
-    // when black is genuinely too weak on the fill).
+    // on-highlight-dark COMPUTED via the shared ons rule (identical to on-cta).
     const dhl9ApcaY = apcaY(dhl9.r, dhl9.g, dhl9.b)
-    onHighlightIsWhiteDark = Math.abs(apcaLc(0.0, dhl9ApcaY)) < 45
+    onHighlightIsWhiteDark = onTextIsWhite(dhl9ApcaY, dhl9.L, dhl9.C, dhl9.H, !!opts?.enforceOnFillContrast)
   }
 
   return {
