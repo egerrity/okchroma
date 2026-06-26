@@ -85,7 +85,8 @@ export function TokenCards({ prefix, kind }: { prefix: string; kind: RampKind })
           onMouseEnter={() => setCtaHover(true)}
           onMouseLeave={() => setCtaHover(false)}
           style={{
-            alignSelf: 'flex-start', background: ctaHover ? v('cta-2') : v('cta-1'), color: v('on-cta'), border: 'none',
+            alignSelf: 'flex-start', width: 184, boxSizing: 'border-box', textAlign: 'center',
+            background: ctaHover ? v('cta-2') : v('cta-1'), color: v('on-cta'), border: 'none',
             borderRadius: 999, padding: '12px 28px', fontSize: 15, fontWeight: 600, fontFamily: 'inherit',
             cursor: 'pointer', marginBottom: 18,
           }}>{ctaHover ? 'cta-2 on hover' : 'cta-1 button'}</button>

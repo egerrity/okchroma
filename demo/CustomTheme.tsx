@@ -5,10 +5,7 @@ import {
 } from 'lucide-react'
 import { resolveBrand, SIGNAL_SCALES } from '../src/engine/resolve'
 import { checkAllCollisions } from '../src/engine/collision'
-import { SIGNALS } from '../src/engine/signals'
 import { brandCss, toHex } from '../src/engine/cssRender'
-import { themeToFigma } from '../src/engine/figmaRender'
-import { makeZip } from './zip'
 import { inRedBand, type NeutralLevel } from '../src/engine/colorEngine'
 import { wcagY, contrastRatio } from '../src/engine/constraints'
 import { HERO_ILLO } from './heroIllo'
@@ -141,29 +138,6 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   // brandCss already includes the per-brand neutral, so the injected CSS is the
   // whole theme — no separate neutral block.
   const overrideCss = computed.css
-
-  const handleExportFigma = () => {
-    // Merge base signals with this brand's per-signal overrides, so the export
-    // carries the final error/warning/success/info each brand actually ships.
-    const signals = SIGNALS.map(s => {
-      const override = computed.r.signalOverrides.find(o => o.name === s.name)
-      return { name: s.name, scale: override?.scale ?? SIGNAL_SCALES.get(s.name)!.scale }
-    })
-    // The neutral is generated per brand at the chosen level (matches the preview).
-    const figma = themeToFigma(computed.r, { accent: computed.accent, neutralLevel, signals })
-    // One ZIP, not two downloads — browsers block multiple programmatic
-    // downloads from a single click. The filenames inside become the Figma
-    // mode names on import (Light / Dark).
-    const zip = makeZip([
-      { name: 'Light.json', content: JSON.stringify(figma.light, null, 2) },
-      { name: 'Dark.json', content: JSON.stringify(figma.dark, null, 2) },
-    ])
-    const url = URL.createObjectURL(zip)
-    const a = document.createElement('a')
-    a.href = url; a.download = 'figma-variables.zip'
-    document.body.appendChild(a); a.click(); a.remove()
-    URL.revokeObjectURL(url)
-  }
 
   const shipsHex = toHex(computed.r.scale.light[8].r, computed.r.scale.light[8].g, computed.r.scale.light[8].b).toUpperCase()
 
@@ -365,7 +339,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
       <style>{PAGE_CSS}</style>
 
       {/* ── App nav: product navbar, themed by the palette. Palette/Preview
-          tabs + the Download (Figma export) primary action. ── */}
+          tabs only — the Figma export now lives in the plugin, not here. ── */}
       <div className="ct-appnav">
         <span className="ct-logo-mark">◈</span>
         <span className="ct-brandname">yourBrand</span>
@@ -373,11 +347,6 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
         {([['palette', 'Palette'], ['preview', 'Preview']] as Array<[View, string]>).map(([v, label]) => (
           <button key={v} className={`ct-apptab${view === v ? ' active' : ''}`} onClick={() => setView(v)}>{label}</button>
         ))}
-        <button className="u-btn u-btn-primary ct-download"
-          title="Download figma-variables.zip (Light.json + Dark.json) — unzip, then import both into a new Figma collection"
-          onClick={handleExportFigma}>
-          <Download size={14} /> Download
-        </button>
       </div>
 
       {/* ── Persistent controls bar — present on both views ── */}
