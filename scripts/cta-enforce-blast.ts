@@ -28,10 +28,10 @@ for (const b of BRANDS) {
   if (b.exact) continue // exact ships raw, no enforce anyway
   const on = generateScale(b.hex, b.slug, undefined, baseFloor(true))
   const off = generateScale(b.hex, b.slug, undefined, baseFloor(false))
-  const lc1on = hx(on.light[8]), lc1off = hx(off.light[8])
-  const lc2on = hx(on.light[9]), lc2off = hx(off.light[9])
-  const dc1on = hx(on.dark[8]), dc1off = hx(off.dark[8])
-  const dc2on = hx(on.dark[9]), dc2off = hx(off.dark[9])
+  const lc1on = hx(on.cta), lc1off = hx(off.cta)
+  const lc2on = hx(on.ctaHover), lc2off = hx(off.ctaHover)
+  const dc1on = hx(on.ctaDark), dc1off = hx(off.ctaDark)
+  const dc2on = hx(on.ctaHoverDark), dc2off = hx(off.ctaHoverDark)
   const moved = lc1on !== lc1off || lc2on !== lc2off || dc1on !== dc1off || dc2on !== dc2off
   if (moved) {
     changed++
@@ -45,5 +45,5 @@ console.log(`\n${changed}/${BRANDS.filter(b => !b.exact).length} non-exact brand
 const dr = BRANDS.find(b => b.name === 'Dark Roast')!
 const on = generateScale(dr.hex, dr.slug, undefined, baseFloor(true))
 const off = generateScale(dr.hex, dr.slug, undefined, baseFloor(false))
-console.log(`\nCANARY (Dark Roast): light cta-1 ${hx(on.light[8])}→${hx(off.light[8])}  |  dark cta-1 ${hx(on.dark[8])}→${hx(off.dark[8])}`)
-console.log(`  → canary ${hx(on.light[8]) === hx(off.light[8]) && hx(on.dark[8]) === hx(off.dark[8]) ? 'UNCHANGED (stays green)' : 'WOULD MOVE (needs deliberate canary update)'}`)
+console.log(`\nCANARY (Dark Roast): light cta-1 ${hx(on.cta)}→${hx(off.cta)}  |  dark cta-1 ${hx(on.ctaDark)}→${hx(off.ctaDark)}`)
+console.log(`  → canary ${hx(on.cta) === hx(off.cta) && hx(on.ctaDark) === hx(off.ctaDark) ? 'UNCHANGED (stays green)' : 'WOULD MOVE (needs deliberate canary update)'}`)

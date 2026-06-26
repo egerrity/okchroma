@@ -139,7 +139,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   // whole theme — no separate neutral block.
   const overrideCss = computed.css
 
-  const shipsHex = toHex(computed.r.scale.light[8].r, computed.r.scale.light[8].g, computed.r.scale.light[8].b).toUpperCase()
+  const shipsHex = toHex(computed.r.scale.cta.r, computed.r.scale.cta.g, computed.r.scale.cta.b).toUpperCase()
 
   // ── Persistent horizontal controls bar — the single source of truth for
   // every color, pinned under the navbar on BOTH views, so editing is live
@@ -409,7 +409,7 @@ function checklistRows(rRec: ResolvedBrand, rung: RungMode, primaryHex: string):
   const origArch = classifyArchetype(rRec.scale.brandL)
   const rec = rung === 'recommended'
   const rows: CheckRow[] = []
-  const shipsHex = toHex(rRec.scale.light[8].r, rRec.scale.light[8].g, rRec.scale.light[8].b).toUpperCase()
+  const shipsHex = toHex(rRec.scale.cta.r, rRec.scale.cta.g, rRec.scale.cta.b).toUpperCase()
 
   if (rRec.rung1) {
     rows.push(rec
@@ -450,8 +450,8 @@ function checklistRows(rRec: ResolvedBrand, rung: RungMode, primaryHex: string):
       const y = wcagY(s.L, s.C, s.H)
       return (white ? contrastRatio(1.0, y) : contrastRatio(y, 0)) >= 4.5
     }
-    const lightOk = fillOk(ex.scale.light[8], ex.scale.onFillTextIsWhite)
-    const darkOk = fillOk(ex.scale.dark[8], ex.scale.onFillTextIsWhiteDark)
+    const lightOk = fillOk(ex.scale.cta, ex.scale.onFillTextIsWhite)
+    const darkOk = fillOk(ex.scale.ctaDark, ex.scale.onFillTextIsWhiteDark)
     rows.push(lightOk && darkOk
       ? { key: 'a11y', tone: 'pass', label: 'contrast passes — WCAG AA + APCA on the unmodified hex', detail: 'Text color is APCA-optimized and this fill clears WCAG 4.5:1 in both modes as-is. The engine just isn\'t allowed to fix it if a future edit breaks it.' }
       : { key: 'a11y', tone: 'fail', label: `fill fails WCAG AA in ${!lightOk && !darkOk ? 'both modes' : !lightOk ? 'light mode' : 'dark mode'} — recommended mode would fix it`, detail: 'Text color is still APCA-optimized (best possible choice), but exact mode forbids darkening the fill to the compliant edge, so the pair falls short of WCAG 4.5:1.' })

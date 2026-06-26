@@ -85,15 +85,15 @@ function audit(name: string, hex: string, scale: GeneratedScale, errorComponentR
   // legal baseline a brand's compliance review runs) and APCA Lc 45 (the
   // perceptual floor). Failures are the L 0.56–0.65 dead-zone fills.
   for (const mode of ['light', 'dark'] as const) {
-    const s9 = (mode === 'light' ? scale.light : scale.dark)[8]
+    const cta = mode === 'light' ? scale.cta : scale.ctaDark  // on-fill sits on the off-scale cta
     const white = mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark
-    const fillY = wcagY(s9.L, s9.C, s9.H)
+    const fillY = wcagY(cta.L, cta.C, cta.H)
     const wcag = white ? contrastRatio(1.0, fillY) : contrastRatio(fillY, 0)
-    const lc = Math.abs(apcaLc(white ? 1.0 : 0.0, apcaY(s9.r, s9.g, s9.b)))
+    const lc = Math.abs(apcaLc(white ? 1.0 : 0.0, apcaY(cta.r, cta.g, cta.b)))
     if (wcag < 4.5 || lc < 45) {
       findings['F on-fill compliance (WCAG 4.5 + APCA 45)'].push({
         name, hex, severity: Math.max(0, 4.5 - wcag) + Math.max(0, 45 - lc) / 100,
-        detail: `${mode}: ${white ? 'white' : 'black'} on fill L ${s9.L.toFixed(2)} — WCAG ${wcag.toFixed(2)}:1, APCA Lc ${lc.toFixed(0)}`,
+        detail: `${mode}: ${white ? 'white' : 'black'} on fill L ${cta.L.toFixed(2)} — WCAG ${wcag.toFixed(2)}:1, APCA Lc ${lc.toFixed(0)}`,
       })
     }
   }

@@ -43,7 +43,7 @@ console.log(`=== highlight-1/2 across ${items.length} brand+secondary ramps ===`
 console.log(`(yellow band = within ${YELLOW_L_LIFT.sigmaDeg}° of H${YELLOW_L_LIFT.centerH}; flagged for reference — highlight holds white in light, flips to black in dark)\n`)
 console.log('  ramp                    H     yel | LIGHT hl9            hl10           | DARK  hl9            hl10')
 for (const { name, hex, scale } of items) {
-  const el = scale.light.slice(12), ed = scale.dark.slice(12)
+  const el = scale.light.slice(8, 10), ed = scale.dark.slice(8, 10)  // slot 9/10 = highlight-9/10
   if (el.length < 2 || ed.length < 2) { fails.push(`${name}: missing highlight stops`); continue }
   const [l9, l10] = el, [d9, d10] = ed
   const a8L = scale.light[7].L
@@ -71,16 +71,16 @@ for (const { name, hex, scale } of items) {
   console.log(`  ${name.padEnd(22)} ${scale.brandH.toFixed(0).padStart(3)}   ${yflag}  | ${hx(l9)} L${f(l9.L)} w${whiteWcag(l9).toFixed(1)}  ${hx(l10)} L${f(l10.L)} | ${hx(d9)} L${f(d9.L)} w${whiteWcag(d9).toFixed(1)}  ${hx(d10)} L${f(d10.L)}`)
 }
 
-// ── neutral (now GENERATED per brand, brand-kind: cta = stop 9, highlight = the
-// rung 13/14). cta is the subtle near-white button in BOTH modes — it does not
-// flip (the owner-accepted non-flipping cta). highlight holds white like every
-// other rung. Checked across representative hues. ──
+// ── neutral (now GENERATED per brand): the off-scale cta is the subtle near-white
+// button in BOTH modes — it does not flip (the owner-accepted non-flipping cta).
+// The highlight rung (scale slot 9/10) holds white like every other rung. Checked
+// across representative hues. ──
 const NEUTRAL_HUES = [30, 90, 143, 210, 270, 320]
 const neutralByHue = NEUTRAL_HUES.map(h => ({ h, s: generateNeutralScale(h, 'default') }))
-console.log(`\n=== neutral cta (stop 9) + highlight (rung) — default level, ${NEUTRAL_HUES.length} hues ===`)
+console.log(`\n=== neutral cta (off-scale) + highlight (slot 9) — default level, ${NEUTRAL_HUES.length} hues ===`)
 for (const { h, s } of neutralByHue) {
-  const ctaL = s.light[8], ctaD = s.dark[8]    // stop 9 = cta-1
-  const hlL = s.light[12], hlD = s.dark[12]    // rung 13 = highlight-1
+  const ctaL = s.cta, ctaD = s.ctaDark         // off-scale cta-1
+  const hlL = s.light[8], hlD = s.dark[8]      // slot 9 = highlight-9
   // cta = subtle near-white button, both modes (does NOT flip)
   ok(ctaL.L > 0.85, `neutral h${h} cta light not near-white (L ${f(ctaL.L)})`)
   ok(ctaD.L > 0.85, `neutral h${h} cta dark not near-white (L ${f(ctaD.L)})`)
@@ -93,27 +93,33 @@ for (const { h, s } of neutralByHue) {
   console.log(`  h${String(h).padStart(3)}  cta ${hx(ctaL)} L${f(ctaL.L)}/${hx(ctaD)} L${f(ctaD.L)}  |  hl ${hx(hlL)} w${whiteWcag(hlL).toFixed(1)}/${hx(hlD)} w${whiteWcag(hlD).toFixed(1)}`)
 }
 
-// signals: on-highlight (= on-fill polarity) must pass on stop 9 both modes;
-// and a signal must carry NO cta/highlight ext (the "no error button" rule).
+// signals: on-cta polarity must pass on the (off-scale) cta in both modes; and a
+// signal carries a clean 12-stop scale (highlight native at 9/10, cta off-scale).
 for (const sig of SIGNALS) {
   const s = SIGNAL_SCALES.get(sig.name)!.scale
-  for (const [mode, st, pol] of [['light', s.light[8], s.onFillTextIsWhite], ['dark', s.dark[8], s.onFillTextIsWhiteDark]] as const) {
-    ok((pol ? whiteWcag(st) : blackWcag(st)) >= 4.5, `signal ${sig.name} ${mode}: on-highlight ${pol ? 'white' : 'black'} fails (${(pol ? whiteWcag(st) : blackWcag(st)).toFixed(2)})`)
+  for (const [mode, st, pol] of [['light', s.cta, s.onFillTextIsWhite], ['dark', s.ctaDark, s.onFillTextIsWhiteDark]] as const) {
+    ok((pol ? whiteWcag(st) : blackWcag(st)) >= 4.5, `signal ${sig.name} ${mode}: on-cta ${pol ? 'white' : 'black'} fails (${(pol ? whiteWcag(st) : blackWcag(st)).toFixed(2)})`)
   }
-  ok(s.light.length === 14 && s.dark.length === 14, `signal ${sig.name} should carry the highlight ext (light ${s.light.length}, dark ${s.dark.length})`)
+  ok(s.light.length === 12 && s.dark.length === 12, `signal ${sig.name} should be a clean 12-stop scale (light ${s.light.length}, dark ${s.dark.length})`)
 }
 
-// ── blessed-snapshot regression for the NEW tokens ───────────────────────────
-// Mirrors dark-audit: --bless records highlight/cta L,C,H per ramp after visual
-// approval; default diffs against it so future engine changes can't silently
-// move the additive tokens. (Stops 1–12 are guarded by dark-audit separately.)
+// ── blessed-snapshot regression for the off-scale / highlight tokens ──────────
+// --bless records the highlight rung AND the off-scale cta (L,C,H per ramp, both
+// modes) after visual approval; default diffs against it so future engine changes
+// can't silently move these tokens. The cta lives here because it left the
+// dark-audit slice(0,12) window when it moved off-scale — this is its guard now.
+// (Stops 1–12 are guarded by dark-audit separately.)
 const SNAP_PATH = path.join(process.cwd(), 'scripts', 'highlight-snapshot.json')
 const TOL = 0.015
+// rung pair (slot 9/10) + the off-scale cta pair (cta-1/cta-2), both modes.
+const rungAndCta = (s: GeneratedScale) =>
+  [...s.light.slice(8, 10), ...s.dark.slice(8, 10), s.cta, s.ctaHover, s.ctaDark, s.ctaHoverDark]
+    .flatMap(c => [c.L, c.C, c.H])
 const snapshot = (): Record<string, number[]> => {
   const o: Record<string, number[]> = {}
-  for (const { name, scale } of items) o[name] = [...scale.light.slice(12), ...scale.dark.slice(12)].flatMap(s => [s.L, s.C, s.H])
-  // Neutral is now per-brand-hue — snapshot each representative hue's rung pair.
-  for (const { h, s } of neutralByHue) o[`neutral-h${h}`] = [...s.light.slice(12), ...s.dark.slice(12)].flatMap(st => [st.L, st.C, st.H])
+  for (const { name, scale } of items) o[name] = rungAndCta(scale)
+  // Neutral is now per-brand-hue — snapshot each representative hue's rung+cta.
+  for (const { h, s } of neutralByHue) o[`neutral-h${h}`] = rungAndCta(s)
   return o
 }
 if (process.argv.includes('--bless')) {
