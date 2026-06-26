@@ -113,8 +113,14 @@ figma.ui.onmessage = async (msg) => {
       // on-fill then carries no black/white of its own — it aliases one of these.
       const W = { r: 1, g: 1, b: 1 }
       const K = { r: 0, g: 0, b: 0 }
-      const STATIC_UTILS: Array<{ path: string; light: figma.RGBA; dark: figma.RGBA }> = [
+      // The list order IS the display order in Figma (variables list in creation
+      // order). paper-0e / paper-2e sit right after paper-0 (their sibling), but
+      // their VALUES are mode-divergent aliases set later — once neutral/paper-2
+      // exists. `elevation` = "create now for ordering, alias below".
+      const STATIC_UTILS: Array<{ path: string; light?: figma.RGBA; dark?: figma.RGBA; elevation?: boolean }> = [
         { path: 'system/paper-0', light: W, dark: K },
+        { path: 'system/paper-0e', elevation: true },
+        { path: 'system/paper-2e', elevation: true },
         { path: 'system/ink-13', light: K, dark: W },
         { path: 'system/abs-black', light: K, dark: K },
         { path: 'system/abs-white', light: W, dark: W },
@@ -125,8 +131,10 @@ figma.ui.onmessage = async (msg) => {
         if (primByName.get(u.path)) continue // already seeded — leave as-is
         const v = figma.variables.createVariable(u.path, p.coll, 'COLOR')
         primByName.set(u.path, v)
-        v.setValueForMode(pLight, u.light)
-        v.setValueForMode(pDark, u.dark)
+        if (u.light && u.dark) { // elevation entries are aliased below, not value-set
+          v.setValueForMode(pLight, u.light)
+          v.setValueForMode(pDark, u.dark)
+        }
         createdShared++
       }
 
@@ -237,6 +245,28 @@ figma.ui.onmessage = async (msg) => {
         for (const t of flatten(grp.light)) {
           aliasInto(`${grp.theme}/${t.path}`, `${grp.prim}/${t.path}`)
         }
+      }
+
+      // Elevation anchors — the only MODE-DIVERGENT tokens: each mode aliases a
+      // DIFFERENT target, so card elevation holds its meaning as the ladder inverts.
+      //   paper-0e (raised)  → paper-0 (white) in light · neutral-paper-2 in dark
+      //   paper-2e (sunken)  → neutral-paper-2 in light · paper-0 (black) in dark
+      // (paper-1 needs no variant — it's the base, same role both modes.) The vars
+      // were CREATED in order above; we set their alias values HERE because the dark
+      // side is the brand-aware THEME neutral/paper-2, which only exists after the
+      // alias loop ("the wait"). No semantic layer — the engine's Light/Dark axis
+      // drives them.
+      const sysPaper0 = primByName.get('system/paper-0')
+      const themeNeutralP2 = themeByName.get('neutral/paper-2')
+      if (sysPaper0 && themeNeutralP2) {
+        const aliasElev = (path: string, light: figma.Variable, dark: figma.Variable) => {
+          const v = primByName.get(path) // pre-created in STATIC_UTILS for ordering
+          if (!v) return
+          v.setValueForMode(pLight, figma.variables.createVariableAlias(light))
+          v.setValueForMode(pDark, figma.variables.createVariableAlias(dark))
+        }
+        aliasElev('system/paper-0e', sysPaper0, themeNeutralP2) // raised
+        aliasElev('system/paper-2e', themeNeutralP2, sysPaper0) // sunken
       }
 
       figma.ui.postMessage({ type: 'done', brand, aliases: aliasCount, createdShared, accent: accentMode })
