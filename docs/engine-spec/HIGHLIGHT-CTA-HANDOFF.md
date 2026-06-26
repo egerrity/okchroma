@@ -94,6 +94,23 @@ dive straight in.
   review **dark mode on a DARK background** (memory `dark-mode-on-dark-bg`; the eye can't
   judge dark tokens on white).
 
+## Existing WIP to reconcile (don't redo it)
+
+There's prior highlight/cta exploration already started, preserved on branch
+**`wip/highlight-sim`** (commit `125d048`, in the worktree `/private/tmp/okchroma-sim`).
+It was made on the **old base `4a1c7e0`** (pre-merge), so reconcile — don't branch from it:
+
+- **New files** — `scripts/highlight-render.ts`, `scripts/highlight-sim.ts`,
+  `scripts/neutral-cta-sim.ts`. Pure additions; bring straight over:
+  `git checkout wip/highlight-sim -- scripts/highlight-sim.ts …`
+- **Edited files** — `src/engine/colorEngine.ts`, `src/engine/resolve.ts`. These were
+  edited on `4a1c7e0`; the engine moved a lot before the published `d87c8bf`, so **diff
+  them carefully** against `fix/highlight` and port the intent by hand rather than
+  cherry-picking blind.
+
+Do the work on **`fix/highlight`** (already branched off the published `origin/main` =
+`d87c8bf`), not in the sim worktree.
+
 ## Demo tools for eyeballing (already built)
 
 - **Temp compare grid** — top of the Palette tab (`demo/CustomTheme.tsx::swatchMatrix`):
