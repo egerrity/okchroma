@@ -5,6 +5,25 @@
 > Can be folded into [`CATALOG.md`](./CATALOG.md) later; kept separate by request.
 > SSOT for the intended model stays [`ENGINE-SPEC.md`](./ENGINE-SPEC.md) §1–2.
 
+## ⚠️ CORRECTION (2026-06-26, later same day — verified against the emitters)
+
+The **"per-family inversion" framing in this report is WRONG** — and it was the very poison pellet
+this report was meant to catch. It came from a stale comment (`colorEngine.ts:251-255`) and the
+**dead `'neutral'` branch** of `stopTokenName`, **not** from the emitters. **Verified truth**
+(`cssRender.ts` + `figmaRender.ts`): every family — brand, secondary, neutral, signals — renders
+**brand-kind** and emits the SAME uniform token set (`cta-1/2` at internal stop 9/10,
+`highlight-9/10` at the 13/14 append, `on-cta`/`on-highlight`; `identity` brand/secondary only).
+There is **no per-family inversion**; signals are **not** collapsed (Phase-2 split signal `cta` ≠
+`highlight`, C4). The only per-family difference is the **cta value** (§3.1). The internal slot
+arrangement (cta@9/10, highlight appended @13/14) is a uniform implementation detail that produces
+correct, uniform output — see **[ENGINE-SPEC §0](./ENGINE-SPEC.md)**.
+
+**What still stands:** the **enforcement inventory** below (the separate back-to-0 workstream —
+`SESSION-HANDOFF-highlight-homeostasis.md`), with one fix: the dark fill L-floors are a *fixed
+visibility floor*, **not** text-feedback (kept; owner-visual decision **C8**), and the C5 divergence
+is **resolved** (strip the cta value-move, keep the polarity pick → CATALOG C5 flips KEEP→REMOVE).
+Treat the structural "pull-out / inversion" narrative below as **historical/incorrect**.
+
 ## TL;DR
 
 The cta was **renamed at the edge but never actually pulled out of generation.** The engine
