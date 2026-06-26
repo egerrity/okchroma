@@ -3,23 +3,20 @@
 // The neutral is produced by REUSING generateScale (a faint gray at the brand
 // hue + the 'light' archetype), with this curve supplied as GenerateOptions.
 // chromaCurve so the only thing that differs from a brand ramp is the chroma
-// profile — a quiet, Radix-derived tint instead of the brand's vivid ladder.
+// profile — a quiet near-gray tint instead of the brand's vivid ladder.
 //
-// Derivation (all measured from Radix's own neutral families, evaluated BY
-// LIGHTNESS so the curve also covers the off-grid roles — the archetype cta and
-// the rung-shifted highlight):
-//   - shape  = Radix per-step chroma, normalized to its peak (step 9 = 1.0).
+// A per-hue, per-level near-gray chroma curve, evaluated BY LIGHTNESS so it also
+// covers the off-grid roles — the archetype cta and the rung-shifted highlight:
+//   - shape  = per-step chroma, normalized to its peak (step 9 = 1.0).
 //     The light/dark split is real: dark's text stop collapses to ~0.195 of
 //     peak while light keeps ~0.74.
-//   - L-anchors = the lightnesses those steps sit at, averaged across the four
-//     non-excluded families (gray is achromatic, sage an outlier). Light anchors
-//     descend with step; dark anchors ascend — interpolation is order-agnostic.
-//   - peak C  = per-hue, interpolated around the wheel from four family anchors.
+//   - L-anchors = the lightnesses those steps sit at. Light anchors descend with
+//     step; dark anchors ascend — interpolation is order-agnostic.
+//   - peak C  = per-hue, interpolated around the wheel from four hue anchors.
 
 export type NeutralLevel = 'pure' | 'default' | 'branded'
 
-// Radix step lightnesses (mauve/slate/olive/sand average). Light descends with
-// step index, dark ascends.
+// Per-step lightness anchors. Light descends with step index, dark ascends.
 const LANCHOR = {
   light: [0.993, 0.983, 0.956, 0.932, 0.91, 0.886, 0.852, 0.793, 0.643, 0.609, 0.501, 0.243],
   dark: [0.179, 0.213, 0.252, 0.283, 0.312, 0.347, 0.4, 0.49, 0.537, 0.583, 0.768, 0.949],
@@ -31,13 +28,14 @@ const SHAPE = {
 }
 // Per-hue PEAK chroma anchors (hue° → light/dark), interpolated circularly.
 const PEAK = [
-  { h: 97, light: 0.0102, dark: 0.0109 },  // sand   (amber/yellow/orange band)
-  { h: 143, light: 0.0119, dark: 0.0181 }, // olive  (lime/grass)
-  { h: 270, light: 0.0165, dark: 0.0156 }, // slate  (cyan/blue/indigo)
-  { h: 301, light: 0.0193, dark: 0.0172 }, // mauve  (violet/purple/pink/red)
+  { h: 97, light: 0.0102, dark: 0.0109 },  // amber/yellow/orange band
+  { h: 143, light: 0.0119, dark: 0.0181 }, // lime/grass
+  { h: 270, light: 0.0165, dark: 0.0156 }, // cyan/blue/indigo
+  { h: 301, light: 0.0193, dark: 0.0172 }, // violet/purple/pink/red
 ]
-// Level multipliers on the peak. pure = true gray; default = the measured curve;
-// branded = an amplified, intentionally-tinted neutral.
+// Level multipliers on the peak. pure = true gray; default = a whisper of brand
+// hue via the neutral chroma curve; branded = an amplified, intentionally-tinted
+// neutral.
 const LEVEL: Record<NeutralLevel, number> = { pure: 0, default: 1, branded: 1.75 }
 
 const peakC = (hue: number, mode: 'light' | 'dark'): number => {

@@ -3,7 +3,7 @@
 ## Concept
 
 The neutral (gray) scale is a **generated** near-gray carrying a whisper of the brand's hue, so the
-UI's grays feel related to the brand instead of dead. (It used to offer a ready-made Radix family;
+UI's grays feel related to the brand instead of dead. (It used to offer a ready-made neutral family;
 that path was deleted — the neutral is now generated per brand, always.)
 
 ## Why
@@ -17,16 +17,15 @@ paper-white backgrounds, a touch more through the mids, gone again by body text.
 
 The neutral is **generated per brand** from the brand hue — both the core build (`cssRender.ts:113`)
 and the plugin/Figma path (`figmaRender.ts:93`) call the same `generateNeutralScale(brandH, level)`.
-There is **no Radix-family path** any more (`src/radixNeutrals.ts` / `closestNeutralFamily` was
-deleted). What is selectable is the **tint LEVEL**, not Radix-vs-generated:
+There is **no pre-made-family path** any more (the old neutral family lookup was
+deleted). What is selectable is the **tint LEVEL**:
 
 - **`pure`** — a flat gray (no brand tint).
 - **`default`** — a whisper of the brand hue, shaped per step by the neutral chroma curve.
 - **`branded`** — more tint (the stretch level).
 
 > **Status:** `pure` and `default` ship. The neutral chroma curve (`neutralCurve.ts`) is the live
-> shaping; its constants were fit from Radix family measurements (a derivation input, not a runtime
-> lookup).
+> shaping: a per-hue, per-level near-gray chroma curve.
 
 And when the chosen secondary is itself near-gray, it informs the neutral rather
 than becoming an accent.
@@ -46,16 +45,15 @@ consume it:
 - [`src/engine/colorEngine.ts`](../../src/engine/colorEngine.ts) →
   `generateNeutralScale(brandH, level)`: synthesizes a faint gray AT the brand hue and runs it
   through `generateScale` with the neutral chroma curve. **The neutral is GENERATED, not selected
-  from a Radix family** — the old `src/radixNeutrals.ts` / `closestNeutralFamily()` / `neutralRadixCss`
-  lookup was **deleted**.
+  from a pre-made family** — the old neutral family-picker lookup was **deleted**.
 - [`src/engine/neutralCurve.ts`](../../src/engine/neutralCurve.ts) →
-  `neutralChromaCurve(brandH, level)`: the per-hue, per-level chroma curve. Its numeric constants
-  were *fit from* Radix family measurements — a derivation input, **not** a runtime color lookup.
+  `neutralChromaCurve(brandH, level)`: a per-hue, per-level near-gray chroma curve that shapes how
+  much brand tint each step carries.
 - Both emitters call the SAME `generateNeutralScale` (`cssRender.ts:113`, `figmaRender.ts:93`), so
   CSS and Figma agree; the plugin dedups same-hue brands onto one shared primitive
   (`plugin/ui.ts` key `<level>-h<round(brandH)>`, or `pure` for grey).
 
-**Worked example.** With a peak chroma of 0.016 (Radix slate's level), step 1
+**Worked example.** With a peak chroma of 0.016, step 1
 carries 0.08 × 0.016 ≈ 0.0013 chroma (essentially white), while step 9 carries the
 full 0.016. The tint is present where surfaces are colored and absent where text
 must read as ink.
@@ -64,4 +62,4 @@ must read as ink.
 
 **Provenance:** `docs/handoff-2026-06-10-color-math.md` (end notes),
 `docs/ROADMAP-engine-and-export.md` (archive).
-**See also:** [the stop ladder](./stop-ladder.md), [lineage / Radix](./lineage.md).
+**See also:** [the stop ladder](./stop-ladder.md), [lineage](./lineage.md).

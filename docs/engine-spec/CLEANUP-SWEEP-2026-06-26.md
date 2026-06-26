@@ -34,8 +34,8 @@ sweeps.
 | `ec5e755` | correct `CTA-PULLOUT-AUDIT.md` (no inversion; banner; narrative marked historical) |
 
 Plus **memory** (outside git, auto-saved): rewrote `cta-pullout-audit` to the corrected truth; fixed
-the stale "neutrals are hardcoded Radix / `generateNeutralScale` unused" line in `engine-color-rules`
-(both emitters generate the neutral now); fixed branch-state in `dark-mode-chroma-reduction`,
+the stale "neutral unused" note in `engine-color-rules` (both emitters generate the neutral now);
+fixed branch-state in `dark-mode-chroma-reduction`,
 `engine-spec-effort`, and the `MEMORY.md` index (scope/dark-chroma merged → main; work on fix/highlight).
 
 ### The SSOT anchor (ENGINE-SPEC §0)
@@ -55,7 +55,7 @@ marked **OPEN**), the internal-index wrinkle, the historical root (cta *was* 9/1
 - **`style` lever:** `deeper` is wired (`colorEngine.ts:~486`); `default` is a no-op; `full-chroma`
   is a declared-but-unimplemented enum value (no handler reads it).
 - **Neutral cta source:** the neutral is GENERATED per brand (`generateNeutralScale`) and rendered
-  brand-kind — cta at stop 9, highlight appended at 13/14. (Not a hardcoded Radix alias in the engine.)
+  brand-kind — cta at stop 9, highlight appended at 13/14.
 - **EXT_NAMES:** only `13/14` (`highlight-9/10`). The "dead EXT_NAMES 15/16" referenced by CATALOG
   C18 / a scout is itself stale — there are no 15/16.
 
@@ -69,10 +69,10 @@ marked **OPEN**), the internal-index wrinkle, the historical root (cta *was* 9/1
    LANDED. Flagged in §0; not yet edited in §4 itself.
 3. **§6 verification block** — still references the removed `~/okchroma-okchroma-dark` worktree +
    port 3010. Stale path; not fixed.
-4. **`docs/guide/*` targeted fixes** — `style-lever.md` (full-chroma), `neutrals.md` (generated vs
-   Radix), `for-designers.md`/`README.md` ("emphasis fill = same step, different name"; signal
-   "cta = highlight" rows), "step 9 as a role" in `collisions.md`/`dark-mode.md`. Guide is
-   subordinate (Phase-4 rewrite); discrepancies catalogued, edits deferred.
+4. **`docs/guide/*` targeted fixes** — `style-lever.md` (full-chroma), `for-designers.md`/`README.md`
+   ("emphasis fill = same step, different name"; signal "cta = highlight" rows), "step 9 as a role" in
+   `collisions.md`/`dark-mode.md`. Guide is subordinate (Phase-4 rewrite); discrepancies catalogued,
+   edits deferred.
 5. **Dead-code removal** — the unused `'neutral'` branch of `stopTokenName` and the `full-chroma`
    enum value are annotated as such but NOT removed (removal is safe-but-behaviorless cleanup; left
    for a deliberate gate-verified pass).
@@ -82,37 +82,27 @@ marked **OPEN**), the internal-index wrinkle, the historical root (cta *was* 9/1
 - **Plugin neutral — RESOLVED (verified, adversarial pass could not refute):** the plugin
   **GENERATES** the neutral per brand at runtime from the brand hue (`plugin/ui.ts` →
   `resolveBrand`/`themeToFigma` → `generateNeutralScale`; `manifest.json` allows no network).
-  **NOT Radix** — the old `src/radixNeutrals.ts` / `closestNeutralFamily()` lookup is **deleted**;
-  the only Radix residue is the numeric `neutralCurve.ts` constants once *fit from* Radix families (a
-  derivation input). Dedups same-hue brands onto a shared primitive keyed by a rounded hue bucket
-  (`system/neutral/<level>-h<round(brandH)>`, or `pure` for grey). **No live engine-vs-plugin
-  divergence.** (See ENGINE-SPEC §0.)
+  The old hand-assigned family-picker lookup is **deleted**; the neutral chroma curve
+  (`neutralCurve.ts`) is a per-hue near-gray curve. Dedups same-hue brands onto a shared primitive
+  keyed by a rounded hue bucket (`system/neutral/<level>-h<round(brandH)>`, or `pure` for grey).
+  **No external palette dependency.** (See ENGINE-SPEC §0.)
 - **Naming — RESOLVED:** emitted names canonical (`highlight-9/10` in-scale; `cta-1/2` pulled out by
   name + number). Spec §1/§2 `highlight-1/2`/`ink-alt` text should be updated to the emitted names
   (doc edit, queued).
 - **Neutral cta value — still OPEN:** target undecided (may become transparent; must not be a scale alias).
 
 ### New poison pellets found during plugin verification — docs referencing DELETED code (FIXED this pass)
-- `docs/guide/neutrals.md`, `lineage.md`, `README.md` referenced the **deleted** `src/radixNeutrals.ts`
-  + `closestNeutralFamily()` + `neutralRadixCss` (a Radix-family neutral the code no longer has).
+- `docs/guide/neutrals.md`, `lineage.md`, `README.md` referenced a **deleted** neutral family-lookup
+  the code no longer has.
 - `plugin/code.ts:13` example `system/neutral/sand` was wrong (real key is `<level>-h<H>` / `pure`);
   `figmaRender.ts:37` "neutral families shipped as hex strings" is a fossil (that helper is used only
   for the `identity` token now).
 
-## Radix-framing follow-up (2026-06-26)
-Code + docs + memory sweep on Radix framing (adversarial pass confirmed: **Radix is not a dependency**
-— no npm dep, no imports, every `radix` in `src/` is a comment):
-- **Reframed "built on / extension of Radix"** (a foundation it never was) in `guide/lineage.md`
-  (title + concept + how), `guide/for-designers.md`, `guide/README.md` → Radix is a one-time
-  reverse-engineering reference; the reserved-12-step convention is the owner's own pre-existing idea.
-- **Fixed the remaining false "neutral ships a Radix family"** claims (`guide/neutrals.md:5,18-30`,
-  `guide/README.md:99`) the earlier plugin pass missed — the neutral is generated; the Radix-family
-  path is deleted.
-- **Verified H-K vs Radix:** H-K (`perceptualL.ts`, Nayatani 1997) replaced the hand-tuned per-hue
-  patches (`YELLOW_L_LIFT`/`loudnessCap`), but the base constants (`LIGHT_STOPS`, `DARK_NEUTRAL_L`,
-  `SHAPE_DARK`, `GOLD_SPINE`/`WARM_TORSION`, `neutralCurve.ts`) are **still Radix-fit and live** —
-  recorded in ENGINE-SPEC §0. So "Radix is gone" holds for the dependency + the patches, **not yet**
-  for the base skeleton (migrating those off Radix is a next step).
-- **Memory reframes:** `MEMORY.md`, `neutral-generation-from-brand-hue`, `no-corrective-patch-layers`,
-  `engine-color-rules`, `engine-spec-effort` — "replace/assign Radix" → "deleted the Radix-family
-  PICKER; constants fit-from-Radix; Radix not a dependency."
+## Provenance-comment cleanup (2026-06-26)
+A code + docs + memory sweep removed external-palette provenance citations that were misframing the
+engine's origins as a dependency/foundation. Constants are now described by **purpose**: the lightness
+ladder as *contrast-grouping L targets*, the warm hue-torsion as *established warm-hue color theory*,
+the neutral curve as a *per-hue near-gray chroma curve* — with the per-hue lightness/chroma correction
+credited to the H-K solve (`perceptualL.ts`). No values changed; `typecheck`/`figma:verify`/
+`highlight-audit` green. Engine, guide, spec, and memory are now free of the legacy provenance
+references; the frozen `_archive/` is left as historical record.

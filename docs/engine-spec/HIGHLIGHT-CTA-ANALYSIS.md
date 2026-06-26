@@ -66,7 +66,7 @@ the hand-blessed `DARK_NEUTRAL_L` scaffold.* The H-K migration moved **dark CHRO
   envelope (`:675-679`).
 - **Dark, all surface + text + highlight chroma**: `darkChromaCurve(L,H,brandC,ctaC)`
   (`darkChromaCurve.ts:82`) = `perceptualDarkC(L,H, max(brandC·shapeAt(L), floorFracAt(L)·ctaC))`.
-  `shapeAt` is Radix's colored-dark distribution (peaks at the fill); `floorFracAt` is an
+  `shapeAt` is the per-stop dark chroma shape (deep stops bumped for dark legibility; peaks at the fill); `floorFracAt` is an
   identity-proportional deep-surface floor; `perceptualDarkC` redistributes per hue so every hue
   reads at equal prominence on dark (band-limited to L 0.22–0.66, `perceptualL.ts:130-152`).
 - **Dark, cta**: `darkC9 = brandC·darkCtaTrim(H)` (`:608`) — `darkCtaTrim` halves the per-hue

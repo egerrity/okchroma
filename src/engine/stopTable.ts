@@ -3,11 +3,12 @@ export interface StopSpec {
   chromaMultiplier: number
 }
 
-// Root L targets for light mode stops 1–8, recalibrated 2026-06-10 to
-// Radix's cross-family ladder (median OKLCH L of their 11 chromatic
-// scales — remarkably uniform across hues). The old roots (0.98–0.71)
-// sat one notch darker: our stop 1 landed where Radix's stop 2 does,
-// which is why brand-1/2 read as "tinted paper" instead of near-white.
+// Root L targets for light mode stops 1–8 — contrast-grouping L targets:
+// each L is purposefully chosen so the step lands in its reserved-role
+// contrast grouping (backgrounds / borders / fills / text), and the
+// targets are remarkably uniform across hues. The old roots (0.98–0.71)
+// sat one notch darker: our stop 1 landed where stop 2 should, which is
+// why brand-1/2 read as "tinted paper" instead of near-white.
 // rootL is now the DIRECT lightness of each stop (plus the yellow-band
 // lift) — the old blue-referenced Y-equalization is gone from the light
 // ramp (the dark ramp keeps its machinery).
@@ -52,7 +53,7 @@ export const HIGHLIGHT_DARK = { rootL: 0.62 }
 // Raised + chroma-boosted (2026-06-09 dark audit): the original roots
 // (0.13–0.42) read as undifferentiated murk — OKLab ΔE under-weights
 // perceived steps at low L, so dark mode needs higher roots and MORE
-// chroma than light-mode symmetry suggests (cf. Radix dark-3 ≈ L 0.24).
+// chroma than light-mode symmetry suggests (a dark step-3 sits near L 0.24).
 export const DARK_STOPS: StopSpec[] = [
   { rootL: 0.18,  chromaMultiplier: 0.30 }, // 1 — app background
   { rootL: 0.21,  chromaMultiplier: 0.38 }, // 2 — subtle background
@@ -84,9 +85,9 @@ export const ACCENT_DARK_STOPS: StopSpec[] = [
 
 // ── GREENFIELD dark mode (Stage 10, owner-blessed 2026-06-25) ────────────────
 // The UNIVERSAL dark lightness scaffold: every palette's dark stops 1–8 + 11/12
-// sit at these Ls (chroma + hue vary by brand; lightness is shared). Radix's
-// compressed deep floor (1–6) spliced to Material 3's airy crown (7–12), with
-// the low-contrast text pulled to 0.80 so cool links keep chroma, and a soft
+// sit at these Ls (chroma + hue vary by brand; lightness is shared). A
+// compressed deep floor (1–6) spliced to an airy crown (7–12), with the
+// low-contrast text pulled to 0.80 so cool links keep chroma, and a soft
 // 0.93 ceiling (anti-halation). Blessed on a dark canvas; clears APCA Lc65/Lc90
 // over a step-2 bg where the old engine failed (text Lc57, focus border 2.88).
 // Emitted DIRECTLY (the old darkRefY blue-referenced luminance solve is retired)
@@ -95,17 +96,17 @@ export const ACCENT_DARK_STOPS: StopSpec[] = [
 // Stops 9/10 (0.66/0.72) are the neutral-solid target — NOT yet wired; dark
 // fills still ride the dark9L lift until the fill-pin fork is decided.
 export const DARK_NEUTRAL_L = [
-  0.178, 0.213, 0.252, 0.285, 0.313, 0.348, // 1–6  compressed deep floor (Radix)
-  0.42,  0.55,  0.66,  0.72,  0.80,  0.93,  // 7–12 airy crown (Material), text-low 0.80
+  0.178, 0.213, 0.252, 0.285, 0.313, 0.348, // 1–6  compressed deep floor
+  0.42,  0.55,  0.66,  0.72,  0.80,  0.93,  // 7–12 airy crown, text-low 0.80
 ]
 
 // Stop 11 — accent text / links: luminance-anchored at the dark root,
 // with AA against stop 2 as a BOUND (take the darker of the two).
 // Until 2026-06-10 it anchored at exactly 4.5:1 — the lightest legal
 // color every time, which is why 11 "ended up looking really light"
-// (our crimson-11 hit 4.50 vs Radix's hand-tuned 5.11). Radix 11s sit
-// at L ≈ 0.51–0.59; the 0.53 root reproduces that depth via the same
-// luminance equalization as stops 1–8.
+// (anchor stop 11 a touch deeper so it doesn't read washed-out). Anchor
+// text stops sit at L ≈ 0.51–0.59; the 0.53 root reproduces that depth
+// via the same luminance equalization as stops 1–8.
 export const STOP_11 = { rootL: 0.53, chromaMultiplier: 0.95 }
 export const STOP_11_CONTRAST = 4.5
 
@@ -145,17 +146,16 @@ export const DARK_COLLIDER_MUTED_CHROMA_SCALE = 0.55
 
 // Warm hue torsion v2 — the GOLD SPINE (2026-06-10, replaces the
 // yellow-only torsion after flagged the brown shift at stops 7–8
-// on oranges/golds). In sRGB, "staying on hue" while lightness drops
-// turns warm colors brown/olive: dark orange at H 53 IS brown, dark
-// yellow at H 100 IS olive. Hand-tuned systems escape by rotating every
-// non-anchor stop toward the hue that stays clean at that lightness —
-// solving Radix's orange/amber/yellow scales for their common attractor
-// gives a monotone path from cream near white to orange-brown in the
-// depths. Stops drift toward the spine with partial travel (capped), so
-// orange papers go peachy-cream (Radix orange-3: +34°), orange 7–8 go
-// golden instead of tan (+10°), and yellow 11 lands on gold (−24°),
-// while stops 9/10 keep the brand hue exactly. Red side (H < 40) and
-// greens (H > 122) are outside the band — Radix barely moves them.
+// on oranges/golds). This is established warm-hue color theory: in sRGB,
+// "staying on hue" while lightness drops turns warm colors brown/olive —
+// dark orange at H 53 IS brown, dark yellow at H 100 IS olive. The escape
+// is to rotate every non-anchor stop toward the hue that stays clean at
+// that lightness, giving a monotone path from cream near white to
+// orange-brown in the depths. Stops drift toward the spine with partial
+// travel (capped), so orange papers go peachy-cream (+34° at the light
+// end), orange 7–8 go golden instead of tan (+10°), and yellow 11 lands
+// on gold (−24°), while stops 9/10 keep the brand hue exactly. Red side
+// (H < 40) and greens (H > 122) are outside the band — barely moved.
 // The light ramp now weights the spine attractor with the red-watershed
 // sigmoid + warm gaussian in colorEngine; WARM_TORSION's hard band only
 // drives the DARK ramp (and the illustration ramp).

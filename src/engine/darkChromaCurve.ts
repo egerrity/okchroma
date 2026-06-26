@@ -2,10 +2,10 @@
 // sets only chroma. Two pieces:
 //
 //   nativeC(L) = max( brandC · shape(L),  floorFracAt(L) · ctaC )   — the brand's
-//               intended dark chroma: a per-stop shape (Radix's colored-dark
-//               distribution; rises across surfaces, peaks at the fill, collapses
-//               at text) with an identity-proportional deep-surface floor so the
-//               app/subtle backgrounds don't wash to grey.
+//               intended dark chroma: a per-stop dark chroma shape (deep stops
+//               bumped for dark legibility; rises across surfaces, peaks at the
+//               fill, collapses at text) with an identity-proportional deep-surface
+//               floor so the app/subtle backgrounds don't wash to grey.
 //   C(L,H)    = perceptualDarkC(L, H, nativeC)   — the per-hue REDISTRIBUTION that
 //               replaces the old hand-tuned loudnessCap: it holds nativeC's hue-
 //               average prominence and solves chroma per hue so every hue reads at
@@ -26,10 +26,10 @@ const smoothstep = (x: number) => { const t = clamp(x, 0, 1); return t * t * (3 
 const angDist = (h: number, c: number) => Math.abs((((h - c + 540) % 360)) - 180)
 const lobe = (h: number, c: number, w: number) => Math.pow(Math.max(0, Math.cos(rad((90 * angDist(h, c)) / w))), 1.5)
 
-// Normalized per-stop chroma, re-derived from Radix's COLORED dark scales (fill
-// stop 9 = 1.0). Rises across the surfaces, peaks at the fill, collapses at text.
-// Deep stops 1–2 nudged up from the raw grand-mean (0.097/0.127) so the app-bg /
-// subtle-bg carry a touch more brand tint (they were reading slightly grey).
+// Normalized per-stop dark chroma shape (fill stop 9 = 1.0), deep stops bumped
+// for dark legibility. Rises across the surfaces, peaks at the fill, collapses at
+// text. Deep stops 1–2 nudged up from the raw grand-mean (0.097/0.127) so the
+// app-bg / subtle-bg carry a touch more brand tint (they were reading slightly grey).
 const SHAPE_DARK = [0.125, 0.16, 0.305, 0.429, 0.483, 0.522, 0.57, 0.674, 1, 0.94, 0.745, 0.2]
 
 const GLOBAL_TRIM = 0.76   // CIECAM02 dark-surround colorfulness trim

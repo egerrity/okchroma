@@ -15,11 +15,11 @@ same numbers, same lightness, same contrasts.
 
 ## How
 
-Steps 1–8 read their lightness from a fixed table calibrated to the median OKLCH
-lightness of Radix's 11 chromatic scales, which are remarkably uniform across
-hues, so one ladder fits all. Chroma is layered on afterward (see [chroma & the
-gamut envelope](./chroma-envelope.md)); lightness comes first, hence
-"luminance-first."
+Steps 1–8 read their lightness from a fixed table of contrast-grouping L targets —
+Ls chosen so each step lands in its reserved-role contrast grouping (backgrounds,
+borders, fills, text). Those targets hold across hues, so one ladder fits all.
+Chroma is layered on afterward (see [chroma & the gamut envelope](./chroma-envelope.md));
+lightness comes first, hence "luminance-first."
 
 Two adjustments sit on top:
 

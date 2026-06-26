@@ -37,7 +37,9 @@ demo's custom-theme view are renderers over the same engine + the shared
 ## The rules (each calibrated once with design, then hard-coded)
 
 - **12-stop OKLCH ramp** anchored at the brand color (stop 9), stops
-  luminance-equalized across hues on a Radix-calibrated ladder. Light
+  luminance-equalized across hues on a ladder of contrast-grouping L
+  targets (each step lands in its reserved-role grouping —
+  backgrounds / borders / fills / text). Light
   1–8 chroma is saturation-preserving: C = brandSat × satFraction ×
   gamut-max at the stop's lightness (the gamut envelope is tiny near
   white, wide in the mid — that's the perceived quiet→vivid curve), with

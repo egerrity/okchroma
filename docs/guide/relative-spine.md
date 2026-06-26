@@ -27,8 +27,8 @@ That fraction is set by a gaussian of how far the brand sits from the spine:
 g = gauss( brandH − spine(brandL),  σ ≈ 20° )
 ```
 
-On-path brands (the vivid oranges/golds/yellows the spine was solved on) get the
-full Radix-shape swing (`g → 1`); off-path brands get about half. The same
+On-path brands (the vivid oranges/golds/yellows the spine is shaped around) get the
+full designed swing (`g → 1`); off-path brands get about half. The same
 machinery runs the light, dark, and illustration ramps.
 
 ## Engineering

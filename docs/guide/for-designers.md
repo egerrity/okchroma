@@ -6,7 +6,7 @@ what you'll see, and what you decide. Follow the links for the math.
 
 ## About the color engine
 
-**Reserved-step model, generated per brand.** OKChroma follows the reserved-step convention Radix popularized (each of the 12 steps has a perceptual target tied to a role) — but it is *not* built on Radix; Radix is only a one-time reference, absent from the runtime. Where Radix hand-tunes a fixed set of palettes, OKChroma generates that structure from any brand color, so contrast pairings are predictable before you build a single token. ([eng](./lineage.md))
+**Reserved-step model, generated per brand.** OKChroma uses a reserved-step model: each of the 12 steps has a perceptual target tied to a role, so contrast pairings are predictable before you build a single token. Rather than hand-tuning a fixed set of palettes, OKChroma generates that structure from any brand color. ([eng](./lineage.md))
 
 **Perceptual color (OKLCH).** The engine works in a perceptual color space, so the steps appear evenly spaced regardless of hue and a scale holds one hue from light to dark. ([eng](./oklch.md))
 
@@ -30,7 +30,7 @@ on top. The point of this section is that the primitives were *designed* for it.
 Each step has a reserved role, so your tokens map cleanly and the mapping holds
 across every brand.
 
-**The step roles.** Following Radix's scale model, each step is meant for a
+**The step roles.** In the reserved-step model, each step is meant for a
 specific job. Steps 1–8 are a linear *surface scale*; the solid fill, its hover,
 and the two text shades are *roles* pulled out of the scale and given their own
 names (so they don't read as "just another step"):
@@ -48,9 +48,6 @@ names (so they don't read as "just another step"):
 So the emphasis fill is `cta` on brand/secondary ramps and `highlight` on
 neutral/signal ramps — same step 9/10, different name by ramp. (Some ramps carry
 *both*; see **Two emphasis fills** below.)
-
-Further reading: Radix's [Understanding the
-scale](https://www.radix-ui.com/colors/docs/palette-composition/understanding-the-scale).
 
 **White-label considerations.** Because every brand's step N lands at the same
 lightness and the same role, you define your tokens against those roles once

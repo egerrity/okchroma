@@ -1,14 +1,13 @@
-# Lineage: reverse-engineered from Radix (not built on it)
+# The model: contrast-grouping scales
 
 ## Concept
 
-OKChroma is **inspired by** [Radix Colors](https://www.radix-ui.com/colors), but it is **not built on
-Radix** — Radix is not a dependency and appears nowhere in the runtime or output. The reserved
-12-step-role convention is the owner's own pre-existing idea (Radix happens to use a similar one).
-OKChroma's numeric constants (the lightness ladder, dark scaffold, neutral chroma curve) were
-**reverse-engineered by fitting to** Radix's hand-tuned palettes as a one-time reference; the engine
-then generates the whole structure from any single brand color, with a principled
-Helmholtz–Kohlrausch solve increasingly replacing the Radix-fit pieces.
+A color system is built on **contrast pairs**: a fill needs text that reads on it, a border needs
+to separate from its background, a background needs to sit quietly behind content. Rather than emit
+N evenly-spaced colors and hope the pairs land, OKChroma purposefully chooses lightness targets so
+each step falls in the contrast grouping its reserved role needs (backgrounds, borders, a solid
+fill, text). The engine then generates the whole 12-step scale per brand from one hex, using
+Helmholtz–Kohlrausch (H-K) perceptual math for the per-hue lightness and chroma.
 
 ## Why
 
@@ -19,32 +18,32 @@ scales generated to a guaranteed standard, not crafted one at a time.
 ## How
 
 The reserved-role model — 12 steps, each mapped to the contrast a reserved role needs (backgrounds,
-borders, a solid fill, text), calibrated so the steps line up across hues — was the reference point
-(Radix popularized the same convention). OKChroma re-derives that structure from gamut geometry and an
-H-K perceptual solve, retaining no Radix artifact at runtime, and adds what a generator needs:
+borders, a solid fill, text), calibrated so the steps line up across hues — is the structural
+foundation. OKChroma derives that structure from gamut geometry and an H-K perceptual solve, and
+adds what a generator needs:
 
 - **Generation.** The full 12-step system is computed from one hex, for any input.
 - **Brand fidelity.** The brand's real color anchors the scale (step 9) instead of
   snapping to a preset.
 - **Collision-awareness.** Generated colors can clash with the fixed signal colors.
-  The engine detects and navigates that; Radix's static palettes never face the
-  problem.
+  The engine detects and navigates that; a static, hand-built palette never faces
+  the problem.
 
-Radix is a reference, not a spec. We derive scales from gamut geometry first and
-validate them against Radix's families; where we diverge it is a deliberate
-choice. Radix is MIT-licensed and credited in the repo.
+Scales are derived from gamut geometry first, then validated against the contrast
+requirements of each reserved role.
 
 ## Engineering
 
-Radix shows up in two places in the code:
+The contrast-grouping constants live in two places:
 
 - [`src/engine/stopTable.ts`](../../src/engine/stopTable.ts): the light-stop
-  lightness ladder (`LIGHT_STOPS`) is the median OKLCH lightness of Radix's 11
-  chromatic scales; `REFERENCE_H = 245` is the calibration hue.
+  lightness ladder (`LIGHT_STOPS`) is a set of contrast-grouping L targets — Ls
+  chosen so each step lands in its reserved-role contrast grouping; `REFERENCE_H =
+  245` is the calibration hue.
 - [`src/engine/neutralCurve.ts`](../../src/engine/neutralCurve.ts): the neutral chroma curve's
-  numeric constants (lightness anchors, shape, per-hue peak chroma) were **fit from** Radix's neutral
-  families — a derivation input only. (The old `src/radixNeutrals.ts` family-lookup was deleted;
-  neutrals are now GENERATED per brand hue, not selected.)
+  numeric constants (lightness anchors, shape, per-hue peak chroma) define a per-hue, per-level
+  near-gray chroma curve. (The old neutral family-lookup was deleted; neutrals are now GENERATED
+  per brand hue, not selected.)
 
 This topic is orientation. The mechanics it points at are covered in [the stop
 ladder](./stop-ladder.md), [chroma & the gamut envelope](./chroma-envelope.md),

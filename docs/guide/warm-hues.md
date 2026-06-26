@@ -16,16 +16,16 @@ looking gold at step 11 means not keeping its literal hue there.
 
 ## How
 
-A gold spine defines the clean hue at each lightness, solved from Radix's
-orange/amber/yellow scales, which all share this attractor. Warm stops drift toward
-the spine with partial, capped travel:
+In sRGB, warm hues (orange/amber/yellow) turn brown/olive as lightness drops; this
+is standard warm-hue color theory. A gold spine defines the hue that stays clean at
+each lightness, and warm stops rotate toward it with partial, capped travel:
 
 - light tints lean yellow-green (the spine's light end),
 - the solid steps (9/10) keep the brand hue exactly,
 - dark stops rotate toward gold/orange (the spine's dark end).
 
 Only the warm band moves. Reds (H < 40°) and greens (H > 122°) are outside it, so
-the engine barely touches them, as Radix barely moves them either.
+the engine barely touches them — they stay clean on their own hue as they darken.
 
 ## Engineering
 

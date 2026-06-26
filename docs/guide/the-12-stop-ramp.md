@@ -27,10 +27,10 @@ leave each brand's palette to be created in a vacuum.
 
 ## How
 
-We took inspiration from [Radix UI](https://www.radix-ui.com/colors), which
-hand-tunes a fixed library of palettes in which each step corresponds to the
-contrast required for a reserved role. OKChroma generates that same 12-step,
-role-mapped structure for any brand hex. Two things hold it together:
+The 12-step ramp follows a reserved-step model: each step corresponds to the
+contrast required for a reserved role, so the same step number does the same job
+on every scale. OKChroma generates that 12-step, role-mapped structure for any
+brand hex. Two things hold it together:
 
 - **Step 9 anchors on the brand color.** The brand's lightness pins the solid
   fill, so the scale is built around the real brand rather than snapped to the
@@ -139,4 +139,4 @@ the scale math's.
 **Provenance:** `docs/handoff-2026-06-10-color-math.md`,
 `docs/documentation-source-notes-2026-06-10-color-model.md` (archive).
 **See also:** [why OKLCH](./oklch.md), [the stop ladder](./stop-ladder.md), [chroma
-& the gamut envelope](./chroma-envelope.md), [lineage / Radix](./lineage.md).
+& the gamut envelope](./chroma-envelope.md), [lineage](./lineage.md).

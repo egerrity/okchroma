@@ -81,29 +81,11 @@ should be updated to the emitted `highlight-9/10` / `ink-11/12` (a doc text edit
 Colors are **generated at runtime** from the brand hue — `plugin/ui.ts` calls `resolveBrand` +
 `themeToFigma` live, and `manifest.json` allows no network, so generation must be local — and the
 handoff is by **semantic token name** ("make this `wash-3`"), never a baked exact hex. The **neutral
-is generated per brand** via `generateNeutralScale(brandH, level)` — **not Radix**: the old
-`src/radixNeutrals.ts` lookup is **deleted**; the only Radix residue is the *numeric* `neutralCurve.ts`
-constants once **fit from** Radix family measurements (a derivation input, not a runtime lookup).
-Same-hue brands **dedup** onto one shared primitive keyed by a rounded hue bucket
+is generated per brand** via `generateNeutralScale(brandH, level)`: there is no neutral-family lookup
+table — the neutral is computed from the brand hue through the engine, with its low-chroma curve in
+`neutralCurve.ts`. Same-hue brands **dedup** onto one shared primitive keyed by a rounded hue bucket
 (`system/neutral/<level>-h<round(brandH)>`, or `pure` for grey). Material-style theming is a possible
 *future* direction, not current.
-
-**Radix's actual role — VERIFIED (2026-06-26, code + adversarial sweep):** Radix is **not a
-dependency, runtime lookup, or baked palette** — absent from the code path and emitted output (no npm
-dep, no imports; every `radix` in `src/` is a comment). It was a one-time **reverse-engineering
-reference**: the owner fit numeric constants to Radix's hand-tuned palettes. Several of those
-constants are **still live as the base skeleton** — `LIGHT_STOPS` (light lightness ladder, Radix-median
-L), `DARK_NEUTRAL_L` (dark scaffold, a Radix deep-floor + Material splice, emitted directly),
-`SHAPE_DARK`, `GOLD_SPINE`/`WARM_TORSION`, and `neutralCurve.ts`. What the **H-K math**
-(`perceptualL.ts`, Nayatani 1997) replaced is the hand-tuned *per-hue apparent-lightness/chroma
-patches* (`YELLOW_L_LIFT`, `loudnessCap`): light-rung L (`perceptualRungL`) and dark-surface chroma
-(`perceptualDarkC`) now fall out of a principled H-K solve **layered on top of** the Radix-seeded base
-constants. **So: Radix is gone as a *dependency*, and the per-hue corrections are now *principled* —
-but the base ladder/scaffolds are still Radix-derived numeric residue; fully migrating them off Radix
-is a next step, not done.** Separately, the **token-pre-reservation** idea (the reserved 12-step roles)
-is the **owner's own pre-existing design** — they came in with it and merely noticed Radix uses a
-similar convention; it is NOT inherited from Radix. Reframe "built on / extension of Radix" wherever
-it appears: it overstates Radix to a foundation it never was.
 
 ---
 
@@ -117,7 +99,7 @@ Every family's tokens fall in exactly three groups:
 | group | synonyms | what it is | tokens |
 |---|---|---|---|
 | **scale** | numbered / steps / stops | **not** archetype-dependent — one universal rule, **identical across every family** (L targets **fixed**; chroma + hue **derived** from the input via the curve) | `paper-1/2`, `wash-3/4/5`, `accent-6/7/8` (1–8); `highlight-1/2` (a "9b/10b"); `ink-alt` (old 11); `ink` (old 12) |
-| **cta** | archetype-dependent | the **one** archetype-dependent fill — analogous to Radix 9/10 | `cta-1`, `cta-2` |
+| **cta** | archetype-dependent | the **one** archetype-dependent fill — the solid action fill | `cta-1`, `cta-2` |
 | **ons** | calculated text / on-fill text | text-on-fill polarity, **computed** from the fill's luminance — falls out, never forced | `on-cta`, `on-highlight` |
 
 Supporting terms: **identity** = the verbatim input hex (brand/secondary only). **archetype** = the

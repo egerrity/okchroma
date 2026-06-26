@@ -29,13 +29,14 @@ not per color.
 ```
 DARK   →  chroma = brandColorfulness  ×  shape[step]  ×  calmDown(hue)
                    └ same                └ a recipe       └ NEW: the only
-                     brand value           measured from     dark-specific part
-                                           Radix's dark
+                     brand value           tuned for         dark-specific part
+                                           dark legibility
 ```
 
 The first two pieces are light's structure (`brandC × shapeAt(L)`). Dark's recipe
-(`SHAPE_DARK`) is a different list of numbers — measured from Radix's *dark colored*
-scales — but the structure is identical. The third piece is the only thing dark adds.
+(`SHAPE_DARK`) is a different list of numbers — a per-stop dark chroma shape with the
+deep stops bumped for dark legibility — but the structure is identical. The third piece is
+the only thing dark adds.
 
 ## The dial — why it isn't bolted-on per color
 

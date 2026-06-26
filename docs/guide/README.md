@@ -13,18 +13,18 @@ and per-palette deviations. Two tracks:
 
 This README is the spine; deep math lives in the linked topic docs.
 
-## Lineage
+## What it is
 
-Inspired by [Radix Colors](https://www.radix-ui.com/colors); re-derived as a per-brand generator for white-label. Radix is a one-time reverse-engineering reference, not a dependency (see [lineage](./lineage.md)).
+A per-brand color generator for white-label, built on first principles (see [lineage](./lineage.md)). What OKChroma does:
 
-| dimension | Radix | OKChroma |
-|---|---|---|
-| input | ~30 pre-made scales; pick one | any brand hex |
-| scales | hand-tuned per hue | generated from gamut geometry |
-| your color | snapped to the nearest scale | reproduced true-to-brand |
-| roles | 12-step scale with pre-reserved roles | non-linear collection of pseudo-semantic colors designed to support effortless theming |
-| modes | light only | light + dark |
-| collisions | unaware | detects + resolves brand↔signal |
+| dimension | OKChroma |
+|---|---|
+| input | any brand hex |
+| scales | generated from gamut geometry |
+| your color | reproduced true-to-brand |
+| roles | non-linear collection of pseudo-semantic colors designed to support effortless theming |
+| modes | light + dark |
+| collisions | detects + resolves brand↔signal |
 
 ## Vocabulary
 

@@ -85,7 +85,7 @@ function goldSpineHue(L: number): number {
 //
 // offPathG attenuates the inherited swing by the brand's distance from the
 // path, gauss(brandH − spine(brandL), σ20): on-path brands (the vivid
-// oranges/golds/yellows the spine was solved on) take the full Radix-shape
+// oranges/golds/yellows the spine was solved on) take the full gold-spine
 // swing; off-path brands (nano H 94 @ L 0.74 — +23° above the path;
 // ireland H 78 @ L 0.86 — 23° below) take a toned-down version, so their
 // papers and text stops stay in the brand's own hue family instead of
@@ -806,10 +806,11 @@ export function generateIllustrationScale(scale: GeneratedScale): IllustrationSc
 // Neutral scale: a REUSE of generateScale, not a bespoke ramp. A faint gray at
 // the brand hue feeds the 'light' archetype, and neutralChromaCurve overrides
 // every rendered chroma by lightness — so the only thing differing from a brand
-// ramp is the chroma profile (a quiet Radix-derived tint, not the brand's vivid
+// ramp is the chroma profile (a quiet near-gray tint, not the brand's vivid
 // ladder). Emits BRAND-KIND: stop 9 is the near-white cta button, the rung
-// (13/14) is the highlight. Levels: pure (C=0) / default (Radix-measured) /
-// branded (amplified). The grayHex carries only the hue — its C0.006 sits below
+// (13/14) is the highlight. Levels: pure (C=0) / default (a whisper of brand hue
+// via the neutral chroma curve) / branded (amplified). The grayHex carries only
+// the hue — its C0.006 sits below
 // HUE_NOISE_C so every lightness-domain decision stays achromatic; the curve
 // drives all chroma. Owner-approved output:
 // docs/engine-spec/approved-neutrals-reference.md (the verification target).
