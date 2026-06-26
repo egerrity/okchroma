@@ -134,9 +134,17 @@ export function brandCss(
     ? `  --secondary-identity: ${accent.identityHex};`
     : `  --secondary-identity: var(--brand-identity);`
 
+  // Universal scale anchors — a pure-white ceiling (paper-0) and pure-black floor
+  // (ink-13), mode-invariant and identical across every ramp. They extend the
+  // scale past the generated stops so elevation can resolve consistently in both
+  // modes (cards lift onto white in light, off black in dark). Emitted once per
+  // brand scope (the light block; they cascade into the dark block unchanged).
+  const universalAnchors = [`  --paper-0: #ffffff;`, `  --ink-13: #000000;`]
+
   return [
     `/* ${displayName}${note} */`,
     `[data-brand="${slug}"] {`,
+    ...universalAnchors,
     ...brandKindBody('brand', scale, 'light'),
     brandIdentity,
     ...illusVars,
