@@ -1,117 +1,133 @@
 import React from 'react'
+import { AlertCircle, AlertTriangle, CheckCircle, Info } from 'lucide-react'
 
-// Stage 3 — the per-ramp token display, redesigned as a compact SCALE VIGNETTE
-// (replaces the dense 6×6 card grid). Every ramp now carries the SAME token
-// inventory (cssRender emits the brand-kind body for brand/secondary/neutral AND
-// signals), so one strip fits them all. It renders with the LIVE primitives, so it
-// themes (light/dark) and picks the right on-fill polarity for free.
+// Stage 3 — the per-ramp token display, as a realistic SHOWCASE card. It renders
+// with the LIVE primitives, so it themes (light/dark) and picks the right on-fill
+// polarity for free. The card it sits in is `.ct-colorblock` (already an elevated
+// --surface-raised surface), so it lifts off the page consistently in both modes.
 //
-// The card it sits in is `.ct-colorblock` — already an elevated --surface-raised
-// surface (white in light, paper-2 in dark) — so the strip lifts off the page
-// consistently in both modes, and the text inks read as "Aa" right on that surface.
+// Roles demonstrated in context, not as abstract chips:
+//   ink     → the heading + body copy ("ink family" called out in ink-11)
+//   wash    → the inset surface(s)
+//   cta     → the full-round pill button (brand/secondary/neutral) OR, on signals,
+//             the ALERT callout (alerts use cta in signals; the pill is hidden)
+//   scale   → the numbered 1–12 ladder with paper/wash/accent/highlight/ink labels
 //
-// Layout, top → bottom:
-//   1. the scale ladder — one contiguous light→dark ramp of filled chips, framed by
-//      the universal anchors paper-0 (#fff) and ink-13 (#000). The cta/highlight
-//      rungs (9/10) are pulled OUT of the ladder (they're pinned roles, not scale
-//      steps), so the numbers read …8, 11, 12, 13.
-//   2. the roles in use — the emphasis fills that carry an on-color (highlight-9,
-//      cta-1) each shown with "Aa" in their on-* text, and the text inks (ink-11/12)
-//      shown as "Aa" on the card surface. Signals omit cta (no "error button").
+// The universal paper-0/ink-13 anchors are NOT shown here — they're one shared
+// white/black pair at the system level, not a per-ramp token.
 export type RampKind = 'brand' | 'neutral' | 'signal'
+
+// Alert icon per signal, chosen by what the signal MEANS (its color identity).
+const SIGNAL_ICON: Record<string, typeof AlertCircle> = {
+  red: AlertCircle,
+  yellow: AlertTriangle,
+  green: CheckCircle,
+  'info-color': Info,
+}
 
 export function TokenCards({ prefix, kind }: { prefix: string; kind: RampKind }) {
   const v = (t: string) => `var(--${prefix}-${t})`
-  // paper-0 / ink-13 are UNIVERSAL anchors (emitted once per brand scope, not
-  // ramp-prefixed). Fallbacks keep the strip correct even out of brand context.
-  const PAPER0 = 'var(--paper-0, #ffffff)'
-  const INK13 = 'var(--ink-13, #000000)'
+  const isSignal = kind === 'signal'
 
-  // signals have no cta (their emphasis IS the highlight) — the "no error button" rule.
-  const showCta = kind !== 'signal'
+  // Identity tags: brand ramps carry two (the family + its role); every other ramp
+  // is a single name chip (neutral / red / yellow / …).
+  const tags = prefix === 'brand' ? ['brand', 'primary']
+    : prefix === 'secondary' ? ['brand', 'secondary']
+    : [prefix]
 
-  // The continuous lightness ladder: anchors bookend the surface scale + text inks.
-  // 9/10 (cta/highlight) are deliberately absent — they surface below as roles.
-  const ladder: Array<{ n: string; c: string; anchor?: boolean }> = [
-    { n: '0', c: PAPER0, anchor: true },
-    { n: '1', c: v('paper-1') },
-    { n: '2', c: v('paper-2') },
-    { n: '3', c: v('wash-3') },
-    { n: '4', c: v('wash-4') },
-    { n: '5', c: v('wash-5') },
-    { n: '6', c: v('accent-6') },
-    { n: '7', c: v('accent-7') },
-    { n: '8', c: v('accent-8') },
-    { n: '11', c: v('ink-11') },
-    { n: '12', c: v('ink-12') },
-    { n: '13', c: INK13, anchor: true },
+  // The 1–12 scale. Number text stays legible in BOTH modes by leaning on tokens
+  // that invert with the mode: ink-12 (high-contrast text) on the surface rungs,
+  // on-highlight (computed legible) on the highlight rungs, paper-1 (inverse of ink)
+  // on the ink rungs.
+  const scale: Array<{ n: number; tok: string; fg: string }> = [
+    { n: 1, tok: 'paper-1', fg: v('ink-12') },
+    { n: 2, tok: 'paper-2', fg: v('ink-12') },
+    { n: 3, tok: 'wash-3', fg: v('ink-12') },
+    { n: 4, tok: 'wash-4', fg: v('ink-12') },
+    { n: 5, tok: 'wash-5', fg: v('ink-12') },
+    { n: 6, tok: 'accent-6', fg: v('ink-12') },
+    { n: 7, tok: 'accent-7', fg: v('ink-12') },
+    { n: 8, tok: 'accent-8', fg: v('ink-12') },
+    { n: 9, tok: 'highlight-9', fg: v('on-highlight') },
+    { n: 10, tok: 'highlight-10', fg: v('on-highlight') },
+    { n: 11, tok: 'ink-11', fg: v('paper-1') },
+    { n: 12, tok: 'ink-12', fg: v('paper-1') },
   ]
-  const leftAnchor = ladder[0]
-  const rightAnchor = ladder[ladder.length - 1]
-  const body = ladder.slice(1, -1) // paper-1 … ink-12 — the contiguous ramp
-
-  const emphasis: Array<{ label: string; fill: string; on: string }> = [
-    { label: 'highlight-9', fill: v('highlight-9'), on: v('on-highlight') },
-    ...(showCta ? [{ label: 'cta-1', fill: v('cta-1'), on: v('on-cta') }] : []),
+  const groups = [
+    { label: 'paper', span: 2 }, { label: 'wash', span: 3 }, { label: 'accent', span: 3 },
+    { label: 'highlight', span: 2 }, { label: 'ink', span: 2 },
   ]
 
-  const cap: React.CSSProperties = { fontSize: 10, fontWeight: 600, color: 'var(--fg-subtle)', lineHeight: 1.3 }
+  const Icon = SIGNAL_ICON[prefix] ?? AlertCircle
+
+  const tagChip = (text: string): React.CSSProperties => ({
+    fontSize: 12, fontWeight: 600, padding: '4px 11px', borderRadius: 6, whiteSpace: 'nowrap',
+    ...(text === 'brand'
+      ? { background: v('wash-4'), color: v('ink-11') }
+      : { background: v('ink-12'), color: v('paper-1') }),
+  })
+  const boxLabel: React.CSSProperties = { fontSize: 12, fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.03em' }
+  const boxBody: React.CSSProperties = { fontSize: 14, lineHeight: 1.4 }
+  const box: React.CSSProperties = { flex: 1, minWidth: 200, borderRadius: 10, padding: '13px 15px' }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {/* 1 — the scale ladder. The two universal anchors (paper-0 #fff ceiling,
-          ink-13 #000 floor) are pulled out as bookend caps with a small gap, so
-          they read as the absolute white/black reference — not as part of the
-          gradient. This keeps the strip a clean ramp in BOTH modes: in dark the
-          surface scale inverts (paper-1 dark → ink-12 light), and the bookends
-          frame it instead of colliding with it. */}
-      <div>
-        <div style={{ display: 'flex', alignItems: 'stretch' }}>
-          {/* left cap — paper-0 */}
-          <div style={{ flex: 0.8, height: 38, marginRight: 6, background: leftAnchor.c, borderRadius: 7, border: '1px solid var(--border-subtle)' }} />
-          {/* body — the contiguous surface→ink ramp */}
-          <div style={{ flex: body.length, display: 'flex', borderRadius: 7, overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
-            {body.map(s => (
-              <div key={s.n} title={s.n} style={{ flex: 1, height: 38, background: s.c, boxShadow: 'inset -1px 0 0 rgba(128,128,128,0.12)' }} />
-            ))}
-          </div>
-          {/* right cap — ink-13 */}
-          <div style={{ flex: 0.8, height: 38, marginLeft: 6, background: rightAnchor.c, borderRadius: 7, border: '1px solid var(--border-subtle)' }} />
-        </div>
-        {/* labels — mirror the same flex+margin structure so they line up */}
-        <div style={{ display: 'flex', marginTop: 4 }}>
-          <div style={{ flex: 0.8, marginRight: 6, textAlign: 'center', ...cap, color: 'var(--fg-default)' }}>{leftAnchor.n}</div>
-          <div style={{ flex: body.length, display: 'flex' }}>
-            {body.map(s => (
-              <div key={s.n} style={{ flex: 1, textAlign: 'center', ...cap }}>{s.n}</div>
-            ))}
-          </div>
-          <div style={{ flex: 0.8, marginLeft: 6, textAlign: 'center', ...cap, color: 'var(--fg-default)' }}>{rightAnchor.n}</div>
-        </div>
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
+      {/* identity tags */}
+      <div style={{ display: 'flex', gap: 7, marginBottom: 14, flexWrap: 'wrap' }}>
+        {tags.map(t => <span key={t} style={tagChip(t)}>{t}</span>)}
       </div>
 
-      {/* 2 — the roles in use: on-color fills + text inks */}
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' }}>
-        {emphasis.map(e => (
-          <div key={e.label} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <div style={{
-              minWidth: 68, height: 40, borderRadius: 8, background: e.fill,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: e.on, fontSize: 16, fontWeight: 700, padding: '0 14px',
-            }}>Aa</div>
-            <div style={cap}>{e.label}</div>
-          </div>
-        ))}
+      {/* ink in context — heading + body, "ink family" called out in ink-11 */}
+      <div style={{ fontSize: 24, fontWeight: 700, color: v('ink-12'), lineHeight: 1.15, marginBottom: 8 }}>Aa Heading</div>
+      <p style={{ fontSize: 15, lineHeight: 1.5, color: v('ink-12'), margin: '0 0 16px' }}>
+        The <span style={{ color: v('ink-11') }}>ink family</span> is designed to contrast with surfaces and is perfect for text. It can also be used as a dark surface.
+      </p>
 
-        {/* text inks — shown as "Aa" directly on the card surface (their actual job) */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14, marginLeft: 'auto' }}>
-          {[['ink-11', v('ink-11')], ['ink-12', v('ink-12')]].map(([label, color]) => (
-            <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
-              <div style={{ fontSize: 22, fontWeight: 700, lineHeight: 1, color }}>Aa</div>
-              <div style={cap}>{label}</div>
-            </div>
-          ))}
+      {/* cta in context — the pill (hidden on signals, where cta lives in the alert) */}
+      {!isSignal && (
+        <button style={{
+          alignSelf: 'flex-start', background: v('cta-1'), color: v('on-cta'), border: 'none',
+          borderRadius: 999, padding: '12px 28px', fontSize: 15, fontWeight: 600, fontFamily: 'inherit',
+          cursor: 'default', marginBottom: 18,
+        }}>Get started</button>
+      )}
+
+      {/* surfaces — wash inset, plus a second wash inset OR the signal alert */}
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 18 }}>
+        <div style={{ ...box, background: v('wash-4') }}>
+          <div style={{ ...boxLabel, color: v('ink-11') }}>inset surface &middot; wash</div>
+          <div style={{ ...boxBody, color: v('ink-12') }}>Body copy in ink on a wash fill.</div>
         </div>
+        {isSignal ? (
+          <div style={{ ...box, background: v('cta-1'), display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+            <span style={{ flexShrink: 0, marginTop: 1, lineHeight: 0, color: v('on-cta') }}><Icon size={18} color={v('on-cta')} /></span>
+            <div>
+              <div style={{ ...boxLabel, color: v('on-cta') }}>alert &middot; cta</div>
+              <div style={{ ...boxBody, color: v('on-cta') }}>Loud message in on-cta text.</div>
+            </div>
+          </div>
+        ) : (
+          <div style={{ ...box, background: v('wash-4') }}>
+            <div style={{ ...boxLabel, color: v('ink-11') }}>inset surface &middot; wash</div>
+            <div style={{ ...boxBody, color: v('ink-12') }}>Body copy in ink on a wash fill.</div>
+          </div>
+        )}
+      </div>
+
+      {/* the scale — numbered 1–12 ladder with group labels */}
+      <div style={{ display: 'flex', gap: 5 }}>
+        {scale.map(s => (
+          <div key={s.n} title={s.tok} style={{
+            flex: 1, height: 34, borderRadius: 6, background: v(s.tok), color: s.fg,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600,
+            boxShadow: 'inset 0 0 0 1px rgba(128,128,128,0.15)',
+          }}>{s.n}</div>
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: 5, marginTop: 6 }}>
+        {groups.map(g => (
+          <div key={g.label} style={{ flex: g.span, textAlign: 'center', fontSize: 12, color: 'var(--fg-subtle)' }}>{g.label}</div>
+        ))}
       </div>
     </div>
   )
