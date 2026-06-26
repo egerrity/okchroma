@@ -43,7 +43,7 @@ export interface CollisionCheck {
   mode: Mode
   dHue: number // angular hue distance, degrees
   hueGate: boolean
-  deltaE: number // OKLab distance between rendered stop-9 fills
+  deltaE: number // OKLab distance between the rendered cta fills
   collides: boolean
 }
 
@@ -66,12 +66,15 @@ export function checkCollision(
   signalDef: SignalDef,
   mode: Mode
 ): CollisionCheck {
-  const brandStop9 = (mode === 'light' ? brand.light : brand.dark)[8]
-  const signalStop9 = (mode === 'light' ? signalScale.light : signalScale.dark)[8]
+  // Compare the CTA fills — the loud action / signal colors. The cta is off-scale
+  // now (formerly the stop-9 array slot); collision runs on the raw cta, before
+  // applyRedCoolRender's render-time cool.
+  const brandCta = mode === 'light' ? brand.cta : brand.ctaDark
+  const signalCta = mode === 'light' ? signalScale.cta : signalScale.ctaDark
 
   const dHue = hueDistance(brand.brandH, signalDef.H)
   const hueGate = dHue <= HUE_GATE_DEG
-  const deltaE = stopDeltaE(brandStop9, signalStop9)
+  const deltaE = stopDeltaE(brandCta, signalCta)
   const threshold = mode === 'dark' ? DARK_DELTA_E_THRESHOLD : DELTA_E_THRESHOLD
 
   return {

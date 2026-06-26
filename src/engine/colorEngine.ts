@@ -246,14 +246,23 @@ export interface GeneratedScale {
   // computed separately per mode — the dark fill can sit at a different L
   // (lift floor / collider registers) than the light fill
   onFillTextIsWhiteDark: boolean
+  // The scale arrays are a clean 1–12 ladder: index i holds stop i+1, so
+  // light[8] is stop 9 = highlight-9, light[10] is stop 11 = ink-11. The cta is
+  // NOT in here (it is off-scale, below).
   light: ColorStop[]
   dark: ColorStop[]
-  // ── Stage 2 additive role tokens ──
-  // The highlight rung is APPENDED at engine indices 13/14 for every brand-kind ramp
-  // (brand / secondary / neutral / signals) and EMITTED as highlight-9/10 by tokenNames; cta lives
-  // at stops 9/10 (emitted cta-1/2). (An earlier comment said neutral appends 'cta' at 13+ — wrong:
-  // ALL families append HIGHLIGHT here; see ENGINE-SPEC §0.) Consumers guarding only the original
-  // 1–12 scale use slice(0, 12).
+  // ── Off-scale cta (the brand-identity fill — emitted cta-1/cta-2 + on-cta) ──
+  // The cta is NOT a numbered scale stop (that was the retired model); it is the
+  // pulled-out, archetype-dependent action fill at the brand's own L. Held here OFF
+  // the light/dark scale arrays so those arrays stay a clean 1–12 ladder. on-cta
+  // polarity rides onFillTextIsWhite(Dark) above. (See ENGINE-SPEC §0.)
+  cta: ColorStop
+  ctaHover: ColorStop
+  ctaDark: ColorStop
+  ctaHoverDark: ColorStop
+  // The highlight rung lives IN the scale at native slot 9/10 (light[8]/light[9]),
+  // placed by the same ladder math as stops 1–8 — a predictable DERIVED value,
+  // identical-rule across every family (brand/secondary/neutral/signals).
   // on-highlight text polarity (universal token, all ramps). White normally;
   // black within the yellow band, where darkening would kill the hue.
   onHighlightIsWhite?: boolean
@@ -351,10 +360,11 @@ export interface GenerateOptions {
   // 'deeper' IS wired (see deeperEffect / bandGate below, ~:486); 'default' is a no-op
   // (bit-identical to base); 'full-chroma' is declared but NOT implemented (no handler reads it).
   style?: 'default' | 'deeper' | 'full-chroma'
-  // Stage 2: append the brand/secondary highlight-9/10 fill pair to light/dark
-  // (+ on-highlight polarity). resolveBrand passes this; signals don't (a
-  // signal's stop-9 highlight already IS its fill). Append-only: never touches
-  // stops 1–12.
+  // Place the highlight-9/10 rung into the scale at native slot 9/10 (+ compute
+  // on-highlight polarity). Passed by every emitted family — brand/secondary (via
+  // resolveBrand), neutral (generateNeutralScale), and signals (SIGNAL_SCALES).
+  // Unset ⇒ no rung (the scale stops at ink-12); used only by the illustration
+  // path, which reads scalars, not the rung.
   highlight?: boolean
   // Neutral seam: when set, REPLACES the per-stop native chroma with
   // chromaCurve(L, mode) at every generation site (stops 1–12, the fill, text
@@ -573,8 +583,11 @@ export function generateScale(
       && contrastRatio(1.0, wcagY(fillAnchorL, brandC, brandH)) < 4.5) {
     light9L = findLForContrast(fillAnchorL, brandC, brandH, 1.0, 4.6)
   }
-  light.push(makeStop(9, light9L, cAt('light', light9L, brandC), brandH))
-  light.push(makeStop(10, hoverL(light9L), cAt('light', hoverL(light9L), brandC), brandH))
+  // The cta is OFF-SCALE (cta-1/cta-2): held aside, never pushed into the scale
+  // array. Emitted from scale.cta/ctaHover; the stamped stop number is vestigial
+  // (the emitter names it by role). applyRedCoolRender may rotate it later.
+  const cta = makeStop(9, light9L, cAt('light', light9L, brandC), brandH)
+  const ctaHover = makeStop(10, hoverL(light9L), cAt('light', hoverL(light9L), brandC), brandH)
 
   // Stops 11/12 — text stops anchored at their dark roots (0.53 / 0.30,
   // plus the yellow lift), with the AA/AAA ratio against stop 2 as a
@@ -628,8 +641,9 @@ export function generateScale(
     dark.push(makeStop(i + 1, L, cAt('dark', L, C), H))
   }
 
-  dark.push(makeStop(9, dark9L, cAt('dark', dark9L, darkC9), darkH))
-  dark.push(makeStop(10, hoverL(dark9L), cAt('dark', hoverL(dark9L), darkC9), darkH))
+  // cta OFF-SCALE (dark), same as light — held aside, emitted from scale.ctaDark.
+  let ctaDark = makeStop(9, dark9L, cAt('dark', dark9L, darkC9), darkH)
+  let ctaHoverDark = makeStop(10, hoverL(dark9L), cAt('dark', hoverL(dark9L), darkC9), darkH)
 
   const dark11L = DARK_NEUTRAL_L[10]
   const darkH11 = torsionedHue(darkH, dark11L, dark9L, gOffPath)
@@ -645,27 +659,27 @@ export function generateScale(
     : applyChromaFloor(brandC, DARK_STOP_12.chromaMultiplier, 11, darkFloorStrength)
   dark.push(makeStop(12, dark12L, cAt('dark', dark12L, darkC12), darkH12))
 
-  // Dark on-fill is black-first — white only when black is genuinely
-  // too weak on the fill.
-  const dark9ApcaY0 = apcaY(dark[8].r, dark[8].g, dark[8].b)
-  const onFillTextIsWhiteDark = onTextIsWhite(dark9ApcaY0, dark[8].L, dark[8].C, dark[8].H, !!opts?.enforceOnFillContrast)
+  // Dark on-fill is black-first — white only when black is genuinely too weak on
+  // the fill. Reads the OFF-SCALE cta (formerly dark[8], now scale.ctaDark).
+  const dark9ApcaY0 = apcaY(ctaDark.r, ctaDark.g, ctaDark.b)
+  const onFillTextIsWhiteDark = onTextIsWhite(dark9ApcaY0, ctaDark.L, ctaDark.C, ctaDark.H, !!opts?.enforceOnFillContrast)
 
   // WCAG bound on the dark fill: same rule as light. Deliberately allowed
   // to undercut the dark lift floor — a 0.55 vivid fill doesn't vanish on
   // a dark background the way a 0.2 one does.
   if (opts?.enforceOnFillContrast && onFillTextIsWhiteDark) {
-    if (contrastRatio(1.0, wcagY(dark[8].L, dark[8].C, dark[8].H)) < 4.5) {
+    if (contrastRatio(1.0, wcagY(ctaDark.L, ctaDark.C, ctaDark.H)) < 4.5) {
       // search to 4.6 — hex rounding must never land below 4.5.
-      const compliantL = findLForContrast(dark[8].L, dark[8].C, darkH, 1.0, 4.6)
-      dark[8] = makeStop(9, compliantL, cAt('dark', compliantL, darkC9), darkH)
-      dark[9] = makeStop(10, hoverL(compliantL), cAt('dark', hoverL(compliantL), darkC9), darkH)
+      const compliantL = findLForContrast(ctaDark.L, ctaDark.C, darkH, 1.0, 4.6)
+      ctaDark = makeStop(9, compliantL, cAt('dark', compliantL, darkC9), darkH)
+      ctaHoverDark = makeStop(10, hoverL(compliantL), cAt('dark', hoverL(compliantL), darkC9), darkH)
     }
   }
 
-  // ── Stage 2: brand/secondary highlight-13/14 (append-only ladder rung) ──────
-  // The surface scale's emphasis fill, pulled out of cta. Generated by the SAME
+  // ── Highlight rung — native scale slot 9/10 (the emphasis fill) ─────────────
+  // The scale's emphasis fill, distinct from the cta. Generated by the SAME
   // loop math as stops 1–8 (lightHueAt + the cream/envelope chroma blend),
-  // extended two rungs below accent-8 — NOT a bespoke path. The highlight is a
+  // two rungs below accent-8 — NOT a bespoke path. The highlight is a
   // predictable DERIVED value (the vivid color lives in the cta); its value
   // falls out of the curve with NO white/black forcing, and on-highlight is
   // COMPUTED from that value's luminance below — exactly like on-cta. If a
@@ -717,9 +731,9 @@ export function generateScale(
 
     // Light: ladder-rung placed perceptually (same curve as stops 1–8), then
     // bound to a legible value.
-    const hl = placeLegibleRung(13, perceptualRungL(HIGHLIGHT_LIGHT.rootL, lightHlC(HIGHLIGHT_LIGHT.rootL, lightHueAt(HIGHLIGHT_LIGHT.rootL)), lightHueAt(HIGHLIGHT_LIGHT.rootL)), lightHueAt, lightHlC)
+    const hl = placeLegibleRung(9, perceptualRungL(HIGHLIGHT_LIGHT.rootL, lightHlC(HIGHLIGHT_LIGHT.rootL, lightHueAt(HIGHLIGHT_LIGHT.rootL)), lightHueAt(HIGHLIGHT_LIGHT.rootL)), lightHueAt, lightHlC)
     const hl9 = hl.s
-    const hl10 = rung(14, hoverL(hl9.L), lightHueAt, lightHlC)
+    const hl10 = rung(10, hoverL(hl9.L), lightHueAt, lightHlC)
     light.push(hl9, hl10)
     onHighlightIsWhite = hl.white
 
@@ -730,16 +744,24 @@ export function generateScale(
       opts?.darkChromaCurve
         ? clampChromaToGamut(l, opts.darkChromaCurve(l, h, brandC), h)
         : clampChromaToGamut(l, hlLadderC + u * (brandSat * HIGHLIGHT_LIGHT.satFraction * maxChromaAt(l, h) - hlLadderC), h)
-    const dhl = placeLegibleRung(13, HIGHLIGHT_DARK.rootL, darkHueAt, darkHlC)
+    const dhl = placeLegibleRung(9, HIGHLIGHT_DARK.rootL, darkHueAt, darkHlC)
     const dhl9 = dhl.s
-    const dhl10 = rung(14, hoverL(dhl9.L), darkHueAt, darkHlC)
+    const dhl10 = rung(10, hoverL(dhl9.L), darkHueAt, darkHlC)
     dark.push(dhl9, dhl10)
     onHighlightIsWhiteDark = dhl.white
   }
 
+  // Heal the array: emit stops in scale order so internal index == emitted name
+  // (light[8] = stop 9 = highlight-9, light[10] = stop 11 = ink-11). The highlight
+  // rung is computed last (it needs dark9L), so sort the 1–12 ladder by stop here;
+  // the cta is off-scale and never enters these arrays.
+  light.sort((a, b) => a.stop - b.stop)
+  dark.sort((a, b) => a.stop - b.stop)
+
   return {
     name: scaleName, archetype, brandL, brandC, brandH, lFlip, lFillMax,
     onFillTextIsWhite, onFillTextIsWhiteDark, light, dark,
+    cta, ctaHover, ctaDark, ctaHoverDark,
     onHighlightIsWhite, onHighlightIsWhiteDark,
     identityHex: hex.toUpperCase(),
   }
@@ -760,17 +782,18 @@ export function applyRedCoolRender(scale: GeneratedScale, enforceOnFillContrast:
   const wRed = redCoolWeight(scale.brandH)
   if (wRed <= 1e-9) return
   const H = scale.brandH - RED_COOL_DEG * wRed
-  for (const i of [8, 9]) {
-    const s = scale.light[i]
-    scale.light[i] = makeStop(s.stop, s.L, s.C, H)
-  }
+  // Rotate the OFF-SCALE cta (cta-1/cta-2) cool — NOT the scale's highlight rung,
+  // which now occupies light[8]/light[9] and must stay put. Keeps L and the
+  // already-clamped C; C only re-clamps at the cooled hue.
+  scale.cta = makeStop(scale.cta.stop, scale.cta.L, scale.cta.C, H)
+  scale.ctaHover = makeStop(scale.ctaHover.stop, scale.ctaHover.L, scale.ctaHover.C, H)
   if (enforceOnFillContrast && scale.onFillTextIsWhite) {
-    const s9 = scale.light[8]
+    const s9 = scale.cta
     if (contrastRatio(1.0, wcagY(s9.L, s9.C, s9.H)) < 4.5) {
       // search to 4.6 — hex rounding must never land below 4.5
       const L = findLForContrast(s9.L, scale.brandC, H, 1.0, 4.6)
-      scale.light[8] = makeStop(9, L, scale.brandC, H)
-      scale.light[9] = makeStop(10, hoverL(L), scale.brandC, H)
+      scale.cta = makeStop(9, L, scale.brandC, H)
+      scale.ctaHover = makeStop(10, hoverL(L), scale.brandC, H)
     }
   }
 }
@@ -807,8 +830,8 @@ export function generateIllustrationScale(scale: GeneratedScale): IllustrationSc
 // the brand hue feeds the 'light' archetype, and neutralChromaCurve overrides
 // every rendered chroma by lightness — so the only thing differing from a brand
 // ramp is the chroma profile (a quiet near-gray tint, not the brand's vivid
-// ladder). Emits BRAND-KIND: stop 9 is the near-white cta button, the rung
-// (13/14) is the highlight. Levels: pure (C=0) / default (a whisper of brand hue
+// ladder). Emits BRAND-KIND: scale slot 9/10 is the highlight rung, the
+// off-scale cta is the near-white low-hierarchy button. Levels: pure (C=0) / default (a whisper of brand hue
 // via the neutral chroma curve) / branded (amplified). The grayHex carries only
 // the hue — its C0.006 sits below
 // HUE_NOISE_C so every lightness-domain decision stays achromatic; the curve
