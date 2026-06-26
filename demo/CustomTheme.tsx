@@ -282,6 +282,14 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
     if (stop.startsWith('ink')) return <div style={{ ...aa, color: cv(stop) }}>Aa</div>
     return <div style={{ height: 36, borderRadius: 6, background: cv(stop), border: '1px solid var(--border-subtle)' }} />
   }
+  // "ID" label legible on the identity swatch (which can be light, e.g. a yellow
+  // brand): pick black/white by the identity's perceived luminance, not fixed white.
+  const idTextOn = (hex?: string) => {
+    if (!hex) return '#fff'
+    const h = hex.replace('#', '')
+    const [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16))
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6 ? '#000' : '#fff'
+  }
   const swatchMatrix = () => (
     <div className="ct-colorblock">
       <div style={{ display: 'grid', gridTemplateColumns: `64px repeat(${SWATCH_STOPS.length + 1}, 1fr)`, gap: 5, alignItems: 'center' }}>
@@ -289,7 +297,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
           <div key={`${prefix}-l`} style={{ fontSize: 11, fontWeight: 700, color: 'var(--fg-default)', whiteSpace: 'nowrap' }}>{label}</div>,
           <div key={`${prefix}-id`} title={hasId ? `--${prefix}-identity` : undefined}>
             {hasId
-              ? <div style={{ height: 36, borderRadius: 6, background: `var(--${prefix}-identity)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#fff' }}>ID</div>
+              ? <div style={{ height: 36, borderRadius: 6, background: `var(--${prefix}-identity)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: idTextOn(prefix === 'brand' ? computed.r.scale.identityHex : computed.accent?.identityHex) }}>ID</div>
               : <div style={{ height: 36 }} />}
           </div>,
           ...SWATCH_STOPS.map(s => (
