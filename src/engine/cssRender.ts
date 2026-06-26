@@ -3,7 +3,7 @@
 // injected <style>) so both ship byte-identical rules.
 
 import { generateIllustrationScale, generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel } from './colorEngine'
-import { stopTokenName, onFillTokenName, tokenOrder, type RampKind } from './tokenNames'
+import { stopTokenName, onFillTokenName, tokenOrder } from './tokenNames'
 import type { ResolvedBrand } from './resolve'
 
 export function toHex(r: number, g: number, b: number): string {
@@ -11,26 +11,30 @@ export function toHex(r: number, g: number, b: number): string {
   return `#${ch(r)}${ch(g)}${ch(b)}`
 }
 
-export function stopsToVars(stops: ColorStop[], prefix: string, kind: RampKind): string {
+export function stopsToVars(stops: ColorStop[], prefix: string): string {
   return [...stops]
-    .sort((a, b) => tokenOrder(stopTokenName(a.stop, kind)) - tokenOrder(stopTokenName(b.stop, kind)))
-    .map(s => `  --${prefix}-${stopTokenName(s.stop, kind)}: ${toHex(s.r, s.g, s.b)};`)
+    .sort((a, b) => tokenOrder(stopTokenName(a.stop)) - tokenOrder(stopTokenName(b.stop)))
+    .map(s => `  --${prefix}-${stopTokenName(s.stop)}: ${toHex(s.r, s.g, s.b)};`)
     .join('\n')
 }
 
 const onColor = (white: boolean) => (white ? '#ffffff' : '#000000')
 
-// A brand-kind ramp body for one mode: the surface + text stops, the
-// highlight-13/14 ext pair (Stage 2), and the on-cta / on-highlight text
-// tokens. identity is mode-invariant — the caller emits it once (the neutral
-// has none). Used for the brand, the (real) secondary, AND the generated
-// neutral — all three are brand-kind (cta = stop 9, highlight = rung).
+// A ramp body for one mode: the scale + highlight + text stops (from the scale
+// array, sorted by token order), the off-scale cta pair (cta-1/cta-2), and the
+// on-cta / on-highlight text tokens. identity is mode-invariant — the caller emits
+// it once (the neutral has none). Used for the brand, the (real) secondary, AND
+// the generated neutral — every family is emitted the same way.
 export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' | 'dark'): string[] {
   const stops = mode === 'light' ? s.light : s.dark
+  const cta = mode === 'light' ? s.cta : s.ctaDark
+  const ctaHover = mode === 'light' ? s.ctaHover : s.ctaHoverDark
   const onCta = mode === 'light' ? s.onFillTextIsWhite : s.onFillTextIsWhiteDark
   const onHl = mode === 'light' ? s.onHighlightIsWhite : s.onHighlightIsWhiteDark
   return [
-    stopsToVars(stops, prefix, 'brand'),
+    stopsToVars(stops, prefix),
+    `  --${prefix}-cta-1: ${toHex(cta.r, cta.g, cta.b)};`,
+    `  --${prefix}-cta-2: ${toHex(ctaHover.r, ctaHover.g, ctaHover.b)};`,
     `  --${prefix}-${onFillTokenName('brand')}: ${onColor(onCta)};`,
     `  --${prefix}-${onFillTokenName('neutral')}: ${onColor(onHl!)};`,
   ]
@@ -113,15 +117,16 @@ export function brandCss(
   const nScale = generateNeutralScale(scale.brandH, neutralLevel)
 
   // When no secondary ramp is given, secondary mirrors brand var-for-var
-  // (stops, highlight ext, and both on-text tokens).
+  // (scale stops, off-scale cta, and both on-text tokens).
   const mirrorBody = (prefix: string, mode: 'light' | 'dark'): string[] => {
     const stops = mode === 'light' ? scale.light : scale.dark
-    const alias = (x: ColorStop) =>
-      `  --${prefix}-${stopTokenName(x.stop, 'brand')}: var(--brand-${stopTokenName(x.stop, 'brand')});`
+    const alias = (name: string) => `  --${prefix}-${name}: var(--brand-${name});`
     return [
-      ...stops.map(alias),
-      `  --${prefix}-${onFillTokenName('brand')}: var(--brand-${onFillTokenName('brand')});`,
-      `  --${prefix}-${onFillTokenName('neutral')}: var(--brand-${onFillTokenName('neutral')});`,
+      ...stops.map(x => alias(stopTokenName(x.stop))),
+      alias('cta-1'),
+      alias('cta-2'),
+      alias(onFillTokenName('brand')),
+      alias(onFillTokenName('neutral')),
     ]
   }
 

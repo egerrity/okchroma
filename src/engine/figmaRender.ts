@@ -43,19 +43,23 @@ function colorFromHexString(hex: string): FigmaColorToken {
   return { $type: 'color', $value: { colorSpace: 'srgb', components: [r, g, b], alpha: 1, hex: hex.toLowerCase() } }
 }
 
-// One ramp for a single mode. `kind` selects the stop 9/10 + on-fill names via
-// the shared tokenNames source of truth. `extra` carries the Stage-2 additive
-// tokens a ramp may have: highlight/cta ext stops (numbered 13+), the
-// on-highlight text token, and the mode-invariant identity hex.
+// One ramp for a single mode. `kind` selects the on-fill token name (on-cta vs
+// on-highlight) via the shared tokenNames source of truth; stop naming is
+// positional. `extra` carries tokens NOT in the scale array: the off-scale cta
+// pair (cta-1/cta-2), the on-highlight text token, and the mode-invariant identity hex.
 function rampGroup(
   stops: ColorStop[],
   onFillWhite: boolean,
   kind: RampKind,
-  extra?: { onHighlightWhite?: boolean; identityHex?: string },
+  extra?: { onHighlightWhite?: boolean; identityHex?: string; cta?: ColorStop; ctaHover?: ColorStop },
 ): FigmaGroup {
   const g: FigmaGroup = {}
-  for (const s of [...stops].sort((a, b) => tokenOrder(stopTokenName(a.stop, kind)) - tokenOrder(stopTokenName(b.stop, kind))))
-    g[stopTokenName(s.stop, kind)] = colorFromStop(s)
+  for (const s of [...stops].sort((a, b) => tokenOrder(stopTokenName(a.stop)) - tokenOrder(stopTokenName(b.stop))))
+    g[stopTokenName(s.stop)] = colorFromStop(s)
+  // Off-scale cta — inserted after the sorted scale (tokenOrder lands it right
+  // after ink-12) and before the on-fill tokens, matching the CSS emitter.
+  if (extra?.cta) g['cta-1'] = colorFromStop(extra.cta)
+  if (extra?.ctaHover) g['cta-2'] = colorFromStop(extra.ctaHover)
   g[onFillTokenName(kind)] = colorFromHex(onFillWhite)
   if (extra?.onHighlightWhite !== undefined) g[onFillTokenName('neutral')] = colorFromHex(extra.onHighlightWhite)
   if (extra?.identityHex) g['identity'] = colorFromHexString(extra.identityHex)
@@ -86,13 +90,17 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
   const brandExtra = (s: GeneratedScale, mode: 'light' | 'dark') => ({
     onHighlightWhite: mode === 'light' ? s.onHighlightIsWhite : s.onHighlightIsWhiteDark,
     identityHex: s.identityHex,
+    cta: mode === 'light' ? s.cta : s.ctaDark,
+    ctaHover: mode === 'light' ? s.ctaHover : s.ctaHoverDark,
   })
-  // Neutral is generated per brand (tinted toward the brand hue) and emitted
-  // BRAND-KIND — same rampGroup path as brand/secondary (cta = stop 9, highlight
-  // = rung 13/14), minus identity (no user-input hex to echo).
+  // Neutral is generated per brand (tinted toward the brand hue) and emitted the
+  // same way as brand/secondary — highlight rung at scale slot 9/10, off-scale
+  // cta — minus identity (no user-input hex to echo).
   const nScale = generateNeutralScale(scale.brandH, input.neutralLevel ?? 'default')
   const neutralExtra = (mode: 'light' | 'dark') => ({
     onHighlightWhite: mode === 'light' ? nScale.onHighlightIsWhite : nScale.onHighlightIsWhiteDark,
+    cta: mode === 'light' ? nScale.cta : nScale.ctaDark,
+    ctaHover: mode === 'light' ? nScale.ctaHover : nScale.ctaHoverDark,
   })
   const build = (mode: 'light' | 'dark'): FigmaGroup => {
     const g: FigmaGroup = {
@@ -101,13 +109,18 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
       neutral: rampGroup(nScale[mode], mode === 'light' ? nScale.onFillTextIsWhite : nScale.onFillTextIsWhiteDark, 'brand', neutralExtra(mode)),
     }
     for (const sig of input.signals) {
-      // F1: signals are brand-kind — a loud cta (stop 9) AND a distinct highlight
-      // rung (13/14), with computed on-cta + on-highlight and no identity. No alias.
+      // F1: signals are emitted like every family — an off-scale loud cta AND a
+      // distinct highlight rung at slot 9/10, with computed on-cta + on-highlight
+      // and no identity. No alias.
       g[sig.name] = rampGroup(
         sig.scale[mode],
         mode === 'light' ? sig.scale.onFillTextIsWhite : sig.scale.onFillTextIsWhiteDark,
         'brand',
-        { onHighlightWhite: mode === 'light' ? sig.scale.onHighlightIsWhite : sig.scale.onHighlightIsWhiteDark },
+        {
+          onHighlightWhite: mode === 'light' ? sig.scale.onHighlightIsWhite : sig.scale.onHighlightIsWhiteDark,
+          cta: mode === 'light' ? sig.scale.cta : sig.scale.ctaDark,
+          ctaHover: mode === 'light' ? sig.scale.ctaHover : sig.scale.ctaHoverDark,
+        },
       )
     }
     return g

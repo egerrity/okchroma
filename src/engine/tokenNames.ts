@@ -2,31 +2,25 @@
 // (cssRender, figmaRender, and — via the demo's Figma export — the plugin).
 // The scale is ONE continuous 1–12 ladder, placed on the perceptual-lightness
 // curve (perceptualL.ts) so every rung reads at a consistent perceived lightness
-// across hue. Token names follow scale POSITION:
+// across hue. Token names follow scale POSITION, identically for every family:
 //
-//   1–8     paper / wash / accent   (surface scale)
-//   9–10    highlight-9 / highlight-10   (emphasis chip)
+//   1–8     paper / wash / accent   (the scale steps)
+//   9–10    highlight-9 / highlight-10   (the emphasis rung)
 //   11–12   ink-11 / ink-12   (text)
 //
-// This reverses the earlier "highlight/ink are roles numbered -1/-2" scheme —
-// the curve makes them scale steps again, so they re-join the 1–12 ladder.
-//
-// The cta is the exception: NOT a scale step but the brand-identity fill, pinned
-// at the archetype lightness, so it keeps role-numbered names (cta-1 / cta-2) and
-// its math is never touched by the curve. The only per-ramp asymmetry: brand &
-// secondary expose stop 9/10 as the cta; neutral & signals expose theirs as the
-// highlight fill (it IS their emphasis chip).
+// The cta is NOT a scale step — it is the off-scale, archetype-dependent brand
+// fill (cta-1 / cta-2), held in dedicated GeneratedScale fields and emitted by
+// name by each emitter, never from this positional table. on-fill text polarity
+// splits into on-cta (the cta) and on-highlight (the rung) — see onFillTokenName.
+// (See ENGINE-SPEC §0.)
 
-// RampKind selects the stop-9/10 + on-fill token NAMES. NOTE (verified 2026-06-26): both emitters
-// (cssRender, figmaRender) render EVERY family — brand, secondary, neutral, signals — with kind
-// 'brand', so the scale always emits cta-1/2 at stop 9/10 and highlight-9/10 at the 13/14 append.
-// The 'neutral' branch of stopTokenName is therefore currently UNUSED for scale naming; 'neutral'
-// survives only as the lookup onFillTokenName('neutral') → 'on-highlight'. (An earlier comment here
-// said "'neutral' covers neutral + signals" — that was never how the emitters behave; see
-// ENGINE-SPEC §0.)
+// RampKind selects the on-fill token NAME only (on-cta vs on-highlight); stop
+// naming is purely positional and no longer branches on kind. Both emitters render
+// every family (brand/secondary/neutral/signals) the same way, calling
+// onFillTokenName('brand') for on-cta and onFillTokenName('neutral') for on-highlight.
 export type RampKind = 'brand' | 'neutral'
 
-// Surface-scale + text-role names that are identical for every ramp kind.
+// Scale + text-role names — positional, identical for every family.
 const SHARED_NAMES: Record<number, string> = {
   1: 'paper-1',
   2: 'paper-2',
@@ -40,41 +34,32 @@ const SHARED_NAMES: Record<number, string> = {
   12: 'ink-12',
 }
 
-// Additive Stage-2 role stops carry engine stop numbers ABOVE the 1–12 scale
-// (kept off scale.light/dark so the blessed 12-stop snapshot is untouched).
-// Every brand-kind ramp (brand/secondary/neutral/signals) carries 13/14 — the
-// highlight rung below the cta.
-const EXT_NAMES: Record<number, string> = {
-  13: 'highlight-9',
-  14: 'highlight-10',
-}
-
-// Map an engine stop number to its emitted token name for the ramp kind.
-// Stops 1–8 are the surface scale; stops 9/10 are the emphasis fill roles
-// (cta-1/cta-2 on brands, highlight-1/highlight-2 on neutral+signals); 11/12 are
-// the pulled-out text roles; 13+ are the Stage-2 additive role stops (EXT_NAMES).
-export function stopTokenName(stop: number, kind: RampKind): string {
-  if (stop === 9) return kind === 'brand' ? 'cta-1' : 'highlight-9'
-  if (stop === 10) return kind === 'brand' ? 'cta-2' : 'highlight-10'
-  if (EXT_NAMES[stop]) return EXT_NAMES[stop]
+// Map an engine stop number to its emitted token name. Naming is PURELY
+// POSITIONAL: 1–8 are the scale (paper/wash/accent), 9/10 are the highlight rung,
+// 11/12 are the text stops — the same for every family. The cta is off-scale and
+// is emitted by name directly by each emitter, never through this table.
+export function stopTokenName(stop: number): string {
+  if (stop === 9) return 'highlight-9'
+  if (stop === 10) return 'highlight-10'
   const name = SHARED_NAMES[stop]
   if (!name) throw new Error(`stopTokenName: unexpected stop ${stop}`)
   return name
 }
 
-// The on-fill text token name for each ramp kind — the byte-identical split of
-// the old single `on-fill`. brand/secondary fills carry text on `cta`, so it's
-// `on-cta`; neutral/signal fills carry text on `highlight`, so `on-highlight`.
+// The on-fill text token name for a ramp role — the byte-identical split of the
+// old single `on-fill`. 'brand' → `on-cta` (text on the cta fill); 'neutral' →
+// `on-highlight` (text on the highlight rung). Every emitted family carries BOTH
+// (it has both a cta and a highlight), so the emitters call this twice per family.
 export function onFillTokenName(kind: RampKind): string {
   return kind === 'brand' ? 'on-cta' : 'on-highlight'
 }
 
 // Canonical emit order, uniform across every ramp (the white-label remap shape,
-// an explicit requirement of the original concept). The surface scale 1–8
-// (paper/wash/accent) reads as one contiguous linear ramp, THEN the pulled-out
-// roles — the emphasis fills (cta/highlight) are NOT scale steps, so they emit
-// below the scale alongside their on-fill text. A ramp simply skips the tokens
-// it doesn't have. Emitters sort by this, not by stop number.
+// an explicit requirement of the original concept). The scale 1–8 (paper/wash/
+// accent) then the highlight rung (highlight-9/10 + on-highlight) read as one
+// contiguous ladder, then the text stops (ink-11/12), then the pulled-out
+// off-scale cta (cta-1/2 + on-cta), then identity. A ramp skips tokens it doesn't
+// have. Emitters sort by this, not by stop number.
 const TOKEN_ORDER = [
   'paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'accent-6', 'accent-7', 'accent-8',
   'highlight-9', 'highlight-10', 'on-highlight',
