@@ -28,12 +28,9 @@ const SIGNAL_ICON: Record<string, typeof AlertCircle> = {
 export function TokenCards({ prefix, kind }: { prefix: string; kind: RampKind }) {
   const v = (t: string) => `var(--${prefix}-${t})`
   const isSignal = kind === 'signal'
-
-  // Identity tags: brand ramps carry two (the family + its role); every other ramp
-  // is a single name chip (neutral / red / yellow / …).
-  const tags = prefix === 'brand' ? ['brand', 'primary']
-    : prefix === 'secondary' ? ['brand', 'secondary']
-    : [prefix]
+  // Only brand & secondary preserve an exact input hex (identity); neutral and
+  // signals are generated and carry none.
+  const hasIdentity = prefix === 'brand' || prefix === 'secondary'
 
   // The 1–12 scale. Number text stays legible in BOTH modes by leaning on tokens
   // that invert with the mode: ink-12 (high-contrast text) on the surface rungs,
@@ -60,22 +57,19 @@ export function TokenCards({ prefix, kind }: { prefix: string; kind: RampKind })
 
   const Icon = SIGNAL_ICON[prefix] ?? AlertCircle
 
-  const tagChip = (text: string): React.CSSProperties => ({
-    fontSize: 12, fontWeight: 600, padding: '4px 11px', borderRadius: 6, whiteSpace: 'nowrap',
-    ...(text === 'brand'
-      ? { background: v('wash-4'), color: v('ink-11') }
-      : { background: v('ink-12'), color: v('paper-1') }),
-  })
   const boxLabel: React.CSSProperties = { fontSize: 12, fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.03em' }
   const boxBody: React.CSSProperties = { fontSize: 14, lineHeight: 1.4 }
   const box: React.CSSProperties = { flex: 1, minWidth: 200, borderRadius: 10, padding: '13px 15px' }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
-      {/* identity tags */}
-      <div style={{ display: 'flex', gap: 7, marginBottom: 14, flexWrap: 'wrap' }}>
-        {tags.map(t => <span key={t} style={tagChip(t)}>{t}</span>)}
-      </div>
+      {/* identity — the exact input hex, preserved (brand & secondary only) */}
+      {hasIdentity && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 14 }}>
+          <span style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0, background: v('identity'), border: '1px solid var(--border-subtle)' }} />
+          <span style={{ fontSize: 13, fontWeight: 600, color: v('ink-11') }}>identity</span>
+        </div>
+      )}
 
       {/* ink in context — heading + body, "ink family" called out in ink-11 */}
       <div style={{ fontSize: 24, fontWeight: 700, color: v('ink-12'), lineHeight: 1.15, marginBottom: 8 }}>Aa Heading</div>
@@ -92,7 +86,7 @@ export function TokenCards({ prefix, kind }: { prefix: string; kind: RampKind })
         }}>Get started</button>
       )}
 
-      {/* surfaces — wash inset, plus a second wash inset OR the signal alert */}
+      {/* surfaces — the wash inset, plus the highlight surface OR the signal alert */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 18 }}>
         <div style={{ ...box, background: v('wash-4') }}>
           <div style={{ ...boxLabel, color: v('ink-11') }}>inset surface &middot; wash</div>
@@ -107,9 +101,9 @@ export function TokenCards({ prefix, kind }: { prefix: string; kind: RampKind })
             </div>
           </div>
         ) : (
-          <div style={{ ...box, background: v('wash-4') }}>
-            <div style={{ ...boxLabel, color: v('ink-11') }}>inset surface &middot; wash</div>
-            <div style={{ ...boxBody, color: v('ink-12') }}>Body copy in ink on a wash fill.</div>
+          <div style={{ ...box, background: v('highlight-9') }}>
+            <div style={{ ...boxLabel, color: v('on-highlight') }}>inset surface &middot; highlight</div>
+            <div style={{ ...boxBody, color: v('on-highlight') }}>Emphasis copy in on-highlight text.</div>
           </div>
         )}
       </div>
