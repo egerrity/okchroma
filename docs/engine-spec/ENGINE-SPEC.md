@@ -47,7 +47,7 @@ all families **brand-kind**):
 
 | group | emitted token names |
 |---|---|
-| surface scale | `paper-1`, `paper-2`, `wash-3/4/5`, `accent-6/7/8` |
+| scale 1–8 | `paper-1`, `paper-2`, `wash-3/4/5`, `accent-6/7/8` |
 | cta (the fill) | `cta-1`, `cta-2`, `on-cta` |
 | highlight (scale rung) | `highlight-9`, `highlight-10`, `on-highlight` |
 | text | `ink-11`, `ink-12` |

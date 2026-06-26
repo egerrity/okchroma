@@ -57,7 +57,7 @@ field. Internal index finally equals emitted name.
 | loc | what it is now | change |
 |---|---|---|
 | `:571-577` light cta push `makeStop(9,light9L…)`/`(10,hoverL…)` | the cta @ slot 9/10 | route cta value (`light9L`, enforce-darken) into `scale.cta`/`ctaHover`, **not** `light[]` |
-| `:608-632` dark cta push + dark surface loop | dark cta @ slot 9/10 | cta → off-scale dark field; surface 1–8 + new highlight 9/10 stay in `dark[]` |
+| `:608-632` dark cta push + dark stop-1–8 loop | dark cta @ slot 9/10 | cta → off-scale dark field; stops 1–8 + new highlight 9/10 stay in `dark[]` |
 | `:650-661` dark on-fill polarity + WCAG re-make reads `dark[8]/[9]` **by index** | **MOST DANGEROUS silent break** — binds polarity/contrast to "the cta"; post-move `dark[8]` is the highlight | read the off-scale `ctaDark` field, not `dark[8]` |
 | `:665-738` highlight append `placeLegibleRung(13,…)`/`rung(14,…)` (guarded by `opts.highlight`) | highlight @ 13/14 | move rung math UP to produce slots **9/10** (`placeLegibleRung(9,…)`/`rung(10,…)`); tail append disappears |
 | `:694-716` `placeLegibleRung` / `:683-686` `rung` helpers | pure fns; `stop` only stamped into `.stop` | callers pass 9/10; **body unchanged → byte-identical at the new stop number** |
@@ -171,6 +171,16 @@ killing, presents the **vestigial `rootL` column** as operative, and describes *
 (CATALOG C2 / §4.4 bolt-on) as a live feature. **Approach:** a per-engine-file workflow — each agent
 classifies every comment `TRUE / STALE / CONTRADICTS-MODEL / VESTIGIAL-AS-LIVE / BOLT-ON-RATIONALE`
 against §0 + the code, then fixes. Start with `stopTable.ts`. Run AFTER (or parallel to) the array heal.
+
+**B includes a VOCABULARY SWEEP — code + comments + identifiers, NOT just comments.** The vocabulary
+is **scale / cta / ons** (ENGINE-SPEC §7). The words **`surface` / `surfaces` / `fills` / `text`** must
+NOT categorize the scale — stops 1–8 are just **scale stops 1–8** (`paper`/`wash`/`accent` by name),
+the fill is **cta**, text is **ink**. ~158 `surface` mentions remain (e.g. "surface scale" in
+`tokenNames.ts:7/29/53/73`, `cssRender.ts:23/137/139`, `colorEngine.ts:369/666`, `stopTable.ts:41`,
+`darkChromaCurve.ts`, `perceptualL.ts`; the **`SURFACE_SCALE` const at `demo/shared.tsx:412`**; the
+guide docs). Replace with §1 vocabulary. **NOTE:** the demo's app-chrome CSS vars
+`--surface-base/raised/sunken` are the demo's OWN preview UI tokens (semantics don't matter) — separate,
+lower priority; don't conflate. Clean fan-out: one agent per file, comments+identifiers only, byte-identical.
 
 ## Session context (what's true as of this handoff)
 - On branch `fix/highlight` (off `main`, tip `c014abc`+). Recent commits: `0d93420` §0 anchor,
