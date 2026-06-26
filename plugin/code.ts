@@ -104,14 +104,18 @@ figma.ui.onmessage = async (msg) => {
 
       // Static designer-convenience invariants — identical for every brand, so
       // seeded once into raw/system/* (created if absent, otherwise left as-is).
-      // Seeded BEFORE the ramps so on-fill tokens can alias them. on-fill then
-      // carries no black/white of its own — the file holds exactly one black and
-      // one white source of truth.
+      // Seeded BEFORE the ramps so on-fill tokens can alias them. Two flavours:
+      //   - paper-0 / ink-13 — the SCALE ANCHORS. They flip with the mode like the
+      //     ladder they cap: paper-0 (surface end) white→black, ink-13 (ink end)
+      //     black→white.
+      //   - abs-white / abs-black — genuinely mode-INVARIANT, for an on-fill that
+      //     never flips (e.g. on-highlight stays white in both modes).
+      // on-fill then carries no black/white of its own — it aliases one of these.
       const W = { r: 1, g: 1, b: 1 }
       const K = { r: 0, g: 0, b: 0 }
       const STATIC_UTILS: Array<{ path: string; light: figma.RGBA; dark: figma.RGBA }> = [
-        { path: 'system/white-to-black', light: W, dark: K },
-        { path: 'system/black-to-white', light: K, dark: W },
+        { path: 'system/paper-0', light: W, dark: K },
+        { path: 'system/ink-13', light: K, dark: W },
         { path: 'system/abs-black', light: K, dark: K },
         { path: 'system/abs-white', light: W, dark: W },
         { path: 'system/transparent', light: { r: 1, g: 1, b: 1, a: 0 }, dark: { r: 1, g: 1, b: 1, a: 0 } },
@@ -127,12 +131,14 @@ figma.ui.onmessage = async (msg) => {
       }
 
       // An on-fill is always pure white or black; map its light/dark polarity to
-      // one of the four invariants so it aliases instead of duplicating a value.
+      // one of the four invariants so it aliases instead of duplicating a value. A
+      // polarity that FLIPS by mode is exactly a scale anchor (white→black = paper-0,
+      // black→white = ink-13); one that holds is the absolute pair.
       const isWhite = (c: { r: number; g: number; b: number }) => c.r + c.g + c.b > 1.5
       const onFillInvariant = (lightWhite: boolean, darkWhite: boolean) =>
         lightWhite && darkWhite ? 'system/abs-white'
           : !lightWhite && !darkWhite ? 'system/abs-black'
-            : lightWhite ? 'system/white-to-black' : 'system/black-to-white'
+            : lightWhite ? 'system/paper-0' : 'system/ink-13'
 
       // Write a primitive. on-fill leaves ALIAS a shared invariant (always, so
       // pre-existing raw on-fills get converted on re-apply); every other leaf is

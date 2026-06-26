@@ -134,17 +134,20 @@ export function brandCss(
     ? `  --secondary-identity: ${accent.identityHex};`
     : `  --secondary-identity: var(--brand-identity);`
 
-  // Universal scale anchors — a pure-white ceiling (paper-0) and pure-black floor
-  // (ink-13), mode-invariant and identical across every ramp. They extend the
-  // scale past the generated stops so elevation can resolve consistently in both
-  // modes (cards lift onto white in light, off black in dark). Emitted once per
-  // brand scope (the light block; they cascade into the dark block unchanged).
-  const universalAnchors = [`  --paper-0: #ffffff;`, `  --ink-13: #000000;`]
+  // Universal scale anchors — positions 0 and 13 that extend the surface→ink
+  // ladder past its generated stops. The ladder INVERTS by mode, so the anchors
+  // flip with it: paper-0 (the surface end, beyond paper-1) is white in light /
+  // black in dark (= white-to-black); ink-13 (the ink end, beyond ink-12) is
+  // black in light / white in dark (= black-to-white). They are NOT absolute
+  // white/black — that's a separate pair, for on-fills that never flip. Emitted
+  // per mode block so each resolves to the right pole.
+  const lightAnchors = [`  --paper-0: #ffffff;`, `  --ink-13: #000000;`]
+  const darkAnchors = [`  --paper-0: #000000;`, `  --ink-13: #ffffff;`]
 
   return [
     `/* ${displayName}${note} */`,
     `[data-brand="${slug}"] {`,
-    ...universalAnchors,
+    ...lightAnchors,
     ...brandKindBody('brand', scale, 'light'),
     brandIdentity,
     ...illusVars,
@@ -154,6 +157,7 @@ export function brandCss(
     ...r.signalOverrides.flatMap(o => brandKindBody(o.name, o.scale, 'light')),
     `}`,
     `[data-brand="${slug}"][data-theme="dark"] {`,
+    ...darkAnchors,
     ...brandKindBody('brand', scale, 'dark'),
     ...accentDark,
     ...brandKindBody('neutral', nScale, 'dark'),
