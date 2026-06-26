@@ -16,9 +16,9 @@ const side = (s: GeneratedScale, mode: 'light' | 'dark'): Side => {
   const stops = mode === 'light' ? s.light : s.dark
   return {
     scale: stops.slice(0, 12).map(toHex),
-    cta: toHex(stops[8]),
+    cta: toHex(mode === 'light' ? s.cta : s.ctaDark), // cta is off-scale (dedicated field)
     onCtaWhite: mode === 'light' ? s.onFillTextIsWhite : s.onFillTextIsWhiteDark,
-    highlight: toHex(stops[12]), // rung 13 = highlight-1
+    highlight: toHex(stops[8]), // index 8 = stop 9 = highlight-9
     onHighlightWhite: (mode === 'light' ? s.onHighlightIsWhite : s.onHighlightIsWhiteDark) ?? false,
   }
 }

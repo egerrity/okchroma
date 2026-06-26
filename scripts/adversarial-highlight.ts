@@ -30,7 +30,7 @@ console.log(`  white=${whiteCount}  black=${blackCount}  (of ${items.length})`)
 console.log('\n═══ LINK B: at the SHIPPED highlight L, dissect the enforce-flip gate ═══')
 console.log('  ramp            shipL  C      H      | whiteWCAG blackWCAG blackAPCA | flipBlockedBy')
 for (const { name, scale } of items) {
-  const hl = scale.dark[12] as ColorStop
+  const hl = scale.dark[8] as ColorStop // highlight-9 (post-heal: clean 1–12 ladder, index 8 = stop 9)
   const { L, C, H } = hl
   const Y = fillApcaY(L, C, H)
   const wW = contrastRatio(1.0, wcagY(L, C, H))
@@ -51,7 +51,7 @@ console.log('  acc8 dark L =', DARK_NEUTRAL_L[7], ' rootL =', HIGHLIGHT_DARK.roo
 console.log('  ramp            rawL  rawΔacc8 | shipL shipΔacc8 | loop moved L by')
 const rawDeltas: number[] = [], shipDeltas: number[] = []
 for (const { name, scale } of items) {
-  const hl = scale.dark[12] as ColorStop
+  const hl = scale.dark[8] as ColorStop // highlight-9 (post-heal: clean 1–12 ladder, index 8 = stop 9)
   const acc8 = scale.dark[7] as ColorStop
   const H = hl.H
   const rawC = clampChromaToGamut(HIGHLIGHT_DARK.rootL, darkChromaCurve(HIGHLIGHT_DARK.rootL, scale.brandC, scale.brandC), H) // note: ctaC path differs; approx
@@ -78,7 +78,7 @@ console.log('\n═══ LINK E: would dropping the APCA-45 floor let it flip to
 console.log('  (tests whether the 45 floor is the SPECIFIC blocker vs black also failing WCAG)')
 let wouldFlip = 0, blackAlsoFailsWcag = 0, whitePasses = 0
 for (const { scale } of items) {
-  const hl = scale.dark[12] as ColorStop
+  const hl = scale.dark[8] as ColorStop // highlight-9 (post-heal: clean 1–12 ladder, index 8 = stop 9)
   const { L, C, H } = hl
   const Y = fillApcaY(L, C, H)
   const wW = contrastRatio(1.0, wcagY(L, C, H))

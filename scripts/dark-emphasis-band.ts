@@ -11,11 +11,11 @@ const f3 = (n: number) => n.toFixed(3)
 const sample = ['Dark Roast', 'Cold Brew', 'Blueberry', 'Sencha', 'Honey Lemon', 'Cranberry', 'Chili Mocha']
 console.log('Dark surface ladder L (DARK_NEUTRAL_L 1–8):', DARK_NEUTRAL_L.slice(0, 8).join(', '))
 console.log('Dark ink L (11/12):', DARK_NEUTRAL_L[10], DARK_NEUTRAL_L[11], '\n')
-console.log('  ramp           | cta9L  ctaOnText | hl9L  hlOnText | acc8L  ink11L')
+console.log('  ramp           | ctaL  ctaOnText | hl9L  hlOnText | acc8L  ink11L')
 for (const name of sample) {
   const b = BRANDS.find(x => x.name === name)!
   const scale = resolveBrand(b.hex, b.slug, { exact: b.exact, archetypeOverride: b.archetypeOverride, style: b.style }).scale
-  const cta = scale.dark[8] as ColorStop, hl = scale.dark[12] as ColorStop
+  const cta = scale.ctaDark as ColorStop, hl = scale.dark[8] as ColorStop
   const a8 = scale.dark[7] as ColorStop, ink11 = scale.dark[10] as ColorStop
   console.log(
     `  ${name.padEnd(14)} | ${f3(cta.L)}  ${scale.onFillTextIsWhiteDark ? 'WHITE' : 'black'}     ` +

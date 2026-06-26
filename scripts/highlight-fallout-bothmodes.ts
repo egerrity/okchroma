@@ -16,7 +16,7 @@ console.log('  ramp           | LIGHT hlL  pol   whiteWCAG blackWCAG | DARK hlL 
 for (const name of sample) {
   const b = BRANDS.find(x => x.name === name)!
   const sc = resolveBrand(b.hex, b.slug, { exact: b.exact, archetypeOverride: b.archetypeOverride, style: b.style }).scale
-  const lh = sc.light[12] as ColorStop, dh = sc.dark[12] as ColorStop
+  const lh = sc.light[8] as ColorStop, dh = sc.dark[8] as ColorStop
   const lp = sc.onHighlightIsWhite ? 'WHITE' : 'black', dp = sc.onHighlightIsWhiteDark ? 'WHITE' : 'black'
   console.log(`  ${name.padEnd(14)} | ${f3(lh.L)}  ${lp}  ${f2(wW(lh)).padStart(5)}    ${f2(bW(lh)).padStart(5)}    | ${f3(dh.L)}  ${dp}  ${f2(wW(dh)).padStart(5)}    ${f2(bW(dh)).padStart(5)}`)
 }

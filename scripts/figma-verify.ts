@@ -24,25 +24,24 @@ const figma = themeToFigma(r, { accent, neutralLevel: 'default', signals })
 const fails: string[] = []
 const ok = (cond: boolean, msg: string) => { if (!cond) fails.push(msg) }
 
-// Same families/modes. brand + secondary are CTA-bearing (stop 9 → cta-1,
-// on-fill → on-cta); neutral + signals are highlight-bearing (stop 9 →
-// highlight-1, on-fill → on-highlight). Surface stop 1 (paper-1) and text
-// role 12 (ink) are shared across all ramps.
+// Same families/modes — every family is emitted UNIFORMLY now: scale slot 9/10
+// is highlight-9/10, the cta is off-scale (cta-1/cta-2 + on-cta), and on-highlight
+// rides the rung. paper-1 (stop 1) and ink-12 (stop 12) are shared across ramps.
 for (const mode of ['light', 'dark'] as const) {
   const m = figma[mode] as any
   for (const fam of ['brand', 'secondary', 'neutral', 'red', 'yellow', 'green', 'info-color']) {
     ok(!!m[fam], `${mode}.${fam} missing`)
-    // brand/secondary: full surface scale + cta + highlight + identity + both
-    // on-text tokens. neutral: surface scale + highlight + cta + both on-text.
-    // signals: SYMMETRIC now — surface scale + highlight + cta (= a duplicate of
-    // highlight) + both on-text, but still NO identity (no user-input hex to echo).
+    // brand/secondary: full scale + highlight + off-scale cta + identity + both
+    // on-text tokens. neutral: scale + highlight + cta + both on-text. signals:
+    // scale + highlight + a DISTINCT loud cta + both on-text, but still NO identity
+    // (no user-input hex to echo).
     const isBrand = fam === 'brand' || fam === 'secondary'
     const tokens = isBrand
       ? ['paper-1', 'cta-1', 'cta-2', 'highlight-9', 'highlight-10', 'ink-11', 'ink-12', 'on-cta', 'on-highlight', 'identity']
       : ['paper-1', 'highlight-9', 'highlight-10', 'cta-1', 'cta-2', 'ink-12', 'on-highlight', 'on-cta']
     for (const t of tokens) ok(!!m[fam][t], `${mode}.${fam}.${t} missing`)
-    // Signals carry cta as a DUPLICATE of highlight (symmetric roles, identical
-    // values for now); they still have no identity (no user-input hex).
+    // Signals carry a DISTINCT loud cta (diverged from the highlight rung, F1);
+    // they still have no identity (no user-input hex).
     if (!isBrand && fam !== 'neutral') {
       ok(m[fam]['cta-1'].$value.hex !== m[fam]['highlight-9'].$value.hex,
         `${mode}.${fam} cta-1 should now DIVERGE from highlight-9 (F1 — signals routed through the scale)`)
@@ -50,7 +49,7 @@ for (const mode of ['light', 'dark'] as const) {
     }
   }
 }
-// Color token shape (brand stop 9 is now `cta-1`)
+// Color token shape (brand cta-1 is the off-scale fill)
 const bcta = (figma.light as any).brand['cta-1']
 ok(bcta.$type === 'color', 'brand/cta-1 not type color')
 ok(bcta.$value && bcta.$value.colorSpace === 'srgb' && Array.isArray(bcta.$value.components) && bcta.$value.components.length === 3, 'brand/cta-1 $value not srgb-components object')

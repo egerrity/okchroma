@@ -28,12 +28,13 @@ const HUES24 = Array.from({ length: 24 }, (_, i) => i * 15)
 const REF_C = 0.16 // representative vivid brand chroma for text-rung target calc
 
 // The 12 rungs of the scale, in descending lightness. idx = position in
-// generateScale(...,{highlight:true}).light: 1–8 → 0–7, text-alt/text → 10/11,
-// highlight-1/2 → 12/13. cta-1/2 (fill, idx 8/9) is NOT a rung — it's pinned.
+// generateScale(...,{highlight:true}).light, which is now a clean 1–12 ladder:
+// 1–8 → 0–7, highlight-9/10 → 8/9, text-alt/text → 10/11. The cta (brand-identity
+// fill) is NOT a rung — it's off-scale (scale.cta/.ctaHover) and pinned at the end.
 const RUNGS = [
   ...LIGHT_STOPS.map((s, i) => ({ name: `${i + 1}`, rootL: s.rootL, repC: LIGHT_BASE_C[i], idx: i })),
-  { name: 'hl-1', rootL: HIGHLIGHT_LIGHT.rootL, repC: HIGHLIGHT_LIGHT.baseC, idx: 12 },
-  { name: 'hl-2', rootL: hoverL(HIGHLIGHT_LIGHT.rootL), repC: HIGHLIGHT_LIGHT.baseC, idx: 13 },
+  { name: 'hl-1', rootL: HIGHLIGHT_LIGHT.rootL, repC: HIGHLIGHT_LIGHT.baseC, idx: 8 },
+  { name: 'hl-2', rootL: hoverL(HIGHLIGHT_LIGHT.rootL), repC: HIGHLIGHT_LIGHT.baseC, idx: 9 },
   { name: 'txt-alt', rootL: STOP_11.rootL, repC: STOP_11.chromaMultiplier * REF_C, idx: 10 },
   { name: 'text', rootL: STOP_12.rootL, repC: STOP_12.chromaMultiplier * REF_C, idx: 11 },
 ]
@@ -55,8 +56,8 @@ const ladders = brands.map(b => {
   return {
     name: b.name, hex: b.hex,
     rungs,
-    cta1: oklchToHex(scale.light[8].L, scale.light[8].C, scale.light[8].H),
-    cta2: oklchToHex(scale.light[9].L, scale.light[9].C, scale.light[9].H),
+    cta1: oklchToHex(scale.cta.L, scale.cta.C, scale.cta.H),
+    cta2: oklchToHex(scale.ctaHover.L, scale.ctaHover.C, scale.ctaHover.H),
   }
 })
 

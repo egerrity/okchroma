@@ -112,8 +112,8 @@ console.log('\n── A2: hue-separation retention for brand pairs 10° apart �
     )
 }
 
-// ── B: input-space cliff scan on brandL (dead-zone fill rule) ────────────────
-console.log('\n── B: light-fill L cliff vs brandL (dead-zone darkening / polarity flip) ──')
+// ── B: input-space cliff scan on brandL (dead-zone cta rule) ─────────────────
+console.log('\n── B: light cta L cliff vs brandL (dead-zone darkening / polarity flip) ──')
 {
   for (const [H, C] of [
     [25, 0.14],
@@ -128,16 +128,16 @@ console.log('\n── B: light-fill L cliff vs brandL (dead-zone darkening / pol
     for (let L = 0.45; L <= 0.76; L += 0.0025) {
       const s = res(H, L, C)
       if (prevL !== null) {
-        const jump = Math.abs(s.light[8].L - prevL)
+        const jump = Math.abs(s.cta.L - prevL)
         if (jump > maxJump) {
           maxJump = jump
-          at = `brandL ${L.toFixed(3)} (fill ${prevL.toFixed(3)}→${s.light[8].L.toFixed(3)}, on-fill ${prevWhite ? 'white' : 'black'}→${s.onFillTextIsWhite ? 'white' : 'black'})`
+          at = `brandL ${L.toFixed(3)} (cta ${prevL.toFixed(3)}→${s.cta.L.toFixed(3)}, on-cta ${prevWhite ? 'white' : 'black'}→${s.onFillTextIsWhite ? 'white' : 'black'})`
         }
       }
-      prevL = s.light[8].L
+      prevL = s.cta.L
       prevWhite = s.onFillTextIsWhite
     }
-    console.log(`   H ${String(H).padStart(3)} C ${C}: max fill-L jump per 0.0025 brandL step = ${maxJump.toFixed(3)} at ${at}`)
+    console.log(`   H ${String(H).padStart(3)} C ${C}: max cta-L jump per 0.0025 brandL step = ${maxJump.toFixed(3)} at ${at}`)
   }
 }
 

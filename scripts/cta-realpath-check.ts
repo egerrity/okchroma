@@ -17,7 +17,7 @@ for (const name of sample) {
   const d = generateScale(b.hex, b.slug, undefined, directFloor)
   const meta = resolveBrand(b.hex, b.slug, { exact: b.exact, archetypeOverride: b.archetypeOverride, style: b.style })
   const r = meta.scale
-  const dL = hx(d.light[8]), dD = hx(d.dark[8]), rL = hx(r.light[8]), rD = hx(r.dark[8])
+  const dL = hx(d.cta), dD = hx(d.ctaDark), rL = hx(r.cta), rD = hx(r.ctaDark)
   const same = dL === rL && dD === rD
   const tags = [meta.rung1 ? 'rung1' : '', meta.darkCollider ? 'darkMuted' : '', meta.errorComponentRule ? 'errComp' : ''].filter(Boolean).join(',')
   console.log(`  ${name.padEnd(15)} | ${dL} / ${dD}  | ${rL} / ${rD}  | ${same ? ' same ' : 'DIFFER'}  ${tags}`)

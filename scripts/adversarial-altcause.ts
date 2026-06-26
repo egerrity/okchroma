@@ -20,7 +20,7 @@ for (const b of BRANDS) items.push({ name: b.name, hex: b.hex, opts: { exact: b.
 //    ΔL to acc8 ~0.07, the LOOP is what causes the collapse (not the curve/scaffold).
 console.log('═══ Counterfactual: highlight rung WITH vs WITHOUT the enforce loop ═══')
 console.log('  (regenerated via generateScale with highlight:true, dark curve on, ±enforce)')
-console.log('  Reusing resolveBrand opts as closely as possible. Reporting dark[12] L + ΔL to acc8.')
+console.log('  Reusing resolveBrand opts as closely as possible. Reporting dark[8] (highlight-9) L + ΔL to acc8.')
 console.log('  ramp            withLoop_L ΔL | noLoop_L ΔL | acc8L')
 
 import { darkChromaCurve } from '../src/engine/darkChromaCurve'
@@ -39,7 +39,7 @@ for (const b of BRANDS) {
   }
   const sWith = generateScale(b.hex, b.slug, b.archetypeOverride, { ...common, enforceOnFillContrast: true })
   const sNo   = generateScale(b.hex, b.slug, b.archetypeOverride, { ...common, enforceOnFillContrast: false })
-  const hlW = sWith.dark[12] as ColorStop, hlN = sNo.dark[12] as ColorStop
+  const hlW = sWith.dark[8] as ColorStop, hlN = sNo.dark[8] as ColorStop
   const a8 = sWith.dark[7] as ColorStop
   withL.push(hlW.L - a8.L); noL.push(hlN.L - a8.L)
   console.log(`  ${b.name.padEnd(15)} ${f3(hlW.L)}  ${(hlW.L-a8.L>=0?'+':'')+f3(hlW.L-a8.L)} | ${f3(hlN.L)}  ${(hlN.L-a8.L>=0?'+':'')+f3(hlN.L-a8.L)} | ${f3(a8.L)}`)
@@ -52,14 +52,14 @@ console.log('\n═══ Apparent-L float of the shipped dark highlight (recompu
 const fleet: { name: string; scale: any }[] = []
 for (const b of BRANDS) fleet.push({ name: b.name, scale: resolveBrand(b.hex, b.slug, { exact: b.exact, archetypeOverride: b.archetypeOverride, style: b.style }).scale })
 for (const { def, scale } of SIGNAL_SCALES.values()) fleet.push({ name: `sig:${def.name}`, scale })
-const dApp = fleet.map(i => { const s = i.scale.dark[12] as ColorStop; return apparentL(s.L, s.C, s.H) })
-const lApp = fleet.map(i => { const s = i.scale.light[12] as ColorStop; return apparentL(s.L, s.C, s.H) })
+const dApp = fleet.map(i => { const s = i.scale.dark[8] as ColorStop; return apparentL(s.L, s.C, s.H) })
+const lApp = fleet.map(i => { const s = i.scale.light[8] as ColorStop; return apparentL(s.L, s.C, s.H) })
 const sd = (xs: number[]) => { const m = mean(xs); return Math.sqrt(xs.reduce((a,b)=>a+(b-m)**2,0)/xs.length) }
 console.log(`  dark apparent-L: mean ${f2(mean(dApp))} sd ${f2(sd(dApp))}  | light apparent-L: mean ${f2(mean(lApp))} sd ${f2(sd(lApp))}`)
 
 // ── OKLCH-L ΔL to acc8: dark vs light (claim: dark 0.00-0.03, light 0.13-0.22) ──
 console.log('\n═══ OKLCH ΔL(highlight − acc8): dark vs light ═══')
-const dΔ = fleet.map(i => { const h=i.scale.dark[12] as ColorStop, a=i.scale.dark[7] as ColorStop; return h.L-a.L })
-const lΔ = fleet.map(i => { const h=i.scale.light[12] as ColorStop, a=i.scale.light[7] as ColorStop; return h.L-a.L })
+const dΔ = fleet.map(i => { const h=i.scale.dark[8] as ColorStop, a=i.scale.dark[7] as ColorStop; return h.L-a.L })
+const lΔ = fleet.map(i => { const h=i.scale.light[8] as ColorStop, a=i.scale.light[7] as ColorStop; return h.L-a.L })
 console.log(`  dark ΔL:  min ${f3(Math.min(...dΔ))}  max ${f3(Math.max(...dΔ))}  mean ${f3(mean(dΔ))}`)
 console.log(`  light ΔL: min ${f3(Math.min(...lΔ))}  max ${f3(Math.max(...lΔ))}  mean ${f3(mean(lΔ))}`)

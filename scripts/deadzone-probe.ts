@@ -17,7 +17,7 @@ function fillApcaY(L: number, C: number, H: number) {
 for (const name of ['Cold Brew', 'Cranberry', 'Sencha']) {
   const b = BRANDS.find(x => x.name === name)!
   const sc = resolveBrand(b.hex, b.slug, { exact: b.exact, style: b.style }).scale
-  const H = (sc.dark[12] as ColorStop).H
+  const H = (sc.dark[8] as ColorStop).H
   console.log(`\n${name} (dark highlight hue H${H.toFixed(1)}):`)
   console.log('   L     C      whiteWCAG blackWCAG  whiteAPCA|Lc| blackAPCA|Lc|  → flip-to-black needs blackWCAG≥4.5 AND blackAPCA≥45')
   for (const L of [0.55, 0.58, 0.60, 0.62, 0.64, 0.66, 0.68, 0.70]) {

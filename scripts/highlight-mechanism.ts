@@ -25,7 +25,7 @@ console.log('  ramp           | rawL  whiteWCAG@raw blackWCAG@raw | shipL shipWC
 for (const name of sample) {
   const b = BRANDS.find(x => x.name === name)!
   const scale = resolveBrand(b.hex, b.slug, { exact: b.exact, archetypeOverride: b.archetypeOverride, style: b.style }).scale
-  const ship = scale.dark[12] as ColorStop          // shipped highlight-13
+  const ship = scale.dark[8] as ColorStop           // shipped highlight-9 (stop 9, index 8)
   const acc8 = scale.dark[7] as ColorStop
   const H = ship.H
   // Raw rung exactly as colorEngine builds it at rootL 0.62, same dark chroma curve:
@@ -46,8 +46,8 @@ console.log('  ramp           | LIGHT a8L  hlL   ΔOKL  ΔappL | DARK a8L  hlL  
 for (const name of sample) {
   const b = BRANDS.find(x => x.name === name)!
   const scale = resolveBrand(b.hex, b.slug, { exact: b.exact, archetypeOverride: b.archetypeOverride, style: b.style }).scale
-  const la8 = scale.light[7] as ColorStop, lhl = scale.light[12] as ColorStop
-  const da8 = scale.dark[7] as ColorStop, dhl = scale.dark[12] as ColorStop
+  const la8 = scale.light[7] as ColorStop, lhl = scale.light[8] as ColorStop
+  const da8 = scale.dark[7] as ColorStop, dhl = scale.dark[8] as ColorStop
   const lApp = Math.abs(apparentL(la8.L, la8.C, la8.H) - apparentL(lhl.L, lhl.C, lhl.H))
   const dApp = Math.abs(apparentL(da8.L, da8.C, da8.H) - apparentL(dhl.L, dhl.C, dhl.H))
   console.log(

@@ -29,7 +29,7 @@ let minBlack = 99, maxWhite = 0
 console.log(`Natural dark highlight fill = rung at L=${L0} (no value-move), chroma=darkChromaCurve. accent-8 L=${acc8L} (ΔL=${(L0 - acc8L).toFixed(3)} fixed).\n`)
 console.log('  ramp                 H      C      whiteWCAG blackWCAG  legible      | whiteAPCA blackAPCA')
 for (const { name, scale } of items) {
-  const H = (scale.dark[12] as ColorStop).H
+  const H = (scale.dark[8] as ColorStop).H  // highlight-9 (array-heal: was appended at [12], now stop-9 lives at index 8)
   const C = clampChromaToGamut(L0, darkChromaCurve(L0, H, scale.brandC), H)
   const wW = contrastRatio(1.0, wcagY(L0, C, H)), bW = contrastRatio(wcagY(L0, C, H), 0)
   const Y = apcaYof(L0, C, H)

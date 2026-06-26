@@ -2,7 +2,8 @@
 // neutral, rendered DIRECTLY from the ramps (not the demo, which confounds via
 // signal-shift). BEFORE = the old global neutral (one brand-independent ramp,
 // cta flips near-black↔near-white). AFTER = the 2b generated neutral, per brand
-// hue, brand-kind (cta = stop 9 near-white in BOTH modes; highlight = the rung).
+// hue, brand-kind (cta = off-scale near-white in BOTH modes; highlight = the rung,
+// stop 9).
 // The AFTER values reproduce docs/engine-spec/approved-neutrals-reference.md.
 import * as fs from 'fs'
 import * as path from 'path'
@@ -48,14 +49,15 @@ const block = (title: string, sub: string, light: { scale: string[]; cta: string
 
 const side = (s: GeneratedScale, mode: 'light' | 'dark') => {
   const stops = mode === 'light' ? s.light : s.dark
-  return { scale: stops.slice(0, 12).map(hx), cta: hx(stops[8]), highlight: hx(stops[12]) }
+  // cta is off-scale (dedicated field); highlight is the rung at index 8 (stop 9).
+  return { scale: stops.slice(0, 12).map(hx), cta: hx(mode === 'light' ? s.cta : s.ctaDark), highlight: hx(stops[8]) }
 }
 
 let body = ''
 body += `<h2>Before — old global neutral</h2><p class="note">One ramp, shared by every brand (untinted). The cta <b>flips</b>: near-black ${BEFORE.light.cta} in light, near-white ${BEFORE.dark.cta} in dark. Highlight = stop 9 (mid gray).</p>`
 body += block('global neutral', 'brand-independent', BEFORE.light, BEFORE.dark)
 
-body += `<h2>After — generated neutral (per brand hue, brand-kind)</h2><p class="note">Routed through generateScale + neutralChromaCurve. cta = stop 9, a subtle near-white button that does <b>not</b> flip (near-white in both modes — owner-accepted). highlight = the rung (holds white). Reproduces the owner-approved reference exactly.</p>`
+body += `<h2>After — generated neutral (per brand hue, brand-kind)</h2><p class="note">Routed through generateScale + neutralChromaCurve. cta = off-scale (its own role field), a subtle near-white button that does <b>not</b> flip (near-white in both modes — owner-accepted). highlight = the rung at stop 9 (holds white). Reproduces the owner-approved reference exactly.</p>`
 for (const level of LEVELS) {
   body += `<h3 class="lvl">${level}</h3>`
   for (const [hue, name] of HUES) {

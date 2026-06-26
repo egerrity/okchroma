@@ -29,7 +29,7 @@ console.log('  Using the dark highlight chroma curve at 0.62 + shipped hue.')
 console.log('  ramp            H      C@.62  | whiteWCAG blackWCAG whiteAPCA blackAPCA | APCApick whiteFailsWCAG blackBlockedBy45')
 let pickWhite = 0, whiteFailWcag = 0, flipBlockedByFloor = 0, flipBlockedByBlackWcag = 0
 for (const { name, scale } of items) {
-  const hl = scale.dark[12] as ColorStop
+  const hl = scale.dark[8] as ColorStop
   const H = hl.H
   const C = clampChromaToGamut(0.62, darkChromaCurve(0.62, H, scale.brandC, undefined), H)
   const Y = aY(0.62, C, H)

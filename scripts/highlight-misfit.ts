@@ -37,11 +37,12 @@ for (const { def, scale } of SIGNAL_SCALES.values()) items.push({ name: `sig:${d
 
 // ── helpers to pull rungs ─────────────────────────────────────────────────
 const appL = (s: ColorStop) => apparentL(s.L, s.C, s.H)
-// stops array layout: [0..7]=1..8, 8/9=cta(9/10), 10/11=ink(11/12), 12/13=highlight(13/14)
+// stops array layout (clean 1–12 ladder): [0..7]=1..8 (paper/wash/accent), 8/9=highlight(9/10), 10/11=ink(11/12).
+// cta is OFF-SCALE on dedicated fields: scale.cta/.ctaHover (light), scale.ctaDark/.ctaHoverDark (dark).
 const acc8 = (sc: GeneratedScale, mode: 'light' | 'dark') => sc[mode][7]
 const ink11 = (sc: GeneratedScale, mode: 'light' | 'dark') => sc[mode][10]
-const hl9 = (sc: GeneratedScale, mode: 'light' | 'dark') => sc[mode][12]
-const cta9 = (sc: GeneratedScale, mode: 'light' | 'dark') => sc[mode][8]
+const hl9 = (sc: GeneratedScale, mode: 'light' | 'dark') => sc[mode][8]
+const cta9 = (sc: GeneratedScale, mode: 'light' | 'dark') => (mode === 'light' ? sc.cta : sc.ctaDark)
 
 // ── 1) Highlight apparent-L spread: light (perceptual) vs dark (fixed) ─────
 console.log('═══ 1. HIGHLIGHT apparent-L (Nayatani) across the fleet ═══')
