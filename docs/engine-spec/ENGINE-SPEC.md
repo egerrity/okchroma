@@ -19,11 +19,14 @@
 
 > ## ▶ Resume here (next session)
 > **Where:** `~/okchroma` on `scope/dark-chroma` (the `okchroma-dark` worktree was removed — one
-> folder; do not recreate it; `~/okchroma/dist` is a stale build, run `npm run build` before any preview).
-> **Ground in §1–§3 of this file only.** Then continue at the first phase in **§5** whose Status
-> isn't DONE — currently **Phase 1, step 1: computed `ons`** (§4 item 1). **Honor §7** — especially:
-> explain any engine change and WAIT for the owner's "go"; review on a DARK background in
-> `demo/TokenCards.tsx` (full role set); re-bless only on owner visual approval.
+> folder; do not recreate it). **`npm run build` (the `--full` one) is authoritative** — `demo:build`
+> / `generate` run a STALE `dist/build-script.js` that clobbers `signals.css` with old `error/warning`
+> names; rebuild that bundle or avoid those scripts.
+> **Ground in §1–§3 of this file only.** Unification **Phases 1+2 LANDED** (`ac81b36` + floor `8aa3237`);
+> next is **Phase 3.5 — the owner-led curve-perceptual pass** (`CATALOG.md` C24–C26: non-perceptual
+> `SHAPE_DARK`, the `highlight-2` cliff, red-reads-orange) → THEN re-bless (C21/C22) + the `highlight-audit`
+> rewrite (C10). **Honor §7** — explain any engine change and WAIT for the owner's "go"; review on a DARK
+> background; re-bless only on owner visual approval.
 
 ---
 
@@ -147,18 +150,24 @@ Everything in §3 is KEEP. These four are the unfinished Stage-6 work + the forc
   dark-mode explorations archived to `_archive/` with a do-not-ground README; `guide/*` kept but
   subordinated via banner (Phase-4 rewrite pending); owner hand-flags salvaged into Phase 4.
   Worktree consolidated — work now lives in `~/okchroma` on `scope/dark-chroma`.
-- **Phase 1 — engine** (`colorEngine.ts`, `resolve.ts`, `signalShift.ts`, `signals.ts`). Status: not
-  started. Computed `ons`; signals through the scale + loud cta (`loudCta` flag so the dark cta keeps
-  full chroma); optional `heat` multiplier in `cAt` (default 1); drop `subtleChromaScale` +
-  `enforceWhiteFill`. New flags default off → brand/secondary byte-identical (`figma-verify` hexes
-  `#07074f`/`#869cda` are the canary).
-- **Phase 2 — render** (`figmaRender.ts`, `cssRender.ts`, `build.ts`). Status: not started. Signals
-  render brand-kind-minus-identity (cta=stop9, highlight=rung); drop the duplicate; fix the
-  `on-highlight ?? true` divergence. Supersedes `27adbeb`.
-- **Phase 3 — guards + re-bless.** Status: not started. `figma-verify` (signal cta ≠ highlight),
-  `highlight-audit` (signals carry a rung; `ons` computed), `dark-audit` (signal surfaces drift).
-  Re-bless `dark-audit-snapshot.json` + `highlight-snapshot.json` after owner visual approval;
-  brand/secondary must NOT drift.
+- **Phase 1 — engine** (`colorEngine.ts`, `resolve.ts`, `signalShift.ts`, `signals.ts`). Status:
+  **LANDED** (`ac81b36` + floor `8aa3237`). Computed `ons` (one shared polarity rule, both modes);
+  signals through the scale + loud cta; `heat` seam in `cAt` (default 1); dropped `subtleChromaScale`
+  + `enforceWhiteFill`. **+ F6:** identity-proportional dark chroma floor folded into `darkChromaCurve`
+  (scaled by the resolved cta chroma — fixes the signal-surface washout; **C7 flipped** to KEEP
+  `applyChromaFloor` for exact). New flags default off → brand/secondary cta byte-identical
+  (`figma-verify` `#07074f`/`#869cda` canary GREEN).
+- **Phase 2 — render** (`figmaRender.ts`, `cssRender.ts`, `build.ts`). Status: **LANDED** (`ac81b36`).
+  Signals render brand-kind-minus-identity (cta=stop9, highlight=rung); duplicate dropped;
+  `on-highlight ?? true` removed. Supersedes `27adbeb`.
+- **Phase 3 — guards + re-bless.** Status: **PARTIAL.** `figma-verify` updated (signal cta ≠ highlight)
+  — GREEN. The `highlight-audit` rewrite (C10) + snapshot re-bless (`dark-audit-snapshot.json` +
+  `highlight-snapshot.json`, C21/C22) are **DEFERRED to the curve-perceptual pass** — blessing now would
+  bake in C25's known-wrong `highlight-2`. Re-bless after owner visual approval; brand/secondary cta must NOT drift.
+- **Phase 3.5 — curve-perceptual pass (owner-led, NOT yet started).** See `CATALOG.md` **C24–C26**:
+  the dark chroma `SHAPE_DARK` is hue-adjusted only by a cap multiplier (not a per-hue shape) and peaks
+  at the fill then drops off a cliff (desaturating `highlight-2`); red reads orange in dark. Re-derive
+  the curve for perceptual chroma-constancy, then re-bless. Do this BEFORE Phase 4.
 - **Phase 4 — final sweep + guide rewrite.** Status: not started. Sweep code against §3; rewrite
   `docs/guide/*` to match (vocabulary §1, baseline→deviations §2–3). **Guide-triage seed** (salvaged
   from the owner's hand-flags before discarding them — incomplete, verify all):
