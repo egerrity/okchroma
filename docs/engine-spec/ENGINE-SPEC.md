@@ -7,9 +7,9 @@
 > aligned in Phase 4; until then treat it as subordinate (do not ground engineering decisions in
 > it). If something here is wrong or missing, fix THIS file.
 >
-> **Branch:** `scope/dark-chroma` — the superset of `scope/engine-spec` + the dark greenfield (the
-> only commit it lacks is `scope/signal-cta`'s `27adbeb`, which the render work below supersedes).
-> Do not merge to `main`.
+> **Branch:** `scope/dark-chroma` + the unification were **MERGED INTO `main` on 2026-06-26** (tip
+> `c014abc`). Current work is on **`fix/highlight` off `main`** in `~/okchroma`; `scope/dark-chroma`
+> is now a redundant stale ancestor (preserved as tag `archive/scope-dark-chroma`).
 >
 > **Status discipline:** every step below carries a Status line. Update it the moment it changes.
 >
@@ -18,17 +18,62 @@
 > mid-phase.
 
 > ## ▶ Resume here (next session)
-> **Where:** `~/okchroma` on `scope/dark-chroma` (the `okchroma-dark` worktree was removed — one
-> folder; do not recreate it). **`npm run build` (the `--full` one) is authoritative** — `demo:build`
+> **Where:** `~/okchroma` on `fix/highlight` (off `main`; one folder — the `okchroma-dark` worktree
+> was removed, do not recreate it). **`npm run build` (the `--full` one) is authoritative** — `demo:build`
 > / `generate` run a STALE `dist/build-script.js` that clobbers `signals.css` with old `error/warning`
 > names; rebuild that bundle or avoid those scripts.
-> **Ground in §1–§3 of this file only**, then read **`CATALOG.md` → ⛔ HANDOFF** (the authoritative
+> **Ground in §0–§3 of this file only**, then read **`CATALOG.md` → ⛔ HANDOFF** (the authoritative
 > not-done list). Unification **Phases 1+2 LANDED** (`ac81b36` + floor `8aa3237`) but NOT all of it is done:
 > the **text-color (`ons`) calc is unfinished** — it ships non-compliant `on-highlight` (3.72:1), the **C23
 > one-rule guard was never built, and the C10 `highlight-audit` rewrite isn't done** (both were mistakenly
 > ticked). Still open: those, the **3 owner-visual decisions** (rung-L / C8 / C19), the **curve-perceptual
 > pass** (C24–C26), and **re-bless** (C21/C22, deferred until the rest settles). **Honor §7** — explain any
 > engine change and WAIT for the owner's "go"; review on a DARK background; re-bless only on owner visual approval.
+
+---
+
+## 0. How to read these docs + the code-truth snapshot (READ FIRST)
+
+**Precedence when sources disagree:** the **code is truth** — the two emitters `cssRender.ts` +
+`figmaRender.ts` define what actually ships. This **spec states intent**; where intent and code
+differ, the gap is tracked in [`CATALOG.md`](./CATALOG.md). Every other doc (`docs/guide/*`, the
+handoffs, the analysis files) **defers** to these. **Never state intent as fact; never trust a
+comment / doc / memory over the source.** (This rule exists because stale comments have repeatedly
+made readers — humans and agents — *invert* the model.)
+
+**Emitted token inventory — verified against both emitters (2026-06-26).** Every family —
+`brand`, `secondary`, `neutral`, and each signal — emits the SAME uniform set (both emitters render
+all families **brand-kind**):
+
+| group | emitted token names |
+|---|---|
+| surface scale | `paper-1`, `paper-2`, `wash-3/4/5`, `accent-6/7/8` |
+| cta (the fill) | `cta-1`, `cta-2`, `on-cta` |
+| highlight (scale rung) | `highlight-9`, `highlight-10`, `on-highlight` |
+| text | `ink-11`, `ink-12` |
+| identity | `identity` — **brand / secondary only** |
+
+The **only per-family difference is the `cta` value** (see §3.1): brand/secondary cta is *variable*
+(= the input color's L); signal cta is a *hue-aware target*; neutral cta is a *target* whose exact
+value is **OPEN** (may become a transparent value — not decided; **must not be a scale alias**).
+Neutral also runs its own low-chroma curve. `highlight` is a scale value with an identical rule
+across families — it is **not** the cta, and `cta` is **not** stops 9/10 (that was the retired model).
+
+**Internal-index wrinkle (code legibility, not an output bug):** internally the generator computes
+`cta` at the base ladder's slot 9/10 and *appends* `highlight` at indices 13/14 — yet the **emitted
+names are uniform and correct** (`cta-1/2`, `highlight-9/10`). This mismatch is why several comments
+read as "inverted." See Historical root.
+
+**Historical root (why the internals look odd):** `cta` originally *was* the 9/10 scale rung. When
+`highlight` was added, cta was renamed to the off-ladder role `cta-1/2` and `highlight` took the
+scale-rung names — but the generator kept producing cta in the 9/10 slot and *appended* highlight at
+13/14 instead of physically swapping them. **The output is correct;** only the internal arrangement
+(and stale comments) carry the old shape. A future *cta pull-out* refactor may align the internals;
+it is **not** required for correct output and is **out of scope** for routine work.
+
+**Open naming discrepancy:** §1/§2 below still call the rung `highlight-1/2` and the text steps
+`ink-alt`/`ink`; the **code emits `highlight-9/10` and `ink-11/12`**. Token-name streamlining is a
+separate horizon task — until it lands, **the emitted names in the table above are canonical.**
 
 ---
 

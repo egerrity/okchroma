@@ -17,9 +17,13 @@
 // secondary expose stop 9/10 as the cta; neutral & signals expose theirs as the
 // highlight fill (it IS their emphasis chip).
 
-// 'brand' covers brand + secondary (CTA-bearing); 'neutral' covers neutral +
-// every signal (highlight-bearing). The split is purely about what stop 9/10
-// and the on-fill text are called.
+// RampKind selects the stop-9/10 + on-fill token NAMES. NOTE (verified 2026-06-26): both emitters
+// (cssRender, figmaRender) render EVERY family — brand, secondary, neutral, signals — with kind
+// 'brand', so the scale always emits cta-1/2 at stop 9/10 and highlight-9/10 at the 13/14 append.
+// The 'neutral' branch of stopTokenName is therefore currently UNUSED for scale naming; 'neutral'
+// survives only as the lookup onFillTokenName('neutral') → 'on-highlight'. (An earlier comment here
+// said "'neutral' covers neutral + signals" — that was never how the emitters behave; see
+// ENGINE-SPEC §0.)
 export type RampKind = 'brand' | 'neutral'
 
 // Surface-scale + text-role names that are identical for every ramp kind.

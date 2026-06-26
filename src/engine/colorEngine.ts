@@ -249,10 +249,11 @@ export interface GeneratedScale {
   light: ColorStop[]
   dark: ColorStop[]
   // ── Stage 2 additive role tokens ──
-  // highlight-9/10 (brand/secondary) and cta/cta-hover (neutral) are appended
-  // to light/dark with engine numbers 13+ — one uniform generated list per
-  // ramp, labeled by tokenNames. Consumers guarding only the original 1–12
-  // scale slice(0, 12).
+  // The highlight rung is APPENDED at engine indices 13/14 for every brand-kind ramp
+  // (brand / secondary / neutral / signals) and EMITTED as highlight-9/10 by tokenNames; cta lives
+  // at stops 9/10 (emitted cta-1/2). (An earlier comment said neutral appends 'cta' at 13+ — wrong:
+  // ALL families append HIGHLIGHT here; see ENGINE-SPEC §0.) Consumers guarding only the original
+  // 1–12 scale use slice(0, 12).
   // on-highlight text polarity (universal token, all ramps). White normally;
   // black within the yellow band, where darkening would kill the hue.
   onHighlightIsWhite?: boolean
@@ -347,7 +348,8 @@ export interface GenerateOptions {
   coolRedDark?: boolean
   // Style lever (decision 2026-06-11): modulates style registers ONLY
   // inside the semi-muted warm band (flag × band, never flag alone).
-  // Plumbed but not yet wired to math — no-op until the deeper pass lands.
+  // 'deeper' IS wired (see deeperEffect / bandGate below, ~:486); 'default' is a no-op
+  // (bit-identical to base); 'full-chroma' is declared but NOT implemented (no handler reads it).
   style?: 'default' | 'deeper' | 'full-chroma'
   // Stage 2: append the brand/secondary highlight-9/10 fill pair to light/dark
   // (+ on-highlight polarity). resolveBrand passes this; signals don't (a
