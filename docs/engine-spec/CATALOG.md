@@ -26,6 +26,15 @@
 > `audit` + `highlight-audit` **RED** for the A–E reasons below (all intended/deferred — not a code break).
 > Working tree clean. **I over-claimed "done" mid-session — this block is the correction.**
 
+> ✅ **ARRAY HEAL — LANDED (2026-06-26, `fix/highlight`).** The internal "array lie" (cta stored at
+> slot 9/10, highlight appended at 13/14, while emitted names were the opposite) is GONE: the generator
+> now puts `highlight` at native scale slot 9/10 and holds the `cta` **off-scale** on
+> `GeneratedScale.cta`/`ctaHover`(+`ctaDark`/`ctaHoverDark`). **Internal index now == emitted name.**
+> Relocation was **byte-identical** (`brands.css` + Figma JSON zero-diff); snapshots re-blessed (drift
+> confined to stops 9/10). **Translation key for stale C-entries below:** wherever an older entry says
+> "rung 13/14" read **slot 9/10**; "stop 9 = cta" read **slot 9 = highlight, cta off-scale". Those entries
+> describe *separate* still-open issues (chroma models, dark-L floor) — only their slot vocabulary is stale.
+
 **A — Text-color (`ons`) calc: NOT finished (the heart of C1).** Shared rule `onTextIsWhite`
 (`colorEngine.ts:389`) exists and all four sites call it (F3), BUT:
 - it emits only **binary `#ffffff`/`#000000`** (`cssRender.ts:21`) and in the conflict zone ships a

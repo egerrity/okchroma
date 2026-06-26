@@ -59,17 +59,20 @@ value is **OPEN** (may become a transparent value — not decided; **must not be
 Neutral also runs its own low-chroma curve. `highlight` is a scale value with an identical rule
 across families — it is **not** the cta, and `cta` is **not** stops 9/10 (that was the retired model).
 
-**Internal-index wrinkle (code legibility, not an output bug):** internally the generator computes
-`cta` at the base ladder's slot 9/10 and *appends* `highlight` at indices 13/14 — yet the **emitted
-names are uniform and correct** (`cta-1/2`, `highlight-9/10`). This mismatch is why several comments
-read as "inverted." See Historical root.
+**Internal layout (HEALED 2026-06-26 on `fix/highlight`):** the generator now places the `highlight`
+rung at the native scale slot 9/10 and holds the `cta` **off** the scale arrays (dedicated
+`GeneratedScale.cta`/`ctaHover` + `ctaDark`/`ctaHoverDark`). **Internal array index now EQUALS the
+emitted stop number** — `light[8]` = stop 9 = `highlight-9`, `light[10]` = stop 11 = `ink-11` — and the
+cta is emitted by name from its off-scale field. The relocation was **byte-identical** (verified:
+`dist/brands.css` + the full Figma JSON via `resolveBrand→themeToFigma` both zero-diff vs the pre-heal
+baseline; snapshots re-blessed with drift confined to stops 9/10).
 
-**Historical root (why the internals look odd):** `cta` originally *was* the 9/10 scale rung. When
-`highlight` was added, cta was renamed to the off-ladder role `cta-1/2` and `highlight` took the
-scale-rung names — but the generator kept producing cta in the 9/10 slot and *appended* highlight at
-13/14 instead of physically swapping them. **The output is correct;** only the internal arrangement
-(and stale comments) carry the old shape. A future *cta pull-out* refactor may align the internals;
-it is **not** required for correct output and is **out of scope** for routine work.
+**Historical root (why older comments may still read "inverted"):** `cta` originally *was* the 9/10
+scale rung. When `highlight` was added, cta was renamed to the off-ladder role `cta-1/2` and
+`highlight` took the scale-rung names — but for a long while the generator kept producing cta in the
+9/10 slot and *appended* highlight at 13/14 instead of physically swapping them (the "array lie" that
+repeatedly fooled readers into inverting the model). The **array heal** finally relocated them; any
+remaining comment that says "cta at stop 9" or "highlight appended at 13/14" is **stale — fix it**.
 
 **Naming — RESOLVED (owner, 2026-06-26):** the **emitted names are canonical** — `highlight-9/10`
 stays *in* the scale (keeps its scale number); `cta` is pulled out by **name AND number** (`cta-1/2`,
