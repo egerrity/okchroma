@@ -3,11 +3,11 @@
 // Two gates, both must trip:
 //   1. Hue gate — brand H within HUE_GATE_DEG of the signal's H. Cheap
 //      pre-filter and intent: a maroon and error red share a hue family.
-//   2. Distance gate — OKLab ΔE between the rendered stop-9 fills below
+//   2. Distance gate — OKLab ΔE between the rendered cta fills below
 //      DELTA_E_THRESHOLD. This is what lets maroon pass: same hue family,
 //      but far enough in lightness that nobody confuses the fills.
 //
-// Runs per mode: dark mode pins brand stop 9 at L 0.63, so a brand can be
+// Runs per mode: dark mode floors the brand cta L at 0.63, so a brand can be
 // clear in light mode and collide in dark.
 //
 // Resolution (the escalation ladder) is deliberately not automatic past
@@ -26,7 +26,7 @@ import { SIGNALS } from './signals'
 // Calibrated visually via the collision rig.
 export const HUE_GATE_DEG = 30
 export const DELTA_E_THRESHOLD = 0.16
-// Dark mode runs a lower bar: stop-9 L is pinned for everyone, so ΔE can't
+// Dark mode runs a lower bar: the cta L is floored for everyone, so ΔE can't
 // reach light-mode levels, and the dark collider treatment adds a salience
 // split (muted brand vs vivid error) that raw ΔE doesn't credit.
 export const DARK_DELTA_E_THRESHOLD = 0.10

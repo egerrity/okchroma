@@ -1,12 +1,14 @@
-// The generated neutral's chroma curve (engine-spec Stage 6, Decision 2).
+// The generated neutral's own low-chroma curve (ENGINE-SPEC §3.1: neutral's
+// architectural deviation; verified against §6's approved-neutrals reference).
 //
 // The neutral is produced by REUSING generateScale (a faint gray at the brand
 // hue + the 'light' archetype), with this curve supplied as GenerateOptions.
 // chromaCurve so the only thing that differs from a brand ramp is the chroma
 // profile — a quiet near-gray tint instead of the brand's vivid ladder.
 //
-// A per-hue, per-level near-gray chroma curve, evaluated BY LIGHTNESS so it also
-// covers the off-grid roles — the archetype cta and the rung-shifted highlight:
+// A per-hue, per-level near-gray chroma curve, evaluated BY LIGHTNESS so it
+// applies at every generation site — including the off-scale cta and the
+// highlight rung, whose L need not land on a scale-step anchor:
 //   - shape  = per-step chroma, normalized to its peak (step 9 = 1.0).
 //     The light/dark split is real: dark's text stop collapses to ~0.195 of
 //     peak while light keeps ~0.74.

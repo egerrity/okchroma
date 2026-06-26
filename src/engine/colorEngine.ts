@@ -263,8 +263,9 @@ export interface GeneratedScale {
   // The highlight rung lives IN the scale at native slot 9/10 (light[8]/light[9]),
   // placed by the same ladder math as stops 1–8 — a predictable DERIVED value,
   // identical-rule across every family (brand/secondary/neutral/signals).
-  // on-highlight text polarity (universal token, all ramps). White normally;
-  // black within the yellow band, where darkening would kill the hue.
+  // on-highlight text polarity (universal token, all ramps) — COMPUTED from the
+  // rung's own luminance via the shared `ons` rule (mirrors on-cta), both modes.
+  // No forced white/black, no yellow-band special-case.
   onHighlightIsWhite?: boolean
   onHighlightIsWhiteDark?: boolean
   // Literal input hex, mode-invariant — emitted as `identity` for brand/
@@ -280,9 +281,9 @@ export interface GeneratedScale {
 // rendered a PINK dark ladder). Gray brands now render gray dark ladders,
 // matching the light ramp's HUE_NOISE_C doctrine; the fade is smooth so
 // no two near-identical accents land on opposite sides of a cliff.
-// KEEP (cf. catalog C7): the dark curve now has its OWN identity-proportional surface
-// floor (darkChromaCurve's ctaC arg), so this path serves EXACT / ships-raw brands
-// only (they don't pass darkChromaCurve). Not redundant — do not delete.
+// KEEP (cf. catalog C7): the dark curve now has its OWN identity-proportional
+// scale-stop floor (darkChromaCurve's ctaC arg), so this path serves EXACT /
+// ships-raw brands only (they don't pass darkChromaCurve). Not redundant — do not delete.
 function applyChromaFloor(C: number, multiplier: number, stopIndex: number, floorStrength: number): number {
   const raw = C * multiplier
   if (floorStrength <= 0) return raw
@@ -308,19 +309,20 @@ function makeStop(stop: number, L: number, C: number, H: number): ColorStop {
 
 export interface GenerateOptions {
   // Signed degrees added to the brand hue before generation — used by the
-  // signal-yield system (e.g. lemon-shifted warning). The whole ramp
-  // generates from the shifted hue; stop 9 is no longer the exact input
-  // hex when set.
+  // yellow signal-yield split (the cool/lemon variant). The whole ramp
+  // generates from the shifted hue; the off-scale cta is no longer the exact
+  // input hex when set.
   hueShiftDeg?: number
   // Multiplies the base chroma before generation (all stops). Used when a
-  // yielding signal shifts cool and washes out — e.g. lemon-shifted warning.
+  // yielding signal shifts cool and washes out (yieldChromaScale on the lemon variant).
   chromaScale?: number
-  // Multiplies chroma for stops 1–8 only (the subtle/UI tier), leaving the
-  // anchor and text stops untouched. Signals use this to read as alerts at
-  // the subtle tier. Gamut clamping still applies after scaling.
+  // INERT: multiplies chroma for stops 1–8 only (the subtle/UI tier), leaving the
+  // cta and text stops untouched. DEFINED but set by NO caller — signals now run
+  // the identical base scale and stand off via the chromaMultiplier ladder + loudCta,
+  // not a subtle boost (cf. catalog C2 / §4.4 heat). Gamut clamping applies after.
   subtleChromaScale?: number
   // Dark-mode collider register: 'muted' floats the fill to pastel rose
-  // (reds — dusty, desaturated vs error's vivid register).
+  // (reds — dusty, desaturated vs the red signal's vivid register).
   darkColliderFill?: 'muted'
   // Light stops 11/12 extra deepening (subtracted from the found L, then
   // re-bounded against stop 2). Rung-1 error colliders pass 0.07/0.05
@@ -335,19 +337,17 @@ export interface GenerateOptions {
   // background; neutral keeps the quieter base ladder.
   darkStops?: StopSpec[]
   // "APCA picks the polarity, WCAG bounds the fill": when the chosen
-  // on-fill polarity is white but the fill fails WCAG 4.5:1, darken the
-  // fill (stops 9/10) to the compliant edge (~L 0.555). Resolves the
-  // L 0.56–0.65 dead zone where WCAG and APCA disagree — a brand's
-  // compliance review runs WCAG. Signals enforce this; brands TBD.
+  // on-fill polarity is white but the cta fill fails WCAG 4.5:1, darken the
+  // fill to the compliant edge (~L 0.555). Resolves the L 0.56–0.65 dead zone
+  // where WCAG and APCA disagree — a brand's compliance review runs WCAG. Set by
+  // signals and by all non-exact brands (resolve.ts); exact ships raw.
   enforceOnFillContrast?: boolean
-  // Stage 2.5: darken THIS ramp's light fill to the WCAG-4.5 white-compliant
-  // edge so the normal on-fill polarity generates WHITE on its own. A value
-  // move on the fill's lightness — NOT a polarity override: APCA already picks
-  // white on these mid-green fills, and once the darkened fill clears 4.5 the
-  // black-text fallback branch is simply never reached. The success signal sets
-  // this for consistency with the other non-yellow signal fills (error/info).
-  // LIGHT only (dark fills are black-first by design). Ramps that don't set it
-  // keep fillAnchorL === scaleL ⇒ byte-identical.
+  // INERT (catalog C3 / §4.3 retire): darken THIS ramp's light fill to the
+  // WCAG-4.5 white-compliant edge so the normal on-fill polarity generates WHITE
+  // on its own — a value move on the fill's lightness, NOT a polarity override.
+  // DEFINED but set by NO caller: green's on-cta now falls out of the raw fill,
+  // bounded only by enforceOnFillContrast. LIGHT only. Unset ⇒ fillAnchorL ===
+  // scaleL ⇒ byte-identical (always, since nothing sets it).
   enforceWhiteFill?: boolean
   // Dark mode keeps the red cool character: generate the ENTIRE dark
   // pipeline from the cooled hue (brandH − RED_COOL_DEG·w_red) for
@@ -376,13 +376,14 @@ export interface GenerateOptions {
   // for brand/secondary/signals.
   chromaCurve?: (L: number, mode: 'light' | 'dark') => number
   // Phase-3 dark chroma curve (greenfield). When set, REPLACES the proportional
-  // dark chroma (subtleC × chromaMultiplier) at the dark SURFACE (1–8) and TEXT
-  // (11/12) stops with an absolute peak×shape×cap value (see darkChromaCurve.ts).
-  // Dark-only — light is untouched; the fill (9/10) keeps brandC identity. makeStop
+  // dark chroma (subtleC × chromaMultiplier) at the dark scale stops 1–8 and the
+  // text stops 11/12 with an absolute shape×perceptual-redistribution value (see
+  // darkChromaCurve.ts). Dark-only — light is untouched; the cta is off-scale and
+  // never enters this curve (it is darkCtaTrim'd separately, below). makeStop
   // gamut-clamps after. Unset ⇒ every dark chroma falls through unchanged ⇒
   // byte-identical.
   // ctaC (4th arg) is the resolved dark cta chroma — when passed, the curve floors
-  // surface chroma at an identity-proportional fraction of it (see darkChromaCurve.ts).
+  // the deep scale stops at an identity-proportional fraction of it (see darkChromaCurve.ts).
   darkChromaCurve?: (L: number, H: number, brandC: number, ctaC?: number) => number
   // Signal "loud cta": keep the dark cta at full brand chroma (skip the per-hue
   // darkCtaTrim that brands get). §3.1 — signals are vivid/louder. Default off ⇒ unchanged.
@@ -441,14 +442,13 @@ export function generateScale(
       : Math.min(1, Math.max(0, (brandC - HUE_NOISE_C) / (DARK_FLOOR_FULL_C - HUE_NOISE_C)))
   const lFlip = computeLFlip(brandC, brandH)
   const lFillMax = computeLFillMax(brandC, brandH)
-  // On-fill text polarity by APCA: whichever of white/black scores higher
-  // |Lc| on the stop-9 fill. The WCAG 2.x equal-contrast flip point picks
-  // black on saturated mid-tone fills (error red, success green) where
-  // convention and APCA both side with white.
-  // Stage 2.5: enforceWhiteFill darkens the fill anchor to the white edge up
-  // front (success), so polarity below is read off the DARKENED green and picks
-  // white naturally — the flip-to-black branch never triggers. Default ramps:
-  // fillAnchorL === scaleL (no-op, byte-identical).
+  // On-cta text polarity by APCA: whichever of white/black scores higher
+  // |Lc| on the (off-scale) cta fill. The WCAG 2.x equal-contrast flip point
+  // picks black on saturated mid-tone fills (red, green) where convention and
+  // APCA both side with white.
+  // fillAnchorL: the inert enforceWhiteFill path (no caller — see option above)
+  // would darken the anchor to the white edge up front; with it unset for every
+  // ramp, fillAnchorL === scaleL (byte-identical).
   const fillAnchorL =
     opts?.enforceWhiteFill && contrastRatio(1.0, wcagY(scaleL, brandC, brandH)) < 4.5
       ? findLForContrast(scaleL, brandC, brandH, 1.0, 4.6)
@@ -564,20 +564,17 @@ export function generateScale(
 
   const stop2Y = wcagY(light[1].L, light[1].C, light[1].H)
 
-  // Compliance ladder for the light fill (APCA picks the polarity, WCAG
+  // Compliance ladder for the light cta fill (APCA picks the polarity, WCAG
   // bounds the pair): if the APCA pick fails WCAG 4.5, flip polarity when
   // the other side passes BOTH standards (dead-zone brands keep their
-  // fill, text goes black); only when neither side passes — error's case —
-  // darken the fill to the white-compliant edge.
-  // Fill anchored on fillAnchorL: scaleL for every ramp, except an
-  // enforceWhiteFill ramp (success) whose green is already darkened to the
-  // white edge — so the WCAG check below passes and this block is a no-op for
-  // it (white stays, no flip). Byte-identical where fillAnchorL === scaleL.
-  // Polarity is resolved at init (onTextIsWhite already flips white→black when
-  // white fails WCAG and black complies). Here only the cta's value-darken
-  // fallback remains: white survived but still fails WCAG (the "neither" case) ⇒
-  // darken the fill to the white-compliant edge (search 4.6 so hex rounding never
-  // dips below 4.5). Byte-identical where fillAnchorL === scaleL and white holds.
+  // fill, text goes black); only when neither side passes — the red signal's
+  // case — darken the fill to the white-compliant edge.
+  // Fill anchored on fillAnchorL (=== scaleL for every ramp, since enforceWhiteFill
+  // is inert — see option). Polarity is resolved at init (onTextIsWhite already
+  // flips white→black when white fails WCAG and black complies). Here only the cta's
+  // value-darken fallback remains: white survived but still fails WCAG (the "neither"
+  // case) ⇒ darken the fill to the white-compliant edge (search 4.6 so hex rounding
+  // never dips below 4.5). Byte-identical where white holds.
   let light9L = fillAnchorL
   if (opts?.enforceOnFillContrast && onFillTextIsWhite
       && contrastRatio(1.0, wcagY(fillAnchorL, brandC, brandH)) < 4.5) {
@@ -628,15 +625,16 @@ export function generateScale(
 
   // Lightness is the blessed DARK_NEUTRAL_L scaffold, emitted DIRECTLY (the old
   // darkRefY blue-referenced luminance solve is retired). Hue torsion still runs
-  // — it rotates hue at the fixed L, it never moves L. Chroma rides
-  // darkStops[i].chromaMultiplier for now (Phase 3 rebuilds the chroma model; the
-  // darkStops rootL column is now vestigial).
+  // — it rotates hue at the fixed L, it never moves L. Chroma: the greenfield
+  // darkChromaCurve when set (brands/signals), else the proportional
+  // darkStops[i].chromaMultiplier fallback (exact / ships-raw). The darkStops
+  // rootL column is unread here (vestigial — L comes from DARK_NEUTRAL_L).
   for (let i = 0; i < darkStops.length; i++) {
     const { chromaMultiplier } = darkStops[i]
     const L = DARK_NEUTRAL_L[i]
     const H = torsionedHue(darkH, L, dark9L, gOffPath)
     const C = opts?.darkChromaCurve
-      ? opts.darkChromaCurve(L, H, brandC, darkC9) // ctaC = resolved dark cta chroma → surface floor
+      ? opts.darkChromaCurve(L, H, brandC, darkC9) // ctaC = resolved dark cta chroma → deep scale-stop floor
       : applyChromaFloor(subtleC, chromaMultiplier, i, darkFloorStrength)
     dark.push(makeStop(i + 1, L, cAt('dark', L, C), H))
   }

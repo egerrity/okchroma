@@ -6,8 +6,8 @@
 // the SIGNAL away from the brand to buy extra perceptual distance, keeping
 // chroma high. Its only product is a GeneratedScale pushed into
 // ResolvedBrand.signalOverrides, which is read only by CSS emission and the
-// Figma export — it never re-enters any engine decision. See
-// docs/SPEC-signal-color-shifting.md.
+// Figma export — it never re-enters any engine decision. See ENGINE-SPEC §3.3
+// (collision-avoiders: green/info-color swaps; yellow → lemon).
 //
 // Trigger = the SAME light-mode checkCollision the warning split already uses
 // (lightness-aware: a signal already far from the brand in L doesn't collide,

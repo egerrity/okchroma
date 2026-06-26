@@ -9,8 +9,9 @@
 //   2. Warning variant      warm-yellow brands get lemon, cool keep macaroni
 //   3. Yielding signals     success/info shift away from the brand (pending
 //                           validation — list empty until then)
-//   4. Red cool render      warm-red NON-colliders rotate stops 9/10 cool,
-//                           away from error (render-time only, LAST step)
+//   4. Red cool render      warm-red NON-colliders rotate the off-scale cta
+//                           (cta-1/2) cool, away from error (render-time only,
+//                           LAST step)
 //
 // ORDERING INVARIANT: every decision above — collision gates, the inRedBand
 // watershed, archetype/rung-1, on-fill text polarity — runs on the RAW
@@ -34,7 +35,8 @@ import {
 } from './collision'
 import { pickSignalShift } from './signalShift'
 
-// Signal scales (subtle tier boosted — signals are alerts).
+// Signal scales (signals are alerts — they stand off via the chromaMultiplier
+// ladder + loudCta, NOT a subtle-tier boost; subtleChromaScale is never set here).
 export const SIGNAL_SCALES = new Map<SignalDef['name'], { def: SignalDef; scale: GeneratedScale }>(
   SIGNALS.map(def => [
     def.name,
@@ -55,8 +57,8 @@ export interface ResolvedBrand {
   scale: GeneratedScale
   // Always 0 since the preventive shear was cut (2026-06-11) — kept so
   // build notes / demo chips need no churn. Warm-red differentiation is
-  // now the render-time stop 9/10 cool rotation (not reported here: it
-  // never changes a decision, only presentation).
+  // now the render-time cool rotation of the off-scale cta (not reported
+  // here: it never changes a decision, only presentation).
   shearDeg: number
   rung1: SignalDef['name'] | null
   // dark collider register: red-side colliders float to 'muted' pastel rose
@@ -68,7 +70,7 @@ export interface ResolvedBrand {
   // Orange-side error collision: the brand keeps its identity (no archetype
   // shift, no dark float — dark-anchored orange is brown and no orange brand
   // accepts a brown button). Separation comes from the uniform component
-  // rule instead: destructive buttons in a group render as OUTLINE (surface
+  // rule instead: destructive buttons in a group render as OUTLINE (low scale
   // fill, error-11 text, error-6 border; hover → bg 3, text 12, border 8),
   // fill only when alone/primary, never beside a brand button — plus the
   // required destructive icon.
@@ -123,14 +125,15 @@ export function resolveBrand(
     enforceOnFillContrast: !opts?.exact,
     // dark mode keeps the red cool character (exact mode ships raw)
     coolRedDark: !opts?.exact,
-    // Phase-3 dark chroma curve (brandC × shape × per-hue cap; surfaces calmed,
+    // Phase-3 dark chroma curve (brandC × shape × per-hue cap; scale stops calmed,
     // cta gently trimmed, highlight flips to a black-text chip). Recommended only —
     // exact ships the raw dark chroma, like coolRedDark. See darkChromaCurve.ts.
     darkChromaCurve: opts?.exact ? undefined : darkChromaCurve,
     style: opts?.style,
-    // Stage 2: brand/secondary carry the highlight-1/2 fill (signals don't —
-    // a signal's stop-9 IS its highlight). Emphasis-fill role token, emitted for
-    // every brand incl. exact (it's derived, not the shipped hex).
+    // Brand/secondary carry the highlight-9/10 rung via this floor (signals
+    // set it themselves in SIGNAL_SCALES). The highlight is a derived scale
+    // value at native stop 9/10, emitted for every brand incl. exact (it's
+    // derived, not the shipped hex).
     highlight: true,
   }
   // Rung-1 colliders deepen their 11/12 text stops ("opt3") so accent and
@@ -206,8 +209,8 @@ export function resolveBrand(
     }
   }
 
-  // FINAL render step — red cool rotation of light stops 9/10 (see the
-  // ordering invariant above: nothing below this line may run a gate).
+  // FINAL render step — red cool rotation of the off-scale cta (cta-1/2; see
+  // the ordering invariant above: nothing below this line may run a gate).
   // Rung-1 and archetype-override scales are exempt (already re-anchored);
   // exact mode ships the hex untouched. inRedBand is evaluated on the RAW
   // brand hue; outside the red band the fill never rotates and the brand

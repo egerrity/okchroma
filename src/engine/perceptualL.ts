@@ -12,7 +12,7 @@
 //                 lightness hits a per-rung target (KEEP_LIGHT dials match-neutral
 //                 ↔ keep-vibrancy). cta is NOT a rung and is never touched.
 //   DARK mode   — lightness is the fixed DARK_NEUTRAL_L scaffold, so chroma is the
-//                 free variable: solve C so the surface reads at consistent
+//                 free variable: solve C so the rung reads at consistent
 //                 prominence on dark (the principled replacement for loudnessCap).
 //
 // The correction is chroma-proportional (H-K boost ∝ C^p), so it auto-fades to
@@ -78,7 +78,7 @@ export function solveLForApparent(target: number, C: number, H: number): number 
   }
   return (lo + hi) / 2
 }
-// Free variable C: find the chroma (at fixed L,H) whose surface hits `target`.
+// Free variable C: find the chroma (at fixed L,H) whose rung hits `target`.
 export function solveCForApparent(L: number, H: number, target: number): number {
   let lo = 0, hi = 0.4
   for (let i = 0; i < 32; i++) {
@@ -122,7 +122,7 @@ export function perceptualRungL(rootL: number, C: number, H: number, keep = KEEP
 }
 
 // Bloom is a MID-lightness effect, so the redistribution is band-limited to the
-// surface mid-band (≈ stops 3–8): the deep darks keep their tint and the fill +
+// scale mid-band (≈ stops 3–8): the deep darks keep their tint and the fill +
 // text tiers (≥ fill L) keep their native chroma — so ink-11/ink-12 keep their
 // separation. Mirrors the old loudnessCap bandWeight, now wrapping the principled
 // solve instead of a hand-tuned cap.
@@ -135,10 +135,10 @@ const darkBandWeight = (L: number): number => {
   return 0
 }
 
-// DARK surface chroma redistribution — the principled replacement for the
+// DARK scale chroma redistribution — the principled replacement for the
 // hand-tuned loudnessCap. `nativeC` is the brand's intended dark chroma at this
-// stop (brandC · shape(L)). In the surface mid-band we hold its hue-AVERAGE
-// prominence and redistribute per hue: solve C so the surface reads at
+// stop (brandC · shape(L)). In the scale mid-band we hold its hue-AVERAGE
+// prominence and redistribute per hue: solve C so the stop reads at
 // gray + KEEP·meanBoost(L, nativeC). The bloom-prone hues (blue/violet/red) come
 // down; the perceptually-quiet ones (yellow/green, which read grey today) come up
 // — so every hue lands at the same prominence on dark. Self-scaling: meanBoost ∝

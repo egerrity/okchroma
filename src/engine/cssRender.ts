@@ -139,9 +139,9 @@ export function brandCss(
     ? `  --secondary-identity: ${accent.identityHex};`
     : `  --secondary-identity: var(--brand-identity);`
 
-  // Universal scale anchors — positions 0 and 13 that extend the surface→ink
+  // Universal scale anchors — positions 0 and 13 that extend the paper→ink
   // ladder past its generated stops. The ladder INVERTS by mode, so the anchors
-  // flip with it: paper-0 (the surface end, beyond paper-1) is white in light /
+  // flip with it: paper-0 (the paper end, beyond paper-1) is white in light /
   // black in dark (= white-to-black); ink-13 (the ink end, beyond ink-12) is
   // black in light / white in dark (= black-to-white). They are NOT absolute
   // white/black — that's a separate pair, for on-fills that never flip. Emitted

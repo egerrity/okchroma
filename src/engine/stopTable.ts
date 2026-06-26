@@ -5,8 +5,8 @@ export interface StopSpec {
 
 // Root L targets for light mode stops 1–8 — contrast-grouping L targets:
 // each L is purposefully chosen so the step lands in its reserved-role
-// contrast grouping (backgrounds / borders / fills / text), and the
-// targets are remarkably uniform across hues. The old roots (0.98–0.71)
+// contrast grouping (paper backgrounds 1–2 / washes 3–5 / accent borders
+// 6–8), and the targets are remarkably uniform across hues. The old roots (0.98–0.71)
 // sat one notch darker: our stop 1 landed where stop 2 should, which is
 // why brand-1/2 read as "tinted paper" instead of near-white.
 // rootL is now the DIRECT lightness of each stop (plus the yellow-band
@@ -38,12 +38,12 @@ export const LIGHT_BASE_C = [0.004, 0.010, 0.022, 0.039, 0.053, 0.068, 0.086, 0.
 // brightness instead of being forced down the shared L ladder.
 export const YELLOW_L_LIFT = { max: 0.03, centerH: 92, sigmaDeg: 20 }
 
-// Stage 2 — brand/secondary highlight-9/10 (the surface scale's emphasis fill,
-// pulled out of cta). Generated as a ladder rung by the SAME 1–8 loop math
-// (lightHueAt + cream/envelope chroma blend), NOT a bespoke path. Light params
-// validated in sim (2026-06-22): rootL continues the accent-8 (0.738) → text
-// descent; baseC/satFraction continue the 1–8 trend. highlight-14 = hoverL of
-// highlight-13. No white/black forcing — the rung value falls out of the curve
+// brand/secondary highlight — the scale's emphasis rung at native slot 9/10,
+// distinct from the off-scale cta. Generated as a ladder rung by the SAME 1–8
+// loop math (lightHueAt + cream/envelope chroma blend), NOT a bespoke path. Light
+// params validated in sim (2026-06-22): rootL continues the accent-8 (0.738) → ink
+// descent; baseC/satFraction continue the 1–8 trend. highlight-10 = hoverL of
+// highlight-9. No white/black forcing — the rung value falls out of the curve
 // and on-highlight is COMPUTED from its luminance (mirrors on-cta). Dark mode
 // pins the same target in the dark hue with the same moderate chroma construction.
 export const HIGHLIGHT_LIGHT = { rootL: 0.62, baseC: 0.142, satFraction: 0.75 }
@@ -66,12 +66,13 @@ export const DARK_STOPS: StopSpec[] = [
 ]
 
 // Accent dark subtle ladder — chromatic accents (brand AND signal subtle
-// surfaces: subtle buttons, badges, alerts) must stand off the dark app
-// background harder than large neutral surfaces do. Anchored at the designer's
+// scale stops: subtle buttons, badges, alerts) must stand off the dark app
+// background harder than large neutral scale stops do. Anchored at the designer's
 // ladder pick (rung C, 2026-06-09): stop 3 = L 0.31 × 0.62 chroma mult.
-// Signals additionally run their subtleChromaBoost on top, which keeps
-// them hotter than brand surfaces. Neutral keeps the base DARK_STOPS —
-// it paints whole cards/panels where this lightness would go milky.
+// Signals stand even hotter via their own chromaMultiplier ladder + loudCta,
+// NOT a subtle-tier boost (no subtleChromaBoost exists; subtleChromaScale is
+// defined but never set). Neutral keeps the base DARK_STOPS — it paints whole
+// cards/panels where this lightness would go milky.
 export const ACCENT_DARK_STOPS: StopSpec[] = [
   { rootL: 0.18,  chromaMultiplier: 0.40 }, // 1
   { rootL: 0.245, chromaMultiplier: 0.52 }, // 2
@@ -135,10 +136,10 @@ export const DARK_STOP_11 = { rootL: 0.75, chromaMultiplier: 0.95 }
 export const DARK_STOP_12 = { rootL: 0.94, chromaMultiplier: 0.62 }
 
 // Dark-mode collider register: rung 1 can't separate fills in dark, so
-// colliding red-side fills FLOAT well above error's vivid 0.63 register
+// colliding red-side fills FLOAT well above the red signal's vivid 0.63 register
 // (the designer's 35%-opacity stand-off reference, 2026-06-09 — the earlier
 // sink-to-0.53 muted register still conflicted). Reds go pastel rose
-// (reduced chroma) and pick up black on-fill text vs error's white as a
+// (reduced chroma) and pick up black on-fill text vs the red signal's white as a
 // second differentiation channel. (The 'bright' orange register was cut —
 // orange-side colliders keep identity via the component rule.)
 export const DARK_COLLIDER_MUTED_L = 0.80

@@ -1,8 +1,8 @@
 // Canonical signal color definitions. Signals run through the same
-// generateScale pipeline as brands — stop 9 anchors to the canonical hex,
-// everything else derives. This keeps signal ramps on the same luminance
-// ladder as brand ramps, and makes brand↔signal collision detection a
-// comparison between two generated scales.
+// generateScale pipeline as brands — the canonical hex anchors the cta
+// (the off-scale action fill), and the rest of the scale derives. This keeps
+// signal ramps on the same luminance ladder as brand ramps, and makes
+// brand↔signal collision detection a comparison between two generated scales.
 //
 // Tolerances are the room each signal has to move during collision
 // resolution (rung 2 of the escalation ladder): hueShift is how far the
@@ -13,7 +13,8 @@
 export interface SignalDef {
   name: 'red' | 'yellow' | 'green' | 'info-color'
   hex: string
-  // OKLCH of hex, for reference and collision math: stop-9 target
+  // OKLCH of the canonical hex. H feeds the collision hue-distance check;
+  // L and C are reference-only (not read by the engine).
   L: number
   C: number
   H: number
@@ -22,7 +23,7 @@ export interface SignalDef {
   // Extra whole-ramp chroma applied when this signal yields (hue-shifts):
   // the cool-shifted lemon warning washes out without it.
   yieldChromaScale: number
-  // Dark-mode fill level (stop 9). Without distinct levels three of the
+  // Min L for the dark-mode cta fill. Without distinct levels three of the
   // four signals resolved within 0.02 L of each other (grayscale
   // check) — the ladder is deliberate: red deepest at the 0.63 default
   // (white text, severity register), info-color 0.70 (black text), green 0.75

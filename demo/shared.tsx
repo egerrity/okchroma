@@ -22,8 +22,8 @@ export const FONT_STACK = "'Inter', -apple-system, system-ui, sans-serif"
 //   accented-inverse primary: accent  subtle: brand
 // The "accent" Family is emitted as the `secondary` primitive prefix (the role
 // was renamed in the token rename); prim() maps Family → primitive prefix.
-// Stops are the post-rename token names: surface scale paper/wash/accent, the
-// cta-1/cta-2 fill pair, ink/ink-alt text, on-cta on-fill text.
+// Stops are the post-rename token names: scale paper/wash/accent, the highlight-9/10
+// rung, the cta-1/cta-2 fill pair, ink-11/ink-12 text, on-cta/on-highlight on-fill text.
 type Family = 'brand' | 'accent'
 function accentModeCss(mode: AccentMode, primary: Family, subtle: Family): string {
   const other = (f: Family): Family => (f === 'brand' ? 'accent' : 'brand')
@@ -401,19 +401,19 @@ export function ScaleStrip({ label, prefix }: { label: string; prefix: string })
   )
 }
 
-// Stage 3 INTERIM — the surface scale is now 1–8 (paper/wash/accent); the
-// emphasis fills (cta/highlight) and text roles (ink/ink-alt) were pulled OUT
-// of the scale into named roles. This renders the honest 1–8 surface ramp
+// Stage 3 INTERIM — the scale is now 1–8 (paper/wash/accent); the cta was pulled
+// OUT (off-scale: cta-1/cta-2), while the highlight rung (9/10) and text roles
+// (ink-11/ink-12) stay in the scale. This renders the honest 1–8 scale ramp
 // (uniform across every ramp kind) with the new token names, so the display is
 // correct rather than dangling on old 1–12 numbers.
-// TODO(stage3): re-skin as categorized cards (surface 1–8 row + role chips for
-// cta-1/cta-2 · highlight-1/highlight-2 · ink/ink-alt, each on-fill chip in its
+// TODO(stage3): re-skin as categorized cards (scale 1–8 row + role chips for
+// cta-1/cta-2 · highlight-9/highlight-10 · ink-11/ink-12, each on-fill chip in its
 // real on-cta/on-highlight polarity). PENDING THE OWNER MOCKUP.
-const SURFACE_SCALE = ['paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'accent-6', 'accent-7', 'accent-8']
+const SCALE_STOPS = ['paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'accent-6', 'accent-7', 'accent-8']
 export function RampRow({ prefix }: { prefix: string }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${SURFACE_SCALE.length}, 1fr)`, gap: 4 }}>
-      {SURFACE_SCALE.map((tok, i) => (
+    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${SCALE_STOPS.length}, 1fr)`, gap: 4 }}>
+      {SCALE_STOPS.map((tok, i) => (
         <div key={tok}>
           <div style={{ height: 48, borderRadius: 4, background: `var(--${prefix}-${tok})`, border: '1px solid var(--border-subtle)' }} />
           <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--fg-subtle)', marginTop: 4 }}>{i + 1}</div>

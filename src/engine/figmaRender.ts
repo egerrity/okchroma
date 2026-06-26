@@ -75,7 +75,7 @@ export interface ThemeInput {
   // CSS path.
   neutralLevel?: NeutralLevel
   // Final per-signal scales (base signals already merged with the brand's
-  // signalOverrides by the caller), e.g. error / warning / success / info.
+  // signalOverrides by the caller), named by identity: red / yellow / green / info-color.
   signals: Array<{ name: string; scale: GeneratedScale }>
 }
 
