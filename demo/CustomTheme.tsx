@@ -276,10 +276,12 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   ]
   const swatchCell = (prefix: string, stop: string) => {
     const cv = (t: string) => `var(--${prefix}-${t})`
-    const aa: React.CSSProperties = { height: 36, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700 }
+    // chip "Aa" (highlight/cta) carries its on-color at a slightly lighter weight;
+    // ink "Aa" is a big, heavy glyph so it reads as a text swatch, not a chip label.
+    const aa: React.CSSProperties = { height: 36, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600 }
     if (stop.startsWith('highlight')) return <div style={{ ...aa, background: cv(stop), color: cv('on-highlight') }}>Aa</div>
     if (stop.startsWith('cta')) return <div style={{ ...aa, background: cv(stop), color: cv('on-cta') }}>Aa</div>
-    if (stop.startsWith('ink')) return <div style={{ ...aa, color: cv(stop) }}>Aa</div>
+    if (stop.startsWith('ink')) return <div style={{ ...aa, fontSize: 18, fontWeight: 900, color: cv(stop) }}>Aa</div>
     return <div style={{ height: 36, borderRadius: 6, background: cv(stop), border: '1px solid var(--border-subtle)' }} />
   }
   // "ID" label legible on the identity swatch (which can be light, e.g. a yellow
