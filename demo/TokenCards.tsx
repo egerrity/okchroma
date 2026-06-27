@@ -109,7 +109,9 @@ export function TokenCards({ prefix, kind }: { prefix: string; kind: RampKind })
         ) : (
           <div style={{ ...box, background: v('highlight-9') }}>
             <div style={{ ...boxLabel, color: v('on-highlight') }}>inset surface &middot; highlight</div>
-            <div style={{ ...boxBody, color: v('on-highlight') }}>Emphasis copy in on-highlight text.</div>
+            <div style={{ background: v('highlight-10'), borderRadius: 8, padding: '10px 12px' }}>
+              <div style={{ ...boxBody, color: v('on-highlight') }}>Emphasis copy in on-highlight text.</div>
+            </div>
           </div>
         )}
       </div>

@@ -3,8 +3,8 @@ export interface StopSpec {
   chromaMultiplier: number
 }
 
-export const LIGHT_L = [0.993, 0.982, 0.960, 0.936, 0.903, 0.860, 0.806, 0.738, 0.669, 0.599, 0.530, 0.300]
-export const DARK_L  = [0.178, 0.213, 0.252, 0.285, 0.313, 0.348, 0.420, 0.550, 0.633, 0.717, 0.800, 0.940]
+export const LIGHT_L = [0.993, 0.982, 0.960, 0.936, 0.903, 0.860, 0.806, 0.738, 0.600, 0.560, 0.530, 0.300]
+export const DARK_L  = [0.178, 0.213, 0.252, 0.285, 0.313, 0.348, 0.420, 0.550, 0.600, 0.640, 0.800, 0.940]
 
 export const LIGHT_SAT = [0.50, 0.85, 0.95, 0.95, 0.92, 0.85, 0.78, 0.78]
 export const LIGHT_STOPS: { rootL: number; satFraction: number }[] =

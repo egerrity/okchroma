@@ -1,19 +1,29 @@
-// Stage 2 highlight audit — mirrors dark-audit, but for the additive tokens.
-// Validates brand/secondary highlight-9/10 across the real fleet:
-//   - light surface monotonic: accent-8 > hl9 > hl10; dark hover pair distinct
-//   - on-highlight: COMPUTED polarity (shared ons rule), legible — the rung VALUE
-//     moves until the picked side clears WCAG 4.5 (placeLegibleRung). Uniform
-//     white-text in both modes now (the old dark black-flip is retired).
-//   - identity === input hex
-// Reports numbers first (so dark is inspectable), then PASS/FAIL.
+// Highlight + off-scale-cta audit. Validates the additive tokens the dark-audit's
+// stop-1..12 window doesn't cover: the highlight rung (slot 9/10) and the off-scale
+// cta pair.
+//
+// What it gates (all code-grounded, verified against the real pipeline):
+//   1. on-highlight legibility — judged by APCA at the BODY-TEXT bar (Lc 60). The
+//      gate runs over an AGNOSTIC hue×chroma fixture (synthetic inputs spanning the
+//      space), not the brand list: the bar is the worst-case hue, so clearing it
+//      clears every real brand for free. Covers hl9 AND hl10 (the hover); on-highlight
+//      is ONE token, so hl10 is judged with hl9's chosen pole.
+//   2. structure on the real fleet — light surface monotonic (accent-8 > hl9 > hl10),
+//      dark hl9/hl10 distinct, identity === input hex.
+//   3. neutral cta is LOW-HIERARCHY — it tracks the scale's own stop 4 (cta) / stop 5
+//      (hover), so it FLIPS per mode (near-white wash in light, dark wash in dark) and
+//      on-cta stays legible.
+//   4. signal cta legible + clean 12-stop scale.
+//   5. blessed-snapshot regression on the highlight rung + off-scale cta (L,C,H).
 
 import { BRANDS } from '../src/brands'
 import { SECONDARIES } from '../src/secondaries'
 import { SIGNALS } from '../src/engine/signals'
 import { resolveBrand, SIGNAL_SCALES } from '../src/engine/resolve'
-import { wcagY, contrastRatio } from '../src/engine/constraints'
-import { YELLOW_L_LIFT } from '../src/engine/stopTable'
-import { generateNeutralScale, type GeneratedScale, type ColorStop } from '../src/engine/colorEngine'
+import { wcagY, contrastRatio, apcaY, apcaLc, clampChromaToGamut, oklchToLinearRgb } from '../src/engine/constraints'
+import { YELLOW_L_LIFT, DARK_BRAND_FILL_MIN_L } from '../src/engine/stopTable'
+import { generateNeutralScale, generateScale, type GeneratedScale, type ColorStop } from '../src/engine/colorEngine'
+import { darkChromaCurve } from '../src/engine/darkChromaCurve'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -24,6 +34,10 @@ const hx = (s: ColorStop) => {
 }
 const whiteWcag = (s: ColorStop) => contrastRatio(1.0, wcagY(s.L, s.C, s.H))
 const blackWcag = (s: ColorStop) => contrastRatio(wcagY(s.L, s.C, s.H), 0)
+// APCA Lc of a text pole on a fill (white → txtY 1.0, black → 0.0), mirroring the
+// engine's onTextIsWhite. HL_BODY = APCA body-text floor: the bar the highlight clears.
+const onApcaLc = (s: ColorStop, white: boolean | undefined) => Math.abs(apcaLc(white ? 1.0 : 0.0, apcaY(s.r, s.g, s.b)))
+const HL_BODY = 60
 const hueDelta = (h: number, c: number) => { let d = (h - c) % 360; if (d > 180) d -= 360; if (d < -180) d += 360; return d }
 const isYellow = (scale: GeneratedScale) =>
   scale.brandC >= 0.008 && Math.abs(hueDelta(scale.brandH, YELLOW_L_LIFT.centerH)) <= YELLOW_L_LIFT.sigmaDeg
@@ -31,6 +45,34 @@ const isYellow = (scale: GeneratedScale) =>
 const fails: string[] = []
 const ok = (cond: boolean, msg: string) => { if (!cond) fails.push(msg) }
 
+// ── 1. Agnostic legibility fixture — the bar is the worst-case hue, not a brand ──
+// Sweep hue × chroma over synthetic inputs and gate the on-highlight pick at the
+// body-text APCA floor (Lc 60) on hl9 and its hover hl10, both modes.
+const encSrgb = (c: number) => { c = Math.min(1, Math.max(0, c)); return c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055 }
+const synthHex = (L: number, C: number, H: number) => {
+  const [r, g, b] = oklchToLinearRgb(L, clampChromaToGamut(L, C, H), H)
+  const h2 = (v: number) => Math.round(Math.max(0, Math.min(1, encSrgb(v))) * 255).toString(16).padStart(2, '0')
+  return `#${h2(r)}${h2(g)}${h2(b)}`
+}
+const FIX_FLOOR = { darkFillMinL: DARK_BRAND_FILL_MIN_L, enforceOnFillContrast: true, darkChromaCurve, highlight: true } as const
+const worst = { l9: 999, l10: 999, d9: 999, d10: 999 }
+let fixN = 0
+for (let H = 0; H < 360; H += 15) for (const C of [0.04, 0.08, 0.12, 0.16, 0.20]) {
+  const s = generateScale(synthHex(0.55, C, H), `fix-h${H}c${C}`, undefined, FIX_FLOOR)
+  const lc = { l9: onApcaLc(s.light[8], s.onHighlightIsWhite), l10: onApcaLc(s.light[9], s.onHighlightIsWhite),
+               d9: onApcaLc(s.dark[8], s.onHighlightIsWhiteDark), d10: onApcaLc(s.dark[9], s.onHighlightIsWhiteDark) }
+  worst.l9 = Math.min(worst.l9, lc.l9); worst.l10 = Math.min(worst.l10, lc.l10)
+  worst.d9 = Math.min(worst.d9, lc.d9); worst.d10 = Math.min(worst.d10, lc.d10)
+  ok(lc.l9 >= HL_BODY, `agnostic H${H} C${C} light hl9 on-text below body-text (Lc ${lc.l9.toFixed(1)})`)
+  ok(lc.l10 >= HL_BODY, `agnostic H${H} C${C} light hl10 on-text below body-text (Lc ${lc.l10.toFixed(1)})`)
+  ok(lc.d9 >= HL_BODY, `agnostic H${H} C${C} dark hl9 on-text below body-text (Lc ${lc.d9.toFixed(1)})`)
+  ok(lc.d10 >= HL_BODY, `agnostic H${H} C${C} dark hl10 on-text below body-text (Lc ${lc.d10.toFixed(1)})`)
+  fixN++
+}
+console.log(`=== agnostic legibility fixture: ${fixN} hue×chroma points · body-text bar Lc ${HL_BODY} ===`)
+console.log(`  worst on-highlight Lc — light hl9 ${worst.l9.toFixed(1)} hl10 ${worst.l10.toFixed(1)} | dark hl9 ${worst.d9.toFixed(1)} hl10 ${worst.d10.toFixed(1)}`)
+
+// ── 2. Real fleet — structure (monotonic / distinct / identity) + printout ──
 interface Item { name: string; hex: string; scale: GeneratedScale }
 const items: Item[] = []
 for (const b of BRANDS) items.push({ name: b.name, hex: b.hex, scale: resolveBrand(b.hex, b.slug, { exact: b.exact, archetypeOverride: b.archetypeOverride, style: b.style }).scale })
@@ -39,86 +81,61 @@ for (const slug of Object.keys(SECONDARIES)) {
   items.push({ name: `${slug}-secondary`, hex: SECONDARIES[slug], scale: resolveBrand(SECONDARIES[slug], `${slug} accent`, { exact: b.exact, style: b.style }).scale })
 }
 
-console.log(`=== highlight-1/2 across ${items.length} brand+secondary ramps ===`)
-console.log(`(yellow band = within ${YELLOW_L_LIFT.sigmaDeg}° of H${YELLOW_L_LIFT.centerH}; flagged for reference — highlight holds white in light, flips to black in dark)\n`)
+console.log(`\n=== highlight structure across ${items.length} brand+secondary ramps ===`)
 console.log('  ramp                    H     yel | LIGHT hl9            hl10           | DARK  hl9            hl10')
 for (const { name, hex, scale } of items) {
-  const el = scale.light.slice(8, 10), ed = scale.dark.slice(8, 10)  // slot 9/10 = highlight-9/10
-  if (el.length < 2 || ed.length < 2) { fails.push(`${name}: missing highlight stops`); continue }
-  const [l9, l10] = el, [d9, d10] = ed
+  const [l9, l10] = scale.light.slice(8, 10), [d9, d10] = scale.dark.slice(8, 10)
+  if (!l9 || !l10 || !d9 || !d10) { fails.push(`${name}: missing highlight stops`); continue }
   const a8L = scale.light[7].L
-  const yel = isYellow(scale)
-
-  // Light surface monotonic (the highlight is a colored chip below accent-8); the
-  // (hl9,hl10) hover pair is two distinct states in BOTH modes — the old dark
-  // "black-flip" (hover lightens) is retired now the highlight is uniform.
-  ok(a8L > l9.L && l9.L > l10.L, `${name}: light surface not monotonic (a8 ${f(a8L)} > hl9 ${f(l9.L)} > hl10 ${f(l10.L)})`)
-  ok(Math.abs(d9.L - d10.L) > 0.005, `${name}: dark highlight pair not distinct (hl9 ${f(d9.L)} hl10 ${f(d10.L)})`)
-
-  // on-highlight polarity is COMPUTED (shared ons rule), NOT forced. The rung's
-  // VALUE moves until the picked side clears WCAG (placeLegibleRung), so we assert
-  // LEGIBILITY of the computed pick — uniform white-text in both modes now.
-  const polL = scale.onHighlightIsWhite, polD = scale.onHighlightIsWhiteDark
-  for (const [mode, s, pol] of [['light', l9, polL], ['dark', d9, polD]] as const) {
-    const cr = pol ? whiteWcag(s) : blackWcag(s)
-    ok(cr >= 4.5, `${name} ${mode}: on-highlight ${pol ? 'white' : 'black'} fails WCAG on hl9 (${cr.toFixed(2)}:1)`)
-  }
-
-  // identity === the exact input hex (uppercased), mode-invariant
+  // Light scale descends, so the highlight sits below accent-8 and its hover below it.
+  ok(a8L > l9.L && l9.L > l10.L, `${name}: light not monotonic (accent-8 ${f(a8L)} > hl9 ${f(l9.L)} > hl10 ${f(l10.L)})`)
+  // Dark: hl9 (base) and hl10 (hover) are a distinct, ordered pair (hover lighter).
+  ok(Math.abs(d9.L - d10.L) > 0.005, `${name}: dark hl9/hl10 not distinct (${f(d9.L)} / ${f(d10.L)})`)
   ok(scale.identityHex === hex.toUpperCase(), `${name}: identity ${scale.identityHex} != input ${hex.toUpperCase()}`)
-
-  const yflag = yel ? 'Y' : '·'
-  console.log(`  ${name.padEnd(22)} ${scale.brandH.toFixed(0).padStart(3)}   ${yflag}  | ${hx(l9)} L${f(l9.L)} w${whiteWcag(l9).toFixed(1)}  ${hx(l10)} L${f(l10.L)} | ${hx(d9)} L${f(d9.L)} w${whiteWcag(d9).toFixed(1)}  ${hx(d10)} L${f(d10.L)}`)
+  console.log(`  ${name.padEnd(22)} ${scale.brandH.toFixed(0).padStart(3)}   ${isYellow(scale) ? 'Y' : '·'}  | ${hx(l9)} L${f(l9.L)} w${whiteWcag(l9).toFixed(1)}  ${hx(l10)} L${f(l10.L)} | ${hx(d9)} L${f(d9.L)} w${whiteWcag(d9).toFixed(1)}  ${hx(d10)} L${f(d10.L)}`)
 }
 
-// ── neutral (now GENERATED per brand): the off-scale cta is the subtle near-white
-// button in BOTH modes — it does not flip (the owner-accepted non-flipping cta).
-// The highlight rung (scale slot 9/10) holds white like every other rung. Checked
-// across representative hues. ──
+// ── 3. Neutral — low-hierarchy cta tracks stop 4 (cta) / stop 5 (hover), flips ──
 const NEUTRAL_HUES = [30, 90, 143, 210, 270, 320]
 const neutralByHue = NEUTRAL_HUES.map(h => ({ h, s: generateNeutralScale(h, 'default') }))
-console.log(`\n=== neutral cta (off-scale) + highlight (slot 9) — default level, ${NEUTRAL_HUES.length} hues ===`)
+console.log(`\n=== neutral cta (tracks stop 4/5, flips) + highlight on-text — ${NEUTRAL_HUES.length} hues ===`)
 for (const { h, s } of neutralByHue) {
-  const ctaL = s.cta, ctaD = s.ctaDark         // off-scale cta-1
-  const hlL = s.light[8], hlD = s.dark[8]      // slot 9 = highlight-9
-  // cta = subtle near-white button, both modes (does NOT flip)
-  ok(ctaL.L > 0.85, `neutral h${h} cta light not near-white (L ${f(ctaL.L)})`)
-  ok(ctaD.L > 0.85, `neutral h${h} cta dark not near-white (L ${f(ctaD.L)})`)
-  // on-cta passes WCAG on the near-white cta, both modes
-  ok((s.onFillTextIsWhite ? whiteWcag(ctaL) : blackWcag(ctaL)) >= 4.5, `neutral h${h} on-cta light fails`)
-  ok((s.onFillTextIsWhiteDark ? whiteWcag(ctaD) : blackWcag(ctaD)) >= 4.5, `neutral h${h} on-cta dark fails`)
-  // highlight on-text is COMPUTED + legible, both modes (not forced white)
-  ok((s.onHighlightIsWhite ? whiteWcag(hlL) : blackWcag(hlL)) >= 4.5, `neutral h${h} light: highlight on-text fails WCAG`)
-  ok((s.onHighlightIsWhiteDark ? whiteWcag(hlD) : blackWcag(hlD)) >= 4.5, `neutral h${h} dark: highlight on-text fails WCAG`)
-  console.log(`  h${String(h).padStart(3)}  cta ${hx(ctaL)} L${f(ctaL.L)}/${hx(ctaD)} L${f(ctaD.L)}  |  hl ${hx(hlL)} w${whiteWcag(hlL).toFixed(1)}/${hx(hlD)} w${whiteWcag(hlD).toFixed(1)}`)
+  const ctaL = s.cta, ctaD = s.ctaDark, hovL = s.ctaHover, hovD = s.ctaHoverDark
+  const hlL = s.light[8], hlD = s.dark[8]
+  // cta == stop 4 and hover == stop 5, in EACH mode → it flips with the scale.
+  ok(Math.abs(ctaL.L - s.light[3].L) < 0.01, `neutral h${h} cta light != stop4 (${f(ctaL.L)} vs ${f(s.light[3].L)})`)
+  ok(Math.abs(ctaD.L - s.dark[3].L) < 0.01, `neutral h${h} cta dark != stop4 (${f(ctaD.L)} vs ${f(s.dark[3].L)})`)
+  ok(Math.abs(hovL.L - s.light[4].L) < 0.01, `neutral h${h} ctaHover light != stop5 (${f(hovL.L)} vs ${f(s.light[4].L)})`)
+  ok(Math.abs(hovD.L - s.dark[4].L) < 0.01, `neutral h${h} ctaHover dark != stop5 (${f(hovD.L)} vs ${f(s.dark[4].L)})`)
+  // on-cta legible on the wash-level cta, both modes (flips black↔white with the cta)
+  ok((s.onFillTextIsWhite ? whiteWcag(ctaL) : blackWcag(ctaL)) >= 4.5, `neutral h${h} on-cta light fails WCAG`)
+  ok((s.onFillTextIsWhiteDark ? whiteWcag(ctaD) : blackWcag(ctaD)) >= 4.5, `neutral h${h} on-cta dark fails WCAG`)
+  // highlight on-text legible at the body-text APCA bar, both modes
+  ok(onApcaLc(hlL, s.onHighlightIsWhite) >= HL_BODY, `neutral h${h} light: highlight on-text below body-text (Lc ${onApcaLc(hlL, s.onHighlightIsWhite).toFixed(1)})`)
+  ok(onApcaLc(hlD, s.onHighlightIsWhiteDark) >= HL_BODY, `neutral h${h} dark: highlight on-text below body-text (Lc ${onApcaLc(hlD, s.onHighlightIsWhiteDark).toFixed(1)})`)
+  console.log(`  h${String(h).padStart(3)}  cta ${hx(ctaL)} L${f(ctaL.L)} / ${hx(ctaD)} L${f(ctaD.L)}  (stop4 ${f(s.light[3].L)}/${f(s.dark[3].L)})  | on-cta ${s.onFillTextIsWhite ? 'blk' : 'wht'}→${s.onFillTextIsWhiteDark ? 'blk' : 'wht'}`)
 }
 
-// signals: on-cta polarity must pass on the (off-scale) cta in both modes; and a
-// signal carries a clean 12-stop scale (highlight native at 9/10, cta off-scale).
+// ── 4. Signals — on-cta legible both modes, clean 12-stop scale ──
 for (const sig of SIGNALS) {
   const s = SIGNAL_SCALES.get(sig.name)!.scale
   for (const [mode, st, pol] of [['light', s.cta, s.onFillTextIsWhite], ['dark', s.ctaDark, s.onFillTextIsWhiteDark]] as const) {
     ok((pol ? whiteWcag(st) : blackWcag(st)) >= 4.5, `signal ${sig.name} ${mode}: on-cta ${pol ? 'white' : 'black'} fails (${(pol ? whiteWcag(st) : blackWcag(st)).toFixed(2)})`)
   }
-  ok(s.light.length === 12 && s.dark.length === 12, `signal ${sig.name} should be a clean 12-stop scale (light ${s.light.length}, dark ${s.dark.length})`)
+  ok(s.light.length === 12 && s.dark.length === 12, `signal ${sig.name} not a clean 12-stop scale (light ${s.light.length}, dark ${s.dark.length})`)
 }
 
-// ── blessed-snapshot regression for the off-scale / highlight tokens ──────────
-// --bless records the highlight rung AND the off-scale cta (L,C,H per ramp, both
-// modes) after visual approval; default diffs against it so future engine changes
-// can't silently move these tokens. The cta lives here because it left the
-// dark-audit slice(0,12) window when it moved off-scale — this is its guard now.
-// (Stops 1–12 are guarded by dark-audit separately.)
+// ── 5. Blessed-snapshot regression — highlight rung (slot 9/10) + off-scale cta ──
+// --bless records L,C,H per ramp (both modes) after visual approval; the default run
+// diffs against it so future engine changes can't silently move these tokens. (Stops
+// 1–12 are guarded separately by dark-audit.)
 const SNAP_PATH = path.join(process.cwd(), 'scripts', 'highlight-snapshot.json')
 const TOL = 0.015
-// rung pair (slot 9/10) + the off-scale cta pair (cta-1/cta-2), both modes.
 const rungAndCta = (s: GeneratedScale) =>
-  [...s.light.slice(8, 10), ...s.dark.slice(8, 10), s.cta, s.ctaHover, s.ctaDark, s.ctaHoverDark]
-    .flatMap(c => [c.L, c.C, c.H])
+  [...s.light.slice(8, 10), ...s.dark.slice(8, 10), s.cta, s.ctaHover, s.ctaDark, s.ctaHoverDark].flatMap(c => [c.L, c.C, c.H])
 const snapshot = (): Record<string, number[]> => {
   const o: Record<string, number[]> = {}
   for (const { name, scale } of items) o[name] = rungAndCta(scale)
-  // Neutral is now per-brand-hue — snapshot each representative hue's rung+cta.
   for (const { h, s } of neutralByHue) o[`neutral-h${h}`] = rungAndCta(s)
   return o
 }
@@ -133,7 +150,7 @@ if (process.argv.includes('--bless')) {
     const r = blessed[k]
     if (!r) { drift.push(`${k} (new, not in snapshot)`); continue }
     for (let i = 0; i < v.length; i += 3) {
-      if (Math.abs(v[i] - r[i]) > TOL) { drift.push(`${k} ext-stop ${i / 3}: ΔL ${Math.abs(v[i] - r[i]).toFixed(3)} vs blessed`); break }
+      if (Math.abs(v[i] - r[i]) > TOL) { drift.push(`${k} token ${i / 3}: ΔL ${Math.abs(v[i] - r[i]).toFixed(3)} vs blessed`); break }
     }
   }
   console.log(`\nhighlight snapshot regression: ${drift.length === 0 ? 'clean — matches blessed' : `${drift.length} drifted`}`)
@@ -145,4 +162,4 @@ if (process.argv.includes('--bless')) {
 
 console.log()
 if (fails.length) { console.error(`FAIL: ${fails.length}\n` + fails.map(s => '  - ' + s).join('\n')); process.exit(1) }
-console.log('PASS — highlight + identity + neutral cta + on-text polarity (brand/secondary/neutral/signals), both modes, all assertions.')
+console.log('PASS — agnostic on-highlight legibility (Lc 60, hl9+hl10) · structure · neutral cta tracks stop 4/5 · signals · snapshot.')

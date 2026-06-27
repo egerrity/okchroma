@@ -431,7 +431,11 @@ export function generateScale(
       hueAt: (l: number) => number, chromaAt: (l: number, h: number) => number,
     ): { s: ColorStop; white: boolean } => {
       const s = rung(stop, L0, hueAt, chromaAt)
-      const white = onTextIsWhite(apcaY(s.r, s.g, s.b), s.L, s.C, s.H, !!opts?.enforceOnFillContrast)
+      // Highlight on-text is judged by APCA, NOT WCAG (enforce=false): keep whichever
+      // pole APCA finds legible, let it fall out. The WCAG-4.5 floor instead FORCES the
+      // pole that clears 4.5 — which on a mid-L fill can be the body-illegible one. The
+      // highlight L is set outside the body-text dead zone so the picked pole clears Lc 60.
+      const white = onTextIsWhite(apcaY(s.r, s.g, s.b), s.L, s.C, s.H, false)
       return { s, white }
     }
 
@@ -512,9 +516,23 @@ export function generateNeutralScale(
   const { r, g, b } = oklchToSrgbUnclamped(0.5, 0.006, h)
   const ch = (v: number) => Math.round(Math.min(1, Math.max(0, v)) * 255).toString(16).padStart(2, '0')
   const grayHex = `#${ch(r)}${ch(g)}${ch(b)}`
-  return generateScale(grayHex, 'neutral', 'light', {
+  const scale = generateScale(grayHex, 'neutral', 'light', {
     chromaCurve: neutralChromaCurve(brandH, level),
     highlight: true,
     enforceOnFillContrast: true,
   })
+
+  // The neutral cta is LOW-HIERARCHY: unlike a brand/signal cta (a bold off-scale
+  // fill), it reads at the quiet wash level. A fed fill can't flip — it's mode-stable
+  // and floored in dark — so we set its L target to the scale's own stop 4 (cta) and
+  // stop 5 (hover), which DO flip via LIGHT_L/DARK_L (light ~0.936/0.903, dark
+  // ~0.285/0.313). on-cta is recomputed so the text stays legible in each mode.
+  const asCta = (stop: number, src: ColorStop) => makeStop(stop, src.L, src.C, src.H)
+  scale.cta = asCta(9, scale.light[3])
+  scale.ctaHover = asCta(10, scale.light[4])
+  scale.ctaDark = asCta(9, scale.dark[3])
+  scale.ctaHoverDark = asCta(10, scale.dark[4])
+  scale.onFillTextIsWhite = onTextIsWhite(apcaY(scale.cta.r, scale.cta.g, scale.cta.b), scale.cta.L, scale.cta.C, scale.cta.H, true)
+  scale.onFillTextIsWhiteDark = onTextIsWhite(apcaY(scale.ctaDark.r, scale.ctaDark.g, scale.ctaDark.b), scale.ctaDark.L, scale.ctaDark.C, scale.ctaDark.H, true)
+  return scale
 }
