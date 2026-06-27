@@ -71,14 +71,9 @@ mid-lightness effect.
 This is the opposite of the old dark mode ("lift this fill, darken that rung, mute this
 red"). The value now falls out of one pipeline.
 
-## The two accents (cta vs highlight)
 
 - **cta** = `brandColorfulness × darkCtaTrim(hue)` — keeps most of its loudness (it's the
   primary action), trimmed gently on the glowy hues. The bright, brand-true element.
-- **highlight** = a *predictable* moderate chip that, in dark mode, **flips to black
-  on-text** and sits at the lightness where black is legible (~L0.58), with a midpoint
-  chroma. Darker and quieter than the cta — draws attention without screaming. One rule
-  for all colors (it finds the black-legible lightness by formula, not per color).
 
-Role hierarchy on dark: **cta** (bright/loud) → **highlight** (deep/predictable) →
-**surfaces** (calm, tinted) → **paper** (deep, faintly tinted).
+
+
