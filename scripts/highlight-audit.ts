@@ -8,8 +8,11 @@
 //      space), not the brand list: the bar is the worst-case hue, so clearing it
 //      clears every real brand for free. Covers hl9 AND hl10 (the hover); on-highlight
 //      is ONE token, so hl10 is judged with hl9's chosen pole.
-//   2. structure on the real fleet — light surface monotonic (highlight-8 > hl9 > hl10),
-//      dark hl9/hl10 distinct, identity === input hex.
+//   2. structure on the real fleet — hl9 > hl10 (fill above its hover), dark hl9/hl10
+//      distinct, identity === input hex. (stop 8 and hl9 may converge in L for luminous
+//      hues — they are not a border/fill pair — so their ordering is NOT asserted.)
+//   2b. non-text contrast — stop 8 (highlight-8) clears WCAG 1.4.11 3:1 vs paper-2 in
+//      BOTH modes, swept agnostically (worst-case hue×chroma×L is the bar).
 //   3. neutral cta is LOW-HIERARCHY — it tracks the scale's own stop 4 (cta) / stop 5
 //      (hover), so it FLIPS per mode (near-white wash in light, dark wash in dark) and
 //      on-cta stays legible.
@@ -72,6 +75,28 @@ for (let H = 0; H < 360; H += 15) for (const C of [0.04, 0.08, 0.12, 0.16, 0.20]
 console.log(`=== agnostic legibility fixture: ${fixN} hue×chroma points · body-text bar Lc ${HL_BODY} ===`)
 console.log(`  worst on-highlight Lc — light hl9 ${worst.l9.toFixed(1)} hl10 ${worst.l10.toFixed(1)} | dark hl9 ${worst.d9.toFixed(1)} hl10 ${worst.d10.toFixed(1)}`)
 
+// ── 1b. Agnostic non-text contrast — stop 8 (highlight-8) clears WCAG 1.4.11 3:1
+// vs paper-2 (the scale's own stop 2) in BOTH modes. The bar is the worst-case
+// hue×chroma×L, so clearing it clears every brand. Guards the light-ramp clamp
+// from silently re-drifting (the failure this audit step was added for). ──
+const NONTEXT = 3.0
+const s8c = { light: 999, lAt: '', dark: 999, dAt: '' }
+const vsPaper2 = (s: GeneratedScale, mode: 'light' | 'dark') => {
+  const arr = mode === 'light' ? s.light : s.dark
+  return contrastRatio(wcagY(arr[7].L, arr[7].C, arr[7].H), wcagY(arr[1].L, arr[1].C, arr[1].H))
+}
+let s8n = 0
+for (let H = 0; H < 360; H += 15) for (const C of [0.04, 0.08, 0.12, 0.16, 0.20, 0.26]) for (const L of [0.45, 0.6, 0.7, 0.82]) {
+  const s = generateScale(synthHex(L, C, H), `nt-h${H}c${C}l${L}`, undefined, FIX_FLOOR)
+  const cl = vsPaper2(s, 'light'), cd = vsPaper2(s, 'dark')
+  if (cl < s8c.light) { s8c.light = cl; s8c.lAt = `H${H} C${C} L${L}` }
+  if (cd < s8c.dark) { s8c.dark = cd; s8c.dAt = `H${H} C${C} L${L}` }
+  ok(cl >= NONTEXT, `agnostic H${H} C${C} L${L} light stop-8 below 3:1 vs paper-2 (${cl.toFixed(2)})`)
+  ok(cd >= NONTEXT, `agnostic H${H} C${C} L${L} dark stop-8 below 3:1 vs paper-2 (${cd.toFixed(2)})`)
+  s8n++
+}
+console.log(`=== agnostic non-text 3:1 (stop 8 vs paper-2): ${s8n} points · worst light ${s8c.light.toFixed(2)}:1 (${s8c.lAt}) · dark ${s8c.dark.toFixed(2)}:1 (${s8c.dAt}) ===`)
+
 // ── 2. Real fleet — structure (monotonic / distinct / identity) + printout ──
 interface Item { name: string; hex: string; scale: GeneratedScale }
 const items: Item[] = []
@@ -86,9 +111,10 @@ console.log('  ramp                    H     yel | LIGHT hl9            hl10    
 for (const { name, hex, scale } of items) {
   const [l9, l10] = scale.light.slice(8, 10), [d9, d10] = scale.dark.slice(8, 10)
   if (!l9 || !l10 || !d9 || !d10) { fails.push(`${name}: missing highlight stops`); continue }
-  const a8L = scale.light[7].L
-  // Light scale descends, so the highlight sits below highlight-8 and its hover below it.
-  ok(a8L > l9.L && l9.L > l10.L, `${name}: light not monotonic (highlight-8 ${f(a8L)} > hl9 ${f(l9.L)} > hl10 ${f(l10.L)})`)
+  // hl9 (fill) sits above its hover hl10. stop 8 is the 3:1-clamped accessibility rung;
+  // it may converge with hl9 in L for luminous hues (owner: they are not a border/fill
+  // pair), so only the fill→hover order is asserted here.
+  ok(l9.L > l10.L, `${name}: highlight not monotonic (hl9 ${f(l9.L)} > hl10 ${f(l10.L)})`)
   // Dark: hl9 (base) and hl10 (hover) are a distinct, ordered pair (hover lighter).
   ok(Math.abs(d9.L - d10.L) > 0.005, `${name}: dark hl9/hl10 not distinct (${f(d9.L)} / ${f(d10.L)})`)
   ok(scale.identityHex === hex.toUpperCase(), `${name}: identity ${scale.identityHex} != input ${hex.toUpperCase()}`)
