@@ -8,9 +8,9 @@ const SHARED_NAMES: Record<number, string> = {
   3: 'wash-3',
   4: 'wash-4',
   5: 'wash-5',
-  6: 'accent-6',
-  7: 'accent-7',
-  8: 'accent-8',
+  6: 'wash-6',
+  7: 'wash-7',
+  8: 'highlight-8',
   11: 'ink-11',
   12: 'ink-12',
 }
@@ -32,14 +32,15 @@ export function onFillTokenName(kind: RampKind): string {
 }
 
 // Canonical emit order, uniform across every ramp (the white-label remap shape,
-// an explicit requirement of the original concept). The scale 1–8 (paper/wash/
-// accent) then the highlight rung (highlight-9/10 + on-highlight) read as one
-// contiguous ladder, then the text stops (ink-11/12), then the pulled-out
-// off-scale cta (cta-1/2 + on-cta), then identity. A ramp skips tokens it doesn't
-// have. Emitters sort by this, not by stop number.
+// an explicit requirement of the original concept). Paper (1–2) / wash (3–7, the
+// decoration stops) then the highlight group (highlight-8/9/10 — stop 8 is the 3:1
+// accessibility border where objects begin, 9/10 the solid fill — + on-highlight)
+// read as one contiguous ladder, then the text stops (ink-11/12), then the
+// pulled-out off-scale cta (cta-1/2 + on-cta), then identity. A ramp skips tokens
+// it doesn't have. Emitters sort by this, not by stop number.
 const TOKEN_ORDER = [
-  'paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'accent-6', 'accent-7', 'accent-8',
-  'highlight-9', 'highlight-10', 'on-highlight',
+  'paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'wash-6', 'wash-7',
+  'highlight-8', 'highlight-9', 'highlight-10', 'on-highlight',
   'ink-11', 'ink-12',
   'cta-1', 'cta-2', 'on-cta',
   'identity',

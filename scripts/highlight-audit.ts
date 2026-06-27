@@ -8,7 +8,7 @@
 //      space), not the brand list: the bar is the worst-case hue, so clearing it
 //      clears every real brand for free. Covers hl9 AND hl10 (the hover); on-highlight
 //      is ONE token, so hl10 is judged with hl9's chosen pole.
-//   2. structure on the real fleet — light surface monotonic (accent-8 > hl9 > hl10),
+//   2. structure on the real fleet — light surface monotonic (highlight-8 > hl9 > hl10),
 //      dark hl9/hl10 distinct, identity === input hex.
 //   3. neutral cta is LOW-HIERARCHY — it tracks the scale's own stop 4 (cta) / stop 5
 //      (hover), so it FLIPS per mode (near-white wash in light, dark wash in dark) and
@@ -87,8 +87,8 @@ for (const { name, hex, scale } of items) {
   const [l9, l10] = scale.light.slice(8, 10), [d9, d10] = scale.dark.slice(8, 10)
   if (!l9 || !l10 || !d9 || !d10) { fails.push(`${name}: missing highlight stops`); continue }
   const a8L = scale.light[7].L
-  // Light scale descends, so the highlight sits below accent-8 and its hover below it.
-  ok(a8L > l9.L && l9.L > l10.L, `${name}: light not monotonic (accent-8 ${f(a8L)} > hl9 ${f(l9.L)} > hl10 ${f(l10.L)})`)
+  // Light scale descends, so the highlight sits below highlight-8 and its hover below it.
+  ok(a8L > l9.L && l9.L > l10.L, `${name}: light not monotonic (highlight-8 ${f(a8L)} > hl9 ${f(l9.L)} > hl10 ${f(l10.L)})`)
   // Dark: hl9 (base) and hl10 (hover) are a distinct, ordered pair (hover lighter).
   ok(Math.abs(d9.L - d10.L) > 0.005, `${name}: dark hl9/hl10 not distinct (${f(d9.L)} / ${f(d10.L)})`)
   ok(scale.identityHex === hex.toUpperCase(), `${name}: identity ${scale.identityHex} != input ${hex.toUpperCase()}`)

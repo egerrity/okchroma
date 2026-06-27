@@ -21,5 +21,5 @@ for (const name of sample) {
   console.log(`  ${name.padEnd(14)} | ${f3(lh.L)}  ${lp}  ${f2(wW(lh)).padStart(5)}    ${f2(bW(lh)).padStart(5)}    | ${f3(dh.L)}  ${dp}  ${f2(wW(dh)).padStart(5)}    ${f2(bW(dh)).padStart(5)}`)
 }
 console.log('\nNote: LIGHT ships WHITE at ~4.6 (fill darkened DOWN into a dark button on near-white surfaces — desirable).')
-console.log('      DARK ships WHITE at ~4.6 too, but the same darken pulls the chip onto accent-8 (destructive).')
-console.log('      Light accent-8 L=0.738 (chip sits well below it); dark accent-8 L=0.55 (chip collapses onto it).')
+console.log('      DARK ships WHITE at ~4.6 too, but the same darken pulls the chip onto highlight-8 (destructive).')
+console.log('      Light highlight-8 L=0.738 (chip sits well below it); dark highlight-8 L=0.55 (chip collapses onto it).')

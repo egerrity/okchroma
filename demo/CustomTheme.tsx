@@ -267,7 +267,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   // highlight/cta as "Aa" on their on-color, ink as "Aa" text, identity as an "ID"
   // chip (blank-but-spaced when a ramp has none, so columns stay justified). Themes
   // with the page toggle.
-  const SWATCH_STOPS = ['paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'accent-6', 'accent-7', 'accent-8', 'highlight-9', 'highlight-10', 'ink-11', 'ink-12', 'cta-1', 'cta-2']
+  const SWATCH_STOPS = ['paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'wash-6', 'wash-7', 'highlight-8', 'highlight-9', 'highlight-10', 'ink-11', 'ink-12', 'cta-1', 'cta-2']
   const swatchRamps: Array<[string, string, boolean]> = [
     ['brand', 'brand', true],
     ...(secondary ? [['secondary', 'secondary', true] as [string, string, boolean]] : []),
@@ -803,7 +803,7 @@ const PAGE_CSS = `
 .ct-alert-warn {
   display: flex; gap: 8px; align-items: flex-start; margin-top: 8px;
   padding: 8px 10px; border-radius: 8px; font-size: 12px; line-height: 1.45;
-  background: var(--yellow-wash-4); border: 1px solid var(--yellow-accent-8); color: var(--yellow-ink-12);
+  background: var(--yellow-wash-4); border: 1px solid var(--yellow-highlight-8); color: var(--yellow-ink-12);
 }
 .ct-alert-warn a { color: inherit; font-weight: 600; }
 .ct-alert-text {
@@ -892,7 +892,7 @@ const PAGE_CSS = `
   background: var(--surface-raised); border: 1px solid var(--border-default); border-radius: 8px;
   padding: 9px 12px;
 }
-.ct-field:focus-within { border-color: var(--brand-accent-8); box-shadow: 0 0 0 3px var(--brand-bg-subtle); }
+.ct-field:focus-within { border-color: var(--brand-highlight-8); box-shadow: 0 0 0 3px var(--brand-bg-subtle); }
 .ct-field input, .ct-field select {
   border: none; outline: none; background: transparent; color: var(--fg-default);
   font-family: inherit; font-size: 13px; flex: 1; min-width: 0;

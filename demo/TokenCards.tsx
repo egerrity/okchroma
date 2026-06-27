@@ -11,7 +11,7 @@ import { AlertCircle, AlertTriangle, CheckCircle, Info } from 'lucide-react'
 //   wash    → the inset surface(s)
 //   cta     → the full-round pill button (brand/secondary/neutral) OR, on signals,
 //             the ALERT callout (alerts use cta in signals; the pill is hidden)
-//   scale   → the numbered 1–12 ladder with paper/wash/accent/highlight/ink labels
+//   scale   → the numbered 1–12 ladder with paper/wash/highlight/ink labels
 //
 // The universal paper-0/ink-13 anchors are NOT shown here — they're one shared
 // white/black pair at the system level, not a per-ramp token.
@@ -43,17 +43,17 @@ export function TokenCards({ prefix, kind }: { prefix: string; kind: RampKind })
     { n: 3, tok: 'wash-3', fg: v('ink-12') },
     { n: 4, tok: 'wash-4', fg: v('ink-12') },
     { n: 5, tok: 'wash-5', fg: v('ink-12') },
-    { n: 6, tok: 'accent-6', fg: v('ink-12') },
-    { n: 7, tok: 'accent-7', fg: v('ink-12') },
-    { n: 8, tok: 'accent-8', fg: v('ink-12') },
+    { n: 6, tok: 'wash-6', fg: v('ink-12') },
+    { n: 7, tok: 'wash-7', fg: v('ink-12') },
+    { n: 8, tok: 'highlight-8', fg: v('ink-12') },
     { n: 9, tok: 'highlight-9', fg: v('on-highlight') },
     { n: 10, tok: 'highlight-10', fg: v('on-highlight') },
     { n: 11, tok: 'ink-11', fg: v('paper-1') },
     { n: 12, tok: 'ink-12', fg: v('paper-1') },
   ]
   const groups = [
-    { label: 'paper', span: 2 }, { label: 'wash', span: 3 }, { label: 'accent', span: 3 },
-    { label: 'highlight', span: 2 }, { label: 'ink', span: 2 },
+    { label: 'paper', span: 2 }, { label: 'wash', span: 5 },
+    { label: 'highlight', span: 3 }, { label: 'ink', span: 2 },
   ]
 
   const Icon = SIGNAL_ICON[prefix] ?? AlertCircle

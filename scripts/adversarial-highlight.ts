@@ -45,7 +45,7 @@ for (const { name, scale } of items) {
 }
 
 // ── LINK C: counterfactual — the RAW rung at rootL 0.62 (no loop). Where would
-//    it sit, and what would its ΔL vs accent-8 be? Does the loop CAUSE collapse? ──
+//    it sit, and what would its ΔL vs highlight-8 be? Does the loop CAUSE collapse? ──
 console.log('\n═══ LINK C: raw rung @0.62 (NO loop) vs shipped (post-loop) ΔL to acc8 ═══')
 console.log('  acc8 dark L =', DARK_NEUTRAL_L[7], ' rootL =', HIGHLIGHT_DARK.rootL)
 console.log('  ramp            rawL  rawΔacc8 | shipL shipΔacc8 | loop moved L by')

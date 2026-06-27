@@ -37,7 +37,7 @@ for (const { def, scale } of SIGNAL_SCALES.values()) items.push({ name: `sig:${d
 
 // ── helpers to pull rungs ─────────────────────────────────────────────────
 const appL = (s: ColorStop) => apparentL(s.L, s.C, s.H)
-// stops array layout (clean 1–12 ladder): [0..7]=1..8 (paper/wash/accent), 8/9=highlight(9/10), 10/11=ink(11/12).
+// stops array layout (clean 1–12 ladder): [0..7]=1..8 (paper/wash), 8/9=highlight(9/10), 10/11=ink(11/12).
 // cta is OFF-SCALE on dedicated fields: scale.cta/.ctaHover (light), scale.ctaDark/.ctaHoverDark (dark).
 const acc8 = (sc: GeneratedScale, mode: 'light' | 'dark') => sc[mode][7]
 const ink11 = (sc: GeneratedScale, mode: 'light' | 'dark') => sc[mode][10]
@@ -54,7 +54,7 @@ console.log(`  LIGHT highlight apparent-L*:  mean ${f2(ls.m)}  sd ${f2(ls.sd)}  
 console.log(`  DARK  highlight apparent-L*:  mean ${f2(ds.m)}  sd ${f2(ds.sd)}  range ${f2(ds.range)}  [${f2(ds.min)}..${f2(ds.max)}]`)
 console.log(`  → dark spread is ${(ds.sd / ls.sd).toFixed(1)}× the light spread (sd), ${(ds.range / ls.range).toFixed(1)}× by range.\n`)
 
-// ── 2) Dark ladder continuity: accent-8 → highlight → ink-11 in apparent L ─
+// ── 2) Dark ladder continuity: highlight-8 → highlight → ink-11 in apparent L ─
 // The neighbors are low-chroma (≈ on their OKLCH L); the highlight is high-chroma
 // at fixed OKLCH 0.62. Measure whether it wedges monotonically between them and
 // at a CONSISTENT fractional position. (Light shown alongside as the reference.)
@@ -99,7 +99,7 @@ console.log(`\n  bloom spread: ${f2(bs.min)} … ${f2(bs.max)} L* (range ${f2(bs
 
 // ── 4) What a PERCEPTUAL dark highlight would do (mirror of the light solve) ─
 // Target = grayApparentL(rootL) + KEEP_DARK·meanBoost — but we want a rung that
-// fits BETWEEN dark accent-8 (OKLCH 0.55) and ink-11 (OKLCH 0.80). Show the
+// fits BETWEEN dark highlight-8 (OKLCH 0.55) and ink-11 (OKLCH 0.80). Show the
 // per-brand OKLCH L that lands the highlight at a CONSTANT apparent-L target,
 // vs the fixed 0.62 it ships today.
 console.log('═══ 4. Perceptual dark-highlight placement (illustrative target) ═══')

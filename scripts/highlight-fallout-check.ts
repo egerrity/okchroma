@@ -2,7 +2,7 @@
 // (un-darkened) dark highlight fill? The natural fill is the rung at its curve
 // position (HIGHLIGHT_DARK.rootL, before placeLegibleRung's value-move), chroma
 // from darkChromaCurve. Reports whiteWCAG/blackWCAG so we can see which color
-// falls out, and the natural separation from accent-8 (0.55).
+// falls out, and the natural separation from highlight-8 (0.55).
 //   esbuild scripts/highlight-fallout-check.ts --bundle --platform=node --outfile=dist/highlight-fallout-check.js && node dist/highlight-fallout-check.js
 import { BRANDS } from '../src/brands'
 import { SECONDARIES } from '../src/secondaries'
@@ -26,7 +26,7 @@ const L0 = HIGHLIGHT_DARK.rootL
 const acc8L = DARK_NEUTRAL_L[7]
 let whiteLegible = 0, blackLegible = 0, both = 0, neither = 0
 let minBlack = 99, maxWhite = 0
-console.log(`Natural dark highlight fill = rung at L=${L0} (no value-move), chroma=darkChromaCurve. accent-8 L=${acc8L} (ΔL=${(L0 - acc8L).toFixed(3)} fixed).\n`)
+console.log(`Natural dark highlight fill = rung at L=${L0} (no value-move), chroma=darkChromaCurve. highlight-8 L=${acc8L} (ΔL=${(L0 - acc8L).toFixed(3)} fixed).\n`)
 console.log('  ramp                 H      C      whiteWCAG blackWCAG  legible      | whiteAPCA blackAPCA')
 for (const { name, scale } of items) {
   const H = (scale.dark[8] as ColorStop).H  // highlight-9 (array-heal: was appended at [12], now stop-9 lives at index 8)
@@ -46,4 +46,4 @@ console.log(`  black WCAG-legible: ${blackLegible + both}/${items.length}   (min
 console.log(`  white WCAG-legible: ${whiteLegible + both}/${items.length}   (max whiteWCAG ${f2(maxWhite)})`)
 console.log(`  → black-only ${blackLegible}, white-only ${whiteLegible}, both ${both}, neither ${neither}`)
 console.log(`\nInterpretation: if black is the only WCAG-legible side at the natural fill, BLACK falls out`)
-console.log(`with the fill left exactly where the curve put it (ΔL ${(L0 - acc8L).toFixed(3)} above accent-8) — no lift, no darken.`)
+console.log(`with the fill left exactly where the curve put it (ΔL ${(L0 - acc8L).toFixed(3)} above highlight-8) — no lift, no darken.`)

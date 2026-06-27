@@ -76,11 +76,11 @@ for (const H of HUES) {
 }
 
 // ── PROOF 3: the fleet stops generating all over the place ───────────────────
-console.log('\n── PROOF 3 · fleet at accent-8: today every brand reads at a DIFFERENT ───────')
+console.log('\n── PROOF 3 · fleet at highlight-8: today every brand reads at a DIFFERENT ───────')
 console.log('  perceived lightness; under the curve they all lock to the gray target.\n')
 const tgt8 = target(rootL8)
 const rows = BRANDS.filter(b => b.demo).slice(0, 12).map(b => {
-  const s = generateScale(b.hex, b.slug).light[7] // today's accent-8 (incl. engine corrections)
+  const s = generateScale(b.hex, b.slug).light[7] // today's highlight-8 (incl. engine corrections)
   const todayA = fn(s.L, s.C, s.H)
   const Leq = solveLForApparent(tgt8, s.C, s.H, fn)
   return {
@@ -95,7 +95,7 @@ for (const r of rows) {
 }
 const todaySpread = spread(rows.map(r => r.todayA)), curveSpread = spread(rows.map(r => r.eqA))
 console.log(`\n   cross-brand perceived-L spread:  today ${todaySpread.toFixed(2)} L*   →   curve ${curveSpread.toFixed(2)} L*`)
-console.log(`   (today a ${rows[0].name} and a ${rows[rows.length - 1].name} accent-8 read ${todaySpread.toFixed(1)} L* apart;`)
+console.log(`   (today a ${rows[0].name} and a ${rows[rows.length - 1].name} highlight-8 read ${todaySpread.toFixed(1)} L* apart;`)
 console.log(`    under the curve they read the same. THAT is "brands stop generating all over the place".)`)
 
 // ── chart feed: stop-8 today wave vs flat target (for the before/after viz) ───

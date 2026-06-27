@@ -1,7 +1,7 @@
 // READ-ONLY — confirms the CAUSAL mechanism of the dark-highlight misfit.
 // Re-derives the dark highlight WITHOUT the legibility loop (raw rung at
 // HIGHLIGHT_DARK.rootL) vs WITH it (the shipped value), to prove what actually
-// places the dark highlight, and measures OKLCH-L separation from accent-8.
+// places the dark highlight, and measures OKLCH-L separation from highlight-8.
 //   esbuild scripts/highlight-mechanism.ts --bundle --platform=node --outfile=dist/highlight-mechanism.js && node dist/highlight-mechanism.js
 
 import { BRANDS } from '../src/brands'
@@ -20,7 +20,7 @@ const blackWcag = (s: { L: number; C: number; H: number }) => contrastRatio(wcag
 const sample = ['Dark Roast', 'Cold Brew', 'Blueberry', 'Sencha', 'Honey Lemon', 'Cranberry', 'Hibiscus', 'Chili Mocha', 'Ube Latte', 'Matcha']
 
 console.log('═══ Dark highlight: raw rung @ rootL 0.62 (pre-legibility) vs shipped (post-loop) ═══')
-console.log('   rootL =', HIGHLIGHT_DARK.rootL, ' accent-8 dark OKLCH L =', DARK_NEUTRAL_L[7], '\n')
+console.log('   rootL =', HIGHLIGHT_DARK.rootL, ' highlight-8 dark OKLCH L =', DARK_NEUTRAL_L[7], '\n')
 console.log('  ramp           | rawL  whiteWCAG@raw blackWCAG@raw | shipL shipWCAG(side) | acc8L  ΔL(hl−acc8)')
 for (const name of sample) {
   const b = BRANDS.find(x => x.name === name)!
@@ -39,8 +39,8 @@ for (const name of sample) {
   )
 }
 
-console.log('\n═══ Separation accent-8 → highlight, both modes (OKLCH L AND apparent L*) ═══')
-console.log('   Light: highlight is a dark chip well below the light accent-8 (0.738). Dark: accent-8 is 0.55,')
+console.log('\n═══ Separation highlight-8 → highlight, both modes (OKLCH L AND apparent L*) ═══')
+console.log('   Light: highlight is a dark chip well below the light highlight-8 (0.738). Dark: highlight-8 is 0.55,')
 console.log('   so a legibility-darkened highlight has almost nowhere to sit — they converge.\n')
 console.log('  ramp           | LIGHT a8L  hlL   ΔOKL  ΔappL | DARK a8L  hlL   ΔOKL  ΔappL')
 for (const name of sample) {

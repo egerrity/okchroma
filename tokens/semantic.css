@@ -46,8 +46,8 @@
 
   --brand-border-subtle:         var(--brand-wash-4);
   --brand-border-subtle-hover:   var(--brand-wash-5);
-  --brand-border-default:            var(--brand-accent-6);
-  --brand-border-default-hover:      var(--brand-accent-8);
+  --brand-border-default:            var(--brand-wash-6);
+  --brand-border-default-hover:      var(--brand-highlight-8);
   --brand-border-emphasis:       var(--brand-cta-1);
   --brand-border-emphasis-hover: var(--brand-cta-2);
 }
@@ -69,8 +69,8 @@
 
   --secondary-border-subtle:         var(--secondary-wash-4);
   --secondary-border-subtle-hover:   var(--secondary-wash-5);
-  --secondary-border-default:           var(--secondary-accent-6);
-  --secondary-border-default-hover:     var(--secondary-accent-8);
+  --secondary-border-default:           var(--secondary-wash-6);
+  --secondary-border-default-hover:     var(--secondary-highlight-8);
   --secondary-border-emphasis:       var(--secondary-cta-1);
   --secondary-border-emphasis-hover: var(--secondary-cta-2);
 }
@@ -91,7 +91,7 @@
 
 [data-brand] {
   --illus-ink:      var(--neutral-ink-12);
-  --illus-muted:    var(--neutral-accent-8);
+  --illus-muted:    var(--neutral-highlight-8);
   --illus-paper:    var(--neutral-paper-1);
   --illus-alt:      var(--illus-alt-mono);
   --illus-alt-soft: var(--illus-alt-soft-mono);
@@ -120,8 +120,8 @@
   --alert-high-bg-emphasis-hover:     var(--red-highlight-10);
   --alert-high-border-subtle:         var(--red-wash-4);
   --alert-high-border-subtle-hover:   var(--red-wash-5);
-  --alert-high-border-default:       var(--red-accent-6);
-  --alert-high-border-default-hover: var(--red-accent-8);
+  --alert-high-border-default:       var(--red-wash-6);
+  --alert-high-border-default-hover: var(--red-highlight-8);
   --alert-high-border-emphasis:       var(--red-highlight-9);
   --alert-high-border-emphasis-hover: var(--red-highlight-10);
 
@@ -137,8 +137,8 @@
   --alert-med-bg-emphasis-hover:      var(--yellow-highlight-10);
   --alert-med-border-subtle:          var(--yellow-wash-4);
   --alert-med-border-subtle-hover:    var(--yellow-wash-5);
-  --alert-med-border-default:        var(--yellow-accent-6);
-  --alert-med-border-default-hover:  var(--yellow-accent-8);
+  --alert-med-border-default:        var(--yellow-wash-6);
+  --alert-med-border-default-hover:  var(--yellow-highlight-8);
   --alert-med-border-emphasis:        var(--yellow-highlight-9);
   --alert-med-border-emphasis-hover:  var(--yellow-highlight-10);
 
@@ -154,8 +154,8 @@
   --positive-bg-emphasis-hover:       var(--green-highlight-10);
   --positive-border-subtle:           var(--green-wash-4);
   --positive-border-subtle-hover:     var(--green-wash-5);
-  --positive-border-default:         var(--green-accent-6);
-  --positive-border-default-hover:   var(--green-accent-8);
+  --positive-border-default:         var(--green-wash-6);
+  --positive-border-default-hover:   var(--green-highlight-8);
   --positive-border-emphasis:         var(--green-highlight-9);
   --positive-border-emphasis-hover:   var(--green-highlight-10);
 
@@ -171,8 +171,8 @@
   --info-bg-emphasis-hover:           var(--info-color-highlight-10);
   --info-border-subtle:               var(--info-color-wash-4);
   --info-border-subtle-hover:         var(--info-color-wash-5);
-  --info-border-default:             var(--info-color-accent-6);
-  --info-border-default-hover:       var(--info-color-accent-8);
+  --info-border-default:             var(--info-color-wash-6);
+  --info-border-default-hover:       var(--info-color-highlight-8);
   --info-border-emphasis:             var(--info-color-highlight-9);
   --info-border-emphasis-hover:       var(--info-color-highlight-10);
 }
