@@ -52,12 +52,8 @@ function goldSpineHueTable(L: number): number {
   return pts[pts.length - 1][1]
 }
 
-let spineSource: (L: number) => number = goldSpineHueTable
-export function __setSpineSourceForAnalysis(fn: ((L: number) => number) | null): void {
-  spineSource = fn ?? goldSpineHueTable
-}
 function goldSpineHue(L: number): number {
-  return spineSource(L)
+  return goldSpineHueTable(L)
 }
 
 function torsionedHue(brandH: number, stopL: number, anchorL: number, offPathG: number): number {

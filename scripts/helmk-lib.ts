@@ -87,7 +87,6 @@ export function oklchToHex(L: number, C: number, H: number): string {
 // ── stats + formatting ───────────────────────────────────────────────────────
 export const mean = (a: number[]) => a.reduce((s, x) => s + x, 0) / a.length
 export const spread = (a: number[]) => Math.max(...a) - Math.min(...a)
-export const stdev = (a: number[]) => { const m = mean(a); return Math.sqrt(mean(a.map(x => (x - m) ** 2))) }
 export function pearson(a: number[], b: number[]): number {
   const ma = mean(a), mb = mean(b)
   let n = 0, da = 0, db = 0

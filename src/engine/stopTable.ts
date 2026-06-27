@@ -6,7 +6,7 @@ export interface StopSpec {
 export const LIGHT_L = [0.993, 0.982, 0.960, 0.936, 0.903, 0.860, 0.806, 0.738, 0.600, 0.560, 0.530, 0.300]
 export const DARK_L  = [0.178, 0.213, 0.252, 0.285, 0.313, 0.348, 0.420, 0.550, 0.600, 0.640, 0.800, 0.940]
 
-export const LIGHT_SAT = [0.50, 0.85, 0.95, 0.95, 0.92, 0.85, 0.78, 0.78]
+const LIGHT_SAT = [0.50, 0.85, 0.95, 0.95, 0.92, 0.85, 0.78, 0.78]
 export const LIGHT_STOPS: { rootL: number; satFraction: number }[] =
   LIGHT_L.slice(0, 8).map((rootL, i) => ({ rootL, satFraction: LIGHT_SAT[i] }))
 
@@ -33,8 +33,8 @@ export const STOP_12_CONTRAST_FLOOR = 7.0
 export const DARK_STOP_9_MIN_L = 0.63
 
 export const DARK_BRAND_FILL_MIN_L = 0.70
-export const DARK_STOP_11 = { rootL: 0.75, chromaMultiplier: 0.95 }
-export const DARK_STOP_12 = { rootL: 0.94, chromaMultiplier: 0.62 }
+export const DARK_STOP_11 = { chromaMultiplier: 0.95 }
+export const DARK_STOP_12 = { chromaMultiplier: 0.62 }
 
 export const DARK_COLLIDER_MUTED_L = 0.80
 export const DARK_COLLIDER_MUTED_CHROMA_SCALE = 0.55

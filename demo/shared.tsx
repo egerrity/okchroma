@@ -401,28 +401,6 @@ export function ScaleStrip({ label, prefix }: { label: string; prefix: string })
   )
 }
 
-// Stage 3 INTERIM — the scale is now 1–8 (paper/wash); the cta was pulled
-// OUT (off-scale: cta-1/cta-2), while the highlight rung (9/10) and text roles
-// (ink-11/ink-12) stay in the scale. This renders the honest 1–8 scale ramp
-// (uniform across every ramp kind) with the new token names, so the display is
-// correct rather than dangling on old 1–12 numbers.
-// TODO(stage3): re-skin as categorized cards (scale 1–8 row + role chips for
-// cta-1/cta-2 · highlight-9/highlight-10 · ink-11/ink-12, each on-fill chip in its
-// real on-cta/on-highlight polarity). PENDING THE OWNER MOCKUP.
-const SCALE_STOPS = ['paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'wash-6', 'wash-7', 'highlight-8']
-export function RampRow({ prefix }: { prefix: string }) {
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${SCALE_STOPS.length}, 1fr)`, gap: 4 }}>
-      {SCALE_STOPS.map((tok, i) => (
-        <div key={tok}>
-          <div style={{ height: 48, borderRadius: 4, background: `var(--${prefix}-${tok})`, border: '1px solid var(--border-subtle)' }} />
-          <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--fg-subtle)', marginTop: 4 }}>{i + 1}</div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 export const ctxCard: React.CSSProperties = {
   padding: 20, borderRadius: 10,
   background: 'var(--surface-raised)',
