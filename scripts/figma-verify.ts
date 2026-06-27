@@ -1,4 +1,4 @@
-// Verifies themeToFigma end-to-end for a real brand with an accent (Dark
+// Verifies themeToFigma end-to-end for a real brand with a secondary (Dark
 // Roast), exercising the same merge the demo handler does. Checks structure +
 // spot values against ground truth, then discards output (verification only).
 
@@ -11,7 +11,7 @@ import { themeToFigma } from '../src/engine/figmaRender'
 const brand = BRANDS.find(b => b.slug === 'dark-roast')!
 const r = resolveBrand(brand.hex, brand.name, { exact: brand.exact, archetypeOverride: brand.archetypeOverride, style: brand.style })
 const sec = SECONDARIES[brand.slug]
-const accent = sec ? resolveBrand(sec, `${brand.name} accent`, { exact: brand.exact, style: brand.style }).scale : null
+const secondary = sec ? resolveBrand(sec, `${brand.name} accent`, { exact: brand.exact, style: brand.style }).scale : null
 const signals = SIGNALS.map(s => {
   const o = r.signalOverrides.find(x => x.name === s.name)
   return { name: s.name, scale: o?.scale ?? SIGNAL_SCALES.get(s.name)!.scale }
@@ -19,7 +19,7 @@ const signals = SIGNALS.map(s => {
 
 // The neutral is now generated per brand (tinted to the brand hue) at a level —
 // no longer passed as hex strings.
-const figma = themeToFigma(r, { accent, neutralLevel: 'default', signals })
+const figma = themeToFigma(r, { secondary, neutralLevel: 'default', signals })
 
 const fails: string[] = []
 const ok = (cond: boolean, msg: string) => { if (!cond) fails.push(msg) }

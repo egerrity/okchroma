@@ -14,20 +14,20 @@ function generateBrandCss(brand: Brand): string {
   const r = resolveBrand(hex, name, { exact: brand.exact, archetypeOverride: brand.archetypeOverride, style: brand.style })
 
   // Secondary runs through the SAME pipeline (a secondary red earns rung 1
-  // like a primary would). Signals follow the primary only — an accent's
+  // like a primary would). Signals follow the primary only — a secondary's
   // own signal conflicts are annotated for review, never resolved, in v1.
-  const secondary = SECONDARIES[slug]
-  let accent = null
+  const secondaryHex = SECONDARIES[slug]
+  let secondary = null
   let noteSuffix = brand.archetypeOverride ? ` · archetype override → ${brand.archetypeOverride}` : ''
-  if (secondary) {
-    const ra = resolveBrand(secondary, `${name} accent`, { exact: brand.exact, style: brand.style })
-    accent = ra.scale
-    if (ra.shearDeg !== 0) noteSuffix += ` · accent shear ${ra.shearDeg > 0 ? '+' : ''}${ra.shearDeg.toFixed(1)}°`
-    if (ra.rung1) noteSuffix += ` · accent rung 1 → dark`
-    if (ra.errorComponentRule) noteSuffix += ` · accent error collision → component rule`
+  if (secondaryHex) {
+    const ra = resolveBrand(secondaryHex, `${name} accent`, { exact: brand.exact, style: brand.style })
+    secondary = ra.scale
+    if (ra.shearDeg !== 0) noteSuffix += ` · secondary shear ${ra.shearDeg > 0 ? '+' : ''}${ra.shearDeg.toFixed(1)}°`
+    if (ra.rung1) noteSuffix += ` · secondary rung 1 → dark`
+    if (ra.errorComponentRule) noteSuffix += ` · secondary error collision → component rule`
   }
 
-  return brandCss(slug, name, r, accent, noteSuffix)
+  return brandCss(slug, name, r, secondary, noteSuffix)
 }
 
 function generateSignalsCss(): string {

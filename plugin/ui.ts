@@ -7,12 +7,12 @@ import { toHex } from '../src/engine/cssRender'
 // ─── State ───────────────────────────────────────────────────────────────────
 
 let primaryHex = '#E93D82'
-let accentHex: string | null = null
-let accentEnabled = false
+let secondaryHex: string | null = null
+let secondaryEnabled = false
 let neutralLevel: NeutralLevel = 'default'
 let engineMode: 'recommended' | 'exact' = 'recommended'
 let pendingName: string | null = null // brand armed for overwrite confirmation
-let accentInclude = true // global accent switch (kill-switch)
+let secondaryInclude = true // global secondary switch (kill-switch)
 
 // ─── DOM ─────────────────────────────────────────────────────────────────────
 
@@ -21,20 +21,20 @@ const collectionInput = $<HTMLInputElement>('collection-name')
 const primaryHexInput = $<HTMLInputElement>('primary-hex')
 const primaryPicker   = $<HTMLInputElement>('primary-picker')
 const primarySwatch   = $<HTMLElement>('primary-swatch')
-const accentToggleBtn = $<HTMLButtonElement>('accent-btn')
-const accentRow       = $<HTMLElement>('accent-row')
-const accentHexInput  = $<HTMLInputElement>('accent-hex')
-const accentPicker    = $<HTMLInputElement>('accent-picker')
-const accentSwatch    = $<HTMLElement>('accent-swatch')
+const secondaryToggleBtn = $<HTMLButtonElement>('secondary-btn')
+const secondaryRow       = $<HTMLElement>('secondary-row')
+const secondaryHexInput  = $<HTMLInputElement>('secondary-hex')
+const secondaryPicker    = $<HTMLInputElement>('secondary-picker')
+const secondarySwatch    = $<HTMLElement>('secondary-swatch')
 const neutralSelect   = $<HTMLSelectElement>('neutral-select')
 const segBtns         = document.querySelectorAll<HTMLButtonElement>('.seg-btn[data-mode]')
-const accentIncludeBtns = document.querySelectorAll<HTMLButtonElement>('.seg-btn[data-acc]')
-const accentCustom    = $<HTMLElement>('accent-custom')
+const secondaryIncludeBtns = document.querySelectorAll<HTMLButtonElement>('.seg-btn[data-sec]')
+const secondaryCustom    = $<HTMLElement>('secondary-custom')
 const rampLight       = $<HTMLElement>('ramp-light')
 const rampDark        = $<HTMLElement>('ramp-dark')
-const rampAccentLight = $<HTMLElement>('ramp-accent-light')
-const rampAccentDark  = $<HTMLElement>('ramp-accent-dark')
-const accentRamps     = $<HTMLElement>('accent-ramps')
+const rampSecondaryLight = $<HTMLElement>('ramp-secondary-light')
+const rampSecondaryDark  = $<HTMLElement>('ramp-secondary-dark')
+const secondaryRamps     = $<HTMLElement>('secondary-ramps')
 const applyBtn        = $<HTMLButtonElement>('apply-btn')
 const statusEl        = $<HTMLElement>('status')
 
@@ -76,14 +76,14 @@ function updatePreview() {
     renderRamp(rampLight, scale.light)
     renderRamp(rampDark, scale.dark)
 
-    // Accent ramp only when accent is globally on AND a color was entered.
-    if (accentInclude && accentEnabled && accentHex) {
-      const a = resolveBrand(accentHex, 'x', opts).scale
-      renderRamp(rampAccentLight, a.light)
-      renderRamp(rampAccentDark, a.dark)
-      accentRamps.style.display = ''
+    // Secondary ramp only when secondary is globally on AND a color was entered.
+    if (secondaryInclude && secondaryEnabled && secondaryHex) {
+      const a = resolveBrand(secondaryHex, 'x', opts).scale
+      renderRamp(rampSecondaryLight, a.light)
+      renderRamp(rampSecondaryDark, a.dark)
+      secondaryRamps.style.display = ''
     } else {
-      accentRamps.style.display = 'none'
+      secondaryRamps.style.display = 'none'
     }
   } catch { /* ignore partial hex during typing */ }
 }
@@ -103,8 +103,8 @@ function buildAndSend() {
   try {
     const opts = engineMode === 'exact' ? { exact: true } : undefined
     const r = resolveBrand(primaryHex, name, opts)
-    const accent = accentEnabled && accentHex
-      ? resolveBrand(accentHex, 'Accent', opts).scale
+    const secondary = secondaryEnabled && secondaryHex
+      ? resolveBrand(secondaryHex, 'Accent', opts).scale
       : null
 
     // The neutral's shared-primitive key. 'pure' is a true grey (C=0), identical
@@ -126,13 +126,13 @@ function buildAndSend() {
       return { name: s.name, scale: ov?.scale ?? SIGNAL_SCALES.get(s.name)!.scale, variant }
     })
 
-    const { light, dark } = themeToFigma(r, { accent, neutralLevel, signals })
+    const { light, dark } = themeToFigma(r, { secondary, neutralLevel, signals })
 
     // The engine now names signals by identity (red / yellow / green /
     // info-color), so both the primitive path (system/<identity>/<variant>) and
     // the theme-collection group name are just s.name — no role→identity remap.
 
-    // brand + accent: unique per brand → raw values under brand/<brand>/<role>.
+    // brand + secondary: unique per brand → raw values under brand/<brand>/<role>.
     const brandRaw = [
       { role: 'primary', light: light.brand, dark: dark.brand },
       { role: 'secondary', light: light.secondary, dark: dark.secondary },
@@ -151,7 +151,7 @@ function buildAndSend() {
 
     // confirmed only when this exact name was just flagged as an overwrite.
     const confirmed = pendingName === name
-    parent.postMessage({ pluginMessage: { type: 'apply', brand: name, brandRaw, shared, confirmed, accent: accentInclude } }, '*')
+    parent.postMessage({ pluginMessage: { type: 'apply', brand: name, brandRaw, shared, confirmed, secondary: secondaryInclude } }, '*')
   } catch (err) {
     applyBtn.disabled = false
     setStatus(String(err), 'err')
@@ -182,34 +182,34 @@ primaryPicker.addEventListener('input', () => {
   updatePreview()
 })
 
-accentToggleBtn.addEventListener('click', () => {
-  accentEnabled = !accentEnabled
-  accentToggleBtn.classList.toggle('on', accentEnabled)
-  accentToggleBtn.textContent = accentEnabled ? 'Remove' : 'Add accent'
-  accentRow.style.display = accentEnabled ? 'block' : 'none'
+secondaryToggleBtn.addEventListener('click', () => {
+  secondaryEnabled = !secondaryEnabled
+  secondaryToggleBtn.classList.toggle('on', secondaryEnabled)
+  secondaryToggleBtn.textContent = secondaryEnabled ? 'Remove' : 'Add accent'
+  secondaryRow.style.display = secondaryEnabled ? 'block' : 'none'
   updatePreview()
 })
 
-accentHexInput.addEventListener('input', () => {
-  const norm = normalizeHex(accentHexInput.value)
+secondaryHexInput.addEventListener('input', () => {
+  const norm = normalizeHex(secondaryHexInput.value)
   if (norm) {
-    accentHex = norm
-    accentSwatch.style.background = norm
-    accentPicker.value = norm
-    accentHexInput.classList.remove('invalid')
+    secondaryHex = norm
+    secondarySwatch.style.background = norm
+    secondaryPicker.value = norm
+    secondaryHexInput.classList.remove('invalid')
   } else {
-    accentHex = null
-    accentHexInput.classList.toggle('invalid', accentHexInput.value !== '')
+    secondaryHex = null
+    secondaryHexInput.classList.toggle('invalid', secondaryHexInput.value !== '')
   }
   updatePreview()
 })
 
-accentPicker.addEventListener('input', () => {
-  const v = accentPicker.value.toUpperCase()
-  accentHex = v
-  accentHexInput.value = v
-  accentSwatch.style.background = v
-  accentHexInput.classList.remove('invalid')
+secondaryPicker.addEventListener('input', () => {
+  const v = secondaryPicker.value.toUpperCase()
+  secondaryHex = v
+  secondaryHexInput.value = v
+  secondarySwatch.style.background = v
+  secondaryHexInput.classList.remove('invalid')
   updatePreview()
 })
 
@@ -226,12 +226,12 @@ segBtns.forEach(btn => {
   })
 })
 
-accentIncludeBtns.forEach(btn => {
+secondaryIncludeBtns.forEach(btn => {
   btn.addEventListener('click', () => {
-    accentIncludeBtns.forEach(b => b.classList.remove('active'))
+    secondaryIncludeBtns.forEach(b => b.classList.remove('active'))
     btn.classList.add('active')
-    accentInclude = btn.dataset.acc === 'on'
-    accentCustom.style.display = accentInclude ? 'block' : 'none'
+    secondaryInclude = btn.dataset.sec === 'on'
+    secondaryCustom.style.display = secondaryInclude ? 'block' : 'none'
     updatePreview()
   })
 })
@@ -240,13 +240,13 @@ applyBtn.addEventListener('click', buildAndSend)
 
 window.addEventListener('message', e => {
   const msg = (e.data as {
-    pluginMessage?: { type: string; message?: string; brand?: string; aliases?: number; createdShared?: number; accent?: string }
+    pluginMessage?: { type: string; message?: string; brand?: string; aliases?: number; createdShared?: number; secondary?: string }
   }).pluginMessage
   if (!msg) return
   applyBtn.disabled = false
   if (msg.type === 'done') {
     pendingName = null
-    const acc = msg.accent && msg.accent !== 'real' ? `, accent ${msg.accent}` : ''
+    const acc = msg.secondary && msg.secondary !== 'real' ? `, accent ${msg.secondary}` : ''
     const grew = msg.createdShared ? `, ${msg.createdShared} new primitives` : ''
     setStatus(`✓ ${msg.brand}: ${msg.aliases} aliased${grew}${acc}`, 'ok')
   } else if (msg.type === 'confirm') {
