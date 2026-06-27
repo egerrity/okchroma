@@ -12,6 +12,13 @@ export const LIGHT_STOPS: { rootL: number; satFraction: number }[] =
 
 export const LIGHT_BASE_C = [0.004, 0.010, 0.022, 0.039, 0.053, 0.068, 0.086, 0.112]
 
+// Stop 8 (highlight-8) carries the WCAG 1.4.11 non-text 3:1 guarantee against
+// paper-2 (the scale's own stop 2). The light ramp clamps its perceptual rung L
+// down to this ceiling — the same kind of contrast bound STOP_11/12 already use
+// (findMaxLForContrast). Dark stop 8 clears 3:1 from DARK_L[7] directly, so the
+// clamp is light-only.
+export const STOP_8_NONTEXT_CONTRAST = 3.0
+
 export const YELLOW_L_LIFT = { max: 0.03, centerH: 92, sigmaDeg: 20 }
 
 export const HIGHLIGHT_LIGHT = { rootL: LIGHT_L[8], rootL10: LIGHT_L[9], baseC: 0.142, satFraction: 0.75 }

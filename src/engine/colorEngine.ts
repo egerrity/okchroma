@@ -15,6 +15,7 @@ import {
 import {
   LIGHT_STOPS,
   LIGHT_BASE_C,
+  STOP_8_NONTEXT_CONTRAST,
   DARK_SUBTLE_CHROMA_MULT,
   DARK_NEUTRAL_L,
   STOP_11,
@@ -330,7 +331,27 @@ export function generateScale(
       return cAt('light', L, cLadder + u * (cEnv - cLadder))
     }
 
-    const L = perceptualRungL(rootL, chromaAt(rootL), lightHueAt(rootL))
+    let L = perceptualRungL(rootL, chromaAt(rootL), lightHueAt(rootL))
+
+    // Stop 8 carries the WCAG 1.4.11 non-text 3:1 guarantee: clamp its perceptual
+    // rung down to the lightest L that still clears 3:1 against this scale's own
+    // paper-2 (light[1], already pushed). Chroma/hue track L (the warm spine drifts
+    // hue with lightness), so iterate the clamp to a fixed point — at convergence
+    // the solver's C/H input equals the emitted C/H, so the 3:1 floor is exact. For
+    // darker hues the rung is already below the ceiling and passes untouched.
+    if (i === 7) {
+      const p2Y = wcagY(light[1].L, light[1].C, light[1].H)
+      // Solve to a hair above 3.0 so the emitted stop still clears 3:1 after
+      // makeStop's gamut clamp trims chroma (same margin idiom as the 4.6-for-4.5
+      // fill floor). chromaAt/lightHueAt track L, so iterate to a fixed point.
+      const solveTarget = STOP_8_NONTEXT_CONTRAST + 0.05
+      for (let pass = 0; pass < 6; pass++) {
+        const next = Math.min(L, findMaxLForContrast(chromaAt(L), lightHueAt(L), p2Y, solveTarget))
+        if (Math.abs(next - L) < 1e-4) { L = next; break }
+        L = next
+      }
+    }
+
     light.push(makeStop(i + 1, L, chromaAt(L), lightHueAt(L)))
   }
 
