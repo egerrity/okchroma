@@ -75,7 +75,7 @@ reads the same across brands.
 
 Example — `highlight-9` (target 0.600):
 - **blue** (large boost) emits at L ≈ 0.560 — placed darker
-- **green** (small boost) emits at L ≈ 0.631 — placed lighter
+- **yellow-green** (small boost) emits at L ≈ 0.631 — placed lighter
 - on screen, both read as the same step
 
 Dark mode skips the solve — dark stops are placed directly at their `DARK_L` target.

@@ -139,7 +139,7 @@ for (const { h, s } of neutralByHue) {
   // highlight on-text legible at the body-text APCA bar, both modes
   ok(onApcaLc(hlL, s.onHighlightIsWhite) >= HL_BODY, `neutral h${h} light: highlight on-text below body-text (Lc ${onApcaLc(hlL, s.onHighlightIsWhite).toFixed(1)})`)
   ok(onApcaLc(hlD, s.onHighlightIsWhiteDark) >= HL_BODY, `neutral h${h} dark: highlight on-text below body-text (Lc ${onApcaLc(hlD, s.onHighlightIsWhiteDark).toFixed(1)})`)
-  console.log(`  h${String(h).padStart(3)}  cta ${hx(ctaL)} L${f(ctaL.L)} / ${hx(ctaD)} L${f(ctaD.L)}  (stop4 ${f(s.light[3].L)}/${f(s.dark[3].L)})  | on-cta ${s.onFillTextIsWhite ? 'blk' : 'wht'}→${s.onFillTextIsWhiteDark ? 'blk' : 'wht'}`)
+  console.log(`  h${String(h).padStart(3)}  cta ${hx(ctaL)} L${f(ctaL.L)} / ${hx(ctaD)} L${f(ctaD.L)}  (stop4 ${f(s.light[3].L)}/${f(s.dark[3].L)})  | on-cta ${s.onFillTextIsWhite ? 'wht' : 'blk'}→${s.onFillTextIsWhiteDark ? 'wht' : 'blk'}`)
 }
 
 // ── 4. Signals — on-cta legible both modes, clean 12-stop scale ──
