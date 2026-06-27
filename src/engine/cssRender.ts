@@ -69,16 +69,16 @@ export function annotationNote(r: ResolvedBrand, opts?: { archetypeOverride?: st
   return note
 }
 
-// One brand's CSS: light + dark blocks with brand vars, on-fill, accent
+// One brand's CSS: light + dark blocks with brand vars, on-fill, secondary
 // vars (secondary ramp when given, else stubbed to brand), and per-brand
 // signal overrides (always from the PRIMARY's resolution — signals react
-// to the dominant brand color; an accent's own signal conflicts are
+// to the dominant brand color; a secondary's own signal conflicts are
 // annotated upstream, not resolved, in v1).
 export function brandCss(
   slug: string,
   displayName: string,
   r: ResolvedBrand,
-  accent?: GeneratedScale | null,
+  secondary?: GeneratedScale | null,
   noteSuffix = '',
   neutralLevel: NeutralLevel = 'default'
 ): string {
@@ -93,8 +93,8 @@ export function brandCss(
   // wash 1 so mono two-area files never collapse). Same values both
   // modes — emitted once in the light block, vars cascade.
   const illus = generateIllustrationScale(scale)
-  const accentIllus = accent ? generateIllustrationScale(accent) : null
-  const altStops = accentIllus ? accentIllus.stops : illus.stops
+  const secondaryIllus = secondary ? generateIllustrationScale(secondary) : null
+  const altStops = secondaryIllus ? secondaryIllus.stops : illus.stops
   const illusVars = [
     ...illus.stops.map(s => `  --illus-primary-${s.stop}: ${toHex(s.r, s.g, s.b)};`),
     ...altStops.map(s => `  --illus-alt-${s.stop}: ${toHex(s.r, s.g, s.b)};`),
@@ -128,13 +128,13 @@ export function brandCss(
     ]
   }
 
-  const accentLight = accent ? brandKindBody('secondary', accent, 'light') : mirrorBody('secondary', 'light')
-  const accentDark = accent ? brandKindBody('secondary', accent, 'dark') : mirrorBody('secondary', 'dark')
+  const secondaryLight = secondary ? brandKindBody('secondary', secondary, 'light') : mirrorBody('secondary', 'light')
+  const secondaryDark = secondary ? brandKindBody('secondary', secondary, 'dark') : mirrorBody('secondary', 'dark')
   // identity — literal input hex, mode-invariant (light block only). Secondary
   // mirrors the brand's when no secondary ramp exists.
   const brandIdentity = `  --brand-identity: ${scale.identityHex};`
-  const secondaryIdentity = accent
-    ? `  --secondary-identity: ${accent.identityHex};`
+  const secondaryIdentity = secondary
+    ? `  --secondary-identity: ${secondary.identityHex};`
     : `  --secondary-identity: var(--brand-identity);`
 
   // Universal scale anchors — positions 0 and 13 that extend the paper→ink
@@ -154,7 +154,7 @@ export function brandCss(
     ...brandKindBody('brand', scale, 'light'),
     brandIdentity,
     ...illusVars,
-    ...accentLight,
+    ...secondaryLight,
     secondaryIdentity,
     ...brandKindBody('neutral', nScale, 'light'),
     ...r.signalOverrides.flatMap(o => brandKindBody(o.name, o.scale, 'light')),
@@ -162,7 +162,7 @@ export function brandCss(
     `[data-brand="${slug}"][data-theme="dark"] {`,
     ...darkAnchors,
     ...brandKindBody('brand', scale, 'dark'),
-    ...accentDark,
+    ...secondaryDark,
     ...brandKindBody('neutral', nScale, 'dark'),
     ...r.signalOverrides.flatMap(o => brandKindBody(o.name, o.scale, 'dark')),
     `}`,

@@ -53,7 +53,7 @@ function rampGroup(
 
 export interface ThemeInput {
 
-  accent?: GeneratedScale | null
+  secondary?: GeneratedScale | null
 
   neutralLevel?: NeutralLevel
 
@@ -62,9 +62,9 @@ export interface ThemeInput {
 
 export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: FigmaGroup; dark: FigmaGroup } {
   const { scale } = r
-  const accent = input.accent ?? scale
-  const accentOnFillLight = input.accent ? input.accent.onFillTextIsWhite : scale.onFillTextIsWhite
-  const accentOnFillDark = input.accent ? input.accent.onFillTextIsWhiteDark : scale.onFillTextIsWhiteDark
+  const secondary = input.secondary ?? scale
+  const secondaryOnFillLight = input.secondary ? input.secondary.onFillTextIsWhite : scale.onFillTextIsWhite
+  const secondaryOnFillDark = input.secondary ? input.secondary.onFillTextIsWhiteDark : scale.onFillTextIsWhiteDark
 
   const brandExtra = (s: GeneratedScale, mode: 'light' | 'dark') => ({
     onHighlightWhite: mode === 'light' ? s.onHighlightIsWhite : s.onHighlightIsWhiteDark,
@@ -82,7 +82,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
   const build = (mode: 'light' | 'dark'): FigmaGroup => {
     const g: FigmaGroup = {
       brand: rampGroup(scale[mode], mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark, 'brand', brandExtra(scale, mode)),
-      secondary: rampGroup(accent[mode], mode === 'light' ? accentOnFillLight : accentOnFillDark, 'brand', brandExtra(accent, mode)),
+      secondary: rampGroup(secondary[mode], mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark, 'brand', brandExtra(secondary, mode)),
       neutral: rampGroup(nScale[mode], mode === 'light' ? nScale.onFillTextIsWhite : nScale.onFillTextIsWhiteDark, 'brand', neutralExtra(mode)),
     }
     for (const sig of input.signals) {
