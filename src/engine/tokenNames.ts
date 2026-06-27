@@ -1,26 +1,7 @@
-// Single source of truth for the stop→name mapping shared by every emitter
-// (cssRender, figmaRender, and — via the demo's Figma export — the plugin).
-// The scale is ONE continuous 1–12 ladder, placed on the perceptual-lightness
-// curve (perceptualL.ts) so every rung reads at a consistent perceived lightness
-// across hue. Token names follow scale POSITION, identically for every family:
-//
-//   1–8     paper / wash / accent   (the scale steps)
-//   9–10    highlight-9 / highlight-10   (the emphasis rung)
-//   11–12   ink-11 / ink-12   (text)
-//
-// The cta is NOT a scale step — it is the off-scale, archetype-dependent brand
-// fill (cta-1 / cta-2), held in dedicated GeneratedScale fields and emitted by
-// name by each emitter, never from this positional table. on-fill text polarity
-// splits into on-cta (the cta) and on-highlight (the rung) — see onFillTokenName.
-// (See ENGINE-SPEC §0.)
 
-// RampKind selects the on-fill token NAME only (on-cta vs on-highlight); stop
-// naming is purely positional and no longer branches on kind. Both emitters render
-// every family (brand/secondary/neutral/signals) the same way, calling
-// onFillTokenName('brand') for on-cta and onFillTokenName('neutral') for on-highlight.
+
 export type RampKind = 'brand' | 'neutral'
 
-// Scale + text-role names — positional, identical for every family.
 const SHARED_NAMES: Record<number, string> = {
   1: 'paper-1',
   2: 'paper-2',
@@ -34,10 +15,6 @@ const SHARED_NAMES: Record<number, string> = {
   12: 'ink-12',
 }
 
-// Map an engine stop number to its emitted token name. Naming is PURELY
-// POSITIONAL: 1–8 are the scale (paper/wash/accent), 9/10 are the highlight rung,
-// 11/12 are the text stops — the same for every family. The cta is off-scale and
-// is emitted by name directly by each emitter, never through this table.
 export function stopTokenName(stop: number): string {
   if (stop === 9) return 'highlight-9'
   if (stop === 10) return 'highlight-10'

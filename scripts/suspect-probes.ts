@@ -23,7 +23,13 @@ import { resolveBrand } from '../src/engine/resolve'
 import { generateIllustrationScale, type GeneratedScale, type ColorStop } from '../src/engine/colorEngine'
 import { clampChromaToGamut, oklchToLinearRgb, wcagY, contrastRatio } from '../src/engine/constraints'
 import { stopDeltaE } from '../src/engine/collision'
-import { GOLD_SPINE, WARM_TORSION, DARK_STOPS } from '../src/engine/stopTable'
+import { GOLD_SPINE, WARM_TORSION } from '../src/engine/stopTable'
+
+// The former DARK_STOPS rootL column (deleted in the H-K table collapse, 2026-06-26)
+// — kept locally as the sample lightnesses this torsion slope-jump probe scans, so
+// the probe's output is unchanged. These were never the emitted dark L (that's the
+// DARK_NEUTRAL_L scaffold); they're just probe sample points.
+const DARK_PROBE_ROOTS = [0.18, 0.21, 0.245, 0.28, 0.315, 0.355, 0.41, 0.48]
 
 function oklchToHex(L: number, C: number, H: number): string {
   const c = clampChromaToGamut(L, C, H)
@@ -247,7 +253,7 @@ console.log('\n── D: output continuity d(stops)/dH, 0.5° steps ──')
   const { bandLo, bandHi, taperDeg, travel } = WARM_TORSION
   console.log(`   WARM_TORSION C1 jump in d(hue-drift)/d(brandH) at band edges (dark ramp):`)
   for (const edge of [bandLo, bandLo + taperDeg, bandHi - taperDeg, bandHi]) {
-    const jumps = DARK_STOPS.map(s => (travel * Math.abs(spineAt(s.rootL) - edge)) / taperDeg)
+    const jumps = DARK_PROBE_ROOTS.map(rootL => (travel * Math.abs(spineAt(rootL) - edge)) / taperDeg)
     console.log(
       `     H ${edge}: slope jump ${Math.min(...jumps).toFixed(2)}–${Math.max(...jumps).toFixed(2)} °/° across dark roots`
     )

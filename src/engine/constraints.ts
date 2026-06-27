@@ -1,4 +1,4 @@
-// OKLCH → linear RGB (Björn Ottosson's matrices)
+
 export function oklchToLinearRgb(L: number, C: number, H: number): [number, number, number] {
   const h = (H * Math.PI) / 180
   const a = C * Math.cos(h)
@@ -50,10 +50,6 @@ export function findLForContrast(
   return lo
 }
 
-// APCA-W3 (0.1.9 constants) lightness contrast. Returns Lc: positive for
-// dark text on light bg, negative for light text on dark bg. Used for
-// on-fill polarity, where WCAG 2.x overweights black on saturated mid-tone
-// fills. apcaY uses APCA's simple 2.4 gamma, not the WCAG piecewise curve.
 export function apcaY(r: number, g: number, b: number): number {
   const ch = (c: number) => Math.min(1, Math.max(0, c)) ** 2.4
   return 0.2126729 * ch(r) + 0.7151522 * ch(g) + 0.0721750 * ch(b)
@@ -84,10 +80,6 @@ export function computeLFlip(C: number, H: number): number {
   return (lo + hi) / 2
 }
 
-// Lightest L that meets targetContrast against bgY — searches the full range,
-// so the result sits exactly at the ratio rather than overshooting darker.
-// Used to anchor stops 11/12: their luminance uniformity across brands comes
-// from each brand's stop 2 being luminance-equalized already.
 export function findMaxLForContrast(C: number, H: number, bgY: number, targetContrast: number): number {
   let lo = 0.005, hi = 0.999
   for (let i = 0; i < 20; i++) {
@@ -97,9 +89,6 @@ export function findMaxLForContrast(C: number, H: number, bgY: number, targetCon
   return lo
 }
 
-// Largest chroma at (L, H) that stays inside sRGB. Per-channel clipping of
-// out-of-gamut colors distorts hue (saturated yellows turn khaki); reducing
-// C along constant L/H keeps the hue true.
 export function clampChromaToGamut(L: number, C: number, H: number): number {
   const inGamut = (c: number) => {
     const [r, g, b] = oklchToLinearRgb(L, c, H)

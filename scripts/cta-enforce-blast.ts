@@ -7,7 +7,7 @@
 import { BRANDS } from '../src/brands'
 import { generateScale, type ColorStop } from '../src/engine/colorEngine'
 import { darkChromaCurve } from '../src/engine/darkChromaCurve'
-import { DARK_BRAND_FILL_MIN_L, ACCENT_DARK_STOPS } from '../src/engine/stopTable'
+import { DARK_BRAND_FILL_MIN_L } from '../src/engine/stopTable'
 
 const hx = (s: ColorStop) => {
   const c = (v: number) => Math.round(Math.max(0, Math.min(1, v)) * 255).toString(16).padStart(2, '0')
@@ -15,7 +15,6 @@ const hx = (s: ColorStop) => {
 }
 const baseFloor = (enforce: boolean) => ({
   darkFillMinL: DARK_BRAND_FILL_MIN_L,
-  darkStops: ACCENT_DARK_STOPS,
   enforceOnFillContrast: enforce,
   coolRedDark: true,
   darkChromaCurve,

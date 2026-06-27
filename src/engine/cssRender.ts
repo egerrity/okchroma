@@ -1,6 +1,4 @@
-// Renders a ResolvedBrand to CSS custom-property blocks. Shared by the
-// build script (node, brands.css) and the demo's any-color tab (browser,
-// injected <style>) so both ship byte-identical rules.
+
 
 import { generateIllustrationScale, generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel } from './colorEngine'
 import { stopTokenName, onFillTokenName, tokenOrder } from './tokenNames'
@@ -150,7 +148,7 @@ export function brandCss(
   const darkAnchors = [`  --paper-0: #000000;`, `  --ink-13: #ffffff;`]
 
   return [
-    `/* ${displayName}${note} */`,
+    ``,
     `[data-brand="${slug}"] {`,
     ...lightAnchors,
     ...brandKindBody('brand', scale, 'light'),

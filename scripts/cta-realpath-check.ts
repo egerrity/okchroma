@@ -7,9 +7,9 @@ import { BRANDS } from '../src/brands'
 import { resolveBrand } from '../src/engine/resolve'
 import { generateScale, type ColorStop } from '../src/engine/colorEngine'
 import { darkChromaCurve } from '../src/engine/darkChromaCurve'
-import { DARK_BRAND_FILL_MIN_L, ACCENT_DARK_STOPS } from '../src/engine/stopTable'
+import { DARK_BRAND_FILL_MIN_L } from '../src/engine/stopTable'
 const hx = (s: ColorStop) => { const c = (v: number) => Math.round(Math.max(0, Math.min(1, v)) * 255).toString(16).padStart(2, '0'); return `#${c(s.r)}${c(s.g)}${c(s.b)}`.toUpperCase() }
-const directFloor = { darkFillMinL: DARK_BRAND_FILL_MIN_L, darkStops: ACCENT_DARK_STOPS, enforceOnFillContrast: true, coolRedDark: true, darkChromaCurve, highlight: true as const }
+const directFloor = { darkFillMinL: DARK_BRAND_FILL_MIN_L, enforceOnFillContrast: true, coolRedDark: true, darkChromaCurve, highlight: true as const }
 const sample = ['Dark Roast', 'Chili Mocha', 'Dragonfruit', 'Turmeric Latte', 'Matcha', 'Cranberry', 'Hibiscus']
 console.log('  brand            | DIRECT generateScale   | REAL resolveBrand      | match  (light cta-1 / dark cta-1)  flags')
 for (const name of sample) {

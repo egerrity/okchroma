@@ -25,14 +25,13 @@ console.log('  ramp            withLoop_L ΔL | noLoop_L ΔL | acc8L')
 
 import { darkChromaCurve } from '../src/engine/darkChromaCurve'
 import { darkCtaTrim } from '../src/engine/darkChromaCurve'
-import { ACCENT_DARK_STOPS, DARK_BRAND_FILL_MIN_L } from '../src/engine/stopTable'
+import { DARK_BRAND_FILL_MIN_L } from '../src/engine/stopTable'
 
 const withL: number[] = [], noL: number[] = []
 for (const b of BRANDS) {
   // Replicate resolveBrand's brand-path opts for a non-exact brand (best effort).
   const common = {
     highlight: true,
-    darkStops: ACCENT_DARK_STOPS,
     darkFillMinL: DARK_BRAND_FILL_MIN_L,
     darkChromaCurve,
     coolRedDark: true,

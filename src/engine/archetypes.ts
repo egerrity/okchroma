@@ -17,7 +17,6 @@ export function medianLForArchetype(archetype: Archetype): number {
   return ARCHETYPES.find(a => a.name === archetype)!.medianL
 }
 
-// Hover formula: ΔL = 0.03 / (L + 0.1), direction flips at L=0.40
 export function hoverL(L: number): number {
   const delta = 0.03 / (L + 0.1)
   return L < 0.40 ? L + delta : L - delta

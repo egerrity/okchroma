@@ -1,13 +1,4 @@
-// Emits a resolved theme as Figma-native variable-import JSON — one object
-// per mode (light / dark). This is a sibling emitter to cssRender.ts off the
-// SAME engine data (ResolvedBrand / GeneratedScale); nothing here touches the
-// engine core.
-//
-// Format is the confirmed `figma-variables-generator` shape:
-//   - color $value is an OBJECT { colorSpace, components:[r,g,b 0–1], alpha, hex }
-//   - nested keys join with '/', so { brand: { '9': … } } => variable "brand/9"
-//   - identical token names across the two mode files (the caller writes one
-//     file per mode; the filename becomes the Figma mode name)
+
 
 import { toHex } from './cssRender'
 import { stopTokenName, onFillTokenName, tokenOrder, type RampKind } from './tokenNames'
@@ -34,7 +25,6 @@ function colorFromHex(white: boolean): FigmaColorToken {
   return { $type: 'color', $value: { colorSpace: 'srgb', components: [v, v, v], alpha: 1, hex: white ? '#ffffff' : '#000000' } }
 }
 
-// Parse "#rrggbb" → a color token (used only for the user-input identity hex).
 function colorFromHexString(hex: string): FigmaColorToken {
   const h = hex.replace('#', '')
   const r = parseInt(h.slice(0, 2), 16) / 255
@@ -43,10 +33,6 @@ function colorFromHexString(hex: string): FigmaColorToken {
   return { $type: 'color', $value: { colorSpace: 'srgb', components: [r, g, b], alpha: 1, hex: hex.toLowerCase() } }
 }
 
-// One ramp for a single mode. `kind` selects the on-fill token name (on-cta vs
-// on-highlight) via the shared tokenNames source of truth; stop naming is
-// positional. `extra` carries tokens NOT in the scale array: the off-scale cta
-// pair (cta-1/cta-2), the on-highlight text token, and the mode-invariant identity hex.
 function rampGroup(
   stops: ColorStop[],
   onFillWhite: boolean,
@@ -56,8 +42,7 @@ function rampGroup(
   const g: FigmaGroup = {}
   for (const s of [...stops].sort((a, b) => tokenOrder(stopTokenName(a.stop)) - tokenOrder(stopTokenName(b.stop))))
     g[stopTokenName(s.stop)] = colorFromStop(s)
-  // Off-scale cta — inserted after the sorted scale (tokenOrder lands it right
-  // after ink-12) and before the on-fill tokens, matching the CSS emitter.
+
   if (extra?.cta) g['cta-1'] = colorFromStop(extra.cta)
   if (extra?.ctaHover) g['cta-2'] = colorFromStop(extra.ctaHover)
   g[onFillTokenName(kind)] = colorFromHex(onFillWhite)
@@ -67,23 +52,17 @@ function rampGroup(
 }
 
 export interface ThemeInput {
-  // Secondary ramp when present; when null, accent mirrors brand (matching cssRender).
+
   accent?: GeneratedScale | null
-  // The neutral is GENERATED per brand (tinted toward the brand hue) at this
-  // level — pure / default / branded. Defaults to 'default'. No longer passed
-  // as hex strings; themeToFigma derives it from the brand hue, just like the
-  // CSS path.
+
   neutralLevel?: NeutralLevel
-  // Final per-signal scales (base signals already merged with the brand's
-  // signalOverrides by the caller), named by identity: red / yellow / green / info-color.
+
   signals: Array<{ name: string; scale: GeneratedScale }>
 }
 
-// Returns one nested token object per mode. The caller serializes each to its
-// own file (Light.json / Dark.json) and downloads both for import as modes.
 export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: FigmaGroup; dark: FigmaGroup } {
   const { scale } = r
-  const accent = input.accent ?? scale // mirror brand when no secondary
+  const accent = input.accent ?? scale
   const accentOnFillLight = input.accent ? input.accent.onFillTextIsWhite : scale.onFillTextIsWhite
   const accentOnFillDark = input.accent ? input.accent.onFillTextIsWhiteDark : scale.onFillTextIsWhiteDark
 
@@ -93,9 +72,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     cta: mode === 'light' ? s.cta : s.ctaDark,
     ctaHover: mode === 'light' ? s.ctaHover : s.ctaHoverDark,
   })
-  // Neutral is generated per brand (tinted toward the brand hue) and emitted the
-  // same way as brand/secondary — highlight rung at scale slot 9/10, off-scale
-  // cta — minus identity (no user-input hex to echo).
+
   const nScale = generateNeutralScale(scale.brandH, input.neutralLevel ?? 'default')
   const neutralExtra = (mode: 'light' | 'dark') => ({
     onHighlightWhite: mode === 'light' ? nScale.onHighlightIsWhite : nScale.onHighlightIsWhiteDark,
@@ -109,9 +86,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
       neutral: rampGroup(nScale[mode], mode === 'light' ? nScale.onFillTextIsWhite : nScale.onFillTextIsWhiteDark, 'brand', neutralExtra(mode)),
     }
     for (const sig of input.signals) {
-      // F1: signals are emitted like every family — an off-scale loud cta AND a
-      // distinct highlight rung at slot 9/10, with computed on-cta + on-highlight
-      // and no identity. No alias.
+
       g[sig.name] = rampGroup(
         sig.scale[mode],
         mode === 'light' ? sig.scale.onFillTextIsWhite : sig.scale.onFillTextIsWhiteDark,
