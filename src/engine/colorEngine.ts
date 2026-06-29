@@ -5,8 +5,6 @@ import {
   findLForY,
   findLForContrast,
   findMaxLForContrast,
-  computeLFlip,
-  computeLFillMax,
   clampChromaToGamut,
   oklchToLinearRgb,
   apcaY,
@@ -163,8 +161,6 @@ export interface GeneratedScale {
   brandL: number
   brandC: number
   brandH: number
-  lFlip: number
-  lFillMax: number
   onFillTextIsWhite: boolean
 
   onFillTextIsWhiteDark: boolean
@@ -267,8 +263,6 @@ export function generateScale(
     brandC >= DARK_FLOOR_MUTED_MAX_C
       ? 0
       : Math.min(1, Math.max(0, (brandC - HUE_NOISE_C) / (DARK_FLOOR_FULL_C - HUE_NOISE_C)))
-  const lFlip = computeLFlip(brandC, brandH)
-  const lFillMax = computeLFillMax(brandC, brandH)
 
   const fillAnchorL =
     opts?.enforceWhiteFill && contrastRatio(1.0, wcagY(scaleL, brandC, brandH)) < 4.5
@@ -479,7 +473,7 @@ export function generateScale(
   dark.sort((a, b) => a.stop - b.stop)
 
   return {
-    name: scaleName, archetype, brandL, brandC, brandH, lFlip, lFillMax,
+    name: scaleName, archetype, brandL, brandC, brandH,
     onFillTextIsWhite, onFillTextIsWhiteDark, light, dark,
     cta, ctaHover, ctaDark, ctaHoverDark,
     onHighlightIsWhite, onHighlightIsWhiteDark,

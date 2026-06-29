@@ -68,18 +68,6 @@ export function apcaLc(txtY: number, bgY: number): number {
   return sapc > -0.1 ? 0 : (sapc + 0.027) * 100
 }
 
-export function computeLFlip(C: number, H: number): number {
-  const whiteY = 1.0
-  const blackY = 0.0
-  let lo = 0.005, hi = 0.999
-  for (let i = 0; i < 20; i++) {
-    const mid = (lo + hi) / 2
-    const Y = wcagY(mid, C, H)
-    contrastRatio(whiteY, Y) > contrastRatio(blackY, Y) ? (lo = mid) : (hi = mid)
-  }
-  return (lo + hi) / 2
-}
-
 export function findMaxLForContrast(C: number, H: number, bgY: number, targetContrast: number): number {
   let lo = 0.005, hi = 0.999
   for (let i = 0; i < 20; i++) {
@@ -99,16 +87,6 @@ export function clampChromaToGamut(L: number, C: number, H: number): number {
   for (let i = 0; i < 20; i++) {
     const mid = (lo + hi) / 2
     inGamut(mid) ? (lo = mid) : (hi = mid)
-  }
-  return lo
-}
-
-export function computeLFillMax(C: number, H: number): number {
-  const whiteY = 1.0
-  let lo = 0.005, hi = 0.999
-  for (let i = 0; i < 20; i++) {
-    const mid = (lo + hi) / 2
-    contrastRatio(whiteY, wcagY(mid, C, H)) >= 3.0 ? (lo = mid) : (hi = mid)
   }
   return lo
 }
