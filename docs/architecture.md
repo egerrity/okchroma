@@ -194,6 +194,9 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
   ramps in above H ≈ 12° and out above H ≈ 35.5° (`inRedBand`). Warm reds rotate a few
   degrees **cooler** so a brand red reads as *brand*, not error red. Applied in light
   (`lightHueAt`), in dark (`coolRedDark`), and as a final fill pass (`applyRedCoolRender`).
+  It is **brand-only**: the red *signal* keeps its identity hue in both modes — signals pass
+  `suppressRedCool: true` (the light-side analogue of brands' `coolRedDark`), so the cool
+  never touches them.
 - **Style lever** (`deeper` / `full-chroma`) — set per brand at intake (`brands.ts`); acts
   **only** inside the ambiguous semi-muted warm band (`deeper` → browner/deeper;
   `full-chroma` → stays loud). A no-op outside that band.
@@ -208,7 +211,10 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
   (`apparentL`); `perceptualRungL` solves the *measured* L at which each stop's *apparent*
   lightness matches a common target. → A high-boost hue (blue) is placed at a lower
   measured L, a low-boost hue (yellow-green) higher, so every step reads the same across
-  brands. **The light ramp uses this solve; the dark ramp is placed directly.**
+  brands. **The light ramp uses this solve; the dark ramp does not — dark stops sit at
+  fixed `DARK_L`, so they carry a per-hue apparent-lightness *wave* (~8–9 L\* across vivid
+  stops, more on loud CTA fills) that light removes. Closing that gap is a tracked follow-on;
+  `divergence-audit` measures the wave.**
 - **Dark-mode "dimmer"** — `perceptualDarkC` solves the *chroma* whose apparent lightness
   matches gray + boost at the dark rung's fixed L (this is the live `darkChromaCurve`). On
   top of that, `darkCtaTrim` / `loudnessCap` trims the **brand** dark-fill chroma
@@ -226,6 +232,13 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
   if neither pole clears; `highlight` is judged by APCA only (Lc 60), because
   mid-lightness chromatic fills have a WCAG dead zone. White and black are the contrast
   extremes — if neither clears, the *fill* moves, never the text.
+- **Light ↔ dark parity** — the modes intentionally differ in exactly one place: lightness
+  *placement* (light H-K-solved per hue, dark fixed at `DARK_L` — the tracked wave above).
+  Everything else is meant to hold in both modes: the chroma curve, the hue treatment
+  (incl. the brand-only red-cool), and the contrast floors. `divergence-audit`
+  (`scripts/divergence-audit.ts`) gates that symmetry family × mode × stop so a change
+  can't silently reintroduce a one-mode-only transform — it caught the neutral `highlight`
+  9/10 chroma bypass and the red-signal cool.
 
 #### Differentiation (brand vs. status signals)
 
@@ -248,8 +261,11 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
 
 - The neutral is **derived from the brand hue** (`generateNeutralScale`): a near-gray
   (C ≈ 0.006) at the brand's hue, run back through `generateScale` with a `neutralChromaCurve`.
-  Tint levels `pure` / `default` / `branded` scale the tint; its `cta` is intentionally
-  **low-hierarchy** (sits at wash level, not a loud off-scale fill).
+  Tint levels `pure` / `default` / `branded` scale the tint, applied at **every** stop in
+  both modes — the `highlight` rungs 9/10 follow the tint curve like the rest of the ramp
+  (they route through `cAt` in dark as in light). Its `cta` is intentionally **low-hierarchy**,
+  tracking the scale's own stop 4 (cta) / stop 5 (hover) so it **flips per mode** — a
+  near-white wash in light, a dark wash in dark — with `on-cta` recomputed for legibility in each.
 
 #### Illustration
 
@@ -321,6 +337,7 @@ npm run plugin:build   # → plugin/dist/plugin-code.js + plugin/dist/plugin-ui.
 npm run typecheck        # tsc --noEmit
 npm run audit            # dark-mode audit        (add :bless to update the snapshot)
 npm run highlight-audit  # highlight/on-fill audit (add :bless)
+npm run audit:divergence # light↔dark + cross-family divergence audit (add :bless)
 npm run sweep            # agnostic hue × chroma gamut sweep
 npm run smooth           # ramp smoothness audit  (smooth:baseline to re-record)
 npm run figma:verify     # validates the Figma emitter output

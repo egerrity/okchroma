@@ -169,7 +169,7 @@ const howItWorks: Article = {
   → classifyArchetype     bucket by lightness
   → build light ramp      stops 1–8, lightness solved for apparent brightness
   → fills + text          off-scale cta, contrast-floored ink-11/12
-  → build dark ramp       stops 1–12, placed directly, chroma reduced
+  → build dark ramp       stops 1–12, placed directly (no H-K solve → per-hue wave), chroma reduced
   → highlight stops 9/10
   → resolveBrand policy   collisions → maybe regenerate; signal shifts
   → emit                  cssRender / figmaRender → named tokens`}</Pre>

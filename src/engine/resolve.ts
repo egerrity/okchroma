@@ -16,7 +16,7 @@ export const SIGNAL_SCALES = new Map<SignalDef['name'], { def: SignalDef; scale:
   SIGNALS.map(def => [
     def.name,
 
-    { def, scale: generateScale(def.hex, def.name, undefined, { highlight: true, darkChromaCurve, loudCta: true, darkFillMinL: def.darkFillMinL, enforceOnFillContrast: true }) },
+    { def, scale: generateScale(def.hex, def.name, undefined, { highlight: true, darkChromaCurve, loudCta: true, darkFillMinL: def.darkFillMinL, enforceOnFillContrast: true, suppressRedCool: true }) },
   ])
 )
 

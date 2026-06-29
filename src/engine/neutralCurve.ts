@@ -2,6 +2,13 @@
 
 export type NeutralLevel = 'pure' | 'default' | 'branded'
 
+// LANCHOR/SHAPE define the neutral's CHROMA as a function of lightness: LANCHOR
+// is the L-breakpoints the curve is sampled at, SHAPE the relative chroma at each.
+// These are a derived artifact (Stage-0) and intentionally NOT the stop-lightness
+// scaffold — the neutral's stops sit at the shared LIGHT_L/DARK_L (stopTable) via
+// the main generateScale loop; this table is only the x-axis of the chroma curve.
+// It reads close to LIGHT_L/DARK_L by coincidence of derivation; do NOT "consolidate"
+// it onto them — that would resample (re-tune) the curve.
 const LANCHOR = {
   light: [0.993, 0.983, 0.956, 0.932, 0.91, 0.886, 0.852, 0.793, 0.643, 0.609, 0.501, 0.243],
   dark: [0.179, 0.213, 0.252, 0.283, 0.312, 0.347, 0.4, 0.49, 0.537, 0.583, 0.768, 0.949],

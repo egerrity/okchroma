@@ -213,9 +213,13 @@ export interface GenerateOptions {
 
   enforceOnFillContrast?: boolean
 
-  enforceWhiteFill?: boolean
-
   coolRedDark?: boolean
+
+  // The red-cool is a BRAND-only differentiator (it nudges a red-band brand cooler
+  // so it reads distinct from the red signal). Signals set this to keep their own
+  // identity hue in BOTH modes — light otherwise cools them like a brand. Dark is
+  // already brand-only via coolRedDark.
+  suppressRedCool?: boolean
 
   style?: 'default' | 'deeper' | 'full-chroma'
 
@@ -264,19 +268,15 @@ export function generateScale(
       ? 0
       : Math.min(1, Math.max(0, (brandC - HUE_NOISE_C) / (DARK_FLOOR_FULL_C - HUE_NOISE_C)))
 
-  const fillAnchorL =
-    opts?.enforceWhiteFill && contrastRatio(1.0, wcagY(scaleL, brandC, brandH)) < 4.5
-      ? findLForContrast(scaleL, brandC, brandH, 1.0, 4.6)
-      : scaleL
-  const fill9 = oklchToSrgbUnclamped(fillAnchorL, clampChromaToGamut(fillAnchorL, cAt('light', fillAnchorL, brandC), brandH), brandH)
+  const fill9 = oklchToSrgbUnclamped(scaleL, clampChromaToGamut(scaleL, cAt('light', scaleL, brandC), brandH), brandH)
   const fill9ApcaY = apcaY(fill9.r, fill9.g, fill9.b)
-  let onFillTextIsWhite = onTextIsWhite(fill9ApcaY, fillAnchorL, brandC, brandH, !!opts?.enforceOnFillContrast)
+  let onFillTextIsWhite = onTextIsWhite(fill9ApcaY, scaleL, brandC, brandH, !!opts?.enforceOnFillContrast)
 
   const hueIsNoise = brandC < HUE_NOISE_C
   const v = Math.min(1, brandC / VIVID_C)
   const vSubtle = Math.min(1, subtleC / VIVID_C)
   const S = hueIsNoise ? 0 : sigmoid(hueDelta(brandH, RED_TORSION_CENTER_H) / RED_TORSION_SOFTNESS)
-  const wRed = hueIsNoise ? 0 : redCoolWeight(brandH)
+  const wRed = hueIsNoise || opts?.suppressRedCool ? 0 : redCoolWeight(brandH)
   const mutednessRaw = Math.min(1, (1 - v) / MUTED_BLEND_DENOM)
 
   const creamGate = 1 - sigmoid((brandH - CREAM_UPPER_H) / CREAM_UPPER_SOFTNESS)
@@ -351,10 +351,10 @@ export function generateScale(
 
   const stop2Y = wcagY(light[1].L, light[1].C, light[1].H)
 
-  let light9L = fillAnchorL
+  let light9L = scaleL
   if (opts?.enforceOnFillContrast && onFillTextIsWhite
-      && contrastRatio(1.0, wcagY(fillAnchorL, brandC, brandH)) < 4.5) {
-    light9L = findLForContrast(fillAnchorL, brandC, brandH, 1.0, 4.6)
+      && contrastRatio(1.0, wcagY(scaleL, brandC, brandH)) < 4.5) {
+    light9L = findLForContrast(scaleL, brandC, brandH, 1.0, 4.6)
   }
 
   const cta = makeStop(9, light9L, cAt('light', light9L, brandC), brandH)
@@ -461,7 +461,7 @@ export function generateScale(
     const darkHlC = (l: number, h: number) =>
       opts?.darkChromaCurve
         ? clampChromaToGamut(l, opts.darkChromaCurve(l, h, brandC), h)
-        : clampChromaToGamut(l, hlLadderC + u * (brandSat * HIGHLIGHT_LIGHT.satFraction * maxChromaAt(l, h) - hlLadderC), h)
+        : clampChromaToGamut(l, cAt('dark', l, hlLadderC + u * (brandSat * HIGHLIGHT_LIGHT.satFraction * maxChromaAt(l, h) - hlLadderC)), h)
     const dhl = placeRung(9, HIGHLIGHT_DARK.rootL, darkHueAt, darkHlC)
     const dhl9 = dhl.s
     const dhl10 = rung(10, HIGHLIGHT_DARK.rootL10, darkHueAt, darkHlC)
