@@ -1,7 +1,6 @@
 # The scale
 
-One brand color in, a 12-step scale out. Each step has a fixed job — and a fixed
-accessibility category — so the same step number does the same thing on every brand.
+One brand color in, a 12-step scale out. Each step has a pre-reserved role and intended accessibility category — so the same step number does the same thing on every brand.
 Lightness comes from a fixed ladder; chroma is saturation-preserving (a fraction of the
 gamut the step allows, scaled by how saturated the brand is). Names fall in four groups
 — `paper`, `wash`, `highlight`, `ink` — plus an off-scale `cta` fill.
@@ -18,18 +17,18 @@ carries. The L targets are the shape — they live in `stopTable.ts` as `LIGHT_L
 
 | stop | light L | dark L | accessibility |
 |---|---:|---:|---|
-| `paper-1`      | 0.993 | 0.178 | surface |
-| `paper-2`      | 0.982 | 0.213 | surface |
-| `wash-3`       | 0.960 | 0.252 | surface |
-| `wash-4`       | 0.936 | 0.285 | surface |
-| `wash-5`       | 0.903 | 0.313 | surface |
+| `paper-1`      | 0.993 | 0.178 | surface, inverted text |
+| `paper-2`      | 0.982 | 0.213 | surface, inverted text |
+| `wash-3`       | 0.960 | 0.252 | surface, surface interaction |
+| `wash-4`       | 0.936 | 0.285 | surface, surface interaction, decorative |
+| `wash-5`       | 0.903 | 0.313 | surface, surface interaction, decorative |
 | `wash-6`       | 0.860 | 0.348 | decorative |
 | `wash-7`       | 0.806 | 0.420 | decorative |
-| `highlight-8`  | 0.738 | 0.550 | 3:1 UI element |
-| `highlight-9`  | 0.600 | 0.600 | 3:1 UI element |
-| `highlight-10` | 0.560 | 0.640 | 3:1 UI element |
-| `ink-11`       | 0.530 | 0.800 | 4.5:1 text |
-| `ink-12`       | 0.300 | 0.940 | 7:1 text |
+| `highlight-8`  | 0.738 | 0.550 | 3:1 UI element, accessible borders |
+| `highlight-9`  | 0.600 | 0.600 | 3:1 UI element, accessible borders, element fills |
+| `highlight-10` | 0.560 | 0.640 | 3:1 UI element, accessible borders, element fills |
+| `ink-11`       | 0.530 | 0.800 | 4.5:1 text, inverted surface |
+| `ink-12`       | 0.300 | 0.940 | 7:1 text, inverted surface |
 
 - Contrast-floored in light (dark is placed directly and already clears its ratio):
   `highlight-8` (`STOP_8_NONTEXT_CONTRAST` 3.0), `ink-11` (`STOP_11_CONTRAST` 4.5),
