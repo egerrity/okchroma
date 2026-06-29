@@ -62,6 +62,33 @@ function Ramp({ hex, caption }: { hex: string; caption?: React.ReactNode }) {
   )
 }
 
+// Several brand colors through the engine, stacked — read down any column and
+// every hue sits at the same lightness. The OKLCH consistency argument, shown.
+const OKLCH_DEMO_HUES = ['#C61D1B', '#E08A1E', '#2E9E3F', '#0BA5C0', '#2C5FC9', '#9B3DBC']
+function HueGrid() {
+  return (
+    <figure className="d2-huegrid">
+      <div className="d2-huegrid-rows">
+        {OKLCH_DEMO_HUES.map(hex => {
+          const scale = generateScale(hex, 'docs', undefined, { highlight: true })
+          return (
+            <div className="d2-huegrid-row" key={hex}>
+              {scale.light.map(s => (
+                <div key={s.stop} className="d2-huegrid-cell" title={`${hex} — stop ${s.stop} — ${toHex(s.r, s.g, s.b)}`}
+                  style={{ background: toHex(s.r, s.g, s.b) }} />
+              ))}
+            </div>
+          )
+        })}
+      </div>
+      <figcaption className="d2-ramp-cap">
+        Six different brand colors through the same engine. Read <i>down</i> any column — every hue
+        lands at the same lightness. That cross-hue consistency is what OKLCH makes possible.
+      </figcaption>
+    </figure>
+  )
+}
+
 // ── Articles ─────────────────────────────────────────────────────────────────
 type Article = { slug: string; title: string; body: () => React.ReactNode }
 type Section = { label: string; articles: Article[] }
@@ -193,10 +220,11 @@ const whyOklch: Article = {
         increments look uneven, and nudging "lightness" in RGB drags the hue along with it.
       </P>
       <P>
-        Moving down a ramp is simply "change L and C, keep H" — which is exactly what makes the 12
-        stops read as one consistent color family from light to dark.
+        Because lightness is its own axis, the engine can place every step at the same lightness on{' '}
+        <i>every</i> hue — so a given step plays the same role no matter the brand color, and each
+        ramp still holds one hue from light to dark.
       </P>
-      <Ramp hex="#005EB8" caption={<>A navy ramp holds one hue down all 12 stops while only L and C move.</>} />
+      <HueGrid />
       <P>
         It also makes the accessibility math possible. Gamut clamping reduces chroma at a fixed L and H
         to stay inside sRGB (<Code>clampChromaToGamut</Code>); per-channel RGB clipping would instead
@@ -417,6 +445,10 @@ const DOCS2_CSS = `
 .d2-table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 0 0 16px; }
 .d2-table th { text-align: left; font-weight: 600; color: var(--fg-subtle); border-bottom: 1px solid var(--border-subtle); padding: 8px 10px; }
 .d2-table td { border-bottom: 1px solid var(--border-subtle); padding: 8px 10px; vertical-align: top; }
+.d2-huegrid { margin: 22px 0 26px; }
+.d2-huegrid-rows { display: flex; flex-direction: column; gap: 4px; }
+.d2-huegrid-row { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; }
+.d2-huegrid-cell { height: 32px; border-radius: 5px; border: 1px solid var(--border-subtle); }
 @media (max-width: 860px) {
   .d2 { grid-template-columns: 1fr; }
   .d2-side { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border-subtle); display: flex; gap: 16px; overflow-x: auto; padding: 16px; }
