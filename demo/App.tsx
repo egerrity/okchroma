@@ -9,17 +9,17 @@ import {
   type RungMode, type AccentMode,
 } from './shared'
 import CustomTheme from './CustomTheme'
+import DocsSite from './docs/DocsSite'
 import { OkchromaLogo } from './okchroma-logo'
 
 type View = 'custom' | 'gallery' | 'docs'
-// Stage 3: gallery + docs are HIDDEN (not deleted) — the demo presents the
-// custom-theme view only. The PaletteGallery and Docs components stay in place
-// below (and in the render switch) so this is a one-line revert. Docs in
-// particular still carries pre-rename 1–12 refs; it's hidden, not yet re-skinned.
+// The gallery view stays HIDDEN for now (PaletteGallery lives below; one-line
+// revert). Docs is the new sidebar docs site (demo/docs/DocsSite.tsx) — the old
+// stale Docs component was removed.
 const VIEWS: Array<[View, string]> = [
   ['custom', 'Custom theme'],
   // ['gallery', 'Example palettes'],
-  // ['docs', 'Documentation'],
+  ['docs', 'Documentation'],
 ]
 
 // Shell: ONE header row — the tab bar collapsed into a view dropdown next
@@ -41,7 +41,7 @@ export default function App() {
       <div style={{ flex: 1, minHeight: 0 }}>
         {view === 'custom' && <CustomTheme dark={dark} onToggleDark={() => setDark(d => !d)} />}
         {view === 'gallery' && <PaletteGallery dark={dark} onToggleDark={() => setDark(d => !d)} />}
-        {view === 'docs' && <Docs dark={dark} />}
+        {view === 'docs' && <DocsSite dark={dark} />}
       </div>
 
       {/* Global tool chrome — moved out of the top header into a pinned footer so
@@ -173,149 +173,6 @@ function PaletteGallery({ dark, onToggleDark }: { dark: boolean; onToggleDark: (
   )
 }
 
-const ROLE_ROWS: Array<{ steps: string; role: string; swatch: number }> = [
-  { steps: '1–2', role: 'surfaces and backgrounds', swatch: 2 },
-  { steps: '3–5', role: 'low-hierarchy component backgrounds (rest / hover / active)', swatch: 4 },
-  { steps: '6–8', role: 'borders and dividers (subtle / border / strong)', swatch: 7 },
-  { steps: '9', role: 'solid fill, the main vehicle for brand identity', swatch: 9 },
-  { steps: '10', role: 'hover for solid fill', swatch: 10 },
-  { steps: '11', role: 'lower-contrast text', swatch: 11 },
-  { steps: '12', role: 'higher-contrast text', swatch: 12 },
-]
-
-function Docs({ dark }: { dark: boolean }) {
-  return (
-    <div className="docs">
-      <style>{DOCS_CSS}</style>
-      <div className="docs-inner">
-        <header className="docs-head">
-          <h1>Documentation</h1>
-          <p className="docs-lede">What the color engine means for your work: what each part does, what you'll see, and what you decide.</p>
-        </header>
-
-        <section>
-          <h2>About the color engine</h2>
-          <p><b>Built on Radix, generated per brand.</b> OKChroma uses Radix's reserved-step model, where each of the 12 steps has a perceptual target tied to a role. Where Radix hand-tunes a fixed set of palettes, OKChroma generates that structure from any brand color, so contrast pairings are predictable before you build a single token.</p>
-          <p><b>Perceptual color (OKLCH).</b> The engine works in a perceptual color space, so the steps appear evenly spaced regardless of hue and a scale holds one hue from light to dark.</p>
-          <p><b>Consistent across brands.</b> Each step is calculated to land at about the same lightness for every brand, so you set your structure once and extend to any brand. No surprises from low chroma, pesky yellows, or very dark navies.</p>
-          <p><b>Brand identity, preserved where safe.</b> Your brand color anchors the system at step 9, the solid fill. The engine keeps your exact hex wherever it safely can, and only adjusts when the literal color would break a UX expectation: a near-red brand that could be mistaken for the error color, or a fill that can't carry legible text. Recommended mode applies those adjustments; Exact mode turns them off and hands the tradeoffs to you.</p>
-          <p><b>Accessibility is guaranteed.</b> Every fill ships with readable text (black or white, whichever passes) in both light and dark mode, by construction. The one exception is Exact mode, which ships your hex untouched and hands accessibility back to you.</p>
-
-          <h3>About OKLCH</h3>
-          <p>OKLCH describes a color with three numbers you can reason about directly: Lightness (how light or dark), Chroma (how saturated), and Hue (the color itself). Unlike hex or RGB, these track how the eye actually reads color, so a step in lightness looks like the same step on any hue, and you can move one value without disturbing the other two. That is what lets the engine put every step at a predictable lightness and hold a single hue down a ramp.</p>
-        </section>
-
-        <section>
-          <h2>Recommendations for using your primitives</h2>
-          <p>OKChroma gives you primitives: the 12-step ramps for each brand, plus the status and neutral ramps. It does not ship semantic or component tokens; you build those on top. The point is that the primitives were designed for it. Each step has a reserved role, so your tokens map cleanly and the mapping holds across every brand.</p>
-
-          <div data-brand="cold-brew" data-theme={dark ? 'dark' : 'light'}>
-            <p className="docs-caption">A generated brand ramp (example):</p>
-            <div className="docs-ramp">
-              {Array.from({ length: 12 }, (_, i) => (
-                <div key={i} className="docs-ramp-cell" style={{ background: `var(--brand-${i + 1})` }} />
-              ))}
-            </div>
-            <div className="docs-ramp-nums">
-              {Array.from({ length: 12 }, (_, i) => <span key={i}>{i + 1}</span>)}
-            </div>
-
-            <table className="docs-roles">
-              <thead><tr><th style={{ width: 64 }}>Step</th><th>Role</th></tr></thead>
-              <tbody>
-                {ROLE_ROWS.map(r => (
-                  <tr key={r.steps}>
-                    <td><span className="docs-chip" style={{ background: `var(--brand-${r.swatch})` }} />{r.steps}</td>
-                    <td>{r.role}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p className="docs-note">The model follows Radix's <a href="https://www.radix-ui.com/colors/docs/palette-composition/understanding-the-scale" target="_blank" rel="noreferrer">Understanding the scale</a>.</p>
-
-          <p><b>White-label considerations.</b> Because every brand's step N lands at the same lightness and role, you define your tokens against step numbers once (solid fill = 9, default border = 6, body text = 12) and they hold for every brand, with no per-brand re-aliasing.</p>
-          <p><b>Build the on-emphasis text per brand.</b> The engine generates an on-fill text color for each palette (black or white, whichever stays legible on that brand's step-9 fill). When you define your "text on solid fill" token, point it at that per-brand value, not one global color.</p>
-          <p><b>Status and neutrals are their own ramps.</b> The four status colors (error, warning, success, info) and the neutrals come as separate, complete ramps in the same 12-step shape. Treat them as fixed.</p>
-          <p><b>Destructive styling.</b> Style destructive interactions differently from ordinary ones (an outline with a required icon rather than a solid red fill), especially when the brand color collides with error. See UX considerations for red hues below.</p>
-        </section>
-
-        <section>
-          <h2>How color shifting works</h2>
-
-          <h3>Collisions &amp; signals</h3>
-          <p>Your brand can land near a signal color (error red, warning yellow, and so on). When it does, the engine keeps them apart on purpose, so a brand element never gets mistaken for a status. For example, the warning yellow may shift toward lemon so it reads distinct from a gold brand. The red case is the big one (see below).</p>
-          <p><b>Accent warnings.</b> If you pick a secondary/accent that reads too close to a status color, the demo warns you and suggests a more distinct one. The accent is your choice, so the engine flags it rather than changing it.</p>
-
-          <h3>UX considerations for red hues</h3>
-          <p>Red is the one color the brand yields to, not the other way around, because red carries the error and destructive meaning and that has to stay unmistakable. When a brand sits in the red register, three things happen:</p>
-          <ul>
-            <li><b>We move the brand's lightness.</b> A red-family brand is darkened so its solid fill can't be confused with the error red on a destructive control. The hue is kept; the lightness moves.</li>
-            <li><b>We shift the brand cooler.</b> Warm reds rotate a few degrees cooler so they read as the brand rather than fire-engine error red.</li>
-            <li><b>We recommend diverging destructive styling.</b> Style destructive interactions differently from ordinary ones (an outline with a required icon, not a solid red fill), especially when the brand collides with error.</li>
-          </ul>
-          <p>The first two are automatic in Recommended mode; the third is a recommendation for your components.</p>
-
-          <h3>Warm hues</h3>
-          <p><b>Gold stays gold.</b> Dark shades of yellow, gold, and orange stay gold instead of turning olive or brown. The engine rotates the hue as it darkens so warm brands keep their character down the scale, even for muted or off-brand warm colors.</p>
-          <p><b>The style lever.</b> Some semi-muted warm brands (a muted gold) can go two ways: stay vivid, or lean browner and deeper. When your color is eligible you'll get a Default / Deeper toggle to choose. Outside that narrow range the toggle doesn't appear, because it would do nothing.</p>
-        </section>
-
-        <section>
-          <h2>Secondary color <span className="docs-badge">beta</span></h2>
-          <p>You can add a secondary (accent) color next to the primary. Treat it as beta, because of an important limit: the engine does not decide what the secondary should be in relation to the primary, and it doesn't harmonize the pair for you. What it does do:</p>
-          <ul>
-            <li>generate a full, accessible ramp for the secondary, the same way it does for the primary,</li>
-            <li>warn you if the secondary collides with a status color.</li>
-          </ul>
-          <p>So the pairing is your responsibility. Pick a secondary that already works with your primary. The engine guarantees each color is accessible on its own and flags signal collisions, but it will not fix a clashing or muddy combination. Use at your discretion. It shows up in accent surfaces, two-color illustrations, and the accent display modes.</p>
-        </section>
-
-        <section>
-          <h2>Modes &amp; extras</h2>
-          <p><b>Dark mode keeps your identity.</b> Fills don't invert or change hue; a too-dark fill just lifts enough to read on a dark background. The one special case: a red brand that would clash with the error red floats to a softer pastel so the two stay distinct.</p>
-          <p><b>Illustrations.</b> Illustrations get their own 4-color palette (wash, tint, mid, deep). You paint artwork using labeled legend colors per slot, and the engine recolors it to any brand. Illustrations deliberately skip the UI accessibility rules so they stay painterly.</p>
-          <p><b>Neutrals.</b> The engine suggests a recommended neutral palette for your brand by default, but you can also select a neutral with extra brand tint, or pick from a small set of other hue options.</p>
-          <p><b>Exact mode and overrides.</b> Exact mode ships your exact hex and turns off the engine's adjustments and guarantees; use it when brand guidelines demand the literal color, and review accessibility yourself.</p>
-        </section>
-
-        <section>
-          <h2>Getting your colors out</h2>
-          <p>The system is meant to leave the demo and go into your tools. Two paths:</p>
-          <ul>
-            <li><b>CSS custom properties:</b> the full set of primitives and semantic roles as CSS variables, for light and dark.</li>
-            <li><b>Figma variables:</b> export the system as Figma variables to drop into a Figma library.</li>
-          </ul>
-          <p>Both carry the same values the demo renders, so what you preview is what you ship.</p>
-        </section>
-      </div>
-    </div>
-  )
-}
-
-const DOCS_CSS = `
-.docs { color: var(--fg-default); }
-.docs-inner { max-width: 760px; margin: 0 auto; padding: 40px 24px 72px; }
-.docs-head h1 { font-size: 28px; font-weight: 700; margin: 0 0 6px; }
-.docs-lede { font-size: 15px; line-height: 1.6; color: var(--fg-subtle); margin: 0; }
-.docs section { margin-top: 44px; }
-.docs h2 { font-size: 20px; font-weight: 700; margin: 0 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border-subtle); }
-.docs h3 { font-size: 15px; font-weight: 700; margin: 24px 0 8px; }
-.docs p { font-size: 14px; line-height: 1.7; margin: 0 0 12px; }
-.docs ul { font-size: 14px; line-height: 1.7; margin: 0 0 12px; padding-left: 20px; }
-.docs li { margin-bottom: 6px; }
-.docs a { color: var(--fg-link); }
-.docs-caption { font-size: 12px; color: var(--fg-subtle); margin: 18px 0 8px; }
-.docs-ramp { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; margin: 0 0 4px; }
-.docs-ramp-cell { aspect-ratio: 1 / 1; border-radius: 5px; border: 1px solid var(--border-subtle); }
-.docs-ramp-nums { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; margin: 0 0 24px; font-size: 10px; color: var(--fg-subtle); text-align: center; }
-.docs-roles { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0 6px; }
-.docs-roles th { text-align: left; font-weight: 600; color: var(--fg-subtle); border-bottom: 1px solid var(--border-subtle); padding: 8px; }
-.docs-roles td { border-bottom: 1px solid var(--border-subtle); padding: 8px; vertical-align: middle; }
-.docs-chip { display: inline-block; width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--border-subtle); margin-right: 8px; vertical-align: -2px; }
-.docs-note { font-size: 12px; color: var(--fg-subtle); margin-top: 0; }
-.docs-badge { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; background: var(--alert-med-bg-subtle); color: var(--alert-med-fg); padding: 2px 8px; border-radius: 999px; vertical-align: middle; margin-left: 6px; }
-`
 
 // GitHub mark — inlined (lucide dropped brand icons) and drawn in currentColor
 // so it inherits the nav pill's text color in both light and dark.
