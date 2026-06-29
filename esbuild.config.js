@@ -2,7 +2,6 @@ const esbuild = require('esbuild')
 const fs = require('fs')
 const { execSync } = require('child_process')
 const isWatch = process.argv.includes('--watch')
-const isFull = process.argv.includes('--full')
 const isPlugin = process.argv.includes('--plugin')
 
 async function main() {

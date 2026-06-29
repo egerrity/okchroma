@@ -5,7 +5,7 @@
   "scripts": {
     "generate": "node dist/build-script.js",
     "demo:build": "node esbuild.config.js",
-    "build": "node esbuild.config.js --full",
+    "build": "node esbuild.config.js",
     "dev": "node esbuild.config.js --watch",
     "audit": "esbuild scripts/dark-audit.ts --bundle --platform=node --outfile=dist/dark-audit.js && node dist/dark-audit.js",
     "audit:bless": "esbuild scripts/dark-audit.ts --bundle --platform=node --outfile=dist/dark-audit.js && node dist/dark-audit.js --bless",

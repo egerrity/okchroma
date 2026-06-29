@@ -1,0 +1,354 @@
+# OKChroma — System documentation
+
+> Status: written 2026-06-29 from a skeptical, code-first read of the `docs-rewrite`
+> branch. The **code is the source of truth**; where older comments or docs disagreed,
+> the code won. File references are `path:line` against this branch.
+
+## 1. System Overview
+
+**OKChroma is a color-system engine.** You give it one brand color (a hex). It generates a
+complete, theme-ready color system around that color: a 12-step light ramp and a 12-step
+dark ramp, a solid call-to-action fill, an emphasis "highlight" rung, body/heading text
+colors, a brand-tinted neutral ramp, and four status ramps (error / warning / success /
+info) — each guaranteed legible and kept visually distinct from the others.
+
+The core promise is **white-label predictability**: every brand's "step 9" lands at the
+same *perceived* lightness and plays the same role, so you define your design tokens
+against step **numbers** once (solid fill = step 9, body text = step 12, default border =
+step 6) and they hold for *any* brand color, with no per-brand re-tuning. Accessibility
+(WCAG contrast targets, plus APCA for emphasis fills) is built into the math rather than
+checked afterward.
+
+**Who it serves:** designers and design-engineers who need to turn an arbitrary brand
+color into a coherent, accessible token set — and ship it into their own product or
+design library.
+
+**What it produces** (two interchangeable outputs carrying identical values):
+
+- **CSS custom properties** — `dist/brands.css` (one block per brand, light + dark) +
+  `dist/signals.css`, consumed through the hand-written semantic layer
+  `tokens/semantic.css`.
+- **Figma variables** — written directly into a Figma file by the plugin (a `mode`
+  primitive collection + a `theme` alias collection).
+
+The **demo** (a live React app) and the **Figma plugin** are both front-ends that call the
+same engine. The engine and its output *are* the product; the demo is a preview.
+
+> Design lineage: the 12-step "reserved role per step" scale model is a nod to
+> [Radix Colors](https://www.radix-ui.com/colors/docs/palette-composition/understanding-the-scale)
+> as a conceptual inspiration. It is **not** a dependency and does not touch the math —
+> all color computation is original.
+
+---
+
+## 2. Core Architecture
+
+### The story in one paragraph
+
+One hex enters `resolveBrand`. That function calls the pure `generateScale` to do the
+color math, then layers **policy** on top — checking the result against the four status
+colors and, on a collision, re-running `generateScale` with different settings or
+recording a flag. The resolved result is handed to an **emitter** (CSS or Figma) that maps
+the computed color stops onto named tokens and chooses light vs dark. `build.ts` drives
+this in a loop over the brand fixtures to write the CSS files; the demo and plugin drive
+the exact same functions live.
+
+### 2a. Architecture details
+
+Recommended documentation format: three coordinated, in-repo artifacts — **(A)** a Mermaid
+layer/flow graph (renders on GitHub, diffs cleanly, stays editable — preferable to an
+exported image), **(B)** a linear pipeline-stage table, **(C)** an output-vocabulary
+table. All three follow.
+
+#### (A) Module map
+
+```mermaid
+flowchart TD
+    subgraph Inputs["Fixtures / inputs"]
+      B[brands.ts · secondaries.ts]
+      SIG[signals.ts · 4 canonical hexes]
+    end
+
+    subgraph Policy["Policy layer"]
+      R[resolve.ts · resolveBrand]
+      COL[collision.ts]
+      SH[signalShift.ts]
+    end
+
+    subgraph Core["Pure math core — generateScale"]
+      CE[colorEngine.ts]
+      CON[constraints.ts · OKLCH / gamut / WCAG / APCA]
+      PL[perceptualL.ts · Helmholtz–Kohlrausch]
+      ST[stopTable.ts · L tables + constants]
+      AR[archetypes.ts]
+      DCC[darkChromaCurve.ts]
+      NC[neutralCurve.ts]
+    end
+
+    subgraph Emit["Emitters"]
+      CSS[cssRender.ts]
+      FIG[figmaRender.ts]
+      TN[tokenNames.ts]
+    end
+
+    subgraph Out["Outputs / consumers"]
+      BUILD[build.ts → dist/*.css]
+      SEM[tokens/semantic.css]
+      DEMO[demo/* React preview]
+      PLUG[plugin/* Figma plugin]
+    end
+
+    B --> R
+    SIG --> R
+    R --> CE
+    R --> COL
+    R --> SH
+    CE --> CON & PL & ST & AR & DCC & NC
+    R --> CSS & FIG
+    CSS --> TN
+    FIG --> TN
+    CSS --> BUILD
+    BUILD --> SEM --> DEMO
+    R --> DEMO
+    R --> FIG --> PLUG
+```
+
+#### (B) Pipeline stages
+
+| # | Stage | File · function | In → Out |
+|---|-------|-----------------|----------|
+| 1 | Decode | `colorEngine.ts` · `hexToOklch` | hex → `{L,C,H}` in OKLCH |
+| 2 | Classify | `archetypes.ts` · `classifyArchetype` | brand L → one of 6 archetypes |
+| 3 | Build light ramp | `colorEngine.ts` loop over `LIGHT_STOPS` | stops 1–8; each L solved by `perceptualRungL` (H-K); stop 8 clamped to 3:1 |
+| 4 | Fills + text | `cta` / `ctaHover`, `lightTextStop` | off-scale fill + contrast-floored text stops (ink-11/12) |
+| 5 | Build dark ramp | loop over `DARK_NEUTRAL_L` + `darkChromaCurve` | stops 1–12 dark, placed directly, chroma reduced |
+| 6 | Stops 9–10 (highlight) | `colorEngine.ts` `highlight` block (`placeRung`) | scale stops 9–10 — placed by the same rule as the rest of their ramp (light = H-K-solved, dark = placed directly) from the `LIGHT_L`/`DARK_L` stop-9/10 targets; they continue the chroma ladder (emphasis chroma) and their on-text (`on-highlight`) is chosen by APCA. Not moved or clamped — they sit below the 3:1-clamped stop 8, so they clear 3:1 by construction |
+| 7 | **Policy** | `resolve.ts` · `resolveBrand` | runs collisions; may re-call stages 1–6 with new archetype/options; computes signal overrides |
+| 8 | Emit | `cssRender.ts` / `figmaRender.ts` + `tokenNames.ts` | `GeneratedScale` → named CSS vars or Figma variable tree |
+| 9 | Drive | `build.ts` (batch) / demo / plugin (live) | writes `dist/*.css` / renders preview / writes Figma |
+
+Structural facts worth stating plainly:
+
+- There is **no barrel/index**. The public API is just the named exports `resolveBrand`
+  (policy entry) and `generateScale` (pure entry).
+- `generateScale` is **pure and runs ~6× per brand** (brand, secondary, neutral, and the
+  cached signal scales). The four **signal scales are generated once at module load**
+  (`SIGNAL_SCALES`, `resolve.ts:15`) and reused everywhere.
+- **Light/dark is computed together, chosen at render.** `generateScale` always builds
+  both ramps from two L tables (`LIGHT_L` / `DARK_L`, `stopTable.ts:6-7`) and stores them
+  on one `GeneratedScale`. `brandKindBody(prefix, scale, mode)` (`cssRender.ts:26`) picks
+  `scale.light` vs `scale.dark` per mode; CSS emits a `[data-brand]` block (light) and a
+  `[data-brand][data-theme="dark"]` block (dark).
+- **`highlight-9/10` are ordinary scale stops, not a separate mechanism.** They're built in
+  a dedicated code block for implementation reasons only; their L targets come straight from
+  the shared `LIGHT_L`/`DARK_L` table (`HIGHLIGHT_LIGHT.rootL = LIGHT_L[8]`, etc.) and are
+  placed by the same rule as the rest of the ramp (the light ones H-K-solved, the dark ones
+  placed directly). The **only** off-scale tokens are `cta-1/2`. The removed `placeLegibleRung` (which *moved* the fill to chase a text target)
+  is gone; the surviving `placeRung` only places the stop and reads its on-text color — it
+  never moves the fill.
+
+The two data structures that flow through everything:
+
+```ts
+ColorStop      = { stop, L, C, H, r, g, b }
+GeneratedScale = { name, archetype, brandL/C/H, lFlip, lFillMax,
+                   onFillTextIsWhite(+Dark), light[], dark[],
+                   cta, ctaHover, ctaDark, ctaHoverDark,
+                   onHighlightIsWhite(+Dark)?, identityHex? }
+ResolvedBrand  = { scale, shearDeg, rung1, darkCollider, warningVariant,
+                   pending[], signalOverrides[], errorComponentRule }
+```
+
+#### (C) Output token vocabulary (`tokenNames.ts`)
+
+| Stops | Token names | Role |
+|---|---|---|
+| 1–2 | `paper-1`, `paper-2` | surfaces / backgrounds |
+| 3–7 | `wash-3` … `wash-7` | low-hierarchy fills, borders, decorative |
+| 8 | `highlight-8` | WCAG 1.4.11 **3:1** non-text step (borders, UI elements) |
+| 9–10 | `highlight-9`, `highlight-10` | emphasis fills — **scale stops** 9–10, same machinery as the rest |
+| 11–12 | `ink-11`, `ink-12` | text (4.5:1 / 7:1) |
+| off-scale | `cta-1`, `cta-2` | the **only** off-scale tokens: the pulled-out solid button fill + hover |
+| computed | `on-cta`, `on-highlight` | black/white text for those fills |
+| literal | `identity` | the exact input hex (brand / secondary only) |
+
+`tokens/semantic.css` is a **static, hand-authored alias layer** (never generated): it maps
+human role names (`--surface-*`, `--fg-*`, `--border-*`, `--alert-high-*` → red,
+`--alert-med-*` → yellow, `--positive-*` → green, `--info-*` → info-color, `--illus-*`)
+onto the emitted primitives. Only the primitives change per brand.
+
+### 2b. Design decisions (the "design touches")
+
+These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
+
+#### Aesthetics / brand fidelity
+
+- **OKLCH throughout** (`constraints.ts`) — a perceptual space, so steps look evenly
+  spaced and a ramp holds one hue from light to dark.
+- **Warm-hue "gold spine" torsion** — `GOLD_SPINE` (a 6-point L→H table, `stopTable.ts:49`)
+  + `WARM_TORSION` (band ≈ 40–122°, taper 10°, travel 0.55, cap ±24°). Warm brands rotate
+  their hue toward gold as lightness changes, so **dark gold/orange stays gold instead of
+  going olive or brown** (`torsionedHue`, `lightHueAt`, `goldSpineHue`). Applied to the
+  light ramp, the dark rungs, and illustrations.
+- **Red-brand cooling** — `RED_COOL_DEG = 10.8°` (`colorEngine.ts:109`); `redCoolWeight`
+  ramps in above H ≈ 12° and out above H ≈ 35.5° (`inRedBand`). Warm reds rotate a few
+  degrees **cooler** so a brand red reads as *brand*, not error red. Applied in light
+  (`lightHueAt`), in dark (`coolRedDark`), and as a final fill pass (`applyRedCoolRender`).
+- **Style lever** (`deeper` / `full-chroma`) — set per brand at intake (`brands.ts`); acts
+  **only** inside the ambiguous semi-muted warm band (`deeper` → browner/deeper;
+  `full-chroma` → stays loud). A no-op outside that band.
+- **Chroma boost** near hue ≈ 90° (`chromaBoost`, `colorEngine.ts:305`) for luminous warm
+  hues that would otherwise read flat.
+
+#### Accessibility
+
+- **Helmholtz–Kohlrausch lightness solve** — at equal measured luminance, a saturated
+  color *looks* brighter than gray, by a hue-dependent amount (large for blue/red/violet,
+  small for yellow-green). `perceptualL.ts` implements the **Nayatani (1997)** model
+  (`apparentL`); `perceptualRungL` solves the *measured* L at which each stop's *apparent*
+  lightness matches a common target. → A high-boost hue (blue) is placed at a lower
+  measured L, a low-boost hue (yellow-green) higher, so every step reads the same across
+  brands. **The light ramp uses this solve; the dark ramp is placed directly.**
+- **Dark-mode "dimmer"** — `perceptualDarkC` solves the *chroma* whose apparent lightness
+  matches gray + boost at the dark rung's fixed L (this is the live `darkChromaCurve`). On
+  top of that, `darkCtaTrim` / `loudnessCap` trims the **brand** dark-fill chroma
+  (`GLOBAL_TRIM 0.76`, with extra damping near blue 265° and red-magenta 345°). *(This
+  path is live for brand families; the signals opt out via `loudCta: true`.)*
+- **Dark fills lift, never sink** — `dark9L = max(scaleL, DARK_*_MIN_L)` (0.63 / 0.70): a
+  too-dark fill lifts to stay visible on a dark background; a vivid fill is never pulled
+  down (identity preserved).
+- **Stop-8 = WCAG 1.4.11 3:1** — `STOP_8_NONTEXT_CONTRAST = 3.0`; an iterated fixed-point
+  clamp (`colorEngine.ts:342`) guarantees a usable 3:1 UI / border step against the
+  scale's own `paper-2`.
+- **Text-stop contrast floors** — `ink-11` → 4.5:1, `ink-12` → 7:1 against `paper-2`.
+- **On-fill text by one criterion: it passes** — `onTextIsWhite` (`colorEngine.ts:237`)
+  picks black or white by APCA; `cta` additionally enforces WCAG 4.5 and **moves the fill**
+  if neither pole clears; `highlight` is judged by APCA only (Lc 60), because
+  mid-lightness chromatic fills have a WCAG dead zone. White and black are the contrast
+  extremes — if neither clears, the *fill* moves, never the text.
+
+#### Differentiation (brand vs. status signals)
+
+- **Four canonical signals** (red / yellow / green / info-color), generated once, named by
+  identity rather than meaning.
+- **Collision test** — `checkCollision` (`collision.ts`): a hue gate (≤ 30°) plus OKLab ΔE
+  (≤ 0.16 light, ≤ 0.10 dark) between the brand fill and each signal fill.
+- **Red collision → darken ("rung 1")** — a red-band brand that collides with error red is
+  re-anchored to the `dark` archetype so its fill can't be mistaken for error; otherwise an
+  `errorComponentRule` flag tells components to style destructive actions as outlines.
+- **Dark red collision → "muted" float** — the dark fill floats to a soft pastel
+  (`L 0.80`, chroma × 0.55) and flips to black text — two extra channels of separation.
+- **Signal shifts** — `pickSignalShift` (`signalShift.ts`): warning yellow → cooler *lemon*;
+  success green → teal-side / yellow-side; info → magenta / blue. The direction depends on
+  which side of a hue split the brand sits, so the signal stays distinct.
+- **Advisory overlaps** — non-critical signal overlaps (`pending[]`) and any
+  secondary-color collisions are *flagged, not auto-resolved* (intentional for v1).
+
+#### Generated neutral
+
+- The neutral is **derived from the brand hue** (`generateNeutralScale`): a near-gray
+  (C ≈ 0.006) at the brand's hue, run back through `generateScale` with a `neutralChromaCurve`.
+  Tint levels `pure` / `default` / `branded` scale the tint; its `cta` is intentionally
+  **low-hierarchy** (sits at wash level, not a loud off-scale fill).
+
+#### Illustration
+
+- A separate **4-slot palette** (wash / tint / mid / deep, `generateIllustrationScale`),
+  matched to equal luminance and warm-torsioned. `remapSvg` swaps legend hexes for
+  `--illus-*` vars so one drawing recolors per brand and per mode. It deliberately **skips
+  the UI accessibility rules** so artwork stays painterly.
+
+---
+
+## 3. Key Dependencies
+
+The most important fact for anyone borrowing this code: **the engine itself has zero
+runtime dependencies.** Everything in `src/` imports only Node built-ins (`fs`, `path`, in
+the build driver). OKLCH ↔ sRGB conversion, gamut clamping, WCAG/APCA luminance, and the
+Helmholtz–Kohlrausch model are all hand-written in `constraints.ts` and `perceptualL.ts`.
+There is no color library. To use the engine, you can copy `src/engine/*` and `src/*.ts`
+and call `resolveBrand` / `generateScale` with nothing else installed.
+
+The packages in `package.json` exist for **tooling and the demo**, not the engine:
+
+| Package | Type | Why it's here |
+|---|---|---|
+| **esbuild** | dev | The only build tool — bundles the Node token generator, the browser demo, and the plugin; provides `--watch`. |
+| **typescript** + **@types/node, @types/react, @types/react-dom** | dev | The codebase is TypeScript; `npm run typecheck` runs `tsc --noEmit`. |
+| **react** + **react-dom** | dev | Power the **demo preview app only**. The engine never imports them. |
+| **lucide-react** | dep | Icons in the **demo only**. *(It is currently a runtime `dependency`, though nothing outside the demo uses it — a candidate to move to `devDependencies`.)* |
+
+A handful of scripts under `scripts/` are internal diagnostics/audits (contrast sweeps,
+smoothness checks, Figma verification). They are **not part of the engine** and aren't
+needed to build or use it.
+
+---
+
+## 4. Setup Guide (run locally from scratch)
+
+**Prerequisites:** Node 18+ (the build targets `node18`; CI uses Node 20) and npm.
+
+```bash
+# 1. Install
+npm install
+
+# 2. Build everything: bundles the generator, runs it to produce the token CSS
+#    (dist/signals.css + dist/brands.css), and bundles the demo (dist/demo.js).
+npm run demo:build
+
+# 3. View the demo. Serve the repo ROOT — demo/index.html references ../dist and ../tokens:
+npx serve .
+#    then open  http://localhost:3000/demo/index.html
+#    (opening demo/index.html directly via file:// also works in most browsers)
+```
+
+**Live editing**
+
+```bash
+npm run dev        # esbuild --watch: rebuilds the demo on save (refresh the browser)
+```
+
+**Figma plugin**
+
+```bash
+npm run plugin:build   # → plugin/dist/plugin-code.js + plugin/dist/plugin-ui.html
+# In Figma: Plugins → Development → Import plugin from manifest… → pick plugin/manifest.json
+```
+
+**Other scripts (verification / diagnostics)**
+
+```bash
+npm run typecheck        # tsc --noEmit
+npm run audit            # dark-mode audit        (add :bless to update the snapshot)
+npm run highlight-audit  # highlight/on-fill audit (add :bless)
+npm run sweep            # agnostic hue × chroma gamut sweep
+npm run smooth           # ramp smoothness audit  (smooth:baseline to re-record)
+npm run figma:verify     # validates the Figma emitter output
+npm run generate         # regenerate dist/*.css only (requires a prior build)
+```
+
+> Note: `npm run build` passes a `--full` flag that `esbuild.config.js` reads but never
+> acts on (`isFull` is declared and unused), so it is currently **identical** to
+> `npm run demo:build`. `demo:build` is the one-stop command. See "What `--full` is" in the
+> project notes if you want to remove or wire up the flag.
+
+**Deploy:** `.github/workflows/pages.yml` deploys the demo to GitHub Pages on push to
+`main` (or manual dispatch): `npm ci` → `npm run demo:build` → flatten `dist/` + `tokens/`
+into `_site/` (rewriting `../` paths for the `/okchroma/` project subpath) → publish.
+
+---
+
+## Known limitations (intentional — not bugs)
+
+These are deliberate v1 scope boundaries, tracked for later work:
+
+1. **Mixed contrast model.** `highlight` on-text is judged by APCA (Lc 60); everything else
+   (`cta`, `ink-11/12`, `highlight-8`) uses WCAG. Under a strict WCAG 2.x audit, many
+   highlight fills' text reads below 4.5:1 (fine under APCA). A unified APCA default plus an
+   opt-in fully-WCAG shape is planned.
+2. **Secondary ↔ signal collisions aren't resolved.** Signal collision/shift logic runs on
+   the **primary** brand only; a secondary that collides with a signal is *flagged*, not
+   shifted.
+3. **No "make-it-secondary" harmonization.** A secondary color is treated as a standalone
+   brand scale; there's no logic relating it to the primary (harmonized hue, lower
+   prominence). The pairing is the user's responsibility.

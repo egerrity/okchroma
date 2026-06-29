@@ -4,3 +4,6 @@ _site/
 scratch/
 .DS_Store
 .proto-ref/
+
+# Internal follow-up / planning notes (kept local, not shipped)
+docs/follow-up.md
