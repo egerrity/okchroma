@@ -22,6 +22,12 @@ const Code = ({ children }: { children: React.ReactNode }) => <code className="d
 const Pre = ({ children }: { children: React.ReactNode }) => <pre className="d2-pre"><code>{children}</code></pre>
 const Lead = ({ children }: { children: React.ReactNode }) => <p className="d2-lead">{children}</p>
 const Note = ({ children }: { children: React.ReactNode }) => <div className="d2-note">{children}</div>
+const Table = ({ head, rows }: { head: React.ReactNode[]; rows: React.ReactNode[][] }) => (
+  <table className="d2-table">
+    <thead><tr>{head.map((h, i) => <th key={i}>{h}</th>)}</tr></thead>
+    <tbody>{rows.map((r, i) => <tr key={i}>{r.map((c, j) => <td key={j}>{c}</td>)}</tr>)}</tbody>
+  </table>
+)
 
 // ── Live example: a real generated ramp, computed by the engine ──────────────
 const RAMP_GROUPS: Array<{ label: string; span: number }> = [
@@ -41,8 +47,13 @@ function Ramp({ hex, caption }: { hex: string; caption?: React.ReactNode }) {
       <div className="d2-ramp-row d2-ramp-nums">
         {scale.light.map(s => <span key={s.stop}>{s.stop}</span>)}
       </div>
-      <div className="d2-ramp-row d2-ramp-groups">
-        {RAMP_GROUPS.map(g => <span key={g.label} style={{ flex: g.span }}>{g.label}</span>)}
+      <div className="d2-ramp-brackets">
+        {RAMP_GROUPS.map(g => (
+          <div key={g.label} className="d2-ramp-grp" style={{ gridColumn: `span ${g.span}` }}>
+            <div className="d2-ramp-brk" />
+            <span>{g.label}</span>
+          </div>
+        ))}
       </div>
       <figcaption className="d2-ramp-cap">
         {caption ?? <>Live ramp generated from <Code>{hex.toUpperCase()}</Code> — these are the engine's actual outputs.</>}
@@ -169,9 +180,166 @@ const howItWorks: Article = {
   ),
 }
 
+const whyOklch: Article = {
+  slug: 'why-oklch',
+  title: 'Why OKLCH',
+  body: () => (
+    <>
+      <Lead>The engine reasons about color in OKLCH and converts to sRGB only at the very end.</Lead>
+      <P>
+        OKLCH describes a color with three numbers you can reason about directly: <b>L</b>ightness
+        (0 black → 1 white), <b>C</b>hroma (0 is gray), and <b>H</b>ue (degrees). It is perceptually
+        uniform — equal number-steps look like equal visual steps. Hex and RGB are not: equal RGB
+        increments look uneven, and nudging "lightness" in RGB drags the hue along with it.
+      </P>
+      <P>
+        Moving down a ramp is simply "change L and C, keep H" — which is exactly what makes the 12
+        stops read as one consistent color family from light to dark.
+      </P>
+      <Ramp hex="#005EB8" caption={<>A navy ramp holds one hue down all 12 stops while only L and C move.</>} />
+      <P>
+        It also makes the accessibility math possible. Gamut clamping reduces chroma at a fixed L and H
+        to stay inside sRGB (<Code>clampChromaToGamut</Code>); per-channel RGB clipping would instead
+        skew the hue, turning a saturated yellow into khaki. Code: <Code>src/engine/constraints.ts</Code>.
+      </P>
+    </>
+  ),
+}
+
+const warmHues: Article = {
+  slug: 'warm-hues',
+  title: 'Warm hues & the gold spine',
+  body: () => (
+    <>
+      <Lead>Gold, orange, and yellow brands rotate their hue toward a fixed "gold spine" as they darken — so dark shades stay gold instead of going olive or brown.</Lead>
+      <P>
+        In sRGB, holding a warm hue exactly while lightness drops is what makes it muddy: dark orange
+        at its own hue is brown; dark yellow is olive. Keeping a gold brand looking gold at the dark end
+        means <i>not</i> keeping its literal hue there.
+      </P>
+      <P>
+        So the engine defines a <b>gold spine</b> — the clean warm hue at each lightness, running from a
+        light yellow-green (~110°) down to a dark gold (~47°). Warm stops drift toward it with partial,
+        capped travel: only inside the warm band (hue ≈ 40–122°), at 55% of the spine's swing, capped at
+        ±24°. Outside the band — reds, greens, blues — it does nothing.
+      </P>
+      <H3>Relative, not absolute</H3>
+      <P>
+        A brand isn't snapped onto the spine; it borrows the spine's <i>shape</i> relative to its own
+        hue. How much it takes is weighted by a gaussian of how far the brand sits from the spine
+        (σ ≈ 20°): an on-path gold takes the full swing, while a near-neutral or off-path warm color
+        takes a softened version and keeps its own identity.
+      </P>
+      <P>
+        The result: the solid CTA fill keeps the brand's exact hue, the light tints lean a touch
+        yellow-green, and the dark stops rotate toward gold. The same machinery runs the light ramp, the
+        dark ramp, and illustrations.
+      </P>
+      <Ramp hex="#B18D0B" caption={<>A gold brand: light tints lean yellow-green, the depths rotate toward gold — no olive.</>} />
+      <P>Code: <Code>goldSpineHue</Code> / <Code>torsionedHue</Code> / <Code>lightHueAt</Code> in <Code>colorEngine.ts</Code>; <Code>GOLD_SPINE</Code> and <Code>WARM_TORSION</Code> in <Code>stopTable.ts</Code>.</P>
+    </>
+  ),
+}
+
+const collisions: Article = {
+  slug: 'collisions',
+  title: 'Collisions & signals',
+  body: () => (
+    <>
+      <Lead>The engine reserves four signal colors — red, yellow, green, info — named by identity. A brand that lands too close to one is kept distinct, so a brand element is never mistaken for a status.</Lead>
+      <H2>Detecting a collision</H2>
+      <P>Two gates must both trip:</P>
+      <UL>
+        <LI><b>Hue gate</b> — the brand hue is within 30° of the signal's hue (same family).</LI>
+        <LI><b>Distance gate</b> — the OKLab ΔE between the two rendered fills is below threshold. This lets a dark maroon pass red: same family, but far enough apart in lightness that no one confuses the fills.</LI>
+      </UL>
+      <P>
+        It runs per mode. Dark mode pins each fill's lightness, so a color can be clear in light and
+        collide in dark — the dark threshold is therefore stricter (0.10 vs 0.16). Code:{' '}
+        <Code>checkCollision</Code> in <Code>collision.ts</Code>.
+      </P>
+      <H2>Resolving a collision</H2>
+      <P>There's no choice ladder — resolution is automatic, and split by which signal is involved.</P>
+      <H3>Red → the brand yields</H3>
+      <P>
+        Red carries destructive meaning, so the brand gives way, never the reverse. A brand in the red
+        band (hue 12–35.5°) re-anchors to the <b>dark</b> archetype and cools a few degrees, so its solid
+        fill can't be confused with the error red — the hue is kept, the lightness moves. A red-adjacent
+        brand <i>outside</i> the band ships as-is, but destructive controls are flagged to use
+        outline-plus-icon styling instead of a solid red fill. In dark mode a colliding fill floats to a
+        softer pastel.
+      </P>
+      <H3>Yellow / green / info → the signal yields</H3>
+      <P>
+        Here the brand is untouched; the <i>signal</i> swaps to a distinct variant, chosen by which side
+        of a per-signal hue split the brand sits on:
+      </P>
+      <Table
+        head={['Signal', 'Split', 'Brand below split', 'Brand at/above']}
+        rows={[
+          [<Code>yellow</Code>, '96°', 'shift to lemon', 'keep amber'],
+          [<Code>green</Code>, '147°', 'teal-side', 'yellow-side'],
+          [<Code>info</Code>, '273°', 'magenta', 'blue'],
+        ]}
+      />
+      <P>
+        Red never shifts — it is the reference everything else is kept distinct from. And the signal
+        swaps are <b>output-only</b>: they change the emitted signal scale but never re-enter an engine
+        decision, so a shift can't cascade into a new collision. Code: <Code>resolve.ts</Code>,{' '}
+        <Code>signalShift.ts</Code>, <Code>collision.ts</Code>.
+      </P>
+    </>
+  ),
+}
+
+const exactMode: Article = {
+  slug: 'exact-mode',
+  title: 'Exact mode & overrides',
+  body: () => (
+    <>
+      <Lead>Two per-brand escape hatches for when the engine's defaults aren't what the brand owner wants.</Lead>
+      <H3>Exact mode</H3>
+      <P>
+        Ships the literal hex and skips <i>every</i> recommended-mode adjustment — no collision
+        resolution, no warm-red cooling, no contrast darkening. Use it when brand guidelines demand the
+        exact color; accessibility then becomes your review, not the engine's guarantee.
+      </P>
+      <H3>Archetype override</H3>
+      <P>
+        Lets the brand owner pick the collision-resolution direction (the rung-1 archetype) instead of
+        the one the engine would choose automatically.
+      </P>
+      <P>Both are flags read by <Code>{`resolveBrand(hex, name, { exact, archetypeOverride, style })`}</Code> — see <Code>resolve.ts</Code> and <Code>brands.ts</Code>.</P>
+    </>
+  ),
+}
+
+const styleLever: Article = {
+  slug: 'style-lever',
+  title: 'The style lever',
+  body: () => (
+    <>
+      <Lead>A per-brand dial — default, deeper, or full-chroma — set by a person at intake.</Lead>
+      <P>
+        Some semi-muted warm brands (a muted gold) can resolve two legitimate ways: stay vivid, or lean
+        into a browner, deeper register. Geometry alone can't choose — it's a taste call — so a human
+        sets the direction instead of the engine guessing.
+      </P>
+      <P>
+        <Code>deeper</Code> pushes the brand toward the cream/brown envelope, but <i>only</i> inside the
+        ambiguous semi-muted warm band (hue ≈ 55–100°, mid mutedness); it's a no-op everywhere else, so a
+        blue or a vivid red ignores it entirely. <Code>full-chroma</Code> is plumbed but not yet wired to
+        the math.
+      </P>
+      <P>Code: the <Code>style</Code> flag in <Code>brands.ts</Code>, the deeper band gate in <Code>colorEngine.ts</Code>.</P>
+    </>
+  ),
+}
+
 const SECTIONS: Section[] = [
   { label: 'Getting started', articles: [overview, install] },
-  { label: 'Concepts', articles: [howItWorks] },
+  { label: 'Concepts', articles: [howItWorks, whyOklch, warmHues, collisions] },
+  { label: 'Overrides', articles: [exactMode, styleLever] },
 ]
 
 // ── Layout ───────────────────────────────────────────────────────────────────
@@ -241,9 +409,14 @@ const DOCS2_CSS = `
 .d2-ramp-cell { flex: 1; height: 46px; border-radius: 6px; border: 1px solid var(--border-subtle); }
 .d2-ramp-nums { margin-top: 5px; font-size: 10px; color: var(--fg-subtle); }
 .d2-ramp-nums span { flex: 1; text-align: center; }
-.d2-ramp-groups { margin-top: 4px; font-size: 11px; font-weight: 600; color: var(--fg-subtle); }
-.d2-ramp-groups span { text-align: center; }
+.d2-ramp-brackets { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; margin-top: 6px; }
+.d2-ramp-grp { display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.d2-ramp-brk { width: 100%; height: 6px; border: 1px solid var(--border-default); border-top: none; border-radius: 0 0 5px 5px; }
+.d2-ramp-grp span { margin-top: 5px; font-size: 11px; font-weight: 600; color: var(--fg-subtle); }
 .d2-ramp-cap { font-size: 12.5px; color: var(--fg-subtle); margin: 10px 0 0; }
+.d2-table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 0 0 16px; }
+.d2-table th { text-align: left; font-weight: 600; color: var(--fg-subtle); border-bottom: 1px solid var(--border-subtle); padding: 8px 10px; }
+.d2-table td { border-bottom: 1px solid var(--border-subtle); padding: 8px 10px; vertical-align: top; }
 @media (max-width: 860px) {
   .d2 { grid-template-columns: 1fr; }
   .d2-side { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border-subtle); display: flex; gap: 16px; overflow-x: auto; padding: 16px; }
