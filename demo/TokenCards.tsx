@@ -126,9 +126,14 @@ export function TokenCards({ prefix, kind }: { prefix: string; kind: RampKind })
           }}>{s.n}</div>
         ))}
       </div>
-      <div style={{ display: 'flex', gap: 5, marginTop: 6 }}>
+      {/* Bracketed group labels — each bracket spans its stops so the
+          paper/wash/highlight/ink grouping reads unambiguously. */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 5, marginTop: 6 }}>
         {groups.map(g => (
-          <div key={g.label} style={{ flex: g.span, textAlign: 'center', fontSize: 12, color: 'var(--fg-subtle)' }}>{g.label}</div>
+          <div key={g.label} style={{ gridColumn: `span ${g.span}`, display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 0 }}>
+            <div style={{ width: '100%', height: 6, borderLeft: '1px solid var(--border-default)', borderRight: '1px solid var(--border-default)', borderBottom: '1px solid var(--border-default)', borderRadius: '0 0 5px 5px' }} />
+            <span style={{ marginTop: 5, fontSize: 12, color: 'var(--fg-subtle)' }}>{g.label}</span>
+          </div>
         ))}
       </div>
     </div>
