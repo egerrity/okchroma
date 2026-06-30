@@ -49,6 +49,7 @@ function swapScale(baseHex: string, def: SignalDef): GeneratedScale {
     loudCta: true,
     darkFillMinL: def.darkFillMinL,
     enforceOnFillContrast: true,
+    suppressRedCool: true,
   })
 }
 
@@ -60,6 +61,7 @@ function lemonScale(def: SignalDef): GeneratedScale {
     darkChromaCurve,
     loudCta: true,
     enforceOnFillContrast: true,
+    suppressRedCool: true,
   })
 }
 

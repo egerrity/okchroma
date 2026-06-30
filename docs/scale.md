@@ -30,9 +30,12 @@ carries. The L targets are the shape — they live in `stopTable.ts` as `LIGHT_L
 | `ink-11`       | 0.530 | 0.800 | 4.5:1 text, inverted surface |
 | `ink-12`       | 0.300 | 0.940 | 7:1 text, inverted surface |
 
-- Contrast-floored in light (dark is placed directly and already clears its ratio):
-  `highlight-8` (`STOP_8_NONTEXT_CONTRAST` 3.0), `ink-11` (`STOP_11_CONTRAST` 4.5),
-  `ink-12` (`STOP_12_CONTRAST_FLOOR` 7.0). Each is clamped down to the lightest L that
+- Contrast-floored in light; in dark these stops are placed directly (no clamp) — the
+  `DARK_L` scaffold already clears the ratio across the whole gamut, verified by
+  `divergence-audit` (worst dark: `highlight-8` 3.4:1, `ink-11` 9.1:1, `ink-12` 14.7:1)
+  rather than actively clamped like light. The floors: `highlight-8`
+  (`STOP_8_NONTEXT_CONTRAST` 3.0), `ink-11` (`STOP_11_CONTRAST` 4.5), `ink-12`
+  (`STOP_12_CONTRAST_FLOOR` 7.0). In light each is clamped down to the lightest L that
   still clears its ratio against `paper-2`.
 - Off the scale: `cta-1` / `cta-2`, the pulled-out button fill (also a 3:1 UI element).
   Fills that carry text ship `on-highlight` / `on-cta` — see [On-fill text](#on-fill-text).
@@ -77,7 +80,16 @@ Example — `highlight-9` (target 0.600):
 - **yellow-green** (small boost) emits at L ≈ 0.631 — placed lighter
 - on screen, both read as the same step
 
-Dark mode skips the solve — dark stops are placed directly at their `DARK_L` target.
+Dark mode runs the same solve, but only where uniform apparent lightness is the stop's
+job: the paper/wash **surfaces** (1–7) and the ink **text** stops (11/12) are H-K-solved
+like light, so they read at one perceived lightness on every brand. The **highlight band**
+(8–10) is the exception — it stays placed at its `DARK_L` target, because those stops carry
+on-text (highlight-9/10) or a 3:1 border (highlight-8) and are hand-tuned for legibility;
+solving them would push some hues into the APCA body-text dead zone (and ride a solved
+surface up past the placed band). So the highlight band keeps a small per-hue
+apparent-lightness *wave* by design — legibility over uniformity — and `divergence-audit`
+reports that residual so it stays visible. (The off-scale CTA isn't solved in either mode;
+it carries the brand fill's own lightness.)
 
 Code: [`perceptualL.ts`](../src/engine/perceptualL.ts) — `apparentL()` is the Nayatani
 (1997) H-K model; `perceptualRungL()` is the solve. It's applied per stop in

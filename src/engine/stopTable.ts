@@ -37,6 +37,12 @@ export const STOP_11_CONTRAST = 4.5
 export const STOP_12 = { rootL: LIGHT_L[11], chromaMultiplier: 0.50 }
 export const STOP_12_CONTRAST_FLOOR = 7.0
 
+// Dark fill min-L family — one concept (how light a fed dark fill may sit),
+// parameterized by consumer via the `darkFillMinL` opt: DARK_STOP_9_MIN_L is the
+// default floor; brands raise it for prominence (DARK_BRAND_FILL_MIN_L); signals
+// override per-def in signals.ts (green 0.75, info 0.70). Kept as named constants
+// (not one object) because the signal half is signal-identity data and belongs
+// with the signal defs.
 export const DARK_STOP_9_MIN_L = 0.63
 
 export const DARK_BRAND_FILL_MIN_L = 0.70

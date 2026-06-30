@@ -121,8 +121,8 @@ flowchart TD
 | 2 | Classify | `archetypes.ts` · `classifyArchetype` | brand L → one of 6 archetypes |
 | 3 | Build light ramp | `colorEngine.ts` loop over `LIGHT_STOPS` | stops 1–8; each L solved by `perceptualRungL` (H-K); stop 8 clamped to 3:1 |
 | 4 | Fills + text | `cta` / `ctaHover`, `lightTextStop` | off-scale fill + contrast-floored text stops (ink-11/12) |
-| 5 | Build dark ramp | loop over `DARK_NEUTRAL_L` + `darkChromaCurve` | stops 1–12 dark, placed directly, chroma reduced |
-| 6 | Stops 9–10 (highlight) | `colorEngine.ts` `highlight` block (`placeRung`) | scale stops 9–10 — placed by the same rule as the rest of their ramp (light = H-K-solved, dark = placed directly) from the `LIGHT_L`/`DARK_L` stop-9/10 targets; they continue the chroma ladder (emphasis chroma) and their on-text (`on-highlight`) is chosen by APCA. Not moved or clamped — they sit below the 3:1-clamped stop 8, so they clear 3:1 by construction |
+| 5 | Build dark ramp | loop over `DARK_NEUTRAL_L` + `darkChromaCurve` | surfaces 1–7 + text 11/12 H-K-solved (`perceptualRungL`); highlight band 8–10 placed at `DARK_L`; chroma reduced |
+| 6 | Stops 9–10 (highlight) | `colorEngine.ts` `highlight` block (`placeRung`) | scale stops 9–10 — light is H-K-solved like the rest of its ramp; dark holds them placed at the `DARK_L` stop-9/10 targets (the highlight band 8–10 is the one part of the dark ramp not solved — legibility over equalization). They continue the chroma ladder (emphasis chroma) and their on-text (`on-highlight`) is chosen by APCA. Not moved or clamped — they sit below the 3:1-clamped stop 8, so they clear 3:1 by construction |
 | 7 | **Policy** | `resolve.ts` · `resolveBrand` | runs collisions; may re-call stages 1–6 with new archetype/options; computes signal overrides |
 | 8 | Emit | `cssRender.ts` / `figmaRender.ts` + `tokenNames.ts` | `GeneratedScale` → named CSS vars or Figma variable tree |
 | 9 | Drive | `build.ts` (batch) / demo / plugin (live) | writes `dist/*.css` / renders preview / writes Figma |
@@ -194,6 +194,9 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
   ramps in above H ≈ 12° and out above H ≈ 35.5° (`inRedBand`). Warm reds rotate a few
   degrees **cooler** so a brand red reads as *brand*, not error red. Applied in light
   (`lightHueAt`), in dark (`coolRedDark`), and as a final fill pass (`applyRedCoolRender`).
+  It is **brand-only**: the red *signal* keeps its identity hue in both modes — signals pass
+  `suppressRedCool: true` (the light-side analogue of brands' `coolRedDark`), so the cool
+  never touches them.
 - **Style lever** (`deeper` / `full-chroma`) — set per brand at intake (`brands.ts`); acts
   **only** inside the ambiguous semi-muted warm band (`deeper` → browner/deeper;
   `full-chroma` → stays loud). A no-op outside that band.
@@ -208,7 +211,12 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
   (`apparentL`); `perceptualRungL` solves the *measured* L at which each stop's *apparent*
   lightness matches a common target. → A high-boost hue (blue) is placed at a lower
   measured L, a low-boost hue (yellow-green) higher, so every step reads the same across
-  brands. **The light ramp uses this solve; the dark ramp is placed directly.**
+  brands. **The light ramp solves every stop. The dark ramp solves the paper/wash surfaces
+  (1–7) and the ink text stops (11/12) the same way, but holds the highlight band (8–10) at
+  its `DARK_L` placement — those stops are legibility/3:1-constrained (solving them would
+  re-enter the APCA dead zone and ride a solved surface up past the placed band), so they
+  keep a small per-hue apparent-lightness wave by design. `divergence-audit` reports that
+  residual. (The off-scale CTA is never solved — it carries the brand fill's own lightness.)**
 - **Dark-mode "dimmer"** — `perceptualDarkC` solves the *chroma* whose apparent lightness
   matches gray + boost at the dark rung's fixed L (this is the live `darkChromaCurve`). On
   top of that, `darkCtaTrim` / `loudnessCap` trims the **brand** dark-fill chroma
@@ -226,6 +234,13 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
   if neither pole clears; `highlight` is judged by APCA only (Lc 60), because
   mid-lightness chromatic fills have a WCAG dead zone. White and black are the contrast
   extremes — if neither clears, the *fill* moves, never the text.
+- **Light ↔ dark parity** — the modes match almost everywhere: the chroma curve, the hue
+  treatment (incl. the brand-only red-cool), the contrast floors, and the apparent-lightness
+  solve on the surfaces (1–7) and text (11/12). The one deliberate difference is the
+  **highlight band** (8–10): light solves it, dark holds it at `DARK_L` (solving it would
+  re-enter the APCA dead zone), so dark's highlight keeps a small per-hue wave by design.
+  `divergence-audit` (`scripts/divergence-audit.ts`) gates the rest family × mode × stop —
+  it caught the neutral 9/10 chroma bypass and the red-signal cool.
 
 #### Differentiation (brand vs. status signals)
 
@@ -248,8 +263,11 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
 
 - The neutral is **derived from the brand hue** (`generateNeutralScale`): a near-gray
   (C ≈ 0.006) at the brand's hue, run back through `generateScale` with a `neutralChromaCurve`.
-  Tint levels `pure` / `default` / `branded` scale the tint; its `cta` is intentionally
-  **low-hierarchy** (sits at wash level, not a loud off-scale fill).
+  Tint levels `pure` / `default` / `branded` scale the tint, applied at **every** stop in
+  both modes — the `highlight` rungs 9/10 follow the tint curve like the rest of the ramp
+  (they route through `cAt` in dark as in light). Its `cta` is intentionally **low-hierarchy**,
+  tracking the scale's own stop 4 (cta) / stop 5 (hover) so it **flips per mode** — a
+  near-white wash in light, a dark wash in dark — with `on-cta` recomputed for legibility in each.
 
 #### Illustration
 
@@ -321,6 +339,7 @@ npm run plugin:build   # → plugin/dist/plugin-code.js + plugin/dist/plugin-ui.
 npm run typecheck        # tsc --noEmit
 npm run audit            # dark-mode audit        (add :bless to update the snapshot)
 npm run highlight-audit  # highlight/on-fill audit (add :bless)
+npm run audit:divergence # light↔dark + cross-family divergence audit (add :bless)
 npm run sweep            # agnostic hue × chroma gamut sweep
 npm run smooth           # ramp smoothness audit  (smooth:baseline to re-record)
 npm run figma:verify     # validates the Figma emitter output

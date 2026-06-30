@@ -213,9 +213,13 @@ export interface GenerateOptions {
 
   enforceOnFillContrast?: boolean
 
-  enforceWhiteFill?: boolean
-
   coolRedDark?: boolean
+
+  // The red-cool is a BRAND-only differentiator (it nudges a red-band brand cooler
+  // so it reads distinct from the red signal). Signals set this to keep their own
+  // identity hue in BOTH modes — light otherwise cools them like a brand. Dark is
+  // already brand-only via coolRedDark.
+  suppressRedCool?: boolean
 
   style?: 'default' | 'deeper' | 'full-chroma'
 
@@ -264,19 +268,15 @@ export function generateScale(
       ? 0
       : Math.min(1, Math.max(0, (brandC - HUE_NOISE_C) / (DARK_FLOOR_FULL_C - HUE_NOISE_C)))
 
-  const fillAnchorL =
-    opts?.enforceWhiteFill && contrastRatio(1.0, wcagY(scaleL, brandC, brandH)) < 4.5
-      ? findLForContrast(scaleL, brandC, brandH, 1.0, 4.6)
-      : scaleL
-  const fill9 = oklchToSrgbUnclamped(fillAnchorL, clampChromaToGamut(fillAnchorL, cAt('light', fillAnchorL, brandC), brandH), brandH)
+  const fill9 = oklchToSrgbUnclamped(scaleL, clampChromaToGamut(scaleL, cAt('light', scaleL, brandC), brandH), brandH)
   const fill9ApcaY = apcaY(fill9.r, fill9.g, fill9.b)
-  let onFillTextIsWhite = onTextIsWhite(fill9ApcaY, fillAnchorL, brandC, brandH, !!opts?.enforceOnFillContrast)
+  let onFillTextIsWhite = onTextIsWhite(fill9ApcaY, scaleL, brandC, brandH, !!opts?.enforceOnFillContrast)
 
   const hueIsNoise = brandC < HUE_NOISE_C
   const v = Math.min(1, brandC / VIVID_C)
   const vSubtle = Math.min(1, subtleC / VIVID_C)
   const S = hueIsNoise ? 0 : sigmoid(hueDelta(brandH, RED_TORSION_CENTER_H) / RED_TORSION_SOFTNESS)
-  const wRed = hueIsNoise ? 0 : redCoolWeight(brandH)
+  const wRed = hueIsNoise || opts?.suppressRedCool ? 0 : redCoolWeight(brandH)
   const mutednessRaw = Math.min(1, (1 - v) / MUTED_BLEND_DENOM)
 
   const creamGate = 1 - sigmoid((brandH - CREAM_UPPER_H) / CREAM_UPPER_SOFTNESS)
@@ -351,10 +351,10 @@ export function generateScale(
 
   const stop2Y = wcagY(light[1].L, light[1].C, light[1].H)
 
-  let light9L = fillAnchorL
+  let light9L = scaleL
   if (opts?.enforceOnFillContrast && onFillTextIsWhite
-      && contrastRatio(1.0, wcagY(fillAnchorL, brandC, brandH)) < 4.5) {
-    light9L = findLForContrast(fillAnchorL, brandC, brandH, 1.0, 4.6)
+      && contrastRatio(1.0, wcagY(scaleL, brandC, brandH)) < 4.5) {
+    light9L = findLForContrast(scaleL, brandC, brandH, 1.0, 4.6)
   }
 
   const cta = makeStop(9, light9L, cAt('light', light9L, brandC), brandH)
@@ -385,32 +385,41 @@ export function generateScale(
     darkC9 = brandC * DARK_COLLIDER_MUTED_CHROMA_SCALE
   }
 
+  // The dark ramp equalizes apparent (H-K) lightness across hue ONLY where that is the
+  // stop's job: the paper/wash SURFACES (1–7) and the ink TEXT stops (11/12) are solved
+  // like light (perceptualRungL, La=65) so they read at one perceived lightness on every
+  // brand. The HIGHLIGHT band (8–10) is constrained — 3:1 border + legibility fills — so
+  // it stays at its hand-placed scaffold: solving it would re-enter the APCA body-text
+  // dead zone AND let a solved surface ride up past the legibility-placed highlight. The
+  // off-scale cta is never solved either (it carries the brand fill's own lightness).
+  const darkHueAtL = (L: number) => torsionedHue(darkH, L, dark9L, gOffPath)
+  const placeDarkStop = (stop: number, rootL: number, chromaAt: (l: number) => number): ColorStop => {
+    const L = perceptualRungL(rootL, chromaAt(rootL), darkHueAtL(rootL))
+    return makeStop(stop, L, chromaAt(L), darkHueAtL(L))
+  }
+
   for (let i = 0; i < DARK_SUBTLE_CHROMA_MULT.length; i++) {
     const chromaMultiplier = DARK_SUBTLE_CHROMA_MULT[i]
-    const L = DARK_NEUTRAL_L[i]
-    const H = torsionedHue(darkH, L, dark9L, gOffPath)
-    const C = opts?.darkChromaCurve
-      ? opts.darkChromaCurve(L, H, brandC, darkC9)
-      : applyChromaFloor(subtleC, chromaMultiplier, i, darkFloorStrength)
-    dark.push(makeStop(i + 1, L, cAt('dark', L, C), H))
+    const rootL = DARK_NEUTRAL_L[i]
+    const chromaAt = (L: number) => cAt('dark', L, opts?.darkChromaCurve
+      ? opts.darkChromaCurve(L, darkHueAtL(L), brandC, darkC9)
+      : applyChromaFloor(subtleC, chromaMultiplier, i, darkFloorStrength))
+    // stop 8 (i===7) is the foot of the constrained highlight band — placed, not solved.
+    dark.push(i < 7
+      ? placeDarkStop(i + 1, rootL, chromaAt)
+      : makeStop(i + 1, rootL, chromaAt(rootL), darkHueAtL(rootL)))
   }
 
   let ctaDark = makeStop(9, dark9L, cAt('dark', dark9L, darkC9), darkH)
   let ctaHoverDark = makeStop(10, hoverL(dark9L), cAt('dark', hoverL(dark9L), darkC9), darkH)
 
-  const dark11L = DARK_NEUTRAL_L[10]
-  const darkH11 = torsionedHue(darkH, dark11L, dark9L, gOffPath)
-  const darkC11 = opts?.darkChromaCurve
-    ? opts.darkChromaCurve(dark11L, darkH11, brandC)
-    : applyChromaFloor(brandC, DARK_STOP_11.chromaMultiplier, 10, darkFloorStrength)
-  dark.push(makeStop(11, dark11L, cAt('dark', dark11L, darkC11), darkH11))
+  dark.push(placeDarkStop(11, DARK_NEUTRAL_L[10], (L) => cAt('dark', L, opts?.darkChromaCurve
+    ? opts.darkChromaCurve(L, darkHueAtL(L), brandC)
+    : applyChromaFloor(brandC, DARK_STOP_11.chromaMultiplier, 10, darkFloorStrength))))
 
-  const dark12L = DARK_NEUTRAL_L[11]
-  const darkH12 = torsionedHue(darkH, dark12L, dark9L, gOffPath)
-  const darkC12 = opts?.darkChromaCurve
-    ? opts.darkChromaCurve(dark12L, darkH12, brandC)
-    : applyChromaFloor(brandC, DARK_STOP_12.chromaMultiplier, 11, darkFloorStrength)
-  dark.push(makeStop(12, dark12L, cAt('dark', dark12L, darkC12), darkH12))
+  dark.push(placeDarkStop(12, DARK_NEUTRAL_L[11], (L) => cAt('dark', L, opts?.darkChromaCurve
+    ? opts.darkChromaCurve(L, darkHueAtL(L), brandC)
+    : applyChromaFloor(brandC, DARK_STOP_12.chromaMultiplier, 11, darkFloorStrength))))
 
   const dark9ApcaY0 = apcaY(ctaDark.r, ctaDark.g, ctaDark.b)
   const onFillTextIsWhiteDark = onTextIsWhite(dark9ApcaY0, ctaDark.L, ctaDark.C, ctaDark.H, !!opts?.enforceOnFillContrast)
@@ -457,14 +466,17 @@ export function generateScale(
     light.push(hl9, hl10)
     onHighlightIsWhite = hl.white
 
-    const darkHueAt = (l: number) => torsionedHue(darkH, l, dark9L, gOffPath)
     const darkHlC = (l: number, h: number) =>
       opts?.darkChromaCurve
         ? clampChromaToGamut(l, opts.darkChromaCurve(l, h, brandC), h)
-        : clampChromaToGamut(l, hlLadderC + u * (brandSat * HIGHLIGHT_LIGHT.satFraction * maxChromaAt(l, h) - hlLadderC), h)
-    const dhl = placeRung(9, HIGHLIGHT_DARK.rootL, darkHueAt, darkHlC)
+        : clampChromaToGamut(l, cAt('dark', l, hlLadderC + u * (brandSat * HIGHLIGHT_LIGHT.satFraction * maxChromaAt(l, h) - hlLadderC)), h)
+    // Highlight 9/10 carry on-text, so their dark L stays hand-placed at the
+    // legibility-tuned HIGHLIGHT_DARK scaffold (out of the APCA body-text dead zone)
+    // rather than solved for apparent-lightness like the surfaces — solving moves some
+    // hues into the dead zone (on-text < Lc 60). Legibility wins over equalization here.
+    const dhl = placeRung(9, HIGHLIGHT_DARK.rootL, darkHueAtL, darkHlC)
     const dhl9 = dhl.s
-    const dhl10 = rung(10, HIGHLIGHT_DARK.rootL10, darkHueAt, darkHlC)
+    const dhl10 = rung(10, HIGHLIGHT_DARK.rootL10, darkHueAtL, darkHlC)
     dark.push(dhl9, dhl10)
     onHighlightIsWhiteDark = dhl.white
   }
