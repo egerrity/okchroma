@@ -385,32 +385,41 @@ export function generateScale(
     darkC9 = brandC * DARK_COLLIDER_MUTED_CHROMA_SCALE
   }
 
+  // The dark ramp equalizes apparent (H-K) lightness across hue ONLY where that is the
+  // stop's job: the paper/wash SURFACES (1–7) and the ink TEXT stops (11/12) are solved
+  // like light (perceptualRungL, La=65) so they read at one perceived lightness on every
+  // brand. The HIGHLIGHT band (8–10) is constrained — 3:1 border + legibility fills — so
+  // it stays at its hand-placed scaffold: solving it would re-enter the APCA body-text
+  // dead zone AND let a solved surface ride up past the legibility-placed highlight. The
+  // off-scale cta is never solved either (it carries the brand fill's own lightness).
+  const darkHueAtL = (L: number) => torsionedHue(darkH, L, dark9L, gOffPath)
+  const placeDarkStop = (stop: number, rootL: number, chromaAt: (l: number) => number): ColorStop => {
+    const L = perceptualRungL(rootL, chromaAt(rootL), darkHueAtL(rootL))
+    return makeStop(stop, L, chromaAt(L), darkHueAtL(L))
+  }
+
   for (let i = 0; i < DARK_SUBTLE_CHROMA_MULT.length; i++) {
     const chromaMultiplier = DARK_SUBTLE_CHROMA_MULT[i]
-    const L = DARK_NEUTRAL_L[i]
-    const H = torsionedHue(darkH, L, dark9L, gOffPath)
-    const C = opts?.darkChromaCurve
-      ? opts.darkChromaCurve(L, H, brandC, darkC9)
-      : applyChromaFloor(subtleC, chromaMultiplier, i, darkFloorStrength)
-    dark.push(makeStop(i + 1, L, cAt('dark', L, C), H))
+    const rootL = DARK_NEUTRAL_L[i]
+    const chromaAt = (L: number) => cAt('dark', L, opts?.darkChromaCurve
+      ? opts.darkChromaCurve(L, darkHueAtL(L), brandC, darkC9)
+      : applyChromaFloor(subtleC, chromaMultiplier, i, darkFloorStrength))
+    // stop 8 (i===7) is the foot of the constrained highlight band — placed, not solved.
+    dark.push(i < 7
+      ? placeDarkStop(i + 1, rootL, chromaAt)
+      : makeStop(i + 1, rootL, chromaAt(rootL), darkHueAtL(rootL)))
   }
 
   let ctaDark = makeStop(9, dark9L, cAt('dark', dark9L, darkC9), darkH)
   let ctaHoverDark = makeStop(10, hoverL(dark9L), cAt('dark', hoverL(dark9L), darkC9), darkH)
 
-  const dark11L = DARK_NEUTRAL_L[10]
-  const darkH11 = torsionedHue(darkH, dark11L, dark9L, gOffPath)
-  const darkC11 = opts?.darkChromaCurve
-    ? opts.darkChromaCurve(dark11L, darkH11, brandC)
-    : applyChromaFloor(brandC, DARK_STOP_11.chromaMultiplier, 10, darkFloorStrength)
-  dark.push(makeStop(11, dark11L, cAt('dark', dark11L, darkC11), darkH11))
+  dark.push(placeDarkStop(11, DARK_NEUTRAL_L[10], (L) => cAt('dark', L, opts?.darkChromaCurve
+    ? opts.darkChromaCurve(L, darkHueAtL(L), brandC)
+    : applyChromaFloor(brandC, DARK_STOP_11.chromaMultiplier, 10, darkFloorStrength))))
 
-  const dark12L = DARK_NEUTRAL_L[11]
-  const darkH12 = torsionedHue(darkH, dark12L, dark9L, gOffPath)
-  const darkC12 = opts?.darkChromaCurve
-    ? opts.darkChromaCurve(dark12L, darkH12, brandC)
-    : applyChromaFloor(brandC, DARK_STOP_12.chromaMultiplier, 11, darkFloorStrength)
-  dark.push(makeStop(12, dark12L, cAt('dark', dark12L, darkC12), darkH12))
+  dark.push(placeDarkStop(12, DARK_NEUTRAL_L[11], (L) => cAt('dark', L, opts?.darkChromaCurve
+    ? opts.darkChromaCurve(L, darkHueAtL(L), brandC)
+    : applyChromaFloor(brandC, DARK_STOP_12.chromaMultiplier, 11, darkFloorStrength))))
 
   const dark9ApcaY0 = apcaY(ctaDark.r, ctaDark.g, ctaDark.b)
   const onFillTextIsWhiteDark = onTextIsWhite(dark9ApcaY0, ctaDark.L, ctaDark.C, ctaDark.H, !!opts?.enforceOnFillContrast)
@@ -457,14 +466,17 @@ export function generateScale(
     light.push(hl9, hl10)
     onHighlightIsWhite = hl.white
 
-    const darkHueAt = (l: number) => torsionedHue(darkH, l, dark9L, gOffPath)
     const darkHlC = (l: number, h: number) =>
       opts?.darkChromaCurve
         ? clampChromaToGamut(l, opts.darkChromaCurve(l, h, brandC), h)
         : clampChromaToGamut(l, cAt('dark', l, hlLadderC + u * (brandSat * HIGHLIGHT_LIGHT.satFraction * maxChromaAt(l, h) - hlLadderC)), h)
-    const dhl = placeRung(9, HIGHLIGHT_DARK.rootL, darkHueAt, darkHlC)
+    // Highlight 9/10 carry on-text, so their dark L stays hand-placed at the
+    // legibility-tuned HIGHLIGHT_DARK scaffold (out of the APCA body-text dead zone)
+    // rather than solved for apparent-lightness like the surfaces — solving moves some
+    // hues into the dead zone (on-text < Lc 60). Legibility wins over equalization here.
+    const dhl = placeRung(9, HIGHLIGHT_DARK.rootL, darkHueAtL, darkHlC)
     const dhl9 = dhl.s
-    const dhl10 = rung(10, HIGHLIGHT_DARK.rootL10, darkHueAt, darkHlC)
+    const dhl10 = rung(10, HIGHLIGHT_DARK.rootL10, darkHueAtL, darkHlC)
     dark.push(dhl9, dhl10)
     onHighlightIsWhiteDark = dhl.white
   }

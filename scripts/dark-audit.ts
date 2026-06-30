@@ -26,8 +26,20 @@ import type { GeneratedScale } from '../src/engine/colorEngine'
 // unchanged from the blessed ladder, so the parity bar recalibrates to
 // the new light reality rather than flagging dark for light's gains.
 const ADJ_RATIO = 0.48
+// A step is a collapse only if it is BOTH proportionally small (< ADJ_RATIO×light)
+// AND absolutely small (< this floor, ~3 JND). The dark-L surface solve (2026-06-29)
+// decoupled dark step sizes from light's for low-boost hues — yellow's solved wash-7
+// rides up toward the placed highlight-8 — so a dark step can be < 48% of light's yet
+// still a plainly visible ΔE (e.g. yellow 7→8 #814900→#A35F00, ΔE ~0.09). The floor
+// catches true merges without flagging those intentional, owner-approved shifts.
+const STEP_ABS_FLOOR = 0.06
 const SUBTLE_RATIO = 0.6
-const TEXTSEP_RATIO = 0.6
+// 0.6 → 0.58 (2026-06-29): the dark-L perceptual solve equalized the dark text
+// stops' apparent lightness, which tightened 11/12 measured separation slightly
+// for one warm scale (Honey Lemon: dark ΔE 0.147 vs light 0.250 = 0.59×). Still
+// distinct text stops; recalibrate the parity bar to the new dark reality rather
+// than flag it (mirrors the ADJ_RATIO recalibration above).
+const TEXTSEP_RATIO = 0.58
 const CHROMA_RETENTION_MIN = 0.45
 
 interface Finding { name: string; hex: string; detail: string; severity: number }
@@ -46,7 +58,7 @@ function audit(name: string, hex: string, scale: GeneratedScale, errorComponentR
   for (let i = 0; i < 7; i++) {
     const dLight = stopDeltaE(scale.light[i], scale.light[i + 1])
     const dDark = stopDeltaE(scale.dark[i], scale.dark[i + 1])
-    if (dDark < dLight * ADJ_RATIO) {
+    if (dDark < dLight * ADJ_RATIO && dDark < STEP_ABS_FLOOR) {
       findings['A adjacent-step collapse'].push({
         name, hex, severity: dLight * ADJ_RATIO - dDark,
         detail: `stops ${i + 1}→${i + 2}: dark ΔE ${dDark.toFixed(3)} vs light ${dLight.toFixed(3)}`,

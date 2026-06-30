@@ -80,11 +80,16 @@ Example — `highlight-9` (target 0.600):
 - **yellow-green** (small boost) emits at L ≈ 0.631 — placed lighter
 - on screen, both read as the same step
 
-Dark mode currently skips this solve — dark stops are placed directly at their `DARK_L`
-target, so unlike light they carry a per-hue apparent-lightness *wave* (the H-K boost
-varies by hue but the measured L does not — ~8–9 L\* across vivid stops, more on the loud
-CTA fills). Equalizing the dark stops the way light does is tracked as a separate effort;
-`divergence-audit` reports the wave size so the gap stays visible.
+Dark mode runs the same solve, but only where uniform apparent lightness is the stop's
+job: the paper/wash **surfaces** (1–7) and the ink **text** stops (11/12) are H-K-solved
+like light, so they read at one perceived lightness on every brand. The **highlight band**
+(8–10) is the exception — it stays placed at its `DARK_L` target, because those stops carry
+on-text (highlight-9/10) or a 3:1 border (highlight-8) and are hand-tuned for legibility;
+solving them would push some hues into the APCA body-text dead zone (and ride a solved
+surface up past the placed band). So the highlight band keeps a small per-hue
+apparent-lightness *wave* by design — legibility over uniformity — and `divergence-audit`
+reports that residual so it stays visible. (The off-scale CTA isn't solved in either mode;
+it carries the brand fill's own lightness.)
 
 Code: [`perceptualL.ts`](../src/engine/perceptualL.ts) — `apparentL()` is the Nayatani
 (1997) H-K model; `perceptualRungL()` is the solve. It's applied per stop in
