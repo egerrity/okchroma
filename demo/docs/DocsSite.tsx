@@ -28,10 +28,6 @@ const Table = ({ head, rows }: { head: React.ReactNode[]; rows: React.ReactNode[
     <tbody>{rows.map((r, i) => <tr key={i}>{r.map((c, j) => <td key={j}>{c}</td>)}</tr>)}</tbody>
   </table>
 )
-// Placeholder for an image the author will drop in later — keeps the draft readable.
-const ImgSlot = ({ label }: { label: string }) => (
-  <div className="d2-imgslot"><span>Image — {label}</span></div>
-)
 
 // ── Live example: a real generated ramp, computed by the engine ──────────────
 const RAMP_GROUPS: Array<{ label: string; span: number }> = [
@@ -94,8 +90,7 @@ function HueGrid() {
 }
 
 // ── Articles ─────────────────────────────────────────────────────────────────
-// `nav` is an optional short sidebar label; `title` is the full article heading.
-type Article = { slug: string; title: string; nav?: string; body: () => React.ReactNode }
+type Article = { slug: string; title: string; body: () => React.ReactNode }
 type Section = { label: string; articles: Article[] }
 
 const overview: Article = {
@@ -369,99 +364,7 @@ const styleLever: Article = {
   ),
 }
 
-const essay: Article = {
-  slug: 'why-primitives-arent-options',
-  nav: 'Primitives as precepts',
-  title: 'You already know what red-500 is for',
-  body: () => (
-    <>
-      <Lead>Why creating primitives in a decision vacuum is bad for your system — what I learned building a generative color tool: we've been treating primitives as a list of options when they were always a set of requirements.</Lead>
-
-      <P>Our system is an elegant, sparse, theme-ready color system for financial products. Every time we white-label our design system for a new brand, the same ritual plays out: check accessibility, measure the H and L distance between each step, realize we don't have a system for that, try to eyeball it, recheck contrast ratios. Need to add a new color group? Time to hand-build a bespoke theme to test the edge cases. Quick! Someone needs a teal theme — can you handle the intake ticket? Don't forget to publish both libraries just to get a single mockup in front of someone. It works, but it's clunky, and it feels like it shouldn't have to be.</P>
-
-      <H2>It started with eggplant</H2>
-      <P>Eggplant has been controversial. It doesn't fall into the same "brand archetype" our white-label defaults to, and it's led to a lot of conversations across teams about just how dark this purple should really be. Why does the hover on this super-dark eggplant just get darker? Well — we mix brand colors darker to get the hover, so the only solution is to change the cta from eggplant-900 to eggplant-800!</P>
-      <P>A small moment kicked off this brainworm. I had two brands open side by side. One was aliasing eggplant/800 to its primary brand fill. The other was aliasing blue/600 to the same role. Nothing about "800" and "600" tells you these two stops are doing the same work. The names promised a shared coordinate system, and there wasn't one.</P>
-      <ImgSlot label="two brands aliasing eggplant-800 and blue-600 to the same brand-fill role" />
-      <P>It seems to be an artifact from Tailwind that's been repeated ad infinitum without anyone questioning its utility.</P>
-      <P>This problem extended across all our palettes. Without a system for calculating the perceived lightness of each color, we kept ending up with very different-looking components when we changed the color family, not just the brand. We were using 200 for highlight and 50 for accent across every brand, on the assumption that the same stop number would read the same way everywhere. It didn't. A brand alert and an info alert, both pulling their "200," would land at visibly different perceived lightnesses. The number said <i>these are equivalent.</i> My eyes said <i>they are not.</i></P>
-      <P>But wait — why are we doing it this way again? Have we been copying a workflow that was once useful but has become anachronistic? Was this ever the best idea at all? Color science is an old discipline, and colors on displays are all math. Surely the math to define a perfectly uniform output at any hue already exists.</P>
-
-      <H2>Were primitives ever really options?</H2>
-      <P>Here's the thing nobody really says out loud about the standard token model.</P>
-      <P>Most systems are built in three tiers: primitives, then semantics, then components. Primitives — the raw values at the bottom — are almost universally described as <b>options</b>. A palette you pick <i>from</i> later, once you start making "decisions" up in the semantic layer. You generate a big field of values to cover every decision you might eventually need to make, give each one an ordinal name, and defer all of the actual meaning to a later step.</P>
-      <P>That deferral is the problem. We spend real effort building a layer of abstraction whose entire purpose is to <i>not know yet</i> what each value is for. We make a hundred colors so we can later choose the eight we needed all along.</P>
-      <P>It's especially odd because, as designers, we already know. When I'm setting up a system, I know I need a brand fill that carries white text at 4.5:1. I know I need a near-white tint that still passes for body copy. I know which pairs have to hold and what contrast each one owes. I'm not discovering these requirements in the semantic layer — I'm bringing them with me the whole time. The "options" framing asks me to pretend I don't know things I already know.</P>
-      <P>And this is how nearly every system I've worked on operates. I keep asking whether I've been wrong the entire time, but I've been deferring to experts and building on established best practices. It's easy to forget how relatively new design systems are — which is exactly why it's worth questioning.</P>
-
-      <H2>The reframe: define the pairs first</H2>
-      <P>At this point in the process I was just trying to figure out the perfect 12 lightness targets, not upend how I thought about primitive tokens in general. But working backwards from where I am today: instead of picking colors and <i>hoping</i> the pairs work out, what if I flipped the approach — define the pairs first and derive colors that satisfy them?</P>
-      <P>To get this out of my head and onto paper, I started building a table instead of a palette. Not "here are my twelve colors," but "here are the relationships that have to hold." Foreground, background, the contrast ratio required, and what the pair is actually for:</P>
-      <Table
-        head={['#', 'fg', 'bg', 'WCAG required', 'Use']}
-        rows={[
-          ['P1', 'on-emphasis', 'emphasis', '4.5:1', 'text/icon on brand fill'],
-          ['P2', 'emphasis', 'white canvas', '3:1', 'fill visible on page'],
-          ['P3', 'base', 'subtle', '4.5:1', 'text on light tint'],
-          ['P4', 'accent', 'subtle', '4.5:1', 'brand-colored text on tint'],
-          ['P5', 'border/subtle', 'subtle', 'decorative', '—'],
-          ['P6', 'base', 'hint', '4.5:1', 'text on near-white tint'],
-          ['P7', 'border/hint', 'hint', 'decorative', '—'],
-          ['P8', 'base', 'white', '4.5:1', 'darkest text on white'],
-          ['P9', 'border/emphasis', 'white', '3:1', 'brand border on white'],
-          ['P10', 'accent', 'white', '4.5:1', 'brand link text on white'],
-          ['P11', 'accent', 'subtle', '4.5:1', 'brand link text on tint'],
-        ]}
-      />
-      <Note>This is an older version of the table — I'll line it up with the current setup before publishing, but the shape is the point.</Note>
-      <P>Even before we've picked any color values, decisions are already being made. None of these values exist yet. There's no hex anywhere in that table. What it captures is a <b>contract</b> — every relationship the eventual palette has to honor, written down before a single color is chosen. A sort of palette pre-nup, if you will. The palette's job is to satisfy the contract, not the other way around. The other way around is how you get eggplant-800 and blue-600 doing the same job.</P>
-      <P>I started naming this idea, because it was different enough from how we usually talk about primitives that it was confusing to relay to colleagues. Without much thought I landed on "pseudo-primitive," but it's a mouthful and doesn't carry the weight. For the rest of this article I'll refer to these "pseudo-primitives" as <b>precepts</b>.</P>
-      <P>A precept is a rule established in advance. The etymology: <i>prae</i> (before) plus <i>capere</i> (to take) — literally <i>taken beforehand.</i> That's exactly what these are: an accessibility requirement, a stylistic contract, taken beforehand, that governs everything downstream. A primitive <i>declares a value.</i> A precept <i>declares a requirement and lets the value follow.</i></P>
-
-      <H2>Is it just me, or are we making this complicated?</H2>
-      <P>For a while I wasn't sure this was a real idea or just me glossing over something I couldn't articulate. I'd been trying to explain to my coworkers that the primitives in our Figma file were <i>fake</i> — don't worry too much about these placeholders, they're just standing in for what a generator will eventually produce. This produced some puzzled looks. Fair enough. I was waving at something I didn't have language for and didn't fully trust myself on.</P>
-      <P>I kept assuming someone, somewhere, had already done this and named it. I'd research when I got stuck, but I never came across anything that tied math to primitive tokens. Then, by chance, I stumbled on Radix UI's color theming system.</P>
-      <ImgSlot label="Radix's 12-step scale with each step reserved for a role" />
-      <P>Radix was doing the thing I'd been rambling about: pre-reserving stops for a specific role. Step 1 is app background. Step 12 is high-contrast text. It sidesteps the abstract "options" layer in favor of reserving roles up front — doing, with credibility and polish, the exact thing I'd been trying to describe.</P>
-      <P>Radix helped me see this as something worth pursuing, and gave me permission to chase something a little outside the norm. Okay, maybe this is experimental, but it's clearly not completely out there — somebody respectable is already doing it. And if the numbers are arbitrary now anyway, who says they can't carry intent? Even if we never go beyond streamlining how we generate our palettes and documenting what each ordinal number is for, we still simplify our workflow internally.</P>
-      <P>So for a while my stops were still literally named 1 through 12, and I just held their meaning in my head. Then I got feedback from engineers, other designers, and my manager that giving these "options" actual decision-based meaning could be useful — even big. That gave me the permission I needed to stop hedging and lean into the somewhat-novel idea.</P>
-      <P>Once you accept that a stop has a reserved role, the ordinal number starts to feel actively wrong. "100" tells you where a color sits on a ramp, but nothing about what it's <i>for</i> (and we all know what 100 is for). So I borrowed from my analog inroad to design and gave the role families vaguely art-medium-based names — enough meaning to intimate the job in understandable terms that nod to paper and pen.</P>
-      <ImgSlot label="the paper / wash / highlight / ink role-family names" />
-      <P>How I arrived at those specific names, and why naming-for-intent beats naming-for-position, is probably its own article. For now, the principle is what matters: the name should mean something — just enough to intimate the job, but not so much that language limits its possibility.</P>
-
-      <H2>I was not a good math student</H2>
-      <P>Then I enlisted Claude Code and pretended I could understand math. I knew I wanted to feed the formula a brand hex and get back a full set of accessible, role-reserved scales. Seems simple: find the math, make it output colors the right way without the limitations of Figma.</P>
-      <P>It was not simple — especially when you're a designer who went to school for painting and has just enough coding knowledge to be annoying, rather than a color scientist or an engineer.</P>
-      <P>I knew from research that OKLCH is generally considered the best color space for theming because it accounts for perceptual lightness. Unfortunately, it doesn't get you all the way there, because its lightness axis isn't perceptually flat across hues. Take equal numeric steps in lightness and they don't look equal — the visual weight wobbles depending on where you are on the color wheel. Yellows and ambers are especially badly behaved. So the clean idea "just step evenly down the lightness axis" produces scales that look uneven to the eye, the exact problem I was trying to solve.</P>
-      <ImgSlot label="equal OKLCH lightness steps that read unevenly across hues" />
-      <P>My first instinct was to fix it by hand. I wrote a lot of if/then rules and did my best to articulate them to Claude (lucky for me, a lot of this happened during the three days Fable was live): nudge lightness and chroma off a baseline depending on the hue range, based on color theory and a lot of squinting. It actually looked good — but I knew the code was probably a nightmare, and the hand-tuning failed in places I couldn't fix correctly, because the method didn't scale. I hesitate to admit to the ninety-some intervening commits, but the problem became a little addictive. Claude would offer small color deltas and I'd approve or reject them by eye, tuning hue ranges one squint at a time. I got it to a place where it was finally working pretty well.</P>
-      <P>But the whole time it felt like maybe it was just as clunky under the hood as the original problem: <i>this math has to exist somewhere. People have studied color for a hundred years. I cannot be the first person to want evenly-perceived lightness.</i></P>
-      <P>And of course I wasn't. The math existed — it was just hidden behind jargon, across several disciplines I touch intuitively in my career and hobbies but am by no means an expert in. I'm a systems designer and an artist, maybe a kind of color-elf at times, but not a color scientist, and I had no idea what to search for. Eventually I found the answers waiting patiently in decades-old research: the Helmholtz–Kohlrausch effect, Fairchild's color appearance models, Nayatani's correction coefficients. They were there the whole time. Do I understand them well? No. But I'm learning just enough to be annoying and surface the problem.</P>
-      <P>This breakthrough came a little late, but I was still excited. I found Görkem Yıldız's work, which tackles the same perceptual problem, and used it as a jumping-off point into the research I'd been unable to name. I ran his tool against mine, and what I found was illuminating: I didn't need to import his approach wholesale, because it led me somewhere better for my use case. I could lean on Nayatani's coefficients fairly cleanly to do the per-hue lightness correction I'd been hand-tuning for weeks. The bespoke rules I'd sweated over collapsed into established, understandable math. Thank god. I was proud I'd gotten something working on my own, but Nayatani's model was scalable and clean where mine was cobbled together.</P>
-      <P>That's where AI both earned its place in this project and surfaced a tension I've been feeling about working with AI in general. Claude didn't make me a color scientist, or even really help me understand the science — but it helped me get an idea out of my head and onto paper for others to consider. Not by creating the idea, but by translating between an existing friction, my intuition, and the equations that already described it.</P>
-      <P>This is a very long way of saying that there are much smarter people than me who'd already figured out the problem — and the lesson underneath all of it was that I probably should have trusted myself sooner. <b>The per-hue correction was derivable the entire time.</b></P>
-
-      <H2>So why do we store values at all?</H2>
-      <P>This is the bigger question the project left me with, and I hope this article helps me entice experts to figure out how to make this proof of concept something bigger.</P>
-      <P>If a primitive can be expressed as a live formula — a hue and chroma resolved against a lightness target that satisfies a contrast requirement — then the frozen list of hex values isn't a <i>necessity.</i> It's an artifact of our tools and of our narrow individual expertise. We only know what we know. We compute the answer, type it into a field in Figma, and ship the written-down version. Imagine how much easier it would be if we could instead set the requirements and ship those.</P>
-      <P>Figma is a big limitation here. It's the tool designers use to communicate with engineers, but it has no way to natively resolve values the way code does. Variables store hex codes, not formulas. They don't exist at design time as relationships — just frozen results. So even when the math lives in a generator, the tokens still have to ship as an enumerated list for Figma to consume. The existence of "options" is a necessary evil — partly the price of design-tool parity. Their arbitrariness is not. I even built a sister plugin to mimic this in Figma, but that's all it can do: <i>mimic.</i> I can't yet make Figma natively understand a primitive as a requirement rather than a value.</P>
-      <P>The code side is circling the same idea from the other direction. CSS relative color syntax and runtime theming are early moves toward expressing color as relationship instead of as a fixed value. The design-to-code pipeline doesn't have a clean shared answer yet for expressing <i>requirements and relationships</i> rather than <i>values</i> in a way both Figma and the browser agree on. That gap is the open frontier, and I'd genuinely love to push the conversation forward with my humble contribution.</P>
-      <P>There's a historical rhyme worth sitting with. In 1994, Håkon Wium Lie proposed something he called Cascading HTML Style Sheets. The core idea was to separate the <i>content</i> of a page from its <i>presentation</i>, and stop tangling structure and style together. This exploration feels like it's peering in on a similar moment: separating the <i>declaration</i> of a value from its <i>derivation.</i> We've been declaring "options" when we could be deriving intentional values from constraints we already know.</P>
-      <P>And if it works for color, could it work for other token types? Color is just the easiest place to prove it, because contrast gives you a hard, measurable requirement to derive against. The same logic — requirement first, value follows — could apply to spacing, type, radius, any token type at all. We'd just need to define the requirements those values get derived from. (Maybe the next phase of my tinkering.)</P>
-
-      <H2>But I don't have a month to make a fancy tool!</H2>
-      <P>Great news: okchroma is open-source — but you don't even need okchroma to rethink your primitive palettes. You don't need a generator, or Nayatani coefficients, or a month of evenings spent tinkering with (yelling at) Claude Code. You can start with the idea.</P>
-      <P>Next time you look at your design system, <b>map out what your primitives actually do, and name the decisions you made subconsciously.</b> Write down the relationships first: what sits on what, what ratio each pair has to clear, what the pair is <i>for.</i> Do that before you change a single value, and you'll find the values almost suggest themselves — because you'll have defined the holes they need to fill.</P>
-      <P>That's the whole idea, and it's available to you by hand, today, with no new technology at all. The fact that the math exists just means this can eventually be done at scale, instead of by rote. But the rote works in the meantime.</P>
-      <P>Stop treating your primitives as a bag of options you'll assign meaning to later. Give them the credit they deserve, and think of them as precepts: decisions you've already made, written as requirements, waiting for values to satisfy them.</P>
-      <P>We were always reverse-engineering decisions and underselling it by calling them options. It's time our language — and eventually our tools — caught up.</P>
-      <Note>okchroma is open source. <a href="https://egerrity.github.io/okchroma/" target="_blank" rel="noreferrer">Try the tool</a> · <a href="https://github.com/egerrity/okchroma" target="_blank" rel="noreferrer">Read the code</a></Note>
-    </>
-  ),
-}
-
 const SECTIONS: Section[] = [
-  { label: 'Background', articles: [essay] },
   { label: 'Getting started', articles: [overview, install] },
   { label: 'Concepts', articles: [howItWorks, whyOklch, warmHues, collisions] },
   { label: 'Overrides', articles: [exactMode, styleLever] },
@@ -482,7 +385,7 @@ export default function DocsSite({ dark: _dark }: { dark: boolean }) {
               <div className="d2-side-label">{section.label}</div>
               {section.articles.map(a => (
                 <button key={a.slug} className={`d2-side-link${a.slug === slug ? ' active' : ''}`} onClick={() => setSlug(a.slug)}>
-                  {a.nav ?? a.title}
+                  {a.title}
                 </button>
               ))}
             </div>
@@ -520,7 +423,6 @@ const DOCS2_CSS = `
 .d2-h2 { font-size: 21px; font-weight: 700; margin: 36px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-subtle); }
 .d2-h3 { font-size: 16px; font-weight: 700; margin: 26px 0 8px; }
 .d2-p { font-size: 15px; line-height: 1.7; margin: 0 0 14px; }
-.d2-article a { color: var(--fg-link); text-decoration: underline; }
 .d2-ul { font-size: 15px; line-height: 1.7; margin: 0 0 14px; padding-left: 22px; }
 .d2-ul li { margin-bottom: 8px; }
 .d2-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.88em; background: var(--surface-sunken); border: 1px solid var(--border-subtle); border-radius: 5px; padding: 1px 5px; }
@@ -547,7 +449,6 @@ const DOCS2_CSS = `
 .d2-huegrid-rows { display: flex; flex-direction: column; gap: 4px; }
 .d2-huegrid-row { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; }
 .d2-huegrid-cell { height: 32px; border-radius: 5px; border: 1px solid var(--border-subtle); }
-.d2-imgslot { border: 1px dashed var(--border-default); border-radius: 10px; padding: 28px 16px; margin: 20px 0; text-align: center; color: var(--fg-subtle); font-size: 13px; font-style: italic; background: var(--surface-sunken); }
 @media (max-width: 860px) {
   .d2 { grid-template-columns: 1fr; }
   .d2-side { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border-subtle); display: flex; gap: 16px; overflow-x: auto; padding: 16px; }
