@@ -105,7 +105,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       } else if (sp.produce.L === 'fixed') {
         placed = { L: sp.rootL, C: chromaAt!(sp.rootL), H: d.darkHueAtL(sp.rootL) }
       } else {
-        placed = placeDark(d, sp.rootL, chromaAt!)
+        placed = placeDark(d, sp.rootL, chromaAt!, sp.produce.L === 'perceptual-lift')
       }
       // a declared dark require is a FLOOR: a hue whose placement already clears the target does not move;
       // a failing hue is raised (bisection) until it clears. This is the Stage-5 flip — blue's stop-8 rises

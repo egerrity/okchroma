@@ -22,7 +22,10 @@ export type Producer = {
   // named hue producers: warm-drift = the light path (spine drift, dynamic cap, red-cool);
   // warm-torsion = the dark path (torsionedHue); constant = the seed's own hue (roles)
   hue: 'warm-drift' | 'warm-torsion' | 'constant'
-  L: 'perceptual' | 'fixed'           // perceptual = Nayatani apparent-L placement; fixed = rootL as placed
+  // perceptual = Nayatani apparent-L placement; perceptual-lift = the same solve FLOORED at rootL
+  // ("dark fills lift, never sink" — high-H-K hues like blue otherwise sink under the near-black
+  // neutral surfaces they render on); fixed = rootL as placed
+  L: 'perceptual' | 'perceptual-lift' | 'fixed'
   chroma: 'ladder' | 'brand'          // ladder = baseC/envelope blend (light) or mult ladder (dark); brand = chromaMult × brand C
 }
 export type Require =
@@ -67,7 +70,10 @@ export type ModeSpec = {
 const groupOf = (stop: number): Group => (stop <= 2 ? 'paper' : stop <= 7 ? 'wash' : stop <= 10 ? 'highlight' : 'ink')
 const PL_LADDER: Producer = { hue: 'warm-drift', L: 'perceptual', chroma: 'ladder' }
 const PL_TEXT: Producer = { hue: 'warm-drift', L: 'perceptual', chroma: 'brand' }
-const P_LADDER: Producer = { hue: 'warm-torsion', L: 'perceptual', chroma: 'ladder' }
+// dark scale uses the LIFT variant (owner-adopted 2026-07-02, the blue-recede fix): the H-K solve may
+// raise a hue above the scaffold but never place it below — high-H-K hues (blue/violet) otherwise sink
+// under the near-black neutral surfaces they render on. "Dark fills lift, never sink."
+const P_LIFT: Producer = { hue: 'warm-torsion', L: 'perceptual-lift', chroma: 'ladder' }
 const P_FIXED: Producer = { hue: 'warm-torsion', L: 'fixed', chroma: 'ladder' }
 const P_TEXT: Producer = { hue: 'warm-torsion', L: 'perceptual', chroma: 'brand' }
 
@@ -132,7 +138,7 @@ export const DARK: ModeSpec = {
     // scaffold and don't move; low-luminance hues (blue) get raised until they read off the dark paper —
     // the blue-recede failure is prevented BY RULE, not by patch.
     ...DARK_NEUTRAL_L.slice(0, 8).map((rootL, i): StopReq => ({
-      stop: i + 1, rootL, group: groupOf(i + 1), produce: i === 7 ? P_FIXED : P_LADDER,
+      stop: i + 1, rootL, group: groupOf(i + 1), produce: i === 7 ? P_FIXED : P_LIFT,
       satFraction: DARK_SUBTLE_CHROMA_MULT[i], require: i === 7 ? S8 : undefined,
     })),
     // highlight 9/10: FIXED at the hand-placed dark scaffold (solving = APCA body-text dead zone).

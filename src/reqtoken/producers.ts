@@ -227,9 +227,14 @@ export const darkHighlightChromaAt = (ctx: Ctx, dctx: DarkCtx, baseC: number, sa
   return clampChromaToGamut(L, ctx.cAt('dark', L, hlLadderC + ctx.u * (ctx.brandSat * satFraction * maxChromaAt(L, h) - hlLadderC)), h)
 }
 
-// dark perceptual placement (stops 1–7, 11/12): placeDarkStop verbatim (colorEngine.ts:396–399)
-export function placeDark(dctx: DarkCtx, rootL: number, chromaAt: (L: number) => number): { L: number; C: number; H: number } {
-  const L = perceptualRungL(rootL, chromaAt(rootL), dctx.darkHueAtL(rootL))
+// dark perceptual placement (stops 1–7, 11/12): placeDarkStop verbatim (colorEngine.ts:396–399).
+// `lift` = the 'perceptual-lift' producer: the H-K solve may raise a hue above its scaffold (low-boost
+// hues like yellow) but never place it BELOW (high-boost hues — blue/violet — otherwise sink under the
+// near-black neutral surfaces they render on: the blue-recede failure). "Dark fills lift, never sink,"
+// extended from the cta floor to the scale.
+export function placeDark(dctx: DarkCtx, rootL: number, chromaAt: (L: number) => number, lift = false): { L: number; C: number; H: number } {
+  let L = perceptualRungL(rootL, chromaAt(rootL), dctx.darkHueAtL(rootL))
+  if (lift) L = Math.max(L, rootL)
   return { L, C: chromaAt(L), H: dctx.darkHueAtL(L) }
 }
 
