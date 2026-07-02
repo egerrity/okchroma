@@ -13,8 +13,8 @@
      extreme beyond paper-1. */
   --surface-base:         var(--neutral-paper-1);
   --surface-sunken:       var(--neutral-paper-2);
-  --surface-raised:       var(--paper-0);
-  --surface-card-overlay: var(--paper-0);
+  --surface-raised:       var(--paper-0, #ffffff);
+  --surface-card-overlay: var(--paper-0, #ffffff);
 
   --fg-default:           var(--neutral-ink-12);
   --fg-subtle:            var(--neutral-ink-11);
@@ -30,7 +30,7 @@
      the page to the paper-0 anchor (black in dark) — so a recessed area actually
      recedes instead of sitting at the page's own level. Overlays go one step lighter
      than raised (wash). */
-  --surface-sunken:       var(--paper-0);
+  --surface-sunken:       var(--paper-0, #000000);
   --surface-raised:       var(--neutral-paper-2);
   --surface-card-overlay: var(--neutral-wash-3);
 }

@@ -45,11 +45,18 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
 // just scoped to an arbitrary selector.
 export function neutralCss(selector: string, brandH: number, level: NeutralLevel = 'default'): string {
   const s = generateNeutralScale(brandH, level)
+  // The universal paper-0/ink-13 anchors ride along: any scope that carries the
+  // ladder must also carry its mode-flipping extremes (semantic aliases like
+  // --surface-raised resolve through them).
   return [
     `${selector} {`,
+    `  --paper-0: #ffffff;`,
+    `  --ink-13: #000000;`,
     ...brandKindBody('neutral', s, 'light'),
     `}`,
     `${selector}[data-theme="dark"] {`,
+    `  --paper-0: #000000;`,
+    `  --ink-13: #ffffff;`,
     ...brandKindBody('neutral', s, 'dark'),
     `}`,
   ].join('\n')
