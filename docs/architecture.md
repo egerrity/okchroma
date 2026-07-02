@@ -430,8 +430,10 @@ These are deliberate v1 scope boundaries, tracked for later work:
 
 1. **Mixed contrast model.** `highlight` on-text is judged by APCA (Lc 60); everything else
    (`cta`, `ink-11/12`, `highlight-8`) uses WCAG. Under a strict WCAG 2.x audit, many
-   highlight fills' text reads below 4.5:1 (fine under APCA). A unified APCA default plus an
-   opt-in fully-WCAG shape is planned.
+   highlight fills' text reads below 4.5:1 (fine under APCA). An opt-in APCA *profile* now
+   exists (`contrastProfile: 'apca'` re-solves the scale's contrast requires under Lc targets
+   via `withProfile()` — see docs/schema.md); the Lc map, default exposure, and moving the
+   on-text enforce fallback from WCAG 4.5 to Lc are pending an owner decision.
 2. **Secondary ↔ signal collisions aren't resolved.** Signal collision/shift logic runs on
    the **primary** brand only; a secondary that collides with a signal is *flagged*, not
    shifted.

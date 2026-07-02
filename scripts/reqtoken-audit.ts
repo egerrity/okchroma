@@ -1,8 +1,12 @@
 // reqtoken-audit.ts — THE GATE. Agnostic hue×chroma sweep; for every seed, check every DECLARED requirement
 // of the resolved ramp. No okchroma comparison — pure requirement-satisfaction. Worst-case flagged.
 // Checks are driven FROM the declaration (MODE_SPECS): a require declared = a require verified.
+// The whole sweep runs under BOTH contrast profiles (wcag = the shipped default, apca = the opt-in
+// re-solve); the gate passes only if every declared require holds under its own metric in both.
 import { resolveRamp } from '../src/reqtoken/resolve'
 import { MODE_SPECS } from '../src/reqtoken/spec'
+import { withProfile, type ContrastProfile } from '../src/reqtoken/profiles'
+import { APCA_TOL_LC, apcaYAt } from '../src/reqtoken/producers'
 import { clampChromaToGamut, wcagY, contrastRatio, oklchToLinearRgb, apcaLc, apcaY } from '../src/engine/constraints'
 
 const enc = (c: number) => { c = Math.max(0, Math.min(1, c)); return c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055 }
@@ -16,26 +20,33 @@ type Fail = { seed: string; mode: string; check: string; detail: string; sev: nu
 const fails: Fail[] = []
 let seedsChecked = 0
 
+const PROFILES: ContrastProfile[] = ['wcag', 'apca']
+for (const profile of PROFILES)
 for (const H of HUES) for (const C of CHROMAS) {
   const hex = oklchToHex(SEED_L, C, H)
   for (const mode of ['light', 'dark'] as const) {
     seedsChecked++
-    const r = resolveRamp(hex, mode)
+    const spec = withProfile(MODE_SPECS[mode], profile)
+    const r = resolveRamp(hex, mode, spec)
     const s = r.stops
     const byStop = (n: number) => s.find(st => st.stop === n)
-    const id = `H${H} C${C}`
+    const id = `${profile} H${H} C${C}`
     // 1. totality: every declared stop resolved, none unresolvable
-    for (const sp of MODE_SPECS[mode].stops) if (!byStop(sp.stop)) fails.push({ seed: id, mode, check: 'missing-stop', detail: `stop ${sp.stop}`, sev: 100 })
+    for (const sp of spec.stops) if (!byStop(sp.stop)) fails.push({ seed: id, mode, check: 'missing-stop', detail: `stop ${sp.stop}`, sev: 100 })
     for (const st of s) if (st.unresolvable) fails.push({ seed: id, mode, check: 'unresolvable', detail: st.unresolvable, sev: 100 })
-    // 2. every DECLARED contrast require holds (recomputed from emitted, gamut-clamped)
+    // 2. every DECLARED contrast require holds under ITS OWN metric (recomputed from emitted, gamut-clamped)
     const p2 = byStop(2)!
     const p2Y = wcagY(p2.L, clampChromaToGamut(p2.L, p2.C, p2.H), p2.H)
-    for (const sp of MODE_SPECS[mode].stops) {
+    const p2ApcaY = apcaYAt(p2.L, clampChromaToGamut(p2.L, p2.C, p2.H), p2.H)
+    for (const sp of spec.stops) {
       if (!sp.require) continue
       const st = byStop(sp.stop)!
       if (sp.require.metric === 'wcag') {
         const got = contrastRatio(wcagY(st.L, clampChromaToGamut(st.L, st.C, st.H), st.H), p2Y)
         if (got < sp.require.target - 1e-3) fails.push({ seed: id, mode, check: `require-stop${sp.stop}`, detail: `got ${got.toFixed(2)} < ${sp.require.target}`, sev: sp.require.target - got })
+      } else if (sp.require.metric === 'apca') {
+        const got = Math.abs(apcaLc(apcaYAt(st.L, clampChromaToGamut(st.L, st.C, st.H), st.H), p2ApcaY))
+        if (got < sp.require.targetLc - APCA_TOL_LC) fails.push({ seed: id, mode, check: `require-stop${sp.stop}`, detail: `|Lc| ${got.toFixed(1)} < ${sp.require.targetLc}`, sev: (sp.require.targetLc - got) / 10 })
       } else if (sp.require.metric === 'min-separation') {
         const ref = byStop(sp.require.against === 'paper-1' ? 1 : sp.stop - 1)!
         const rad = (h: number) => (h * Math.PI) / 180
@@ -74,26 +85,44 @@ for (const H of HUES) for (const C of CHROMAS) {
     //    the ANCHOR: the on-fill enforcement re-solve may legitimately move the fill past it, but then the
     //    enforcement's own guarantee (chosen-pole text 4.5) must hold — that's what we verify.
     const { cta, ctaHover } = r.roles
-    const floor = MODE_SPECS[mode].roles.find(x => x.role === 'cta')!.floorL
+    const floor = spec.roles.find(x => x.role === 'cta')!.floorL
     if (cta.L < floor - 1e-6 && !cta.enforced) fails.push({ seed: id, mode, check: 'cta-floor', detail: `L${cta.L.toFixed(3)} < floor ${floor} without enforcement`, sev: 10 })
     if (cta.enforced) {
-      const fillY2 = wcagY(cta.L, clampChromaToGamut(cta.L, cta.C, cta.H), cta.H)
-      const got = r.ons.onFillIsWhite ? contrastRatio(1.0, fillY2) : contrastRatio(fillY2, 0)
-      if (got < 4.5 - 0.05) fails.push({ seed: id, mode, check: 'cta-enforce', detail: `enforced but on-text ${got.toFixed(2)} < 4.5`, sev: 15 })
+      if (spec.ons.onFill.enforceLc !== undefined) {
+        // apca profile: an enforced cta's chosen pole must read the Lc threshold (solved to threshold+0.5)
+        const aY2 = apcaYAt(cta.L, clampChromaToGamut(cta.L, cta.C, cta.H), cta.H)
+        const got = Math.abs(apcaLc(r.ons.onFillIsWhite ? 1.0 : 0.0, aY2))
+        if (got < spec.ons.onFill.enforceLc - 0.1) fails.push({ seed: id, mode, check: 'cta-enforce', detail: `enforced but on-text |Lc| ${got.toFixed(1)} < ${spec.ons.onFill.enforceLc}`, sev: 15 })
+      } else {
+        const fillY2 = wcagY(cta.L, clampChromaToGamut(cta.L, cta.C, cta.H), cta.H)
+        const got = r.ons.onFillIsWhite ? contrastRatio(1.0, fillY2) : contrastRatio(fillY2, 0)
+        if (got < 4.5 - 0.05) fails.push({ seed: id, mode, check: 'cta-enforce', detail: `enforced but on-text ${got.toFixed(2)} < 4.5`, sev: 15 })
+      }
     }
     if (Math.abs(cta.H - r.seed.H) > 1e-6) fails.push({ seed: id, mode, check: 'cta-hue', detail: `H${cta.H.toFixed(1)} vs seed ${r.seed.H.toFixed(1)}`, sev: 5 })
     if (!/^#[0-9a-f]{6}$/.test(cta.hex) || !/^#[0-9a-f]{6}$/.test(ctaHover.hex)) fails.push({ seed: id, mode, check: 'role-rgb', detail: `${cta.hex}/${ctaHover.hex}`, sev: 20 })
     // 6. ons: the chosen pole must be the passing one — if enforce is declared and the chosen pole fails
     //    WCAG 4.5 while the OTHER pole passes it with |Lc| ≥ 45, the choice is wrong (true dead zone excepted)
-    const onSpec = MODE_SPECS[mode].ons.onFill
+    const onSpec = spec.ons.onFill
     if (onSpec.enforce) {
       const fillY = wcagY(cta.L, clampChromaToGamut(cta.L, cta.C, cta.H), cta.H)
       const aY = apcaY(...([cta.hex.slice(1, 3), cta.hex.slice(3, 5), cta.hex.slice(5, 7)].map(h => parseInt(h, 16) / 255) as [number, number, number]))
-      const chosenWcag = r.ons.onFillIsWhite ? contrastRatio(1.0, fillY) : contrastRatio(fillY, 0)
-      const otherWcag = r.ons.onFillIsWhite ? contrastRatio(fillY, 0) : contrastRatio(1.0, fillY)
-      const otherLc = Math.abs(apcaLc(r.ons.onFillIsWhite ? 0.0 : 1.0, aY))
-      if (chosenWcag < 4.5 && otherWcag >= 4.5 && otherLc >= 45)
-        fails.push({ seed: id, mode, check: 'on-fill-pole', detail: `chosen ${r.ons.onFillIsWhite ? 'white' : 'black'} ${chosenWcag.toFixed(2)}, other passes ${otherWcag.toFixed(2)}`, sev: 15 })
+      if (onSpec.enforceLc !== undefined) {
+        // apca profile: the pole must be Lc-optimal, and a failing WHITE pole must have triggered the
+        // fill re-solve (white-only trigger, mirroring the engine's asymmetry — black dead zones keep the fill)
+        const chosenLc = Math.abs(apcaLc(r.ons.onFillIsWhite ? 1.0 : 0.0, aY))
+        const otherLc = Math.abs(apcaLc(r.ons.onFillIsWhite ? 0.0 : 1.0, aY))
+        if (chosenLc < otherLc - 0.1)
+          fails.push({ seed: id, mode, check: 'on-fill-pole', detail: `chosen ${r.ons.onFillIsWhite ? 'white' : 'black'} |Lc| ${chosenLc.toFixed(1)} < other ${otherLc.toFixed(1)}`, sev: 15 })
+        if (r.ons.onFillIsWhite && chosenLc < onSpec.enforceLc - 0.1 && !cta.enforced)
+          fails.push({ seed: id, mode, check: 'on-fill-enforce', detail: `white on-text |Lc| ${chosenLc.toFixed(1)} < ${onSpec.enforceLc} but the fill was not re-solved`, sev: 15 })
+      } else {
+        const chosenWcag = r.ons.onFillIsWhite ? contrastRatio(1.0, fillY) : contrastRatio(fillY, 0)
+        const otherWcag = r.ons.onFillIsWhite ? contrastRatio(fillY, 0) : contrastRatio(1.0, fillY)
+        const otherLc = Math.abs(apcaLc(r.ons.onFillIsWhite ? 0.0 : 1.0, aY))
+        if (chosenWcag < 4.5 && otherWcag >= 4.5 && otherLc >= 45)
+          fails.push({ seed: id, mode, check: 'on-fill-pole', detail: `chosen ${r.ons.onFillIsWhite ? 'white' : 'black'} ${chosenWcag.toFixed(2)}, other passes ${otherWcag.toFixed(2)}`, sev: 15 })
+      }
     }
   }
 }
@@ -113,7 +142,7 @@ for (const mode of ['light', 'dark'] as const) {
 // report
 const byCheck: Record<string, number> = {}
 for (const f of fails) byCheck[f.check] = (byCheck[f.check] ?? 0) + 1
-console.log(`\n=== reqtoken-audit: ${seedsChecked} seed×mode resolved ===`)
+console.log(`\n=== reqtoken-audit: ${seedsChecked} seed×mode resolved (profiles: ${PROFILES.join(' + ')}) ===`)
 console.log(`failures: ${fails.length}`)
 for (const [k, n] of Object.entries(byCheck)) console.log(`  ${k}: ${n}`)
 if (fails.length) {

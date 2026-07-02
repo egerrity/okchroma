@@ -29,6 +29,7 @@ export type { ColorStop } from './colorMath'
 
 import { resolveRamp, type ResolvedStop } from '../reqtoken/resolve'
 import { MODE_SPECS, type ModeSpec } from '../reqtoken/spec'
+import { withProfile, type ContrastProfile } from '../reqtoken/profiles'
 
 export interface GeneratedScale {
   name: string
@@ -95,6 +96,11 @@ export interface GenerateOptions {
   loudCta?: boolean
 
   heat?: number
+
+  // contrast PROFILE (opt-in): 'apca' re-solves every declared wcag contrast require under APCA Lc
+  // targets via withProfile() — the same declaration vs a different constraint. Default 'wcag' is the
+  // shipped behavior, byte-identical when unset.
+  contrastProfile?: ContrastProfile
 }
 
 // generateScale is now an ADAPTER over the requirement-token resolver (src/reqtoken): it compiles the caller
@@ -110,10 +116,14 @@ export function generateScale(
 ): GeneratedScale {
   // compile: opts + the built-in declaration → per-mode resolver runs. enforceOnFillContrast is passed
   // explicitly (generateScale's contract defaults it OFF; the spec's declared default only applies to
-  // direct resolver users). The highlight flag gates stops 9/10 out of the compiled spec.
+  // direct resolver users). The highlight flag gates stops 9/10 out of the compiled spec; the contrast
+  // profile rewrites the wcag requires (withProfile is the identity for 'wcag' — byte-identical default).
   const rOpts = { ...opts, forcedArchetype, enforceOnFillContrast: !!opts?.enforceOnFillContrast }
   const compile = (spec: ModeSpec): ModeSpec =>
-    opts?.highlight ? spec : { ...spec, stops: spec.stops.filter(s => s.stop !== 9 && s.stop !== 10) }
+    withProfile(
+      opts?.highlight ? spec : { ...spec, stops: spec.stops.filter(s => s.stop !== 9 && s.stop !== 10) },
+      opts?.contrastProfile ?? 'wcag',
+    )
   const lightRamp = resolveRamp(hex, 'light', compile(MODE_SPECS.light), rOpts)
   const darkRamp = resolveRamp(hex, 'dark', compile(MODE_SPECS.dark), rOpts)
 

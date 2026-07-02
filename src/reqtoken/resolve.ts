@@ -8,16 +8,18 @@
 // The producers are verbatim ports of the pre-resolver engine, proven byte-identical at cutover (c7542b7);
 // the blessed snapshot audits are the standing regression gate.
 import { apparentL } from '../engine/perceptualL'
-import { clampChromaToGamut, wcagY, contrastRatio } from '../engine/constraints'
+import { clampChromaToGamut, wcagY, contrastRatio, findMaxLForContrast, apcaLc } from '../engine/constraints'
 import { hexToOklch, oklchToSrgbUnclamped } from '../engine/colorMath'
 import { hoverL } from '../engine/archetypes'
-import { MODE_SPECS, type ModeSpec, type StopReq, type RoleReq } from './spec'
+import { MODE_SPECS, type ModeSpec, type StopReq, type RoleReq, type Require } from './spec'
 import {
   buildContext, buildDarkContext, type Ctx, type DarkCtx, type ResolveOpts,
   lightScaleChromaAt, lightHighlightChromaAt, placeLightScale, placeLightText, placeLightHighlight,
   separationClampLight,
   darkScaleChromaAt, darkInkChromaAt, darkHighlightChromaAt, placeDark,
   onFillIsWhiteLight, onFillIsWhiteDarkAt, onHighlightIsWhiteAt, ctaLightL, ctaDarkEnforcedL,
+  ctaLightLApca, ctaDarkEnforcedLApca,
+  apcaYAt, findMaxLForApcaLc, APCA_SOLVE_MARGIN_LC, APCA_TOL_LC,
 } from './producers'
 
 const oklchToSrgb = (L: number, C: number, H: number) => (Object.values(oklchToSrgbUnclamped(L, C, H)) as number[]).map(c => Math.max(0, Math.min(1, c))) as [number, number, number]
@@ -58,10 +60,36 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     const gC = clampChromaToGamut(L, C, H)   // REFINE: chroma yields to gamut at emit (makeStop parity)
     return { stop, group, L, C: gC, H, hex: toHex(oklchToSrgb(L, gC, H)), Y: wcagY(L, gC, H), appL: apparentL(L, gC, H), clamped, unresolvable }
   }
-  const refYOf = (stopNum: number, forWhom: number): number => {
+  const refOf = (stopNum: number, forWhom: number): ResolvedStop => {
     const ref = stops.find(s => s.stop === stopNum)
     if (!ref) throw new Error(`stop ${forWhom}: require against stop ${stopNum} but it is not resolved yet`)
+    return ref
+  }
+  const refYOf = (stopNum: number, forWhom: number): number => {
+    const ref = refOf(stopNum, forWhom)
     return wcagY(ref.L, ref.C, ref.H)
+  }
+  // the apca reference Y: paper-2's emitted (gamut-clamped) color through the APCA screen-luminance model
+  const refApcaYOf = (stopNum: number, forWhom: number): number => {
+    const ref = refOf(stopNum, forWhom)
+    return apcaYAt(ref.L, ref.C, ref.H)
+  }
+  // the light contrast solves are metric-blind: the resolver hands the producer a maxLFor closure built
+  // from the declared require. wcag closures call findMaxLForContrast with the exact old arguments
+  // (float-identical — the wcag profile stays byte-for-byte); apca closures swap in the Lc bisection.
+  // `withMargin` mirrors the wcag idiom: the scale solve carries the emit margin, the ink solve doesn't.
+  const maxLForOf = (req: Require, forWhom: number, withMargin: boolean): ((C: number, H: number) => number) => {
+    if (req.metric === 'wcag') {
+      const refY = refYOf(2, forWhom)
+      const t = withMargin ? req.target + 0.05 : req.target
+      return (C, H) => findMaxLForContrast(C, H, refY, t)
+    }
+    if (req.metric === 'apca') {
+      const refA = refApcaYOf(2, forWhom)
+      const t = withMargin ? req.targetLc + APCA_SOLVE_MARGIN_LC : req.targetLc
+      return (C, H) => findMaxLForApcaLc(C, H, refA, t)
+    }
+    throw new Error(`stop ${forWhom}: ${req.metric} is not a contrast require`)
   }
   const deepenFor = (stop: number) => (stop === 11 ? ctx.opts?.stop11DeepenL ?? 0 : stop === 12 ? ctx.opts?.stop12DeepenL ?? 0 : 0)
 
@@ -73,7 +101,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       // LIGHT: verbatim engine producers, dispatched by group
       if (sp.group === 'ink') {
         if (!sp.require) throw new Error(`light ink stop ${sp.stop} must declare a contrast require`)
-        placed = placeLightText(ctx, sp.rootL, sp.chromaMult ?? 1, sp.require.target, deepenFor(sp.stop), refYOf(2, sp.stop))
+        placed = placeLightText(ctx, sp.rootL, sp.chromaMult ?? 1, maxLForOf(sp.require, sp.stop, false), deepenFor(sp.stop))
         clamped = true
       } else if (sp.stop === 9 || sp.stop === 10) {
         placed = placeLightHighlight(ctx, sp.rootL, lightHighlightChromaAt(ctx, sp.baseC ?? 0, sp.satFraction ?? 1))
@@ -83,9 +111,9 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         placed = { L: sp.rootL, C: chromaAt(sp.rootL), H: ctx.lightHueAt(sp.rootL) }
       } else {
         const chromaAt = lightScaleChromaAt(ctx, sp.baseC ?? 0, sp.satFraction ?? 1)
-        const wcagReq = sp.require?.metric === 'wcag' ? sp.require : undefined
-        placed = placeLightScale(ctx, sp.rootL, chromaAt, wcagReq?.target, wcagReq ? refYOf(2, sp.stop) : undefined)
-        clamped = !!wcagReq
+        const contrastReq = sp.require && sp.require.metric !== 'min-separation' ? sp.require : undefined
+        placed = placeLightScale(ctx, sp.rootL, chromaAt, contrastReq ? maxLForOf(contrastReq, sp.stop, true) : undefined)
+        clamped = !!contrastReq
         if (sp.require?.metric === 'min-separation') {
           const refStop = sp.require.against === 'paper-1' ? 1 : sp.stop - 1
           const ref = stops.find(s => s.stop === refStop)
@@ -114,19 +142,29 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       }
       // a declared dark require is a FLOOR: a hue whose placement already clears the target does not move;
       // a failing hue is raised (bisection) until it clears. This is the Stage-5 flip — blue's stop-8 rises
-      // off the dark paper by rule; every other hue stays at its scaffold byte-identically.
-      if (sp.require) {
-        const refY = refYOf(2, sp.stop)
+      // off the dark paper by rule; every other hue stays at its scaffold byte-identically. The measure is
+      // metric-blind (wcag ratio or |APCA Lc|); the wcag path computes the exact old floats.
+      if (sp.require && sp.require.metric !== 'min-separation') {
+        const req = sp.require
         const cAtL = (L: number) => (sp.stop === 9 || sp.stop === 10)
           ? darkHighlightChromaAt(ctx, d, sp.baseC ?? 0, sp.satFraction ?? 1)(L, d.darkHueAtL(L))
           : chromaAt!(L)
-        const got0 = contrastRatio(wcagY(placed.L, clampChromaToGamut(placed.L, placed.C, placed.H), placed.H), refY)
-        if (got0 < sp.require.target - 1e-3) {
-          const target = sp.require.target + 0.05
+        const isApca = req.metric === 'apca'
+        const refMeasY = isApca ? refApcaYOf(2, sp.stop) : refYOf(2, sp.stop)
+        const measure = (L: number, C: number, H: number): number =>
+          isApca ? Math.abs(apcaLc(apcaYAt(L, C, H), refMeasY)) : contrastRatio(wcagY(L, C, H), refMeasY)
+        const reqTarget = isApca ? req.targetLc : req.target
+        const tol = isApca ? APCA_TOL_LC : 1e-3
+        const got0 = measure(placed.L, clampChromaToGamut(placed.L, placed.C, placed.H), placed.H)
+        if (got0 < reqTarget - tol) {
+          const target = reqTarget + (isApca ? APCA_SOLVE_MARGIN_LC : 0.05)
           let lo = placed.L, hi = 1
           for (let pass = 0; pass < 24; pass++) {
             const m = (lo + hi) / 2
-            contrastRatio(wcagY(m, cAtL(m), d.darkHueAtL(m)), refY) < target ? (lo = m) : (hi = m)
+            const mH = d.darkHueAtL(m)
+            // apca measures in emit space (gamut-clamped) — see findMaxLForApcaLc; wcag keeps the raw floats
+            const mC = isApca ? clampChromaToGamut(m, cAtL(m), mH) : cAtL(m)
+            measure(m, mC, mH) < target ? (lo = m) : (hi = m)
           }
           placed = { L: hi, C: cAtL(hi), H: d.darkHueAtL(hi) }
           clamped = true
@@ -139,6 +177,10 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       const refY = refYOf(2, sp.stop)
       const got = contrastRatio(wcagY(placed.L, clampChromaToGamut(placed.L, placed.C, placed.H), placed.H), refY)
       if (got < sp.require.target - 1e-3) unresolvable = `stop ${sp.stop}: contrast ${got.toFixed(2)} < required ${sp.require.target}`
+    } else if (sp.require?.metric === 'apca') {
+      const refA = refApcaYOf(2, sp.stop)
+      const got = Math.abs(apcaLc(apcaYAt(placed.L, clampChromaToGamut(placed.L, placed.C, placed.H), placed.H), refA))
+      if (got < sp.require.targetLc - APCA_TOL_LC) unresolvable = `stop ${sp.stop}: |Lc| ${got.toFixed(1)} < required ${sp.require.targetLc}`
     } else if (sp.require?.metric === 'min-separation') {
       const ref = stops.find(s => s.stop === (sp.require!.against === 'paper-1' ? 1 : sp.stop - 1))!
       const rad = (h: number) => (h * Math.PI) / 180
@@ -156,11 +198,16 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     const gC = clampChromaToGamut(L, C, H)
     return { role, L, C: gC, H, hex: toHex(oklchToSrgb(L, gC, H)), Y: wcagY(L, gC, H), appL: apparentL(L, gC, H) }
   }
+  // the apca profile's on-text threshold (set by withProfile): pole judged pure apca-pole (the wcag flip
+  // is metric-mixing and a no-op under Lc anyway); the cta enforce re-solve runs on Lc instead of 4.5.
+  const enforceLc = spec.ons.onFill.enforceLc
   let cta: ResolvedRole, ctaHover: ResolvedRole, onFillIsWhite: boolean
   if (mode === 'light') {
     // on-fill judged PRE-enforcement at fill9 (:271–273); the enforce re-solve feeds FROM it (:354–358)
-    onFillIsWhite = onFillIsWhiteLight(ctx, onFillEnforce)
-    const light9L = ctaLightL(ctx, onFillIsWhite, onFillEnforce)
+    onFillIsWhite = onFillIsWhiteLight(ctx, enforceLc !== undefined ? false : onFillEnforce)
+    const light9L = enforceLc !== undefined
+      ? ctaLightLApca(ctx, onFillIsWhite, onFillEnforce, enforceLc)
+      : ctaLightL(ctx, onFillIsWhite, onFillEnforce)
     cta = emitRole('cta', light9L, ctx.cAt('light', light9L, (ctaReq.chromaMult ?? 1) * ctx.brandC), ctx.brandH)
     ctaHover = emitRole('cta-hover', hoverL(light9L), ctx.cAt('light', hoverL(light9L), (hoverReq?.chromaMult ?? 1) * ctx.brandC), ctx.brandH)
     if (light9L !== ctx.scaleL) { cta.enforced = true; ctaHover.enforced = true }
@@ -169,8 +216,10 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     const d = dctx!
     cta = emitRole('cta', d.dark9L, ctx.cAt('dark', d.dark9L, d.darkC9), ctx.darkH)
     ctaHover = emitRole('cta-hover', hoverL(d.dark9L), ctx.cAt('dark', hoverL(d.dark9L), d.darkC9), ctx.darkH)
-    onFillIsWhite = onFillIsWhiteDarkAt(cta.L, cta.C, cta.H, onFillEnforce)
-    const enforcedL = ctaDarkEnforcedL(ctx, cta, onFillIsWhite, onFillEnforce)
+    onFillIsWhite = onFillIsWhiteDarkAt(cta.L, cta.C, cta.H, enforceLc !== undefined ? false : onFillEnforce)
+    const enforcedL = enforceLc !== undefined
+      ? ctaDarkEnforcedLApca(ctx, cta, onFillIsWhite, onFillEnforce, enforceLc)
+      : ctaDarkEnforcedL(ctx, cta, onFillIsWhite, onFillEnforce)
     if (enforcedL !== null) {
       cta = emitRole('cta', enforcedL, ctx.cAt('dark', enforcedL, d.darkC9), ctx.darkH)
       ctaHover = emitRole('cta-hover', hoverL(enforcedL), ctx.cAt('dark', hoverL(enforcedL), d.darkC9), ctx.darkH)

@@ -144,14 +144,28 @@ be fake portability. Changing producer behavior requires a resolver version bump
 | variant | fields | meaning |
 |---|---|---|
 | WCAG contrast | `{ "metric": "wcag", "against": "paper-2", "target": n, "level": "AA" \| "AAA" }` | The stop must hold `target`:1 against the RESOLVED paper-2. Declared in both modes: light clamps lightness down; dark raises a failing hue off the paper. In use: highlight-8 → 3.0, ink-11 → 4.5, ink-12 → 7.0. |
+| APCA contrast | `{ "metric": "apca", "against": "paper-2", "targetLc": n }` | The stop must read \|APCA Lc\| ≥ `targetLc` against the RESOLVED paper-2. Same solve shape as wcag (light clamps down, dark raises off the paper). Never hand-declared in the built-in specs — produced by the contrast-profile compiler (below). |
 | Min separation | `{ "metric": "min-separation", "against": "paper-1" \| "prev", "target": n }` | OKLab ΔE floor from the resolved reference stop (`prev` = the stop's predecessor). In use: paper-2 ≥ 0.028 off paper-1; every wash seam ≥ 0.012 off `prev`. |
+
+### Contrast profiles (opt-in)
+
+`withProfile(spec, 'apca')` (`src/reqtoken/profiles.ts`) rewrites every declared wcag require
+onto its APCA equivalent — the same declaration re-solved against a different constraint — and
+sets `ons.onFill.enforceLc` so the on-text/cta enforcement judges Lc too (measured bridge fact:
+the shipped WCAG 4.5-white cta enforcement lands at Lc ≈ 76–78, so a map's 4.5 slot chooses
+between releasing fills lighter at Lc 60 or reproducing the shipped ctas at Lc 75).
+Exposed as `contrastProfile: 'wcag' | 'apca'` on `GenerateOptions`; the default `'wcag'` is the
+identity (byte-identical shipped output). The Lc map (currently 3:1 → Lc 30, 4.5 → 60, 7 → 90)
+and any adoption/exposure are pending an owner decision — see `scripts/apca-sweep.ts` →
+`render/apca.html` for the candidate comparison.
 
 ### On-color rules (`ons`, group level)
 
 | field | meaning |
 |---|---|
 | `metric: "apca-pole"` | The on-text color is whichever pole (white/black) has the larger \|APCA Lc\| on the fill. |
-| `enforce` | If true, add the WCAG fallback: flip the pole only if the chosen one fails 4.5:1 while the other clears it with \|Lc\| ≥ 45. On-text never moves a fill; a fill only moves when *neither* pole passes (the enforcement re-solve). |
+| `enforce` | If true, add the legibility fallback: flip the pole only if the chosen one fails 4.5:1 while the other clears it with \|Lc\| ≥ 45. On-text never moves a fill; a fill only moves when *neither* pole passes (the enforcement re-solve). |
+| `enforceLc` | Set by the apca profile compiler (from the map's 4.5 slot): the pole is judged pure apca-pole (the wcag flip is metric-mixing and a no-op under one metric) and the cta enforcement re-solve darkens the fill until the white pole reads ≥ this Lc, replacing the WCAG-4.5 re-solve. Absent under the shipped wcag profile. |
 
 ## Resolution semantics
 

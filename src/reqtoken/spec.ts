@@ -30,6 +30,10 @@ export type Producer = {
 }
 export type Require =
   | { metric: 'wcag'; against: 'paper-2'; target: number; level: 'AA' | 'AAA' }
+  // APCA lightness-contrast requirement (the contrast-PROFILE alternative to wcag): the stop must read
+  // |Lc| ≥ targetLc against the resolved paper-2. Same floor semantics — a placement that already clears
+  // does not move. Produced by withProfile() (profiles.ts), never hand-declared in the built-in specs.
+  | { metric: 'apca'; against: 'paper-2'; targetLc: number }
   // minimum perceptual separation (OKLab ΔE, the house stopDeltaE metric) from another RESOLVED stop —
   // 'paper-1' anchors the paper-2 push; 'prev' = the stop's resolved predecessor (the wash seam floors:
   // every ladder seam guarantees distinctness, so no seed — low-chroma grays and muted warms included —
@@ -57,9 +61,13 @@ export type RoleReq = {
 }
 
 // on-color requirements: the on-text pole is chosen on ONE criterion — it passes. apca-pole picks the pole
-// with the larger |APCA Lc|; enforce adds the WCAG-4.5 fallback (flip pole only if the other pole clears 4.5
-// AND |Lc| ≥ 45 — okchroma's onTextIsWhite enforce branch). Never feeds back into the fill.
-export type OnReq = { metric: 'apca-pole'; enforce: boolean }
+// with the larger |APCA Lc|; enforce adds the legibility fallback. Under the shipped wcag profile that
+// fallback is WCAG-4.5 (flip pole only if the other pole clears 4.5 AND |Lc| ≥ 45 — okchroma's
+// onTextIsWhite enforce branch; the cta fill re-solves to 4.5 when neither works). Under the apca profile
+// `enforceLc` is set (by withProfile, from the map's 4.5 slot): the pole flip is a no-op (max-|Lc| already
+// wins its own metric) and the cta fill re-solves until the white pole reads ≥ enforceLc. On-text itself
+// never feeds back into a scale stop.
+export type OnReq = { metric: 'apca-pole'; enforce: boolean; enforceLc?: number }
 
 export type ModeSpec = {
   stops: StopReq[]

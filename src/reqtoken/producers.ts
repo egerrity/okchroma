@@ -4,7 +4,7 @@
 // and proven byte-identical at cutover (commit c7542b7); the blessed snapshots are the standing gate — do not
 // "simplify" an expression here without eye-check + re-bless.
 import { classifyArchetype, medianLForArchetype, type Archetype } from '../engine/archetypes'
-import { clampChromaToGamut, wcagY, contrastRatio, findMaxLForContrast, findLForContrast, apcaY } from '../engine/constraints'
+import { clampChromaToGamut, wcagY, contrastRatio, findMaxLForContrast, findLForContrast, apcaY, apcaLc } from '../engine/constraints'
 import { perceptualRungL } from '../engine/perceptualL'
 import {
   hexToOklch, oklchToSrgbUnclamped, maxChromaAt, goldSpineHue, torsionedHue, gauss, sigmoid, hueDelta,
@@ -105,18 +105,44 @@ export const lightHighlightChromaAt = (ctx: Ctx, baseC: number, satFraction: num
   return clampChromaToGamut(L, ctx.cAt('light', L, hlLadderC + ctx.u * (ctx.brandSat * satFraction * maxChromaAt(L, hh) - hlLadderC)), hh)
 }
 
+// ---- APCA metric primitives (the 'apca' contrast profile). apcaYAt mirrors wcagY's treatment of
+// out-of-gamut chroma (apcaY channel-clamps, wcagY zero-floors); findMaxLForApcaLc is the exact
+// findMaxLForContrast bisection shape with |Lc| as the predicate. Monotone for the same reason the WCAG
+// bisection is: against a near-white (light) or near-black (dark) paper-2, the reverse-polarity side of
+// the curve can never reach a passing |Lc|, so the passing set is a single downward (light) interval.
+export function apcaYAt(L: number, C: number, H: number): number {
+  const { r, g, b } = oklchToSrgbUnclamped(L, C, H)
+  return apcaY(r, g, b)
+}
+// The solve measures in EMIT space — chroma gamut-clamped per candidate L — because Lc is polarity- and
+// luminance-exact: near yellow the raw ladder chroma is far out of gamut and the emit trim costs > 1 Lc,
+// blowing past any reasonable margin (the wcag solver tolerates this because wcagY zero-floors channels
+// and the ratio is less sensitive there; measured, not assumed).
+export function findMaxLForApcaLc(C: number, H: number, bgApcaY: number, targetLc: number): number {
+  let lo = 0.005, hi = 0.999
+  for (let i = 0; i < 20; i++) {
+    const mid = (lo + hi) / 2
+    Math.abs(apcaLc(apcaYAt(mid, clampChromaToGamut(mid, C, H), H), bgApcaY)) >= targetLc ? (lo = mid) : (hi = mid)
+  }
+  return lo
+}
+// solve margins/tolerances in Lc, scaled from the WCAG idiom (+0.05 ratio ≈ +0.5 Lc at the 3:1↔45 slope):
+// the margin lets the gamut-trimmed emit still clear; the tolerance keys the verify + the dark floor.
+export const APCA_SOLVE_MARGIN_LC = 0.5
+export const APCA_TOL_LC = 0.05
+
 // ---- light scale placement (stops 1–8): perceptual rung; a declared contrast require clamps it down to a
-// fixed point vs the resolved paper-2 (colorEngine.ts:328–349 — stop 8's 3:1, spec-driven here; the +0.05
-// margin lets the gamut-trimmed emit still clear). Returns L,C,H at emit (caller gamut-clamps).
+// fixed point vs the resolved paper-2 (colorEngine.ts:328–349 — stop 8's 3:1, spec-driven here). The solve
+// is metric-blind: `maxLFor` is the resolver-built closure (findMaxLForContrast for wcag — margin included,
+// so the wcag floats are unchanged — or findMaxLForApcaLc for the apca profile). Returns L,C,H at emit
+// (caller gamut-clamps).
 export function placeLightScale(
-  ctx: Ctx, rootL: number, chromaAt: (L: number) => number, requireTarget: number | undefined, refY: number | undefined,
+  ctx: Ctx, rootL: number, chromaAt: (L: number) => number, maxLFor: ((C: number, H: number) => number) | undefined,
 ): { L: number; C: number; H: number } {
   let L = perceptualRungL(rootL, chromaAt(rootL), ctx.lightHueAt(rootL))
-  if (requireTarget !== undefined) {
-    if (refY === undefined) throw new Error('contrast require needs the resolved reference stop')
-    const solveTarget = requireTarget + 0.05
+  if (maxLFor !== undefined) {
     for (let pass = 0; pass < 6; pass++) {
-      const next = Math.min(L, findMaxLForContrast(chromaAt(L), ctx.lightHueAt(L), refY, solveTarget))
+      const next = Math.min(L, maxLFor(chromaAt(L), ctx.lightHueAt(L)))
       if (Math.abs(next - L) < 1e-4) { L = next; break }
       L = next
     }
@@ -155,18 +181,20 @@ export function separationClampLight(
 
 // ---- light text stops 11/12: the EXACT 3-call Math.min sequence incl. the deepen re-solve
 // (colorEngine.ts:363–374). The anchor solve uses raw gamut-clamped chroma; the emit chroma is cAt-wrapped.
+// `maxLFor` = the resolver-built metric closure (wcag: findMaxLForContrast at the raw ratio, no margin —
+// float-identical to the old inline calls; apca: findMaxLForApcaLc at the raw targetLc).
 export function placeLightText(
-  ctx: Ctx, rootL: number, cMult: number, ratio: number, deepen: number, stop2Y: number,
+  ctx: Ctx, rootL: number, cMult: number, maxLFor: (C: number, H: number) => number, deepen: number,
 ): { L: number; C: number; H: number } {
   const brandC = ctx.brandC
   const anchorL = perceptualRungL(rootL, clampChromaToGamut(rootL, cMult * brandC, ctx.lightHueAt(rootL)), ctx.lightHueAt(rootL))
   let H = ctx.lightHueAt(anchorL)
   let C = clampChromaToGamut(anchorL, cMult * brandC, H)
-  let L = Math.min(anchorL, findMaxLForContrast(C, H, stop2Y, ratio))
+  let L = Math.min(anchorL, maxLFor(C, H))
   H = ctx.lightHueAt(L)
   C = clampChromaToGamut(L, cMult * brandC, H)
-  L = Math.min(anchorL, findMaxLForContrast(C, H, stop2Y, ratio))
-  L = Math.min(L - deepen, findMaxLForContrast(C, ctx.lightHueAt(L - deepen), stop2Y, ratio))
+  L = Math.min(anchorL, maxLFor(C, H))
+  L = Math.min(L - deepen, maxLFor(C, ctx.lightHueAt(L - deepen)))
   return { L, C: ctx.cAt('light', L, cMult * brandC), H: ctx.lightHueAt(L) }
 }
 
@@ -255,6 +283,45 @@ export function ctaDarkEnforcedL(ctx: Ctx, base: { L: number; C: number; H: numb
   if (!(enforce && onFillIsWhiteDark)) return null
   if (contrastRatio(1.0, wcagY(base.L, base.C, base.H)) >= 4.5) return null
   return findLForContrast(base.L, base.C, ctx.darkH, 1.0, 4.6)
+}
+
+// ================= the APCA on-text enforcement (the 'apca' profile's Lc-metric analog) =================
+// The pole choice is UNCHANGED (already apca-pole in both profiles); the wcag pole-FLIP fallback is a
+// no-op under a single metric (the max-|Lc| pole can't lose to the other on |Lc|), so what the profile
+// swaps is the FILL MOVE: a white on-fill reading under the Lc threshold darkens the fill until it clears.
+// Mirrors ctaLightL/ctaDarkEnforcedL exactly (white-only trigger, darken-only solve) with the Lc metric,
+// measured in EMIT space (gamut-clamped chroma per candidate L — the same lesson as findMaxLForApcaLc).
+
+// |Lc| of WHITE text on the fill at (L, C, H), chroma emit-clamped. White's apcaY is exactly 1.0.
+export const whiteTextLcAt = (L: number, C: number, H: number): number =>
+  Math.abs(apcaLc(1.0, apcaYAt(L, clampChromaToGamut(L, C, H), H)))
+
+// darken the fill from startL until white text reads ≥ targetLc (findLForContrast's shape: early-out
+// when already passing, bisect down, return the passing side).
+export function findLForWhiteTextLc(startL: number, C: number, H: number, targetLc: number): number {
+  if (whiteTextLcAt(startL, C, H) >= targetLc) return startL
+  let lo = 0.05, hi = startL
+  for (let i = 0; i < 20; i++) {
+    const mid = (lo + hi) / 2
+    whiteTextLcAt(mid, C, H) >= targetLc ? (lo = mid) : (hi = mid)
+  }
+  return lo
+}
+
+// light cta anchor under the apca profile (ctaLightL's shape; +0.5 Lc solve margin ≈ the 4.6-for-4.5 idiom)
+export function ctaLightLApca(ctx: Ctx, onFillTextIsWhite: boolean, enforce: boolean, thresholdLc: number): number {
+  let light9L = ctx.scaleL
+  if (enforce && onFillTextIsWhite && whiteTextLcAt(ctx.scaleL, ctx.brandC, ctx.brandH) < thresholdLc) {
+    light9L = findLForWhiteTextLc(ctx.scaleL, ctx.brandC, ctx.brandH, thresholdLc + APCA_SOLVE_MARGIN_LC)
+  }
+  return light9L
+}
+
+// dark cta enforce re-solve under the apca profile (ctaDarkEnforcedL's shape)
+export function ctaDarkEnforcedLApca(ctx: Ctx, base: { L: number; C: number; H: number }, onFillIsWhiteDark: boolean, enforce: boolean, thresholdLc: number): number | null {
+  if (!(enforce && onFillIsWhiteDark)) return null
+  if (whiteTextLcAt(base.L, base.C, base.H) >= thresholdLc) return null
+  return findLForWhiteTextLc(base.L, base.C, ctx.darkH, thresholdLc + APCA_SOLVE_MARGIN_LC)
 }
 
 // on-fill (dark): judged at the emitted (gamut-clamped) base ctaDark, PRE-enforcement (:424–425)

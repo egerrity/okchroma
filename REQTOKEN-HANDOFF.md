@@ -1,5 +1,84 @@
 # Continue: requirement-token color engine (compact/handoff)
 
+## ▶ APCA/WCAG contrast-profile spike: DONE — OWNER-APPROVED 2026-07-02 ("yes!" on the recommended map)
+
+**Shipped WCAG output untouched — `npm run audit` snapshot CLEAN with the profile code live.**
+All gates green: req:audit (now 288 seed×mode across BOTH profiles, 0 failures) · audit ·
+highlight-audit · audit:divergence · figma:verify · plugin:build · typecheck · portability 25/25.
+
+What landed (all in the working tree, show-before-commit):
+- `src/reqtoken/spec.ts` — Require union gains `{ metric: 'apca', against: 'paper-2', targetLc }`.
+- `src/reqtoken/profiles.ts` (NEW) — `withProfile(spec, 'wcag'|'apca', lcMap?)`: maps wcag→apca
+  requires; identity for 'wcag'; min-separation passes through. `DEFAULT_APCA_LC_MAP = {3:30, 4.5:60, 7:90}`.
+- `src/reqtoken/producers.ts` — `apcaYAt` + `findMaxLForApcaLc` (bisection in EMIT space: chroma
+  gamut-clamped per candidate L — raw-chroma solving lost >1 Lc to the emit trim on saturated
+  yellows); `placeLightScale`/`placeLightText` now take a metric-blind `maxLFor` closure (the wcag
+  closure calls findMaxLForContrast with the exact old arguments — float-identical, snapshot-proven).
+- `src/reqtoken/resolve.ts` — per-metric closures (`maxLForOf`), generalized dark conditional-floor
+  bisection (apca measures emit-space; wcag floats untouched), apca verify branch (fail-loud).
+- `src/engine/colorEngine.ts` — `contrastProfile?: 'wcag'|'apca'` on GenerateOptions; adapter
+  compiles withProfile(). Default 'wcag' = identity.
+- `scripts/reqtoken-audit.ts` — the whole sweep runs under both profiles; apca requires verified.
+- `scripts/apca-sweep.ts` → `render/apca.html` (NEW) — the owner eye-check: 3 candidate Lc maps ×
+  wcag-vs-apca side-by-sides (6 edge seeds, real components, light-on-light/dark-on-dark) +
+  24-hue movement table + Lc/ratio annotations per stop.
+- docs: schema.md (apca require + profiles section) · architecture.md limitation #1 updated.
+
+**FINDINGS (render/apca.html — now framed as ONE question: "does the APCA column look right?"):**
+1. **The Lc map is SETTLED as a recommendation (owner round 3: "why wouldn't we just do the
+   recommended?"): DEFAULT_APCA_LC_MAP = {3:30, 4.5:75, 7:90}.** Each slot measured, not copied
+   from a bridge table: 30 = APCA solid-UI minimum (45 breaks the dark highlight band); 75 = APCA
+   body-text minimum AND the measured equivalent of the shipped cta enforcement (so ctas keep
+   their shipped look); 90 already holds. Rejected variants (4.5→60 releases ctas lighter;
+   3:1→45 structural break) are footnotes on the render page with one seed-pair each.
+2. **Dark stop-8 is the WCAG blind spot:** it reads only Lc 24–29 vs dark paper-2 (ratio 3:1
+   passes; APCA says barely visible). Under Lc 30 it lifts modestly (L 0.550→~0.58, all hues).
+   **Under Lc 45 it must rise to L≈0.69 — PAST hand-placed highlight-9 (0.600)**: bridge-45 is
+   structurally incompatible with the current dark highlight band (marked ⚠ in the render);
+   adopting it means re-placing that band.
+3. **Light stop-8 RELAXES lighter under apca** (WCAG 3:1 reads Lc≈54 — over-demanding vs either
+   candidate): saturated green L 0.624→0.740, ratio drops to ~1.97 (fails 1.4.11 *under the ratio
+   metric*, by design — different conformance model). A re-solve moves stops both ways.
+4. Light ink 11/12 already read Lc 67–77/92+ → barely move; dark ink lifts only where <60/<90.
+5. **ON-TEXT IS IN THE PROFILE (owner call, round 2):** withProfile sets `ons.onFill.enforceLc`
+   from the map's 4.5 slot — pole judged pure apca-pole (wcag flip = metric-mixing, provably a
+   no-op under one metric; poles differ on 5–6/72 seeds), cta enforcement re-solves to Lc instead
+   of 4.5 (producers: whiteTextLcAt/findLForWhiteTextLc/ctaLightLApca/ctaDarkEnforcedLApca, all
+   emit-space). **MEASURED BRIDGE FACT: the shipped WCAG 4.5-white enforcement lands ctas at
+   Lc ≈ 76–78** → a 4.5→60 map RELEASES fills lighter (white text Lc 64–71, ratio drops to ~3.3–3.9
+   by design); a 4.5→75 map REPRODUCES the shipped ctas (ΔL ≤ ~0.02). That's the on-text half of
+   the Lc-map decision. Render columns now show the cta button + on-fill Aa and highlight-9 + Aa.
+6. **Demo toggle NOT built (deliberate):** threading the profile through the module-level canonical
+   signal scales + the neutral generated inside cssRender/themeToFigma is a real slice — only worth
+   doing if the profile is adopted/exposed. Flagged, not started.
+
+Eye-check: `render/apca.html` via the reqtoken-render preview (renders verified in-session, both
+modes, break markers visible). Owner picks: Lc map · adoption/exposure · the ons-fallback question.
+
+## Where things stand (2026-07-02, end of the merge day)
+
+- **The requirement-token engine IS production okchroma**: origin/main @ b95864a. History:
+  71a66fe → c7542b7 (engine replacement, byte-identical cutover) → 8b79504 (stage-7 cleanup +
+  docs + elevation-mirror semantic aliasing) → 93dd626 (neutralCss anchor fix) → 523a9d9
+  (blue-recede: 'perceptual-lift' dark producer) → b698527 (paper-0 = resolved stop 0) →
+  f2372de (paper-0 dark rootL 0.16) → 6841710 (docs/schema.md) → 48ea5e5 (DocsSite schema
+  article, live-emitted tokens) → 2ba478d (plugin: adaptive paper-0 via neutral ramp payload,
+  on-fills decoupled to per-mode abs poles, accent→secondary, secondary default OFF) →
+  b95864a (elevation anchors renamed paper-raised/paper-sunken).
+- **Work in `~/okchroma-reqtoken`** (worktree, branch `reqtoken/color-engine` == origin/main).
+  The owner's `~/okchroma` is on main, possibly behind origin — NEVER touch that tree (their
+  parallel session lives there; push main via `git push origin reqtoken/color-engine:main`
+  after owner approval, exactly as before). Show before commit; verify branch before commits.
+- **Docs surfaces:** README · docs/architecture.md (§2b schema concept) · docs/scale.md ·
+  docs/schema.md (field reference) · DocsSite "The token schema" (live-emitted). Keep all in
+  sync with any spec change. Vocabulary: scale/cta/ons — never "surface" as a category,
+  "secondary" never "accent", signals by identity.
+- **Open follow-ups besides APCA:** demo "Accent color" input label (same vocab sweep, demo
+  side — flagged, owner hasn't called it) · plugin install docs gap (owner raised it, then we
+  got pulled onto the plugin globals — the DocsSite Installation article has one thin line;
+  README/architecture cover it better; probably wants a proper walkthrough).
+- Yellow-in-light: FIXED (owner-confirmed) — off the list.
+
 **STATUS 2026-07-02 (late night): STAGE 7 IMPLEMENTED (uncommitted, awaiting owner review): deleted src/engine/legacy/ + engine-parity + parity-probe + reqtoken-diff(+report) + 18 historical research scripts (helmk-*, census/candidates/probes, workflow generator) + helmlab dep + the parity npm script; YELLOW_L_LIFT → YELLOW_BAND (the lift value was dead; the band definition was live in highlight-audit); "surface" vocab renamed to scale in reqtoken files + TokenCards labels/copy; docs reworked to the schema (README how-it-works, architecture.md §2 pipeline + new §2b "The requirement schema", scale.md stop table w/ declared requirements + new wash rootLs, DocsSite pipeline/scale prose); demo fixes: highlight-8 swatch no longer shows "Aa" (non-text stop), side-nav confirmed neutral-paper-2 NOT wash-3 (measured #f2f4f2 C 0.003 — reads deeper since the 0.028 push). OWNER'S ELEVATION-MIRROR SPEC IMPLEMENTED in tokens/semantic.css: raised/sunken mirror around the paper-1 page via the mode-flipping --paper-0 anchor (light: raised=paper-0/white, sunken=paper-2 · dark: raised=paper-2, sunken=paper-0/black — dark sunken previously sat AT the page level, never sank). Verified both modes in the live preview. All gates green post-rebuild.**
 
 Stage-6 final form (all owner-picked from render sweeps):
