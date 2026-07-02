@@ -74,7 +74,7 @@ const groupOf = (stop: number): Group => (stop <= 2 ? 'paper' : stop <= 7 ? 'was
 // is white (rootL 1.0, zero chroma). Dark sits one seam BELOW paper-1 — deep, brand-tinted, never the
 // void; rootL owner-picked from scripts/paper0-sweep.ts. The lift producer applies like the rest of the
 // dark scale.
-export const PAPER0_DARK_ROOT_L = 0.145   // owner-picked from scripts/paper0-sweep.ts (one seam below paper-1)
+export const PAPER0_DARK_ROOT_L = 0.16    // owner-picked (revised 2026-07-02 from 0.145 — the tighter gap below paper-1)
 const PL_LADDER: Producer = { hue: 'warm-drift', L: 'perceptual', chroma: 'ladder' }
 const PL_TEXT: Producer = { hue: 'warm-drift', L: 'perceptual', chroma: 'brand' }
 // dark scale uses the LIFT variant (owner-adopted 2026-07-02, the blue-recede fix): the H-K solve may
