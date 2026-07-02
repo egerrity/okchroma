@@ -194,6 +194,9 @@ onto the emitted primitives. Only the primitives change per brand.
 
 ### 2b. The requirement schema
 
+> Field-by-field reference for the serialized token format — with real emitted JSON
+> examples — lives in **[schema.md](schema.md)**. This section is the conceptual model.
+
 The engine's core idea: **a token is a requirement the engine solves, not a frozen value.**
 The declaration (`src/reqtoken/spec.ts`) is pure, serializable data; the resolver executes
 it. Three phases per stop, in order:

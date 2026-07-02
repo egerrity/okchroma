@@ -57,6 +57,8 @@ named tokens and picks light vs dark. The declaration also round-trips to DTCG t
 Full system documentation — overview, architecture (data flow + design decisions),
 dependencies, setup — is in **[docs/architecture.md](docs/architecture.md)**.
 The scale model and its per-stop targets are in **[docs/scale.md](docs/scale.md)**.
+The requirement-token schema — the DTCG token format, field by field, with real
+emitted examples — is in **[docs/schema.md](docs/schema.md)**.
 
 ## License
 
