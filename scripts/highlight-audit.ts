@@ -24,7 +24,7 @@ import { SECONDARIES } from '../src/secondaries'
 import { SIGNALS } from '../src/engine/signals'
 import { resolveBrand, SIGNAL_SCALES } from '../src/engine/resolve'
 import { wcagY, contrastRatio, apcaY, apcaLc, clampChromaToGamut, oklchToLinearRgb } from '../src/engine/constraints'
-import { YELLOW_L_LIFT, DARK_BRAND_FILL_MIN_L } from '../src/engine/stopTable'
+import { YELLOW_BAND, DARK_BRAND_FILL_MIN_L } from '../src/engine/stopTable'
 import { generateNeutralScale, generateScale, type GeneratedScale, type ColorStop } from '../src/engine/colorEngine'
 import { darkChromaCurve } from '../src/engine/darkChromaCurve'
 import * as fs from 'fs'
@@ -43,7 +43,7 @@ const onApcaLc = (s: ColorStop, white: boolean | undefined) => Math.abs(apcaLc(w
 const HL_BODY = 60
 const hueDelta = (h: number, c: number) => { let d = (h - c) % 360; if (d > 180) d -= 360; if (d < -180) d += 360; return d }
 const isYellow = (scale: GeneratedScale) =>
-  scale.brandC >= 0.008 && Math.abs(hueDelta(scale.brandH, YELLOW_L_LIFT.centerH)) <= YELLOW_L_LIFT.sigmaDeg
+  scale.brandC >= 0.008 && Math.abs(hueDelta(scale.brandH, YELLOW_BAND.centerH)) <= YELLOW_BAND.sigmaDeg
 
 const fails: string[] = []
 const ok = (cond: boolean, msg: string) => { if (!cond) fails.push(msg) }

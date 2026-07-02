@@ -19,7 +19,9 @@ export const LIGHT_BASE_C = [0.004, 0.010, 0.022, 0.039, 0.053, 0.068, 0.086, 0.
 // clamp is light-only.
 export const STOP_8_NONTEXT_CONTRAST = 3.0
 
-export const YELLOW_L_LIFT = { max: 0.03, centerH: 92, sigmaDeg: 20 }
+// The yellow hue band (used by audits to scope yellow-specific checks). The old YELLOW_L_LIFT.max
+// lift value was never consumed anywhere and is deleted; only the band definition was live.
+export const YELLOW_BAND = { centerH: 92, sigmaDeg: 20 }
 
 export const HIGHLIGHT_LIGHT = { rootL: LIGHT_L[8], rootL10: LIGHT_L[9], baseC: 0.142, satFraction: 0.75 }
 export const HIGHLIGHT_DARK = { rootL: DARK_L[8], rootL10: DARK_L[9] }

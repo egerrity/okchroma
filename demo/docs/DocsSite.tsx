@@ -158,19 +158,20 @@ const howItWorks: Article = {
 
       <H2>The pipeline</H2>
       <P>
-        <Code>resolveBrand(hex)</Code> is the entry point. It calls the pure <Code>generateScale</Code>{' '}
-        to do the color math, then applies <b>policy</b> — checking the result against the four status
-        colors and, on a collision, re-running generation with different settings. The resolved result
-        goes to an <b>emitter</b> (CSS or Figma) that maps the computed stops onto named tokens and
-        chooses light vs dark.
+        Every token is a <b>requirement the engine solves</b>, not a frozen value. A pure-data
+        declaration (<Code>spec.ts</Code>) states each stop's producer and its requirements; a
+        resolver executes it per seed. <Code>resolveBrand(hex)</Code> is the entry point: it runs the
+        engine, then applies <b>policy</b> — checking the result against the four status colors and,
+        on a collision, re-running generation with different settings. The resolved result goes to
+        an <b>emitter</b> (CSS or Figma) that maps the resolved stops onto named tokens and chooses
+        light vs dark.
       </P>
-      <Pre>{`hex
-  → hexToOklch            decode to OKLCH (L, C, H)
-  → classifyArchetype     bucket by lightness
-  → build light ramp      stops 1–8, lightness solved for apparent brightness
-  → fills + text          off-scale cta, contrast-floored ink-11/12
-  → build dark ramp       surfaces 1–7 + text 11/12 H-K-solved, highlight band 8–10 placed, chroma reduced
-  → highlight stops 9/10
+      <Pre>{`hex + declaration (spec.ts)
+  → produce   hue (warm drift) → chroma (ladder) → lightness (apparent-brightness solve)
+  → require   declared floors bind: contrast (3:1 / 4.5 / 7 both modes),
+              seam separation (paper-2 ≥ 0.028, wash seams ≥ 0.012), on-text rules
+  → refine    chroma yields to gamut
+  → roles     off-scale cta / cta-hover (anchored to the brand's own lightness)
   → resolveBrand policy   collisions → maybe regenerate; signal shifts
   → emit                  cssRender / figmaRender → named tokens`}</Pre>
       <P>
@@ -182,10 +183,10 @@ const howItWorks: Article = {
       <H2>The scale</H2>
       <P>
         Twelve stops, each with a reserved role and accessibility category, named in four groups:{' '}
-        <Code>paper</Code> (surfaces), <Code>wash</Code> (low-hierarchy fills and borders),{' '}
+        <Code>paper</Code> (backgrounds), <Code>wash</Code> (low-hierarchy fills and borders),{' '}
         <Code>highlight</Code> (emphasis fills, with stop 8 carrying the 3:1 non-text guarantee), and{' '}
-        <Code>ink</Code> (text). The brand's solid button fill, <Code>cta</Code>, sits off-scale,
-        anchored to the brand's own lightness.
+        <Code>ink</Code> (text). The brand's solid button fill, <Code>cta</Code>, is an off-scale
+        role — never a numbered stop — anchored to the brand's own lightness.
       </P>
       <Ramp hex="#005EB8" caption={<>The same 12 roles on a different brand — note how each stop still lands at the same perceived lightness.</>} />
 

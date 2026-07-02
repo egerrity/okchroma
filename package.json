@@ -17,7 +17,6 @@
     "smooth": "esbuild scripts/smoothness-audit.ts --bundle --platform=node --outfile=dist/smoothness-audit.js && node dist/smoothness-audit.js",
     "smooth:baseline": "esbuild scripts/smoothness-audit.ts --bundle --platform=node --outfile=dist/smoothness-audit.js && node dist/smoothness-audit.js --baseline",
     "figma:verify": "esbuild scripts/figma-verify.ts --bundle --platform=node --outfile=dist/figma-verify.js && node dist/figma-verify.js",
-    "parity": "esbuild scripts/engine-parity.ts --bundle --platform=node --outfile=dist/engine-parity.js && node dist/engine-parity.js",
     "req:audit": "esbuild scripts/reqtoken-audit.ts --bundle --platform=node --outfile=dist/reqtoken-audit.js && node dist/reqtoken-audit.js",
     "plugin:build": "node esbuild.config.js --plugin",
     "typecheck": "tsc --noEmit"
@@ -27,7 +26,6 @@
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "esbuild": "^0.28.1",
-    "helmlab": "^0.14.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "typescript": "^5.4.0"

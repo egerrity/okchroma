@@ -45,13 +45,17 @@ same engine. The engine and its output *are* the product; the demo is a preview.
 
 ### The story in one paragraph
 
-One hex enters `resolveBrand`. That function calls the pure `generateScale` to do the
-color math, then layers **policy** on top — checking the result against the four status
-colors and, on a collision, re-running `generateScale` with different settings or
-recording a flag. The resolved result is handed to an **emitter** (CSS or Figma) that maps
-the computed color stops onto named tokens and chooses light vs dark. `build.ts` drives
-this in a loop over the brand fixtures to write the CSS files; the demo and plugin drive
-the exact same functions live.
+One hex enters `resolveBrand`. That function calls `generateScale`, which is now a thin
+adapter over the **requirement-token core** (`src/reqtoken/`): a pure-data **declaration**
+(`spec.ts` — per-stop producers, requirements, and roles) executed by a **resolver**
+(`resolve.ts` + `producers.ts`) in three phases per stop — **produce** (hue → chroma →
+lightness), **require** (declared floors: contrast, seam separation), **refine** (chroma
+yields to gamut). `resolveBrand` then layers **policy** on top — checking the result
+against the four status colors and, on a collision, re-running the engine with different
+settings or recording a flag. The resolved result is handed to an **emitter** (CSS or
+Figma) that maps the computed color stops onto named tokens and chooses light vs dark.
+`build.ts` drives this in a loop over the brand fixtures to write the CSS files; the demo
+and plugin drive the exact same functions live.
 
 ### 2a. Architecture details
 
@@ -75,8 +79,13 @@ flowchart TD
       SH[signalShift.ts]
     end
 
-    subgraph Core["Pure math core — generateScale"]
-      CE[colorEngine.ts]
+    subgraph Core["Requirement-token core — generateScale adapter"]
+      CE[colorEngine.ts · adapter + neutral/illustration]
+      SPEC[reqtoken/spec.ts · the DECLARATION]
+      RES[reqtoken/resolve.ts · produce → require → refine]
+      PROD[reqtoken/producers.ts · named producers]
+      DTCG[reqtoken/dtcg.ts · DTCG $extensions round-trip]
+      CM[colorMath.ts · shared math + onTextIsWhite]
       CON[constraints.ts · OKLCH / gamut / WCAG / APCA]
       PL[perceptualL.ts · Helmholtz–Kohlrausch]
       ST[stopTable.ts · L tables + constants]
@@ -103,7 +112,12 @@ flowchart TD
     R --> CE
     R --> COL
     R --> SH
-    CE --> CON & PL & ST & AR & DCC & NC
+    CE --> RES
+    SPEC --> RES
+    RES --> PROD
+    SPEC <--> DTCG
+    PROD --> CM & CON & PL & ST & AR & DCC
+    CE --> NC
     R --> CSS & FIG
     CSS --> TN
     FIG --> TN
@@ -117,41 +131,42 @@ flowchart TD
 
 | # | Stage | File · function | In → Out |
 |---|-------|-----------------|----------|
-| 1 | Decode | `colorEngine.ts` · `hexToOklch` | hex → `{L,C,H}` in OKLCH |
-| 2 | Classify | `archetypes.ts` · `classifyArchetype` | brand L → one of 6 archetypes |
-| 3 | Build light ramp | `colorEngine.ts` loop over `LIGHT_STOPS` | stops 1–8; each L solved by `perceptualRungL` (H-K); stop 8 clamped to 3:1 |
-| 4 | Fills + text | `cta` / `ctaHover`, `lightTextStop` | off-scale fill + contrast-floored text stops (ink-11/12) |
-| 5 | Build dark ramp | loop over `DARK_NEUTRAL_L` + `darkChromaCurve` | surfaces 1–7 + text 11/12 H-K-solved (`perceptualRungL`); highlight band 8–10 placed at `DARK_L`; chroma reduced |
-| 6 | Stops 9–10 (highlight) | `colorEngine.ts` `highlight` block (`placeRung`) | scale stops 9–10 — light is H-K-solved like the rest of its ramp; dark holds them placed at the `DARK_L` stop-9/10 targets (the highlight band 8–10 is the one part of the dark ramp not solved — legibility over equalization). They continue the chroma ladder (emphasis chroma) and their on-text (`on-highlight`) is chosen by APCA. Not moved or clamped — they sit below the 3:1-clamped stop 8, so they clear 3:1 by construction |
-| 7 | **Policy** | `resolve.ts` · `resolveBrand` | runs collisions; may re-call stages 1–6 with new archetype/options; computes signal overrides |
-| 8 | Emit | `cssRender.ts` / `figmaRender.ts` + `tokenNames.ts` | `GeneratedScale` → named CSS vars or Figma variable tree |
-| 9 | Drive | `build.ts` (batch) / demo / plugin (live) | writes `dist/*.css` / renders preview / writes Figma |
+| 1 | Decode + context | `producers.ts` · `buildContext` | hex + opts → OKLCH seed, archetype, and the aesthetic state (chroma boost, mutedness, cream gate, warm-drift caps, red-cool weights) |
+| 2 | Compile | `colorEngine.ts` · `generateScale` (adapter) | caller opts + the built-in declaration → a per-mode `ModeSpec` for the resolver (e.g. the `highlight` flag gates stops 9/10 out) |
+| 3 | Resolve stops | `resolve.ts` · `resolveRamp` | per declared stop: **produce** (hue → chroma → `perceptualRungL`) → **require** (declared floors bind: contrast down-clamp in light, raise-off-paper in dark, seam separation) → **refine** (chroma yields to gamut). Stops resolve in order, so a require can reference an already-resolved stop |
+| 4 | Resolve roles + ons | `resolve.ts` | off-scale `cta`/`cta-hover` roles (anchor = the brand's own lightness, floored in dark; the on-fill enforce re-solve last); `on-cta`/`on-highlight` poles chosen by the declared `ons` rules — never feeding back into a fill |
+| 5 | Assemble | `colorEngine.ts` adapter | resolved ramps → the same `GeneratedScale` contract as always (light[], dark[], cta×4, on-booleans) |
+| 6 | **Policy** | `resolve.ts` (engine) · `resolveBrand` | runs collisions; may re-call the engine with new archetype/options; computes signal overrides |
+| 7 | Emit | `cssRender.ts` / `figmaRender.ts` + `tokenNames.ts` | `GeneratedScale` → named CSS vars or Figma variable tree |
+| 8 | Drive | `build.ts` (batch) / demo / plugin (live) | writes `dist/*.css` / renders preview / writes Figma |
 
 Structural facts worth stating plainly:
 
-- There is **no barrel/index**. The public API is just the named exports `resolveBrand`
-  (policy entry) and `generateScale` (pure entry).
-- `generateScale` is **pure and runs ~6× per brand** (brand, secondary, neutral, and the
-  cached signal scales). The four **signal scales are generated once at module load**
-  (`SIGNAL_SCALES`, `resolve.ts:15`) and reused everywhere.
-- **Light/dark is computed together, chosen at render.** `generateScale` always builds
-  both ramps from two L tables (`LIGHT_L` / `DARK_L`, `stopTable.ts:6-7`) and stores them
-  on one `GeneratedScale`. `brandKindBody(prefix, scale, mode)` (`cssRender.ts:26`) picks
-  `scale.light` vs `scale.dark` per mode; CSS emits a `[data-brand]` block (light) and a
-  `[data-brand][data-theme="dark"]` block (dark).
-- **`highlight-9/10` are ordinary scale stops, not a separate mechanism.** They're built in
-  a dedicated code block for implementation reasons only; their L targets come straight from
-  the shared `LIGHT_L`/`DARK_L` table (`HIGHLIGHT_LIGHT.rootL = LIGHT_L[8]`, etc.) and are
-  placed by the same rule as the rest of the ramp (the light ones H-K-solved, the dark ones
-  placed directly). The **only** off-scale tokens are `cta-1/2`. The removed `placeLegibleRung` (which *moved* the fill to chase a text target)
-  is gone; the surviving `placeRung` only places the stop and reads its on-text color — it
-  never moves the fill.
+- The public API is unchanged: `resolveBrand` (policy entry) and `generateScale` (engine
+  entry, same signature and options as before the requirement-token rework — consumers,
+  the plugin included, never see the internal change).
+- The engine runs **~6× per brand** (brand, secondary, neutral, and the cached signal
+  scales). The four **signal scales are generated once at module load** (`SIGNAL_SCALES`,
+  `resolve.ts:15`) and reused everywhere.
+- **Light/dark is computed together, chosen at render.** Both ramps resolve from their
+  declared `ModeSpec` and land on one `GeneratedScale`. `brandKindBody(prefix, scale, mode)`
+  (`cssRender.ts:26`) picks `scale.light` vs `scale.dark` per mode; CSS emits a
+  `[data-brand]` block (light) and a `[data-brand][data-theme="dark"]` block (dark).
+- **`highlight-9/10` are ordinary scale stops; `cta-1/2` are the only off-scale tokens** —
+  in the declaration they are literally different kinds: stops carry numbers, the cta is a
+  named **role** with no number, so the historical stop-9/cta confusion cannot recur.
 
-The two data structures that flow through everything:
+The data structures that flow through everything:
 
 ```ts
+// the declaration (pure data — src/reqtoken/spec.ts)
+ModeSpec       = { stops: StopReq[], roles: RoleReq[], ons: { onFill, onHighlight } }
+StopReq        = { stop, rootL, group, produce: {hue, L, chroma}, satFraction?/baseC?/chromaMult?, require? }
+RoleReq        = { role: 'cta'|'cta-hover', produce, floorL, chromaMult }
+
+// the resolved output (unchanged public contract)
 ColorStop      = { stop, L, C, H, r, g, b }
-GeneratedScale = { name, archetype, brandL/C/H, lFlip, lFillMax,
+GeneratedScale = { name, archetype, brandL/C/H,
                    onFillTextIsWhite(+Dark), light[], dark[],
                    cta, ctaHover, ctaDark, ctaHoverDark,
                    onHighlightIsWhite(+Dark)?, identityHex? }
@@ -177,7 +192,48 @@ human role names (`--surface-*`, `--fg-*`, `--border-*`, `--alert-high-*` → re
 `--alert-med-*` → yellow, `--positive-*` → green, `--info-*` → info-color, `--illus-*`)
 onto the emitted primitives. Only the primitives change per brand.
 
-### 2b. Design decisions (the "design touches")
+### 2b. The requirement schema
+
+The engine's core idea: **a token is a requirement the engine solves, not a frozen value.**
+The declaration (`src/reqtoken/spec.ts`) is pure, serializable data; the resolver executes
+it. Three phases per stop, in order:
+
+- **produce** — the forward formula. Named producers, referenced by name in the data:
+  `hue: 'warm-drift' | 'warm-torsion' | 'constant'`, `L: 'perceptual' | 'fixed'` (plus
+  `'anchor'`/`'hover'` for roles), `chroma: 'ladder' | 'brand'`. The producer
+  *implementations* (the Nayatani solve, the gold-spine drift, the chroma ladder/envelope
+  blend, the aesthetic state) live in `producers.ts` under the resolver id
+  `okchroma-reqtoken@2` — they are the house style *of this resolver*, not portable data.
+- **require** — declared floors, checked and enforced against **resolved** stops (never a
+  cached value, so a pushed stop automatically re-solves everything referencing it):
+  - `{ metric: 'wcag', against: 'paper-2', target }` — `highlight-8` 3:1, `ink-11` 4.5,
+    `ink-12` 7.0, declared in **both modes** (light clamps down; dark raises off the
+    paper; a placement that already clears doesn't move).
+  - `{ metric: 'min-separation', against: 'paper-1' | 'prev', target }` — OKLab ΔE seam
+    floors: `paper-2` ≥ 0.028 off `paper-1`; every wash seam ≥ 0.012 off its predecessor
+    (guards low-chroma seeds, where chroma contributes nothing to seam distance).
+  - the `ons` block — `on-cta`/`on-highlight` pole choice (`apca-pole`, with the WCAG-4.5
+    enforce fallback on `on-cta`). On-text is chosen on one criterion: it passes. It never
+    feeds back into a fill.
+  A require the resolver cannot meet yields an explicit `unresolvable` marker — never a
+  silent fudge.
+- **refine** — chroma yields to the sRGB gamut at emit.
+
+**The spec/resolver line** (what's portable vs what isn't): stop identity, rootL ladders,
+per-stop chroma params, producer *names*, and every requirement are data — they serialize
+to DTCG tokens (`dtcg.ts`: frozen `$value` fallback for any DTCG tool + the live
+requirement in `$extensions['org.okchroma.requirement']`, round-trip-proven by
+`scripts/reqtoken-portability.ts` — editing a requirement in the token file changes the
+re-resolved value). The producer implementations and their constants stay behind the
+versioned resolver id: twenty aesthetic constants in a token file would be fake
+portability.
+
+**The gate:** `npm run req:audit` resolves an agnostic 24-hue × 3-chroma sweep in both
+modes and verifies every *declared* requirement plus structural invariants (totality,
+monotonic ladder, gamut, role floors, on-pole validity). Requirement-satisfaction is the
+contract; the blessed snapshots remain the value-regression pin.
+
+### 2c. Design decisions (the "design touches")
 
 These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
 
@@ -185,12 +241,12 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
 
 - **OKLCH throughout** (`constraints.ts`) — a perceptual space, so steps look evenly
   spaced and a ramp holds one hue from light to dark.
-- **Warm-hue "gold spine" torsion** — `GOLD_SPINE` (a 6-point L→H table, `stopTable.ts:49`)
+- **Warm-hue "gold spine" torsion** — `GOLD_SPINE` (a 6-point L→H table, `stopTable.ts`)
   + `WARM_TORSION` (band ≈ 40–122°, taper 10°, travel 0.55, cap ±24°). Warm brands rotate
   their hue toward gold as lightness changes, so **dark gold/orange stays gold instead of
   going olive or brown** (`torsionedHue`, `lightHueAt`, `goldSpineHue`). Applied to the
   light ramp, the dark rungs, and illustrations.
-- **Red-brand cooling** — `RED_COOL_DEG = 10.8°` (`colorEngine.ts:109`); `redCoolWeight`
+- **Red-brand cooling** — `RED_COOL_DEG = 10.8°` (`colorMath.ts`); `redCoolWeight`
   ramps in above H ≈ 12° and out above H ≈ 35.5° (`inRedBand`). Warm reds rotate a few
   degrees **cooler** so a brand red reads as *brand*, not error red. Applied in light
   (`lightHueAt`), in dark (`coolRedDark`), and as a final fill pass (`applyRedCoolRender`).
@@ -200,7 +256,7 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
 - **Style lever** (`deeper` / `full-chroma`) — set per brand at intake (`brands.ts`); acts
   **only** inside the ambiguous semi-muted warm band (`deeper` → browner/deeper;
   `full-chroma` → stays loud). A no-op outside that band.
-- **Chroma boost** near hue ≈ 90° (`chromaBoost`, `colorEngine.ts:305`) for luminous warm
+- **Chroma boost** near hue ≈ 90° (`chromaBoost`, `producers.ts`) for luminous warm
   hues that would otherwise read flat.
 
 #### Accessibility
@@ -225,11 +281,18 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
 - **Dark fills lift, never sink** — `dark9L = max(scaleL, DARK_*_MIN_L)` (0.63 / 0.70): a
   too-dark fill lifts to stay visible on a dark background; a vivid fill is never pulled
   down (identity preserved).
-- **Stop-8 = WCAG 1.4.11 3:1** — `STOP_8_NONTEXT_CONTRAST = 3.0`; an iterated fixed-point
-  clamp (`colorEngine.ts:342`) guarantees a usable 3:1 UI / border step against the
-  scale's own `paper-2`.
-- **Text-stop contrast floors** — `ink-11` → 4.5:1, `ink-12` → 7:1 against `paper-2`.
-- **On-fill text by one criterion: it passes** — `onTextIsWhite` (`colorEngine.ts:237`)
+- **Stop-8 = WCAG 1.4.11 3:1, declared in both modes** — `STOP_8_NONTEXT_CONTRAST = 3.0`,
+  a requirement on the declared stop (`spec.ts`): light iterates a fixed-point clamp down;
+  dark raises a failing hue off the near-black paper (today's dark scaffold already clears
+  it everywhere measured — the declaration makes that a guarantee, not an observation).
+- **Text-stop contrast floors, declared in both modes** — `ink-11` → 4.5:1, `ink-12` → 7:1
+  against `paper-2`.
+- **Seam separation floors (light)** — `paper-2` must stand OKLab ΔE ≥ 0.028 off
+  `paper-1`; every wash seam ≥ 0.012 off its predecessor. The wash rootLs (3–7) were
+  re-spaced downward to absorb the paper-2 push holistically, so the floors bind almost
+  nowhere — they exist to make seam collapse impossible for any seed (low-chroma grays
+  and muted warms were the failure cases).
+- **On-fill text by one criterion: it passes** — `onTextIsWhite` (`colorMath.ts`)
   picks black or white by APCA; `cta` additionally enforces WCAG 4.5 and **moves the fill**
   if neither pole clears; `highlight` is judged by APCA only (Lc 60), because
   mid-lightness chromatic fills have a WCAG dead zone. White and black are the contrast
@@ -341,6 +404,7 @@ npm run audit            # dark-mode audit        (add :bless to update the snap
 npm run highlight-audit  # highlight/on-fill audit (add :bless)
 npm run audit:divergence # light↔dark + cross-family divergence audit (add :bless)
 npm run sweep            # agnostic hue × chroma gamut sweep
+npm run req:audit        # the requirement gate: every DECLARED requirement, agnostic sweep, both modes
 npm run smooth           # ramp smoothness audit  (smooth:baseline to re-record)
 npm run figma:verify     # validates the Figma emitter output
 npm run generate         # regenerate dist/*.css only (requires a prior build)

@@ -75,7 +75,7 @@ export function TokenCards({ prefix, kind }: { prefix: string; kind: RampKind })
       {/* ink in context — heading + body, "ink family" called out in ink-11 */}
       <div style={{ fontSize: 24, fontWeight: 700, color: v('ink-12'), lineHeight: 1.15, marginBottom: 8 }}>Aa Heading</div>
       <p style={{ fontSize: 15, lineHeight: 1.5, color: v('ink-12'), margin: '0 0 16px' }}>
-        The <span style={{ color: v('ink-11') }}>ink family</span> is designed to contrast with surfaces and is perfect for text. It can also be used as a dark surface.
+        The <span style={{ color: v('ink-11') }}>ink family</span> is designed to contrast with the paper and wash stops and is perfect for text. It can also be used as an inverted fill.
       </p>
 
       {/* cta in context — the pill (hidden on signals, where cta lives in the alert).
@@ -92,10 +92,10 @@ export function TokenCards({ prefix, kind }: { prefix: string; kind: RampKind })
           }}>{ctaHover ? 'cta-2 on hover' : 'cta-1 button'}</button>
       )}
 
-      {/* surfaces — the wash inset, plus the highlight surface OR the signal alert */}
+      {/* in context — the wash inset, plus the highlight inset OR the signal alert */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 18 }}>
         <div style={{ ...box, background: v('wash-4') }}>
-          <div style={{ ...boxLabel, color: v('ink-11') }}>inset surface &middot; wash</div>
+          <div style={{ ...boxLabel, color: v('ink-11') }}>inset &middot; wash</div>
           <div style={{ ...boxBody, color: v('ink-12') }}>Body copy in ink on a wash fill.</div>
         </div>
         {isSignal ? (
@@ -108,7 +108,7 @@ export function TokenCards({ prefix, kind }: { prefix: string; kind: RampKind })
           </div>
         ) : (
           <div style={{ ...box, background: v('highlight-9') }}>
-            <div style={{ ...boxLabel, color: v('on-highlight') }}>inset surface &middot; highlight</div>
+            <div style={{ ...boxLabel, color: v('on-highlight') }}>inset &middot; highlight</div>
             <div style={{ background: v('highlight-10'), borderRadius: 8, padding: '10px 12px' }}>
               <div style={{ ...boxBody, color: v('on-highlight') }}>Emphasis copy in on-highlight text.</div>
             </div>

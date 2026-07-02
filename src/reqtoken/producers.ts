@@ -1,8 +1,8 @@
 // producers.ts — the NAMED PRODUCER implementations of the okchroma resolver (resolver id okchroma-reqtoken@2).
-// Every numeric expression here is a VERBATIM port of generateScale (src/engine/colorEngine.ts) — the aesthetic
-// state (chromaBoost, mutedness, cream gate, warm drift, red cool) is the house style OF this resolver, not
-// portable spec data. Byte parity with the engine is enforced by scripts/engine-parity.ts and the Stage-2/3
-// probe; do not "simplify" an expression here without that gate.
+// The aesthetic state (chromaBoost, mutedness, cream gate, warm drift, red cool) is the house style OF this
+// resolver, not portable spec data. These expressions were ported verbatim from the pre-resolver generateScale
+// and proven byte-identical at cutover (commit c7542b7); the blessed snapshots are the standing gate — do not
+// "simplify" an expression here without eye-check + re-bless.
 import { classifyArchetype, medianLForArchetype, type Archetype } from '../engine/archetypes'
 import { clampChromaToGamut, wcagY, contrastRatio, findMaxLForContrast, findLForContrast, apcaY } from '../engine/constraints'
 import { perceptualRungL } from '../engine/perceptualL'
@@ -91,9 +91,9 @@ export function buildContext(hex: string, opts?: ResolveOpts) {
 }
 export type Ctx = ReturnType<typeof buildContext>
 
-// ---- light surface chroma (stops 1–8): ladder/envelope blend, cAt-wrapped (colorEngine.ts:322–326).
+// ---- light scale chroma (stops 1–8: paper/wash/highlight-8): ladder/envelope blend, cAt-wrapped (colorEngine.ts:322–326).
 // NOTE: unclamped by design — the perceptual solve sees the raw blend; makeStop clamps at emit.
-export const lightSurfaceChromaAt = (ctx: Ctx, baseC: number, satFraction: number) => (L: number): number => {
+export const lightScaleChromaAt = (ctx: Ctx, baseC: number, satFraction: number) => (L: number): number => {
   const cLadder = ctx.vSubtle * ctx.chromaBoost * baseC
   const cEnv = ctx.brandSat * satFraction * maxChromaAt(L, ctx.lightHueAt(L))
   return ctx.cAt('light', L, cLadder + ctx.u * (cEnv - cLadder))
@@ -105,10 +105,10 @@ export const lightHighlightChromaAt = (ctx: Ctx, baseC: number, satFraction: num
   return clampChromaToGamut(L, ctx.cAt('light', L, hlLadderC + ctx.u * (ctx.brandSat * satFraction * maxChromaAt(L, hh) - hlLadderC)), hh)
 }
 
-// ---- light surface placement (stops 1–8): perceptual rung; a declared contrast require clamps it down to a
+// ---- light scale placement (stops 1–8): perceptual rung; a declared contrast require clamps it down to a
 // fixed point vs the resolved paper-2 (colorEngine.ts:328–349 — stop 8's 3:1, spec-driven here; the +0.05
 // margin lets the gamut-trimmed emit still clear). Returns L,C,H at emit (caller gamut-clamps).
-export function placeLightSurface(
+export function placeLightScale(
   ctx: Ctx, rootL: number, chromaAt: (L: number) => number, requireTarget: number | undefined, refY: number | undefined,
 ): { L: number; C: number; H: number } {
   let L = perceptualRungL(rootL, chromaAt(rootL), ctx.lightHueAt(rootL))

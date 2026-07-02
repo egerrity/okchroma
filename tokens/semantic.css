@@ -6,10 +6,15 @@
 /* ─── Global surface / fg / border ─────────────────────────────────────────── */
 
 [data-brand] {
+  /* Elevation MIRRORS across modes around the paper-1 page (owner spec, 2026-07-02):
+     raised moves toward the paper-0 anchor's side in light (white) and toward paper-2
+     in dark (lighter); sunken is the reverse — paper-2 in light, the paper-0 anchor
+     (black) in dark. paper-0 flips white→black with the mode, so "0" is always the
+     extreme beyond paper-1. */
   --surface-base:         var(--neutral-paper-1);
   --surface-sunken:       var(--neutral-paper-2);
-  --surface-raised:       #ffffff;
-  --surface-card-overlay: #ffffff;
+  --surface-raised:       var(--paper-0);
+  --surface-card-overlay: var(--paper-0);
 
   --fg-default:           var(--neutral-ink-12);
   --fg-subtle:            var(--neutral-ink-11);
@@ -21,10 +26,11 @@
 }
 
 [data-brand][data-theme="dark"] {
-  /* Dark inverts the stop order (paper-2 is lighter than paper-1), so elevate by
-     LIGHTENING: cards sit on a subtle paper-2 step (not a wash), recessed surfaces
-     sit at the floor, overlays go one step lighter (wash). */
-  --surface-sunken:       var(--neutral-paper-1);
+  /* Dark mirrors the elevation order: raised LIGHTENS to paper-2, sunken DEEPENS past
+     the page to the paper-0 anchor (black in dark) — so a recessed area actually
+     recedes instead of sitting at the page's own level. Overlays go one step lighter
+     than raised (wash). */
+  --surface-sunken:       var(--paper-0);
   --surface-raised:       var(--neutral-paper-2);
   --surface-card-overlay: var(--neutral-wash-3);
 }

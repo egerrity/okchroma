@@ -37,13 +37,18 @@ then import `plugin/manifest.json` in Figma.
 
 ## How it works (30 seconds)
 
-`resolveBrand(hex)` → calls the pure `generateScale` (the OKLCH color math) → applies
-**policy** (status-color collisions, signal shifts) → an **emitter** (`cssRender` /
-`figmaRender`) maps the computed stops onto named tokens and picks light vs dark.
+Every token is a **requirement the engine solves, not a frozen value**. A pure-data
+declaration (`src/reqtoken/spec.ts`) states each stop's producer (perceptual placement,
+warm drift, chroma ladder) and its requirements (contrast floors, seam separations,
+on-text rules); a resolver executes it per seed — **produce → require → refine**.
+`resolveBrand(hex)` runs that engine, applies **policy** (status-color collisions, signal
+shifts), and an **emitter** (`cssRender` / `figmaRender`) maps the resolved stops onto
+named tokens and picks light vs dark. The declaration also round-trips to DTCG tokens
+(`$value` fallback + the live requirement in `$extensions`).
 
-- **Engine:** `src/engine/*` — zero runtime dependencies, pure TypeScript.
+- **Engine:** `src/engine/*` + `src/reqtoken/*` — zero runtime dependencies, pure TypeScript.
 - **Entry points:** `resolveBrand` (`src/engine/resolve.ts`) and `generateScale`
-  (`src/engine/colorEngine.ts`).
+  (`src/engine/colorEngine.ts`, an adapter over the resolver — same signature as always).
 - **Batch build:** `src/build.ts` runs the engine over the brand fixtures in
   `src/brands.ts` and writes `dist/*.css`.
 

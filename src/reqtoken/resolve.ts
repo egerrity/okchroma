@@ -5,7 +5,8 @@
 // dark cta anchor BEFORE the dark stops (the torsion anchors at it), on-fill judged PRE-enforcement, the
 // enforce re-solve last. Total: an unmet require yields an explicit `unresolvable`, never a silent fudge.
 //
-// Parity: light AND dark are verbatim engine ports, gated float-identical by scripts/reqtoken-parity-probe.ts.
+// The producers are verbatim ports of the pre-resolver engine, proven byte-identical at cutover (c7542b7);
+// the blessed snapshot audits are the standing regression gate.
 import { apparentL } from '../engine/perceptualL'
 import { clampChromaToGamut, wcagY, contrastRatio } from '../engine/constraints'
 import { hexToOklch, oklchToSrgbUnclamped } from '../engine/colorMath'
@@ -13,7 +14,7 @@ import { hoverL } from '../engine/archetypes'
 import { MODE_SPECS, type ModeSpec, type StopReq, type RoleReq } from './spec'
 import {
   buildContext, buildDarkContext, type Ctx, type DarkCtx, type ResolveOpts,
-  lightSurfaceChromaAt, lightHighlightChromaAt, placeLightSurface, placeLightText, placeLightHighlight,
+  lightScaleChromaAt, lightHighlightChromaAt, placeLightScale, placeLightText, placeLightHighlight,
   separationClampLight,
   darkScaleChromaAt, darkInkChromaAt, darkHighlightChromaAt, placeDark,
   onFillIsWhiteLight, onFillIsWhiteDarkAt, onHighlightIsWhiteAt, ctaLightL, ctaDarkEnforcedL,
@@ -77,9 +78,9 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       } else if (sp.stop === 9 || sp.stop === 10) {
         placed = placeLightHighlight(ctx, sp.rootL, lightHighlightChromaAt(ctx, sp.baseC ?? 0, sp.satFraction ?? 1))
       } else {
-        const chromaAt = lightSurfaceChromaAt(ctx, sp.baseC ?? 0, sp.satFraction ?? 1)
+        const chromaAt = lightScaleChromaAt(ctx, sp.baseC ?? 0, sp.satFraction ?? 1)
         const wcagReq = sp.require?.metric === 'wcag' ? sp.require : undefined
-        placed = placeLightSurface(ctx, sp.rootL, chromaAt, wcagReq?.target, wcagReq ? refYOf(2, sp.stop) : undefined)
+        placed = placeLightScale(ctx, sp.rootL, chromaAt, wcagReq?.target, wcagReq ? refYOf(2, sp.stop) : undefined)
         clamped = !!wcagReq
         if (sp.require?.metric === 'min-separation') {
           const refStop = sp.require.against === 'paper-1' ? 1 : sp.stop - 1
