@@ -48,9 +48,21 @@ What landed (all in the working tree, show-before-commit):
    Lc ≈ 76–78** → a 4.5→60 map RELEASES fills lighter (white text Lc 64–71, ratio drops to ~3.3–3.9
    by design); a 4.5→75 map REPRODUCES the shipped ctas (ΔL ≤ ~0.02). That's the on-text half of
    the Lc-map decision. Render columns now show the cta button + on-fill Aa and highlight-9 + Aa.
-6. **Demo toggle NOT built (deliberate):** threading the profile through the module-level canonical
-   signal scales + the neutral generated inside cssRender/themeToFigma is a real slice — only worth
-   doing if the profile is adopted/exposed. Flagged, not started.
+6. **THE SWITCH IS BUILT + OWNER-APPROVED ("PERFECT", 2026-07-02, committed + pushed):** contrastProfile
+   threads end-to-end — resolveBrand opt (floor + profile-matched canonical signals via
+   `signalScalesFor(profile)`, lazy apca cache; collision decisions compare like with like),
+   pickSignalShift/swap/lemon regenerate under the profile, generateNeutralScale(brandH, level,
+   profile) (+ pure apca-pole on-text judgment for the scale-fed neutral cta), cssRender
+   brandCss/neutralCss profile params + NEW `signalsCss(profile)` (moved from build.ts, shared),
+   figmaRender ThemeInput.contrastProfile, index.ts exports. **Demo: "Contrast standard" WCAG/APCA
+   Segmented in CustomTheme's controls bar** — APCA re-resolves brand+accent+neutral and appends
+   the apca signal block as an override. Verified live: dark info-color stop-8 #6f68a8 → #7971b4
+   (the lift), light stop-8 relaxes, cta ships-hex re-solves (#D92B75→#DA2C76). All gates green
+   AFTER the threading (snapshot CLEAN — default untouched). Probe: red-collider brand flips
+   darkCollider null→muted under apca (borderline collision, profile-consistent — expected);
+   green light cta = the pole-flip case (black text, no white-enforcement darkening).
+   STILL OPEN: plugin does not expose the profile (owner didn't pick that option); PaletteGallery
+   (hidden view) not threaded; DocsSite/schema note the profile but not the demo toggle.
 
 Eye-check: `render/apca.html` via the reqtoken-render preview (renders verified in-session, both
 modes, break markers visible). Owner picks: Lc map · adoption/exposure · the ons-fallback question.

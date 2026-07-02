@@ -2,7 +2,7 @@
 
 import { toHex } from './cssRender'
 import { stopTokenName, onFillTokenName, tokenOrder, type RampKind } from './tokenNames'
-import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel } from './colorEngine'
+import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
 import type { ResolvedBrand } from './resolve'
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v))
@@ -58,6 +58,10 @@ export interface ThemeInput {
   neutralLevel?: NeutralLevel
 
   signals: Array<{ name: string; scale: GeneratedScale }>
+
+  // profile the theme was resolved under: the neutral generated HERE must match the caller's
+  // brand/secondary/signal scales (which already carry it). Default wcag.
+  contrastProfile?: ContrastProfile
 }
 
 export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: FigmaGroup; dark: FigmaGroup } {
@@ -73,7 +77,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     ctaHover: mode === 'light' ? s.ctaHover : s.ctaHoverDark,
   })
 
-  const nScale = generateNeutralScale(scale.brandH, input.neutralLevel ?? 'default')
+  const nScale = generateNeutralScale(scale.brandH, input.neutralLevel ?? 'default', input.contrastProfile)
   const neutralExtra = (mode: 'light' | 'dark') => ({
     onHighlightWhite: mode === 'light' ? nScale.onHighlightIsWhite : nScale.onHighlightIsWhiteDark,
     cta: mode === 'light' ? nScale.cta : nScale.ctaDark,

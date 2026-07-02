@@ -30,6 +30,7 @@ export type { ColorStop } from './colorMath'
 import { resolveRamp, type ResolvedStop } from '../reqtoken/resolve'
 import { MODE_SPECS, type ModeSpec } from '../reqtoken/spec'
 import { withProfile, type ContrastProfile } from '../reqtoken/profiles'
+export type { ContrastProfile } from '../reqtoken/profiles'
 
 export interface GeneratedScale {
   name: string
@@ -198,6 +199,7 @@ export function generateIllustrationScale(scale: GeneratedScale): IllustrationSc
 export function generateNeutralScale(
   brandH: number,
   level: NeutralLevel = 'default',
+  contrastProfile?: ContrastProfile,
 ): GeneratedScale {
   const h = ((brandH % 360) + 360) % 360
   const { r, g, b } = oklchToSrgbUnclamped(0.5, 0.006, h)
@@ -207,6 +209,7 @@ export function generateNeutralScale(
     chromaCurve: neutralChromaCurve(brandH, level),
     highlight: true,
     enforceOnFillContrast: true,
+    contrastProfile,
   })
 
   // The neutral cta is LOW-HIERARCHY: unlike a brand/signal cta (a bold off-scale
@@ -219,7 +222,10 @@ export function generateNeutralScale(
   scale.ctaHover = asCta(10, scale.light[4])
   scale.ctaDark = asCta(9, scale.dark[3])
   scale.ctaHoverDark = asCta(10, scale.dark[4])
-  scale.onFillTextIsWhite = onTextIsWhite(apcaY(scale.cta.r, scale.cta.g, scale.cta.b), scale.cta.L, scale.cta.C, scale.cta.H, true)
-  scale.onFillTextIsWhiteDark = onTextIsWhite(apcaY(scale.ctaDark.r, scale.ctaDark.g, scale.ctaDark.b), scale.ctaDark.L, scale.ctaDark.C, scale.ctaDark.H, true)
+  // the scale-fed neutral cta can't move, so on-text is judgment only: under the apca profile the
+  // pole is pure apca-pole (enforce=false skips the wcag-mixing flip); shipped wcag keeps the flip.
+  const onEnforce = contrastProfile !== 'apca'
+  scale.onFillTextIsWhite = onTextIsWhite(apcaY(scale.cta.r, scale.cta.g, scale.cta.b), scale.cta.L, scale.cta.C, scale.cta.H, onEnforce)
+  scale.onFillTextIsWhiteDark = onTextIsWhite(apcaY(scale.ctaDark.r, scale.ctaDark.g, scale.ctaDark.b), scale.ctaDark.L, scale.ctaDark.C, scale.ctaDark.H, onEnforce)
   return scale
 }

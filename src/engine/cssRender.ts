@@ -1,8 +1,9 @@
 
 
-import { generateIllustrationScale, generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel } from './colorEngine'
+import { generateIllustrationScale, generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
 import { stopTokenName, onFillTokenName, tokenOrder } from './tokenNames'
-import type { ResolvedBrand } from './resolve'
+import { signalScalesFor, type ResolvedBrand } from './resolve'
+import { SIGNALS } from './signals'
 
 export function toHex(r: number, g: number, b: number): string {
   const ch = (v: number) => Math.round(Math.min(1, Math.max(0, v)) * 255).toString(16).padStart(2, '0')
@@ -43,8 +44,8 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
 // theme to carry a per-brand neutral) reuse this. The product emits the
 // neutral inline per brand (see brandCss); this is the same brand-kind body,
 // just scoped to an arbitrary selector.
-export function neutralCss(selector: string, brandH: number, level: NeutralLevel = 'default'): string {
-  const s = generateNeutralScale(brandH, level)
+export function neutralCss(selector: string, brandH: number, level: NeutralLevel = 'default', contrastProfile?: ContrastProfile): string {
+  const s = generateNeutralScale(brandH, level, contrastProfile)
   // The universal paper-0/ink-13 anchors ride along: any scope that carries the
   // ladder must also carry its mode-flipping extremes (semantic aliases like
   // --surface-raised resolve through them). paper-0 = the neutral's resolved
@@ -60,6 +61,32 @@ export function neutralCss(selector: string, brandH: number, level: NeutralLevel
     `  --paper-0: ${p0(s.paper0Dark, '#000000')};`,
     `  --ink-13: #ffffff;`,
     ...brandKindBody('neutral', s, 'dark'),
+    `}`,
+  ].join('\n')
+}
+
+// The canonical signal block (`:root` light + `[data-theme="dark"]`), per profile — the build
+// writes the wcag one to signals.css; the demo re-emits the apca one as an override when toggled.
+export function signalsCss(contrastProfile?: ContrastProfile): string {
+  const sigScales = signalScalesFor(contrastProfile)
+  const lightBlocks: string[] = []
+  const darkBlocks: string[] = []
+
+  for (const sig of SIGNALS) {
+    const { scale } = sigScales.get(sig.name)!
+    // F1: signals are brand-kind now — a real loud cta (stop 9) AND a distinct
+    // highlight rung (13/14), plus computed on-cta + on-highlight. No more alias.
+    lightBlocks.push(...brandKindBody(sig.name, scale, 'light'))
+    darkBlocks.push(...brandKindBody(sig.name, scale, 'dark'))
+  }
+
+  return [
+    `/* Signal scales — engine-generated from canonical hexes, shared across brands */`,
+    `:root {`,
+    ...lightBlocks,
+    `}`,
+    `[data-theme="dark"] {`,
+    ...darkBlocks,
     `}`,
   ].join('\n')
 }
@@ -89,7 +116,10 @@ export function brandCss(
   r: ResolvedBrand,
   secondary?: GeneratedScale | null,
   noteSuffix = '',
-  neutralLevel: NeutralLevel = 'default'
+  neutralLevel: NeutralLevel = 'default',
+  // the per-brand neutral is generated here, so it needs the caller's profile (the brand/secondary
+  // scales inside `r` were already resolved under it by resolveBrand)
+  contrastProfile?: ContrastProfile
 ): string {
   const { scale } = r
   const note = annotationNote(r) + noteSuffix
@@ -121,7 +151,7 @@ export function brandCss(
   // The neutral is now GENERATED per brand (tinted toward the brand hue), so it
   // rides inside this brand's block as a brand-kind ramp — no longer a shared
   // global :root block.
-  const nScale = generateNeutralScale(scale.brandH, neutralLevel)
+  const nScale = generateNeutralScale(scale.brandH, neutralLevel, contrastProfile)
 
   // When no secondary ramp is given, secondary mirrors brand var-for-var
   // (scale stops, off-scale cta, and both on-text tokens).

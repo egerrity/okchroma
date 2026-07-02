@@ -5,8 +5,8 @@ import {
 } from 'lucide-react'
 import { resolveBrand, SIGNAL_SCALES } from '../src/engine/resolve'
 import { checkAllCollisions } from '../src/engine/collision'
-import { brandCss, toHex } from '../src/engine/cssRender'
-import { inRedBand, type NeutralLevel } from '../src/engine/colorEngine'
+import { brandCss, signalsCss, toHex } from '../src/engine/cssRender'
+import { inRedBand, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
 import { wcagY, contrastRatio } from '../src/engine/constraints'
 import { HERO_ILLO } from './heroIllo'
 import {
@@ -49,6 +49,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   const [secondaryInput, setSecondaryInput] = useState('')
   const [suggestOpen, setSuggestOpen] = useState(false)
   const [rung, setRung] = useState<RungMode>('recommended')
+  const [profile, setProfile] = useState<ContrastProfile>('wcag')
   // Accent preview: two options shown only when an accent is set —
   // Default = 'accented', Inverse = 'accented-inverse'. Init 'accented' so
   // adding an accent shows it immediately.
@@ -84,12 +85,16 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   }, [suggestOpen])
 
   const computed = useMemo(() => {
-    const opts = rung === 'exact' ? { exact: true } : undefined
+    const cp = profile === 'apca' ? ('apca' as const) : undefined
+    const opts = rung === 'exact' || cp ? { exact: rung === 'exact' || undefined, contrastProfile: cp } : undefined
     const r = resolveBrand(primary, 'Custom brand', opts)
     const accent = secondary ? resolveBrand(secondary, 'Custom accent', opts).scale : null
-    // brandCss now emits the per-brand neutral too, at the chosen level.
-    return { r, accent, css: brandCss('custom', 'Custom brand', r, accent, '', neutralLevel) }
-  }, [primary, secondary, rung, neutralLevel])
+    // brandCss now emits the per-brand neutral too, at the chosen level. Under the APCA profile the
+    // canonical signal block is re-emitted as an override (the static signals.css is WCAG-solved).
+    const css = brandCss('custom', 'Custom brand', r, accent, '', neutralLevel, cp)
+      + (cp ? '\n' + signalsCss(cp) : '')
+    return { r, accent, css }
+  }, [primary, secondary, rung, neutralLevel, profile])
 
   // The RECOMMENDED resolution, always — exact mode skips the rules, so the
   // checklist and toasts need to know what WOULD have fired to flag it red.
@@ -223,6 +228,21 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
                 Recommended applies the engine's adjustments — collisions, contrast, dark mode — and is
                 WCAG-AA by construction. Exact ships your hex untouched; accessibility outcomes are
                 reviewed with you rather than guaranteed.
+              </span>
+            </span>
+          </div>
+        </div>
+        <div className="ct-bar-field">
+          <div className="ct-label">Contrast standard</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Segmented value={profile} onChange={setProfile} options={[['wcag', 'WCAG'], ['apca', 'APCA']]} />
+            <span className="ct-info">
+              ⓘ
+              <span className="ct-tip">
+                The same requirements re-solved under a different contrast metric. WCAG uses the 2.x
+                ratios (3:1 / 4.5 / 7). APCA re-solves them as Lc 30 / 75 / 90 — dark fills read
+                slightly stronger off the paper, light non-text relaxes, text and buttons keep their
+                shipped look by design.
               </span>
             </span>
           </div>

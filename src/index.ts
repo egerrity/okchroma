@@ -20,18 +20,20 @@ export {
   type IllustrationScale,
   type GenerateOptions,
   type NeutralLevel,
+  type ContrastProfile,
 } from './engine/colorEngine'
 
 // ── Policy layer (collision + signal resolution) — recommended entry ─────────
 export {
   resolveBrand,
   SIGNAL_SCALES,
+  signalScalesFor,
   type ResolvedBrand,
   type SignalOverride,
 } from './engine/resolve'
 
 // ── Emitters ─────────────────────────────────────────────────────────────────
-export { brandCss, neutralCss, stopsToVars, toHex } from './engine/cssRender'
+export { brandCss, neutralCss, signalsCss, stopsToVars, toHex } from './engine/cssRender'
 export {
   themeToFigma,
   type FigmaGroup,

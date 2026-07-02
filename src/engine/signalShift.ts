@@ -1,6 +1,6 @@
 
 
-import { generateScale, type GeneratedScale } from './colorEngine'
+import { generateScale, type GeneratedScale, type ContrastProfile } from './colorEngine'
 import { darkChromaCurve } from './darkChromaCurve'
 import { checkCollision, YELLOW_SPLIT_H } from './collision'
 import type { SignalDef } from './signals'
@@ -42,7 +42,7 @@ export interface ShiftResult {
   note: string
 }
 
-function swapScale(baseHex: string, def: SignalDef): GeneratedScale {
+function swapScale(baseHex: string, def: SignalDef, contrastProfile?: ContrastProfile): GeneratedScale {
   return generateScale(baseHex, def.name, undefined, {
     highlight: true,
     darkChromaCurve,
@@ -50,10 +50,11 @@ function swapScale(baseHex: string, def: SignalDef): GeneratedScale {
     darkFillMinL: def.darkFillMinL,
     enforceOnFillContrast: true,
     suppressRedCool: true,
+    contrastProfile,
   })
 }
 
-function lemonScale(def: SignalDef): GeneratedScale {
+function lemonScale(def: SignalDef, contrastProfile?: ContrastProfile): GeneratedScale {
   return generateScale(def.hex, def.name, 'light', {
     hueShiftDeg: def.hueShift.cool,
     chromaScale: def.yieldChromaScale,
@@ -62,13 +63,16 @@ function lemonScale(def: SignalDef): GeneratedScale {
     loudCta: true,
     enforceOnFillContrast: true,
     suppressRedCool: true,
+    contrastProfile,
   })
 }
 
 export function pickSignalShift(
   brand: GeneratedScale,
   canonicalSignalScale: GeneratedScale,
-  def: SignalDef
+  def: SignalDef,
+  // shifted replacement signals are generated under the caller's profile (like the canonicals)
+  contrastProfile?: ContrastProfile
 ): ShiftResult | null {
   const rule = SHIFT_RULES[def.name]
   if (!rule) return null
@@ -76,6 +80,6 @@ export function pickSignalShift(
 
   const side = brand.brandH < rule.splitH ? rule.below : rule.atOrAbove
   if (side.kind === 'none') return null
-  if (side.kind === 'swap') return { scale: swapScale(side.baseHex, def), note: side.note }
-  return { scale: lemonScale(def), note: side.note }
+  if (side.kind === 'swap') return { scale: swapScale(side.baseHex, def, contrastProfile), note: side.note }
+  return { scale: lemonScale(def, contrastProfile), note: side.note }
 }

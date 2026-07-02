@@ -1,6 +1,6 @@
 
 
-import { generateScale, applyRedCoolRender, inRedBand, type GeneratedScale } from './colorEngine'
+import { generateScale, applyRedCoolRender, inRedBand, type GeneratedScale, type ContrastProfile } from './colorEngine'
 import { darkChromaCurve } from './darkChromaCurve'
 import type { Archetype } from './archetypes'
 import { SIGNALS, type SignalDef } from './signals'
@@ -12,13 +12,25 @@ import {
 } from './collision'
 import { pickSignalShift } from './signalShift'
 
-export const SIGNAL_SCALES = new Map<SignalDef['name'], { def: SignalDef; scale: GeneratedScale }>(
-  SIGNALS.map(def => [
-    def.name,
+type SignalScales = Map<SignalDef['name'], { def: SignalDef; scale: GeneratedScale }>
+const buildSignalScales = (contrastProfile?: ContrastProfile): SignalScales =>
+  new Map(
+    SIGNALS.map(def => [
+      def.name,
 
-    { def, scale: generateScale(def.hex, def.name, undefined, { highlight: true, darkChromaCurve, loudCta: true, darkFillMinL: def.darkFillMinL, enforceOnFillContrast: true, suppressRedCool: true }) },
-  ])
-)
+      { def, scale: generateScale(def.hex, def.name, undefined, { highlight: true, darkChromaCurve, loudCta: true, darkFillMinL: def.darkFillMinL, enforceOnFillContrast: true, suppressRedCool: true, contrastProfile }) },
+    ])
+  )
+
+export const SIGNAL_SCALES = buildSignalScales()
+
+// the canonical signal scales PER PROFILE: the collision machinery must compare the brand against
+// signals solved under the SAME profile. The apca set is built lazily on first use and cached.
+let apcaSignalScales: SignalScales | null = null
+export function signalScalesFor(contrastProfile?: ContrastProfile): SignalScales {
+  if (contrastProfile !== 'apca') return SIGNAL_SCALES
+  return (apcaSignalScales ??= buildSignalScales('apca'))
+}
 
 export interface SignalOverride {
   name: SignalDef['name']
@@ -41,10 +53,10 @@ export interface ResolvedBrand {
   errorComponentRule: boolean
 }
 
-function collisionStatus(scale: GeneratedScale): { trigger: SignalDef['name'] | null; pending: SignalDef['name'][] } {
+function collisionStatus(scale: GeneratedScale, sigScales: SignalScales): { trigger: SignalDef['name'] | null; pending: SignalDef['name'][] } {
   let trigger: SignalDef['name'] | null = null
   const pending: SignalDef['name'][] = []
-  for (const { def, scale: sigScale } of SIGNAL_SCALES.values()) {
+  for (const { def, scale: sigScale } of sigScales.values()) {
     if (checkCollision(scale, sigScale, def, 'light').collides) {
       if (def.name === 'red') trigger = def.name
       else pending.push(def.name)
@@ -62,8 +74,13 @@ export function resolveBrand(
     archetypeOverride?: Archetype
 
     style?: 'default' | 'deeper' | 'full-chroma'
+
+    // opt-in contrast profile: threads into every generateScale call AND selects the matching
+    // canonical signal set (collision decisions must compare like with like). Default 'wcag'.
+    contrastProfile?: ContrastProfile
   }
 ): ResolvedBrand {
+  const sigScales = signalScalesFor(opts?.contrastProfile)
 
   const floor = {
     darkFillMinL: DARK_BRAND_FILL_MIN_L,
@@ -75,6 +92,7 @@ export function resolveBrand(
     style: opts?.style,
 
     highlight: true,
+    contrastProfile: opts?.contrastProfile,
   }
 
   const rung1Opts = { stop11DeepenL: 0.07, stop12DeepenL: 0.05 }
@@ -87,7 +105,7 @@ export function resolveBrand(
   if (opts?.archetypeOverride) {
     scale = generateScale(hex, name, opts.archetypeOverride, floor)
   } else if (!opts?.exact) {
-    const status = collisionStatus(scale)
+    const status = collisionStatus(scale, sigScales)
     if (status.trigger) {
 
       if (inRedBand(scale.brandH)) {
@@ -102,7 +120,7 @@ export function resolveBrand(
 
   let darkCollider: 'muted' | null = null
   if (!opts?.exact) {
-    const err = SIGNAL_SCALES.get('red')!
+    const err = sigScales.get('red')!
     if (checkCollision(scale, err.scale, err.def, 'dark').collides) {
       if (inRedBand(scale.brandH)) {
         darkCollider = 'muted'
@@ -123,13 +141,13 @@ export function resolveBrand(
   let warnVariant: 'lemon' | 'macaroni' | null = null
 
   if (!opts?.exact) {
-    const warn = SIGNAL_SCALES.get('yellow')!
+    const warn = sigScales.get('yellow')!
     warnVariant = warningVariant(scale, warn.scale, warn.def)
     if (warnVariant) pending = pending.filter(n => n !== 'yellow')
 
     for (const sigName of ['yellow', 'green', 'info-color'] as const) {
-      const { def, scale: canonical } = SIGNAL_SCALES.get(sigName)!
-      const shift = pickSignalShift(scale, canonical, def)
+      const { def, scale: canonical } = sigScales.get(sigName)!
+      const shift = pickSignalShift(scale, canonical, def, opts?.contrastProfile)
       if (shift) {
         signalOverrides.push({ name: sigName, scale: shift.scale, note: shift.note })
         pending = pending.filter(n => n !== sigName)
