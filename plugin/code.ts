@@ -78,8 +78,8 @@ figma.ui.onmessage = async (msg) => {
       if (!confirmed && (overwrite || secondaryMismatch)) {
         const reasons: string[] = []
         if (overwrite) reasons.push(`overwrite "${brand}"`)
-        if (secondaryMismatch && secondaryOn) reasons.push('add accent to every brand')
-        if (secondaryMismatch && !secondaryOn) reasons.push('mirror brand into accent (file already uses accent)')
+        if (secondaryMismatch && secondaryOn) reasons.push('add a secondary to every brand')
+        if (secondaryMismatch && !secondaryOn) reasons.push('mirror brand into secondary (file already uses a secondary)')
         figma.ui.postMessage({ type: 'confirm', brand, message: `Will ${reasons.join(' + ')} — click Apply again.` })
         return
       }
@@ -104,21 +104,21 @@ figma.ui.onmessage = async (msg) => {
 
       // Static designer-convenience invariants — identical for every brand, so
       // seeded once into raw/system/* (created if absent, otherwise left as-is).
-      // Seeded BEFORE the ramps so on-fill tokens can alias them. Two flavours:
-      //   - paper-0 / ink-13 — the SCALE ANCHORS. They flip with the mode like the
-      //     ladder they cap: paper-0 (surface end) white→black, ink-13 (ink end)
-      //     black→white.
-      //   - abs-white / abs-black — genuinely mode-INVARIANT, for an on-fill that
-      //     never flips (e.g. on-highlight stays white in both modes).
-      // on-fill then carries no black/white of its own — it aliases one of these.
+      // Seeded BEFORE the ramps so on-fill tokens can alias them.
+      //   - abs-white / abs-black — mode-INVARIANT poles; on-fill tokens alias
+      //     one PER MODE (a flipping on-fill = abs-white in light, abs-black in
+      //     dark), so text stays a true pole regardless of the ladder.
+      //   - ink-13 — the literal ink extreme beyond ink-12 (black→white).
+      //   - paper-0 is NOT static anymore: the engine resolves it (white in
+      //     light; one seam below paper-1 in dark, neutral-tinted) and it rides
+      //     the neutral ramp at system/neutral/<tint>/paper-0.
       const W = { r: 1, g: 1, b: 1 }
       const K = { r: 0, g: 0, b: 0 }
       // The list order IS the display order in Figma (variables list in creation
-      // order). paper-0e / paper-2e sit right after paper-0 (their sibling), but
-      // their VALUES are mode-divergent aliases set later — once neutral/paper-2
-      // exists. `elevation` = "create now for ordering, alias below".
+      // order). paper-0e / paper-2e are mode-divergent aliases set later — once
+      // the theme's neutral/paper-0 and neutral/paper-2 exist. `elevation` =
+      // "create now for ordering, alias below".
       const STATIC_UTILS: Array<{ path: string; light?: figma.RGBA; dark?: figma.RGBA; elevation?: boolean }> = [
-        { path: 'system/paper-0', light: W, dark: K },
         { path: 'system/paper-0e', elevation: true },
         { path: 'system/paper-2e', elevation: true },
         { path: 'system/ink-13', light: K, dark: W },
@@ -138,15 +138,12 @@ figma.ui.onmessage = async (msg) => {
         createdShared++
       }
 
-      // An on-fill is always pure white or black; map its light/dark polarity to
-      // one of the four invariants so it aliases instead of duplicating a value. A
-      // polarity that FLIPS by mode is exactly a scale anchor (white→black = paper-0,
-      // black→white = ink-13); one that holds is the absolute pair.
+      // An on-fill is always a pure pole; alias it PER MODE to abs-white/abs-black
+      // (mode-divergent alias, like the elevation pair) instead of duplicating a
+      // value. Decoupled from the paper-0/ink-13 anchors on purpose: paper-0 is a
+      // RESOLVED color now (near-black, tinted, in dark) — text must stay a pole.
       const isWhite = (c: { r: number; g: number; b: number }) => c.r + c.g + c.b > 1.5
-      const onFillInvariant = (lightWhite: boolean, darkWhite: boolean) =>
-        lightWhite && darkWhite ? 'system/abs-white'
-          : !lightWhite && !darkWhite ? 'system/abs-black'
-            : lightWhite ? 'system/paper-0' : 'system/ink-13'
+      const absPole = (white: boolean) => primByName.get(white ? 'system/abs-white' : 'system/abs-black')
 
       // Write a primitive. on-fill leaves ALIAS a shared invariant (always, so
       // pre-existing raw on-fills get converted on re-apply); every other leaf is
@@ -162,11 +159,11 @@ figma.ui.onmessage = async (msg) => {
         if (!v) { v = figma.variables.createVariable(path, p.coll, 'COLOR'); primByName.set(path, v) }
         const dk = darkMap.get(t.path)
         if (t.path === 'on-cta' || t.path === 'on-highlight') {
-          const inv = primByName.get(onFillInvariant(isWhite(t), isWhite(dk ?? t)))
-          if (inv) {
-            const alias = figma.variables.createVariableAlias(inv)
-            v.setValueForMode(pLight, alias)
-            v.setValueForMode(pDark, alias)
+          const lightPole = absPole(isWhite(t))
+          const darkPole = absPole(isWhite(dk ?? t))
+          if (lightPole && darkPole) {
+            v.setValueForMode(pLight, figma.variables.createVariableAlias(lightPole))
+            v.setValueForMode(pDark, figma.variables.createVariableAlias(darkPole))
           }
         } else if (created || refresh) {
           v.setValueForMode(pLight, { r: t.r, g: t.g, b: t.b })
@@ -247,26 +244,27 @@ figma.ui.onmessage = async (msg) => {
         }
       }
 
-      // Elevation anchors — the only MODE-DIVERGENT tokens: each mode aliases a
-      // DIFFERENT target, so card elevation holds its meaning as the ladder inverts.
-      //   paper-0e (raised)  → paper-0 (white) in light · neutral-paper-2 in dark
-      //   paper-2e (sunken)  → neutral-paper-2 in light · paper-0 (black) in dark
+      // Elevation anchors — mode-DIVERGENT aliases: each mode points at a different
+      // target, so card elevation holds its meaning as the ladder inverts. Both ends
+      // are the brand-aware THEME neutral now (paper-0 is the engine's RESOLVED
+      // anchor — white in light, one seam below paper-1 in dark, never absolute black):
+      //   paper-0e (raised)  → neutral/paper-0 (white) in light · neutral/paper-2 in dark
+      //   paper-2e (sunken)  → neutral/paper-2 in light · neutral/paper-0 (deep) in dark
       // (paper-1 needs no variant — it's the base, same role both modes.) The vars
-      // were CREATED in order above; we set their alias values HERE because the dark
-      // side is the brand-aware THEME neutral/paper-2, which only exists after the
-      // alias loop ("the wait"). No semantic layer — the engine's Light/Dark axis
-      // drives them.
-      const sysPaper0 = primByName.get('system/paper-0')
+      // were CREATED in order above; aliases are set HERE because the theme's
+      // neutral vars only exist after the alias loop ("the wait"). This mirrors the
+      // CSS semantic layer's surface-raised/surface-sunken exactly.
+      const themeNeutralP0 = themeByName.get('neutral/paper-0')
       const themeNeutralP2 = themeByName.get('neutral/paper-2')
-      if (sysPaper0 && themeNeutralP2) {
+      if (themeNeutralP0 && themeNeutralP2) {
         const aliasElev = (path: string, light: figma.Variable, dark: figma.Variable) => {
           const v = primByName.get(path) // pre-created in STATIC_UTILS for ordering
           if (!v) return
           v.setValueForMode(pLight, figma.variables.createVariableAlias(light))
           v.setValueForMode(pDark, figma.variables.createVariableAlias(dark))
         }
-        aliasElev('system/paper-0e', sysPaper0, themeNeutralP2) // raised
-        aliasElev('system/paper-2e', themeNeutralP2, sysPaper0) // sunken
+        aliasElev('system/paper-0e', themeNeutralP0, themeNeutralP2) // raised
+        aliasElev('system/paper-2e', themeNeutralP2, themeNeutralP0) // sunken
       }
 
       figma.ui.postMessage({ type: 'done', brand, aliases: aliasCount, createdShared, secondary: secondaryMode })

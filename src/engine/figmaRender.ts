@@ -80,10 +80,18 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     ctaHover: mode === 'light' ? nScale.ctaHover : nScale.ctaHoverDark,
   })
   const build = (mode: 'light' | 'dark'): FigmaGroup => {
+    // paper-0 rides WITH the neutral ramp (its dark value is neutral-tinted, so it dedups and
+    // aliases through the same per-tint machinery as the rest of the neutral — never a global
+    // absolute). Placed first so it sits beside paper-1 in creation order.
+    const p0 = mode === 'light' ? nScale.paper0 : nScale.paper0Dark
+    const neutralGroup: FigmaGroup = {
+      ...(p0 ? { 'paper-0': colorFromStop(p0) } : {}),
+      ...rampGroup(nScale[mode], mode === 'light' ? nScale.onFillTextIsWhite : nScale.onFillTextIsWhiteDark, 'brand', neutralExtra(mode)),
+    }
     const g: FigmaGroup = {
       brand: rampGroup(scale[mode], mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark, 'brand', brandExtra(scale, mode)),
       secondary: rampGroup(secondary[mode], mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark, 'brand', brandExtra(secondary, mode)),
-      neutral: rampGroup(nScale[mode], mode === 'light' ? nScale.onFillTextIsWhite : nScale.onFillTextIsWhiteDark, 'brand', neutralExtra(mode)),
+      neutral: neutralGroup,
     }
     for (const sig of input.signals) {
 

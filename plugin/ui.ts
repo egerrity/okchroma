@@ -12,7 +12,7 @@ let secondaryEnabled = false
 let neutralLevel: NeutralLevel = 'default'
 let engineMode: 'recommended' | 'exact' = 'recommended'
 let pendingName: string | null = null // brand armed for overwrite confirmation
-let secondaryInclude = true // global secondary switch (kill-switch)
+let secondaryInclude = false // global secondary switch — OFF by default (owner call)
 
 // ─── DOM ─────────────────────────────────────────────────────────────────────
 
@@ -104,7 +104,7 @@ function buildAndSend() {
     const opts = engineMode === 'exact' ? { exact: true } : undefined
     const r = resolveBrand(primaryHex, name, opts)
     const secondary = secondaryEnabled && secondaryHex
-      ? resolveBrand(secondaryHex, 'Accent', opts).scale
+      ? resolveBrand(secondaryHex, 'secondary', opts).scale
       : null
 
     // The neutral's shared-primitive key. 'pure' is a true grey (C=0), identical
@@ -185,7 +185,7 @@ primaryPicker.addEventListener('input', () => {
 secondaryToggleBtn.addEventListener('click', () => {
   secondaryEnabled = !secondaryEnabled
   secondaryToggleBtn.classList.toggle('on', secondaryEnabled)
-  secondaryToggleBtn.textContent = secondaryEnabled ? 'Remove' : 'Add accent'
+  secondaryToggleBtn.textContent = secondaryEnabled ? 'Remove' : 'Add secondary'
   secondaryRow.style.display = secondaryEnabled ? 'block' : 'none'
   updatePreview()
 })
@@ -246,7 +246,7 @@ window.addEventListener('message', e => {
   applyBtn.disabled = false
   if (msg.type === 'done') {
     pendingName = null
-    const acc = msg.secondary && msg.secondary !== 'real' ? `, accent ${msg.secondary}` : ''
+    const acc = msg.secondary && msg.secondary !== 'real' ? `, secondary ${msg.secondary}` : ''
     const grew = msg.createdShared ? `, ${msg.createdShared} new primitives` : ''
     setStatus(`✓ ${msg.brand}: ${msg.aliases} aliased${grew}${acc}`, 'ok')
   } else if (msg.type === 'confirm') {
