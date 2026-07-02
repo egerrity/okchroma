@@ -1,0 +1,75 @@
+<!doctype html><meta charset="utf-8"><title>paper-2 seam: chained wash-3 separation</title>
+<style>
+  body{margin:0;padding:28px;background:#f4f2ee;color:#222;font:14px/1.4 -apple-system,system-ui,sans-serif}
+  h1{font-size:17px;font-weight:650} h2{font-size:13px;font-weight:600;margin:26px 0 8px}
+  .dot{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:6px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .panel{border-radius:12px;padding:14px;border:1px solid #00000014}
+  .cap{font-size:11.5px;margin-bottom:8px;opacity:.85;line-height:1.5}
+  .row{display:flex}
+  .lbl{font-size:10px;opacity:.65;margin-top:3px;text-align:center}
+  .chip{display:inline-block;padding:5px 12px;border-radius:6px;font-size:12px;margin-right:6px}
+</style>
+<h1>the warm-hue seam: 0.028 pushes paper-2 onto wash-3 for muted warm hues — pick the resolution</h1>
+<div style="opacity:.65;font-size:12px">middle column shows the collapse (H60: ΔE 2↔3 = 0.002 — wash-3 badge vanishes on paper-2) · right column adds the CHAINED rule: wash-3 must stand ΔE ≥ 0.012 off the resolved paper-2 (same min-separation rule, next seam; floor semantics — unaffected hues don't move)</div>
+<section><h2><span class="dot" style="background:#a27e62"></span> #a27e62 — H60 C0.06 — muted warm (THE collapse case)</h2><div class="grid"><div class="panel" style="background:#fdfdfc;color:#3c2c21">
+    <div class="cap"><b>current (no separation)</b><br>ΔE 1↔2 = 0.009 · ΔE 2↔3 = 0.019</div>
+    <div class="row" style="border-radius:8px;overflow:hidden"><div style="flex:1"><div style="height:72px;background:#fdfdfc"></div><div class="lbl">1</div></div><div style="flex:1"><div style="height:72px;background:#fcfaf6"></div><div class="lbl">2</div></div><div style="flex:1"><div style="height:72px;background:#f9f4ea"></div><div class="lbl">3</div></div><div style="flex:1"><div style="height:72px;background:#f5eedd"></div><div class="lbl">4</div></div><div style="flex:1"><div style="height:72px;background:#efe4cd"></div><div class="lbl">5</div></div></div>
+    <div style="margin-top:8px"><span class="chip" style="background:#fcfaf6">on paper-2</span>
+    <span class="chip" style="background:#f9f4ea">wash-3 badge</span></div>
+  </div><div class="panel" style="background:#fdfdfc;color:#3c2c21">
+    <div class="cap"><b>0.028 only</b><br>ΔE 1↔2 = 0.029 · ΔE 2↔3 = 0.002</div>
+    <div class="row" style="border-radius:8px;overflow:hidden"><div style="flex:1"><div style="height:72px;background:#fdfdfc"></div><div class="lbl">1</div></div><div style="flex:1"><div style="height:72px;background:#f8f4eb"></div><div class="lbl">2</div></div><div style="flex:1"><div style="height:72px;background:#f9f4ea"></div><div class="lbl">3</div></div><div style="flex:1"><div style="height:72px;background:#f5eedd"></div><div class="lbl">4</div></div><div style="flex:1"><div style="height:72px;background:#efe4cd"></div><div class="lbl">5</div></div></div>
+    <div style="margin-top:8px"><span class="chip" style="background:#f8f4eb">on paper-2</span>
+    <span class="chip" style="background:#f9f4ea">wash-3 badge</span></div>
+  </div><div class="panel" style="background:#fdfdfc;color:#3c2c21">
+    <div class="cap"><b>0.028 + chained wash-3 (0.012)</b><br>ΔE 1↔2 = 0.029 · ΔE 2↔3 = 0.013</div>
+    <div class="row" style="border-radius:8px;overflow:hidden"><div style="flex:1"><div style="height:72px;background:#fdfdfc"></div><div class="lbl">1</div></div><div style="flex:1"><div style="height:72px;background:#f8f4eb"></div><div class="lbl">2</div></div><div style="flex:1"><div style="height:72px;background:#f6f0e2"></div><div class="lbl">3</div></div><div style="flex:1"><div style="height:72px;background:#f5eedd"></div><div class="lbl">4</div></div><div style="flex:1"><div style="height:72px;background:#efe4cd"></div><div class="lbl">5</div></div></div>
+    <div style="margin-top:8px"><span class="chip" style="background:#f8f4eb">on paper-2</span>
+    <span class="chip" style="background:#f6f0e2">wash-3 badge</span></div>
+  </div></div></section><section><h2><span class="dot" style="background:#b37903"></span> #b37903 — H75 C0.13 — warm</h2><div class="grid"><div class="panel" style="background:#fffef9;color:#472d04">
+    <div class="cap"><b>current (no separation)</b><br>ΔE 1↔2 = 0.012 · ΔE 2↔3 = 0.025</div>
+    <div class="row" style="border-radius:8px;overflow:hidden"><div style="flex:1"><div style="height:72px;background:#fffef9"></div><div class="lbl">1</div></div><div style="flex:1"><div style="height:72px;background:#fffbef"></div><div class="lbl">2</div></div><div style="flex:1"><div style="height:72px;background:#fff7db"></div><div class="lbl">3</div></div><div style="flex:1"><div style="height:72px;background:#fff2c6"></div><div class="lbl">4</div></div><div style="flex:1"><div style="height:72px;background:#ffeaa7"></div><div class="lbl">5</div></div></div>
+    <div style="margin-top:8px"><span class="chip" style="background:#fffbef">on paper-2</span>
+    <span class="chip" style="background:#fff7db">wash-3 badge</span></div>
+  </div><div class="panel" style="background:#fffef9;color:#472d04">
+    <div class="cap"><b>0.028 only</b><br>ΔE 1↔2 = 0.029 · ΔE 2↔3 = 0.012</div>
+    <div class="row" style="border-radius:8px;overflow:hidden"><div style="flex:1"><div style="height:72px;background:#fffef9"></div><div class="lbl">1</div></div><div style="flex:1"><div style="height:72px;background:#fcf7e4"></div><div class="lbl">2</div></div><div style="flex:1"><div style="height:72px;background:#fff7db"></div><div class="lbl">3</div></div><div style="flex:1"><div style="height:72px;background:#fff2c6"></div><div class="lbl">4</div></div><div style="flex:1"><div style="height:72px;background:#ffeaa7"></div><div class="lbl">5</div></div></div>
+    <div style="margin-top:8px"><span class="chip" style="background:#fcf7e4">on paper-2</span>
+    <span class="chip" style="background:#fff7db">wash-3 badge</span></div>
+  </div><div class="panel" style="background:#fffef9;color:#472d04">
+    <div class="cap"><b>0.028 + chained wash-3 (0.012)</b><br>ΔE 1↔2 = 0.029 · ΔE 2↔3 = 0.013</div>
+    <div class="row" style="border-radius:8px;overflow:hidden"><div style="flex:1"><div style="height:72px;background:#fffef9"></div><div class="lbl">1</div></div><div style="flex:1"><div style="height:72px;background:#fcf7e4"></div><div class="lbl">2</div></div><div style="flex:1"><div style="height:72px;background:#fff7da"></div><div class="lbl">3</div></div><div style="flex:1"><div style="height:72px;background:#fff2c6"></div><div class="lbl">4</div></div><div style="flex:1"><div style="height:72px;background:#ffeaa7"></div><div class="lbl">5</div></div></div>
+    <div style="margin-top:8px"><span class="chip" style="background:#fcf7e4">on paper-2</span>
+    <span class="chip" style="background:#fff7da">wash-3 badge</span></div>
+  </div></div></section><section><h2><span class="dot" style="background:#c8a018"></span> #c8a018 — saturated yellow</h2><div class="grid"><div class="panel" style="background:#fffef6;color:#453100">
+    <div class="cap"><b>current (no separation)</b><br>ΔE 1↔2 = 0.018 · ΔE 2↔3 = 0.035</div>
+    <div class="row" style="border-radius:8px;overflow:hidden"><div style="flex:1"><div style="height:72px;background:#fffef6"></div><div class="lbl">1</div></div><div style="flex:1"><div style="height:72px;background:#fefce8"></div><div class="lbl">2</div></div><div style="flex:1"><div style="height:72px;background:#fef9cb"></div><div class="lbl">3</div></div><div style="flex:1"><div style="height:72px;background:#fff5a3"></div><div class="lbl">4</div></div><div style="flex:1"><div style="height:72px;background:#ffee75"></div><div class="lbl">5</div></div></div>
+    <div style="margin-top:8px"><span class="chip" style="background:#fefce8">on paper-2</span>
+    <span class="chip" style="background:#fef9cb">wash-3 badge</span></div>
+  </div><div class="panel" style="background:#fffef6;color:#453100">
+    <div class="cap"><b>0.028 only</b><br>ΔE 1↔2 = 0.029 · ΔE 2↔3 = 0.032</div>
+    <div class="row" style="border-radius:8px;overflow:hidden"><div style="flex:1"><div style="height:72px;background:#fffef6"></div><div class="lbl">1</div></div><div style="flex:1"><div style="height:72px;background:#f9f7e2"></div><div class="lbl">2</div></div><div style="flex:1"><div style="height:72px;background:#fef9cb"></div><div class="lbl">3</div></div><div style="flex:1"><div style="height:72px;background:#fff5a3"></div><div class="lbl">4</div></div><div style="flex:1"><div style="height:72px;background:#ffee75"></div><div class="lbl">5</div></div></div>
+    <div style="margin-top:8px"><span class="chip" style="background:#f9f7e2">on paper-2</span>
+    <span class="chip" style="background:#fef9cb">wash-3 badge</span></div>
+  </div><div class="panel" style="background:#fffef6;color:#453100">
+    <div class="cap"><b>0.028 + chained wash-3 (0.012)</b><br>ΔE 1↔2 = 0.029 · ΔE 2↔3 = 0.032</div>
+    <div class="row" style="border-radius:8px;overflow:hidden"><div style="flex:1"><div style="height:72px;background:#fffef6"></div><div class="lbl">1</div></div><div style="flex:1"><div style="height:72px;background:#f9f7e2"></div><div class="lbl">2</div></div><div style="flex:1"><div style="height:72px;background:#fef9cb"></div><div class="lbl">3</div></div><div style="flex:1"><div style="height:72px;background:#fff5a3"></div><div class="lbl">4</div></div><div style="flex:1"><div style="height:72px;background:#ffee75"></div><div class="lbl">5</div></div></div>
+    <div style="margin-top:8px"><span class="chip" style="background:#f9f7e2">on paper-2</span>
+    <span class="chip" style="background:#fef9cb">wash-3 badge</span></div>
+  </div></div></section><section><h2><span class="dot" style="background:#3060c0"></span> #3060c0 — mid blue (control — unaffected)</h2><div class="grid"><div class="panel" style="background:#fbfcff;color:#11264f">
+    <div class="cap"><b>current (no separation)</b><br>ΔE 1↔2 = 0.014 · ΔE 2↔3 = 0.028</div>
+    <div class="row" style="border-radius:8px;overflow:hidden"><div style="flex:1"><div style="height:72px;background:#fbfcff"></div><div class="lbl">1</div></div><div style="flex:1"><div style="height:72px;background:#f5f8ff"></div><div class="lbl">2</div></div><div style="flex:1"><div style="height:72px;background:#e8f0ff"></div><div class="lbl">3</div></div><div style="flex:1"><div style="height:72px;background:#dae7ff"></div><div class="lbl">4</div></div><div style="flex:1"><div style="height:72px;background:#c7dbfe"></div><div class="lbl">5</div></div></div>
+    <div style="margin-top:8px"><span class="chip" style="background:#f5f8ff">on paper-2</span>
+    <span class="chip" style="background:#e8f0ff">wash-3 badge</span></div>
+  </div><div class="panel" style="background:#fbfcff;color:#11264f">
+    <div class="cap"><b>0.028 only</b><br>ΔE 1↔2 = 0.029 · ΔE 2↔3 = 0.016</div>
+    <div class="row" style="border-radius:8px;overflow:hidden"><div style="flex:1"><div style="height:72px;background:#fbfcff"></div><div class="lbl">1</div></div><div style="flex:1"><div style="height:72px;background:#f0f3fa"></div><div class="lbl">2</div></div><div style="flex:1"><div style="height:72px;background:#e8f0ff"></div><div class="lbl">3</div></div><div style="flex:1"><div style="height:72px;background:#dae7ff"></div><div class="lbl">4</div></div><div style="flex:1"><div style="height:72px;background:#c7dbfe"></div><div class="lbl">5</div></div></div>
+    <div style="margin-top:8px"><span class="chip" style="background:#f0f3fa">on paper-2</span>
+    <span class="chip" style="background:#e8f0ff">wash-3 badge</span></div>
+  </div><div class="panel" style="background:#fbfcff;color:#11264f">
+    <div class="cap"><b>0.028 + chained wash-3 (0.012)</b><br>ΔE 1↔2 = 0.029 · ΔE 2↔3 = 0.016</div>
+    <div class="row" style="border-radius:8px;overflow:hidden"><div style="flex:1"><div style="height:72px;background:#fbfcff"></div><div class="lbl">1</div></div><div style="flex:1"><div style="height:72px;background:#f0f3fa"></div><div class="lbl">2</div></div><div style="flex:1"><div style="height:72px;background:#e8f0ff"></div><div class="lbl">3</div></div><div style="flex:1"><div style="height:72px;background:#dae7ff"></div><div class="lbl">4</div></div><div style="flex:1"><div style="height:72px;background:#c7dbfe"></div><div class="lbl">5</div></div></div>
+    <div style="margin-top:8px"><span class="chip" style="background:#f0f3fa">on paper-2</span>
+    <span class="chip" style="background:#e8f0ff">wash-3 badge</span></div>
+  </div></div></section>

@@ -1,159 +1,34 @@
-import { type Archetype, classifyArchetype, medianLForArchetype, hoverL } from './archetypes'
+import { type Archetype, classifyArchetype, hoverL } from './archetypes'
 import {
   wcagY,
   contrastRatio,
   findLForY,
   findLForContrast,
-  findMaxLForContrast,
-  clampChromaToGamut,
-  oklchToLinearRgb,
   apcaY,
-  apcaLc,
 } from './constraints'
 import {
-  LIGHT_STOPS,
-  LIGHT_BASE_C,
-  STOP_8_NONTEXT_CONTRAST,
-  DARK_SUBTLE_CHROMA_MULT,
-  DARK_NEUTRAL_L,
-  STOP_11,
-  STOP_12,
-  STOP_11_CONTRAST,
-  STOP_12_CONTRAST_FLOOR,
-  DARK_STOP_9_MIN_L,
-  DARK_COLLIDER_MUTED_L,
-  DARK_COLLIDER_MUTED_CHROMA_SCALE,
-  DARK_STOP_11,
-  DARK_STOP_12,
-  GOLD_SPINE,
-  WARM_TORSION,
-  HIGHLIGHT_LIGHT,
-  HIGHLIGHT_DARK,
   ILLUS_STOPS,
   REFERENCE_H,
 } from './stopTable'
 import { neutralChromaCurve, type NeutralLevel } from './neutralCurve'
-import { darkCtaTrim } from './darkChromaCurve'
-import { perceptualRungL } from './perceptualL'
 
 export type { NeutralLevel } from './neutralCurve'
 
-function goldSpineHueTable(L: number): number {
-  const pts = GOLD_SPINE
-  if (L <= pts[0][0]) return pts[0][1]
-  for (let i = 1; i < pts.length; i++) {
-    if (L <= pts[i][0]) {
-      const [l0, h0] = pts[i - 1]
-      const [l1, h1] = pts[i]
-      return h0 + ((h1 - h0) * (L - l0)) / (l1 - l0)
-    }
-  }
-  return pts[pts.length - 1][1]
-}
+// Shared color math + producer constants live in colorMath.ts (hoisted verbatim; leaf module so the
+// requirement-token resolver can share them without an import cycle). Re-exported here for API compat.
+import {
+  goldSpineHue, torsionedHue, SPINE_OFFPATH_SIGMA, gauss, hueDelta,
+  HUE_NOISE_C, RED_COOL_DEG, redCoolWeight,
+  hexToOklch, oklchToSrgbUnclamped,
+  makeStop, onTextIsWhite, type ColorStop,
+} from './colorMath'
+export {
+  goldSpineHue, torsionedHue, hexToOklch, RED_COOL_DEG, redCoolWeight, inRedBand,
+} from './colorMath'
+export type { ColorStop } from './colorMath'
 
-function goldSpineHue(L: number): number {
-  return goldSpineHueTable(L)
-}
-
-function torsionedHue(brandH: number, stopL: number, anchorL: number, offPathG: number): number {
-  const { bandLo, bandHi, taperDeg, travel, capDeg } = WARM_TORSION
-  const w = Math.min(
-    1,
-    Math.max(0, (brandH - bandLo) / taperDeg),
-    Math.max(0, (bandHi - brandH) / taperDeg)
-  )
-  if (w <= 0) return brandH
-  const drift = travel * (goldSpineHue(stopL) - goldSpineHue(anchorL)) * w * offPathG
-  return brandH + Math.max(-capDeg, Math.min(capDeg, drift))
-}
-
-const SPINE_OFFPATH_SIGMA = 20
-
-const sigmoid = (x: number) => 1 / (1 + Math.exp(-x))
-const gauss = (x: number, sigma: number) => Math.exp(-0.5 * (x / sigma) ** 2)
-
-function hueDelta(h: number, center: number): number {
-  let d = (h - center) % 360
-  if (d > 180) d -= 360
-  if (d < -180) d += 360
-  return d
-}
-
-const RED_TORSION_CENTER_H = 35.5
-const RED_TORSION_SOFTNESS = 3.5
-
-const RED_BAND_LO_H = 12
-
-const RED_BAND_LO_SOFTNESS = 2
-
-const VIVID_C = 0.13
-
-const HUE_NOISE_C = 0.008
-
-const MUTED_BLEND_DENOM = 0.55
-
-const CREAM_UPPER_H = 105
-const CREAM_UPPER_SOFTNESS = 5
-
-const DEEPER_BAND_H_LO = 55
-const DEEPER_BAND_H_HI = 100
-const DEEPER_BAND_H_SOFT = 4
-const DEEPER_BAND_U_LO = 0.10
-const DEEPER_BAND_U_HI = 0.70
-const DEEPER_BAND_U_SOFT = 0.015
-
-const DEEPER_STRENGTH = 0.85
-
-export const RED_COOL_DEG = 10.8
-
-export function redCoolWeight(brandH: number): number {
-  return (
-    sigmoid((brandH - RED_BAND_LO_H) / RED_BAND_LO_SOFTNESS) *
-    (1 - sigmoid((brandH - RED_TORSION_CENTER_H) / RED_TORSION_SOFTNESS))
-  )
-}
-
-export function inRedBand(h: number): boolean {
-  return h > RED_BAND_LO_H && h <= RED_TORSION_CENTER_H
-}
-
-function maxChromaAt(L: number, H: number): number {
-  return clampChromaToGamut(L, 0.52, H)
-}
-
-function hexToOklch(hex: string): { L: number; C: number; H: number } {
-  const h = hex.replace('#', '')
-  const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h
-  const r = parseInt(full.slice(0, 2), 16) / 255
-  const g = parseInt(full.slice(2, 4), 16) / 255
-  const b = parseInt(full.slice(4, 6), 16) / 255
-  const lin = (c: number) => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
-  const rl = lin(r), gl = lin(g), bl = lin(b)
-  const lms_l = 0.4121656120 * rl + 0.5362752080 * gl + 0.0514575653 * bl
-  const lms_m = 0.2118591070 * rl + 0.6807189584 * gl + 0.1074065790 * bl
-  const lms_s = 0.0883097947 * rl + 0.2818474174 * gl + 0.6302613616 * bl
-  const l_ = Math.cbrt(lms_l), m_ = Math.cbrt(lms_m), s_ = Math.cbrt(lms_s)
-  const L = 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_
-  const a = 1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_
-  const bv = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_
-  return { L, C: Math.sqrt(a * a + bv * bv), H: (Math.atan2(bv, a) * 180 / Math.PI + 360) % 360 }
-}
-
-function oklchToSrgbUnclamped(L: number, C: number, H: number): { r: number; g: number; b: number } {
-  const [rl, gl, bl] = oklchToLinearRgb(L, C, H)
-  const gm = (c: number) => c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055
-  return { r: gm(rl), g: gm(gl), b: gm(bl) }
-}
-
-export interface ColorStop {
-  stop: number
-  L: number
-  C: number
-  H: number
-  r: number
-  g: number
-  b: number
-}
+import { resolveRamp, type ResolvedStop } from '../reqtoken/resolve'
+import { MODE_SPECS, type ModeSpec } from '../reqtoken/spec'
 
 export interface GeneratedScale {
   name: string
@@ -177,23 +52,6 @@ export interface GeneratedScale {
   onHighlightIsWhiteDark?: boolean
 
   identityHex?: string
-}
-
-function applyChromaFloor(C: number, multiplier: number, stopIndex: number, floorStrength: number): number {
-  const raw = C * multiplier
-  if (floorStrength <= 0) return raw
-  const floor = (0.02 + (0.04 - 0.02) * (stopIndex / 7)) * floorStrength
-  return Math.max(raw, floor)
-}
-
-const DARK_FLOOR_FULL_C = 0.022
-
-const DARK_FLOOR_MUTED_MAX_C = 0.04
-
-function makeStop(stop: number, L: number, C: number, H: number): ColorStop {
-  const gamutC = clampChromaToGamut(L, C, H)
-  const { r, g, b } = oklchToSrgbUnclamped(L, gamutC, H)
-  return { stop, L, C: gamutC, H, r, g, b }
 }
 
 export interface GenerateOptions {
@@ -234,261 +92,47 @@ export interface GenerateOptions {
   heat?: number
 }
 
-function onTextIsWhite(Y: number, L: number, C: number, H: number, enforce: boolean): boolean {
-  let white = Math.abs(apcaLc(1.0, Y)) >= Math.abs(apcaLc(0.0, Y))
-  if (enforce) {
-    if (white && contrastRatio(1.0, wcagY(L, C, H)) < 4.5) {
-      if (contrastRatio(wcagY(L, C, H), 0) >= 4.5 && Math.abs(apcaLc(0.0, Y)) >= 45) white = false
-    } else if (!white && contrastRatio(wcagY(L, C, H), 0) < 4.5) {
-      if (contrastRatio(1.0, wcagY(L, C, H)) >= 4.5 && Math.abs(apcaLc(1.0, Y)) >= 45) white = true
-    }
-  }
-  return white
-}
-
+// generateScale is now an ADAPTER over the requirement-token resolver (src/reqtoken): it compiles the caller
+// opts into a resolver invocation per mode and assembles the same GeneratedScale contract as before. The
+// producer/require/refine math lives in src/reqtoken/producers.ts (verbatim ports of the old body — the old
+// body itself is frozen in src/engine/legacy/ until Stage 7). Output is byte-identical: proven by
+// scripts/engine-parity.ts (legacy vs live) and scripts/reqtoken-parity-probe.ts (resolver vs legacy shape).
 export function generateScale(
   hex: string,
   scaleName: string,
   forcedArchetype?: Archetype,
   opts?: GenerateOptions
 ): GeneratedScale {
+  // compile: opts + the built-in declaration → per-mode resolver runs. enforceOnFillContrast is passed
+  // explicitly (generateScale's contract defaults it OFF; the spec's declared default only applies to
+  // direct resolver users). The highlight flag gates stops 9/10 out of the compiled spec.
+  const rOpts = { ...opts, forcedArchetype, enforceOnFillContrast: !!opts?.enforceOnFillContrast }
+  const compile = (spec: ModeSpec): ModeSpec =>
+    opts?.highlight ? spec : { ...spec, stops: spec.stops.filter(s => s.stop !== 9 && s.stop !== 10) }
+  const lightRamp = resolveRamp(hex, 'light', compile(MODE_SPECS.light), rOpts)
+  const darkRamp = resolveRamp(hex, 'dark', compile(MODE_SPECS.dark), rOpts)
+
+  // metadata (brand identity fields on the scale)
   const { L: brandL, C: rawC, H: rawH } = hexToOklch(hex)
   const brandH = (rawH + (opts?.hueShiftDeg ?? 0) + 360) % 360
   const brandC = rawC * (opts?.chromaScale ?? 1)
-
-  const subtleC = brandC * (opts?.subtleChromaScale ?? 1)
-
-  const cAt = (mode: 'light' | 'dark', L: number, nativeC: number): number =>
-    (opts?.chromaCurve ? opts.chromaCurve(L, mode) : nativeC) * (opts?.heat ?? 1)
   const archetype = forcedArchetype ?? classifyArchetype(brandL)
-  const scaleL = forcedArchetype ? medianLForArchetype(forcedArchetype) : brandL
 
-  const darkFloorStrength =
-    brandC >= DARK_FLOOR_MUTED_MAX_C
-      ? 0
-      : Math.min(1, Math.max(0, (brandC - HUE_NOISE_C) / (DARK_FLOOR_FULL_C - HUE_NOISE_C)))
-
-  const fill9 = oklchToSrgbUnclamped(scaleL, clampChromaToGamut(scaleL, cAt('light', scaleL, brandC), brandH), brandH)
-  const fill9ApcaY = apcaY(fill9.r, fill9.g, fill9.b)
-  let onFillTextIsWhite = onTextIsWhite(fill9ApcaY, scaleL, brandC, brandH, !!opts?.enforceOnFillContrast)
-
-  const hueIsNoise = brandC < HUE_NOISE_C
-  const v = Math.min(1, brandC / VIVID_C)
-  const vSubtle = Math.min(1, subtleC / VIVID_C)
-  const S = hueIsNoise ? 0 : sigmoid(hueDelta(brandH, RED_TORSION_CENTER_H) / RED_TORSION_SOFTNESS)
-  const wRed = hueIsNoise || opts?.suppressRedCool ? 0 : redCoolWeight(brandH)
-  const mutednessRaw = Math.min(1, (1 - v) / MUTED_BLEND_DENOM)
-
-  const creamGate = 1 - sigmoid((brandH - CREAM_UPPER_H) / CREAM_UPPER_SOFTNESS)
-  const uRaw = S * creamGate * mutednessRaw
-
-  const bandGate = hueIsNoise
-    ? 0
-    : sigmoid((brandH - DEEPER_BAND_H_LO) / DEEPER_BAND_H_SOFT) *
-      (1 - sigmoid((brandH - DEEPER_BAND_H_HI) / DEEPER_BAND_H_SOFT)) *
-      sigmoid((uRaw - DEEPER_BAND_U_LO) / DEEPER_BAND_U_SOFT) *
-      (1 - sigmoid((uRaw - DEEPER_BAND_U_HI) / DEEPER_BAND_U_SOFT))
-  const deeperEffect = opts?.style === 'deeper' ? DEEPER_STRENGTH * bandGate : 0
-
-  const mutedness = mutednessRaw + deeperEffect * (1 - mutednessRaw)
-  const u = S * creamGate * mutedness
-  const gWarm = gauss(hueDelta(brandH, 83), 28)
-  const wDrift = S * (gWarm + (1 - gWarm) * mutedness * creamGate)
-  const driftCapDeg = 24 + 8 * u
-
-  const chromaBoost = hueIsNoise
-    ? 1
-    : 1 + 1.7 * gauss(hueDelta(brandH, 90), 35) * S * (1 - (1 - creamGate) * (1 - v))
-
-  const brandSat = subtleC / Math.max(1e-6, maxChromaAt(brandL, brandH))
-
-  const lightSpineRef = goldSpineHue(scaleL)
-  const gOffPath = gauss(hueDelta(brandH, lightSpineRef), SPINE_OFFPATH_SIGMA)
-  const lightHueAt = (L: number): number => {
-    const drift = 0.55 * (goldSpineHue(L) - lightSpineRef) * wDrift * gOffPath
-    return brandH + Math.max(-driftCapDeg, Math.min(driftCapDeg, drift)) - RED_COOL_DEG * wRed
-  }
-
-  const darkH =
-    opts?.coolRedDark && !hueIsNoise && inRedBand(brandH)
-      ? brandH - RED_COOL_DEG * redCoolWeight(brandH)
-      : brandH
-
-  const light: ColorStop[] = []
-
-  for (let i = 0; i < LIGHT_STOPS.length; i++) {
-    const { rootL, satFraction } = LIGHT_STOPS[i]
-
-    const chromaAt = (L: number): number => {
-      const cLadder = vSubtle * chromaBoost * LIGHT_BASE_C[i]
-      const cEnv = brandSat * satFraction * maxChromaAt(L, lightHueAt(L))
-      return cAt('light', L, cLadder + u * (cEnv - cLadder))
-    }
-
-    let L = perceptualRungL(rootL, chromaAt(rootL), lightHueAt(rootL))
-
-    // Stop 8 carries the WCAG 1.4.11 non-text 3:1 guarantee: clamp its perceptual
-    // rung down to the lightest L that still clears 3:1 against this scale's own
-    // paper-2 (light[1], already pushed). Chroma/hue track L (the warm spine drifts
-    // hue with lightness), so iterate the clamp to a fixed point — at convergence
-    // the solver's C/H input equals the emitted C/H, so the 3:1 floor is exact. For
-    // darker hues the rung is already below the ceiling and passes untouched.
-    if (i === 7) {
-      const p2Y = wcagY(light[1].L, light[1].C, light[1].H)
-      // Solve to a hair above 3.0 so the emitted stop still clears 3:1 after
-      // makeStop's gamut clamp trims chroma (same margin idiom as the 4.6-for-4.5
-      // fill floor). chromaAt/lightHueAt track L, so iterate to a fixed point.
-      const solveTarget = STOP_8_NONTEXT_CONTRAST + 0.05
-      for (let pass = 0; pass < 6; pass++) {
-        const next = Math.min(L, findMaxLForContrast(chromaAt(L), lightHueAt(L), p2Y, solveTarget))
-        if (Math.abs(next - L) < 1e-4) { L = next; break }
-        L = next
-      }
-    }
-
-    light.push(makeStop(i + 1, L, chromaAt(L), lightHueAt(L)))
-  }
-
-  const stop2Y = wcagY(light[1].L, light[1].C, light[1].H)
-
-  let light9L = scaleL
-  if (opts?.enforceOnFillContrast && onFillTextIsWhite
-      && contrastRatio(1.0, wcagY(scaleL, brandC, brandH)) < 4.5) {
-    light9L = findLForContrast(scaleL, brandC, brandH, 1.0, 4.6)
-  }
-
-  const cta = makeStop(9, light9L, cAt('light', light9L, brandC), brandH)
-  const ctaHover = makeStop(10, hoverL(light9L), cAt('light', hoverL(light9L), brandC), brandH)
-
-  const lightTextStop = (stop: number, rootL: number, cMult: number, ratio: number, deepen: number): ColorStop => {
-
-    const anchorL = perceptualRungL(rootL, clampChromaToGamut(rootL, cMult * brandC, lightHueAt(rootL)), lightHueAt(rootL))
-    let H = lightHueAt(anchorL)
-    let C = clampChromaToGamut(anchorL, cMult * brandC, H)
-    let L = Math.min(anchorL, findMaxLForContrast(C, H, stop2Y, ratio))
-    H = lightHueAt(L)
-    C = clampChromaToGamut(L, cMult * brandC, H)
-    L = Math.min(anchorL, findMaxLForContrast(C, H, stop2Y, ratio))
-    L = Math.min(L - deepen, findMaxLForContrast(C, lightHueAt(L - deepen), stop2Y, ratio))
-    return makeStop(stop, L, cAt('light', L, cMult * brandC), lightHueAt(L))
-  }
-  light.push(lightTextStop(11, STOP_11.rootL, STOP_11.chromaMultiplier, STOP_11_CONTRAST, opts?.stop11DeepenL ?? 0))
-  light.push(lightTextStop(12, STOP_12.rootL, STOP_12.chromaMultiplier, STOP_12_CONTRAST_FLOOR, opts?.stop12DeepenL ?? 0))
-
-  const dark: ColorStop[] = []
-
-  let dark9L = Math.max(scaleL, opts?.darkFillMinL ?? DARK_STOP_9_MIN_L)
-
-  let darkC9 = opts?.darkChromaCurve && !opts?.loudCta ? brandC * darkCtaTrim(darkH) : brandC
-  if (opts?.darkColliderFill === 'muted') {
-    dark9L = DARK_COLLIDER_MUTED_L
-    darkC9 = brandC * DARK_COLLIDER_MUTED_CHROMA_SCALE
-  }
-
-  // The dark ramp equalizes apparent (H-K) lightness across hue ONLY where that is the
-  // stop's job: the paper/wash SURFACES (1–7) and the ink TEXT stops (11/12) are solved
-  // like light (perceptualRungL, La=65) so they read at one perceived lightness on every
-  // brand. The HIGHLIGHT band (8–10) is constrained — 3:1 border + legibility fills — so
-  // it stays at its hand-placed scaffold: solving it would re-enter the APCA body-text
-  // dead zone AND let a solved surface ride up past the legibility-placed highlight. The
-  // off-scale cta is never solved either (it carries the brand fill's own lightness).
-  const darkHueAtL = (L: number) => torsionedHue(darkH, L, dark9L, gOffPath)
-  const placeDarkStop = (stop: number, rootL: number, chromaAt: (l: number) => number): ColorStop => {
-    const L = perceptualRungL(rootL, chromaAt(rootL), darkHueAtL(rootL))
-    return makeStop(stop, L, chromaAt(L), darkHueAtL(L))
-  }
-
-  for (let i = 0; i < DARK_SUBTLE_CHROMA_MULT.length; i++) {
-    const chromaMultiplier = DARK_SUBTLE_CHROMA_MULT[i]
-    const rootL = DARK_NEUTRAL_L[i]
-    const chromaAt = (L: number) => cAt('dark', L, opts?.darkChromaCurve
-      ? opts.darkChromaCurve(L, darkHueAtL(L), brandC, darkC9)
-      : applyChromaFloor(subtleC, chromaMultiplier, i, darkFloorStrength))
-    // stop 8 (i===7) is the foot of the constrained highlight band — placed, not solved.
-    dark.push(i < 7
-      ? placeDarkStop(i + 1, rootL, chromaAt)
-      : makeStop(i + 1, rootL, chromaAt(rootL), darkHueAtL(rootL)))
-  }
-
-  let ctaDark = makeStop(9, dark9L, cAt('dark', dark9L, darkC9), darkH)
-  let ctaHoverDark = makeStop(10, hoverL(dark9L), cAt('dark', hoverL(dark9L), darkC9), darkH)
-
-  dark.push(placeDarkStop(11, DARK_NEUTRAL_L[10], (L) => cAt('dark', L, opts?.darkChromaCurve
-    ? opts.darkChromaCurve(L, darkHueAtL(L), brandC)
-    : applyChromaFloor(brandC, DARK_STOP_11.chromaMultiplier, 10, darkFloorStrength))))
-
-  dark.push(placeDarkStop(12, DARK_NEUTRAL_L[11], (L) => cAt('dark', L, opts?.darkChromaCurve
-    ? opts.darkChromaCurve(L, darkHueAtL(L), brandC)
-    : applyChromaFloor(brandC, DARK_STOP_12.chromaMultiplier, 11, darkFloorStrength))))
-
-  const dark9ApcaY0 = apcaY(ctaDark.r, ctaDark.g, ctaDark.b)
-  const onFillTextIsWhiteDark = onTextIsWhite(dark9ApcaY0, ctaDark.L, ctaDark.C, ctaDark.H, !!opts?.enforceOnFillContrast)
-
-  if (opts?.enforceOnFillContrast && onFillTextIsWhiteDark) {
-    if (contrastRatio(1.0, wcagY(ctaDark.L, ctaDark.C, ctaDark.H)) < 4.5) {
-
-      const compliantL = findLForContrast(ctaDark.L, ctaDark.C, darkH, 1.0, 4.6)
-      ctaDark = makeStop(9, compliantL, cAt('dark', compliantL, darkC9), darkH)
-      ctaHoverDark = makeStop(10, hoverL(compliantL), cAt('dark', hoverL(compliantL), darkC9), darkH)
-    }
-  }
-
-  let onHighlightIsWhite: boolean | undefined
-  let onHighlightIsWhiteDark: boolean | undefined
-  if (opts?.highlight) {
-    const hlLadderC = vSubtle * chromaBoost * HIGHLIGHT_LIGHT.baseC
-
-    const lightHlC = (l: number, hh: number) =>
-      clampChromaToGamut(l, cAt('light', l, hlLadderC + u * (brandSat * HIGHLIGHT_LIGHT.satFraction * maxChromaAt(l, hh) - hlLadderC)), hh)
-
-    const rung = (
-      stop: number, Lt: number,
-      hueAt: (l: number) => number, chromaAt: (l: number, h: number) => number,
-    ): ColorStop => makeStop(stop, Lt, chromaAt(Lt, hueAt(Lt)), hueAt(Lt))
-
-    const placeRung = (
-      stop: number, L0: number,
-      hueAt: (l: number) => number, chromaAt: (l: number, h: number) => number,
-    ): { s: ColorStop; white: boolean } => {
-      const s = rung(stop, L0, hueAt, chromaAt)
-      // Highlight on-text is judged by APCA, NOT WCAG (enforce=false): keep whichever
-      // pole APCA finds legible, let it fall out. The WCAG-4.5 floor instead FORCES the
-      // pole that clears 4.5 — which on a mid-L fill can be the body-illegible one. The
-      // highlight L is set outside the body-text dead zone so the picked pole clears Lc 60.
-      const white = onTextIsWhite(apcaY(s.r, s.g, s.b), s.L, s.C, s.H, false)
-      return { s, white }
-    }
-
-    const lightHlL = (rl: number) => perceptualRungL(rl, lightHlC(rl, lightHueAt(rl)), lightHueAt(rl))
-    const hl = placeRung(9, lightHlL(HIGHLIGHT_LIGHT.rootL), lightHueAt, lightHlC)
-    const hl9 = hl.s
-    const hl10 = rung(10, lightHlL(HIGHLIGHT_LIGHT.rootL10), lightHueAt, lightHlC)
-    light.push(hl9, hl10)
-    onHighlightIsWhite = hl.white
-
-    const darkHlC = (l: number, h: number) =>
-      opts?.darkChromaCurve
-        ? clampChromaToGamut(l, opts.darkChromaCurve(l, h, brandC), h)
-        : clampChromaToGamut(l, cAt('dark', l, hlLadderC + u * (brandSat * HIGHLIGHT_LIGHT.satFraction * maxChromaAt(l, h) - hlLadderC)), h)
-    // Highlight 9/10 carry on-text, so their dark L stays hand-placed at the
-    // legibility-tuned HIGHLIGHT_DARK scaffold (out of the APCA body-text dead zone)
-    // rather than solved for apparent-lightness like the surfaces — solving moves some
-    // hues into the dead zone (on-text < Lc 60). Legibility wins over equalization here.
-    const dhl = placeRung(9, HIGHLIGHT_DARK.rootL, darkHueAtL, darkHlC)
-    const dhl9 = dhl.s
-    const dhl10 = rung(10, HIGHLIGHT_DARK.rootL10, darkHueAtL, darkHlC)
-    dark.push(dhl9, dhl10)
-    onHighlightIsWhiteDark = dhl.white
-  }
-
-  light.sort((a, b) => a.stop - b.stop)
-  dark.sort((a, b) => a.stop - b.stop)
+  const toStop = (s: ResolvedStop): ColorStop => makeStop(s.stop, s.L, s.C, s.H)
+  const light = lightRamp.stops.map(toStop).sort((a, b) => a.stop - b.stop)
+  const dark = darkRamp.stops.map(toStop).sort((a, b) => a.stop - b.stop)
 
   return {
     name: scaleName, archetype, brandL, brandC, brandH,
-    onFillTextIsWhite, onFillTextIsWhiteDark, light, dark,
-    cta, ctaHover, ctaDark, ctaHoverDark,
-    onHighlightIsWhite, onHighlightIsWhiteDark,
+    onFillTextIsWhite: lightRamp.ons.onFillIsWhite,
+    onFillTextIsWhiteDark: darkRamp.ons.onFillIsWhite,
+    light, dark,
+    cta: makeStop(9, lightRamp.roles.cta.L, lightRamp.roles.cta.C, lightRamp.roles.cta.H),
+    ctaHover: makeStop(10, lightRamp.roles.ctaHover.L, lightRamp.roles.ctaHover.C, lightRamp.roles.ctaHover.H),
+    ctaDark: makeStop(9, darkRamp.roles.cta.L, darkRamp.roles.cta.C, darkRamp.roles.cta.H),
+    ctaHoverDark: makeStop(10, darkRamp.roles.ctaHover.L, darkRamp.roles.ctaHover.C, darkRamp.roles.ctaHover.H),
+    onHighlightIsWhite: opts?.highlight ? lightRamp.ons.onHighlightIsWhite : undefined,
+    onHighlightIsWhiteDark: opts?.highlight ? darkRamp.ons.onHighlightIsWhite : undefined,
     identityHex: hex.toUpperCase(),
   }
 }
