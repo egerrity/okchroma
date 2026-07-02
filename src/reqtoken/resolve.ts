@@ -77,6 +77,10 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         clamped = true
       } else if (sp.stop === 9 || sp.stop === 10) {
         placed = placeLightHighlight(ctx, sp.rootL, lightHighlightChromaAt(ctx, sp.baseC ?? 0, sp.satFraction ?? 1))
+      } else if (sp.produce.L === 'fixed') {
+        // fixed light stop (paper-0): sits exactly at its declared extreme
+        const chromaAt = lightScaleChromaAt(ctx, sp.baseC ?? 0, sp.satFraction ?? 1)
+        placed = { L: sp.rootL, C: chromaAt(sp.rootL), H: ctx.lightHueAt(sp.rootL) }
       } else {
         const chromaAt = lightScaleChromaAt(ctx, sp.baseC ?? 0, sp.satFraction ?? 1)
         const wcagReq = sp.require?.metric === 'wcag' ? sp.require : undefined
@@ -97,7 +101,8 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       const chromaAt =
         sp.group === 'ink' ? darkInkChromaAt(ctx, d, sp.stop - 1, sp.chromaMult ?? 1)
         : (sp.stop === 9 || sp.stop === 10) ? undefined
-        : darkScaleChromaAt(ctx, d, sp.stop - 1, sp.satFraction ?? 1)
+        // chroma-floor index clamps at 0: stop 0 shares paper-1's tint treatment
+        : darkScaleChromaAt(ctx, d, Math.max(0, sp.stop - 1), sp.satFraction ?? 1)
       if (sp.stop === 9 || sp.stop === 10) {
         const hlC = darkHighlightChromaAt(ctx, d, sp.baseC ?? 0, sp.satFraction ?? 1)
         const H = d.darkHueAtL(sp.rootL)

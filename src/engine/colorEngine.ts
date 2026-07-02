@@ -52,6 +52,11 @@ export interface GeneratedScale {
   onHighlightIsWhiteDark?: boolean
 
   identityHex?: string
+
+  // paper-0: the resolved ladder extreme beyond paper-1 (white-ish in light; one seam below paper-1 in
+  // dark — never absolute black). OFF the light[]/dark[] arrays: consumers index [0] as stop 1.
+  paper0?: ColorStop
+  paper0Dark?: ColorStop
 }
 
 export interface GenerateOptions {
@@ -119,8 +124,11 @@ export function generateScale(
   const archetype = forcedArchetype ?? classifyArchetype(brandL)
 
   const toStop = (s: ResolvedStop): ColorStop => makeStop(s.stop, s.L, s.C, s.H)
-  const light = lightRamp.stops.map(toStop).sort((a, b) => a.stop - b.stop)
-  const dark = darkRamp.stops.map(toStop).sort((a, b) => a.stop - b.stop)
+  // stop 0 stays OFF the arrays (consumers index [0] as stop 1) — exposed as paper0/paper0Dark
+  const light = lightRamp.stops.filter(s => s.stop >= 1).map(toStop).sort((a, b) => a.stop - b.stop)
+  const dark = darkRamp.stops.filter(s => s.stop >= 1).map(toStop).sort((a, b) => a.stop - b.stop)
+  const p0Light = lightRamp.stops.find(s => s.stop === 0)
+  const p0Dark = darkRamp.stops.find(s => s.stop === 0)
 
   return {
     name: scaleName, archetype, brandL, brandC, brandH,
@@ -134,6 +142,8 @@ export function generateScale(
     onHighlightIsWhite: opts?.highlight ? lightRamp.ons.onHighlightIsWhite : undefined,
     onHighlightIsWhiteDark: opts?.highlight ? darkRamp.ons.onHighlightIsWhite : undefined,
     identityHex: hex.toUpperCase(),
+    paper0: p0Light ? makeStop(0, p0Light.L, p0Light.C, p0Light.H) : undefined,
+    paper0Dark: p0Dark ? makeStop(0, p0Dark.L, p0Dark.C, p0Dark.H) : undefined,
   }
 }
 

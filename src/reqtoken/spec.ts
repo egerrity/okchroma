@@ -68,6 +68,13 @@ export type ModeSpec = {
 }
 
 const groupOf = (stop: number): Group => (stop <= 2 ? 'paper' : stop <= 7 ? 'wash' : stop <= 10 ? 'highlight' : 'ink')
+
+// paper-0 — the ladder extreme BEYOND paper-1, now a resolved stop instead of a hard-coded absolute
+// (it was the last literal value in the system: #ffffff/#000000 pasted into the emitters). Light really
+// is white (rootL 1.0, zero chroma). Dark sits one seam BELOW paper-1 — deep, brand-tinted, never the
+// void; rootL owner-picked from scripts/paper0-sweep.ts. The lift producer applies like the rest of the
+// dark scale.
+export const PAPER0_DARK_ROOT_L = 0.145   // owner-picked from scripts/paper0-sweep.ts (one seam below paper-1)
 const PL_LADDER: Producer = { hue: 'warm-drift', L: 'perceptual', chroma: 'ladder' }
 const PL_TEXT: Producer = { hue: 'warm-drift', L: 'perceptual', chroma: 'brand' }
 // dark scale uses the LIFT variant (owner-adopted 2026-07-02, the blue-recede fix): the H-K solve may
@@ -108,6 +115,8 @@ const WASHSEP: Require = { metric: 'min-separation', against: 'prev', target: WA
 
 export const LIGHT: ModeSpec = {
   stops: [
+    // paper-0: the resolved ladder extreme — in light it genuinely is white (rootL 1.0, zero chroma)
+    { stop: 0, rootL: 1.0, group: 'paper', produce: { hue: 'warm-drift', L: 'fixed', chroma: 'ladder' }, satFraction: 0, baseC: 0 },
     // paper/wash/highlight-8: perceptual ladder/envelope blend on the RE-SPACED scaffold. Requires:
     // paper-2 stands ΔE ≥ 0.028 off paper-1; every wash seam stands ΔE ≥ 0.012 off its predecessor;
     // stop 8 keeps the 3:1 clamp — all against RESOLVED stops, so a pushed stop automatically
@@ -133,6 +142,9 @@ export const LIGHT: ModeSpec = {
 
 export const DARK: ModeSpec = {
   stops: [
+    // paper-0: the resolved ladder extreme — one seam BELOW paper-1, deep and brand-tinted, never the
+    // absolute void (the old hard-coded #000000 was "too much"). Lift applies like the rest of the scale.
+    { stop: 0, rootL: PAPER0_DARK_ROOT_L, group: 'paper', produce: P_LIFT, satFraction: DARK_SUBTLE_CHROMA_MULT[0] },
     // paper/wash 1–7: perceptual on the dark scaffold. stop 8: FIXED at the hand-placed scaffold BUT with the
     // 3:1 non-text require DECLARED (the Stage-5 flip, owner-approved): most hues already clear it from the
     // scaffold and don't move; low-luminance hues (blue) get raised until they read off the dark paper —

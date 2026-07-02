@@ -47,15 +47,17 @@ export function neutralCss(selector: string, brandH: number, level: NeutralLevel
   const s = generateNeutralScale(brandH, level)
   // The universal paper-0/ink-13 anchors ride along: any scope that carries the
   // ladder must also carry its mode-flipping extremes (semantic aliases like
-  // --surface-raised resolve through them).
+  // --surface-raised resolve through them). paper-0 = the neutral's resolved
+  // stop 0 (white in light; one seam below paper-1 in dark, never absolute black).
+  const p0 = (st: ColorStop | undefined, fallback: string) => (st ? toHex(st.r, st.g, st.b) : fallback)
   return [
     `${selector} {`,
-    `  --paper-0: #ffffff;`,
+    `  --paper-0: ${p0(s.paper0, '#ffffff')};`,
     `  --ink-13: #000000;`,
     ...brandKindBody('neutral', s, 'light'),
     `}`,
     `${selector}[data-theme="dark"] {`,
-    `  --paper-0: #000000;`,
+    `  --paper-0: ${p0(s.paper0Dark, '#000000')};`,
     `  --ink-13: #ffffff;`,
     ...brandKindBody('neutral', s, 'dark'),
     `}`,
@@ -145,14 +147,13 @@ export function brandCss(
     : `  --secondary-identity: var(--brand-identity);`
 
   // Universal scale anchors — positions 0 and 13 that extend the paper→ink
-  // ladder past its generated stops. The ladder INVERTS by mode, so the anchors
-  // flip with it: paper-0 (the paper end, beyond paper-1) is white in light /
-  // black in dark (= white-to-black); ink-13 (the ink end, beyond ink-12) is
-  // black in light / white in dark (= black-to-white). They are NOT absolute
-  // white/black — that's a separate pair, for on-fills that never flip. Emitted
-  // per mode block so each resolves to the right pole.
-  const lightAnchors = [`  --paper-0: #ffffff;`, `  --ink-13: #000000;`]
-  const darkAnchors = [`  --paper-0: #000000;`, `  --ink-13: #ffffff;`]
+  // ladder past its generated stops, flipping with the mode. paper-0 is now a
+  // RESOLVED stop of the neutral ramp (white in light; one seam below paper-1
+  // in dark — never absolute black). ink-13 stays the literal ink extreme.
+  // Emitted per mode block so each resolves to the right pole.
+  const p0hex = (s: ColorStop | undefined, fallback: string) => (s ? toHex(s.r, s.g, s.b) : fallback)
+  const lightAnchors = [`  --paper-0: ${p0hex(nScale.paper0, '#ffffff')};`, `  --ink-13: #000000;`]
+  const darkAnchors = [`  --paper-0: ${p0hex(nScale.paper0Dark, '#000000')};`, `  --ink-13: #ffffff;`]
 
   return [
     ``,
