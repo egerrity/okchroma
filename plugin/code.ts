@@ -115,12 +115,13 @@ figma.ui.onmessage = async (msg) => {
       const W = { r: 1, g: 1, b: 1 }
       const K = { r: 0, g: 0, b: 0 }
       // The list order IS the display order in Figma (variables list in creation
-      // order). paper-0e / paper-2e are mode-divergent aliases set later — once
-      // the theme's neutral/paper-0 and neutral/paper-2 exist. `elevation` =
-      // "create now for ordering, alias below".
+      // order). paper-raised / paper-sunken are mode-divergent aliases set later —
+      // once the theme's neutral/paper-0 and neutral/paper-2 exist. `elevation` =
+      // "create now for ordering, alias below". (Role names, not ladder numbers —
+      // they alias different ladder positions per mode, so a number would lie.)
       const STATIC_UTILS: Array<{ path: string; light?: figma.RGBA; dark?: figma.RGBA; elevation?: boolean }> = [
-        { path: 'system/paper-0e', elevation: true },
-        { path: 'system/paper-2e', elevation: true },
+        { path: 'system/paper-raised', elevation: true },
+        { path: 'system/paper-sunken', elevation: true },
         { path: 'system/ink-13', light: K, dark: W },
         { path: 'system/abs-black', light: K, dark: K },
         { path: 'system/abs-white', light: W, dark: W },
@@ -248,8 +249,8 @@ figma.ui.onmessage = async (msg) => {
       // target, so card elevation holds its meaning as the ladder inverts. Both ends
       // are the brand-aware THEME neutral now (paper-0 is the engine's RESOLVED
       // anchor — white in light, one seam below paper-1 in dark, never absolute black):
-      //   paper-0e (raised)  → neutral/paper-0 (white) in light · neutral/paper-2 in dark
-      //   paper-2e (sunken)  → neutral/paper-2 in light · neutral/paper-0 (deep) in dark
+      //   paper-raised → neutral/paper-0 (white) in light · neutral/paper-2 in dark
+      //   paper-sunken → neutral/paper-2 in light · neutral/paper-0 (deep) in dark
       // (paper-1 needs no variant — it's the base, same role both modes.) The vars
       // were CREATED in order above; aliases are set HERE because the theme's
       // neutral vars only exist after the alias loop ("the wait"). This mirrors the
@@ -263,8 +264,8 @@ figma.ui.onmessage = async (msg) => {
           v.setValueForMode(pLight, figma.variables.createVariableAlias(light))
           v.setValueForMode(pDark, figma.variables.createVariableAlias(dark))
         }
-        aliasElev('system/paper-0e', themeNeutralP0, themeNeutralP2) // raised
-        aliasElev('system/paper-2e', themeNeutralP2, themeNeutralP0) // sunken
+        aliasElev('system/paper-raised', themeNeutralP0, themeNeutralP2)
+        aliasElev('system/paper-sunken', themeNeutralP2, themeNeutralP0)
       }
 
       figma.ui.postMessage({ type: 'done', brand, aliases: aliasCount, createdShared, secondary: secondaryMode })
