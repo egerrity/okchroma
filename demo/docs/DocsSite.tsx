@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { generateScale } from '../../src/engine/colorEngine'
 import { toHex } from '../../src/engine/cssRender'
+import { emitDtcgRamp } from '../../src/reqtoken/dtcg'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // In-app documentation: a sidebar docs site (Radix-style). Each article is a
@@ -58,6 +59,17 @@ function Ramp({ hex, caption }: { hex: string; caption?: React.ReactNode }) {
       <figcaption className="d2-ramp-cap">
         {caption ?? <>Live ramp generated from <Code>{hex.toUpperCase()}</Code> — these are the engine's actual outputs.</>}
       </figcaption>
+    </figure>
+  )
+}
+
+// ── Live example: a real requirement token, emitted by the engine right now ──
+function LiveToken({ hex, tokenKey, mode, caption }: { hex: string; tokenKey: string; mode: 'light' | 'dark'; caption: React.ReactNode }) {
+  const group = emitDtcgRamp(hex, mode, `brand.${mode}`)
+  return (
+    <figure className="d2-ramp">
+      <Pre>{JSON.stringify(group[tokenKey], null, 2)}</Pre>
+      <figcaption className="d2-ramp-cap">{caption}</figcaption>
     </figure>
   )
 }
@@ -360,14 +372,59 @@ const styleLever: Article = {
         blue or a vivid red ignores it entirely. <Code>full-chroma</Code> is plumbed but not yet wired to
         the math.
       </P>
-      <P>Code: the <Code>style</Code> flag in <Code>brands.ts</Code>, the deeper band gate in <Code>colorEngine.ts</Code>.</P>
+      <P>Code: the <Code>style</Code> flag in <Code>brands.ts</Code>, the deeper band gate in <Code>producers.ts</Code>.</P>
+    </>
+  ),
+}
+
+const tokenSchema: Article = {
+  slug: 'token-schema',
+  title: 'The token schema',
+  body: () => (
+    <>
+      <Lead>A token is a requirement the engine solves — not a frozen value.</Lead>
+      <P>
+        Every emitted token carries two things at once: a frozen color any DTCG tool can read
+        (<Code>$value</Code>), and the live <b>requirement</b> that produced it
+        (<Code>$extensions["org.okchroma.requirement"]</Code>). A requirement-aware resolver ignores
+        the frozen value and re-solves from the requirement; everything else uses the fallback. Edit
+        the requirement in the file — raise a contrast target, tighten a seam — and the resolver
+        honors the edit.
+      </P>
+      <P>
+        This is a real token, emitted by the engine <i>right now</i> — light <Code>paper-2</Code>,
+        carrying its minimum-separation requirement against paper-1:
+      </P>
+      <LiveToken hex="#3060C0" tokenKey="2" mode="light"
+        caption={<>Live output of <Code>emitDtcgRamp('#3060C0', 'light')</Code>. The <Code>produce</Code> block names the producers (perceptual placement, warm drift, chroma ladder); the <Code>require</Code> block is the declared floor.</>} />
+      <H2>Stops and roles</H2>
+      <P>
+        Scale stops are keyed by <b>number</b> (0–12, where 0 is the resolved paper anchor beyond
+        paper-1). The cta is not a stop: it's an off-scale <b>role</b>, keyed by <b>name</b> —
+        <Code>cta</Code> / <Code>cta-hover</Code> — so it can never be confused with a scale
+        position again. Roles anchor to the brand's own hue and lightness (floored in dark, so a
+        fill lifts but never sinks):
+      </P>
+      <LiveToken hex="#3060C0" tokenKey="cta" mode="dark"
+        caption={<>The dark <Code>cta</Code> role: <Code>hue: constant</Code> (the brand's own hue, no drift), <Code>L: anchor</Code> with <Code>floorL</Code> — the "lift, never sink" rule.</>} />
+      <H2>The rules in one breath</H2>
+      <UL>
+        <LI><b>A requirement is a floor.</b> A placement that already clears it doesn't move, byte for byte.</LI>
+        <LI><b>Requirements reference resolved stops.</b> Push paper-2 darker and everything declared against it (stop-8's 3:1, the text floors, the wash seams) re-solves automatically.</LI>
+        <LI><b>Fail loud.</b> An unmeetable requirement marks the stop <Code>unresolvable</Code>; a foreign resolver id is rejected — never guessed at.</LI>
+        <LI><b>Producers are names, not formulas.</b> The perceptual math lives behind the versioned <Code>resolver</Code> id; the token file stays pure intent.</LI>
+      </UL>
+      <Note>
+        The full field-by-field reference — every producer name, both require variants, the on-color
+        rules, resolution semantics — is in <Code>docs/schema.md</Code> in the repo.
+      </Note>
     </>
   ),
 }
 
 const SECTIONS: Section[] = [
   { label: 'Getting started', articles: [overview, install] },
-  { label: 'Concepts', articles: [howItWorks, whyOklch, warmHues, collisions] },
+  { label: 'Concepts', articles: [howItWorks, tokenSchema, whyOklch, warmHues, collisions] },
   { label: 'Overrides', articles: [exactMode, styleLever] },
 ]
 
