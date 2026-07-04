@@ -8,8 +8,10 @@ solid CTA resting/hover pairing for each brand hex inputted. Alongside the brand
 
 The point is **white-label predictability**: every ramps's stops land at the same
 perceived lightness and play the same role, so you map your design tokens to step
-**numbers** once and they hold for any color scale. Contrast (WCAG, plus APCA for emphasis
-fills) is built into the math, not bolted on after.
+**numbers** once and they hold for any color scale. Contrast is built into the math, not
+bolted on after — and the whole system re-solves under your choice of contrast law:
+**APCA** (the shipped default — the perceptual model) or **WCAG** (the strict ratios,
+every text color guaranteed to pass its ratio).
 
 Output comes in two interchangeable forms carrying the same values:
 
@@ -51,6 +53,36 @@ named tokens and picks light vs dark. The declaration also round-trips to DTCG t
   (`src/engine/colorEngine.ts`, an adapter over the resolver — same signature as always).
 - **Batch build:** `src/build.ts` runs the engine over the brand fixtures in
   `src/brands.ts` and writes `dist/*.css`.
+
+## The Figma plugin
+
+The bundled plugin runs the same engine inside Figma and writes the resolved system into
+your file as variables: **theme** + **mode** collections whose semantic tokens alias onto
+shared primitives — per-brand ramps under `brand/<name>`, with neutrals and signals
+deduplicated across brands, light + dark values on every token.
+
+**Install** — from the Figma Community listing (search "OKChroma"), or from source:
+
+```bash
+npm install && npm run plugin:build
+```
+
+then Figma → Plugins → Development → **Import plugin from manifest** →
+`plugin/manifest.json`.
+
+**Use** — name the brand, pick a primary, and Apply. Optional before applying:
+
+- **Secondary color** — "+ Add secondary" starts on *From primary* (a pastel derived from
+  your primary); type any hex for a custom secondary in **Tint / Pastel / Outline / Exact**
+  style.
+- **Neutral color** — *Default* (a touch of primary hue), *Intense*, or *True grey*.
+- **Contrast standard** — **APCA** (default) or **WCAG**. One profile per collection pair:
+  applying the other profile to an existing file forks a clearly-labeled second pair
+  (`theme-wcag`/`mode-wcag`) instead of ever mixing values.
+
+Re-applying the same brand name updates it in place (after a confirm); a new name adds a
+brand to the same collections — two applies with two brand colors is a multi-brand system
+on shared foundations.
 
 ## Documentation
 
