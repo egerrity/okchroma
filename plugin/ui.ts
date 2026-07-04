@@ -15,7 +15,7 @@ let neutralLevel: NeutralLevel = 'default'
 // derived is always pastel, the engine's call).
 let primaryMode: 'recommended' | 'exact' | Archetype = 'recommended'
 let secondaryStyle: SecondaryStyle = 'tint'
-let contrastProfile: ContrastProfile = 'wcag' // opt-in APCA re-solve; WCAG = shipped default
+let contrastProfile: ContrastProfile = 'apca' // APCA = the shipped default; WCAG = the opt-in legal mode
 let pendingName: string | null = null // brand armed for overwrite confirmation
 // The secondary is the demo's THREE-STATE field: none (default — just "+ Add secondary") →
 // derived (the input tracks the primary live; the engine derives the pastel secondary) →

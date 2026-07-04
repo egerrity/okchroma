@@ -65,7 +65,10 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   const [secondaryStyle, setSecondaryStyle] = useState<SecondaryStyle>('tint')
   // legacy shape for the checklist/toast logic: anchors count as recommended machinery
   const rung: RungMode = primaryMode === 'exact' ? 'exact' : 'recommended'
-  const [profile, setProfile] = useState<ContrastProfile>('wcag')
+  // APCA is the DEFAULT (owner 2026-07-04, the true split): the perceptually-solved look ships;
+  // WCAG is the opt-in legal mode — every on-text pole ratio-passing, highlights flip to black
+  // where white fails 4.5.
+  const [profile, setProfile] = useState<ContrastProfile>('apca')
   // Neutral tint level (the neutral is always generated from the brand hue now).
   const [neutralLevel, setNeutralLevel] = useState<NeutralLevel>('default')
   const [view, setView] = useState<View>('palette')
@@ -111,8 +114,10 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
       secondaryStyle: derived ? undefined : secondaryStyle,   // derived is always pastel — no chip
       contrastProfile: cp,
     })
+    // signals ALWAYS re-emit under the selected profile: the static signals.css now carries the
+    // SHIPPED default (apca), so the wcag toggle needs its own override block just like apca did
     const css = brandCss('custom', 'Custom brand', t.themed, t.secondary?.scale ?? null, '', neutralLevel, cp, t.secondary?.style)
-      + (cp ? '\n' + signalsCss(cp) : '')
+      + '\n' + signalsCss(cp)
     return { t, r: t.themed, accent: t.secondary?.scale ?? null, css }
   }, [primary, secondary, derived, primaryMode, secondaryStyle, neutralLevel, profile])
 
@@ -257,10 +262,11 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
             <span className="ct-info">
               ⓘ
               <span className="ct-tip">
-                The same requirements re-solved under a different contrast metric. WCAG uses the 2.x
-                ratios (3:1 / 4.5 / 7). APCA re-solves them as Lc 30 / 75 / 90 — dark fills read
-                slightly stronger off the paper, light non-text relaxes, text and buttons keep their
-                shipped look by design.
+                The same requirements solved under two contrast metrics. APCA (the default) is the
+                perceptual model — Lc 30 / 75 / 90, the better read of what's actually legible.
+                WCAG is the strict legal mode — the 2.x ratios (3:1 / 4.5 / 7), every text color
+                guaranteed to pass its ratio; highlight text flips to black where white reads
+                under 4.5:1.
               </span>
             </span>
           </div>
