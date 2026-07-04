@@ -30,9 +30,12 @@ declare namespace figma {
     getPluginData(key: string): string
   }
 
+  type VariableScope = 'ALL_SCOPES' | 'ALL_FILLS' | 'FRAME_FILL' | 'SHAPE_FILL' | 'TEXT_FILL' | 'STROKE_COLOR' | 'EFFECT_COLOR'
+
   interface Variable {
     name: string
     description: string
+    scopes: VariableScope[]
     readonly variableCollectionId: string
     setValueForMode(modeId: string, value: RGBA | VariableAlias): void
   }

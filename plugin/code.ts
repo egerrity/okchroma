@@ -191,9 +191,13 @@ figma.ui.onmessage = async (msg) => {
         { path: 'system/scrim', light: { r: 0, g: 0, b: 0, a: 0.6 }, dark: { r: 0, g: 0, b: 0, a: 0.6 } },
       ]
       for (const u of STATIC_UTILS) {
-        if (primByName.get(u.path)) continue // already seeded — leave as-is
+        const existing = primByName.get(u.path)
+        if (existing) { existing.scopes = [] ; continue } // already seeded — just enforce the scope rule
         const v = figma.variables.createVariable(u.path, p.coll, 'COLOR')
         v.description = stamp
+        // primitives are NEVER bound directly — hidden from every property picker
+        // (the theme aliases carry the scopes); the mode collection is the value store
+        v.scopes = []
         primByName.set(u.path, v)
         if (u.light && u.dark) { // elevation entries are aliased below, not value-set
           v.setValueForMode(pLight, u.light)
@@ -225,6 +229,7 @@ figma.ui.onmessage = async (msg) => {
         const created = !v
         if (!v) { v = figma.variables.createVariable(path, p.coll, 'COLOR'); primByName.set(path, v) }
         v.description = stamp // restamped every apply — the visible contrast posture
+        v.scopes = [] // primitives hidden from every picker (re-applies fix older files too)
         const dk = darkMap.get(t.path)
         // a TRUE pole (the engine's on-fills are exactly white or black); an outline
         // secondary's on-cta is the family's ink-11 instead — alias the sibling, not a pole
@@ -310,6 +315,9 @@ figma.ui.onmessage = async (msg) => {
         let v = themeByName.get(themePath)
         if (!v) { v = figma.variables.createVariable(themePath, th.coll, 'COLOR'); themeByName.set(themePath, v) }
         v.description = stamp
+        // the THEME aliases are what users bind — visible in every supported property
+        // (the mode primitives underneath carry scope NOTHING)
+        v.scopes = ['ALL_SCOPES']
         v.setValueForMode(modeId, figma.variables.createVariableAlias(target))
         aliasCount++
       }
