@@ -139,7 +139,13 @@ export function makeStop(stop: number, L: number, C: number, H: number): ColorSt
   return { stop, L, C: gamutC, H, r, g, b }
 }
 
-export function onTextIsWhite(Y: number, L: number, C: number, H: number, enforce: boolean): boolean {
+// The on-text pole. The PREFERENCE is perceptual (max-|APCA Lc| — which pole reads better) in
+// both profiles; the FLOOR is the profile's law (owner 2026-07-04, the true wcag/apca split):
+// under the wcag profile every CHOSEN pole must pass the 4.5 ratio — `ratioFloor` flips to the
+// other pole when the preferred one fails (WCAG 4.5:1 has no dead zone, so the other pole
+// always passes; fills never move). The apca profile carries no ratio floor — its law is the
+// Lc bar (enforceLc re-solves enforced ctas; the highlight band clears Lc 60 by placement).
+export function onTextIsWhite(Y: number, L: number, C: number, H: number, enforce: boolean, ratioFloor?: number): boolean {
   let white = Math.abs(apcaLc(1.0, Y)) >= Math.abs(apcaLc(0.0, Y))
   if (enforce) {
     if (white && contrastRatio(1.0, wcagY(L, C, H)) < 4.5) {
@@ -147,6 +153,12 @@ export function onTextIsWhite(Y: number, L: number, C: number, H: number, enforc
     } else if (!white && contrastRatio(wcagY(L, C, H), 0) < 4.5) {
       if (contrastRatio(1.0, wcagY(L, C, H)) >= 4.5 && Math.abs(apcaLc(1.0, Y)) >= 45) white = true
     }
+  }
+  // the conformance floor: the chosen pole must PASS — legality overrides preference
+  if (ratioFloor !== undefined) {
+    const fillY = wcagY(L, C, H)
+    const chosen = white ? contrastRatio(1.0, fillY) : contrastRatio(fillY, 0)
+    if (chosen < ratioFloor) white = !white
   }
   return white
 }

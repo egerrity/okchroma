@@ -227,11 +227,13 @@ export function generateNeutralScale(
   scale.ctaHover = asCta(10, scale.light[4])
   scale.ctaDark = asCta(9, scale.dark[3])
   scale.ctaHoverDark = asCta(10, scale.dark[4])
-  // the scale-fed neutral cta can't move, so on-text is judgment only: under the apca profile the
-  // pole is pure apca-pole (enforce=false skips the wcag-mixing flip); shipped wcag keeps the flip.
+  // the scale-fed neutral cta can't move, so on-text is judgment only: apca profile = pure
+  // apca-pole (its law is the Lc bar); wcag profile = the mixing flip PLUS the conformance
+  // floor — the chosen pole must pass 4.5 (the fill can't re-solve, so the pole flips).
   const onEnforce = contrastProfile !== 'apca'
-  scale.onFillTextIsWhite = onTextIsWhite(apcaY(scale.cta.r, scale.cta.g, scale.cta.b), scale.cta.L, scale.cta.C, scale.cta.H, onEnforce)
-  scale.onFillTextIsWhiteDark = onTextIsWhite(apcaY(scale.ctaDark.r, scale.ctaDark.g, scale.ctaDark.b), scale.ctaDark.L, scale.ctaDark.C, scale.ctaDark.H, onEnforce)
+  const onFloor = contrastProfile === 'apca' ? undefined : 4.5
+  scale.onFillTextIsWhite = onTextIsWhite(apcaY(scale.cta.r, scale.cta.g, scale.cta.b), scale.cta.L, scale.cta.C, scale.cta.H, onEnforce, onFloor)
+  scale.onFillTextIsWhiteDark = onTextIsWhite(apcaY(scale.ctaDark.r, scale.ctaDark.g, scale.ctaDark.b), scale.ctaDark.L, scale.ctaDark.C, scale.ctaDark.H, onEnforce, onFloor)
   return scale
 }
 
@@ -283,8 +285,11 @@ export function generateSubtleSecondary(
     scale.ctaDark = asCta(9, scale.dark[3])
     scale.ctaHoverDark = asCta(10, scale.dark[4])
   }
+  // quiet cta, judgment only (same law as the neutral's): wcag = mixing flip + the 4.5
+  // conformance floor (pole flips when the preferred one fails); apca = pure apca-pole.
   const onEnforce = opts?.contrastProfile !== 'apca'
-  scale.onFillTextIsWhite = onTextIsWhite(apcaY(scale.cta.r, scale.cta.g, scale.cta.b), scale.cta.L, scale.cta.C, scale.cta.H, onEnforce)
-  scale.onFillTextIsWhiteDark = onTextIsWhite(apcaY(scale.ctaDark.r, scale.ctaDark.g, scale.ctaDark.b), scale.ctaDark.L, scale.ctaDark.C, scale.ctaDark.H, onEnforce)
+  const onFloor = opts?.contrastProfile === 'apca' ? undefined : 4.5
+  scale.onFillTextIsWhite = onTextIsWhite(apcaY(scale.cta.r, scale.cta.g, scale.cta.b), scale.cta.L, scale.cta.C, scale.cta.H, onEnforce, onFloor)
+  scale.onFillTextIsWhiteDark = onTextIsWhite(apcaY(scale.ctaDark.r, scale.ctaDark.g, scale.ctaDark.b), scale.ctaDark.L, scale.ctaDark.C, scale.ctaDark.H, onEnforce, onFloor)
   return scale
 }

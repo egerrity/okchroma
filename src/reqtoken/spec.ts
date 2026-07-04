@@ -67,7 +67,12 @@ export type RoleReq = {
 // `enforceLc` is set (by withProfile, from the map's 4.5 slot): the pole flip is a no-op (max-|Lc| already
 // wins its own metric) and the cta fill re-solves until the white pole reads ≥ enforceLc. On-text itself
 // never feeds back into a scale stop.
-export type OnReq = { metric: 'apca-pole'; enforce: boolean; enforceLc?: number }
+// `ratioFloor` (the TRUE wcag/apca split, owner 2026-07-04): under the wcag profile the CHOSEN pole must
+// PASS the 4.5 ratio — preference stays perceptual, the floor is the law. onFill's floor is the
+// ENFORCEMENT itself (the fill re-solves to 4.5-white); onHighlight fills are placed by design and never
+// move, so its floor is the pole FLIP (4.5 has no dead zone — the other pole always passes).
+// withProfile('apca') strips the ratio floor; the apca law is the Lc bar.
+export type OnReq = { metric: 'apca-pole'; enforce: boolean; enforceLc?: number; ratioFloor?: number }
 
 export type ModeSpec = {
   stops: StopReq[]
@@ -97,7 +102,7 @@ const S8: Require = { metric: 'wcag', against: 'paper-2', target: STOP_8_NONTEXT
 const T11: Require = { metric: 'wcag', against: 'paper-2', target: STOP_11_CONTRAST, level: 'AA' }
 const T12: Require = { metric: 'wcag', against: 'paper-2', target: STOP_12_CONTRAST_FLOOR, level: 'AAA' }
 
-const ONS = { onFill: { metric: 'apca-pole', enforce: true } as OnReq, onHighlight: { metric: 'apca-pole', enforce: false } as OnReq }
+const ONS = { onFill: { metric: 'apca-pole', enforce: true } as OnReq, onHighlight: { metric: 'apca-pole', enforce: false, ratioFloor: 4.5 } as OnReq }
 
 // paper-2 separation (Stage 6): pre-fix light stop1↔2 ΔE_OK measured 0.009–0.017 (median 0.013); dark ~0.035.
 // OWNER PICKED 0.028 from the render sweep (scripts/paper2-sweep.ts → render/paper2.html, 2026-07-02):

@@ -227,11 +227,39 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     }
   }
 
-  // on-highlight: judged at the emitted highlight-9, APCA only — never feeds back
+  // on-highlight: judged at the emitted highlight-9 — never feeds back into the fill. The
+  // declared ratioFloor (wcag profile) flips the pole when the preferred one fails 4.5.
   const hl9 = stops.find(s => s.stop === 9)
   const ons = {
     onFillIsWhite,
-    onHighlightIsWhite: hl9 ? onHighlightIsWhiteAt(hl9.L, hl9.C, hl9.H) : true,
+    onHighlightIsWhite: hl9 ? onHighlightIsWhiteAt(hl9.L, hl9.C, hl9.H, spec.ons.onHighlight.ratioFloor) : true,
+  }
+
+  // the PAIR law (wcag profile): on-highlight is ONE token shared by hl-9 and its hover hl-10,
+  // so the chosen pole must pass the floor on BOTH. For straddling hues no single pole passes
+  // both fills — the HOVER re-solves toward hl-9 (the only movable member: an offset
+  // convention, not an identity placement; the pole passes at hl-9, so by continuity a passing
+  // L exists between them). Same shape as the cta enforcement: the fill yields to the law.
+  const hlFloor = spec.ons.onHighlight.ratioFloor
+  if (hlFloor !== undefined && hl9) {
+    const i10 = stops.findIndex(s => s.stop === 10)
+    if (i10 >= 0) {
+      const white = ons.onHighlightIsWhite
+      const poleRatio = (s: { L: number; C: number; H: number }) => {
+        const Y = wcagY(s.L, clampChromaToGamut(s.L, s.C, s.H), s.H)
+        return white ? contrastRatio(1.0, Y) : contrastRatio(Y, 0)
+      }
+      const hl10 = stops[i10]
+      if (poleRatio(hl10) < hlFloor - 1e-3) {
+        // bisect L between the failing hover and the passing hl-9 (ratio is monotonic in L)
+        let lo = hl10.L, hi = hl9.L
+        for (let i = 0; i < 24; i++) {
+          const m = (lo + hi) / 2
+          poleRatio({ L: m, C: hl10.C, H: hl10.H }) < hlFloor + 0.05 ? (lo = m) : (hi = m)
+        }
+        stops[i10] = emit(10, hl10.group, hi, hl10.C, hl10.H, true)
+      }
+    }
   }
 
   return { mode, seed, stops, roles: { cta, ctaHover }, ons }

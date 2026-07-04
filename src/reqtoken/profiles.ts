@@ -41,6 +41,12 @@ export function withProfile(spec: ModeSpec, profile: ContrastProfile, lcMap: LcM
   return {
     ...spec,
     stops: spec.stops.map((s): StopReq => (s.require ? { ...s, require: toApca(s.require, lcMap) } : s)),
-    ons: { ...spec.ons, onFill: { ...spec.ons.onFill, enforceLc: textLc } },
+    ons: {
+      ...spec.ons,
+      onFill: { ...spec.ons.onFill, enforceLc: textLc },
+      // the apca law is the Lc bar (band placement + the highlight-audit gate), not the ratio —
+      // strip the wcag conformance floor so the pole stays purely perceptual
+      onHighlight: { ...spec.ons.onHighlight, ratioFloor: undefined },
+    },
   }
 }

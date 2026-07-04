@@ -212,10 +212,11 @@ export function onFillIsWhiteLight(ctx: Ctx, enforce: boolean): boolean {
   return onTextIsWhite(fill9ApcaY, ctx.scaleL, ctx.brandC, ctx.brandH, enforce)
 }
 
-// ---- on-highlight: judged at the emitted highlight-9 stop, APCA only (enforce=false) (colorEngine.ts:458)
-export function onHighlightIsWhiteAt(L: number, C: number, H: number): boolean {
+// ---- on-highlight: judged at the emitted highlight-9 stop — perceptual preference, with the
+// declared conformance floor (spec.ons.onHighlight.ratioFloor: 4.5 under wcag, stripped under apca)
+export function onHighlightIsWhiteAt(L: number, C: number, H: number, ratioFloor?: number): boolean {
   const { r, g, b } = oklchToSrgbUnclamped(L, C, H)
-  return onTextIsWhite(apcaY(r, g, b), L, C, H, false)
+  return onTextIsWhite(apcaY(r, g, b), L, C, H, false, ratioFloor)
 }
 
 // ================= DARK producers (colorEngine.ts:378–434, 469–481, verbatim) =================
