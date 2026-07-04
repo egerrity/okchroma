@@ -73,6 +73,11 @@ export const COMPONENT_CSS = `
 .u-btn-primary:hover { background: var(--brand-bg-emphasis-hover); }
 .u-btn-subtle { background: var(--brand-bg-subtle); color: var(--brand-fg); }
 .u-btn-subtle:hover { background: var(--brand-bg-subtle-hover); }
+/* the LOW-HIERARCHY button: the neutral's quiet scale-fed cta (stop 4/5). The
+   secondary-showcase slots fall back to this when no secondary exists — a
+   subtle slot reads neutral until a secondary claims it, never brand-again. */
+.u-btn-neutral { background: var(--neutral-cta-1); color: var(--neutral-on-cta); }
+.u-btn-neutral:hover { background: var(--neutral-cta-2); }
 .u-btn-ghost { background: transparent; color: var(--brand-fg); }
 .u-btn-ghost:hover { background: var(--brand-bg-subtle); }
 /* Universal destructive rule (designer decision): destructive BUTTONS never

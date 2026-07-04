@@ -704,7 +704,9 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
             <div style={{ fontSize: 12, color: 'var(--fg-subtle)', textAlign: 'center', marginBottom: 12 }}>
               Invite your team and spin up your first project.
             </div>
-            <button className="u-btn u-btn-subtle" style={{ width: '100%', justifyContent: 'center' }}>Create project</button>
+            {/* the secondary-showcase slot: NEUTRAL (quiet cta) until a secondary exists,
+                then the secondary's subtle register (owner: never brand-again) */}
+            <button className={`u-btn ${hasSecondary ? 'u-btn-subtle' : 'u-btn-neutral'}`} style={{ width: '100%', justifyContent: 'center' }}>Create project</button>
           </section>
 
           <section style={{ ...dashCard, gridColumn: 'span 2' }}>
