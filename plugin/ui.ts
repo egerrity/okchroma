@@ -1,4 +1,4 @@
-import { resolveBrand, signalScalesFor } from '../src/engine/resolve'
+import { resolveTheme, signalScalesFor } from '../src/engine/resolve'
 import { type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
 import { themeToFigma } from '../src/engine/figmaRender'
 import { SIGNALS } from '../src/engine/signals'
@@ -13,7 +13,10 @@ let neutralLevel: NeutralLevel = 'default'
 let engineMode: 'recommended' | 'exact' = 'recommended'
 let contrastProfile: ContrastProfile = 'wcag' // opt-in APCA re-solve; WCAG = shipped default
 let pendingName: string | null = null // brand armed for overwrite confirmation
-let secondaryInclude = false // global secondary switch — OFF by default (owner call)
+// secondary posture: DERIVED is the default (owner call 2026-07-04) — the engine derives a
+// subtle secondary from the primary; Custom = user hex; Off = mirror posture (as before).
+type SecondaryMode = 'derived' | 'custom' | 'off'
+let secondaryMode: SecondaryMode = 'derived'
 
 // ─── DOM ─────────────────────────────────────────────────────────────────────
 
@@ -71,24 +74,28 @@ function setStatus(text: string, tone: '' | 'ok' | 'err' = '') {
 
 // ─── Preview ─────────────────────────────────────────────────────────────────
 
-// caller opts: engine mode + the contrast profile (omitted when wcag — the shipped default)
-function engineOpts() {
+// the THEME input: primary + secondary posture + engine mode + contrast profile. The secondary's
+// LEVEL follows the engine mode inside resolveTheme (subtle = recommended, standard = exact).
+function themeInput(name: string) {
   const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
-  return engineMode === 'exact' || cp ? { exact: engineMode === 'exact' || undefined, contrastProfile: cp } : undefined
+  return {
+    primaryHex, name,
+    secondaryHex: secondaryMode === 'custom' && secondaryEnabled && secondaryHex ? secondaryHex : null,
+    deriveSecondary: secondaryMode === 'derived' || undefined,
+    exact: engineMode === 'exact' || undefined,
+    contrastProfile: cp,
+  }
 }
 
 function updatePreview() {
   try {
-    const opts = engineOpts()
-    const { scale } = resolveBrand(primaryHex, 'x', opts)
-    renderRamp(rampLight, scale.light)
-    renderRamp(rampDark, scale.dark)
+    const t = resolveTheme(themeInput('x'))
+    renderRamp(rampLight, t.primary.scale.light)
+    renderRamp(rampDark, t.primary.scale.dark)
 
-    // Secondary ramp only when secondary is globally on AND a color was entered.
-    if (secondaryInclude && secondaryEnabled && secondaryHex) {
-      const a = resolveBrand(secondaryHex, 'x', opts).scale
-      renderRamp(rampSecondaryLight, a.light)
-      renderRamp(rampSecondaryDark, a.dark)
+    if (t.secondary) {
+      renderRamp(rampSecondaryLight, t.secondary.scale.light)
+      renderRamp(rampSecondaryDark, t.secondary.scale.dark)
       secondaryRamps.style.display = ''
     } else {
       secondaryRamps.style.display = 'none'
@@ -109,11 +116,11 @@ function buildAndSend() {
   setStatus('Applying…')
 
   try {
-    const opts = engineOpts()
-    const r = resolveBrand(primaryHex, name, opts)
-    const secondary = secondaryEnabled && secondaryHex
-      ? resolveBrand(secondaryHex, 'secondary', opts).scale
-      : null
+    // theme-level resolution: the secondary (derived or custom) resolves against the post-shift
+    // signal set; t.themed carries the merged signal overrides for the payload
+    const t = resolveTheme(themeInput(name))
+    const r = t.themed
+    const secondary = t.secondary?.scale ?? null
 
     // The neutral's shared-primitive key. 'pure' is a true grey (C=0), identical
     // for every brand — so it's keyed hue-INDEPENDENTLY as one shared
@@ -165,7 +172,7 @@ function buildAndSend() {
 
     // confirmed only when this exact name was just flagged as an overwrite.
     const confirmed = pendingName === name
-    parent.postMessage({ pluginMessage: { type: 'apply', brand: name, brandRaw, shared, confirmed, secondary: secondaryInclude, contrastProfile } }, '*')
+    parent.postMessage({ pluginMessage: { type: 'apply', brand: name, brandRaw, shared, confirmed, secondary: secondaryMode !== 'off', contrastProfile } }, '*')
   } catch (err) {
     applyBtn.disabled = false
     setStatus(String(err), 'err')
@@ -253,8 +260,8 @@ secondaryIncludeBtns.forEach(btn => {
   btn.addEventListener('click', () => {
     secondaryIncludeBtns.forEach(b => b.classList.remove('active'))
     btn.classList.add('active')
-    secondaryInclude = btn.dataset.sec === 'on'
-    secondaryCustom.style.display = secondaryInclude ? 'block' : 'none'
+    secondaryMode = btn.dataset.sec as SecondaryMode
+    secondaryCustom.style.display = secondaryMode === 'custom' ? 'block' : 'none'
     updatePreview()
   })
 })

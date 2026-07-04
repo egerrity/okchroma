@@ -2,7 +2,7 @@
 
 figma.showUI(__html__, { width: 360, height: 520, title: 'OKChroma' })
 
-type TokenLeaf = { $type: 'color'; $value: { components: [number, number, number] } }
+type TokenLeaf = { $type: 'color'; $value: { components: [number, number, number]; alpha?: number } }
 type TokenNode = TokenLeaf | { [k: string]: TokenNode }
 
 // A per-brand raw ramp, written into the `primitive` collection under
@@ -42,10 +42,11 @@ const pairName = (role: string, profile: Profile) => `${role}-${profile}`
 const profileStamp = (profile: Profile) =>
   profile === 'apca' ? 'OKChroma · contrast: APCA (Lc 30/75/90)' : 'OKChroma · contrast: WCAG (3:1/4.5/7:1)'
 
-function flatten(node: TokenNode, prefix = ''): Array<{ path: string; r: number; g: number; b: number }> {
+function flatten(node: TokenNode, prefix = ''): Array<{ path: string; r: number; g: number; b: number; a?: number }> {
   if ('$type' in node) {
-    const [r, g, b] = (node as TokenLeaf).$value.components
-    return [{ path: prefix, r, g, b }]
+    const leaf = node as TokenLeaf
+    const [r, g, b] = leaf.$value.components
+    return [{ path: prefix, r, g, b, a: leaf.$value.alpha }]
   }
   return Object.entries(node).flatMap(([k, v]) =>
     flatten(v as TokenNode, prefix ? `${prefix}/${k}` : k)
@@ -209,12 +210,15 @@ figma.ui.onmessage = async (msg) => {
       const absPole = (white: boolean) => primByName.get(white ? 'system/abs-white' : 'system/abs-black')
 
       // Write a primitive. on-fill leaves ALIAS a shared invariant (always, so
-      // pre-existing raw on-fills get converted on re-apply); every other leaf is
-      // a raw color, written on create or when `refresh` is set (per-brand ramps).
+      // pre-existing raw on-fills get converted on re-apply); cta-stroke leaves ALIAS
+      // per mode — system/transparent when the fill passes the boundary gate, the
+      // family's own highlight-8 when it doesn't (alpha 0 in the payload = transparent);
+      // every other leaf is a raw color, written on create or when `refresh` is set
+      // (per-brand ramps).
       const writeRaw = (
         path: string,
-        t: { path: string; r: number; g: number; b: number },
-        darkMap: Map<string, { r: number; g: number; b: number }>,
+        t: { path: string; r: number; g: number; b: number; a?: number },
+        darkMap: Map<string, { r: number; g: number; b: number; a?: number }>,
         refresh: boolean
       ): { v: figma.Variable; created: boolean } => {
         let v = primByName.get(path)
@@ -228,6 +232,17 @@ figma.ui.onmessage = async (msg) => {
           if (lightPole && darkPole) {
             v.setValueForMode(pLight, figma.variables.createVariableAlias(lightPole))
             v.setValueForMode(pDark, figma.variables.createVariableAlias(darkPole))
+          }
+        } else if (t.path === 'cta-stroke') {
+          const sibling8 = primByName.get(path.replace(/cta-stroke$/, 'highlight-8'))
+          const transparent = primByName.get('system/transparent')
+          const target = (leaf?: { a?: number }) =>
+            leaf?.a === 0 ? transparent : (sibling8 ?? transparent)
+          const lightTarget = target(t)
+          const darkTarget = target(dk ?? t)
+          if (lightTarget && darkTarget) {
+            v.setValueForMode(pLight, figma.variables.createVariableAlias(lightTarget))
+            v.setValueForMode(pDark, figma.variables.createVariableAlias(darkTarget))
           }
         } else if (created || refresh) {
           v.setValueForMode(pLight, { r: t.r, g: t.g, b: t.b })
