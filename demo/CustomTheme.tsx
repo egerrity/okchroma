@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Check, TriangleAlert, Sparkles, ArrowRight, ChevronDown, ChevronUp,
-  LayoutDashboard, FolderKanban, ListTodo, BarChart3, Users, Settings, Search, Download, Plus, Info, X,
+  LayoutDashboard, FolderKanban, ListTodo, BarChart3, Users, Settings, Search, Download, Plus, Info,
 } from 'lucide-react'
 import { resolveBrand, resolveTheme, type SecondaryStyle } from '../src/engine/resolve'
 import { ARCHETYPES, type Archetype } from '../src/engine/archetypes'
@@ -11,8 +11,8 @@ import { wcagY, contrastRatio } from '../src/engine/constraints'
 import { HERO_ILLO } from './heroIllo'
 import {
   BanIcon, Segmented,
-  normalizeHex, rybRotate,
-  type RungMode, type AccentMode,
+  normalizeHex,
+  type RungMode,
 } from './shared'
 import { TokenCards, type RampKind } from './TokenCards'
 import { classifyArchetype } from '../src/engine/archetypes'
@@ -26,14 +26,20 @@ function NeutralSelect({ value, onChange }: {
   onChange: (v: NeutralLevel) => void
 }) {
   const levels: Array<[NeutralLevel, string]> = [
-    ['pure', 'Pure (gray)'],
-    ['default', 'Default (brand-tinted)'],
-    ['branded', 'Branded (intense tint)'],
+    ['default', 'default'],
+    ['branded', 'intense'],
+    ['pure', 'true grey'],
   ]
+  // appearance:none + our own chevron in reserved space — the native arrow let
+  // the option copy run underneath it.
   return (
-    <select value={value} onChange={e => onChange(e.target.value as NeutralLevel)}>
-      {levels.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
-    </select>
+    <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
+      <select value={value} onChange={e => onChange(e.target.value as NeutralLevel)}
+        style={{ appearance: 'none', WebkitAppearance: 'none', paddingRight: 20, width: '100%' }}>
+        {levels.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+      </select>
+      <ChevronDown size={13} style={{ position: 'absolute', right: 2, pointerEvents: 'none', color: 'var(--fg-subtle)' }} />
+    </span>
   )
 }
 
@@ -45,9 +51,13 @@ type View = 'palette' | 'preview'
 
 export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onToggleDark: () => void }) {
   const [primaryInput, setPrimaryInput] = useState('#E93D82')
-  const [accentOpen, setAccentOpen] = useState(false)
+  // The secondary is a three-state field (owner UX): none — just an "Add secondary"
+  // button; derived — the field tracks the primary live (the engine derives the subtle
+  // tint; no style chip); custom — the user's own hex, style chip shown. Typing in
+  // derived mode detaches to custom; the trailing menu moves between all three.
+  const [secState, setSecState] = useState<'none' | 'derived' | 'custom'>('none')
   const [secondaryInput, setSecondaryInput] = useState('')
-  const [suggestOpen, setSuggestOpen] = useState(false)
+  const [secMenuOpen, setSecMenuOpen] = useState(false)
   // per-family modes (owner design: exact decoupled per family, chips in the fields). The
   // primary's chip = Recommended / Exact / the six archetype anchors; the secondary's chip =
   // Tint / Pastel / Outline / Exact.
@@ -56,16 +66,10 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   // legacy shape for the checklist/toast logic: anchors count as recommended machinery
   const rung: RungMode = primaryMode === 'exact' ? 'exact' : 'recommended'
   const [profile, setProfile] = useState<ContrastProfile>('wcag')
-  // Accent preview: two options shown only when an accent is set —
-  // Default = 'accented', Inverse = 'accented-inverse'. Init 'accented' so
-  // adding an accent shows it immediately.
-  const [accentMode, setAccentMode] = useState<AccentMode>('accented')
   // Neutral tint level (the neutral is always generated from the brand hue now).
   const [neutralLevel, setNeutralLevel] = useState<NeutralLevel>('default')
-  // DERIVED secondary (the plugin's default posture): no hex — the engine derives a subtle
-  // secondary from the primary. Entered via the suggestion chip; typing any hex exits it.
-  const [derived, setDerived] = useState(false)
   const [view, setView] = useState<View>('palette')
+  const derived = secState === 'derived'
 
   // Suggestions and the theme always derive from the last VALID hex, so a
   // half-edited input never blanks the chips or flashes a fallback theme.
@@ -80,18 +84,18 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   const lastValidSecondary = useRef<string | null>(null)
   const parsedSecondary = normalizeHex(secondaryInput)
   if (parsedSecondary) lastValidSecondary.current = parsedSecondary
-  const secondary = accentOpen ? (parsedSecondary ?? (secondaryInput ? lastValidSecondary.current : null)) : null
+  const secondary = secState === 'custom' ? (parsedSecondary ?? (secondaryInput ? lastValidSecondary.current : null)) : null
 
-  // Close the suggestion popover on outside click
+  // Close the secondary menu on outside click
   const popoverRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    if (!suggestOpen) return
+    if (!secMenuOpen) return
     const onDown = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) setSuggestOpen(false)
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) setSecMenuOpen(false)
     }
     document.addEventListener('mousedown', onDown)
     return () => document.removeEventListener('mousedown', onDown)
-  }, [suggestOpen])
+  }, [secMenuOpen])
 
   const computed = useMemo(() => {
     const cp = profile === 'apca' ? ('apca' as const) : undefined
@@ -104,7 +108,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
       primaryArchetype: primaryMode !== 'recommended' && primaryMode !== 'exact' ? primaryMode : undefined,
       secondaryHex: derived ? null : secondary,
       deriveSecondary: derived || undefined,
-      secondaryStyle,
+      secondaryStyle: derived ? undefined : secondaryStyle,   // derived is always pastel — no chip
       contrastProfile: cp,
     })
     const css = brandCss('custom', 'Custom brand', t.themed, t.secondary?.scale ?? null, '', neutralLevel, cp, t.secondary?.style)
@@ -181,54 +185,58 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
 
       <div className="ct-bar-field" style={{ position: 'relative' }} ref={popoverRef}>
         <div className="ct-label">Secondary color</div>
-        <div className="ct-field ct-field-color">
-          <label className="ct-swatch-btn" title="Open color picker">
-            <span className="ct-swatch" style={{ background: derived ? 'var(--secondary-cta-1)' : (secondary ?? 'var(--neutral-wash-5)') }} />
-            <input type="color" value={secondary ?? primary} onChange={e => { setDerived(false); setSecondaryInput(e.target.value.toUpperCase()); setAccentOpen(true) }} />
-          </label>
-          <input value={derived ? '' : secondaryInput} placeholder={derived ? 'Derived from primary' : 'enter a hex'}
-            onChange={e => { setDerived(false); setSecondaryInput(e.target.value); setAccentOpen(true) }} spellCheck={false} />
-          {(secondary || derived) && (
-            <select style={chipStyle} value={secondaryStyle} onChange={e => setSecondaryStyle(e.target.value as SecondaryStyle)} title="Secondary style">
-              <option value="tint">Tint</option>
-              <option value="pastel">Pastel</option>
-              <option value="outline">Outline</option>
-              <option value="exact">Exact</option>
-            </select>
-          )}
-          {/* one trailing button: suggestions when empty, clear once filled */}
-          {(secondary || derived) ? (
-            <button className="ct-iconbtn" title="Remove secondary"
-              onClick={() => { setDerived(false); setAccentOpen(false); setSecondaryInput(''); setSuggestOpen(false); setAccentMode('accented') }}>
-              <X size={14} />
-            </button>
-          ) : (
-            <button className="ct-iconbtn" title="Suggested pairings" onClick={() => setSuggestOpen(o => !o)}>
-              <Sparkles size={14} />
-            </button>
-          )}
-        </div>
-        {suggestOpen && (
-          <div className="ct-popover">
-            <div style={{ fontSize: 11, color: 'var(--fg-subtle)' }}>Suggested from your primary</div>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {/* the plugin's default posture: no hex — the engine derives the subtle secondary */}
-              <button className="ct-suggest" onClick={() => { setDerived(true); setSecondaryInput(''); setAccentOpen(false); setSuggestOpen(false) }}>
-                <span className="ct-swatch sm" style={{ background: 'var(--secondary-cta-1)' }} />
-                Derive from primary
-              </button>
-              {([['Complementary', 180], ['60°', 60], ['30°', 30]] as Array<[string, number]>).map(([label, deg]) => (
-                <button key={label} className="ct-suggest" onClick={() => { setSecondaryInput(rybRotate(primary, deg)); setAccentOpen(true); setSuggestOpen(false) }}>
-                  <span className="ct-swatch sm" style={{ background: rybRotate(primary, deg) }} />
-                  {label}
-                </button>
-              ))}
-            </div>
-            {(secondary || derived) && (
-              <button className="ct-remove" onClick={() => { setDerived(false); setAccentOpen(false); setSecondaryInput(''); setSuggestOpen(false); setAccentMode('accented') }}>
-                <BanIcon size={13} /> Remove secondary
-              </button>
+        {secState === 'none' ? (
+          // no secondary is the demo's default — the field only exists once added
+          <button className="ct-add" onClick={() => setSecState('derived')}>
+            <Plus size={14} /> Add secondary
+          </button>
+        ) : (
+          <div className="ct-field ct-field-color">
+            <label className="ct-swatch-btn" title="Open color picker">
+              {/* the swatch always shows the RESOLVED secondary — in derived mode that's
+                  the subtle tint the engine produced, not the primary hex in the input */}
+              <span className="ct-swatch" style={{ background: derived ? 'var(--secondary-cta-1)' : (secondary ?? 'var(--neutral-wash-5)') }} />
+              <input type="color" value={secondary ?? primary} onChange={e => { setSecState('custom'); setSecondaryInput(e.target.value.toUpperCase()) }} />
+            </label>
+            {/* derived: the input TRACKS the primary live (that's what derived means) and is
+                dimmed; the first keystroke detaches to custom with the typed value */}
+            <input value={derived ? primary.toUpperCase() : secondaryInput} placeholder="enter a hex"
+              style={derived ? { color: 'var(--fg-subtle)' } : undefined}
+              onChange={e => { setSecState('custom'); setSecondaryInput(e.target.value) }} spellCheck={false} />
+            {derived ? (
+              // passive marker, not the style chip — derived is always pastel, engine's call
+              <span style={{ fontSize: 11, color: 'var(--fg-subtle)', marginLeft: 'auto', flexShrink: 0 }}>from primary</span>
+            ) : (
+              <select style={chipStyle} value={secondaryStyle} onChange={e => setSecondaryStyle(e.target.value as SecondaryStyle)} title="Secondary style">
+                <option value="tint">Tint</option>
+                <option value="pastel">Pastel</option>
+                <option value="outline">Outline</option>
+                <option value="exact">Exact</option>
+              </select>
             )}
+            <button className="ct-iconbtn" title="Secondary options" onClick={() => setSecMenuOpen(o => !o)}>
+              <ChevronDown size={14} />
+            </button>
+          </div>
+        )}
+        {secMenuOpen && secState !== 'none' && (
+          <div className="ct-popover">
+            <button className="ct-suggest" style={derived ? { borderColor: 'var(--brand-highlight-8)' } : undefined}
+              onClick={() => { setSecMenuOpen(false); setSecState('derived') }}>
+              <span className="ct-swatch sm" style={{ background: 'var(--secondary-cta-1)' }} />
+              From primary
+            </button>
+            <button className="ct-suggest" style={secState === 'custom' ? { borderColor: 'var(--brand-highlight-8)' } : undefined}
+              onClick={() => {
+                // keep the pre-filled primary hex so "custom" starts from what derived showed
+                if (!secondaryInput) setSecondaryInput(primary.toUpperCase())
+                setSecMenuOpen(false); setSecState('custom')
+              }}>
+              Custom
+            </button>
+            <button className="ct-remove" onClick={() => { setSecMenuOpen(false); setSecState('none'); setSecondaryInput('') }}>
+              <BanIcon size={13} /> Remove
+            </button>
           </div>
         )}
       </div>
@@ -241,14 +249,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
         </div>
       </div>
 
-      {/* keep preview + engine-mode together; wrap as one group, left-aligned */}
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px 18px', flexWrap: 'wrap' }}>
-        {(secondary || derived) && (
-          <div className="ct-bar-field">
-            <div className="ct-label">Secondary preview</div>
-            <Segmented value={accentMode} onChange={setAccentMode} options={[['accented', 'Default'], ['accented-inverse', 'Inverse']]} />
-          </div>
-        )}
         <div className="ct-bar-field">
           <div className="ct-label">Contrast standard</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -273,7 +274,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   const colorBlock = (label: string, prefix: string, kind: RampKind, r: ResolvedBrand | null, hex: string, extras?: React.ReactNode) => (
     <div className="ct-colorblock">
       <div className="ct-label" style={{ marginBottom: 8 }}>{label}</div>
-      <TokenCards prefix={prefix} kind={kind} />
+      <TokenCards prefix={prefix} kind={kind} outlineCta={prefix === 'secondary' && computed.t.secondary?.style === 'outline'} />
       {extras}
       {r && <EngineChecklist rRec={r} rung={rung} primaryHex={hex} />}
     </div>
@@ -316,11 +317,16 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
     // chip "Aa" (highlight/cta) carries its on-color at a slightly lighter weight;
     // ink "Aa" is a big, heavy glyph so it reads as a text swatch, not a chip label.
     const aa: React.CSSProperties = { height: 36, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600 }
-    // highlight-8 is the 3:1 NON-TEXT stop (boundaries) — it carries no on-text, so it renders as a plain
-    // swatch; only highlight-9/10 carry on-highlight text.
-    if (stop === 'highlight-8') return <div style={{ height: 36, borderRadius: 6, background: cv(stop), border: '1px solid var(--border-subtle)' }} />
+    // highlight-8 is the 3:1 NON-TEXT stop (boundaries/strokes) — it carries no on-text, so it
+    // renders AS a stroke: a ring of the color, not a fill.
+    if (stop === 'highlight-8') return <div style={{ height: 36, borderRadius: 6, boxSizing: 'border-box', border: `2px solid ${cv(stop)}` }} />
     if (stop.startsWith('highlight')) return <div style={{ ...aa, background: cv(stop), color: cv('on-highlight') }}>Aa</div>
-    if (stop.startsWith('cta')) return <div style={{ ...aa, background: cv(stop), color: cv('on-cta') }}>Aa</div>
+    // filled cta cells carry NO stroke (filled is filled — same call as the buttons);
+    // only the OUTLINE secondary shows its ring, where the boundary IS the component
+    if (stop.startsWith('cta')) {
+      const ring = prefix === 'secondary' && computed.t.secondary?.style === 'outline'
+      return <div style={{ ...aa, boxSizing: 'border-box', background: cv(stop), color: cv('on-cta'), border: ring ? `1.5px solid ${cv('cta-stroke')}` : undefined }}>Aa</div>
+    }
     if (stop.startsWith('ink')) return <div style={{ ...aa, fontSize: 18, fontWeight: 900, color: cv(stop) }}>Aa</div>
     return <div style={{ height: 36, borderRadius: 6, background: cv(stop), border: '1px solid var(--border-subtle)' }} />
   }
@@ -384,7 +390,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   )
 
   return (
-    <div data-brand="custom" data-theme={dark ? 'dark' : 'light'} data-accent-mode={(secondary || derived) ? accentMode : 'default'} style={{ background: 'var(--surface-base)', color: 'var(--fg-default)', minHeight: '100%', position: 'relative' }}>
+    <div data-brand="custom" data-theme={dark ? 'dark' : 'light'} data-accent-mode={(secondary || derived) ? 'accented' : 'default'} style={{ background: 'var(--surface-base)', color: 'var(--fg-default)', minHeight: '100%', position: 'relative' }}>
       <style>{overrideCss}</style>
       <style>{PAGE_CSS}</style>
 
@@ -873,9 +879,17 @@ const PAGE_CSS = `
 /* Fixed height so a taller child (the ✦ button) can't push one field bigger
    than the rest — all bar fields line up at 38px. */
 .ct-bar .ct-field { width: auto; height: 38px; padding: 0 12px; }
-.ct-bar .ct-field-color { width: 152px; }
-.ct-bar .ct-field-color > input { flex: 1; min-width: 0; }
-.ct-bar .ct-field > select { width: 132px; }
+/* Room for the mode chips — "Recommended"/"Outline" must never truncate. */
+.ct-bar .ct-field-color { width: 272px; }
+.ct-bar .ct-field-color > input { flex: 1; min-width: 56px; }
+.ct-bar .ct-field > select, .ct-bar .ct-field > span > select { width: 96px; }
+.ct-add {
+  display: inline-flex; align-items: center; gap: 6px; box-sizing: border-box; height: 38px;
+  padding: 0 14px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600;
+  color: var(--fg-subtle); background: transparent;
+  border: 1.5px dashed var(--border-default); border-radius: 8px;
+}
+.ct-add:hover { color: var(--fg-default); border-color: var(--brand-highlight-8); background: var(--brand-bg-faint); }
 .ct-pane {
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.5fr);
   gap: 24px; padding: 24px; align-items: start;

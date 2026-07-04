@@ -25,7 +25,7 @@ const SIGNAL_ICON: Record<string, typeof AlertCircle> = {
   'info-color': Info,
 }
 
-export function TokenCards({ prefix, kind }: { prefix: string; kind: RampKind }) {
+export function TokenCards({ prefix, kind, outlineCta }: { prefix: string; kind: RampKind; outlineCta?: boolean }) {
   const v = (t: string) => `var(--${prefix}-${t})`
   const isSignal = kind === 'signal'
   const [ctaHover, setCtaHover] = React.useState(false) // cta-1 → cta-2 on hover
@@ -87,9 +87,10 @@ export function TokenCards({ prefix, kind }: { prefix: string; kind: RampKind })
           style={{
             alignSelf: 'flex-start', width: 184, boxSizing: 'border-box', textAlign: 'center',
             background: ctaHover ? v('cta-2') : v('cta-1'), color: v('on-cta'),
-            // the adaptive boundary: transparent until the cta fill fails 3:1 vs paper-2, then
-            // the family's contrast-gated highlight-8 — always present, so layout never shifts
-            border: `1.5px solid ${v('cta-stroke')}`,
+            // filled buttons carry NO stroke (the label identifies the button — WCAG 1.4.11
+            // doesn't require a boundary); only the OUTLINE style keeps its ring, where the
+            // boundary IS the component. Transparent border keeps layout identical.
+            border: `1.5px solid ${outlineCta ? v('cta-stroke') : 'transparent'}`,
             borderRadius: 999, padding: '12px 28px', fontSize: 15, fontWeight: 600, fontFamily: 'inherit',
             cursor: 'pointer', marginBottom: 18,
           }}>{ctaHover ? 'cta-2 on hover' : 'cta-1 button'}</button>
