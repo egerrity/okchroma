@@ -1,5 +1,5 @@
-import { resolveBrand, SIGNAL_SCALES } from '../src/engine/resolve'
-import { type NeutralLevel } from '../src/engine/colorEngine'
+import { resolveBrand, signalScalesFor } from '../src/engine/resolve'
+import { type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
 import { themeToFigma } from '../src/engine/figmaRender'
 import { SIGNALS } from '../src/engine/signals'
 import { toHex } from '../src/engine/cssRender'
@@ -11,6 +11,7 @@ let secondaryHex: string | null = null
 let secondaryEnabled = false
 let neutralLevel: NeutralLevel = 'default'
 let engineMode: 'recommended' | 'exact' = 'recommended'
+let contrastProfile: ContrastProfile = 'wcag' // opt-in APCA re-solve; WCAG = shipped default
 let pendingName: string | null = null // brand armed for overwrite confirmation
 let secondaryInclude = false // global secondary switch — OFF by default (owner call)
 
@@ -28,6 +29,7 @@ const secondaryPicker    = $<HTMLInputElement>('secondary-picker')
 const secondarySwatch    = $<HTMLElement>('secondary-swatch')
 const neutralSelect   = $<HTMLSelectElement>('neutral-select')
 const segBtns         = document.querySelectorAll<HTMLButtonElement>('.seg-btn[data-mode]')
+const profileBtns     = document.querySelectorAll<HTMLButtonElement>('.seg-btn[data-profile]')
 const secondaryIncludeBtns = document.querySelectorAll<HTMLButtonElement>('.seg-btn[data-sec]')
 const secondaryCustom    = $<HTMLElement>('secondary-custom')
 const rampLight       = $<HTMLElement>('ramp-light')
@@ -69,9 +71,15 @@ function setStatus(text: string, tone: '' | 'ok' | 'err' = '') {
 
 // ─── Preview ─────────────────────────────────────────────────────────────────
 
+// caller opts: engine mode + the contrast profile (omitted when wcag — the shipped default)
+function engineOpts() {
+  const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
+  return engineMode === 'exact' || cp ? { exact: engineMode === 'exact' || undefined, contrastProfile: cp } : undefined
+}
+
 function updatePreview() {
   try {
-    const opts = engineMode === 'exact' ? { exact: true } : undefined
+    const opts = engineOpts()
     const { scale } = resolveBrand(primaryHex, 'x', opts)
     renderRamp(rampLight, scale.light)
     renderRamp(rampDark, scale.dark)
@@ -101,7 +109,7 @@ function buildAndSend() {
   setStatus('Applying…')
 
   try {
-    const opts = engineMode === 'exact' ? { exact: true } : undefined
+    const opts = engineOpts()
     const r = resolveBrand(primaryHex, name, opts)
     const secondary = secondaryEnabled && secondaryHex
       ? resolveBrand(secondaryHex, 'secondary', opts).scale
@@ -114,19 +122,25 @@ function buildAndSend() {
     // recreated) instead of duplicating an identical grey ramp per brand (heavy
     // in Figma). The tinted levels genuinely vary by hue, so they key by level +
     // hue (same-hue brands still dedup onto one primitive).
-    const neutralKey = neutralLevel === 'pure'
+    // APCA-solved ramps are DIFFERENT VALUES from wcag ones, so they get their own shared-primitive
+    // dedup space (suffixed paths) — otherwise an apca apply would silently reuse a wcag primitive
+    // written earlier (shared prims are refresh=false: an existing path is never re-written).
+    const profileSuffix = contrastProfile === 'apca' ? '-apca' : ''
+    const neutralKey = (neutralLevel === 'pure'
       ? 'pure'
-      : `${neutralLevel}-h${Math.round(r.scale.brandH)}`
+      : `${neutralLevel}-h${Math.round(r.scale.brandH)}`) + profileSuffix
     // Per-signal variant key for Foundations dedup. An override note reads
     // "warning → lemon" / "success → teal-side"; we key on the right-hand side
     // (lemon, teal-side, …). No override → the canonical ramp, keyed 'base'.
+    const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
+    const sigScales = signalScalesFor(cp)
     const signals = SIGNALS.map(s => {
       const ov = r.signalOverrides.find(o => o.name === s.name)
-      const variant = ov ? ov.note.split('→').pop()!.trim().toLowerCase().replace(/\s+/g, '-') : 'base'
-      return { name: s.name, scale: ov?.scale ?? SIGNAL_SCALES.get(s.name)!.scale, variant }
+      const variant = (ov ? ov.note.split('→').pop()!.trim().toLowerCase().replace(/\s+/g, '-') : 'base') + profileSuffix
+      return { name: s.name, scale: ov?.scale ?? sigScales.get(s.name)!.scale, variant }
     })
 
-    const { light, dark } = themeToFigma(r, { secondary, neutralLevel, signals })
+    const { light, dark } = themeToFigma(r, { secondary, neutralLevel, signals, contrastProfile: cp })
 
     // The engine now names signals by identity (red / yellow / green /
     // info-color), so both the primitive path (system/<identity>/<variant>) and
@@ -222,6 +236,15 @@ segBtns.forEach(btn => {
     segBtns.forEach(b => b.classList.remove('active'))
     btn.classList.add('active')
     engineMode = btn.dataset.mode as typeof engineMode
+    updatePreview()
+  })
+})
+
+profileBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    profileBtns.forEach(b => b.classList.remove('active'))
+    btn.classList.add('active')
+    contrastProfile = btn.dataset.profile as ContrastProfile
     updatePreview()
   })
 })
