@@ -165,7 +165,8 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   const chipStyle: React.CSSProperties = {
     fontSize: 11, fontWeight: 650, border: '1px solid var(--neutral-highlight-8)',
     background: 'var(--neutral-wash-3)', color: 'var(--fg-default)',
-    borderRadius: 999, padding: '3px 8px', marginLeft: 'auto', flexShrink: 0, cursor: 'pointer',
+    // small radius, not a pill — the chip sits inside a square-cornered field
+    borderRadius: 5, padding: '3px 8px', marginLeft: 'auto', flexShrink: 0, cursor: 'pointer',
   }
 
   const controlsBar = (
