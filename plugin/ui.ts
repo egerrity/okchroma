@@ -118,7 +118,7 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
 
   type Row = { label: string; scale: GeneratedScale; idHex?: string; outline?: boolean }
   const rows: Row[] = [
-    { label: 'brand', scale: t.themed.scale, idHex: t.themed.scale.identityHex },
+    { label: 'primary', scale: t.themed.scale, idHex: t.themed.scale.identityHex },
     ...(t.secondary ? [{ label: 'secondary', scale: t.secondary.scale, idHex: t.secondary.scale.identityHex, outline: t.secondary.style === 'outline' }] : []),
     { label: 'neutral', scale: nScale },
     ...SIGNALS.map(s => ({ label: s.name, scale: effective(s.name) })),

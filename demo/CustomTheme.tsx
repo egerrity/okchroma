@@ -307,7 +307,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   // with the page toggle.
   const SWATCH_STOPS = ['paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'wash-6', 'wash-7', 'highlight-8', 'highlight-9', 'highlight-10', 'ink-11', 'ink-12', 'cta-1', 'cta-2']
   const swatchRamps: Array<[string, string, boolean]> = [
-    ['brand', 'brand', true],
+    ['brand', 'primary', true],
     ...((secondary || derived) ? [['secondary', 'secondary', true] as [string, string, boolean]] : []),
     ['neutral', 'neutral', false],
     ['red', 'red', false], ['yellow', 'yellow', false], ['green', 'green', false], ['info-color', 'info-color', false],
