@@ -131,6 +131,99 @@ render §⓪★ (blue primary → blue-8 stroke · coral secondary → coral-8).
 STILL OPEN: highlight-stroke (badges/chips on hl-9 fills — same rule, not yet asked-for as a
 token) · a semantic-layer name for the stroke.
 
+**✓ ROUND 6b SHIPPED (owner, same day): DERIVED IS PASTEL + the plugin becomes the demo.**
+- **Derived = PASTEL by default (supersedes round 6's "derived is always tint", same day):**
+  the owner's answer to the derived-redundancy question ("a lot of redundancies… maybe just a
+  second cta swatch group") — the ramp STAYS a full real ramp; the fix is differentiation, not
+  emission collapse. A derived tint ramp sat same-hue between the brand row and the (brand-hue
+  by default) neutral row; pastel (k·maxChroma at each L) reads as its own thing. Engine-pinned
+  in the derived branch (`pastelK: SUBTLE_PASTEL_K`, style 'pastel', immune to lingering chip
+  state — gate asserts it). Verified in plugin matrix + demo. ⚠ CARRIES the known dark-pastel
+  greyishness onto the DEFAULT path — the per-style dark constants work is now urgent.
+- **Plugin UI = the demo (owner mockup, Frame 1739329230):** dialog 360×520 → **720×640**;
+  the demo controls bar verbatim (labels Primary/Secondary/Neutral color + Contrast standard;
+  swatch-in-field + in-field chip selects; the THREE-STATE secondary field with "+ Add
+  secondary" → derived (tracked hex, dim, "from primary" marker) → custom (prefill, style
+  chip), chevron menu From primary/Custom/Remove); the two ramp strips replaced by the demo's
+  FULL MATRIX (brand/secondary/neutral/4 signals × ID + 12 stops + cta pair, light mode:
+  stroke-8 ring, Aa on-highlight/ink cells, cta cells carrying each family's cta-stroke,
+  outline-aware secondary pair). Whole state machine browser-verified via the built
+  plugin-ui.html. **⚠ DEFAULT-POSTURE CHANGE (per the mockup): the plugin now STARTS WITH NO
+  SECONDARY** ("+ Add secondary"), superseding "plugin defaults Derived" — flagged for owner
+  veto.
+- **Button-stroke sequel (owner: "looks really heavy — required?"):** NOT required by WCAG
+  1.4.11 when the label identifies the button (Understanding doc: no boundary required; the
+  label's own contrast is enforced separately) — and every light-mode subtle cta fired the
+  ring, so it read as the norm. DROPPED on filled cta buttons in TokenCards (outline keeps its
+  ring — there the boundary IS the component); the token stays emitted everywhere.
+- **Stroke sequel 2 (owner, same day: "these still have their strokes even though they are
+  filled"):** the matrix cta cells briefly carried the conditional cta-stroke (my reading of
+  "show the cta outline color on the palette swatches") — measured live: the rings were the
+  gate CORRECTLY firing (neutral/yellow/green/secondary light ctas fail 3:1; red/info/brand
+  transparent — the apparent red/info rings were screenshot compression). Owner call: filled
+  is filled — NO stroke on filled matrix cells either, demo + plugin; ONLY the outline
+  secondary's pair renders its ring (verified live: transparent fill + own highlight-8).
+  highlight-8-as-a-stroke-swatch stays.
+- **Stroke sequel 3 — THE RULE IS GONE (owner: "get rid of that rule entirely… leave [the
+  token] everywhere in the event we add a high contrast mode, but it shouldn't be getting
+  [set]"):** the conditional 3:1/Lc-30 gate REMOVED from the engine — `ctaStrokeNeeded(/Dark)`
+  fields, `needsCtaStroke()`, and all three re-judge sites (red-cool render · neutral quiet-cta
+  · subtle-secondary cta) deleted. Emitters now write `cta-stroke: transparent` UNCONDITIONALLY
+  for every family (css var + figma TRANSPARENT_TOKEN → plugin aliases system/transparent);
+  the OUTLINE secondary override is the ONLY resolver (→ own highlight-8). Token stays in the
+  vocabulary for components + a future high-contrast profile re-solve. dark-audit snapshot
+  legitimately CLEAN (it tracks resolved colors; the stroke was always an alias).
+- **Outline hover re-anchored (owner: "9% of a very light/dark color… fairly imperceptible…
+  reference a stable value — let's do 9% of highlight"):** cta-2 = the family's OWN
+  **highlight-8 at OUTLINE_HOVER_ALPHA (.09)** — the same stable contrast-gated stop the ring
+  aliases — instead of 9% of the generated subtle cta. css + figma + plugin matrix all moved;
+  verified: both modes emit cta-2 α.09 from s8. (If "highlight" meant hl-9 — the emphasis
+  fill — it's a one-line swap.)
+- **The APCA-in-WCAG wrench (owner question), answered from code:** YES — under the WCAG
+  profile the highlight path still uses APCA in two places, BY DESIGN and predating the
+  profile switch: ① on-fill/on-highlight POLARITY (`onTextIsWhite`) picks the pole by
+  max-|Lc| always (wcag adds the mixing-flip guard: ratio ≥4.5 AND |Lc| ≥45); the reqtoken
+  spec declares `metric: 'apca-pole'` in BOTH profiles. ② highlight-9/10 legibility is the
+  agnostic APCA Lc-60 worst-case bar (owner's 2026-06-27 edge-case decision), gated by
+  highlight-audit in both profiles. The wcag/apca PROFILE switch maps only the numbered
+  ratio requires (3↔30, 4.5↔75, 7↔90).
+
+**✓ ROUND 6 SHIPPED (owner talk-through, 2026-07-04 post-compact): the DERIVED-FIRST field +
+the plugin port.**
+- **Demo secondary field is a THREE-STATE control:** none (default — just a dashed "+ Add
+  secondary" button; "no secondary is basically the default" stands) → derived (what Add lands
+  on: the input TRACKS the primary hex live, dimmed, with a passive "from primary" marker —
+  NOT the style chip; the swatch shows the RESOLVED subtle secondary) → custom (any keystroke
+  or color-pick detaches; the style chip appears, default Tint). The trailing chevron menu
+  replaces the sparkles popover AND the X: **From primary / Custom / Remove** (custom prefills
+  the primary hex so it starts from what derived showed). The complementary/60°/30° suggestions
+  are DELETED.
+- **Derived is ALWAYS tint (owner):** engine-enforced in resolveTheme (style coerced, tint mult
+  pinned) — a lingering pastel/outline chip state can't leak into the derived scale. Escape
+  hatch: Custom + keep the prefilled primary hex + pick a style.
+- **Button stroke DROPPED on filled ctas (owner, after the WCAG reading):** 1.4.11 doesn't
+  require a boundary when the label identifies the button (text contrast is enforced
+  separately), and every light-mode subtle cta was firing the ring — it read heavy. The
+  cta-stroke TOKEN stays emitted everywhere; TokenCards renders it only for the OUTLINE style
+  (where the ring IS the component). The story moved to the palette matrix: **cta swatch cells
+  now carry their family's cta-stroke, and highlight-8 renders AS a stroke** (a ring, not a
+  fill — it's the boundary stop).
+- **Bar edits:** Secondary-preview (Default/Inverse) seg REMOVED · primary/secondary fields
+  widened to 272px (chips never truncate) · neutral select smaller with options renamed
+  **default / intense / true grey** (appearance:none + own chevron in reserved space — the
+  copy ran under the native arrow).
+- **PLUGIN PORTED to per-family modes:** global Engine Rec./Exact seg GONE; primary hex row
+  gains the Recommended/Exact/archetypes select; secondary seg renamed **From primary / Custom
+  / None** (default From primary); Custom shows hex row + style select (Tint/Pastel/Outline/
+  Exact), prefilled with the primary hex; neutral options renamed to match. **Outline now
+  crosses the Figma boundary:** themeToFigma takes `secondaryStyle` and re-expresses the
+  secondary group exactly like cssRender (cta-1 alpha-0, cta-2 cta-color @ .09, cta-stroke =
+  own highlight-8, on-cta = ink-11); code.ts generalizes — alpha-0 leaves alias
+  system/transparent, NON-pole on-cta aliases the sibling ink-11 (a pole check, not a flag),
+  raw writes carry partial alpha. Verified by script: both modes emit cta-1 α0 / cta-2 α.09 /
+  stroke==hl-8 / on-cta==ink-11; derived-with-pastel-requested resolves tint.
+- All gates green after each stage; snapshot clean (shipped WCAG output untouched).
+
 **✓ ROUND 5 SHIPPED (owner mockup, 2026-07-04): PER-FAMILY MODES — exact decoupled per family,
 chips in the fields.** The global Recommended/Exact seg is GONE from the demo. Each field carries
 its own mode chip:
@@ -161,7 +254,7 @@ its own mode chip:
   the Recommended/Exact seg carries it. Consequence: the per-signal-room demote machinery is
   live only on the explicit-standard path; the recommended lane is subtle by construction with
   residual ANNOTATIONS (audit:secondary reworked to two lanes — recommended: subtle+annotated
-  invariant, 108/480 annotated residuals = threshold-calibration data; standard lane keeps
+  invariant, annotated residuals = threshold-calibration data (127/480 at the round-5 tint ×8); standard lane keeps
   clears-or-demoted + variant rules tested).
 - ✓ Demo: "Derive from primary" chip in the suggestions popover (demo STARTS EMPTY — owner: "no
   secondary is basically the default" for the demo); chip enters the derived state (field reads

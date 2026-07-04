@@ -1,25 +1,40 @@
 # Continue: requirement-token color engine (compact/handoff)
 
-## ▶▶ OWNER REVIEW EDITS (2026-07-04, pre-compact — TALK THROUGH FIRST, then build)
+## ▶▶ ROUND 6b ALSO BUILT (same session): derived=PASTEL + plugin UI = the demo
 
-Owner reviewed the plugin IN REAL FIGMA (screenshot: dialog renders correctly — brand name/color,
-Secondary Derived/Custom/Off w/ Custom+Remove, Neutral select, Engine Rec./Exact, Contrast
-WCAG/APCA, ramp previews) — "overall looks good." NOTE: plugin still shows a GLOBAL Engine
-Rec./Exact — per-family modes (primary chip + secondary style chips) not yet ported to the plugin.
+Owner's two post-review asks, both landed (record = SECONDARY-PLAN ROUND 6b): ① **derived
+secondary is now PASTEL by default** (their answer to the derived-redundancy question — the
+same-hue tint ramp read redundant next to brand+neutral; pastel differentiates; engine-pinned,
+gate-asserted; ⚠ dark-pastel greyishness now sits on the default path). ② **Plugin UI reworked
+to the demo's look/behavior** (mockup Frame 1739329230): 720×640, demo controls bar, the
+three-state secondary field (+ Add secondary → derived → custom) with the chevron menu, and the
+full family matrix replacing the ramp strips. ⚠ Plugin default posture changed derived→NONE
+(the mockup shows "+ Add secondary") — awaiting owner veto. Browser-verified (plugin-ui.html
+served statically: state machine + matrix + pastel row); demo rebuilt + reverified; ALL gates
+green, snapshot clean. Uncommitted (show-before-commit, together with the round-6 pile below).
 
-**DEMO edits requested (controls bar):**
-1. REMOVE the "Secondary preview" control (the Default/Inverse seg).
-2. MORE ROOM for the primary + secondary inputs (they're cramped; chips truncate — screenshot
-   showed "Recom…"/"Ou…").
-3. Neutral select SMALLER; options renamed **"default" · "intense" · "true grey"** (from
-   Default (brand-tinted) / Branded (intense tint) / Pure (gray)) — check NeutralLevel label map
-   in demo + plugin for consistency.
-4. FIX: copy bleeds under the neutral select's chevron — the chevron needs its own space.
-5. **"Missing 'derived' — would be the default option"** — AMBIGUOUS, ask first: (a) the demo
-   secondary field should present Derived/Custom/Off like the plugin (parity; Derived visible as
-   the default state rather than buried in the sparkles popover)? — most likely; or (b) 'derived'
-   as an entry in the secondary STYLE chip? Owner earlier said the demo "starts empty — no
-   secondary is basically the default"; this may revise that. Clarify, then build.
+## ▶▶ OWNER REVIEW EDITS: ✓ ALL BUILT (2026-07-04 post-compact, talked through first)
+
+All five demo edits + the plugin per-family port landed in the working tree (SECONDARY-PLAN
+ROUND 6 = the full decision record). The talk-through resolved edit #5: the secondary field is
+now a THREE-STATE control — "+ Add secondary" button (default; demo still starts with none) →
+derived (input tracks the primary hex live, dimmed, passive "from primary" marker, NO style
+chip — derived is ALWAYS tint, now engine-enforced) → custom (typing detaches; chip appears).
+Chevron menu = From primary / Custom / Remove; sparkles + complementary suggestions deleted.
+Also owner-decided (3 rounds): **the cta-stroke RULE IS GONE** — conditional gate deleted from
+the engine (needsCtaStroke + fields + re-judge sites); emitters write cta-stroke TRANSPARENT
+unconditionally; only the OUTLINE secondary resolves it (own highlight-8); token kept for a
+future high-contrast re-solve. **Outline hover re-anchored to highlight-8 @ .09** (9% of the
+generated cta was imperceptible). Snapshot legitimately clean (it tracks colors; the stroke
+was an alias). Wrench answered: WCAG profile still uses APCA by design for on-text polarity +
+the hl Lc-60 bar (see SECONDARY-PLAN ROUND 6b).
+Plugin: Engine seg gone, primary mode select (Rec/Exact/archetypes), secondary seg From
+primary/Custom/None, style select on custom, neutral renamed default/intense/true grey, and
+OUTLINE now crosses themeToFigma (cta-1→transparent alias, cta-2 raw α.09, on-cta→sibling
+ink-11 via non-pole detection). All gates green, snapshot clean. NOT yet committed —
+show-before-commit; owner was live-driving the rebuilt demo during verification.
+REMAINING after this: real-Figma apply/fork test · dark tint/pastel chroma · push call ·
+install-docs walkthrough → Community.
 
 ## ▶▶ CURRENT STATE 2026-07-04 (write-through before possible compaction — READ THIS FIRST)
 
