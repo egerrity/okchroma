@@ -152,6 +152,18 @@ figma.ui.onmessage = async (msg) => {
       // would be blank in the new group — backfill them with a mirrored secondary.
       const backfillSecondary = secondaryOn && !fileHasSecondary && brandsExist
 
+      // ── theme collection FIRST (owner: theme appears above mode in the panel —
+      // the collections list follows creation order) ──────────────────────────
+      const th = resolveOwned(collections, THEME_NAME, profile, suffixed)
+      let brandMode: string
+      if (th.created) {
+        brandMode = th.coll.modes[0].modeId
+        th.coll.renameMode(brandMode, brand)
+      } else {
+        const m = th.coll.modes.find(x => x.name === brand)
+        brandMode = m ? m.modeId : th.coll.addMode(brand)
+      }
+
       // ── primitive collection: raw values, modes Light / Dark ───────────────
       const p = resolveOwned(collections, MODE_NAME, profile, suffixed)
       const stamp = profileStamp(profile)
@@ -296,17 +308,7 @@ figma.ui.onmessage = async (msg) => {
         }
       }
 
-      // ── theme collection: aliases, modes = brands ──────────────────────────
-      const th = resolveOwned(collections, THEME_NAME, profile, suffixed)
-      let brandMode: string
-      if (th.created) {
-        brandMode = th.coll.modes[0].modeId
-        th.coll.renameMode(brandMode, brand)
-      } else {
-        const m = th.coll.modes.find(x => x.name === brand)
-        brandMode = m ? m.modeId : th.coll.addMode(brand)
-      }
-
+      // ── theme collection: aliases, modes = brands (resolved above, before mode) ──
       const themeByName = await varsByName(th.coll.id)
       let aliasCount = 0
       const aliasInto = (themePath: string, primPath: string, modeId: string = brandMode) => {
@@ -322,7 +324,39 @@ figma.ui.onmessage = async (msg) => {
         aliasCount++
       }
 
-      // brand/primary always; brand/secondary depends on the secondary mode.
+      // THEME WRITE ORDER = PANEL ORDER (the groups sidebar follows each group's first
+      // variable; fresh files get the owner's layout): system → neutral → brand → signals.
+      // Existing collections keep their historical order — no reorder API; drag or re-apply
+      // on a fresh file.
+
+      // migration: ink-13 used to live under theme system/* — RENAME moves it into the
+      // neutral group with every user binding intact
+      const staleInk = themeByName.get('system/ink-13')
+      if (staleInk) {
+        staleInk.name = 'neutral/ink-13'
+        themeByName.set('neutral/ink-13', staleInk)
+        themeByName.delete('system/ink-13')
+      }
+
+      // ① system globals (brand-independent: every theme mode aliases the same seed;
+      // idempotent — backfills pre-existing brand modes the moment the globals appear)
+      const SYSTEM_GLOBALS = ['system/paper-raised', 'system/paper-sunken',
+        'system/abs-black', 'system/abs-white', 'system/transparent', 'system/scrim']
+      for (const path of SYSTEM_GLOBALS) {
+        for (const m of th.coll.modes) aliasInto(path, path, m.modeId)
+      }
+
+      // ② neutral (+ ink-13, folded into the neutral group like paper-0 — its seed stays
+      // the system/ink-13 pole in the mode collection)
+      const neutralGrp = shared.find(g => g.theme === 'neutral')
+      if (neutralGrp) {
+        for (const t of flatten(neutralGrp.light)) {
+          aliasInto(`neutral/${t.path}`, `${neutralGrp.prim}/${t.path}`)
+        }
+      }
+      for (const m of th.coll.modes) aliasInto('neutral/ink-13', 'system/ink-13', m.modeId)
+
+      // ③ brand/primary always; brand/secondary depends on the secondary mode.
       const stops = primaryRamp ? flatten(primaryRamp.light) : []
       for (const t of stops) {
         aliasInto(`brand/primary/${t.path}`, `brand/${brand}/primary/${t.path}`)
@@ -342,8 +376,9 @@ figma.ui.onmessage = async (msg) => {
           }
         }
       }
-      // neutral + signals → their shared primitive paths
+      // ④ signals → their shared primitive paths (engine order: red, yellow, green, info-color)
       for (const grp of shared) {
+        if (grp === neutralGrp) continue
         for (const t of flatten(grp.light)) {
           aliasInto(`${grp.theme}/${t.path}`, `${grp.prim}/${t.path}`)
         }
@@ -370,17 +405,6 @@ figma.ui.onmessage = async (msg) => {
         }
         aliasElev('system/paper-raised', themeNeutralP0, themeNeutralP2)
         aliasElev('system/paper-sunken', themeNeutralP2, themeNeutralP0)
-      }
-
-      // The system GLOBALS get theme-side aliases too (owner model: mode is the SEEDS —
-      // it must keep the light/dark values, so nothing moves; theme is where it all goes
-      // to work, so the globals must be bindable there). Brand-independent: every theme
-      // mode aliases the same primitive. Runs every apply — idempotent, and it backfills
-      // pre-existing brand modes the moment the globals first appear.
-      const SYSTEM_GLOBALS = ['system/paper-raised', 'system/paper-sunken', 'system/ink-13',
-        'system/abs-black', 'system/abs-white', 'system/transparent', 'system/scrim']
-      for (const path of SYSTEM_GLOBALS) {
-        for (const m of th.coll.modes) aliasInto(path, path, m.modeId)
       }
 
       figma.ui.postMessage({ type: 'done', brand, aliases: aliasCount, createdShared, secondary: secondaryMode })
