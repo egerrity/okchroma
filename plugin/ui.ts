@@ -1,5 +1,6 @@
-import { resolveTheme, signalScalesFor } from '../src/engine/resolve'
-import { type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
+import { resolveTheme, signalScalesFor, type SecondaryStyle, type ResolvedTheme } from '../src/engine/resolve'
+import { ARCHETYPES, type Archetype } from '../src/engine/archetypes'
+import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
 import { themeToFigma } from '../src/engine/figmaRender'
 import { SIGNALS } from '../src/engine/signals'
 import { toHex } from '../src/engine/cssRender'
@@ -8,15 +9,19 @@ import { toHex } from '../src/engine/cssRender'
 
 let primaryHex = '#E93D82'
 let secondaryHex: string | null = null
-let secondaryEnabled = false
 let neutralLevel: NeutralLevel = 'default'
-let engineMode: 'recommended' | 'exact' = 'recommended'
+// per-family modes (parity with the demo): the primary's select = Recommended / Exact /
+// the six archetype anchors; the secondary's select = its style chip (custom only —
+// derived is always pastel, the engine's call).
+let primaryMode: 'recommended' | 'exact' | Archetype = 'recommended'
+let secondaryStyle: SecondaryStyle = 'tint'
 let contrastProfile: ContrastProfile = 'wcag' // opt-in APCA re-solve; WCAG = shipped default
 let pendingName: string | null = null // brand armed for overwrite confirmation
-// secondary posture: DERIVED is the default (owner call 2026-07-04) — the engine derives a
-// subtle secondary from the primary; Custom = user hex; Off = mirror posture (as before).
+// The secondary is the demo's THREE-STATE field: none (default — just "+ Add secondary") →
+// derived (the input tracks the primary live; the engine derives the pastel secondary) →
+// custom (user hex + style chip). The chevron menu moves between all three.
 type SecondaryMode = 'derived' | 'custom' | 'off'
-let secondaryMode: SecondaryMode = 'derived'
+let secondaryMode: SecondaryMode = 'off'
 
 // ─── DOM ─────────────────────────────────────────────────────────────────────
 
@@ -25,21 +30,26 @@ const collectionInput = $<HTMLInputElement>('collection-name')
 const primaryHexInput = $<HTMLInputElement>('primary-hex')
 const primaryPicker   = $<HTMLInputElement>('primary-picker')
 const primarySwatch   = $<HTMLElement>('primary-swatch')
-const secondaryToggleBtn = $<HTMLButtonElement>('secondary-btn')
-const secondaryRow       = $<HTMLElement>('secondary-row')
+const primaryModeSelect  = $<HTMLSelectElement>('primary-mode')
+const archetypeGroup     = $<HTMLElement>('archetype-group')
+const secondarySlot      = $<HTMLElement>('secondary-slot')
+const secondaryAddBtn    = $<HTMLButtonElement>('secondary-add')
+const secondaryField     = $<HTMLElement>('secondary-field')
 const secondaryHexInput  = $<HTMLInputElement>('secondary-hex')
 const secondaryPicker    = $<HTMLInputElement>('secondary-picker')
 const secondarySwatch    = $<HTMLElement>('secondary-swatch')
+const secondaryMarker    = $<HTMLElement>('secondary-marker')
+const secondaryStyleSelect = $<HTMLSelectElement>('secondary-style')
+const secondaryMenuBtn   = $<HTMLButtonElement>('secondary-menu-btn')
+const secondaryMenu      = $<HTMLElement>('secondary-menu')
+const menuDerived        = $<HTMLButtonElement>('menu-derived')
+const menuDerivedSwatch  = $<HTMLElement>('menu-derived-swatch')
+const menuCustom         = $<HTMLButtonElement>('menu-custom')
+const menuRemove         = $<HTMLButtonElement>('menu-remove')
+const neutralSwatch   = $<HTMLElement>('neutral-swatch')
 const neutralSelect   = $<HTMLSelectElement>('neutral-select')
-const segBtns         = document.querySelectorAll<HTMLButtonElement>('.seg-btn[data-mode]')
 const profileBtns     = document.querySelectorAll<HTMLButtonElement>('.seg-btn[data-profile]')
-const secondaryIncludeBtns = document.querySelectorAll<HTMLButtonElement>('.seg-btn[data-sec]')
-const secondaryCustom    = $<HTMLElement>('secondary-custom')
-const rampLight       = $<HTMLElement>('ramp-light')
-const rampDark        = $<HTMLElement>('ramp-dark')
-const rampSecondaryLight = $<HTMLElement>('ramp-secondary-light')
-const rampSecondaryDark  = $<HTMLElement>('ramp-secondary-dark')
-const secondaryRamps     = $<HTMLElement>('secondary-ramps')
+const matrixEl        = $<HTMLElement>('matrix')
 const applyBtn        = $<HTMLButtonElement>('apply-btn')
 const statusEl        = $<HTMLElement>('status')
 
@@ -61,44 +71,121 @@ function toSpinal(s: string): string {
   return s.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
 }
 
-function renderRamp(el: HTMLElement, stops: Array<{ r: number; g: number; b: number }>) {
-  el.innerHTML = stops
-    .map(s => `<div class="stop" style="background:${toHex(s.r, s.g, s.b)}"></div>`)
-    .join('')
-}
-
 function setStatus(text: string, tone: '' | 'ok' | 'err' = '') {
   statusEl.textContent = text
   statusEl.className = `status${tone ? ` ${tone}` : ''}`
 }
 
+// ─── The secondary field's three states ──────────────────────────────────────
+
+function setSecondaryMode(mode: SecondaryMode) {
+  secondaryMode = mode
+  secondaryAddBtn.style.display = mode === 'off' ? '' : 'none'
+  secondaryField.style.display = mode === 'off' ? 'none' : ''
+  secondaryMarker.style.display = mode === 'derived' ? '' : 'none'
+  secondaryStyleSelect.style.display = mode === 'custom' ? '' : 'none'
+  secondaryHexInput.classList.toggle('dim', mode === 'derived')
+  if (mode !== 'custom') secondaryHexInput.classList.remove('invalid')
+  menuDerived.classList.toggle('on', mode === 'derived')
+  menuCustom.classList.toggle('on', mode === 'custom')
+  updatePreview()
+}
+
 // ─── Preview ─────────────────────────────────────────────────────────────────
 
-// the THEME input: primary + secondary posture + engine mode + contrast profile. The secondary's
-// LEVEL follows the engine mode inside resolveTheme (subtle = recommended, standard = exact).
+// the THEME input: primary + secondary posture, each under its OWN mode (per-family chips —
+// the demo's model exactly). Derived is always pastel; the style select applies to custom only.
 function themeInput(name: string) {
   const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
   return {
     primaryHex, name,
-    secondaryHex: secondaryMode === 'custom' && secondaryEnabled && secondaryHex ? secondaryHex : null,
+    primaryMode: primaryMode === 'exact' ? ('exact' as const) : ('recommended' as const),
+    primaryArchetype: primaryMode !== 'recommended' && primaryMode !== 'exact' ? primaryMode : undefined,
+    secondaryHex: secondaryMode === 'custom' && secondaryHex ? secondaryHex : null,
     deriveSecondary: secondaryMode === 'derived' || undefined,
-    exact: engineMode === 'exact' || undefined,
+    secondaryStyle: secondaryMode === 'custom' ? secondaryStyle : undefined,
     contrastProfile: cp,
   }
 }
 
+// the demo's top-card matrix: every family × ID + the 12 stops + the cta pair (light mode).
+// Stop 8 renders AS a stroke (it's the boundary stop); cta cells carry the family's cta-stroke.
+function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
+  const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
+  const sigScales = signalScalesFor(cp)
+  const effective = (n: typeof SIGNALS[number]['name']) =>
+    t.themed.signalOverrides.find(o => o.name === n)?.scale ?? sigScales.get(n)!.scale
+
+  type Row = { label: string; scale: GeneratedScale; idHex?: string; outline?: boolean }
+  const rows: Row[] = [
+    { label: 'brand', scale: t.themed.scale, idHex: t.themed.scale.identityHex },
+    ...(t.secondary ? [{ label: 'secondary', scale: t.secondary.scale, idHex: t.secondary.scale.identityHex, outline: t.secondary.style === 'outline' }] : []),
+    { label: 'neutral', scale: nScale },
+    ...SIGNALS.map(s => ({ label: s.name, scale: effective(s.name) })),
+  ]
+
+  const hx = (s: ColorStop) => toHex(s.r, s.g, s.b)
+  const pole = (white: boolean) => (white ? '#fff' : '#000')
+  const idText = (hex: string) => {
+    const h = hex.replace('#', '')
+    const [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16))
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6 ? '#000' : '#fff'
+  }
+
+  const rowHtml = (row: Row) => {
+    const st = (n: number) => row.scale.light.find(s => s.stop === n)!
+    const cells: string[] = [`<div class="mx-label" title="${row.label}">${row.label}</div>`]
+    cells.push(row.idHex
+      ? `<div class="mx-aa" style="background:${row.idHex};color:${idText(row.idHex)};font-weight:700;font-size:10px" title="identity">ID</div>`
+      : `<div class="mx-cell"></div>`)
+    for (let n = 1; n <= 12; n++) {
+      const h = hx(st(n))
+      if (n === 8) cells.push(`<div class="mx-cell" style="border:2px solid ${h}" title="highlight-8"></div>`)
+      else if (n === 9 || n === 10) cells.push(`<div class="mx-aa" style="background:${h};color:${pole(row.scale.onHighlightIsWhite)}" title="highlight-${n}">Aa</div>`)
+      else if (n >= 11) cells.push(`<div class="mx-aa" style="color:${h};font-size:15px;font-weight:800" title="ink-${n}">Aa</div>`)
+      else cells.push(`<div class="mx-cell" style="background:${h};box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)" title="${n <= 2 ? 'paper' : 'wash'}-${n}"></div>`)
+    }
+    const s8 = hx(st(8))
+    if (row.outline) {
+      // outline's re-expressed pair: transparent fill + ring + ink-11 label; hover = the
+      // STABLE highlight-8 at 9% (the same stop the ring uses)
+      const ink11 = hx(st(11))
+      const c8 = st(8)
+      const rgb = `${Math.round(c8.r * 255)},${Math.round(c8.g * 255)},${Math.round(c8.b * 255)}`
+      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink11}" title="cta-1 (outline)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink11};background:rgba(${rgb},0.09)" title="cta-2 (outline hover)">Aa</div>`)
+    } else {
+      // filled cta cells carry NO stroke (filled is filled); only outline shows its ring
+      const on = pole(row.scale.onFillTextIsWhite)
+      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.cta)};color:${on}" title="cta-1">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaHover)};color:${on}" title="cta-2">Aa</div>`)
+    }
+    return cells.join('')
+  }
+
+  matrixEl.innerHTML = rows.map(rowHtml).join('')
+}
+
 function updatePreview() {
   try {
+    const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
     const t = resolveTheme(themeInput('x'))
-    renderRamp(rampLight, t.primary.scale.light)
-    renderRamp(rampDark, t.primary.scale.dark)
+    const nScale = generateNeutralScale(t.themed.scale.brandH, neutralLevel, cp)
+    renderMatrix(t, nScale)
 
+    // the bar's live swatches: neutral shows its highlight-9; a derived secondary shows the
+    // RESOLVED pastel (the input tracks the primary hex — that's the source, not the result)
+    const n9 = nScale.light.find(s => s.stop === 9)
+    if (n9) neutralSwatch.style.background = toHex(n9.r, n9.g, n9.b)
     if (t.secondary) {
-      renderRamp(rampSecondaryLight, t.secondary.scale.light)
-      renderRamp(rampSecondaryDark, t.secondary.scale.dark)
-      secondaryRamps.style.display = ''
-    } else {
-      secondaryRamps.style.display = 'none'
+      const c = t.secondary.scale.cta
+      const h = toHex(c.r, c.g, c.b)
+      menuDerivedSwatch.style.background = h
+      if (secondaryMode === 'derived') {
+        secondarySwatch.style.background = h
+        secondaryHexInput.value = primaryHex
+        secondaryPicker.value = primaryHex
+      }
     }
   } catch { /* ignore partial hex during typing */ }
 }
@@ -147,7 +234,7 @@ function buildAndSend() {
       return { name: s.name, scale: ov?.scale ?? sigScales.get(s.name)!.scale, variant }
     })
 
-    const { light, dark } = themeToFigma(r, { secondary, neutralLevel, signals, contrastProfile: cp })
+    const { light, dark } = themeToFigma(r, { secondary, secondaryStyle: t.secondary?.style, neutralLevel, signals, contrastProfile: cp })
 
     // The engine now names signals by identity (red / yellow / green /
     // info-color), so both the primitive path (system/<identity>/<variant>) and
@@ -203,15 +290,16 @@ primaryPicker.addEventListener('input', () => {
   updatePreview()
 })
 
-secondaryToggleBtn.addEventListener('click', () => {
-  secondaryEnabled = !secondaryEnabled
-  secondaryToggleBtn.classList.toggle('on', secondaryEnabled)
-  secondaryToggleBtn.textContent = secondaryEnabled ? 'Remove' : 'Add secondary'
-  secondaryRow.style.display = secondaryEnabled ? 'block' : 'none'
+primaryModeSelect.addEventListener('change', () => {
+  primaryMode = primaryModeSelect.value as typeof primaryMode
   updatePreview()
 })
 
+secondaryAddBtn.addEventListener('click', () => setSecondaryMode('derived'))
+
+// typing (or picking) while derived DETACHES to custom with the entered value
 secondaryHexInput.addEventListener('input', () => {
+  if (secondaryMode === 'derived') setSecondaryMode('custom')
   const norm = normalizeHex(secondaryHexInput.value)
   if (norm) {
     secondaryHex = norm
@@ -226,6 +314,7 @@ secondaryHexInput.addEventListener('input', () => {
 })
 
 secondaryPicker.addEventListener('input', () => {
+  if (secondaryMode === 'derived') setSecondaryMode('custom')
   const v = secondaryPicker.value.toUpperCase()
   secondaryHex = v
   secondaryHexInput.value = v
@@ -234,17 +323,43 @@ secondaryPicker.addEventListener('input', () => {
   updatePreview()
 })
 
-neutralSelect.addEventListener('change', () => {
-  neutralLevel = neutralSelect.value as NeutralLevel
+secondaryStyleSelect.addEventListener('change', () => {
+  secondaryStyle = secondaryStyleSelect.value as SecondaryStyle
+  updatePreview()
 })
 
-segBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
-    segBtns.forEach(b => b.classList.remove('active'))
-    btn.classList.add('active')
-    engineMode = btn.dataset.mode as typeof engineMode
-    updatePreview()
-  })
+secondaryMenuBtn.addEventListener('click', () => {
+  secondaryMenu.style.display = secondaryMenu.style.display === 'none' ? '' : 'none'
+})
+menuDerived.addEventListener('click', () => {
+  secondaryMenu.style.display = 'none'
+  setSecondaryMode('derived')
+})
+menuCustom.addEventListener('click', () => {
+  secondaryMenu.style.display = 'none'
+  // custom starts from what derived showed — prefill the primary hex (demo parity)
+  if (!secondaryHex) {
+    secondaryHex = primaryHex
+    secondaryHexInput.value = primaryHex
+    secondaryPicker.value = primaryHex
+    secondarySwatch.style.background = primaryHex
+  }
+  setSecondaryMode('custom')
+})
+menuRemove.addEventListener('click', () => {
+  secondaryMenu.style.display = 'none'
+  secondaryHex = null
+  secondaryHexInput.value = ''
+  setSecondaryMode('off')
+})
+document.addEventListener('mousedown', e => {
+  if (secondaryMenu.style.display !== 'none' && !secondarySlot.contains(e.target as Node))
+    secondaryMenu.style.display = 'none'
+})
+
+neutralSelect.addEventListener('change', () => {
+  neutralLevel = neutralSelect.value as NeutralLevel
+  updatePreview()
 })
 
 profileBtns.forEach(btn => {
@@ -252,16 +367,6 @@ profileBtns.forEach(btn => {
     profileBtns.forEach(b => b.classList.remove('active'))
     btn.classList.add('active')
     contrastProfile = btn.dataset.profile as ContrastProfile
-    updatePreview()
-  })
-})
-
-secondaryIncludeBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
-    secondaryIncludeBtns.forEach(b => b.classList.remove('active'))
-    btn.classList.add('active')
-    secondaryMode = btn.dataset.sec as SecondaryMode
-    secondaryCustom.style.display = secondaryMode === 'custom' ? 'block' : 'none'
     updatePreview()
   })
 })
@@ -288,5 +393,13 @@ window.addEventListener('message', e => {
 })
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
+
+// the six archetype anchors under the primary's mode select (source of truth: the engine)
+for (const a of ARCHETYPES) {
+  const opt = document.createElement('option')
+  opt.value = a.name
+  opt.textContent = a.name
+  archetypeGroup.appendChild(opt)
+}
 
 updatePreview()

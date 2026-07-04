@@ -1,6 +1,6 @@
 /// <reference path="./figma-env.d.ts" />
 
-figma.showUI(__html__, { width: 360, height: 520, title: 'OKChroma' })
+figma.showUI(__html__, { width: 720, height: 640, title: 'OKChroma' })
 
 type TokenLeaf = { $type: 'color'; $value: { components: [number, number, number]; alpha?: number } }
 type TokenNode = TokenLeaf | { [k: string]: TokenNode }
@@ -226,12 +226,28 @@ figma.ui.onmessage = async (msg) => {
         if (!v) { v = figma.variables.createVariable(path, p.coll, 'COLOR'); primByName.set(path, v) }
         v.description = stamp // restamped every apply — the visible contrast posture
         const dk = darkMap.get(t.path)
+        // a TRUE pole (the engine's on-fills are exactly white or black); an outline
+        // secondary's on-cta is the family's ink-11 instead — alias the sibling, not a pole
+        const isPole = (c: { r: number; g: number; b: number }) => {
+          const sum = c.r + c.g + c.b
+          return sum > 2.97 || sum < 0.03
+        }
         if (t.path === 'on-cta' || t.path === 'on-highlight') {
-          const lightPole = absPole(isWhite(t))
-          const darkPole = absPole(isWhite(dk ?? t))
-          if (lightPole && darkPole) {
-            v.setValueForMode(pLight, figma.variables.createVariableAlias(lightPole))
-            v.setValueForMode(pDark, figma.variables.createVariableAlias(darkPole))
+          const sibling11 = primByName.get(path.replace(/on-(?:cta|highlight)$/, 'ink-11'))
+          const target = (leaf: { r: number; g: number; b: number }) =>
+            isPole(leaf) ? absPole(isWhite(leaf)) : (sibling11 ?? absPole(isWhite(leaf)))
+          const lightTarget = target(t)
+          const darkTarget = target(dk ?? t)
+          if (lightTarget && darkTarget) {
+            v.setValueForMode(pLight, figma.variables.createVariableAlias(lightTarget))
+            v.setValueForMode(pDark, figma.variables.createVariableAlias(darkTarget))
+          }
+        } else if (t.a === 0 && (dk === undefined || dk.a === 0)) {
+          // fully-transparent leaf (an outline secondary's cta-1) → alias system/transparent
+          const transparent = primByName.get('system/transparent')
+          if (transparent) {
+            v.setValueForMode(pLight, figma.variables.createVariableAlias(transparent))
+            v.setValueForMode(pDark, figma.variables.createVariableAlias(transparent))
           }
         } else if (t.path === 'cta-stroke') {
           const sibling8 = primByName.get(path.replace(/cta-stroke$/, 'highlight-8'))
@@ -245,8 +261,9 @@ figma.ui.onmessage = async (msg) => {
             v.setValueForMode(pDark, figma.variables.createVariableAlias(darkTarget))
           }
         } else if (created || refresh) {
-          v.setValueForMode(pLight, { r: t.r, g: t.g, b: t.b })
-          if (dk) v.setValueForMode(pDark, { r: dk.r, g: dk.g, b: dk.b })
+          // carry a real partial alpha through (the outline secondary's cta-2 tinted hover)
+          v.setValueForMode(pLight, t.a !== undefined && t.a < 1 ? { r: t.r, g: t.g, b: t.b, a: t.a } : { r: t.r, g: t.g, b: t.b })
+          if (dk) v.setValueForMode(pDark, dk.a !== undefined && dk.a < 1 ? { r: dk.r, g: dk.g, b: dk.b, a: dk.a } : { r: dk.r, g: dk.g, b: dk.b })
         }
         return { v, created }
       }
