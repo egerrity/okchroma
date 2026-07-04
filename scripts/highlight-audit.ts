@@ -22,7 +22,7 @@
 import { BRANDS } from '../src/brands'
 import { SECONDARIES } from '../src/secondaries'
 import { SIGNALS } from '../src/engine/signals'
-import { resolveBrand, SIGNAL_SCALES } from '../src/engine/resolve'
+import { resolveBrand, signalScalesFor } from '../src/engine/resolve'
 import { wcagY, contrastRatio, apcaY, apcaLc, clampChromaToGamut, oklchToLinearRgb } from '../src/engine/constraints'
 import { YELLOW_BAND, DARK_BRAND_FILL_MIN_L } from '../src/engine/stopTable'
 import { generateNeutralScale, generateScale, type GeneratedScale, type ColorStop } from '../src/engine/colorEngine'
@@ -41,6 +41,12 @@ const blackWcag = (s: ColorStop) => contrastRatio(wcagY(s.L, s.C, s.H), 0)
 // engine's onTextIsWhite. HL_BODY = APCA body-text floor: the bar the highlight clears.
 const onApcaLc = (s: ColorStop, white: boolean | undefined) => Math.abs(apcaLc(white ? 1.0 : 0.0, apcaY(s.r, s.g, s.b)))
 const HL_BODY = 60
+// THE TRUE SPLIT (owner 2026-07-04): each profile is gated by ITS OWN law — apca lane = the
+// Lc-60 body-text bar (the shipped default look); wcag lane = the chosen pole passes 4.5
+// (the ratioFloor flip guarantees it; this lane asserts the guarantee holds).
+const SHIPPED_PROFILE = 'apca' as const
+const SIGNAL_SCALES = signalScalesFor(SHIPPED_PROFILE)
+const onWcag = (s: ColorStop, white: boolean | undefined) => (white ? whiteWcag(s) : blackWcag(s))
 const hueDelta = (h: number, c: number) => { let d = (h - c) % 360; if (d > 180) d -= 360; if (d < -180) d += 360; return d }
 const isYellow = (scale: GeneratedScale) =>
   scale.brandC >= 0.008 && Math.abs(hueDelta(scale.brandH, YELLOW_BAND.centerH)) <= YELLOW_BAND.sigmaDeg
@@ -58,22 +64,36 @@ const synthHex = (L: number, C: number, H: number) => {
   return `#${h2(r)}${h2(g)}${h2(b)}`
 }
 const FIX_FLOOR = { darkFillMinL: DARK_BRAND_FILL_MIN_L, enforceOnFillContrast: true, darkChromaCurve, highlight: true } as const
+// APCA lane: the shipped default — on-highlight clears the Lc-60 body-text bar
 const worst = { l9: 999, l10: 999, d9: 999, d10: 999 }
+// WCAG lane: the legal mode — the CHOSEN pole passes the 4.5 ratio on hl9/hl10
+const worstW = { l9: 999, l10: 999, d9: 999, d10: 999 }
 let fixN = 0
 for (let H = 0; H < 360; H += 15) for (const C of [0.04, 0.08, 0.12, 0.16, 0.20]) {
-  const s = generateScale(synthHex(0.55, C, H), `fix-h${H}c${C}`, undefined, FIX_FLOOR)
+  const s = generateScale(synthHex(0.55, C, H), `fix-h${H}c${C}`, undefined, { ...FIX_FLOOR, contrastProfile: 'apca' })
   const lc = { l9: onApcaLc(s.light[8], s.onHighlightIsWhite), l10: onApcaLc(s.light[9], s.onHighlightIsWhite),
                d9: onApcaLc(s.dark[8], s.onHighlightIsWhiteDark), d10: onApcaLc(s.dark[9], s.onHighlightIsWhiteDark) }
   worst.l9 = Math.min(worst.l9, lc.l9); worst.l10 = Math.min(worst.l10, lc.l10)
   worst.d9 = Math.min(worst.d9, lc.d9); worst.d10 = Math.min(worst.d10, lc.d10)
-  ok(lc.l9 >= HL_BODY, `agnostic H${H} C${C} light hl9 on-text below body-text (Lc ${lc.l9.toFixed(1)})`)
-  ok(lc.l10 >= HL_BODY, `agnostic H${H} C${C} light hl10 on-text below body-text (Lc ${lc.l10.toFixed(1)})`)
-  ok(lc.d9 >= HL_BODY, `agnostic H${H} C${C} dark hl9 on-text below body-text (Lc ${lc.d9.toFixed(1)})`)
-  ok(lc.d10 >= HL_BODY, `agnostic H${H} C${C} dark hl10 on-text below body-text (Lc ${lc.d10.toFixed(1)})`)
+  ok(lc.l9 >= HL_BODY, `agnostic H${H} C${C} apca light hl9 on-text below body-text (Lc ${lc.l9.toFixed(1)})`)
+  ok(lc.l10 >= HL_BODY, `agnostic H${H} C${C} apca light hl10 on-text below body-text (Lc ${lc.l10.toFixed(1)})`)
+  ok(lc.d9 >= HL_BODY, `agnostic H${H} C${C} apca dark hl9 on-text below body-text (Lc ${lc.d9.toFixed(1)})`)
+  ok(lc.d10 >= HL_BODY, `agnostic H${H} C${C} apca dark hl10 on-text below body-text (Lc ${lc.d10.toFixed(1)})`)
+
+  const w = generateScale(synthHex(0.55, C, H), `fixw-h${H}c${C}`, undefined, FIX_FLOOR)
+  const wr = { l9: onWcag(w.light[8], w.onHighlightIsWhite), l10: onWcag(w.light[9], w.onHighlightIsWhite),
+               d9: onWcag(w.dark[8], w.onHighlightIsWhiteDark), d10: onWcag(w.dark[9], w.onHighlightIsWhiteDark) }
+  worstW.l9 = Math.min(worstW.l9, wr.l9); worstW.l10 = Math.min(worstW.l10, wr.l10)
+  worstW.d9 = Math.min(worstW.d9, wr.d9); worstW.d10 = Math.min(worstW.d10, wr.d10)
+  ok(wr.l9 >= 4.5, `agnostic H${H} C${C} wcag light hl9 chosen pole fails 4.5 (${wr.l9.toFixed(2)})`)
+  ok(wr.l10 >= 4.5, `agnostic H${H} C${C} wcag light hl10 chosen pole fails 4.5 (${wr.l10.toFixed(2)})`)
+  ok(wr.d9 >= 4.5, `agnostic H${H} C${C} wcag dark hl9 chosen pole fails 4.5 (${wr.d9.toFixed(2)})`)
+  ok(wr.d10 >= 4.5, `agnostic H${H} C${C} wcag dark hl10 chosen pole fails 4.5 (${wr.d10.toFixed(2)})`)
   fixN++
 }
-console.log(`=== agnostic legibility fixture: ${fixN} hue×chroma points · body-text bar Lc ${HL_BODY} ===`)
-console.log(`  worst on-highlight Lc — light hl9 ${worst.l9.toFixed(1)} hl10 ${worst.l10.toFixed(1)} | dark hl9 ${worst.d9.toFixed(1)} hl10 ${worst.d10.toFixed(1)}`)
+console.log(`=== agnostic legibility fixture: ${fixN} hue×chroma points × BOTH profiles ===`)
+console.log(`  apca lane (Lc ${HL_BODY} bar) worst — light hl9 ${worst.l9.toFixed(1)} hl10 ${worst.l10.toFixed(1)} | dark hl9 ${worst.d9.toFixed(1)} hl10 ${worst.d10.toFixed(1)}`)
+console.log(`  wcag lane (4.5 floor) worst  — light hl9 ${worstW.l9.toFixed(2)} hl10 ${worstW.l10.toFixed(2)} | dark hl9 ${worstW.d9.toFixed(2)} hl10 ${worstW.d10.toFixed(2)}`)
 
 // ── 1b. Agnostic non-text contrast — stop 8 (highlight-8) clears WCAG 1.4.11 3:1
 // vs paper-2 (the scale's own stop 2) in BOTH modes. The bar is the worst-case
@@ -100,10 +120,10 @@ console.log(`=== agnostic non-text 3:1 (stop 8 vs paper-2): ${s8n} points · wor
 // ── 2. Real fleet — structure (monotonic / distinct / identity) + printout ──
 interface Item { name: string; hex: string; scale: GeneratedScale }
 const items: Item[] = []
-for (const b of BRANDS) items.push({ name: b.name, hex: b.hex, scale: resolveBrand(b.hex, b.slug, { exact: b.exact, archetypeOverride: b.archetypeOverride, style: b.style }).scale })
+for (const b of BRANDS) items.push({ name: b.name, hex: b.hex, scale: resolveBrand(b.hex, b.slug, { exact: b.exact, archetypeOverride: b.archetypeOverride, style: b.style, contrastProfile: SHIPPED_PROFILE }).scale })
 for (const slug of Object.keys(SECONDARIES)) {
   const b = BRANDS.find(x => x.slug === slug)!
-  items.push({ name: `${slug}-secondary`, hex: SECONDARIES[slug], scale: resolveBrand(SECONDARIES[slug], `${slug} accent`, { exact: b.exact, style: b.style }).scale })
+  items.push({ name: `${slug}-secondary`, hex: SECONDARIES[slug], scale: resolveBrand(SECONDARIES[slug], `${slug} accent`, { exact: b.exact, style: b.style, contrastProfile: SHIPPED_PROFILE }).scale })
 }
 
 console.log(`\n=== highlight structure across ${items.length} brand+secondary ramps ===`)
@@ -123,8 +143,10 @@ for (const { name, hex, scale } of items) {
 
 // ── 3. Neutral — low-hierarchy cta tracks stop 4 (cta) / stop 5 (hover), flips ──
 const NEUTRAL_HUES = [30, 90, 143, 210, 270, 320]
-const neutralByHue = NEUTRAL_HUES.map(h => ({ h, s: generateNeutralScale(h, 'default') }))
-console.log(`\n=== neutral cta (tracks stop 4/5, flips) + highlight on-text — ${NEUTRAL_HUES.length} hues ===`)
+// apca lane = the shipped default (structure + the Lc bar); wcag lane = the legal ratios
+const neutralByHue = NEUTRAL_HUES.map(h => ({ h, s: generateNeutralScale(h, 'default', SHIPPED_PROFILE) }))
+const neutralWcag = NEUTRAL_HUES.map(h => ({ h, s: generateNeutralScale(h, 'default') }))
+console.log(`\n=== neutral cta (tracks stop 4/5, flips) + highlight on-text — ${NEUTRAL_HUES.length} hues × both profiles ===`)
 for (const { h, s } of neutralByHue) {
   const ctaL = s.cta, ctaD = s.ctaDark, hovL = s.ctaHover, hovD = s.ctaHoverDark
   const hlL = s.light[8], hlD = s.dark[8]
@@ -133,22 +155,36 @@ for (const { h, s } of neutralByHue) {
   ok(Math.abs(ctaD.L - s.dark[3].L) < 0.01, `neutral h${h} cta dark != stop4 (${f(ctaD.L)} vs ${f(s.dark[3].L)})`)
   ok(Math.abs(hovL.L - s.light[4].L) < 0.01, `neutral h${h} ctaHover light != stop5 (${f(hovL.L)} vs ${f(s.light[4].L)})`)
   ok(Math.abs(hovD.L - s.dark[4].L) < 0.01, `neutral h${h} ctaHover dark != stop5 (${f(hovD.L)} vs ${f(s.dark[4].L)})`)
-  // on-cta legible on the wash-level cta, both modes (flips black↔white with the cta)
-  ok((s.onFillTextIsWhite ? whiteWcag(ctaL) : blackWcag(ctaL)) >= 4.5, `neutral h${h} on-cta light fails WCAG`)
-  ok((s.onFillTextIsWhiteDark ? whiteWcag(ctaD) : blackWcag(ctaD)) >= 4.5, `neutral h${h} on-cta dark fails WCAG`)
-  // highlight on-text legible at the body-text APCA bar, both modes
-  ok(onApcaLc(hlL, s.onHighlightIsWhite) >= HL_BODY, `neutral h${h} light: highlight on-text below body-text (Lc ${onApcaLc(hlL, s.onHighlightIsWhite).toFixed(1)})`)
-  ok(onApcaLc(hlD, s.onHighlightIsWhiteDark) >= HL_BODY, `neutral h${h} dark: highlight on-text below body-text (Lc ${onApcaLc(hlD, s.onHighlightIsWhiteDark).toFixed(1)})`)
+  // apca lane: highlight on-text at the body-text Lc bar, both modes
+  ok(onApcaLc(hlL, s.onHighlightIsWhite) >= HL_BODY, `neutral h${h} apca light: highlight on-text below body-text (Lc ${onApcaLc(hlL, s.onHighlightIsWhite).toFixed(1)})`)
+  ok(onApcaLc(hlD, s.onHighlightIsWhiteDark) >= HL_BODY, `neutral h${h} apca dark: highlight on-text below body-text (Lc ${onApcaLc(hlD, s.onHighlightIsWhiteDark).toFixed(1)})`)
   console.log(`  h${String(h).padStart(3)}  cta ${hx(ctaL)} L${f(ctaL.L)} / ${hx(ctaD)} L${f(ctaD.L)}  (stop4 ${f(s.light[3].L)}/${f(s.dark[3].L)})  | on-cta ${s.onFillTextIsWhite ? 'wht' : 'blk'}→${s.onFillTextIsWhiteDark ? 'wht' : 'blk'}`)
 }
+for (const { h, s } of neutralWcag) {
+  // wcag lane: every chosen pole passes its ratio — on-cta AND on-highlight (both modes)
+  ok(onWcag(s.cta, s.onFillTextIsWhite) >= 4.5, `neutral h${h} wcag on-cta light fails 4.5`)
+  ok(onWcag(s.ctaDark, s.onFillTextIsWhiteDark) >= 4.5, `neutral h${h} wcag on-cta dark fails 4.5`)
+  ok(onWcag(s.light[8], s.onHighlightIsWhite) >= 4.5, `neutral h${h} wcag light highlight pole fails 4.5 (${onWcag(s.light[8], s.onHighlightIsWhite).toFixed(2)})`)
+  ok(onWcag(s.dark[8], s.onHighlightIsWhiteDark) >= 4.5, `neutral h${h} wcag dark highlight pole fails 4.5 (${onWcag(s.dark[8], s.onHighlightIsWhiteDark).toFixed(2)})`)
+}
 
-// ── 4. Signals — on-cta legible both modes, clean 12-stop scale ──
+// ── 4. Signals — on-cta legible under each profile's own law, clean 12-stop scale ──
+const SIGNALS_WCAG = signalScalesFor(undefined)
 for (const sig of SIGNALS) {
+  // apca lane (shipped): the enforcement guarantees the WHITE pole (Lc-75 re-solve); a black
+  // pole is pole-choice-only — assert it is genuinely the better pole (green dark reads black
+  // at Lc ~63, the known green-white-text follow-up — not a gate failure)
   const s = SIGNAL_SCALES.get(sig.name)!.scale
   for (const [mode, st, pol] of [['light', s.cta, s.onFillTextIsWhite], ['dark', s.ctaDark, s.onFillTextIsWhiteDark]] as const) {
-    ok((pol ? whiteWcag(st) : blackWcag(st)) >= 4.5, `signal ${sig.name} ${mode}: on-cta ${pol ? 'white' : 'black'} fails (${(pol ? whiteWcag(st) : blackWcag(st)).toFixed(2)})`)
+    if (pol) ok(onApcaLc(st, true) >= 74, `signal ${sig.name} ${mode} apca: enforced white on-cta below Lc 74 (${onApcaLc(st, true).toFixed(1)})`)
+    else ok(onApcaLc(st, false) >= onApcaLc(st, true), `signal ${sig.name} ${mode} apca: black pole chosen but white reads better`)
   }
   ok(s.light.length === 12 && s.dark.length === 12, `signal ${sig.name} not a clean 12-stop scale (light ${s.light.length}, dark ${s.dark.length})`)
+  // wcag lane: the ratio law
+  const w = SIGNALS_WCAG.get(sig.name)!.scale
+  for (const [mode, st, pol] of [['light', w.cta, w.onFillTextIsWhite], ['dark', w.ctaDark, w.onFillTextIsWhiteDark]] as const) {
+    ok((pol ? whiteWcag(st) : blackWcag(st)) >= 4.5, `signal ${sig.name} ${mode} wcag: on-cta ${pol ? 'white' : 'black'} fails (${(pol ? whiteWcag(st) : blackWcag(st)).toFixed(2)})`)
+  }
 }
 
 // ── 5. Blessed-snapshot regression — highlight rung (slot 9/10) + off-scale cta ──
@@ -188,4 +224,4 @@ if (process.argv.includes('--bless')) {
 
 console.log()
 if (fails.length) { console.error(`FAIL: ${fails.length}\n` + fails.map(s => '  - ' + s).join('\n')); process.exit(1) }
-console.log('PASS — agnostic on-highlight legibility (Lc 60, hl9+hl10) · structure · neutral cta tracks stop 4/5 · signals · snapshot.')
+console.log('PASS — agnostic on-highlight legibility (apca lane Lc 60 · wcag lane 4.5 floor, hl9+hl10) · structure · neutral cta tracks stop 4/5 · signals (both lanes) · snapshot (shipped=apca).')

@@ -1,4 +1,9 @@
-// wcag-pole-sweep.ts — OWNER EYE-CHECK for the strict-WCAG polarity question.
+// wcag-pole-sweep.ts — the PRE-SPLIT decision record (2026-07-04). The owner adopted the true
+// wcag/apca split from this page: the wcag profile now carries the ratioFloor pole flip + the
+// hover pair re-solve (gated by highlight-audit's per-profile lanes), and APCA became the
+// shipped default. Re-running this script today compares the CURRENT wcag profile (already
+// floor-flipped) against the raw max-ratio pole — the residual "flips" it reports are the
+// 4.5–4.58 sliver where both poles pass, not conformance gaps. Kept for the ledger (section ②).
 // ONE question: under the WCAG profile, should on-text polarity be chosen by the RATIO
 // metric (strict wcag-pole) instead of the current APCA pole (max-|Lc|, the standing design)?
 // The page renders every affected slot through the REAL pipeline (resolveBrand/resolveTheme),

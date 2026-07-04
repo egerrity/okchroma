@@ -15,10 +15,15 @@
 import { BRANDS } from '../src/brands'
 import { SECONDARIES } from '../src/secondaries'
 import { SIGNALS } from '../src/engine/signals'
-import { resolveBrand, SIGNAL_SCALES } from '../src/engine/resolve'
+import { resolveBrand, signalScalesFor } from '../src/engine/resolve'
 import { checkCollision, stopDeltaE } from '../src/engine/collision'
 import { wcagY, contrastRatio, apcaY, apcaLc } from '../src/engine/constraints'
 import type { GeneratedScale } from '../src/engine/colorEngine'
+
+// This audit (and its blessed snapshot) tracks the SHIPPED profile — apca since the true
+// wcag/apca split (owner 2026-07-04, default flipped so the page keeps the perceptual look).
+const SHIPPED_PROFILE = 'apca' as const
+const SIGNAL_SCALES = signalScalesFor(SHIPPED_PROFILE)
 
 // Parity tolerances: dark metric must reach this fraction of light's.
 // 0.55 → 0.48 (2026-06-10): the envelope-chroma light model widened
@@ -124,7 +129,7 @@ function audit(name: string, hex: string, scale: GeneratedScale, errorComponentR
 
 let componentRuleCount = 0
 for (const b of BRANDS) {
-  const r = resolveBrand(b.hex, b.slug)
+  const r = resolveBrand(b.hex, b.slug, { contrastProfile: SHIPPED_PROFILE })
   if (r.errorComponentRule) componentRuleCount++
   audit(b.name, b.hex, r.scale, r.errorComponentRule)
 }
@@ -157,7 +162,7 @@ type Snap = Record<string, Array<[number, number, number]>> // name → 24×[L,C
 function snapshotOf(): Snap {
   const snap: Snap = {}
   for (const b of BRANDS) {
-    const r = resolveBrand(b.hex, b.slug)
+    const r = resolveBrand(b.hex, b.slug, { contrastProfile: SHIPPED_PROFILE })
     snap[b.slug] = [...r.scale.light.slice(0, 12), ...r.scale.dark.slice(0, 12)].map(s => [s.L, s.C, s.H])
     // Accents joined the snapshot 2026-06-11 (dark pass): the near-neutral
     // pink-ladder defect lived ONLY in accents and was invisible to a
@@ -167,7 +172,7 @@ function snapshotOf(): Snap {
     // queued for a deliberate pass.)
     const sec = SECONDARIES[b.slug]
     if (sec) {
-      const ra = resolveBrand(sec, `${b.slug} accent`, { exact: b.exact, style: b.style })
+      const ra = resolveBrand(sec, `${b.slug} accent`, { exact: b.exact, style: b.style, contrastProfile: SHIPPED_PROFILE })
       snap[`${b.slug}-accent`] = [...ra.scale.light.slice(0, 12), ...ra.scale.dark.slice(0, 12)].map(s => [s.L, s.C, s.H])
     }
   }
