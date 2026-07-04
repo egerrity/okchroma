@@ -1,5 +1,29 @@
 # Continue: requirement-token color engine (compact/handoff)
 
+## ▶▶ THE TRUE WCAG/APCA SPLIT + APCA DEFAULT (2026-07-04, committed bc6a357→deec9b1)
+
+Owner decisions (from render/wcag-pole.html — the flip sweep + shift ledger): the hybrid
+(apca-informed polarity under the wcag profile) was "a legal thing, not a my-call thing" →
+**each profile carries its own law**, and **APCA is the shipped default** ("so it looks nicer").
+- **wcag** = the opt-in LEGAL mode: pole preference stays perceptual, but every chosen on-text
+  pole passes 4.5 (`OnReq.ratioFloor` → onTextIsWhite pole flip; no dead zone, fills never
+  move). onFill's floor = the existing enforcement (unchanged, byte-identical). **The PAIR
+  law:** on-highlight is one token on hl-9 + hover hl-10; straddling hues have NO single pole
+  passing both (measured worst 3.94) → the HOVER re-solves toward hl-9 (bisection, wcag only,
+  11 fleet scales moved stop-10). Rejected alternative (measured, section ② of the render):
+  shifting highlights for white@4.5 = median −0.024/−0.031 L but 24/48 DARK band inversions —
+  the room doesn't exist.
+- **apca** = the shipped default: withProfile strips the ratio floor; law = the Lc bars
+  (enforceLc 75, hl band Lc 60). build.ts SHIPPED_PROFILE='apca' (static css now apca-solved);
+  demo toggle + plugin seg default apca; demo re-emits signalsCss under BOTH selections (the
+  static signals.css is apca now). Verified live: apca = white highlights everywhere; wcag =
+  yellow/green flip black, pink/blue keep white (4.6+ legitimately).
+- **Gates:** highlight-audit runs per-profile lanes (apca Lc-60 worst 63.5 · wcag 4.5-floor
+  worst 4.52); dark-audit + its snapshot track the SHIPPED profile; dark/highlight/divergence
+  snapshots re-blessed (divergence drift = exactly the 11 hover re-solves). All green.
+- **Known intentional:** green dark cta reads black at Lc 63 under apca (the standing
+  green-white-text follow-up, asserted as black-is-genuinely-better, not gated away).
+
 ## ▶▶ ROUND 6b ALSO BUILT (same session): derived=PASTEL + plugin UI = the demo
 
 Owner's two post-review asks, both landed (record = SECONDARY-PLAN ROUND 6b): ① **derived
