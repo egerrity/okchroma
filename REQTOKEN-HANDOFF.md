@@ -1,5 +1,26 @@
 # Continue: requirement-token color engine (compact/handoff)
 
+## ▶▶ OWNER REVIEW EDITS (2026-07-04, pre-compact — TALK THROUGH FIRST, then build)
+
+Owner reviewed the plugin IN REAL FIGMA (screenshot: dialog renders correctly — brand name/color,
+Secondary Derived/Custom/Off w/ Custom+Remove, Neutral select, Engine Rec./Exact, Contrast
+WCAG/APCA, ramp previews) — "overall looks good." NOTE: plugin still shows a GLOBAL Engine
+Rec./Exact — per-family modes (primary chip + secondary style chips) not yet ported to the plugin.
+
+**DEMO edits requested (controls bar):**
+1. REMOVE the "Secondary preview" control (the Default/Inverse seg).
+2. MORE ROOM for the primary + secondary inputs (they're cramped; chips truncate — screenshot
+   showed "Recom…"/"Ou…").
+3. Neutral select SMALLER; options renamed **"default" · "intense" · "true grey"** (from
+   Default (brand-tinted) / Branded (intense tint) / Pure (gray)) — check NeutralLevel label map
+   in demo + plugin for consistency.
+4. FIX: copy bleeds under the neutral select's chevron — the chevron needs its own space.
+5. **"Missing 'derived' — would be the default option"** — AMBIGUOUS, ask first: (a) the demo
+   secondary field should present Derived/Custom/Off like the plugin (parity; Derived visible as
+   the default state rather than buried in the sparkles popover)? — most likely; or (b) 'derived'
+   as an entry in the secondary STYLE chip? Owner earlier said the demo "starts empty — no
+   secondary is basically the default"; this may revise that. Clarify, then build.
+
 ## ▶▶ CURRENT STATE 2026-07-04 (write-through before possible compaction — READ THIS FIRST)
 
 **THE TOPOLOGY (the owner's confusion-killer — there is NO separate forked repo):**
