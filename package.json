@@ -18,6 +18,7 @@
     "smooth:baseline": "esbuild scripts/smoothness-audit.ts --bundle --platform=node --outfile=dist/smoothness-audit.js && node dist/smoothness-audit.js --baseline",
     "figma:verify": "esbuild scripts/figma-verify.ts --bundle --platform=node --outfile=dist/figma-verify.js && node dist/figma-verify.js",
     "req:audit": "esbuild scripts/reqtoken-audit.ts --bundle --platform=node --outfile=dist/reqtoken-audit.js && node dist/reqtoken-audit.js",
+    "audit:secondary": "esbuild scripts/secondary-audit.ts --bundle --platform=node --outfile=dist/secondary-audit.js && node dist/secondary-audit.js",
     "plugin:build": "node esbuild.config.js --plugin",
     "typecheck": "tsc --noEmit"
   },
