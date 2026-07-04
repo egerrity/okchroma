@@ -31,6 +31,9 @@ const primaryHexInput = $<HTMLInputElement>('primary-hex')
 const primaryPicker   = $<HTMLInputElement>('primary-picker')
 const primarySwatch   = $<HTMLElement>('primary-swatch')
 const primaryModeSelect  = $<HTMLSelectElement>('primary-mode')
+const primaryChip        = $<HTMLElement>('primary-chip')
+const primaryChipLabel   = $<HTMLElement>('primary-chip-label')
+const primaryInfo        = $<HTMLElement>('primary-info')
 const archetypeGroup     = $<HTMLElement>('archetype-group')
 const secondarySlot      = $<HTMLElement>('secondary-slot')
 const secondaryAddBtn    = $<HTMLButtonElement>('secondary-add')
@@ -40,6 +43,12 @@ const secondaryPicker    = $<HTMLInputElement>('secondary-picker')
 const secondarySwatch    = $<HTMLElement>('secondary-swatch')
 const secondaryMarker    = $<HTMLElement>('secondary-marker')
 const secondaryStyleSelect = $<HTMLSelectElement>('secondary-style')
+const secondaryChip      = $<HTMLElement>('secondary-chip')
+const secondaryChipLabel = $<HTMLElement>('secondary-chip-label')
+const secondaryInfo      = $<HTMLElement>('secondary-info')
+const secondaryInfoLine  = $<HTMLElement>('secondary-info-line')
+const neutralLabel       = $<HTMLElement>('neutral-label')
+const neutralInfo        = $<HTMLElement>('neutral-info')
 const secondaryMenuBtn   = $<HTMLButtonElement>('secondary-menu-btn')
 const secondaryMenu      = $<HTMLElement>('secondary-menu')
 const menuDerived        = $<HTMLButtonElement>('menu-derived')
@@ -78,12 +87,39 @@ function setStatus(text: string, tone: '' | 'ok' | 'err' = '') {
 
 // ─── The secondary field's three states ──────────────────────────────────────
 
+// the ⓘ copy per selection (Figma spec) — the always-visible tooltip replacement
+const STYLE_LABEL: Record<SecondaryStyle, string> = { tint: 'Tint', pastel: 'Pastel', outline: 'Outline', exact: 'Exact' }
+const STYLE_INFO: Record<SecondaryStyle, string> = {
+  tint: 'Differentiates from primary with a lighter tint of hue',
+  pastel: 'Differentiates from primary with lower chroma and lighter tint',
+  outline: 'Outline only',
+  exact: 'Your hex ships untouched',
+}
+const NEUTRAL_LABEL: Record<NeutralLevel, string> = { default: 'Default', branded: 'Intense', pure: 'True grey' }
+const NEUTRAL_INFO: Record<NeutralLevel, string> = {
+  default: 'Adds a touch of primary hue',
+  branded: 'Adds a noticeable tint to neutral',
+  pure: 'Neutrals are pure grey',
+}
+
+function syncInfoLines() {
+  primaryChipLabel.textContent = primaryMode === 'recommended' ? 'Recommended' : primaryMode === 'exact' ? 'Exact' : primaryMode
+  primaryInfo.textContent = primaryMode === 'recommended' ? 'Engine adjusts for optimal legibility'
+    : primaryMode === 'exact' ? 'Your hex ships untouched'
+    : `Anchored to the ${primaryMode} archetype`
+  secondaryChipLabel.textContent = STYLE_LABEL[secondaryStyle]
+  secondaryInfoLine.style.display = secondaryMode === 'off' ? 'none' : ''
+  secondaryInfo.textContent = secondaryMode === 'derived' ? 'A pastel derived from your primary' : STYLE_INFO[secondaryStyle]
+  neutralLabel.textContent = NEUTRAL_LABEL[neutralLevel]
+  neutralInfo.textContent = NEUTRAL_INFO[neutralLevel]
+}
+
 function setSecondaryMode(mode: SecondaryMode) {
   secondaryMode = mode
   secondaryAddBtn.style.display = mode === 'off' ? '' : 'none'
   secondaryField.style.display = mode === 'off' ? 'none' : ''
   secondaryMarker.style.display = mode === 'derived' ? '' : 'none'
-  secondaryStyleSelect.style.display = mode === 'custom' ? '' : 'none'
+  secondaryChip.style.display = mode === 'custom' ? '' : 'none'
   secondaryHexInput.classList.toggle('dim', mode === 'derived')
   if (mode !== 'custom') secondaryHexInput.classList.remove('invalid')
   menuDerived.classList.toggle('on', mode === 'derived')
@@ -187,6 +223,28 @@ function updatePreview() {
         secondaryPicker.value = primaryHex
       }
     }
+
+    // chip TONES (Figma spec): the family's own wash/ink; outline = the outline treatment;
+    // exact = neutral-grey "hands off"
+    const hxs = (s: { r: number; g: number; b: number }) => toHex(s.r, s.g, s.b)
+    if (primaryMode === 'exact') {
+      primaryChip.style.background = '#ededf0'; primaryChip.style.color = '#646464'; primaryChip.style.borderColor = 'transparent'
+    } else {
+      primaryChip.style.background = hxs(t.themed.scale.light[3])
+      primaryChip.style.color = hxs(t.themed.scale.light[11])
+      primaryChip.style.borderColor = 'transparent'
+    }
+    if (t.secondary) {
+      const sl = t.secondary.scale.light
+      if (secondaryStyle === 'exact') {
+        secondaryChip.style.background = '#ededf0'; secondaryChip.style.color = '#646464'; secondaryChip.style.borderColor = 'transparent'
+      } else if (secondaryStyle === 'outline') {
+        secondaryChip.style.background = 'transparent'; secondaryChip.style.color = hxs(sl[10]); secondaryChip.style.borderColor = hxs(sl[7])
+      } else {
+        secondaryChip.style.background = hxs(sl[5]); secondaryChip.style.color = hxs(sl[11]); secondaryChip.style.borderColor = 'transparent'
+      }
+    }
+    syncInfoLines()
   } catch { /* ignore partial hex during typing */ }
 }
 

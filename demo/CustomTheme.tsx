@@ -18,28 +18,68 @@ import { TokenCards, type RampKind } from './TokenCards'
 import { classifyArchetype } from '../src/engine/archetypes'
 import type { ResolvedBrand } from '../src/engine/resolve'
 
-// The neutral is GENERATED from the brand hue (no more Radix families) — the
-// menu picks the tint LEVEL: pure (flat gray), default (the Radix-measured
-// tint), or branded (an amplified, intentionally-tinted neutral).
+// The Figma-spec CHIP SELECT (post-hk 60:1384): a VISUAL chip — label + its own 12px
+// chevron laid out inline (never the native select arrow, which let copy run under it) —
+// with a transparent native <select> overlaid for the actual menu. The chip TINTS with
+// the selection (the family's own wash/ink; outline gets the outline treatment; exact
+// reads neutral-grey "hands off").
+function ChipSelect({ value, label, onChange, tone, children, title }: {
+  value: string
+  label: string
+  onChange: (v: string) => void
+  tone: React.CSSProperties
+  children: React.ReactNode
+  title?: string
+}) {
+  return (
+    <span title={title} style={{
+      position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0,
+      marginLeft: 'auto', padding: '3px 7px', borderRadius: 4, fontSize: 11.5, fontWeight: 650,
+      cursor: 'pointer', whiteSpace: 'nowrap', border: '1px solid transparent', ...tone,
+    }}>
+      {label}
+      <ChevronDown size={12} strokeWidth={2.5} />
+      <select value={value} onChange={e => onChange(e.target.value)}
+        style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}>
+        {children}
+      </select>
+    </span>
+  )
+}
+
+// the ⓘ explanation line under each field — the always-visible replacement for the old
+// tooltips (owner: "we need an explanation now that we removed the tool tip")
+function InfoLine({ text }: { text: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6, fontSize: 11.5, color: 'var(--fg-subtle)', whiteSpace: 'nowrap' }}>
+      <Info size={14} style={{ flexShrink: 0 }} />
+      {text}
+    </div>
+  )
+}
+
+const NEUTRAL_LABELS: Array<[NeutralLevel, string]> = [
+  ['default', 'Default'],
+  ['branded', 'Intense'],
+  ['pure', 'True grey'],
+]
+
+// The neutral is GENERATED from the brand hue (no more Radix families) — the menu picks
+// the tint LEVEL. Figma-spec field: swatch + the level as the field TEXT + a 26px chevron
+// button; the transparent select overlays the WHOLE field so anywhere opens the menu.
 function NeutralSelect({ value, onChange }: {
   value: NeutralLevel
   onChange: (v: NeutralLevel) => void
 }) {
-  const levels: Array<[NeutralLevel, string]> = [
-    ['default', 'default'],
-    ['branded', 'intense'],
-    ['pure', 'true grey'],
-  ]
-  // appearance:none + our own chevron in reserved space — the native arrow let
-  // the option copy run underneath it.
   return (
-    <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
+    <>
+      <span style={{ flex: 1, fontSize: 14, minWidth: 0 }}>{NEUTRAL_LABELS.find(([v]) => v === value)![1]}</span>
+      <span className="ct-iconbtn" style={{ pointerEvents: 'none' }}><ChevronDown size={12} strokeWidth={2.5} /></span>
       <select value={value} onChange={e => onChange(e.target.value as NeutralLevel)}
-        style={{ appearance: 'none', WebkitAppearance: 'none', paddingRight: 20, width: '100%' }}>
-        {levels.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+        style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}>
+        {NEUTRAL_LABELS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
       </select>
-      <ChevronDown size={13} style={{ position: 'absolute', right: 2, pointerEvents: 'none', color: 'var(--fg-subtle)' }} />
-    </span>
+    </>
   )
 }
 
@@ -162,12 +202,27 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   // every color, pinned under the navbar on BOTH views, so editing is live
   // everywhere (change the primary on Preview, the demo themes under you).
   // the in-field MODE CHIP (the mockup's pill dropdown): a styled select riding inside ct-field
-  const chipStyle: React.CSSProperties = {
-    fontSize: 11, fontWeight: 650, border: '1px solid var(--neutral-highlight-8)',
-    background: 'var(--neutral-wash-3)', color: 'var(--fg-default)',
-    // small radius, not a pill — the chip sits inside a square-cornered field
-    borderRadius: 5, padding: '3px 8px', marginLeft: 'auto', flexShrink: 0, cursor: 'pointer',
+  // the chip TINTS with the selection (Figma spec): the family's own wash/ink; outline gets
+  // the outline treatment; exact reads neutral-grey "hands off"
+  const chipTone: Record<string, React.CSSProperties> = {
+    brand: { background: 'var(--brand-wash-4)', color: 'var(--brand-ink-12)' },
+    secondary: { background: 'var(--secondary-wash-6)', color: 'var(--secondary-ink-12)' },
+    outline: { background: 'transparent', color: 'var(--secondary-ink-11)', border: '1px solid var(--secondary-highlight-8)' },
+    grey: { background: 'var(--surface-sunken)', color: 'var(--fg-subtle)' },
   }
+  const styleLabel: Record<SecondaryStyle, string> = { tint: 'Tint', pastel: 'Pastel', outline: 'Outline', exact: 'Exact' }
+  // the ⓘ copy per selection (Figma spec) — the always-visible tooltip replacement
+  const primaryInfo = primaryMode === 'recommended' ? 'Engine adjusts for optimal legibility'
+    : primaryMode === 'exact' ? 'Your hex ships untouched'
+    : `Anchored to the ${primaryMode} archetype`
+  const secondaryInfo = secState === 'derived' ? 'A pastel derived from your primary'
+    : secondaryStyle === 'tint' ? 'Differentiates from primary with a lighter tint of hue'
+    : secondaryStyle === 'pastel' ? 'Differentiates from primary with lower chroma and lighter tint'
+    : secondaryStyle === 'outline' ? 'Outline only'
+    : 'Your hex ships untouched'
+  const neutralInfo = neutralLevel === 'default' ? 'Adds a touch of primary hue'
+    : neutralLevel === 'branded' ? 'Adds a noticeable tint to neutral'
+    : 'Neutrals are pure grey'
 
   const controlsBar = (
     <div className="ct-bar">
@@ -179,14 +234,18 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
             <input type="color" value={primary} onChange={e => setPrimaryInput(e.target.value.toUpperCase())} />
           </label>
           <input value={primaryInput} onChange={e => setPrimaryInput(e.target.value)} spellCheck={false} placeholder="#E93D82" />
-          <select style={chipStyle} value={primaryMode} onChange={e => setPrimaryMode(e.target.value as typeof primaryMode)} title="Primary engine mode">
+          <ChipSelect value={primaryMode} title="Primary engine mode"
+            label={primaryMode === 'recommended' ? 'Recommended' : primaryMode === 'exact' ? 'Exact' : primaryMode}
+            tone={primaryMode === 'exact' ? chipTone.grey : chipTone.brand}
+            onChange={v => setPrimaryMode(v as typeof primaryMode)}>
             <option value="recommended">Recommended</option>
             <option value="exact">Exact</option>
             <optgroup label="Anchor archetype">
               {ARCHETYPES.map(a => <option key={a.name} value={a.name}>{a.name}</option>)}
             </optgroup>
-          </select>
+          </ChipSelect>
         </div>
+        <InfoLine text={primaryInfo} />
       </div>
 
       <div className="ct-bar-field" style={{ position: 'relative' }} ref={popoverRef}>
@@ -213,18 +272,21 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
               // passive marker, not the style chip — derived is always pastel, engine's call
               <span style={{ fontSize: 11, color: 'var(--fg-subtle)', marginLeft: 'auto', flexShrink: 0 }}>from primary</span>
             ) : (
-              <select style={chipStyle} value={secondaryStyle} onChange={e => setSecondaryStyle(e.target.value as SecondaryStyle)} title="Secondary style">
+              <ChipSelect value={secondaryStyle} title="Secondary style" label={styleLabel[secondaryStyle]}
+                tone={secondaryStyle === 'exact' ? chipTone.grey : secondaryStyle === 'outline' ? chipTone.outline : chipTone.secondary}
+                onChange={v => setSecondaryStyle(v as SecondaryStyle)}>
                 <option value="tint">Tint</option>
                 <option value="pastel">Pastel</option>
                 <option value="outline">Outline</option>
                 <option value="exact">Exact</option>
-              </select>
+              </ChipSelect>
             )}
             <button className="ct-iconbtn" title="Secondary options" onClick={() => setSecMenuOpen(o => !o)}>
-              <ChevronDown size={14} />
+              <ChevronDown size={12} strokeWidth={2.5} />
             </button>
           </div>
         )}
+        {secState !== 'none' && <InfoLine text={secondaryInfo} />}
         {secMenuOpen && secState !== 'none' && (
           <div className="ct-popover">
             <button className="ct-suggest" style={derived ? { borderColor: 'var(--brand-highlight-8)' } : undefined}
@@ -249,13 +311,14 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
 
       <div className="ct-bar-field">
         <div className="ct-label">Neutral color</div>
-        <div className="ct-field">
+        <div className="ct-field" style={{ position: 'relative', width: 176 }}>
           <span className="ct-swatch" style={{ background: 'var(--neutral-highlight-9)' }} />
           <NeutralSelect value={neutralLevel} onChange={setNeutralLevel} />
         </div>
+        <InfoLine text={neutralInfo} />
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px 18px', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px 18px', flexWrap: 'wrap' }}>
         <div className="ct-bar-field">
           <div className="ct-label">Contrast standard</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -876,7 +939,7 @@ const PAGE_CSS = `
 }
 .ct-bar {
   position: sticky; top: 52px; z-index: 35;
-  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 18px;
+  display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 18px;
   padding: 12px 24px; background: var(--surface-raised);
   border-bottom: 1px solid var(--border-subtle);
 }
@@ -885,16 +948,16 @@ const PAGE_CSS = `
    the old fixed 240px. The neutral select keeps a comfortable min-width. */
 /* Fixed height so a taller child (the ✦ button) can't push one field bigger
    than the rest — all bar fields line up at 38px. */
-.ct-bar .ct-field { width: auto; height: 38px; padding: 0 12px; }
+.ct-bar .ct-field { width: auto; height: 40px; padding: 0 12px; }
 /* Room for the mode chips — "Recommended"/"Outline" must never truncate. */
 .ct-bar .ct-field-color { width: 272px; }
 .ct-bar .ct-field-color > input { flex: 1; min-width: 56px; }
 .ct-bar .ct-field > select, .ct-bar .ct-field > span > select { width: 96px; }
 .ct-add {
-  display: inline-flex; align-items: center; gap: 6px; box-sizing: border-box; height: 38px;
+  display: inline-flex; align-items: center; gap: 6px; box-sizing: border-box; height: 40px;
   padding: 0 14px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600;
   color: var(--fg-subtle); background: transparent;
-  border: 1.5px dashed var(--border-default); border-radius: 8px;
+  border: 1.5px dashed var(--border-default); border-radius: 10px;
 }
 .ct-add:hover { color: var(--fg-default); border-color: var(--brand-highlight-8); background: var(--brand-bg-faint); }
 .ct-pane {
@@ -957,19 +1020,19 @@ const PAGE_CSS = `
 .ct-label { font-size: 12px; font-weight: 600; color: var(--fg-default); margin-bottom: 5px; }
 .ct-field {
   display: flex; align-items: center; gap: 8px; box-sizing: border-box; width: 100%;
-  background: var(--surface-raised); border: 1px solid var(--border-default); border-radius: 8px;
+  background: var(--surface-raised); border: 1px solid var(--border-default); border-radius: 10px;
   padding: 9px 12px;
 }
 .ct-field:focus-within { border-color: var(--brand-highlight-8); box-shadow: 0 0 0 3px var(--brand-bg-subtle); }
 .ct-field input, .ct-field select {
   border: none; outline: none; background: transparent; color: var(--fg-default);
-  font-family: inherit; font-size: 13px; flex: 1; min-width: 0;
+  font-family: inherit; font-size: 14px; flex: 1; min-width: 0;
 }
 .ct-field input:focus-visible, .ct-field select:focus-visible { outline: none; }
 .ct-field.err { border-color: var(--alert-high-border-emphasis); background: var(--alert-high-bg-faint); }
 .ct-field.err:focus-within { border-color: var(--alert-high-border-emphasis); box-shadow: 0 0 0 3px var(--alert-high-bg-subtle); }
 .ct-err-note { font-size: 11px; color: var(--alert-high-fg-alt); margin-top: 5px; }
-.ct-swatch { width: 18px; height: 18px; border-radius: 4px; flex-shrink: 0; border: 1px solid var(--border-subtle); }
+.ct-swatch { width: 20px; height: 20px; border-radius: 5px; flex-shrink: 0; border: 1px solid var(--border-subtle); }
 .ct-swatch.sm { width: 13px; height: 13px; }
 .ct-popover {
   position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; width: 230px;

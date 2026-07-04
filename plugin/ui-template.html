@@ -45,26 +45,26 @@ body {
 .input.invalid:focus { box-shadow: 0 0 0 3px #e5484d1a; }
 
 /* ── Controls bar (the demo's layout: labeled fields in one wrapping row) ── */
-.bar { display: flex; align-items: flex-end; gap: 12px 16px; flex-wrap: wrap; }
+.bar { display: flex; align-items: flex-start; gap: 12px 16px; flex-wrap: wrap; }
 .bar-field { display: flex; flex-direction: column; }
 .bar-field > .label { margin-bottom: 5px; }
 
-/* the demo's field: swatch + hex + chip select riding INSIDE one bordered box */
+/* the Figma-spec field (post-hk 60:1384): 40px, radius 10, swatch 20/r5, hex 14px */
 .field {
   display: flex; align-items: center; gap: 8px;
-  height: 34px; padding: 0 10px;
-  border: 1.5px solid #e0e0e0; border-radius: 8px; background: #fff;
+  height: 40px; padding: 0 12px;
+  border: 1.5px solid #d9d9de; border-radius: 10px; background: #fff;
 }
 .field:focus-within { border-color: #7c6fcd; box-shadow: 0 0 0 3px #7c6fcd1a; }
 .field > input[type="text"] {
   border: none; outline: none; background: transparent; flex: 1; min-width: 56px;
-  font-size: 12px; font-family: ui-monospace, 'SF Mono', monospace; color: #1a1a1a;
+  font-size: 14px; font-family: inherit; font-weight: 500; color: #1a1a1a;
 }
 .field > input[type="text"].dim { color: #999; }
-.field-color { width: 252px; }
+.field-color { width: 288px; }
 
 .swatch {
-  position: relative; width: 18px; height: 18px; flex-shrink: 0;
+  position: relative; width: 20px; height: 20px; flex-shrink: 0;
   border-radius: 5px; border: 1px solid rgba(0,0,0,.12); cursor: pointer; overflow: hidden;
 }
 .swatch input[type="color"] {
@@ -72,22 +72,34 @@ body {
   opacity: 0; cursor: pointer;
 }
 
-/* the in-field mode chip (a styled select pill) */
+/* the in-field mode CHIP (Figma spec): a VISUAL chip — label + its own 12px chevron laid
+   out inline (never the native select arrow) — with a transparent select overlaid. The
+   chip TINTS with the selection (set from the resolved scales in ui.ts). */
 .chip {
-  font-size: 11px; font-weight: 650; border: 1px solid #e0e0e0;
-  background: #f6f6f7; color: #1a1a1a;
-  /* small radius, not a pill — the chip sits inside a square-cornered field */
-  border-radius: 5px; padding: 3px 8px; margin-left: auto; flex-shrink: 0; cursor: pointer;
-  font-family: inherit; outline: none;
+  position: relative; display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11.5px; font-weight: 650; border: 1px solid transparent;
+  background: #ededf0; color: #646464;
+  border-radius: 4px; padding: 3px 7px; margin-left: auto; flex-shrink: 0; cursor: pointer;
+  font-family: inherit; white-space: nowrap;
 }
+.chip svg { width: 12px; height: 12px; flex-shrink: 0; }
+.chip select { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
 .marker { font-size: 11px; color: #999; margin-left: auto; flex-shrink: 0; }
+
+/* the ⓘ explanation line under each field — the always-visible tooltip replacement */
+.info-line {
+  display: flex; align-items: center; gap: 5px; margin-top: 6px;
+  font-size: 11.5px; font-weight: 500; color: #646464; white-space: nowrap;
+}
+.info-line svg { width: 14px; height: 14px; flex-shrink: 0; }
 
 /* trailing menu button + popover (From primary / Custom / Remove) */
 .menu-btn {
   display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
-  width: 22px; height: 22px; border-radius: 6px; border: none; cursor: pointer;
-  background: #f2f2f2; color: #777; font-size: 11px; font-family: inherit;
+  width: 26px; height: 26px; border-radius: 6px; border: none; cursor: pointer;
+  background: #ededf0; color: #555; font-size: 11px; font-family: inherit;
 }
+.menu-btn svg { width: 12px; height: 12px; }
 .menu-btn:hover { background: #e9e7f7; color: #1a1a1a; }
 .popover {
   position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; width: 190px;
@@ -198,12 +210,17 @@ body {
         <input type="color" id="primary-picker" value="#E93D82" />
       </span>
       <input type="text" id="primary-hex" value="#E93D82" spellcheck="false" placeholder="#E93D82" />
-      <select class="chip" id="primary-mode" title="Primary engine mode">
-        <option value="recommended" selected>Recommended</option>
-        <option value="exact">Exact</option>
-        <optgroup label="Anchor archetype" id="archetype-group"></optgroup>
-      </select>
+      <span class="chip" id="primary-chip" title="Primary engine mode">
+        <span id="primary-chip-label">Recommended</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        <select id="primary-mode">
+          <option value="recommended" selected>Recommended</option>
+          <option value="exact">Exact</option>
+          <optgroup label="Anchor archetype" id="archetype-group"></optgroup>
+        </select>
+      </span>
     </div>
+    <div class="info-line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span id="primary-info">Engine adjusts for optimal legibility</span></div>
   </div>
 
   <div class="bar-field" style="position:relative" id="secondary-slot">
@@ -215,14 +232,19 @@ body {
       </span>
       <input type="text" id="secondary-hex" value="" spellcheck="false" placeholder="enter a hex" />
       <span class="marker" id="secondary-marker" style="display:none">from primary</span>
-      <select class="chip" id="secondary-style" title="Secondary style" style="display:none">
-        <option value="tint" selected>Tint</option>
-        <option value="pastel">Pastel</option>
-        <option value="outline">Outline</option>
-        <option value="exact">Exact</option>
-      </select>
-      <button class="menu-btn" id="secondary-menu-btn" title="Secondary options">▾</button>
+      <span class="chip" id="secondary-chip" title="Secondary style" style="display:none">
+        <span id="secondary-chip-label">Tint</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        <select id="secondary-style">
+          <option value="tint" selected>Tint</option>
+          <option value="pastel">Pastel</option>
+          <option value="outline">Outline</option>
+          <option value="exact">Exact</option>
+        </select>
+      </span>
+      <button class="menu-btn" id="secondary-menu-btn" title="Secondary options"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
     </div>
+    <div class="info-line" id="secondary-info-line" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span id="secondary-info"></span></div>
     <div class="popover" id="secondary-menu" style="display:none">
       <button class="pop-item" id="menu-derived"><span class="swatch" id="menu-derived-swatch" style="background:#ccc"></span>From primary</button>
       <button class="pop-item" id="menu-custom">Custom</button>
@@ -232,14 +254,17 @@ body {
 
   <div class="bar-field">
     <div class="label">Neutral color</div>
-    <div class="field" style="width:150px">
+    <div class="field" style="width:176px;position:relative">
       <span class="swatch" id="neutral-swatch" style="background:#888;cursor:default"></span>
-      <select class="chip" id="neutral-select" style="margin-left:0;flex:1">
-        <option value="default" selected>default</option>
-        <option value="branded">intense</option>
-        <option value="pure">true grey</option>
+      <span id="neutral-label" style="flex:1;font-size:14px;font-weight:500">Default</span>
+      <span class="menu-btn" style="pointer-events:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+      <select id="neutral-select" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">
+        <option value="default" selected>Default</option>
+        <option value="branded">Intense</option>
+        <option value="pure">True grey</option>
       </select>
     </div>
+    <div class="info-line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span id="neutral-info">Adds a touch of primary hue</span></div>
   </div>
 
   <div class="bar-field">
