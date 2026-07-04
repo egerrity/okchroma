@@ -352,9 +352,12 @@ figma.ui.onmessage = async (msg) => {
       if (neutralGrp) {
         for (const t of flatten(neutralGrp.light)) {
           aliasInto(`neutral/${t.path}`, `${neutralGrp.prim}/${t.path}`)
+          if (t.path === 'ink-12') {
+            // ink-13 slots DIRECTLY after ink-12 — ladder order, before the cta/on tokens
+            for (const m of th.coll.modes) aliasInto('neutral/ink-13', 'system/ink-13', m.modeId)
+          }
         }
       }
-      for (const m of th.coll.modes) aliasInto('neutral/ink-13', 'system/ink-13', m.modeId)
 
       // ③ brand/primary always; brand/secondary depends on the secondary mode.
       const stops = primaryRamp ? flatten(primaryRamp.light) : []
