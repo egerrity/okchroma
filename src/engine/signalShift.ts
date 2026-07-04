@@ -67,6 +67,18 @@ function lemonScale(def: SignalDef, contrastProfile?: ContrastProfile): Generate
   })
 }
 
+// The swap variants a signal can OFFER (green: teal-side / yellow-side; info-color: magenta /
+// blue). Used by resolveTheme when a SECONDARY collides: a variant is adopted only if it clears
+// BOTH brand colors. red offers none (identity sacred) and yellow's lemon stays primary-only
+// (warningVariant machinery) — for those the secondary yields instead (SECONDARY-PLAN §2).
+export function signalSwapVariants(def: SignalDef, contrastProfile?: ContrastProfile): ShiftResult[] {
+  const rule = SHIFT_RULES[def.name]
+  if (!rule || def.name === 'yellow') return []
+  return [rule.below, rule.atOrAbove]
+    .filter((s): s is Extract<Side, { kind: 'swap' }> => s.kind === 'swap')
+    .map(s => ({ scale: swapScale(s.baseHex, def, contrastProfile), note: s.note }))
+}
+
 export function pickSignalShift(
   brand: GeneratedScale,
   canonicalSignalScale: GeneratedScale,

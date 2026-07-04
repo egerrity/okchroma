@@ -55,3 +55,16 @@ export function neutralChromaCurve(
   const mult = LEVEL[level]
   return (L, mode) => mult * peakC(brandH, mode) * interpShape(L, mode)
 }
+
+// The SUBTLE SECONDARY rides this same tint axis (the neutral is "the secondary engine +
+// a chroma clamp" — SECONDARY-PLAN §3): the secondary hue through the SAME shape at a
+// point above 'branded'. Candidate strengths for the owner's render sweep; the default is
+// provisional until picked (scripts/secondary-sweep.ts → render/secondary.html).
+export const SUBTLE_SECONDARY_MULT = 4.5
+export const SUBTLE_SECONDARY_MULT_CANDIDATES = [3, 4.5, 6]
+export function subtleSecondaryChromaCurve(
+  brandH: number,
+  mult: number = SUBTLE_SECONDARY_MULT,
+): (L: number, mode: 'light' | 'dark') => number {
+  return (L, mode) => mult * peakC(brandH, mode) * interpShape(L, mode)
+}

@@ -14,6 +14,7 @@
 export {
   generateScale,
   generateNeutralScale,
+  generateSubtleSecondary,
   generateIllustrationScale,
   type GeneratedScale,
   type ColorStop,
@@ -26,9 +27,18 @@ export {
 // ── Policy layer (collision + signal resolution) — recommended entry ─────────
 export {
   resolveBrand,
+  resolveTheme,
   SIGNAL_SCALES,
   signalScalesFor,
+  SECONDARY_DISTINCT_DELTA_E,
+  SUBTLE_TINT_MULT,
+  SUBTLE_PASTEL_K,
+  OUTLINE_HOVER_ALPHA,
   type ResolvedBrand,
+  type ResolvedTheme,
+  type ResolvedSecondary,
+  type SecondaryLevel,
+  type SecondaryStyle,
   type SignalOverride,
 } from './engine/resolve'
 

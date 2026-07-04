@@ -2,7 +2,7 @@
 
 import { generateIllustrationScale, generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
 import { stopTokenName, onFillTokenName, tokenOrder } from './tokenNames'
-import { signalScalesFor, type ResolvedBrand } from './resolve'
+import { signalScalesFor, OUTLINE_HOVER_ALPHA, type ResolvedBrand, type SecondaryStyle } from './resolve'
 import { SIGNALS } from './signals'
 
 export function toHex(r: number, g: number, b: number): string {
@@ -30,10 +30,16 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
   const ctaHover = mode === 'light' ? s.ctaHover : s.ctaHoverDark
   const onCta = mode === 'light' ? s.onFillTextIsWhite : s.onFillTextIsWhiteDark
   const onHl = mode === 'light' ? s.onHighlightIsWhite : s.onHighlightIsWhiteDark
+  // cta-stroke: the adaptive boundary paired with the cta pair — transparent unless the cta fill
+  // reads under 3:1 (Lc 30 apca) vs the scale's own paper-2, then it ALIASES the contrast-gated
+  // highlight-8. Always emitted, so components can carry `border: 1.5px solid var(...-cta-stroke)`
+  // unconditionally and the layout never shifts.
+  const strokeNeeded = mode === 'light' ? s.ctaStrokeNeeded : s.ctaStrokeNeededDark
   return [
     stopsToVars(stops, prefix),
     `  --${prefix}-cta-1: ${toHex(cta.r, cta.g, cta.b)};`,
     `  --${prefix}-cta-2: ${toHex(ctaHover.r, ctaHover.g, ctaHover.b)};`,
+    `  --${prefix}-cta-stroke: ${strokeNeeded ? `var(--${prefix}-highlight-8)` : 'transparent'};`,
     `  --${prefix}-${onFillTokenName('brand')}: ${onColor(onCta)};`,
     `  --${prefix}-${onFillTokenName('neutral')}: ${onColor(onHl!)};`,
   ]
@@ -119,7 +125,11 @@ export function brandCss(
   neutralLevel: NeutralLevel = 'default',
   // the per-brand neutral is generated here, so it needs the caller's profile (the brand/secondary
   // scales inside `r` were already resolved under it by resolveBrand)
-  contrastProfile?: ContrastProfile
+  contrastProfile?: ContrastProfile,
+  // the secondary's mode chip: 'outline' re-resolves the cta pair — cta-1 transparent, cta-2 the
+  // cta color at OUTLINE_HOVER_ALPHA (the tinted hover), on-cta ink-11, cta-stroke ALWAYS the
+  // gated highlight-8. Same tokens, different resolution — no component changes needed.
+  secondaryStyle?: SecondaryStyle
 ): string {
   const { scale } = r
   const note = annotationNote(r) + noteSuffix
@@ -162,6 +172,7 @@ export function brandCss(
       ...stops.map(x => alias(stopTokenName(x.stop))),
       alias('cta-1'),
       alias('cta-2'),
+      alias('cta-stroke'),
       alias(onFillTokenName('brand')),
       alias(onFillTokenName('neutral')),
     ]
@@ -185,6 +196,20 @@ export function brandCss(
   const lightAnchors = [`  --paper-0: ${p0hex(nScale.paper0, '#ffffff')};`, `  --ink-13: #000000;`]
   const darkAnchors = [`  --paper-0: ${p0hex(nScale.paper0Dark, '#000000')};`, `  --ink-13: #ffffff;`]
 
+  // outline re-resolution: emitted AFTER the secondary body so the cascade takes these values.
+  // cta-2 = the resolved cta color at OUTLINE_HOVER_ALPHA — the tinted transparent hover.
+  const outline = (mode: 'light' | 'dark'): string[] => {
+    if (secondaryStyle !== 'outline' || !secondary) return []
+    const cta = mode === 'light' ? secondary.cta : secondary.ctaDark
+    const c = (v: number) => Math.round(Math.min(1, Math.max(0, v)) * 255)
+    return [
+      `  --secondary-cta-1: transparent;`,
+      `  --secondary-cta-2: rgba(${c(cta.r)}, ${c(cta.g)}, ${c(cta.b)}, ${OUTLINE_HOVER_ALPHA});`,
+      `  --secondary-cta-stroke: var(--secondary-highlight-8);`,
+      `  --secondary-${onFillTokenName('brand')}: var(--secondary-ink-11);`,
+    ]
+  }
+
   return [
     ``,
     `[data-brand="${slug}"] {`,
@@ -193,6 +218,7 @@ export function brandCss(
     brandIdentity,
     ...illusVars,
     ...secondaryLight,
+    ...outline('light'),
     secondaryIdentity,
     ...brandKindBody('neutral', nScale, 'light'),
     ...r.signalOverrides.flatMap(o => brandKindBody(o.name, o.scale, 'light')),
@@ -201,6 +227,7 @@ export function brandCss(
     ...darkAnchors,
     ...brandKindBody('brand', scale, 'dark'),
     ...secondaryDark,
+    ...outline('dark'),
     ...brandKindBody('neutral', nScale, 'dark'),
     ...r.signalOverrides.flatMap(o => brandKindBody(o.name, o.scale, 'dark')),
     `}`,

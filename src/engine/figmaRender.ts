@@ -9,9 +9,15 @@ const clamp01 = (v: number) => Math.min(1, Math.max(0, v))
 
 export interface FigmaColorToken {
   $type: 'color'
-  $value: { colorSpace: 'srgb'; components: [number, number, number]; alpha: 1; hex: string }
+  $value: { colorSpace: 'srgb'; components: [number, number, number]; alpha: number; hex: string }
 }
 export type FigmaGroup = { [key: string]: FigmaColorToken | FigmaGroup }
+
+// the cta-stroke's transparent default (alpha 0 — the plugin aliases it onto system/transparent)
+const TRANSPARENT_TOKEN: FigmaColorToken = {
+  $type: 'color',
+  $value: { colorSpace: 'srgb', components: [0, 0, 0], alpha: 0, hex: '#000000' },
+}
 
 function colorFromStop(s: ColorStop): FigmaColorToken {
   return {
@@ -37,7 +43,7 @@ function rampGroup(
   stops: ColorStop[],
   onFillWhite: boolean,
   kind: RampKind,
-  extra?: { onHighlightWhite?: boolean; identityHex?: string; cta?: ColorStop; ctaHover?: ColorStop },
+  extra?: { onHighlightWhite?: boolean; identityHex?: string; cta?: ColorStop; ctaHover?: ColorStop; ctaStrokeNeeded?: boolean },
 ): FigmaGroup {
   const g: FigmaGroup = {}
   for (const s of [...stops].sort((a, b) => tokenOrder(stopTokenName(a.stop)) - tokenOrder(stopTokenName(b.stop))))
@@ -45,6 +51,12 @@ function rampGroup(
 
   if (extra?.cta) g['cta-1'] = colorFromStop(extra.cta)
   if (extra?.ctaHover) g['cta-2'] = colorFromStop(extra.ctaHover)
+  // cta-stroke pairs with the cta pair: transparent unless the fill fails the boundary gate,
+  // then the family's OWN contrast-gated highlight-8 (the plugin re-expresses both as aliases)
+  if (extra?.ctaStrokeNeeded !== undefined) {
+    const s8 = stops.find(s => s.stop === 8)
+    g['cta-stroke'] = extra.ctaStrokeNeeded && s8 ? colorFromStop(s8) : TRANSPARENT_TOKEN
+  }
   g[onFillTokenName(kind)] = colorFromHex(onFillWhite)
   if (extra?.onHighlightWhite !== undefined) g[onFillTokenName('neutral')] = colorFromHex(extra.onHighlightWhite)
   if (extra?.identityHex) g['identity'] = colorFromHexString(extra.identityHex)
@@ -75,6 +87,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     identityHex: s.identityHex,
     cta: mode === 'light' ? s.cta : s.ctaDark,
     ctaHover: mode === 'light' ? s.ctaHover : s.ctaHoverDark,
+    ctaStrokeNeeded: !!(mode === 'light' ? s.ctaStrokeNeeded : s.ctaStrokeNeededDark),
   })
 
   const nScale = generateNeutralScale(scale.brandH, input.neutralLevel ?? 'default', input.contrastProfile)
@@ -82,6 +95,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     onHighlightWhite: mode === 'light' ? nScale.onHighlightIsWhite : nScale.onHighlightIsWhiteDark,
     cta: mode === 'light' ? nScale.cta : nScale.ctaDark,
     ctaHover: mode === 'light' ? nScale.ctaHover : nScale.ctaHoverDark,
+    ctaStrokeNeeded: !!(mode === 'light' ? nScale.ctaStrokeNeeded : nScale.ctaStrokeNeededDark),
   })
   const build = (mode: 'light' | 'dark'): FigmaGroup => {
     // paper-0 rides WITH the neutral ramp (its dark value is neutral-tinted, so it dedups and
@@ -107,6 +121,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
           onHighlightWhite: mode === 'light' ? sig.scale.onHighlightIsWhite : sig.scale.onHighlightIsWhiteDark,
           cta: mode === 'light' ? sig.scale.cta : sig.scale.ctaDark,
           ctaHover: mode === 'light' ? sig.scale.ctaHover : sig.scale.ctaHoverDark,
+          ctaStrokeNeeded: !!(mode === 'light' ? sig.scale.ctaStrokeNeeded : sig.scale.ctaStrokeNeededDark),
         },
       )
     }
