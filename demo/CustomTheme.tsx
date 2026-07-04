@@ -3,8 +3,8 @@ import {
   Check, TriangleAlert, Sparkles, ArrowRight, ChevronDown, ChevronUp,
   LayoutDashboard, FolderKanban, ListTodo, BarChart3, Users, Settings, Search, Download, Plus, Info, X,
 } from 'lucide-react'
-import { resolveBrand, SIGNAL_SCALES } from '../src/engine/resolve'
-import { checkAllCollisions } from '../src/engine/collision'
+import { resolveBrand, resolveTheme, type SecondaryStyle } from '../src/engine/resolve'
+import { ARCHETYPES, type Archetype } from '../src/engine/archetypes'
 import { brandCss, signalsCss, toHex } from '../src/engine/cssRender'
 import { inRedBand, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
 import { wcagY, contrastRatio } from '../src/engine/constraints'
@@ -48,7 +48,13 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   const [accentOpen, setAccentOpen] = useState(false)
   const [secondaryInput, setSecondaryInput] = useState('')
   const [suggestOpen, setSuggestOpen] = useState(false)
-  const [rung, setRung] = useState<RungMode>('recommended')
+  // per-family modes (owner design: exact decoupled per family, chips in the fields). The
+  // primary's chip = Recommended / Exact / the six archetype anchors; the secondary's chip =
+  // Tint / Pastel / Outline / Exact.
+  const [primaryMode, setPrimaryMode] = useState<'recommended' | 'exact' | Archetype>('recommended')
+  const [secondaryStyle, setSecondaryStyle] = useState<SecondaryStyle>('tint')
+  // legacy shape for the checklist/toast logic: anchors count as recommended machinery
+  const rung: RungMode = primaryMode === 'exact' ? 'exact' : 'recommended'
   const [profile, setProfile] = useState<ContrastProfile>('wcag')
   // Accent preview: two options shown only when an accent is set —
   // Default = 'accented', Inverse = 'accented-inverse'. Init 'accented' so
@@ -56,6 +62,9 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   const [accentMode, setAccentMode] = useState<AccentMode>('accented')
   // Neutral tint level (the neutral is always generated from the brand hue now).
   const [neutralLevel, setNeutralLevel] = useState<NeutralLevel>('default')
+  // DERIVED secondary (the plugin's default posture): no hex — the engine derives a subtle
+  // secondary from the primary. Entered via the suggestion chip; typing any hex exits it.
+  const [derived, setDerived] = useState(false)
   const [view, setView] = useState<View>('palette')
 
   // Suggestions and the theme always derive from the last VALID hex, so a
@@ -86,32 +95,26 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
 
   const computed = useMemo(() => {
     const cp = profile === 'apca' ? ('apca' as const) : undefined
-    const opts = rung === 'exact' || cp ? { exact: rung === 'exact' || undefined, contrastProfile: cp } : undefined
-    const r = resolveBrand(primary, 'Custom brand', opts)
-    const accent = secondary ? resolveBrand(secondary, 'Custom accent', opts).scale : null
-    // brandCss now emits the per-brand neutral too, at the chosen level. Under the APCA profile the
-    // canonical signal block is re-emitted as an override (the static signals.css is WCAG-solved).
-    const css = brandCss('custom', 'Custom brand', r, accent, '', neutralLevel, cp)
+    // THEME-level resolution: primary + signals exactly as before; the secondary resolves against
+    // the post-shift signal set. The LEVEL follows the engine mode (owner model: subtle IS the
+    // recommendation; a full-register secondary is the exact-mode choice) — no separate control.
+    const t = resolveTheme({
+      primaryHex: primary, name: 'Custom brand',
+      primaryMode: primaryMode === 'exact' ? 'exact' : 'recommended',
+      primaryArchetype: primaryMode !== 'recommended' && primaryMode !== 'exact' ? primaryMode : undefined,
+      secondaryHex: derived ? null : secondary,
+      deriveSecondary: derived || undefined,
+      secondaryStyle,
+      contrastProfile: cp,
+    })
+    const css = brandCss('custom', 'Custom brand', t.themed, t.secondary?.scale ?? null, '', neutralLevel, cp, t.secondary?.style)
       + (cp ? '\n' + signalsCss(cp) : '')
-    return { r, accent, css }
-  }, [primary, secondary, rung, neutralLevel, profile])
+    return { t, r: t.themed, accent: t.secondary?.scale ?? null, css }
+  }, [primary, secondary, derived, primaryMode, secondaryStyle, neutralLevel, profile])
 
   // The RECOMMENDED resolution, always — exact mode skips the rules, so the
   // checklist and toasts need to know what WOULD have fired to flag it red.
   const rRec = useMemo(() => resolveBrand(primary, 'Custom brand'), [primary])
-  // Same for the accent — its engine decisions reuse the brand↔signal
-  // checklist (collisions with error/warning/etc.), shown only when a
-  // secondary is set.
-  const rRecAccent = useMemo(() => (secondary ? resolveBrand(secondary, 'Custom accent') : null), [secondary])
-
-  // Signals the accent reads too close to (hue gate + ΔE, light AND dark).
-  // We don't reshape the accent — it's the user's pick — so a collision is
-  // surfaced as advice to choose a more distinct hex.
-  const accentCollisions = useMemo<Array<'red' | 'yellow' | 'green' | 'info-color'>>(() => {
-    if (!rRecAccent) return []
-    const sigScales = new Map([...SIGNAL_SCALES].map(([n, v]) => [n, v.scale]))
-    return checkAllCollisions(rRecAccent.scale, sigScales).collidesWith
-  }, [rRecAccent])
 
   // Collision/caveat notices as dismissible toasts. Keys include the
   // primary so a new color re-surfaces them.
@@ -129,16 +132,16 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
       key: `ex:${primary}`, kind: 'info',
       text: 'Exact mode: your hex ships untouched. Accessibility outcomes are reviewed with you rather than guaranteed by the engine.',
     })
-    if (accentCollisions.length) {
-      const names = accentCollisions.join(' and ')
-      const plural = accentCollisions.length > 1
-      list.push({
-        key: `ac:${secondary}:${accentCollisions.join(',')}`, kind: 'warn',
-        text: `Accent notice: your accent reads close to the ${names} signal color${plural ? 's' : ''}. They may be hard to tell apart in the UI — consider a more distinct accent.`,
-      })
-    }
+    // theme decisions on the secondary (demotion / residual / close-to-primary), straight from
+    // resolveTheme's annotations — the engine now DECIDES instead of just warning
+    const secNotes = computed.t.secondary ? [...computed.t.secondary.notes, ...computed.t.notes] : []
+    for (const n of secNotes) list.push({
+      key: `sn:${secondary}:${n}`,
+      kind: n.includes('close to the primary') ? 'warn' : 'info',
+      text: `Secondary: ${n}`,
+    })
     return list
-  }, [primary, rung, rRec, secondary, accentCollisions])
+  }, [primary, rung, rRec, secondary, computed])
 
   // brandCss already includes the per-brand neutral, so the injected CSS is the
   // whole theme — no separate neutral block.
@@ -149,6 +152,13 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   // ── Persistent horizontal controls bar — the single source of truth for
   // every color, pinned under the navbar on BOTH views, so editing is live
   // everywhere (change the primary on Preview, the demo themes under you).
+  // the in-field MODE CHIP (the mockup's pill dropdown): a styled select riding inside ct-field
+  const chipStyle: React.CSSProperties = {
+    fontSize: 11, fontWeight: 650, border: '1px solid var(--neutral-highlight-8)',
+    background: 'var(--neutral-wash-3)', color: 'var(--fg-default)',
+    borderRadius: 999, padding: '3px 8px', marginLeft: 'auto', flexShrink: 0, cursor: 'pointer',
+  }
+
   const controlsBar = (
     <div className="ct-bar">
       <div className="ct-bar-field">
@@ -159,21 +169,37 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
             <input type="color" value={primary} onChange={e => setPrimaryInput(e.target.value.toUpperCase())} />
           </label>
           <input value={primaryInput} onChange={e => setPrimaryInput(e.target.value)} spellCheck={false} placeholder="#E93D82" />
+          <select style={chipStyle} value={primaryMode} onChange={e => setPrimaryMode(e.target.value as typeof primaryMode)} title="Primary engine mode">
+            <option value="recommended">Recommended</option>
+            <option value="exact">Exact</option>
+            <optgroup label="Anchor archetype">
+              {ARCHETYPES.map(a => <option key={a.name} value={a.name}>{a.name}</option>)}
+            </optgroup>
+          </select>
         </div>
       </div>
 
       <div className="ct-bar-field" style={{ position: 'relative' }} ref={popoverRef}>
-        <div className="ct-label">Accent color</div>
+        <div className="ct-label">Secondary color</div>
         <div className="ct-field ct-field-color">
           <label className="ct-swatch-btn" title="Open color picker">
-            <span className="ct-swatch" style={{ background: secondary ?? 'var(--neutral-wash-5)' }} />
-            <input type="color" value={secondary ?? primary} onChange={e => { setSecondaryInput(e.target.value.toUpperCase()); setAccentOpen(true) }} />
+            <span className="ct-swatch" style={{ background: derived ? 'var(--secondary-cta-1)' : (secondary ?? 'var(--neutral-wash-5)') }} />
+            <input type="color" value={secondary ?? primary} onChange={e => { setDerived(false); setSecondaryInput(e.target.value.toUpperCase()); setAccentOpen(true) }} />
           </label>
-          <input value={secondaryInput} placeholder="enter a hex" onChange={e => { setSecondaryInput(e.target.value); setAccentOpen(true) }} spellCheck={false} />
+          <input value={derived ? '' : secondaryInput} placeholder={derived ? 'Derived from primary' : 'enter a hex'}
+            onChange={e => { setDerived(false); setSecondaryInput(e.target.value); setAccentOpen(true) }} spellCheck={false} />
+          {(secondary || derived) && (
+            <select style={chipStyle} value={secondaryStyle} onChange={e => setSecondaryStyle(e.target.value as SecondaryStyle)} title="Secondary style">
+              <option value="tint">Tint</option>
+              <option value="pastel">Pastel</option>
+              <option value="outline">Outline</option>
+              <option value="exact">Exact</option>
+            </select>
+          )}
           {/* one trailing button: suggestions when empty, clear once filled */}
-          {secondary ? (
-            <button className="ct-iconbtn" title="Remove accent"
-              onClick={() => { setAccentOpen(false); setSecondaryInput(''); setSuggestOpen(false); setAccentMode('accented') }}>
+          {(secondary || derived) ? (
+            <button className="ct-iconbtn" title="Remove secondary"
+              onClick={() => { setDerived(false); setAccentOpen(false); setSecondaryInput(''); setSuggestOpen(false); setAccentMode('accented') }}>
               <X size={14} />
             </button>
           ) : (
@@ -186,6 +212,11 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
           <div className="ct-popover">
             <div style={{ fontSize: 11, color: 'var(--fg-subtle)' }}>Suggested from your primary</div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {/* the plugin's default posture: no hex — the engine derives the subtle secondary */}
+              <button className="ct-suggest" onClick={() => { setDerived(true); setSecondaryInput(''); setAccentOpen(false); setSuggestOpen(false) }}>
+                <span className="ct-swatch sm" style={{ background: 'var(--secondary-cta-1)' }} />
+                Derive from primary
+              </button>
               {([['Complementary', 180], ['60°', 60], ['30°', 30]] as Array<[string, number]>).map(([label, deg]) => (
                 <button key={label} className="ct-suggest" onClick={() => { setSecondaryInput(rybRotate(primary, deg)); setAccentOpen(true); setSuggestOpen(false) }}>
                   <span className="ct-swatch sm" style={{ background: rybRotate(primary, deg) }} />
@@ -193,9 +224,9 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
                 </button>
               ))}
             </div>
-            {secondary && (
-              <button className="ct-remove" onClick={() => { setAccentOpen(false); setSecondaryInput(''); setSuggestOpen(false); setAccentMode('accented') }}>
-                <BanIcon size={13} /> Remove accent
+            {(secondary || derived) && (
+              <button className="ct-remove" onClick={() => { setDerived(false); setAccentOpen(false); setSecondaryInput(''); setSuggestOpen(false); setAccentMode('accented') }}>
+                <BanIcon size={13} /> Remove secondary
               </button>
             )}
           </div>
@@ -212,26 +243,12 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
 
       {/* keep preview + engine-mode together; wrap as one group, left-aligned */}
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px 18px', flexWrap: 'wrap' }}>
-        {secondary && (
+        {(secondary || derived) && (
           <div className="ct-bar-field">
-            <div className="ct-label">Accent preview</div>
+            <div className="ct-label">Secondary preview</div>
             <Segmented value={accentMode} onChange={setAccentMode} options={[['accented', 'Default'], ['accented-inverse', 'Inverse']]} />
           </div>
         )}
-        <div className="ct-bar-field">
-          <div className="ct-label">Color engine mode</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Segmented value={rung} onChange={setRung} options={[['recommended', 'Recommended'], ['exact', 'Exact']]} />
-            <span className="ct-info">
-              ⓘ
-              <span className="ct-tip">
-                Recommended applies the engine's adjustments — collisions, contrast, dark mode — and is
-                WCAG-AA by construction. Exact ships your hex untouched; accessibility outcomes are
-                reviewed with you rather than guaranteed.
-              </span>
-            </span>
-          </div>
-        </div>
         <div className="ct-bar-field">
           <div className="ct-label">Contrast standard</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -290,7 +307,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   const SWATCH_STOPS = ['paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'wash-6', 'wash-7', 'highlight-8', 'highlight-9', 'highlight-10', 'ink-11', 'ink-12', 'cta-1', 'cta-2']
   const swatchRamps: Array<[string, string, boolean]> = [
     ['brand', 'brand', true],
-    ...(secondary ? [['secondary', 'secondary', true] as [string, string, boolean]] : []),
+    ...((secondary || derived) ? [['secondary', 'secondary', true] as [string, string, boolean]] : []),
     ['neutral', 'neutral', false],
     ['red', 'red', false], ['yellow', 'yellow', false], ['green', 'green', false], ['info-color', 'info-color', false],
   ]
@@ -367,7 +384,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   )
 
   return (
-    <div data-brand="custom" data-theme={dark ? 'dark' : 'light'} data-accent-mode={secondary ? accentMode : 'default'} style={{ background: 'var(--surface-base)', color: 'var(--fg-default)', minHeight: '100%', position: 'relative' }}>
+    <div data-brand="custom" data-theme={dark ? 'dark' : 'light'} data-accent-mode={(secondary || derived) ? accentMode : 'default'} style={{ background: 'var(--surface-base)', color: 'var(--fg-default)', minHeight: '100%', position: 'relative' }}>
       <style>{overrideCss}</style>
       <style>{PAGE_CSS}</style>
 
@@ -392,7 +409,14 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
           <div className="ct-pane-main">
             {swatchMatrix()}
             {colorBlock('Primary scale', 'brand', 'brand', rRec, primary, primaryExtras)}
-            {secondary && colorBlock('Secondary scale', 'secondary', 'brand', rRecAccent, secondary)}
+            {(secondary || derived) && colorBlock(derived ? 'Secondary scale — derived from primary' : 'Secondary scale', 'secondary', 'brand', null, secondary ?? primary, (
+              computed.t.secondary && (
+                <div style={{ fontSize: 11.5, color: 'var(--fg-subtle)', marginTop: 8, lineHeight: 1.45 }}>
+                  Resolved <b>{computed.t.secondary.level}</b>{computed.t.secondary.demoted ? ' (auto)' : ''}
+                  {computed.t.secondary.notes.map(n => <div key={n}>· {n}</div>)}
+                </div>
+              )
+            ))}
             {colorBlock(`Neutral scale — ${neutralLevel} tint`, 'neutral', 'neutral', null, primary)}
             {signalBlocks()}
           </div>
@@ -404,7 +428,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
 
       {/* ── Preview: the applied demo UI + export. No editable controls here —
           the persistent bar above stays live. ── */}
-      {view === 'preview' && <Dashboard hasSecondary={!!secondary} />}
+      {view === 'preview' && <Dashboard hasSecondary={!!secondary || derived} />}
 
       {/* toast stack — engine findings as dismissible notices */}
       <div className="ct-toasts">
