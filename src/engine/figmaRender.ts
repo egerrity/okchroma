@@ -3,7 +3,7 @@
 import { toHex } from './cssRender'
 import { stopTokenName, onFillTokenName, tokenOrder, type RampKind } from './tokenNames'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
-import type { ResolvedBrand } from './resolve'
+import { OUTLINE_HOVER_ALPHA, type ResolvedBrand, type SecondaryStyle } from './resolve'
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v))
 
@@ -43,7 +43,7 @@ function rampGroup(
   stops: ColorStop[],
   onFillWhite: boolean,
   kind: RampKind,
-  extra?: { onHighlightWhite?: boolean; identityHex?: string; cta?: ColorStop; ctaHover?: ColorStop; ctaStrokeNeeded?: boolean },
+  extra?: { onHighlightWhite?: boolean; identityHex?: string; cta?: ColorStop; ctaHover?: ColorStop },
 ): FigmaGroup {
   const g: FigmaGroup = {}
   for (const s of [...stops].sort((a, b) => tokenOrder(stopTokenName(a.stop)) - tokenOrder(stopTokenName(b.stop))))
@@ -51,12 +51,10 @@ function rampGroup(
 
   if (extra?.cta) g['cta-1'] = colorFromStop(extra.cta)
   if (extra?.ctaHover) g['cta-2'] = colorFromStop(extra.ctaHover)
-  // cta-stroke pairs with the cta pair: transparent unless the fill fails the boundary gate,
-  // then the family's OWN contrast-gated highlight-8 (the plugin re-expresses both as aliases)
-  if (extra?.ctaStrokeNeeded !== undefined) {
-    const s8 = stops.find(s => s.stop === 8)
-    g['cta-stroke'] = extra.ctaStrokeNeeded && s8 ? colorFromStop(s8) : TRANSPARENT_TOKEN
-  }
+  // cta-stroke pairs with the cta pair, TRANSPARENT everywhere (the conditional gate is gone —
+  // owner 2026-07-04): the token stays for components + a future high-contrast re-solve; the
+  // outline secondary override is the only resolver (→ its own highlight-8)
+  if (extra?.cta) g['cta-stroke'] = TRANSPARENT_TOKEN
   g[onFillTokenName(kind)] = colorFromHex(onFillWhite)
   if (extra?.onHighlightWhite !== undefined) g[onFillTokenName('neutral')] = colorFromHex(extra.onHighlightWhite)
   if (extra?.identityHex) g['identity'] = colorFromHexString(extra.identityHex)
@@ -66,6 +64,11 @@ function rampGroup(
 export interface ThemeInput {
 
   secondary?: GeneratedScale | null
+
+  // the secondary's mode chip — 'outline' re-expresses the cta pair (mirrors cssRender's
+  // outline override): cta-1 transparent, cta-2 the cta color at OUTLINE_HOVER_ALPHA,
+  // cta-stroke ALWAYS the secondary's own highlight-8, on-cta the secondary's ink-11.
+  secondaryStyle?: SecondaryStyle
 
   neutralLevel?: NeutralLevel
 
@@ -87,7 +90,6 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     identityHex: s.identityHex,
     cta: mode === 'light' ? s.cta : s.ctaDark,
     ctaHover: mode === 'light' ? s.ctaHover : s.ctaHoverDark,
-    ctaStrokeNeeded: !!(mode === 'light' ? s.ctaStrokeNeeded : s.ctaStrokeNeededDark),
   })
 
   const nScale = generateNeutralScale(scale.brandH, input.neutralLevel ?? 'default', input.contrastProfile)
@@ -95,7 +97,6 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     onHighlightWhite: mode === 'light' ? nScale.onHighlightIsWhite : nScale.onHighlightIsWhiteDark,
     cta: mode === 'light' ? nScale.cta : nScale.ctaDark,
     ctaHover: mode === 'light' ? nScale.ctaHover : nScale.ctaHoverDark,
-    ctaStrokeNeeded: !!(mode === 'light' ? nScale.ctaStrokeNeeded : nScale.ctaStrokeNeededDark),
   })
   const build = (mode: 'light' | 'dark'): FigmaGroup => {
     // paper-0 rides WITH the neutral ramp (its dark value is neutral-tinted, so it dedups and
@@ -106,9 +107,25 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
       ...(p0 ? { 'paper-0': colorFromStop(p0) } : {}),
       ...rampGroup(nScale[mode], mode === 'light' ? nScale.onFillTextIsWhite : nScale.onFillTextIsWhiteDark, 'brand', neutralExtra(mode)),
     }
+    const secondaryGroup = rampGroup(secondary[mode], mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark, 'brand', brandExtra(secondary, mode))
+    // outline re-expression (only a real secondary can be outline) — same values cssRender
+    // emits. The hover = highlight-8 at OUTLINE_HOVER_ALPHA (the STABLE gated stop the ring
+    // uses — 9% of the generated subtle cta was imperceptible).
+    if (input.secondaryStyle === 'outline' && input.secondary) {
+      const s8 = secondary[mode].find(s => s.stop === 8)
+      const s11 = secondary[mode].find(s => s.stop === 11)
+      secondaryGroup['cta-1'] = TRANSPARENT_TOKEN
+      if (s8) secondaryGroup['cta-2'] = {
+        $type: 'color',
+        $value: { colorSpace: 'srgb', components: [clamp01(s8.r), clamp01(s8.g), clamp01(s8.b)], alpha: OUTLINE_HOVER_ALPHA, hex: toHex(s8.r, s8.g, s8.b) },
+      }
+      if (s8) secondaryGroup['cta-stroke'] = colorFromStop(s8)
+      // on-cta = the family's ink-11, NOT a pole — the plugin aliases non-pole on-cta to the sibling ink-11
+      if (s11) secondaryGroup[onFillTokenName('brand')] = colorFromStop(s11)
+    }
     const g: FigmaGroup = {
       brand: rampGroup(scale[mode], mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark, 'brand', brandExtra(scale, mode)),
-      secondary: rampGroup(secondary[mode], mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark, 'brand', brandExtra(secondary, mode)),
+      secondary: secondaryGroup,
       neutral: neutralGroup,
     }
     for (const sig of input.signals) {
@@ -121,7 +138,6 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
           onHighlightWhite: mode === 'light' ? sig.scale.onHighlightIsWhite : sig.scale.onHighlightIsWhiteDark,
           cta: mode === 'light' ? sig.scale.cta : sig.scale.ctaDark,
           ctaHover: mode === 'light' ? sig.scale.ctaHover : sig.scale.ctaHoverDark,
-          ctaStrokeNeeded: !!(mode === 'light' ? sig.scale.ctaStrokeNeeded : sig.scale.ctaStrokeNeededDark),
         },
       )
     }

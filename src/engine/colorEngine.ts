@@ -57,13 +57,6 @@ export interface GeneratedScale {
 
   identityHex?: string
 
-  // cta-stroke (owner feature 2026-07-04): the adaptive boundary. TRUE = the cta fill reads
-  // under 3:1 (Lc 30 under the apca profile) against the scale's own paper-2, so the paired
-  // cta-stroke token resolves to highlight-8 (the contrast-gated stop); FALSE = transparent.
-  // A conditional ALIAS the emitters materialize — never a solved color.
-  ctaStrokeNeeded?: boolean
-  ctaStrokeNeededDark?: boolean
-
   // paper-0: the resolved ladder extreme beyond paper-1 (white-ish in light; one seam below paper-1 in
   // dark — never absolute black). OFF the light[]/dark[] arrays: consumers index [0] as stop 1.
   paper0?: ColorStop
@@ -165,20 +158,9 @@ export function generateScale(
     onHighlightIsWhite: opts?.highlight ? lightRamp.ons.onHighlightIsWhite : undefined,
     onHighlightIsWhiteDark: opts?.highlight ? darkRamp.ons.onHighlightIsWhite : undefined,
     identityHex: hex.toUpperCase(),
-    ctaStrokeNeeded: needsCtaStroke(cta, light[1], opts?.contrastProfile),
-    ctaStrokeNeededDark: needsCtaStroke(ctaDark, dark[1], opts?.contrastProfile),
     paper0: p0Light ? makeStop(0, p0Light.L, p0Light.C, p0Light.H) : undefined,
     paper0Dark: p0Dark ? makeStop(0, p0Dark.L, p0Dark.C, p0Dark.H) : undefined,
   }
-}
-
-// the cta-stroke gate: does the cta fill read under the non-text boundary threshold against the
-// scale's OWN paper-2 — the same reference stop-8's declared 3:1 rides on? Profile-aware: the
-// apca profile judges its 3:1 slot (Lc 30) instead of the ratio.
-export function needsCtaStroke(cta: ColorStop, paper2: ColorStop, contrastProfile?: ContrastProfile): boolean {
-  if (contrastProfile === 'apca')
-    return Math.abs(apcaLc(apcaY(cta.r, cta.g, cta.b), apcaY(paper2.r, paper2.g, paper2.b))) < DEFAULT_APCA_LC_MAP[3]
-  return contrastRatio(wcagY(cta.L, cta.C, cta.H), wcagY(paper2.L, paper2.C, paper2.H)) < 3
 }
 
 export function applyRedCoolRender(scale: GeneratedScale, enforceOnFillContrast: boolean, contrastProfile?: ContrastProfile): void {
@@ -198,8 +180,6 @@ export function applyRedCoolRender(scale: GeneratedScale, enforceOnFillContrast:
       scale.ctaHover = makeStop(10, hoverL(L), scale.brandC, H)
     }
   }
-  // the render moved the light cta — the stroke gate re-judges at the rendered fill
-  scale.ctaStrokeNeeded = needsCtaStroke(scale.cta, scale.light[1], contrastProfile)
 }
 
 export interface IllustrationScale {
@@ -252,9 +232,6 @@ export function generateNeutralScale(
   const onEnforce = contrastProfile !== 'apca'
   scale.onFillTextIsWhite = onTextIsWhite(apcaY(scale.cta.r, scale.cta.g, scale.cta.b), scale.cta.L, scale.cta.C, scale.cta.H, onEnforce)
   scale.onFillTextIsWhiteDark = onTextIsWhite(apcaY(scale.ctaDark.r, scale.ctaDark.g, scale.ctaDark.b), scale.ctaDark.L, scale.ctaDark.C, scale.ctaDark.H, onEnforce)
-  // the quiet scale-fed cta is exactly the case the stroke exists for — re-judge at the override
-  scale.ctaStrokeNeeded = needsCtaStroke(scale.cta, scale.light[1], contrastProfile)
-  scale.ctaStrokeNeededDark = needsCtaStroke(scale.ctaDark, scale.dark[1], contrastProfile)
   return scale
 }
 
@@ -309,9 +286,5 @@ export function generateSubtleSecondary(
   const onEnforce = opts?.contrastProfile !== 'apca'
   scale.onFillTextIsWhite = onTextIsWhite(apcaY(scale.cta.r, scale.cta.g, scale.cta.b), scale.cta.L, scale.cta.C, scale.cta.H, onEnforce)
   scale.onFillTextIsWhiteDark = onTextIsWhite(apcaY(scale.ctaDark.r, scale.ctaDark.g, scale.ctaDark.b), scale.ctaDark.L, scale.ctaDark.C, scale.ctaDark.H, onEnforce)
-  // the subtle cta is quiet BY DESIGN — the stroke gate re-judges at the delta-anchored override
-  // (this is the pairing that makes the very-light secondary viable)
-  scale.ctaStrokeNeeded = needsCtaStroke(scale.cta, scale.light[1], opts?.contrastProfile)
-  scale.ctaStrokeNeededDark = needsCtaStroke(scale.ctaDark, scale.dark[1], opts?.contrastProfile)
   return scale
 }
