@@ -122,13 +122,13 @@ function buildAndSend() {
     // recreated) instead of duplicating an identical grey ramp per brand (heavy
     // in Figma). The tinted levels genuinely vary by hue, so they key by level +
     // hue (same-hue brands still dedup onto one primitive).
-    // APCA-solved ramps are DIFFERENT VALUES from wcag ones, so they get their own shared-primitive
-    // dedup space (suffixed paths) — otherwise an apca apply would silently reuse a wcag primitive
-    // written earlier (shared prims are refresh=false: an existing path is never re-written).
-    const profileSuffix = contrastProfile === 'apca' ? '-apca' : ''
-    const neutralKey = (neutralLevel === 'pure'
+    // NOTE: apca-solved values are DIFFERENT from wcag ones, but paths carry no
+    // profile suffix — the file keeps ONE profile per collection pair (code.ts
+    // detects a mismatched apply and forks a separate, labeled pair instead of
+    // ever mixing values inside one).
+    const neutralKey = neutralLevel === 'pure'
       ? 'pure'
-      : `${neutralLevel}-h${Math.round(r.scale.brandH)}`) + profileSuffix
+      : `${neutralLevel}-h${Math.round(r.scale.brandH)}`
     // Per-signal variant key for Foundations dedup. An override note reads
     // "warning → lemon" / "success → teal-side"; we key on the right-hand side
     // (lemon, teal-side, …). No override → the canonical ramp, keyed 'base'.
@@ -136,7 +136,7 @@ function buildAndSend() {
     const sigScales = signalScalesFor(cp)
     const signals = SIGNALS.map(s => {
       const ov = r.signalOverrides.find(o => o.name === s.name)
-      const variant = (ov ? ov.note.split('→').pop()!.trim().toLowerCase().replace(/\s+/g, '-') : 'base') + profileSuffix
+      const variant = ov ? ov.note.split('→').pop()!.trim().toLowerCase().replace(/\s+/g, '-') : 'base'
       return { name: s.name, scale: ov?.scale ?? sigScales.get(s.name)!.scale, variant }
     })
 
@@ -165,7 +165,7 @@ function buildAndSend() {
 
     // confirmed only when this exact name was just flagged as an overwrite.
     const confirmed = pendingName === name
-    parent.postMessage({ pluginMessage: { type: 'apply', brand: name, brandRaw, shared, confirmed, secondary: secondaryInclude } }, '*')
+    parent.postMessage({ pluginMessage: { type: 'apply', brand: name, brandRaw, shared, confirmed, secondary: secondaryInclude, contrastProfile } }, '*')
   } catch (err) {
     applyBtn.disabled = false
     setStatus(String(err), 'err')

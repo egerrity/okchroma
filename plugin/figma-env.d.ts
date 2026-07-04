@@ -32,6 +32,7 @@ declare namespace figma {
 
   interface Variable {
     name: string
+    description: string
     readonly variableCollectionId: string
     setValueForMode(modeId: string, value: RGBA | VariableAlias): void
   }

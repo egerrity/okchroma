@@ -61,8 +61,17 @@ What landed (all in the working tree, show-before-commit):
    AFTER the threading (snapshot CLEAN — default untouched). Probe: red-collider brand flips
    darkCollider null→muted under apca (borderline collision, profile-consistent — expected);
    green light cta = the pole-flip case (black text, no white-enforcement darkening).
-   STILL OPEN: plugin does not expose the profile (owner didn't pick that option); PaletteGallery
-   (hidden view) not threaded; DocsSite/schema note the profile but not the demo toggle.
+   STILL OPEN: PaletteGallery (hidden view) not threaded; DocsSite/schema note the profile but
+   not the demo toggle.
+7. **PLUGIN PROFILE = ONE PER COLLECTION PAIR (owner design, 2026-07-02):** the plugin exposes a
+   Contrast WCAG/APCA seg; a file never mixes profiles inside a pair. The first `-apca`-suffix
+   dedup approach was REJECTED by the owner ("not create new values… check and warn") and
+   replaced: every variable's DESCRIPTION carries the visible stamp ("OKChroma · contrast: …"),
+   each collection carries `okchroma-profile` plugin-data, and a mismatched apply goes through
+   the existing two-step confirm — confirming FORKS the file: the old pair is parked under
+   labeled names ("theme (WCAG)" / "mode (WCAG)" — renames never break bindings) and a labeled
+   pair is created for the new profile. Post-fork, applies route silently to their profile's
+   pair by tag. Fresh files keep plain names until a fork happens.
 
 Eye-check: `render/apca.html` via the reqtoken-render preview (renders verified in-session, both
 modes, break markers visible). Owner picks: Lc map · adoption/exposure · the ons-fallback question.

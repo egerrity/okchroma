@@ -25,6 +25,17 @@ const THEME_NAME = 'theme'
 // key, so we can find it again even after the user renames it. The name is only
 // a fallback for the very first run.
 const OWNER_KEY = 'okchroma'
+// The contrast profile a pair was solved under, tagged per collection (absent =
+// wcag: every pre-profile file is wcag by construction). A file never MIXES
+// profiles inside a pair — a mismatched apply forks a second, labeled pair.
+const PROFILE_KEY = 'okchroma-profile'
+type Profile = 'wcag' | 'apca'
+const profileOf = (c: figma.VariableCollection): Profile => (c.getPluginData(PROFILE_KEY) === 'apca' ? 'apca' : 'wcag')
+const pairLabel = (role: string, profile: Profile) => `${role} (${profile.toUpperCase()})`
+// human-visible stamp, written into every variable's description (owner ask:
+// the file's contrast posture must be visible + checkable without the plugin)
+const profileStamp = (profile: Profile) =>
+  profile === 'apca' ? 'OKChroma · contrast: APCA (Lc 30/75/90)' : 'OKChroma · contrast: WCAG (3:1/4.5/7:1)'
 
 function flatten(node: TokenNode, prefix = ''): Array<{ path: string; r: number; g: number; b: number }> {
   if ('$type' in node) {
@@ -36,15 +47,27 @@ function flatten(node: TokenNode, prefix = ''): Array<{ path: string; r: number;
   )
 }
 
-// Resolve the collection we own for `role`: prefer our plugin-data tag (survives
-// renames), fall back to the name (first run or a pre-existing collection), else
-// create it. Always (re)stamps the tag so future lookups are rename-proof.
-function resolveOwned(collections: figma.VariableCollection[], role: string) {
-  let coll = collections.find(c => c.getPluginData(OWNER_KEY) === role)
-  if (!coll) coll = collections.find(c => c.name === role)
+// All collections we own for `role`: plugin-data tag first (survives renames);
+// an untagged name match only counts when NO tagged one exists (first run / a
+// pre-existing collection) — legacy untagged = wcag.
+function ownedFor(collections: figma.VariableCollection[], role: string): figma.VariableCollection[] {
+  const tagged = collections.filter(c => c.getPluginData(OWNER_KEY) === role)
+  if (tagged.length) return tagged
+  const byName = collections.find(c => c.name === role)
+  return byName ? [byName] : []
+}
+
+// Resolve the collection we own for `role` UNDER `profile`. Each profile gets its
+// own pair — a wcag file and its apca fork are separate collections, never mixed.
+// `labeled` = a sibling pair with the other profile exists, so a newly created
+// collection takes the labeled name ("mode (APCA)") instead of the plain role.
+// Always (re)stamps both tags so future lookups are rename-proof.
+function resolveOwned(collections: figma.VariableCollection[], role: string, profile: Profile, labeled: boolean) {
+  let coll = ownedFor(collections, role).find(c => profileOf(c) === profile)
   const created = !coll
-  if (!coll) coll = figma.variables.createVariableCollection(role)
+  if (!coll) coll = figma.variables.createVariableCollection(labeled ? pairLabel(role, profile) : role)
   coll.setPluginData(OWNER_KEY, role)
+  coll.setPluginData(PROFILE_KEY, profile)
   return { coll, created }
 }
 
@@ -55,33 +78,65 @@ async function varsByName(collectionId: string): Promise<Map<string, figma.Varia
 
 figma.ui.onmessage = async (msg) => {
   if (msg.type === 'apply') {
-    const { brand, brandRaw, shared, confirmed, secondary } = msg as {
+    const { brand, brandRaw, shared, confirmed, secondary, contrastProfile } = msg as {
       type: 'apply'; brand: string; brandRaw: BrandRamp[]; shared: SharedRamp[]
-      confirmed?: boolean; secondary?: boolean
+      confirmed?: boolean; secondary?: boolean; contrastProfile?: Profile
     }
     const secondaryOn = secondary !== false // global secondary switch (default on)
+    const profile: Profile = contrastProfile === 'apca' ? 'apca' : 'wcag'
     try {
       const collections = await figma.variables.getLocalVariableCollectionsAsync()
 
-      // Live-detect the file's secondary posture from the theme collection, so
+      // The file's contrast posture, per PAIR: this apply targets the pair solved
+      // under ITS profile. A pair for another profile with none for this one =
+      // the FORK moment (same idiom as the secondary-posture check): confirm,
+      // then park the existing pair under a labeled name and create a labeled
+      // pair for this profile. Renames never break bindings — old designs keep
+      // their values; the two sets never mix.
+      const themePairs = ownedFor(collections, THEME_NAME)
+      const themeMatch = themePairs.find(c => profileOf(c) === profile)
+      const themeOther = themePairs.find(c => profileOf(c) !== profile)
+      const profileFork = !themeMatch && !!themeOther
+      // labeled names whenever the file holds (or is about to hold) both profiles
+      const labeled = profileFork || (!!themeMatch && !!themeOther)
+
+      // Live-detect the pair's secondary posture from ITS theme collection, so
       // manual edits self-heal — there's no stored flag to go stale.
-      const existingTheme = collections.find(c => c.getPluginData(OWNER_KEY) === THEME_NAME)
-        ?? collections.find(c => c.name === THEME_NAME)
+      const existingTheme = themeMatch
       const existingThemeVars = existingTheme ? await varsByName(existingTheme.id) : new Map<string, figma.Variable>()
       const fileHasSecondary = existingThemeVars.has('brand/secondary/paper-1')
       const brandsExist = existingThemeVars.has('brand/primary/paper-1')
 
-      // Nudge before two surprising changes: overwriting an existing brand, or
-      // flipping the file's secondary posture. Either needs a second Apply.
+      // Nudge before surprising changes: overwriting an existing brand, flipping
+      // the pair's secondary posture, or forking the file's contrast profile.
+      // Each needs a second Apply.
       const overwrite = existingTheme?.modes.some(m => m.name === brand) ?? false
       const secondaryMismatch = brandsExist && fileHasSecondary !== secondaryOn
-      if (!confirmed && (overwrite || secondaryMismatch)) {
+      if (!confirmed && (overwrite || secondaryMismatch || profileFork)) {
         const reasons: string[] = []
         if (overwrite) reasons.push(`overwrite "${brand}"`)
         if (secondaryMismatch && secondaryOn) reasons.push('add a secondary to every brand')
         if (secondaryMismatch && !secondaryOn) reasons.push('mirror brand into secondary (file already uses a secondary)')
+        if (profileFork) reasons.push(
+          `create a separate ${profile.toUpperCase()} set — this file's existing OKChroma collections are `
+          + `${profileOf(themeOther!).toUpperCase()}-solved and will be kept, renamed "${pairLabel(THEME_NAME, profileOf(themeOther!))}" / "${pairLabel(MODE_NAME, profileOf(themeOther!))}"`)
         figma.ui.postMessage({ type: 'confirm', brand, message: `Will ${reasons.join(' + ')} — click Apply again.` })
         return
+      }
+
+      // confirmed fork: park the other-profile pair under its labeled names
+      // (tags keep it findable; bindings survive renames untouched)
+      if (profileFork) {
+        const otherProf = profileOf(themeOther!)
+        themeOther!.name = pairLabel(THEME_NAME, otherProf)
+        themeOther!.setPluginData(OWNER_KEY, THEME_NAME)
+        themeOther!.setPluginData(PROFILE_KEY, otherProf)
+        const modeOther = ownedFor(collections, MODE_NAME).find(c => profileOf(c) === otherProf)
+        if (modeOther) {
+          modeOther.name = pairLabel(MODE_NAME, otherProf)
+          modeOther.setPluginData(OWNER_KEY, MODE_NAME)
+          modeOther.setPluginData(PROFILE_KEY, otherProf)
+        }
       }
 
       // secondary treatment: real = write this brand's secondary; mirror = alias
@@ -92,7 +147,8 @@ figma.ui.onmessage = async (msg) => {
       const backfillSecondary = secondaryOn && !fileHasSecondary && brandsExist
 
       // ── primitive collection: raw values, modes Light / Dark ───────────────
-      const p = resolveOwned(collections, MODE_NAME)
+      const p = resolveOwned(collections, MODE_NAME, profile, labeled)
+      const stamp = profileStamp(profile)
       const pLight = p.coll.modes[0].modeId
       p.coll.renameMode(pLight, 'Light')
       const pDark = p.coll.modes.length < 2 ? p.coll.addMode('Dark') : p.coll.modes[1].modeId
@@ -131,6 +187,7 @@ figma.ui.onmessage = async (msg) => {
       for (const u of STATIC_UTILS) {
         if (primByName.get(u.path)) continue // already seeded — leave as-is
         const v = figma.variables.createVariable(u.path, p.coll, 'COLOR')
+        v.description = stamp
         primByName.set(u.path, v)
         if (u.light && u.dark) { // elevation entries are aliased below, not value-set
           v.setValueForMode(pLight, u.light)
@@ -158,6 +215,7 @@ figma.ui.onmessage = async (msg) => {
         let v = primByName.get(path)
         const created = !v
         if (!v) { v = figma.variables.createVariable(path, p.coll, 'COLOR'); primByName.set(path, v) }
+        v.description = stamp // restamped every apply — the visible contrast posture
         const dk = darkMap.get(t.path)
         if (t.path === 'on-cta' || t.path === 'on-highlight') {
           const lightPole = absPole(isWhite(t))
@@ -197,7 +255,7 @@ figma.ui.onmessage = async (msg) => {
       }
 
       // ── theme collection: aliases, modes = brands ──────────────────────────
-      const th = resolveOwned(collections, THEME_NAME)
+      const th = resolveOwned(collections, THEME_NAME, profile, labeled)
       let brandMode: string
       if (th.created) {
         brandMode = th.coll.modes[0].modeId
@@ -214,6 +272,7 @@ figma.ui.onmessage = async (msg) => {
         if (!target) return
         let v = themeByName.get(themePath)
         if (!v) { v = figma.variables.createVariable(themePath, th.coll, 'COLOR'); themeByName.set(themePath, v) }
+        v.description = stamp
         v.setValueForMode(modeId, figma.variables.createVariableAlias(target))
         aliasCount++
       }
