@@ -67,7 +67,7 @@ ONE GitHub repo `github.com/egerrity/okchroma`; Pages deploys its `main`. Two lo
 `~/okchroma` = the OWNER's checkout (their session; NEVER touch) · `~/okchroma-reqtoken` = a git
 WORKTREE of the same repo where Claude works. "Moving things over" = `git push origin
 <branch>:main` — that's how every prior effort shipped.
-- **origin/main = 36368a6** (public page): everything through the APCA switch.
+- **origin/main = 8302363** (public page): EVERYTHING is shipped (pushed 2026-07-04 — rounds 6/6b, the true split, apca default).
 - **`reqtoken/color-engine`** (worktree, unpushed +4): 761569a plugin WCAG/APCA seg → f53d3b9
   SECONDARY-PLAN → f6a61d9 plugin profile-fork ("fork, don't mix" + description stamps) →
   3fb20be asymmetric fork naming (theme-apca; original never renamed).
