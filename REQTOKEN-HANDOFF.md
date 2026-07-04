@@ -68,10 +68,12 @@ What landed (all in the working tree, show-before-commit):
    dedup approach was REJECTED by the owner ("not create new values… check and warn") and
    replaced: every variable's DESCRIPTION carries the visible stamp ("OKChroma · contrast: …"),
    each collection carries `okchroma-profile` plugin-data, and a mismatched apply goes through
-   the existing two-step confirm — confirming FORKS the file: the old pair is parked under
-   labeled names ("theme (WCAG)" / "mode (WCAG)" — renames never break bindings) and a labeled
-   pair is created for the new profile. Post-fork, applies route silently to their profile's
-   pair by tag. Fresh files keep plain names until a fork happens.
+   the existing two-step confirm — confirming FORKS the file. **NAMING = ASYMMETRIC (owner call,
+   round 2): the original pair is NEVER renamed** — one-lane files keep plain "theme"/"mode"
+   forever (downstream pipelines pointed at them never break); only the forked addition is
+   suffixed **"theme-apca"/"mode-apca"** (hyphen + lowercase full word — slug-safe, one-line
+   Style Dictionary strip; parens/spaces and -a/-w single letters both rejected). Post-fork,
+   applies route silently to their profile's pair by tag.
 
 Eye-check: `render/apca.html` via the reqtoken-render preview (renders verified in-session, both
 modes, break markers visible). Owner picks: Lc map · adoption/exposure · the ons-fallback question.
