@@ -372,6 +372,17 @@ figma.ui.onmessage = async (msg) => {
         aliasElev('system/paper-sunken', themeNeutralP2, themeNeutralP0)
       }
 
+      // The system GLOBALS get theme-side aliases too (owner model: mode is the SEEDS —
+      // it must keep the light/dark values, so nothing moves; theme is where it all goes
+      // to work, so the globals must be bindable there). Brand-independent: every theme
+      // mode aliases the same primitive. Runs every apply — idempotent, and it backfills
+      // pre-existing brand modes the moment the globals first appear.
+      const SYSTEM_GLOBALS = ['system/paper-raised', 'system/paper-sunken', 'system/ink-13',
+        'system/abs-black', 'system/abs-white', 'system/transparent', 'system/scrim']
+      for (const path of SYSTEM_GLOBALS) {
+        for (const m of th.coll.modes) aliasInto(path, path, m.modeId)
+      }
+
       figma.ui.postMessage({ type: 'done', brand, aliases: aliasCount, createdShared, secondary: secondaryMode })
     } catch (err) {
       figma.ui.postMessage({ type: 'error', message: String(err) })
