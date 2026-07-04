@@ -57,8 +57,9 @@ primary/Custom/None, style select on custom, neutral renamed default/intense/tru
 OUTLINE now crosses themeToFigma (cta-1→transparent alias, cta-2 raw α.09, on-cta→sibling
 ink-11 via non-pole detection). All gates green, snapshot clean. NOT yet committed —
 show-before-commit; owner was live-driving the rebuilt demo during verification.
-REMAINING after this: real-Figma apply/fork test · dark tint/pastel chroma · push call ·
-install-docs walkthrough → Community.
+REMAINING after this: real-Figma apply/fork test · push call · install-docs walkthrough →
+Community. (Dark tint/pastel chroma: CLOSED as-is 2026-07-04 — owner: styles vary by hue, the
+user decides or uses Exact; no tuning.)
 
 ## ▶▶ CURRENT STATE 2026-07-04 (write-through before possible compaction — READ THIS FIRST)
 
