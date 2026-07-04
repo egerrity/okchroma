@@ -1,5 +1,54 @@
 # Continue: requirement-token color engine (compact/handoff)
 
+## ▶▶ CURRENT STATE 2026-07-04 (write-through before possible compaction — READ THIS FIRST)
+
+**THE TOPOLOGY (the owner's confusion-killer — there is NO separate forked repo):**
+ONE GitHub repo `github.com/egerrity/okchroma`; Pages deploys its `main`. Two local checkouts:
+`~/okchroma` = the OWNER's checkout (their session; NEVER touch) · `~/okchroma-reqtoken` = a git
+WORKTREE of the same repo where Claude works. "Moving things over" = `git push origin
+<branch>:main` — that's how every prior effort shipped.
+- **origin/main = 36368a6** (public page): everything through the APCA switch.
+- **`reqtoken/color-engine`** (worktree, unpushed +4): 761569a plugin WCAG/APCA seg → f53d3b9
+  SECONDARY-PLAN → f6a61d9 plugin profile-fork ("fork, don't mix" + description stamps) →
+  3fb20be asymmetric fork naming (theme-apca; original never renamed).
+- **`scope/secondary-styles`** (CURRENT branch, contains ALL of the above +5): 9dfd935 engine
+  (resolveTheme · tint/pastel/outline/exact styles · distance-curve subtle · cta-stroke tokens ·
+  rung-1 mirror) → 8e5e970 plugin (Derived/Custom/Off default Derived, resolveTheme migration,
+  cta-stroke aliases) → d3a58d6 demo (per-family mode chips per the owner's mockup, derived chip,
+  stroke consumption) → bb1c578 gates+sweeps (audit:secondary two lanes; render/secondary.html =
+  the decision record) → 216f516 docs. ALL GATES CERTIFIED GREEN on the committed tip; snapshot
+  clean (shipped output untouched). **Pushing scope/secondary-styles:main ships everything (it
+  contains the other branch's commits).**
+
+**PLUGIN CHANGES — separate commits, ONE history:** 761569a + f6a61d9 + 3fb20be (contrast
+profile posture) and 8e5e970 (secondary postures + stroke aliases) are all ancestors of
+scope/secondary-styles. NOT YET BUILT in the plugin: the secondary STYLE chips
+(tint/pastel/outline/exact — plugin currently ships tint via Derived/Custom; outline aliases
+sketched in SECONDARY-PLAN: cta-1→system/transparent, on-cta→sibling ink-11, cta-2 raw alpha).
+
+**HOW THE OWNER REVIEWS (paths, no git needed):**
+- Demo → the `reqtoken-demo` preview (launch config serves `~/okchroma-reqtoken`; open
+  `/demo/`). Rebuild first if sources changed: `cd ~/okchroma-reqtoken && npm run build`.
+- Decision sweeps → the `reqtoken-render` preview → `/secondary.html` (also `/apca.html`).
+- Plugin → Figma desktop → Plugins → Development → **Import plugin from manifest** →
+  `/Users/emilygerrity/okchroma-reqtoken/plugin/manifest.json` (build first:
+  `npm run plugin:build`). Test on a SCRATCH file: apply once (WCAG, Derived default) → check
+  theme/mode collections + descriptions stamped "OKChroma · contrast: …" + brand/secondary
+  group + cta-stroke aliases → switch APCA → Apply twice → expect untouched theme/mode PLUS new
+  `theme-apca`/`mode-apca`.
+
+**RECOMMENDED SEQUENCE:** ① owner eyeballs demo (chips: primary Recommended/Exact/anchors;
+secondary Tint/Pastel/Outline/Exact; derived chip) ② one real-Figma plugin run (above)
+③ push `scope/secondary-styles:main` (publishes page; ~/okchroma pulls) ④ then the publish
+tail: plugin style chips · dark tint/pastel chroma (owner: "neither look great" — per-style
+dark constants now possible) · install-docs walkthrough → Community.
+
+**GATES:** npm run audit (snapshot) · req:audit · audit:secondary · highlight-audit ·
+audit:divergence · figma:verify · typecheck · plugin:build. Rules: rtk proxy grep · caveman
+subagents · show-before-commit · never touch ~/okchroma · push only via
+`git push origin <branch>:main` after owner approval. Memory: [[secondary-collision-plan]],
+[[requirements-token-research]].
+
 ## ▶ SECONDARY P1 BUILT (2026-07-04, UNCOMMITTED — awaiting owner sweeps): the road to Community publish
 Sequencing (owner): lock secondary → demo display → plugin update → PUBLISH to Community; then the
 internal-only plugin (repo-local, unpublished) for the owner's workflow needs.
