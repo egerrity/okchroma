@@ -1,5 +1,33 @@
 # Continue: requirement-token color engine (compact/handoff)
 
+## ▶ SECONDARY P1 BUILT (2026-07-04, UNCOMMITTED — awaiting owner sweeps): the road to Community publish
+Sequencing (owner): lock secondary → demo display → plugin update → PUBLISH to Community; then the
+internal-only plugin (repo-local, unpublished) for the owner's workflow needs.
+- **Engine:** `resolveTheme` in resolve.ts (primary+signals byte-identical FIRST — snapshot clean;
+  secondary vs the POST-shift signal set; per-signal room: red/yellow → auto-subtle, green = one
+  move primary-priority, info moves freely but any variant must clear BOTH; residuals annotated
+  never silent; P↔S distinctness advice ΔE<0.12 provisional). `generateSubtleSecondary` = the
+  neutral tint axis at SUBTLE_SECONDARY_MULT 4.5 (candidates 3/4.5/6) + quiet stop-4/5 cta.
+  **resolveBrand gains internal `skipCollisionRules`** — the secondary base skips rung-1 etc.
+  (owner rule: red yield goes LIGHTER, the rung-1 MIRROR; supersedes "secondary earns rung 1").
+  `deriveSecondary` = the §2b posture (no hex → subtle from the brand hue).
+- **Gate:** `npm run audit:secondary` (480 themes, both profiles, PASS): clears-or-demoted
+  invariant, variants-clear-primary, annotated residuals, derived validity. **STATS FOR THE OWNER:
+  50% of arbitrary secondaries demote at today's thresholds (red 80 · green 90 · info 70 ·
+  yellow 0); only 8 signal moves — the 0.16/0.10 thresholds (tuned for PRIMARY stakes) over-fire
+  for variants, same pattern as gold-vs-yellow.**
+- **Owner sweeps = render/secondary.html** (scripts/secondary-sweep.ts): ① subtle mult pick
+  ② red-mirror + gold in situ ③ borderline-demotion calibration cards (the threshold question)
+  ④ a real info move ⑤ derived preview. Verified in preview.
+- **Demo:** CustomTheme → resolveTheme end-to-end; "Secondary color" (vocab fixed from "Accent"),
+  "Secondary style" Standard/Subtle seg, resolution note under the Secondary scale ("Resolved
+  subtle (auto) · reads close to info-color (ΔE 0.03) → subtle register"), decision toasts.
+  Verified live (green complementary → standard; subtle flip; violet → auto-demote + toast).
+- **REMAINING before publish:** owner picks (mult · thresholds · green rule confirm · derived
+  default-or-option) → lock + possibly re-tune → plugin secondary path migrates to resolveTheme
+  (+ Subtle toggle) → plugin install docs (thin — Community listing needs a walkthrough) → real
+  Figma test of the profile fork flow → publish.
+
 ## ▶ APCA/WCAG contrast-profile spike: DONE — OWNER-APPROVED 2026-07-02 ("yes!" on the recommended map)
 
 **Shipped WCAG output untouched — `npm run audit` snapshot CLEAN with the profile code live.**
