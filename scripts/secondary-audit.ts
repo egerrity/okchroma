@@ -85,10 +85,12 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
         fails.push({ theme: id, check: 'rgb', detail: `secondary stop ${st.stop} out of range` })
   }
 
-  // 5. the derived posture (§2b): resolves for every primary, always subtle, never demoted
+  // 5. the derived posture (§2b): resolves for every primary, always subtle, never demoted,
+  //    and ALWAYS pastel (owner round 6b: pastel differentiates the same-hue rows) — even when
+  //    a style leaks in from a lingering chip state
   for (const pHex of PRIMARIES) {
-    const t = resolveTheme({ primaryHex: pHex, deriveSecondary: true, contrastProfile: cp })
-    if (!t.secondary || !t.secondary.derived || t.secondary.level !== 'subtle' || t.secondary.demoted)
+    const t = resolveTheme({ primaryHex: pHex, deriveSecondary: true, secondaryStyle: 'tint', contrastProfile: cp })
+    if (!t.secondary || !t.secondary.derived || t.secondary.level !== 'subtle' || t.secondary.demoted || t.secondary.style !== 'pastel')
       fails.push({ theme: `${profile} derived p${pHex}`, check: 'derived', detail: 'derived secondary malformed' })
   }
 }
