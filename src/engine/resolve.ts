@@ -300,12 +300,13 @@ export function resolveTheme(input: {
   // ---- no secondary supplied: nothing, or the DERIVED subtle secondary (§2b) ----
   if (!input.secondaryHex) {
     if (!input.deriveSecondary) return { primary, themed: primary, secondary: null, signalOverrides: primary.signalOverrides, notes }
-    const scale = generateSubtleSecondary(input.primaryHex, { contrastProfile: cp, ctaL: subtleCtaLFor(primary.scale), ...subtleModel })
+    const scale = generateSubtleSecondary(input.primaryHex, { contrastProfile: cp, ctaL: subtleCtaLFor(primary.scale), pastelK: SUBTLE_PASTEL_K })
     return {
       primary, themed: primary,
       secondary: {
         scale,
-        style: secStyle === 'exact' ? 'tint' : secStyle,   // derived can't be exact — coerce tint
+        style: 'pastel',   // derived is ALWAYS pastel (owner: differentiates it from the
+                           // same-hue brand + neutral rows — a tint ramp read as redundant)
         level: 'subtle', demoted: false, derived: true,
         notes: ['secondary derived from the brand color (subtle register)'],
         distinctness: ctaDistinctness(primary.scale, scale),
