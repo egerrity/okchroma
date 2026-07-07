@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Install OKChroma — early access</title>
+<style>
+  :root {
+    --paper: #fffcfc; --ink: #1a1a1a; --sub: #64585c; --card: #ffffff;
+    --brand: #da2c76; --brand-ink: #4d0324; --wash: #fae6eb; --line: #f0e2e7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #191214; --ink: #f2e8ea; --sub: #b09aa1; --card: #221a1d;
+      --brand: #d06387; --brand-ink: #ffe5eb; --wash: #3b2129; --line: #35272c;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    font-family: Inter, -apple-system, system-ui, sans-serif; background: var(--paper);
+    color: var(--ink); line-height: 1.55; padding: 48px 20px 80px;
+  }
+  main { max-width: 620px; margin: 0 auto; }
+  h1 { font-size: 30px; letter-spacing: -0.02em; margin-bottom: 10px; }
+  .tagline { color: var(--sub); font-size: 16px; margin-bottom: 28px; }
+  .download {
+    display: inline-flex; align-items: center; gap: 10px; background: var(--brand); color: #fff;
+    font-weight: 600; font-size: 16px; padding: 14px 26px; border-radius: 999px;
+    text-decoration: none; margin-bottom: 10px;
+  }
+  .download:hover { filter: brightness(0.94); }
+  .fineprint { font-size: 12.5px; color: var(--sub); margin-bottom: 34px; }
+  .callout {
+    background: var(--wash); color: var(--brand-ink); border-radius: 12px;
+    padding: 12px 16px; font-size: 14px; font-weight: 500; margin-bottom: 34px;
+  }
+  ol.steps { list-style: none; counter-reset: step; display: flex; flex-direction: column; gap: 14px; padding: 0; margin-bottom: 36px; }
+  ol.steps li {
+    counter-increment: step; background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; padding: 16px 18px 16px 58px; position: relative; font-size: 15px;
+  }
+  ol.steps li::before {
+    content: counter(step); position: absolute; left: 16px; top: 16px;
+    width: 26px; height: 26px; border-radius: 999px; background: var(--wash); color: var(--brand-ink);
+    font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center;
+  }
+  ol.steps b { display: block; margin-bottom: 2px; }
+  ol.steps .menupath { font-size: 13.5px; color: var(--sub); }
+  kbd, code {
+    font-family: ui-monospace, "SF Mono", monospace; font-size: 0.9em;
+    background: var(--wash); color: var(--brand-ink); border-radius: 5px; padding: 1px 6px;
+  }
+  h2 { font-size: 17px; margin: 0 0 10px; }
+  .notes { color: var(--sub); font-size: 14px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 40px; }
+  footer { font-size: 13.5px; color: var(--sub); border-top: 1px solid var(--line); padding-top: 18px; }
+  footer a { color: var(--brand); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Install OKChroma</h1>
+  <p class="tagline">A full accessibility-solved color system from one brand color — written into
+  your file as Figma variables. The Figma Community listing is in review; this page installs the
+  exact same plugin manually. It takes about a minute.</p>
+
+  <a class="download" href="okchroma-plugin.zip" download>⬇&nbsp; Download OKChroma</a>
+  <p class="fineprint">Rebuilt automatically from the latest engine — this link is always current.</p>
+
+  <div class="callout">You'll need the <b>Figma desktop app</b> — the browser version can't
+  install plugins this way. (Free from figma.com/downloads.)</div>
+
+  <ol class="steps">
+    <li><b>Unzip the download.</b><span class="menupath">You'll get a folder called
+      <code>okchroma-plugin</code>. Put it somewhere it can stay — Figma reads it from this
+      location every time the plugin runs.</span></li>
+    <li><b>Open any design file in Figma desktop.</b><span class="menupath">A new empty file
+      works fine.</span></li>
+    <li><b>Import the plugin.</b><span class="menupath">Menu (the Figma logo, top-left) →
+      <kbd>Plugins</kbd> → <kbd>Development</kbd> → <kbd>Import plugin from manifest…</kbd> —
+      then pick <code>manifest.json</code> inside the unzipped folder.</span></li>
+    <li><b>Run it.</b><span class="menupath">From now on it lives under <kbd>Plugins</kbd> →
+      <kbd>Development</kbd> → <kbd>OKChroma</kbd>. Name a brand, pick a color, hit
+      <i>Apply to Figma</i>, then open the Variables panel.</span></li>
+  </ol>
+
+  <h2>Good to know</h2>
+  <div class="notes">
+    <span>• The plugin installs just for you, on this computer — teammates each do the four steps
+      once.</span>
+    <span>• To update later: download the zip again, replace the old folder's contents, done —
+      no re-import needed if the folder stays in the same place.</span>
+    <span>• It never touches the network and stores nothing outside your file.</span>
+    <span>• When the Community version is approved, install that one instead and delete the
+      development copy.</span>
+  </div>
+
+  <footer>
+    Curious what it makes? <a href="./">Play with the live demo</a> — same engine, in the browser.
+  </footer>
+</main>
+</body>
+</html>

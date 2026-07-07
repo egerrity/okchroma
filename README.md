@@ -61,7 +61,9 @@ your file as variables: **theme** + **mode** collections whose semantic tokens a
 shared primitives — per-brand ramps under `brand/<name>`, with neutrals and signals
 deduplicated across brands, light + dark values on every token.
 
-**Install** — from the Figma Community listing (search "OKChroma"), or from source:
+**Install** — from the Figma Community listing (search "OKChroma"; in review), or the
+**[early-access manual install](https://egerrity.github.io/okchroma/install.html)** — a
+one-minute walkthrough with an always-current download built from this repo. Or from source:
 
 ```bash
 npm install && npm run plugin:build
