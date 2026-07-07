@@ -7,3 +7,9 @@ scratch/
 
 # Internal follow-up / planning notes (kept local, not shipped)
 docs/follow-up.md
+
+# Internal working paper (session handoffs, decision records, owner eye-check
+# sweeps) — kept local for continuity, not shipped in the public repo
+REQTOKEN-HANDOFF.md
+SECONDARY-PLAN.md
+render/

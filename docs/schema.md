@@ -157,7 +157,7 @@ between releasing fills lighter at Lc 60 or reproducing the shipped ctas at Lc 7
 Exposed as `contrastProfile: 'wcag' | 'apca'` on `GenerateOptions`; the default `'wcag'` is the
 identity (byte-identical shipped output). The Lc map (currently 3:1 → Lc 30, 4.5 → 60, 7 → 90)
 and any adoption/exposure are pending an owner decision — see `scripts/apca-sweep.ts` →
-`render/apca.html` for the candidate comparison.
+`scripts/apca-sweep.ts` renders the candidate comparison (a local-only page).
 
 ### On-color rules (`ons`, group level)
 
