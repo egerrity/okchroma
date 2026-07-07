@@ -307,8 +307,9 @@ body {
 <button class="roster-btn" id="roster-btn" title="Applies the edge-case brand set — one extension per roster entry, all solve columns. Ignores the fields above.">Apply test roster (16 brands)</button>
 <div class="status" id="status"></div>
 
-<div style="margin-top:10px;text-align:center">
+<div style="margin-top:10px;text-align:center;display:flex;gap:14px;justify-content:center">
   <button class="smoke-link" id="smoke-btn" title="Runs the extended-collections API probes on scratch collections, then removes them">Run Enterprise smoke test</button>
+  <button class="smoke-link" id="reapply-btn" title="Rebuilds every brand extension from the recipe stamped at its last apply">Re-apply all brands</button>
 </div>
 <pre class="smoke-log" id="smoke-log" style="display:none"></pre>
 

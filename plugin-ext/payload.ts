@@ -103,8 +103,15 @@ function columns(input: ThemeSpec, neutralLevel: NeutralLevel, canonicalSignals:
 }
 
 // The apply payload for a brand — both lanes, both schemes, collision overrides merged.
+// The payload ALWAYS carries a brand-secondary: the brand's own (hex or derived-by-choice)
+// when it brings one, otherwise the DERIVED pastel from its primary (owner 2026-07-07 —
+// no brand ever has a blank or wrong-hue secondary; supersedes v1's mirror). Whether those
+// paths are WRITTEN is the file's posture, decided in code.ts.
 export function buildBrandColumns(input: ThemeSpec, neutralLevel: NeutralLevel): TokenColumns {
-  return columns(input, neutralLevel, false, 'auto')
+  const spec: ThemeSpec = (!input.secondaryHex && !input.deriveSecondary)
+    ? { ...input, deriveSecondary: true }
+    : input
+  return columns(spec, neutralLevel, false, true)
 }
 
 // The base collection's seed set. brand-secondary is ALWAYS included (the derived pastel):

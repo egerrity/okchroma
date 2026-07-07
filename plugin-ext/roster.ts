@@ -27,13 +27,14 @@ export interface RosterEntry {
   hex: string
   neutralLevel?: NeutralLevel
   style?: 'default' | 'deeper' | 'full-chroma'
-  // Recorded for the smarter-secondary iteration — the bulk action does NOT apply it.
-  plannedSecondaryHex?: string
+  // A real secondary the bulk action APPLIES (activated 2026-07-07 — fis is the
+  // group-add exerciser: the batch's first apply flips the base's secondary posture on).
+  secondaryHex?: string
   note: string
 }
 
 export const ROSTER: RosterEntry[] = [
-  { name: 'fis-eggplant', hex: '#532371', plannedSecondaryHex: '#4BCD3E', note: 'real theme' },
+  { name: 'fis-eggplant', hex: '#532371', secondaryHex: '#4BCD3E', note: 'real theme + real secondary (adds the group)' },
   { name: 'L1-near-black', hex: '#07074F', style: 'deeper', note: 'near-black band + deeper' },
   { name: 'L2-dark', hex: '#003359', style: 'deeper', note: 'dark band + deeper' },
   { name: 'L3-rich', hex: '#860249', note: 'rich band' },
@@ -51,11 +52,12 @@ export const ROSTER: RosterEntry[] = [
   { name: 'vs-yellow', hex: '#F5B301', note: 'yellow → lemon' },
 ]
 
-// The ThemeSpec the bulk action resolves — secondary-off across the board (iteration-1
-// posture; plannedSecondaryHex activates in the smarter-secondary iteration).
+// The ThemeSpec the bulk action resolves. Brands without a secondaryHex fall back to
+// the DERIVED pastel inside buildBrandColumns (written only when the file's posture is
+// on — which fis's first apply turns on).
 export const rosterSpec = (e: RosterEntry): ThemeSpec => ({
   primaryHex: e.hex,
   name: e.name,
   style: e.style,
-  secondaryHex: null,
+  secondaryHex: e.secondaryHex ?? null,
 })

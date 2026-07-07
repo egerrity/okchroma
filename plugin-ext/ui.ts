@@ -3,7 +3,7 @@ import { ARCHETYPES, type Archetype } from '../src/engine/archetypes'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
 import { SIGNALS } from '../src/engine/signals'
 import { toHex } from '../src/engine/cssRender'
-import { buildBrandColumns, buildBaseColumns } from './payload'
+import { buildBrandColumns, buildBaseColumns, type ThemeSpec } from './payload'
 import { ROSTER, rosterSpec } from './roster'
 
 // ─── State ───────────────────────────────────────────────────────────────────
@@ -67,6 +67,7 @@ const statusEl        = $<HTMLElement>('status')
 const smokeBtn        = $<HTMLButtonElement>('smoke-btn')
 const smokeLog        = $<HTMLElement>('smoke-log')
 const rosterBtn       = $<HTMLButtonElement>('roster-btn')
+const reapplyBtn      = $<HTMLButtonElement>('reapply-btn')
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -271,14 +272,17 @@ function buildAndSend() {
     // always): this brand's semantic set, plus the DEFAULT-SEED base set (used only when
     // the base collection — or its brand-secondary group — is created). No dedup keys,
     // no shared-primitive paths, no profile picker: the diff against the base IS the
-    // dedup, and the solve columns carry the profile axis.
-    const { contrastProfile: _previewOnly, ...spec } = themeInput(name)
-    const brandTokens = buildBrandColumns(spec, neutralLevel)
+    // dedup, and the solve columns carry the profile axis. The RECIPE rides along and
+    // gets stamped on the extension — it powers the automatic secondary check and
+    // "Re-apply all brands".
+    const { contrastProfile: _previewOnly, ...theme } = themeInput(name)
+    const recipe: Recipe = { brand: name, theme, neutralLevel, hasSecondary: secondaryMode !== 'off' }
+    const brandTokens = buildBrandColumns(theme, neutralLevel)
     const baseTokens = buildBaseColumns()
 
     // confirmed only when this exact name was just flagged as an overwrite.
     const confirmed = pendingName === name
-    parent.postMessage({ pluginMessage: { type: 'apply', brand: name, brandTokens, baseTokens, hasSecondary: secondaryMode !== 'off', confirmed } }, '*')
+    parent.postMessage({ pluginMessage: { type: 'apply', brand: name, brandTokens, baseTokens, hasSecondary: recipe.hasSecondary, confirmed, spec: recipe } }, '*')
   } catch (err) {
     applyBtn.disabled = false
     setStatus(String(err), 'err')
@@ -397,30 +401,36 @@ window.addEventListener('message', e => {
     pluginMessage?: {
       type: string; message?: string; brand?: string; secondary?: string
       set?: number; removed?: number; inherited?: number; createdVars?: number; baseCreated?: boolean
+      secondaryAdded?: boolean; backfill?: unknown[]; unstamped?: string[]; specs?: unknown[]
       lines?: string[]
     }
   }).pluginMessage
   if (!msg) return
-  // an active roster batch consumes done/error/confirm itself (sequential applies)
-  if (rosterIdx !== null && (msg.type === 'done' || msg.type === 'error' || msg.type === 'confirm')) {
-    const entry = ROSTER[rosterIdx]
+  // an active batch (roster / secondary check / re-apply) consumes done/error/confirm
+  if (queue && (msg.type === 'done' || msg.type === 'error' || msg.type === 'confirm')) {
+    const item = queue[qi]
     if (msg.type === 'done') {
-      rosterTotals.set += msg.set ?? 0
-      rosterTotals.removed += msg.removed ?? 0
-      rosterTotals.inherited += msg.inherited ?? 0
-      rosterTotals.baseCreated = rosterTotals.baseCreated || !!msg.baseCreated
-      if (rosterIdx + 1 < ROSTER.length) { sendRosterEntry(rosterIdx + 1); return }
-      rosterIdx = null
+      qTotals.set += msg.set ?? 0
+      qTotals.removed += msg.removed ?? 0
+      qTotals.inherited += msg.inherited ?? 0
+      qTotals.baseCreated = qTotals.baseCreated || !!msg.baseCreated
+      // the posture flip mid-batch: append the other extensions' recipes to this queue
+      if (msg.secondaryAdded) enqueueBackfill(msg.backfill ?? [], msg.unstamped)
+      if (qi + 1 < queue.length) { qi++; sendQueueItem(); return }
+      const label = qLabel, n = queue.length, un = qUnstamped
+      queue = null
       applyBtn.disabled = false
       rosterBtn.disabled = false
-      setStatus(`✓ roster: ${ROSTER.length} brands · ${rosterTotals.set} overridden · ${rosterTotals.inherited} inherited`
-        + `${rosterTotals.removed ? ` · ${rosterTotals.removed} reverted` : ''}${rosterTotals.baseCreated ? ' · base created' : ''}`, 'ok')
+      setStatus(`✓ ${label}: ${n} brands · ${qTotals.set} overridden · ${qTotals.inherited} inherited`
+        + `${qTotals.removed ? ` · ${qTotals.removed} reverted` : ''}${qTotals.baseCreated ? ' · base created' : ''}`
+        + `${un.length ? ` · no stored recipe (re-apply manually): ${un.join(', ')}` : ''}`, 'ok')
       return
     }
-    rosterIdx = null
+    const stoppedAt = item?.brand ?? '?'
+    queue = null
     applyBtn.disabled = false
     rosterBtn.disabled = false
-    setStatus(`Roster stopped at ${entry.name} — ${msg.message ?? msg.type}`, 'err')
+    setStatus(`Batch stopped at ${stoppedAt} — ${msg.message ?? msg.type}`, 'err')
     return
   }
   applyBtn.disabled = false
@@ -429,13 +439,23 @@ window.addEventListener('message', e => {
     const parts = [`${msg.set ?? 0} overridden`, `${msg.inherited ?? 0} inherited`]
     if (msg.removed) parts.push(`${msg.removed} reverted to base`)
     const grew = msg.baseCreated ? ' · base created' : (msg.createdVars ? ` · ${msg.createdVars} base tokens added` : '')
-    const acc = msg.secondary && msg.secondary !== 'real' ? ` · secondary ${msg.secondary}` : ''
+    const acc = msg.secondary === 'derived' ? ' · secondary derived' : ''
     setStatus(`✓ ${msg.brand}: ${parts.join(' · ')}${grew}${acc}`, 'ok')
+    // the posture flip from a single apply: run the collection-wide secondary check now
+    if (msg.secondaryAdded) enqueueBackfill(msg.backfill ?? [], msg.unstamped)
   } else if (msg.type === 'confirm') {
     pendingName = msg.brand ?? null
     setStatus(msg.message ?? `"${msg.brand}" already exists — click Apply again`, 'err')
   } else if (msg.type === 'error') {
     setStatus(msg.message ?? 'Unknown error', 'err')
+  } else if (msg.type === 'specs') {
+    const items = ((msg.specs ?? []) as Recipe[]).filter(s => s && typeof s.brand === 'string' && !!s.theme)
+    if (!items.length) {
+      setStatus(`No stored recipes to re-apply${msg.unstamped?.length ? ` — ${msg.unstamped.length} extension(s) predate recipes: ${msg.unstamped.join(', ')}` : ''}.`, 'err')
+      return
+    }
+    startQueue(items, 're-apply')
+    if (msg.unstamped?.length) qUnstamped.push(...msg.unstamped)
   } else if (msg.type === 'smoke-result') {
     smokeLog.style.display = ''
     smokeLog.textContent = (msg.lines ?? []).join('\n')
@@ -450,25 +470,63 @@ smokeBtn.addEventListener('click', () => {
   parent.postMessage({ pluginMessage: { type: 'smoke' } }, '*')
 })
 
-// ─── Bulk roster — the edge-case brand set, one batch confirm, sequential applies ─────
-// Every entry goes through the UNCHANGED single-apply path (confirmed: true after the
-// one arming click); the handler above accumulates totals and advances the queue.
+// ─── The batch queue — serves the roster, the automatic secondary check, and
+// "Re-apply all brands". Every item is a RECIPE (brand + ThemeSpec + options), runs
+// through the UNCHANGED single-apply path with confirmed: true, and gets stamped onto
+// its extension; the handler above accumulates totals and advances the queue.
 
-let rosterIdx: number | null = null // active batch position; null = idle
+type Recipe = { brand: string; theme: ThemeSpec; neutralLevel: NeutralLevel; hasSecondary: boolean }
+let queue: Recipe[] | null = null // active batch; null = idle
+let qi = 0
+let qLabel = 'roster'
+let qTotals = { set: 0, removed: 0, inherited: 0, baseCreated: false }
+let qUnstamped: string[] = []
 let rosterArmed = false
-let rosterTotals = { set: 0, removed: 0, inherited: 0, baseCreated: false }
+let reapplyArmed = false
 
-function sendRosterEntry(i: number) {
-  const e = ROSTER[i]
-  rosterIdx = i
-  setStatus(`roster ${i + 1}/${ROSTER.length} — ${e.name}…`)
-  const brandTokens = buildBrandColumns(rosterSpec(e), e.neutralLevel ?? 'default')
+function sendQueueItem() {
+  const it = queue![qi]
+  setStatus(`${qLabel} ${qi + 1}/${queue!.length} — ${it.brand}…`)
+  const brandTokens = buildBrandColumns(it.theme, it.neutralLevel)
   const baseTokens = buildBaseColumns()
-  parent.postMessage({ pluginMessage: { type: 'apply', brand: e.name, brandTokens, baseTokens, hasSecondary: false, confirmed: true } }, '*')
+  parent.postMessage({ pluginMessage: { type: 'apply', brand: it.brand, brandTokens, baseTokens, hasSecondary: it.hasSecondary, confirmed: true, spec: it } }, '*')
+}
+
+function startQueue(items: Recipe[], label: string) {
+  queue = items
+  qi = 0
+  qLabel = label
+  qTotals = { set: 0, removed: 0, inherited: 0, baseCreated: false }
+  qUnstamped = []
+  applyBtn.disabled = true
+  rosterBtn.disabled = true
+  sendQueueItem()
+}
+
+// The collection-wide check after a secondary is ADDED: every other extension's stored
+// recipe re-applies (deriving its secondary). Mid-batch, recipes append to the running
+// queue (skipping brands already ahead of the cursor); from a single apply, they start
+// their own queue. Extensions without a recipe are reported for one manual re-apply.
+function enqueueBackfill(specs: unknown[], unstamped?: string[]) {
+  const items = (specs as Recipe[]).filter(s => s && typeof s.brand === 'string' && !!s.theme)
+  if (!queue) {
+    if (items.length) {
+      startQueue(items, 'secondary check')
+      if (unstamped?.length) qUnstamped.push(...unstamped)
+    } else if (unstamped?.length) {
+      setStatus(`Secondary added — no stored recipes to update; re-apply manually: ${unstamped.join(', ')}`, 'err')
+    }
+    return
+  }
+  const ahead = new Set(queue.slice(qi).map(x => x.brand))
+  // brands already queued ahead get re-applied (and stamped) by this very batch —
+  // only truly orphaned extensions are worth reporting
+  if (unstamped?.length) qUnstamped.push(...unstamped.filter(n => !ahead.has(n)))
+  for (const it of items) if (!ahead.has(it.brand)) queue.push(it)
 }
 
 rosterBtn.addEventListener('click', () => {
-  if (rosterIdx !== null) return // batch already running
+  if (queue) return // a batch is already running
   if (!rosterArmed) {
     rosterArmed = true
     setStatus(`Applies the fixed ${ROSTER.length}-brand test set (ignores the fields above; overwrites existing roster extensions). `
@@ -476,10 +534,23 @@ rosterBtn.addEventListener('click', () => {
     return
   }
   rosterArmed = false
-  applyBtn.disabled = true
-  rosterBtn.disabled = true
-  rosterTotals = { set: 0, removed: 0, inherited: 0, baseCreated: false }
-  sendRosterEntry(0)
+  startQueue(ROSTER.map(e => ({
+    brand: e.name,
+    theme: rosterSpec(e),
+    neutralLevel: e.neutralLevel ?? 'default',
+    hasSecondary: !!e.secondaryHex,
+  })), 'roster')
+})
+
+reapplyBtn.addEventListener('click', () => {
+  if (queue) return
+  if (!reapplyArmed) {
+    reapplyArmed = true
+    setStatus('Rebuilds every brand from its stored recipe (posture + engine refresh). Keep the plugin open. Click again to run.', 'err')
+    return
+  }
+  reapplyArmed = false
+  parent.postMessage({ pluginMessage: { type: 'collect-specs' } }, '*')
 })
 
 // ─── Init ─────────────────────────────────────────────────────────────────────

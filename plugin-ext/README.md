@@ -40,13 +40,21 @@ On any other plan the plugin detects the missing API and reports it instead of w
   shift lands only in its own lane. Everything else inherits — Figma highlights
   overrides blue per mode, so the diff is visible and honest.
 
-## Secondary posture (owner 2026-07-07)
+## Secondary posture (owner 2026-07-07, revised same day)
 
-Secondary is opt-in and defaults **off**. A base created without it has no
-`brand-secondary/*` group. Later applying a brand WITH a secondary confirms, then adds
-the group to the base (seeded from the default derived pastel) and writes that brand's
-overrides — **existing brands inherit the base default until individually re-applied**
-(no auto-backfill; smarter check logic is a follow-up iteration).
+Secondary is opt-in and defaults **off** — a base created without one has no
+`brand-secondary/*` group and nothing is ever written there. **Adding a secondary is
+the deliberate posture flip**: the first apply that brings one confirms, adds the group
+to the base, and then **checks the entire collection** — every existing brand extension
+is re-applied from its stored recipe, and brands without their own secondary get one
+**derived from their primary** (no blanks, no wrong-hue inheritance; supersedes v1's
+mirror). From then on, any secondary-less apply derives at apply time.
+
+Every apply **stamps its input recipe** (brand, hex, style, neutral, secondary) into
+the extension's pluginData. That powers the automatic check above and the footer's
+**Re-apply all brands** action (posture refresh, engine updates, migrations).
+Extensions created before recipes existed are reported by name — one manual re-apply
+stamps them for good.
 
 ## Install (import from manifest — unlisted)
 

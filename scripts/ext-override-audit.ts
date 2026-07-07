@@ -60,9 +60,10 @@ for (const b of BRANDS) {
     primaryHex: b.hex, name: b.name, exact: b.exact, archetypeOverride: b.archetypeOverride,
     style: b.style, secondaryHex,
   }, 'default')
-  const hasSecondaryGroup = tokens[COLUMNS[0]].some(x => x.path.startsWith('brand-secondary/'))
-  if (hasSecondaryGroup !== !!secondaryHex)
-    fails.push(`${b.slug}: brand-secondary group ${hasSecondaryGroup ? 'present without' : 'missing despite'} a secondary`)
+  // every payload carries a brand-secondary now (real or derived from the primary);
+  // code.ts decides whether it's WRITTEN based on the file's posture
+  if (!tokens[COLUMNS[0]].some(x => x.path.startsWith('brand-secondary/')))
+    fails.push(`${b.slug}: payload missing brand-secondary (the derive fallback is broken)`)
   snap.brands[b.slug] = overridesFor(tokens, base, b.slug)
 }
 

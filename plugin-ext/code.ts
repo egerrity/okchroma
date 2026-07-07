@@ -17,6 +17,9 @@ figma.showUI(__html__, { width: 720, height: 640, title: 'OKChroma Extended' })
 const BASE_NAME = 'theme'
 const OWNER_KEY = 'okchroma-ext'          // 'base' | 'brand'
 const BRAND_KEY = 'okchroma-ext-brand'
+// Each apply stamps its input recipe here (JSON) — what powers the automatic
+// collection-wide secondary check and the manual "Re-apply all brands" action.
+const SPEC_KEY = 'okchroma-ext-spec'
 // Mirrors payload.COLUMNS (type-only import keeps the engine out of the sandbox bundle).
 // Column order IS the mode-dropdown order: the default lane leads, pairs group by prefix.
 const COLUMNS: Column[] = ['wcag', 'wcag-dark', 'apca', 'apca-dark']
@@ -50,9 +53,9 @@ const toRGBA = (t: FlatTok): figma.RGBA =>
 
 figma.ui.onmessage = async (msg) => {
   if (msg.type === 'apply') {
-    const { brand, brandTokens, baseTokens, hasSecondary, confirmed } = msg as unknown as {
+    const { brand, brandTokens, baseTokens, hasSecondary, confirmed, spec } = msg as unknown as {
       type: 'apply'; brand: string; brandTokens: TokenColumns; baseTokens: TokenColumns
-      hasSecondary: boolean; confirmed?: boolean
+      hasSecondary: boolean; confirmed?: boolean; spec?: unknown
     }
     try {
       const collections = await figma.variables.getLocalVariableCollectionsAsync()
@@ -86,16 +89,15 @@ figma.ui.onmessage = async (msg) => {
         ?? extsOfBase.find(e => e.name === brand)
 
       // Nudge before surprising changes (v1's idiom — each needs a second Apply):
-      // overwriting a brand, or flipping the base's secondary posture.
+      // overwriting a brand, or ADDING the file's secondary (the deliberate posture flip;
+      // once on, the collection checks itself — secondary-less applies just derive).
       const overwrite = !!existingExt
-      const secondaryMismatch = !!baseMatch && baseHasSecondary !== hasSecondary
-      if (!confirmed && (overwrite || secondaryMismatch)) {
+      const addingSecondary = hasSecondary && !!baseMatch && !baseHasSecondary
+      if (!confirmed && (overwrite || addingSecondary)) {
         const reasons: string[] = []
         if (overwrite) reasons.push(`overwrite "${brand}"`)
-        if (secondaryMismatch && hasSecondary) reasons.push(
-          'add a brand-secondary group to the base (existing brands inherit the base default until re-applied)')
-        if (secondaryMismatch && !hasSecondary) reasons.push(
-          'mirror brand-primary into brand-secondary (the base already has a secondary group)')
+        if (addingSecondary) reasons.push(
+          'add a brand-secondary group to the base and update every existing brand with its derived secondary')
         figma.ui.postMessage({ type: 'confirm', brand, message: `Will ${reasons.join(' + ')} — click Apply again.` })
         return
       }
@@ -176,6 +178,7 @@ figma.ui.onmessage = async (msg) => {
       }
       ext.setPluginData(OWNER_KEY, 'brand')
       ext.setPluginData(BRAND_KEY, brand)
+      if (spec !== undefined) ext.setPluginData(SPEC_KEY, JSON.stringify(spec)) // the stored recipe
       const extColIds: string[] = []
       for (const baseId of colIds) {
         const m = ext.modes.find(x => x.parentModeId === baseId)
@@ -191,29 +194,26 @@ figma.ui.onmessage = async (msg) => {
       // Equal → ensure NO override (inherit; the blue-highlight story stays honest).
       // Different → setValueForMode routed by the extension's modeId for that column.
       // system/* is contract-invariant and skipped outright (paper-raised/-sunken are
-      // aliases; the rest are poles every brand shares).
-      const secondaryMode: 'real' | 'mirror' | 'none' = hasSecondary ? 'real' : (withSecondary ? 'mirror' : 'none')
+      // aliases; the rest are poles every brand shares). The payload always CARRIES a
+      // brand-secondary (real or derived from the primary); it is WRITTEN only when the
+      // file's posture is on — secondary stays opt-in, and once on, every brand derives.
+      const secondaryMode: 'real' | 'derived' | 'none' = hasSecondary ? 'real' : (withSecondary ? 'derived' : 'none')
       const brandByCol = new Map<Column, Map<string, FlatTok>>(
         COLUMNS.map(c => [c, new Map(brandTokens[c].map(t => [t.path, t]))]))
-      const work: Array<{ path: string; from: string }> = []
+      const work: string[] = []
       for (const t of brandTokens[COLUMNS[0]]) {
         if (t.path.startsWith('system/')) continue
-        work.push({ path: t.path, from: t.path })
-        // v1's 'mirror' mode, materialized as overrides: a secondary-less brand in a
-        // secondary-bearing base writes its PRIMARY values into brand-secondary/*.
-        if (secondaryMode === 'mirror' && t.path.startsWith('brand-primary/')) {
-          const mirrored = t.path.replace('brand-primary/', 'brand-secondary/')
-          if (baseVars.has(mirrored)) work.push({ path: mirrored, from: t.path })
-        }
+        if (secondaryMode === 'none' && t.path.startsWith('brand-secondary/')) continue
+        work.push(t.path)
       }
       const overrides = ext.variableOverrides
       let set = 0, removed = 0, inherited = 0
-      for (const w of work) {
-        const v = baseVars.get(w.path)
+      for (const path of work) {
+        const v = baseVars.get(path)
         if (!v) continue
         const cur = overrides[v.id]
         for (let i = 0; i < COLUMNS.length; i++) {
-          const tok = brandByCol.get(COLUMNS[i])!.get(w.from)
+          const tok = brandByCol.get(COLUMNS[i])!.get(path)
           if (!tok) continue
           if (valEq(v.valuesByMode[colIds[i]], tok)) {
             if (cur && cur[extColIds[i]] !== undefined) { v.removeOverrideForMode(extColIds[i]); removed++ }
@@ -222,7 +222,41 @@ figma.ui.onmessage = async (msg) => {
         }
       }
 
-      figma.ui.postMessage({ type: 'done', brand, set, removed, inherited, createdVars, baseCreated: created, secondary: secondaryMode })
+      // The posture flip's collection-wide check: this apply just ADDED the secondary
+      // group to an existing base — hand every OTHER extension's stored recipe back to
+      // the UI, which re-applies each one (deriving its secondary). Recipes are stamped
+      // per apply; extensions without one are reported for a one-time manual re-apply.
+      const secondaryAdded = hasSecondary && !baseHasSecondary && !created
+      const backfill: unknown[] = []
+      const unstamped: string[] = []
+      if (secondaryAdded) {
+        for (const e of extsOfBase) {
+          if (e.id === ext.id) continue
+          const raw = e.getPluginData(SPEC_KEY)
+          if (!raw) { unstamped.push(e.name); continue }
+          try { backfill.push(JSON.parse(raw)) } catch { unstamped.push(e.name) }
+        }
+      }
+
+      figma.ui.postMessage({ type: 'done', brand, set, removed, inherited, createdVars, baseCreated: created, secondary: secondaryMode, secondaryAdded, backfill, unstamped })
+    } catch (err) {
+      figma.ui.postMessage({ type: 'error', message: String(err) })
+    }
+  } else if (msg.type === 'collect-specs') {
+    // Manual "Re-apply all brands": return every extension's stored recipe; the UI
+    // rebuilds payloads (the engine lives there) and runs them through the apply path.
+    try {
+      const collections = await figma.variables.getLocalVariableCollectionsAsync()
+      const base = collections.filter(c => !isExtension(c)).find(c => c.getPluginData(OWNER_KEY) === 'base')
+      const exts = base ? collections.filter(isExtension).filter(e => e.rootVariableCollectionId === base.id) : []
+      const specs: unknown[] = []
+      const unstamped: string[] = []
+      for (const e of exts) {
+        const raw = e.getPluginData(SPEC_KEY)
+        if (!raw) { unstamped.push(e.name); continue }
+        try { specs.push(JSON.parse(raw)) } catch { unstamped.push(e.name) }
+      }
+      figma.ui.postMessage({ type: 'specs', specs, unstamped })
     } catch (err) {
       figma.ui.postMessage({ type: 'error', message: String(err) })
     }
