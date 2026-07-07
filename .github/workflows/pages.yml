@@ -36,6 +36,10 @@ jobs:
       # early-access manual-install page, always current with main.
       - run: npm run plugin:build
 
+      # Builds plugin v2 (extended collections, unlisted for now) — zipped below
+      # beside v1 so an Enterprise seat can install it by download alone.
+      - run: npm run plugin-ext:build
+
       # The demo entry (demo/index.html) references ../dist and ../tokens.
       # Flatten into a Pages root: index.html at top, assets beside it, with
       # the ../ rewritten to plain relative paths so it works under the
@@ -58,6 +62,10 @@ jobs:
           cp plugin/dist/plugin-code.js plugin/dist/plugin-ui.html stage/okchroma-plugin/dist/
           (cd stage && zip -rq ../_site/okchroma-plugin.zip okchroma-plugin)
           cp plugin/install.html _site/install.html
+          mkdir -p stage/okchroma-extended/dist
+          cp plugin-ext/manifest.json stage/okchroma-extended/
+          cp plugin-ext/dist/plugin-ext-code.js plugin-ext/dist/plugin-ext-ui.html stage/okchroma-extended/dist/
+          (cd stage && zip -rq ../_site/okchroma-extended.zip okchroma-extended)
 
       - uses: actions/upload-pages-artifact@v3
         with:

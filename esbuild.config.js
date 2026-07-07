@@ -3,10 +3,15 @@ const fs = require('fs')
 const { execSync } = require('child_process')
 const isWatch = process.argv.includes('--watch')
 const isPlugin = process.argv.includes('--plugin')
+const isPluginExt = process.argv.includes('--plugin-ext')
 
 async function main() {
   if (isPlugin) {
     await buildPlugin()
+    return
+  }
+  if (isPluginExt) {
+    await buildPluginExt()
     return
   }
 
@@ -73,6 +78,31 @@ async function buildPlugin() {
   const bundle = fs.readFileSync('plugin/dist/plugin-ui-bundle.js', 'utf8')
   fs.writeFileSync('plugin/dist/plugin-ui.html', template.replace('__BUNDLE__', bundle))
   console.log('Plugin built → plugin/dist/plugin-code.js + plugin/dist/plugin-ui.html')
+}
+
+// Plugin v2 (extended collections, internal) — same two-thread build as v1, its own
+// manifest/dist so the published plugin is never touched.
+async function buildPluginExt() {
+  await esbuild.build({
+    entryPoints: ['plugin-ext/code.ts'],
+    bundle: true,
+    platform: 'browser',
+    target: 'es2017',
+    outfile: 'plugin-ext/dist/plugin-ext-code.js',
+  })
+
+  await esbuild.build({
+    entryPoints: ['plugin-ext/ui.ts'],
+    bundle: true,
+    platform: 'browser',
+    target: 'es2017',
+    outfile: 'plugin-ext/dist/plugin-ext-ui-bundle.js',
+  })
+
+  const template = fs.readFileSync('plugin-ext/ui-template.html', 'utf8')
+  const bundle = fs.readFileSync('plugin-ext/dist/plugin-ext-ui-bundle.js', 'utf8')
+  fs.writeFileSync('plugin-ext/dist/plugin-ext-ui.html', template.replace('__BUNDLE__', bundle))
+  console.log('Plugin-ext built → plugin-ext/dist/plugin-ext-code.js + plugin-ext/dist/plugin-ext-ui.html')
 }
 
 main().catch(e => { console.error(e); process.exit(1) })

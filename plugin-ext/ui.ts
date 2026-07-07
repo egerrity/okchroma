@@ -1,0 +1,439 @@
+import { resolveTheme, signalScalesFor, type SecondaryStyle, type ResolvedTheme } from '../src/engine/resolve'
+import { ARCHETYPES, type Archetype } from '../src/engine/archetypes'
+import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
+import { SIGNALS } from '../src/engine/signals'
+import { toHex } from '../src/engine/cssRender'
+import { buildBrandColumns, buildBaseColumns } from './payload'
+
+// ─── State ───────────────────────────────────────────────────────────────────
+
+let primaryHex = '#E93D82'
+let secondaryHex: string | null = null
+let neutralLevel: NeutralLevel = 'default'
+// per-family modes (parity with the demo): the primary's select = Recommended / Exact /
+// the six archetype anchors; the secondary's select = its style chip (custom only —
+// derived is always pastel, the engine's call).
+let primaryMode: 'recommended' | 'exact' | Archetype = 'recommended'
+let secondaryStyle: SecondaryStyle = 'tint'
+// PREVIEW lens only — the apply always writes all four solve columns (wcag · wcag-dark ·
+// apca · apca-dark). WCAG is this plugin’s default lane, so it leads the preview too.
+let contrastProfile: ContrastProfile = 'wcag'
+let pendingName: string | null = null // brand armed for overwrite confirmation
+// The secondary is the demo's THREE-STATE field: none (default — just "+ Add secondary") →
+// derived (the input tracks the primary live; the engine derives the pastel secondary) →
+// custom (user hex + style chip). The chevron menu moves between all three.
+type SecondaryMode = 'derived' | 'custom' | 'off'
+let secondaryMode: SecondaryMode = 'off'
+
+// ─── DOM ─────────────────────────────────────────────────────────────────────
+
+const $  = <T extends HTMLElement>(id: string) => document.getElementById(id) as T
+const collectionInput = $<HTMLInputElement>('collection-name')
+const primaryHexInput = $<HTMLInputElement>('primary-hex')
+const primaryPicker   = $<HTMLInputElement>('primary-picker')
+const primarySwatch   = $<HTMLElement>('primary-swatch')
+const primaryModeSelect  = $<HTMLSelectElement>('primary-mode')
+const primaryChip        = $<HTMLElement>('primary-chip')
+const primaryChipLabel   = $<HTMLElement>('primary-chip-label')
+const primaryInfo        = $<HTMLElement>('primary-info')
+const archetypeGroup     = $<HTMLElement>('archetype-group')
+const secondarySlot      = $<HTMLElement>('secondary-slot')
+const secondaryAddBtn    = $<HTMLButtonElement>('secondary-add')
+const secondaryField     = $<HTMLElement>('secondary-field')
+const secondaryHexInput  = $<HTMLInputElement>('secondary-hex')
+const secondaryPicker    = $<HTMLInputElement>('secondary-picker')
+const secondarySwatch    = $<HTMLElement>('secondary-swatch')
+const secondaryMarker    = $<HTMLElement>('secondary-marker')
+const secondaryStyleSelect = $<HTMLSelectElement>('secondary-style')
+const secondaryChip      = $<HTMLElement>('secondary-chip')
+const secondaryChipLabel = $<HTMLElement>('secondary-chip-label')
+const secondaryInfo      = $<HTMLElement>('secondary-info')
+const secondaryInfoLine  = $<HTMLElement>('secondary-info-line')
+const neutralLabel       = $<HTMLElement>('neutral-label')
+const neutralInfo        = $<HTMLElement>('neutral-info')
+const secondaryMenuBtn   = $<HTMLButtonElement>('secondary-menu-btn')
+const secondaryMenu      = $<HTMLElement>('secondary-menu')
+const menuDerived        = $<HTMLButtonElement>('menu-derived')
+const menuDerivedSwatch  = $<HTMLElement>('menu-derived-swatch')
+const menuCustom         = $<HTMLButtonElement>('menu-custom')
+const menuRemove         = $<HTMLButtonElement>('menu-remove')
+const neutralSwatch   = $<HTMLElement>('neutral-swatch')
+const neutralSelect   = $<HTMLSelectElement>('neutral-select')
+const profileBtns     = document.querySelectorAll<HTMLButtonElement>('.seg-btn[data-profile]')
+const matrixEl        = $<HTMLElement>('matrix')
+const applyBtn        = $<HTMLButtonElement>('apply-btn')
+const statusEl        = $<HTMLElement>('status')
+const smokeBtn        = $<HTMLButtonElement>('smoke-btn')
+const smokeLog        = $<HTMLElement>('smoke-log')
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function normalizeHex(s: string): string | null {
+  const h = s.trim().replace(/^#/, '')
+  if (/^[0-9a-fA-F]{6}$/.test(h)) return `#${h.toUpperCase()}`
+  if (/^[0-9a-fA-F]{3}$/.test(h)) {
+    const [a, b, c] = h
+    return `#${a}${a}${b}${b}${c}${c}`.toUpperCase()
+  }
+  return null
+}
+
+// Force the brand name to spinal (kebab) case so it's a clean variable-name
+// segment: lowercase, any run of non-alphanumerics → one hyphen, no edge hyphens.
+function toSpinal(s: string): string {
+  return s.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+}
+
+function setStatus(text: string, tone: '' | 'ok' | 'err' = '') {
+  statusEl.textContent = text
+  statusEl.className = `status${tone ? ` ${tone}` : ''}`
+}
+
+// ─── The secondary field's three states ──────────────────────────────────────
+
+// the ⓘ copy per selection (Figma spec) — the always-visible tooltip replacement
+const STYLE_LABEL: Record<SecondaryStyle, string> = { tint: 'Tint', pastel: 'Pastel', outline: 'Outline', exact: 'Exact' }
+const STYLE_INFO: Record<SecondaryStyle, string> = {
+  tint: 'Differentiates from primary with a lighter tint of hue',
+  pastel: 'Differentiates from primary with lower chroma and lighter tint',
+  outline: 'Outline only',
+  exact: 'Your hex ships untouched',
+}
+const NEUTRAL_LABEL: Record<NeutralLevel, string> = { default: 'Default', branded: 'Intense', pure: 'True grey' }
+const NEUTRAL_INFO: Record<NeutralLevel, string> = {
+  default: 'Adds a touch of primary hue',
+  branded: 'Adds a noticeable tint to neutral',
+  pure: 'Neutrals are pure grey',
+}
+
+function syncInfoLines() {
+  primaryChipLabel.textContent = primaryMode === 'recommended' ? 'Recommended' : primaryMode === 'exact' ? 'Exact' : primaryMode
+  primaryInfo.textContent = primaryMode === 'recommended' ? 'Engine adjusts for optimal legibility'
+    : primaryMode === 'exact' ? 'Your hex ships untouched'
+    : `Anchored to the ${primaryMode} archetype`
+  secondaryChipLabel.textContent = STYLE_LABEL[secondaryStyle]
+  secondaryInfoLine.style.display = secondaryMode === 'off' ? 'none' : ''
+  secondaryInfo.textContent = secondaryMode === 'derived' ? 'A pastel derived from your primary' : STYLE_INFO[secondaryStyle]
+  neutralLabel.textContent = NEUTRAL_LABEL[neutralLevel]
+  neutralInfo.textContent = NEUTRAL_INFO[neutralLevel]
+}
+
+function setSecondaryMode(mode: SecondaryMode) {
+  secondaryMode = mode
+  secondaryAddBtn.style.display = mode === 'off' ? '' : 'none'
+  secondaryField.style.display = mode === 'off' ? 'none' : ''
+  secondaryMarker.style.display = mode === 'derived' ? '' : 'none'
+  secondaryChip.style.display = mode === 'custom' ? '' : 'none'
+  secondaryHexInput.classList.toggle('dim', mode === 'derived')
+  if (mode !== 'custom') secondaryHexInput.classList.remove('invalid')
+  menuDerived.classList.toggle('on', mode === 'derived')
+  menuCustom.classList.toggle('on', mode === 'custom')
+  updatePreview()
+}
+
+// ─── Preview ─────────────────────────────────────────────────────────────────
+
+// the THEME input: primary + secondary posture, each under its OWN mode (per-family chips —
+// the demo's model exactly). Derived is always pastel; the style select applies to custom only.
+function themeInput(name: string) {
+  const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
+  return {
+    primaryHex, name,
+    primaryMode: primaryMode === 'exact' ? ('exact' as const) : ('recommended' as const),
+    primaryArchetype: primaryMode !== 'recommended' && primaryMode !== 'exact' ? primaryMode : undefined,
+    secondaryHex: secondaryMode === 'custom' && secondaryHex ? secondaryHex : null,
+    deriveSecondary: secondaryMode === 'derived' || undefined,
+    secondaryStyle: secondaryMode === 'custom' ? secondaryStyle : undefined,
+    contrastProfile: cp,
+  }
+}
+
+// the demo's top-card matrix: every family × ID + the 12 stops + the cta pair (light mode).
+// Stop 8 renders AS a stroke (it's the boundary stop); cta cells carry the family's cta-stroke.
+function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
+  const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
+  const sigScales = signalScalesFor(cp)
+  const effective = (n: typeof SIGNALS[number]['name']) =>
+    t.themed.signalOverrides.find(o => o.name === n)?.scale ?? sigScales.get(n)!.scale
+
+  type Row = { label: string; scale: GeneratedScale; idHex?: string; outline?: boolean }
+  const rows: Row[] = [
+    { label: 'primary', scale: t.themed.scale, idHex: t.themed.scale.identityHex },
+    ...(t.secondary ? [{ label: 'secondary', scale: t.secondary.scale, idHex: t.secondary.scale.identityHex, outline: t.secondary.style === 'outline' }] : []),
+    { label: 'neutral', scale: nScale },
+    ...SIGNALS.map(s => ({ label: s.name, scale: effective(s.name) })),
+  ]
+
+  const hx = (s: ColorStop) => toHex(s.r, s.g, s.b)
+  const pole = (white: boolean) => (white ? '#fff' : '#000')
+  const idText = (hex: string) => {
+    const h = hex.replace('#', '')
+    const [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16))
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6 ? '#000' : '#fff'
+  }
+
+  const rowHtml = (row: Row) => {
+    const st = (n: number) => row.scale.light.find(s => s.stop === n)!
+    const cells: string[] = [`<div class="mx-label" title="${row.label}">${row.label}</div>`]
+    cells.push(row.idHex
+      ? `<div class="mx-aa" style="background:${row.idHex};color:${idText(row.idHex)};font-weight:700;font-size:10px" title="identity">ID</div>`
+      : `<div class="mx-cell"></div>`)
+    for (let n = 1; n <= 12; n++) {
+      const h = hx(st(n))
+      if (n === 8) cells.push(`<div class="mx-cell" style="border:2px solid ${h}" title="highlight-8"></div>`)
+      else if (n === 9 || n === 10) cells.push(`<div class="mx-aa" style="background:${h};color:${pole(row.scale.onHighlightIsWhite ?? false)}" title="highlight-${n}">Aa</div>`)
+      else if (n >= 11) cells.push(`<div class="mx-aa" style="color:${h};font-size:15px;font-weight:800" title="ink-${n}">Aa</div>`)
+      else cells.push(`<div class="mx-cell" style="background:${h};box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)" title="${n <= 2 ? 'paper' : 'wash'}-${n}"></div>`)
+    }
+    const s8 = hx(st(8))
+    if (row.outline) {
+      // outline's re-expressed pair: transparent fill + ring + ink-11 label; hover = the
+      // STABLE highlight-8 at 9% (the same stop the ring uses)
+      const ink11 = hx(st(11))
+      const c8 = st(8)
+      const rgb = `${Math.round(c8.r * 255)},${Math.round(c8.g * 255)},${Math.round(c8.b * 255)}`
+      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink11}" title="cta-1 (outline)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink11};background:rgba(${rgb},0.09)" title="cta-2 (outline hover)">Aa</div>`)
+    } else {
+      // filled cta cells carry NO stroke (filled is filled); only outline shows its ring
+      const on = pole(row.scale.onFillTextIsWhite)
+      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.cta)};color:${on}" title="cta-1">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaHover)};color:${on}" title="cta-2">Aa</div>`)
+    }
+    return cells.join('')
+  }
+
+  matrixEl.innerHTML = rows.map(rowHtml).join('')
+}
+
+function updatePreview() {
+  try {
+    const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
+    const t = resolveTheme(themeInput('x'))
+    const nScale = generateNeutralScale(t.themed.scale.brandH, neutralLevel, cp)
+    renderMatrix(t, nScale)
+
+    // the bar's live swatches: neutral shows its highlight-9; a derived secondary shows the
+    // RESOLVED pastel (the input tracks the primary hex — that's the source, not the result)
+    const n9 = nScale.light.find(s => s.stop === 9)
+    if (n9) neutralSwatch.style.background = toHex(n9.r, n9.g, n9.b)
+    if (t.secondary) {
+      const c = t.secondary.scale.cta
+      const h = toHex(c.r, c.g, c.b)
+      menuDerivedSwatch.style.background = h
+      if (secondaryMode === 'derived') {
+        secondarySwatch.style.background = h
+        secondaryHexInput.value = primaryHex
+        secondaryPicker.value = primaryHex
+      }
+    }
+
+    // chip TONES (Figma spec): the family's own wash/ink; outline = the outline treatment;
+    // exact = neutral-grey "hands off"
+    const hxs = (s: { r: number; g: number; b: number }) => toHex(s.r, s.g, s.b)
+    if (primaryMode === 'exact') {
+      primaryChip.style.background = '#ededf0'; primaryChip.style.color = '#646464'; primaryChip.style.borderColor = 'transparent'
+    } else {
+      primaryChip.style.background = hxs(t.themed.scale.light[3])
+      primaryChip.style.color = hxs(t.themed.scale.light[11])
+      primaryChip.style.borderColor = 'transparent'
+    }
+    if (t.secondary) {
+      const sl = t.secondary.scale.light
+      if (secondaryStyle === 'exact') {
+        secondaryChip.style.background = '#ededf0'; secondaryChip.style.color = '#646464'; secondaryChip.style.borderColor = 'transparent'
+      } else if (secondaryStyle === 'outline') {
+        secondaryChip.style.background = 'transparent'; secondaryChip.style.color = hxs(sl[10]); secondaryChip.style.borderColor = hxs(sl[7])
+      } else {
+        secondaryChip.style.background = hxs(sl[5]); secondaryChip.style.color = hxs(sl[11]); secondaryChip.style.borderColor = 'transparent'
+      }
+    }
+    syncInfoLines()
+  } catch { /* ignore partial hex during typing */ }
+}
+
+// ─── Apply ───────────────────────────────────────────────────────────────────
+
+function buildAndSend() {
+  const name = toSpinal(collectionInput.value)
+  if (!name) { setStatus('Enter a brand name first.', 'err'); return }
+  collectionInput.value = name // reflect the normalized name back to the field
+  const norm = normalizeHex(primaryHexInput.value)
+  if (!norm) { setStatus('Enter a valid hex color.', 'err'); return }
+
+  applyBtn.disabled = true
+  setStatus('Applying…')
+
+  try {
+    // v2 sends flat token COLUMNS (wcag · wcag-dark · apca · apca-dark — both lanes,
+    // always): this brand's semantic set, plus the DEFAULT-SEED base set (used only when
+    // the base collection — or its brand-secondary group — is created). No dedup keys,
+    // no shared-primitive paths, no profile picker: the diff against the base IS the
+    // dedup, and the solve columns carry the profile axis.
+    const { contrastProfile: _previewOnly, ...spec } = themeInput(name)
+    const brandTokens = buildBrandColumns(spec, neutralLevel)
+    const baseTokens = buildBaseColumns()
+
+    // confirmed only when this exact name was just flagged as an overwrite.
+    const confirmed = pendingName === name
+    parent.postMessage({ pluginMessage: { type: 'apply', brand: name, brandTokens, baseTokens, hasSecondary: secondaryMode !== 'off', confirmed } }, '*')
+  } catch (err) {
+    applyBtn.disabled = false
+    setStatus(String(err), 'err')
+  }
+}
+
+// ─── Event wiring ─────────────────────────────────────────────────────────────
+
+primaryHexInput.addEventListener('input', () => {
+  const norm = normalizeHex(primaryHexInput.value)
+  if (norm) {
+    primaryHex = norm
+    primarySwatch.style.background = norm
+    primaryPicker.value = norm
+    primaryHexInput.classList.remove('invalid')
+  } else {
+    primaryHexInput.classList.toggle('invalid', primaryHexInput.value !== '')
+  }
+  updatePreview()
+})
+
+primaryPicker.addEventListener('input', () => {
+  const v = primaryPicker.value.toUpperCase()
+  primaryHex = v
+  primaryHexInput.value = v
+  primarySwatch.style.background = v
+  primaryHexInput.classList.remove('invalid')
+  updatePreview()
+})
+
+primaryModeSelect.addEventListener('change', () => {
+  primaryMode = primaryModeSelect.value as typeof primaryMode
+  updatePreview()
+})
+
+secondaryAddBtn.addEventListener('click', () => setSecondaryMode('derived'))
+
+// typing (or picking) while derived DETACHES to custom with the entered value
+secondaryHexInput.addEventListener('input', () => {
+  if (secondaryMode === 'derived') setSecondaryMode('custom')
+  const norm = normalizeHex(secondaryHexInput.value)
+  if (norm) {
+    secondaryHex = norm
+    secondarySwatch.style.background = norm
+    secondaryPicker.value = norm
+    secondaryHexInput.classList.remove('invalid')
+  } else {
+    secondaryHex = null
+    secondaryHexInput.classList.toggle('invalid', secondaryHexInput.value !== '')
+  }
+  updatePreview()
+})
+
+secondaryPicker.addEventListener('input', () => {
+  if (secondaryMode === 'derived') setSecondaryMode('custom')
+  const v = secondaryPicker.value.toUpperCase()
+  secondaryHex = v
+  secondaryHexInput.value = v
+  secondarySwatch.style.background = v
+  secondaryHexInput.classList.remove('invalid')
+  updatePreview()
+})
+
+secondaryStyleSelect.addEventListener('change', () => {
+  secondaryStyle = secondaryStyleSelect.value as SecondaryStyle
+  updatePreview()
+})
+
+secondaryMenuBtn.addEventListener('click', () => {
+  secondaryMenu.style.display = secondaryMenu.style.display === 'none' ? '' : 'none'
+})
+menuDerived.addEventListener('click', () => {
+  secondaryMenu.style.display = 'none'
+  setSecondaryMode('derived')
+})
+menuCustom.addEventListener('click', () => {
+  secondaryMenu.style.display = 'none'
+  // custom starts from what derived showed — prefill the primary hex (demo parity)
+  if (!secondaryHex) {
+    secondaryHex = primaryHex
+    secondaryHexInput.value = primaryHex
+    secondaryPicker.value = primaryHex
+    secondarySwatch.style.background = primaryHex
+  }
+  setSecondaryMode('custom')
+})
+menuRemove.addEventListener('click', () => {
+  secondaryMenu.style.display = 'none'
+  secondaryHex = null
+  secondaryHexInput.value = ''
+  setSecondaryMode('off')
+})
+document.addEventListener('mousedown', e => {
+  if (secondaryMenu.style.display !== 'none' && !secondarySlot.contains(e.target as Node))
+    secondaryMenu.style.display = 'none'
+})
+
+neutralSelect.addEventListener('change', () => {
+  neutralLevel = neutralSelect.value as NeutralLevel
+  updatePreview()
+})
+
+profileBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    profileBtns.forEach(b => b.classList.remove('active'))
+    btn.classList.add('active')
+    contrastProfile = btn.dataset.profile as ContrastProfile
+    updatePreview()
+  })
+})
+
+applyBtn.addEventListener('click', buildAndSend)
+
+window.addEventListener('message', e => {
+  const msg = (e.data as {
+    pluginMessage?: {
+      type: string; message?: string; brand?: string; secondary?: string
+      set?: number; removed?: number; inherited?: number; createdVars?: number; baseCreated?: boolean
+      lines?: string[]
+    }
+  }).pluginMessage
+  if (!msg) return
+  applyBtn.disabled = false
+  if (msg.type === 'done') {
+    pendingName = null
+    const parts = [`${msg.set ?? 0} overridden`, `${msg.inherited ?? 0} inherited`]
+    if (msg.removed) parts.push(`${msg.removed} reverted to base`)
+    const grew = msg.baseCreated ? ' · base created' : (msg.createdVars ? ` · ${msg.createdVars} base tokens added` : '')
+    const acc = msg.secondary && msg.secondary !== 'real' ? ` · secondary ${msg.secondary}` : ''
+    setStatus(`✓ ${msg.brand}: ${parts.join(' · ')}${grew}${acc}`, 'ok')
+  } else if (msg.type === 'confirm') {
+    pendingName = msg.brand ?? null
+    setStatus(msg.message ?? `"${msg.brand}" already exists — click Apply again`, 'err')
+  } else if (msg.type === 'error') {
+    setStatus(msg.message ?? 'Unknown error', 'err')
+  } else if (msg.type === 'smoke-result') {
+    smokeLog.style.display = ''
+    smokeLog.textContent = (msg.lines ?? []).join('\n')
+  }
+})
+
+// ─── Enterprise smoke test (the plan-§2 verify-first probes, on scratch collections) ──
+
+smokeBtn.addEventListener('click', () => {
+  smokeLog.style.display = ''
+  smokeLog.textContent = 'running…'
+  parent.postMessage({ pluginMessage: { type: 'smoke' } }, '*')
+})
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+
+// the six archetype anchors under the primary's mode select (source of truth: the engine)
+for (const a of ARCHETYPES) {
+  const opt = document.createElement('option')
+  opt.value = a.name
+  opt.textContent = a.name
+  archetypeGroup.appendChild(opt)
+}
+
+updatePreview()

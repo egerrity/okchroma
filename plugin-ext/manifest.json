@@ -1,0 +1,11 @@
+{
+  "name": "OKChroma Extended",
+  "api": "1.0.0",
+  "main": "dist/plugin-ext-code.js",
+  "ui": "dist/plugin-ext-ui.html",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": ["none"]
+  }
+}

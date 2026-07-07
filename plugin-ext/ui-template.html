@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 12px;
+  color: #1a1a1a;
+  background: #fff;
+  padding: 16px;
+  line-height: 1.45;
+  user-select: none;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin-bottom: 6px;
+}
+
+.section { margin-bottom: 14px; }
+
+/* ── Inputs ── */
+.input {
+  width: 100%;
+  height: 32px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 7px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-family: inherit;
+  color: #1a1a1a;
+  background: #fff;
+  outline: none;
+  transition: border-color .1s, box-shadow .1s;
+}
+.input:focus { border-color: #7c6fcd; box-shadow: 0 0 0 3px #7c6fcd1a; }
+.input.invalid { border-color: #e5484d; background: #fff8f8; }
+.input.invalid:focus { box-shadow: 0 0 0 3px #e5484d1a; }
+
+/* ── Controls bar (the demo's layout: labeled fields in one wrapping row) ── */
+.bar { display: flex; align-items: flex-start; gap: 12px 16px; flex-wrap: wrap; }
+.bar-field { display: flex; flex-direction: column; }
+.bar-field > .label { margin-bottom: 5px; }
+
+/* the Figma-spec field (post-hk 60:1384): 40px, radius 10, swatch 20/r5, hex 14px */
+.field {
+  display: flex; align-items: center; gap: 8px;
+  height: 40px; padding: 0 12px;
+  border: 1.5px solid #d9d9de; border-radius: 10px; background: #fff;
+}
+.field:focus-within { border-color: #7c6fcd; box-shadow: 0 0 0 3px #7c6fcd1a; }
+.field > input[type="text"] {
+  border: none; outline: none; background: transparent; flex: 1; min-width: 56px;
+  font-size: 14px; font-family: inherit; font-weight: 500; color: #1a1a1a;
+}
+.field > input[type="text"].dim { color: #999; }
+.field-color { width: 288px; }
+
+.swatch {
+  position: relative; width: 20px; height: 20px; flex-shrink: 0;
+  border-radius: 5px; border: 1px solid rgba(0,0,0,.12); cursor: pointer; overflow: hidden;
+}
+.swatch input[type="color"] {
+  position: absolute; inset: -6px; width: calc(100% + 12px); height: calc(100% + 12px);
+  opacity: 0; cursor: pointer;
+}
+
+/* the in-field mode CHIP (Figma spec): a VISUAL chip — label + its own 12px chevron laid
+   out inline (never the native select arrow) — with a transparent select overlaid. The
+   chip TINTS with the selection (set from the resolved scales in ui.ts). */
+.chip {
+  position: relative; display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11.5px; font-weight: 650; border: 1px solid transparent;
+  background: #ededf0; color: #646464;
+  border-radius: 4px; padding: 3px 7px; margin-left: auto; flex-shrink: 0; cursor: pointer;
+  font-family: inherit; white-space: nowrap;
+}
+.chip svg { width: 12px; height: 12px; flex-shrink: 0; }
+.chip select { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.marker { font-size: 11px; color: #999; margin-left: auto; flex-shrink: 0; }
+
+/* the ⓘ explanation line under each field — the always-visible tooltip replacement */
+.info-line {
+  display: flex; align-items: center; gap: 5px; margin-top: 6px;
+  font-size: 11.5px; font-weight: 500; color: #646464; white-space: nowrap;
+}
+.info-line svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+/* trailing menu button + popover (From primary / Custom / Remove) */
+.menu-btn {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 26px; height: 26px; border-radius: 6px; border: none; cursor: pointer;
+  background: #ededf0; color: #555; font-size: 11px; font-family: inherit;
+}
+.menu-btn svg { width: 12px; height: 12px; }
+.menu-btn:hover { background: #e9e7f7; color: #1a1a1a; }
+.popover {
+  position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; width: 190px;
+  background: #fff; border: 1.5px solid #d7d2ef; border-radius: 10px;
+  padding: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.12);
+  display: flex; flex-direction: column; gap: 7px; align-items: flex-start;
+}
+.pop-item {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-family: inherit;
+  background: #f6f6f7; border: 1px solid #e0e0e0; border-radius: 8px;
+  padding: 4px 10px; font-size: 12px; color: #1a1a1a;
+}
+.pop-item:hover { background: #efecfb; }
+.pop-item.on { border-color: #7c6fcd; }
+.pop-item .swatch { width: 13px; height: 13px; cursor: inherit; }
+.pop-remove {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-family: inherit;
+  background: #fff; border: 1px solid #f0b8bb; border-radius: 8px;
+  padding: 4px 10px; font-size: 12px; font-weight: 600; color: #c62828;
+}
+.pop-remove:hover { background: #fde8e8; }
+
+/* "+ Add secondary" — the field's none-state */
+.add {
+  display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px;
+  cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 600;
+  color: #888; background: transparent;
+  border: 1.5px dashed #d5d5d5; border-radius: 8px;
+}
+.add:hover { color: #1a1a1a; border-color: #7c6fcd; background: #7c6fcd0d; }
+
+/* ── Segmented control ── */
+.seg {
+  display: flex; background: #f2f2f2; border-radius: 8px; padding: 3px; gap: 2px; height: 34px;
+}
+.seg-btn {
+  flex: 1; border: none; border-radius: 6px; padding: 0 12px;
+  font-size: 11px; font-weight: 500; font-family: inherit; cursor: pointer;
+  background: transparent; color: #777; transition: background .1s, color .1s, box-shadow .1s;
+}
+.seg-btn.active {
+  background: #fff; color: #1a1a1a;
+  box-shadow: 0 1px 3px rgba(0,0,0,.12), 0 0 0 1px rgba(0,0,0,.04);
+}
+
+/* ── Select ── */
+.select {
+  height: 34px; border: 1.5px solid #e0e0e0; border-radius: 8px;
+  padding: 0 22px 0 8px; font-size: 12px; font-family: inherit; color: #1a1a1a;
+  background: #fff; outline: none; cursor: pointer;
+  appearance: none; -webkit-appearance: none;
+}
+.select:focus { border-color: #7c6fcd; box-shadow: 0 0 0 3px #7c6fcd1a; }
+.select-wrap { position: relative; display: inline-flex; align-items: center; }
+.select-wrap::after {
+  content: ''; position: absolute; right: 9px; pointer-events: none;
+  width: 7px; height: 7px; border-right: 1.5px solid #999; border-bottom: 1.5px solid #999;
+  transform: rotate(45deg) translateY(-2px);
+}
+
+/* ── Matrix preview (the demo's top card: every family × every stop) ── */
+.divider { height: 1px; background: #f0f0f0; margin: 14px -16px; }
+.matrix {
+  display: grid; gap: 4px; align-items: center;
+  grid-template-columns: 62px repeat(15, 1fr);
+}
+.mx-label { font-size: 11px; font-weight: 700; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mx-cell { height: 26px; border-radius: 5px; }
+.mx-aa {
+  height: 26px; border-radius: 5px; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600;
+}
+
+/* ── Apply button ── */
+.apply-btn {
+  width: 100%; height: 36px; border: none; border-radius: 9px;
+  background: #7c6fcd; color: #fff;
+  font-size: 13px; font-weight: 600; font-family: inherit;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: background .1s, opacity .1s;
+  margin-top: 14px;
+}
+.apply-btn:hover:not(:disabled) { background: #6d5fc0; }
+.apply-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ── Status ── */
+.status { margin-top: 8px; font-size: 11px; text-align: center; min-height: 16px; color: #888; }
+.status.ok  { color: #16a34a; font-weight: 600; }
+.status.err { color: #dc2626; }
+
+/* ── Enterprise smoke test (verify-first probes) ── */
+.smoke-link {
+  border: none; background: transparent; cursor: pointer; font-family: inherit;
+  font-size: 11px; color: #999; text-decoration: underline; text-underline-offset: 2px;
+}
+.smoke-link:hover { color: #7c6fcd; }
+.smoke-log {
+  margin-top: 8px; padding: 8px 10px; background: #f6f6f7; border: 1px solid #ececec;
+  border-radius: 7px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10.5px; line-height: 1.5; color: #444; white-space: pre-wrap; user-select: text;
+}
+</style>
+</head>
+<body>
+
+<div style="margin-bottom:14px;padding:8px 10px;background:#f6f6f7;border:1px solid #ececec;border-radius:7px;font-size:11px;color:#666;line-height:1.4;">
+  <b>theme</b> is the base collection — bind these. Its modes are the solve columns: <b>wcag · wcag-dark · apca · apca-dark</b> (wcag is the default; every apply writes all four). Each brand becomes one <b>extension</b>, overriding only what differs. Needs a Figma <b>Enterprise</b> org (extended collections).
+</div>
+
+<div class="section">
+  <div class="label">Brand name</div>
+  <input class="input" id="collection-name" spellcheck="false" placeholder="Type a brand name…" />
+</div>
+
+<div class="bar section">
+  <div class="bar-field">
+    <div class="label">Primary color</div>
+    <div class="field field-color">
+      <span class="swatch" id="primary-swatch" style="background:#E93D82" title="Open color picker">
+        <input type="color" id="primary-picker" value="#E93D82" />
+      </span>
+      <input type="text" id="primary-hex" value="#E93D82" spellcheck="false" placeholder="#E93D82" />
+      <span class="chip" id="primary-chip" title="Primary engine mode">
+        <span id="primary-chip-label">Recommended</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        <select id="primary-mode">
+          <option value="recommended" selected>Recommended</option>
+          <option value="exact">Exact</option>
+          <optgroup label="Anchor archetype" id="archetype-group"></optgroup>
+        </select>
+      </span>
+    </div>
+    <div class="info-line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span id="primary-info">Engine adjusts for optimal legibility</span></div>
+  </div>
+
+  <div class="bar-field" style="position:relative" id="secondary-slot">
+    <div class="label">Secondary color</div>
+    <button class="add" id="secondary-add">+ Add secondary</button>
+    <div class="field field-color" id="secondary-field" style="display:none">
+      <span class="swatch" id="secondary-swatch" style="background:#ccc" title="Open color picker">
+        <input type="color" id="secondary-picker" value="#E93D82" />
+      </span>
+      <input type="text" id="secondary-hex" value="" spellcheck="false" placeholder="enter a hex" />
+      <span class="marker" id="secondary-marker" style="display:none">from primary</span>
+      <span class="chip" id="secondary-chip" title="Secondary style" style="display:none">
+        <span id="secondary-chip-label">Tint</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        <select id="secondary-style">
+          <option value="tint" selected>Tint</option>
+          <option value="pastel">Pastel</option>
+          <option value="outline">Outline</option>
+          <option value="exact">Exact</option>
+        </select>
+      </span>
+      <button class="menu-btn" id="secondary-menu-btn" title="Secondary options"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+    </div>
+    <div class="info-line" id="secondary-info-line" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span id="secondary-info"></span></div>
+    <div class="popover" id="secondary-menu" style="display:none">
+      <button class="pop-item" id="menu-derived"><span class="swatch" id="menu-derived-swatch" style="background:#ccc"></span>From primary</button>
+      <button class="pop-item" id="menu-custom">Custom</button>
+      <button class="pop-remove" id="menu-remove">Remove</button>
+    </div>
+  </div>
+
+  <div class="bar-field">
+    <div class="label">Neutral color</div>
+    <div class="field" style="width:176px;position:relative">
+      <span class="swatch" id="neutral-swatch" style="background:#888;cursor:default"></span>
+      <span id="neutral-label" style="flex:1;font-size:14px;font-weight:500">Default</span>
+      <span class="menu-btn" style="pointer-events:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+      <select id="neutral-select" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">
+        <option value="default" selected>Default</option>
+        <option value="branded">Intense</option>
+        <option value="pure">True grey</option>
+      </select>
+    </div>
+    <div class="info-line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span id="neutral-info">Adds a touch of primary hue</span></div>
+  </div>
+
+  <div class="bar-field">
+    <div class="label">Preview contrast</div>
+    <div class="seg">
+      <button class="seg-btn active" data-profile="wcag">WCAG</button>
+      <button class="seg-btn" data-profile="apca">APCA</button>
+    </div>
+    <div class="info-line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span>Preview lens only — Apply writes all four modes</span></div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<div class="matrix" id="matrix"></div>
+
+<button class="apply-btn" id="apply-btn">Apply to Figma</button>
+<div class="status" id="status"></div>
+
+<div style="margin-top:10px;text-align:center">
+  <button class="smoke-link" id="smoke-btn" title="Runs the extended-collections API probes on scratch collections, then removes them">Run Enterprise smoke test</button>
+</div>
+<pre class="smoke-log" id="smoke-log" style="display:none"></pre>
+
+<script>__BUNDLE__</script>
+</body>
+</html>
