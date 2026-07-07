@@ -67,15 +67,19 @@ for (const b of BRANDS) {
 }
 
 // The bulk roster (plugin-ext/roster.ts) goes through the same gate — exactly what the
-// footer action sends, so the plugin's batch totals reconcile against this snapshot.
+// roster button sends, so the plugin's batch totals reconcile against this snapshot.
 for (const e of ROSTER) {
   const tokens = buildBrandColumns(rosterSpec(e), e.neutralLevel ?? 'default')
   snap.roster[e.name] = overridesFor(tokens, base, `roster/${e.name}`)
 }
-// the seed canary IS the diff-correctness assertion: the base seed applied as a brand
-// must inherit everything
-if (COLUMNS.some(c => snap.roster['seed-canary'][c].length > 0))
-  fails.push(`roster/seed-canary: the seed canary has overrides (${COLUMNS.map(c => snap.roster['seed-canary'][c].length).join('·')}) — the diff is misfiring`)
+// The seed-canary property, asserted computationally (the in-file canary extension was
+// retired — owner call): the base seed applied as a brand must inherit everything.
+{
+  const seed = buildBrandColumns({ primaryHex: '#E93D82', name: 'seed', secondaryHex: null }, 'default')
+  const canary = overridesFor(seed, base, 'seed-canary')
+  if (COLUMNS.some(c => canary[c].length > 0))
+    fails.push(`seed-canary: the base seed diffs against itself (${COLUMNS.map(c => canary[c].length).join('·')}) — the diff is misfiring`)
+}
 
 if (bless) {
   fs.writeFileSync(SNAP_PATH, JSON.stringify(snap, null, 1))
