@@ -75,3 +75,67 @@ pushes these stops warm — the signed shift composes with it; smoothness `drift
 (scripts/smoothness-audit.ts) will move on the warm side → mechanical re-baseline after
 approval; blessed snapshots (dark-audit, divergence, ext-overrides, highlight) re-bless ONLY
 after owner eye-check.
+
+## C7 — the collision gate's cta-ΔE proxy doesn't see the wash register (yellow worst; green lane-dependent)
+
+**Status:** OPEN (found 2026-07-07 by the owner via the v2 plugin's lane columns — a green
+brand shifting the signal under wcag but not apca exposed the metric).
+
+**The structural problem.** `checkCollision` (src/engine/collision.ts) gates a signal shift
+on ONE distance: brand-cta ↔ signal-cta ΔE ≤ 0.16 inside a 30° hue window, on the LANE'S
+resolved values. But the wash register's only differentiator is hue (fixed L scaffold,
+normalized chroma — same lesson as C6), and the cta is a poor proxy for it wherever the cta
+machinery diverges from the ramp:
+
+- **yellow — a hard hole, both lanes:** gold/brown brands H≈60–80 (e.g. #c97a00 H66,
+  #9e6200 H69) sit wash-ΔE 0.002 / ΔH 0.5 from the yellow signal — byte-adjacent washes —
+  with NO lemon shift, because yellow's loud bright cta vs a gold-brown brand's deep cta
+  reads ctaΔE ≈ 0.29–0.31 (≫ 0.16). 27/116 sweep seeds dead. The lemon rule (split H96)
+  WOULD apply — the gate never fires.
+- **green — bright-register, lane-dependent:** #65C466 (H144, L≈0.73): wcag ctaΔE 0.090 →
+  shifts; apca ctaΔE 0.182 (the apca green cta re-solves darker for white on-text) → no
+  shift, washes ΔE 0.003–0.010 vs the signal. The collision genuinely differs per lane —
+  value-honest, but the file then carries a per-column signal variant AND an unprotected
+  wash register in one lane.
+- **even a fired shift under-delivers at the wash:** #65C466 wcag post-swap washes sit
+  ΔE 0.009–0.023 from the teal-side variant (swap hues are near siblings).
+- **info-color:** worst unshifted 0.028 at the hue-gate edge; the green-style
+  bright-register hole is untested and likely.
+- **red:** protected to the bar (0.007 vs the 0.006 C6 bar) — because C6's fix moves the
+  BRAND ramp, which protects every stop by construction.
+
+**The owner's sharper frame (2026-07-07): two collision phenomena, conflated.**
+(1) HUE collision — ramp-wide by construction: the L scaffold + normalized chroma make a
+near-hue chromatic pair collide at EVERY scaffolded register ("if the hue collides, it's
+all going to collide"). Only whole-ramp remedies apply: repel the brand (C6) or swap the
+signal. Right gate = hue proximity + sufficient chroma (wash-ΔE is the operational form of
+that test — the chroma qualifier built in; muted brands at the signal hue don't
+family-collide and must not false-fire). (2) VALUE collision — two specific stops
+coinciding (the cta clash) even at distinguishable hues; remedy = a value move (the dark
+treatments); right gate = stop ΔE. The bug in one sentence: the code uses metric (2)
+(cta ΔE) to decide remedy (1) (signal swap).
+
+**Fix directions (owner to pick; not decided):** (a) split the gate — a type-1 test
+(hue+chroma / wash-ΔE) drives swap-or-repel, the type-2 test (cta ΔE) drives value moves
+only; (b) generalize C6's brand-repel to the other signal bands (whole-ramp remedy, no
+signal swap — but changes brand ramps rather than signals); (c) role-split of both. Also
+decide: lane-local vs lane-global shift decisions (a per-column signal variant flips
+character when a frame's mode switches).
+
+**Secondaries: same gate, more exposed (owner scoping 2026-07-07).** The secondary's
+collision path (resolve.ts:340/353) uses the SAME checkCollision cta-ΔE gate — one
+mechanism, two callers; the gate fix covers both. Exposure is WORSE for secondaries:
+derived pastels track the primary's hue exactly while their pale ctas sit maximally far
+from any signal cta, so the current gate ~never fires for them — and since the plugin's
+derive-fallback shipped, every posture-on file carries one derived secondary per brand.
+The secondary REMEDY layer (yield-subtle for red/yellow — the mirror of rung-1's darken;
+swap-only-if-clears-BOTH for green/info) is owner-decided design (SECONDARY-PLAN §2) and
+has a new wrinkle repel can't answer: a derived secondary's hue is SUPPOSED to track its
+primary. Plan: C7's sweep measures secondary exposure + how the existing remedies behave
+once the corrected gate fires (does yield-subtle wash an already-pastel secondary to
+nothing?); remedies get their own owner-decision round ONLY if the measurements say so.
+
+**Measurement:** sweeps in scratchpad wash-sweep.ts/wash-sweep2.ts (session 2ac35f09);
+seeds ±35° per signal × L{0.55,0.65} × C{0.12,0.17} — NOTE under-covers the bright register
+where the green hole lives; re-sweep with L up to 0.8 + low-chroma seeds + DERIVED-SECONDARY
+seeds before fixing.
