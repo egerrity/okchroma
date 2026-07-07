@@ -84,6 +84,32 @@ export function inRedBand(h: number): boolean {
   return h > RED_BAND_LO_H && h <= RED_TORSION_CENTER_H
 }
 
+// The repel watershed = the red SIGNAL hue (signals.ts red, H 33.3) — not the torsion center
+// 35.5. A brand at exactly the pivot exits cool (status quo tie-break).
+export const RED_PIVOT_H = 33.3
+
+// Warm-side falloff: full push at the watershed (nearest-exit), gone by ~H50. Mirrors the
+// cool side's falloff shape (RED_TORSION_SOFTNESS register).
+export const RED_WARM_EXIT_H = 44
+export const RED_WARM_EXIT_SOFTNESS = 3.5
+
+// The band where red-adjacency machinery (rung-1 / dark collider / cta render shift) is
+// eligible. Upper edge = the measured re-conflict window (H29–41; 42+ recovers). Distinct
+// from inRedBand, which keeps the signal-fidelity meaning (audits gate on it).
+export const RED_REPEL_HI_H = 41.5
+export function inRedRepelBand(h: number): boolean {
+  return h > RED_BAND_LO_H && h <= RED_REPEL_HI_H
+}
+
+// Direction-aware red repel (owner directive 2026-07-07, CATALOG C6): the hue shift that
+// separates a brand from the red signal exits by the NEAREST side. Cool of the pivot keeps
+// the shipped cool curve byte-identical; warm of it the same magnitude pushes warmer
+// ("tomato goes orange-er"), so a warm-of-red brand is never dragged THROUGH the signal.
+export function redRepelShiftDeg(brandH: number): number {
+  if (brandH <= RED_PIVOT_H) return -RED_COOL_DEG * redCoolWeight(brandH)
+  return RED_COOL_DEG * (1 - sigmoid((brandH - RED_WARM_EXIT_H) / RED_WARM_EXIT_SOFTNESS))
+}
+
 export function maxChromaAt(L: number, H: number): number {
   return clampChromaToGamut(L, 0.52, H)
 }

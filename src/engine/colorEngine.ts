@@ -20,12 +20,13 @@ export { SUBTLE_SECONDARY_MULT, SUBTLE_SECONDARY_MULT_CANDIDATES } from './neutr
 // requirement-token resolver can share them without an import cycle). Re-exported here for API compat.
 import {
   goldSpineHue, torsionedHue, SPINE_OFFPATH_SIGMA, gauss, hueDelta,
-  HUE_NOISE_C, RED_COOL_DEG, redCoolWeight,
+  HUE_NOISE_C, redRepelShiftDeg,
   hexToOklch, oklchToSrgbUnclamped, maxChromaAt,
   makeStop, onTextIsWhite, type ColorStop,
 } from './colorMath'
 export {
   goldSpineHue, torsionedHue, hexToOklch, RED_COOL_DEG, redCoolWeight, inRedBand,
+  RED_PIVOT_H, redRepelShiftDeg, inRedRepelBand,
 } from './colorMath'
 export type { ColorStop } from './colorMath'
 
@@ -82,10 +83,10 @@ export interface GenerateOptions {
 
   coolRedDark?: boolean
 
-  // The red-cool is a BRAND-only differentiator (it nudges a red-band brand cooler
-  // so it reads distinct from the red signal). Signals set this to keep their own
-  // identity hue in BOTH modes — light otherwise cools them like a brand. Dark is
-  // already brand-only via coolRedDark.
+  // The red repel is a BRAND-only differentiator (it shifts a red-adjacent brand away
+  // from the red signal, out the NEAREST side — cooler below the signal hue, warmer
+  // above). Signals set this to keep their own identity hue in BOTH modes — light
+  // otherwise shifts them like a brand. Dark is already brand-only via coolRedDark.
   suppressRedCool?: boolean
 
   style?: 'default' | 'deeper' | 'full-chroma'
@@ -163,11 +164,11 @@ export function generateScale(
   }
 }
 
-export function applyRedCoolRender(scale: GeneratedScale, enforceOnFillContrast: boolean, contrastProfile?: ContrastProfile): void {
+export function applyRedRepelRender(scale: GeneratedScale, enforceOnFillContrast: boolean, contrastProfile?: ContrastProfile): void {
   if (scale.brandC < HUE_NOISE_C) return
-  const wRed = redCoolWeight(scale.brandH)
-  if (wRed <= 1e-9) return
-  const H = scale.brandH - RED_COOL_DEG * wRed
+  const shift = redRepelShiftDeg(scale.brandH)
+  if (Math.abs(shift) <= 1e-9) return
+  const H = scale.brandH + shift
 
   scale.cta = makeStop(scale.cta.stop, scale.cta.L, scale.cta.C, H)
   scale.ctaHover = makeStop(scale.ctaHover.stop, scale.ctaHover.L, scale.ctaHover.C, H)

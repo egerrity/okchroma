@@ -1,6 +1,6 @@
 
 
-import { generateScale, generateSubtleSecondary, applyRedCoolRender, inRedBand, type GeneratedScale, type ContrastProfile } from './colorEngine'
+import { generateScale, generateSubtleSecondary, applyRedRepelRender, inRedRepelBand, RED_PIVOT_H, type GeneratedScale, type ContrastProfile } from './colorEngine'
 import { darkChromaCurve } from './darkChromaCurve'
 import type { Archetype } from './archetypes'
 import { SIGNALS, type SignalDef } from './signals'
@@ -115,7 +115,7 @@ export function resolveBrand(
     const status = collisionStatus(scale, sigScales)
     if (status.trigger) {
 
-      if (inRedBand(scale.brandH)) {
+      if (inRedRepelBand(scale.brandH)) {
         rung1 = status.trigger
         scale = generateScale(hex, name, RUNG1_ARCHETYPE, { ...floor, ...rung1Opts })
       } else {
@@ -128,8 +128,13 @@ export function resolveBrand(
   let darkCollider: 'muted' | null = null
   if (!opts?.exact && !opts?.skipCollisionRules) {
     const err = sigScales.get('red')!
+    // COOL SIDE ONLY: the muted float is the value-separation for brands whose dark hue
+    // can't exit (the cool side owns the pink exit already). Warm of the pivot the repel
+    // separates by hue and the directive's dark-cta treatment applies instead — muted's
+    // pastel anchor would also re-collide the ramp (it re-anchors the dark torsion at the
+    // pastel L, dragging every low stop back onto the signal hue).
     if (checkCollision(scale, err.scale, err.def, 'dark').collides) {
-      if (inRedBand(scale.brandH)) {
+      if (inRedRepelBand(scale.brandH) && scale.brandH <= RED_PIVOT_H) {
         darkCollider = 'muted'
         scale = generateScale(
           hex,
@@ -162,8 +167,11 @@ export function resolveBrand(
     }
   }
 
-  if (!opts?.exact && !opts?.archetypeOverride && !rung1 && inRedBand(scale.brandH)) {
-    applyRedCoolRender(scale, true, opts?.contrastProfile)
+  // cta hue follows the repel. Cool side: rung-1's dark value separates on its own, the cta
+  // keeps identity hue (!rung1 preserves the shipped values). Warm side: the dark treatment
+  // AND the warm hue compose — "dark tomato, not dark red" (owner directive, CATALOG C6).
+  if (!opts?.exact && !opts?.archetypeOverride && (!rung1 || scale.brandH > RED_PIVOT_H) && inRedRepelBand(scale.brandH)) {
+    applyRedRepelRender(scale, true, opts?.contrastProfile)
   }
 
   return { scale, shearDeg: 0, rung1, darkCollider, warningVariant: warnVariant, pending, signalOverrides, errorComponentRule }

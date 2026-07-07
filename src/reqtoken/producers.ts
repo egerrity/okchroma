@@ -11,7 +11,7 @@ import {
   SPINE_OFFPATH_SIGMA, RED_TORSION_CENTER_H, RED_TORSION_SOFTNESS, VIVID_C, HUE_NOISE_C, MUTED_BLEND_DENOM,
   CREAM_UPPER_H, CREAM_UPPER_SOFTNESS,
   DEEPER_BAND_H_LO, DEEPER_BAND_H_HI, DEEPER_BAND_H_SOFT, DEEPER_BAND_U_LO, DEEPER_BAND_U_HI, DEEPER_BAND_U_SOFT,
-  DEEPER_STRENGTH, RED_COOL_DEG, redCoolWeight, inRedBand, applyChromaFloor,
+  DEEPER_STRENGTH, redRepelShiftDeg, RED_BAND_LO_H, applyChromaFloor,
   DARK_FLOOR_FULL_C, DARK_FLOOR_MUTED_MAX_C, onTextIsWhite,
 } from '../engine/colorMath'
 import { DARK_STOP_9_MIN_L, DARK_COLLIDER_MUTED_L, DARK_COLLIDER_MUTED_CHROMA_SCALE } from '../engine/stopTable'
@@ -43,7 +43,7 @@ export function buildContext(hex: string, opts?: ResolveOpts) {
   const v = Math.min(1, brandC / VIVID_C)
   const vSubtle = Math.min(1, subtleC / VIVID_C)
   const S = hueIsNoise ? 0 : sigmoid(hueDelta(brandH, RED_TORSION_CENTER_H) / RED_TORSION_SOFTNESS)
-  const wRed = hueIsNoise || opts?.suppressRedCool ? 0 : redCoolWeight(brandH)
+  const redShift = hueIsNoise || opts?.suppressRedCool ? 0 : redRepelShiftDeg(brandH)
   const mutednessRaw = Math.min(1, (1 - v) / MUTED_BLEND_DENOM)
 
   const creamGate = 1 - sigmoid((brandH - CREAM_UPPER_H) / CREAM_UPPER_SOFTNESS)
@@ -71,22 +71,25 @@ export function buildContext(hex: string, opts?: ResolveOpts) {
 
   const lightSpineRef = goldSpineHue(scaleL)
   const gOffPath = gauss(hueDelta(brandH, lightSpineRef), SPINE_OFFPATH_SIGMA)
-  // the REAL light hue producer ('warm-drift'): inline spine drift with a dynamic cap (24+8u) MINUS the red
-  // cool — NOT torsionedHue (that is the dark producer). colorEngine.ts:307–310 verbatim.
+  // the REAL light hue producer ('warm-drift'): inline spine drift with a dynamic cap (24+8u) PLUS the
+  // signed red repel — NOT torsionedHue (that is the dark producer). Was colorEngine.ts:307–310 with a
+  // fixed-direction cool; the repel is direction-aware (CATALOG C6).
   const lightHueAt = (L: number): number => {
     const drift = 0.55 * (goldSpineHue(L) - lightSpineRef) * wDrift * gOffPath
-    return brandH + Math.max(-driftCapDeg, Math.min(driftCapDeg, drift)) - RED_COOL_DEG * wRed
+    return brandH + Math.max(-driftCapDeg, Math.min(driftCapDeg, drift)) + redShift
   }
 
+  // dark keeps its shipped lower fence (light applies the weight's own taper below H12;
+  // dark never shifted there) — the upper fence is gone by design: the warm exit tapers.
   const darkH =
-    opts?.coolRedDark && !hueIsNoise && inRedBand(brandH)
-      ? brandH - RED_COOL_DEG * redCoolWeight(brandH)
+    opts?.coolRedDark && !hueIsNoise && brandH > RED_BAND_LO_H
+      ? brandH + redRepelShiftDeg(brandH)
       : brandH
 
   return {
     hex, opts, brandL, brandC, brandH, subtleC, cAt, archetype, scaleL,
     darkFloorStrength, hueIsNoise, v, vSubtle, u, chromaBoost, brandSat,
-    lightHueAt, darkH, gOffPath, wRed,
+    lightHueAt, darkH, gOffPath, redShift,
   }
 }
 export type Ctx = ReturnType<typeof buildContext>

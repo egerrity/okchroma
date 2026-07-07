@@ -6,7 +6,7 @@ import {
 import { resolveBrand, resolveTheme, type SecondaryStyle } from '../src/engine/resolve'
 import { ARCHETYPES, type Archetype } from '../src/engine/archetypes'
 import { brandCss, signalsCss, toHex } from '../src/engine/cssRender'
-import { inRedBand, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
+import { inRedRepelBand, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
 import { wcagY, contrastRatio } from '../src/engine/constraints'
 import { HERO_ILLO } from './heroIllo'
 import {
@@ -546,8 +546,8 @@ function checklistRows(rRec: ResolvedBrand, rung: RungMode, primaryHex: string):
     rows.push({ key: 'hue', tone: 'pass', label: `${origArch} archetype, no signal conflicts`, detail: 'The hue clears every signal gate; the fill anchors at your exact color.' })
   }
 
-  if (inRedBand(rRec.scale.brandH)) {
-    rows.push({ key: 'redcool', tone: 'standard', label: 'standard red hue shift applied', detail: 'Warm reds rotate the fill a few degrees cool at render time, away from error red. Every decision is made on your raw hue first — this is presentation only.' })
+  if (inRedRepelBand(rRec.scale.brandH)) {
+    rows.push({ key: 'redcool', tone: 'standard', label: 'standard red hue shift applied', detail: 'Red-adjacent hues rotate the fill a few degrees away from error red at render time — cooler below it, warmer above. Every decision is made on your raw hue first — this is presentation only.' })
   }
 
   if (rRec.warningVariant === 'lemon') {
