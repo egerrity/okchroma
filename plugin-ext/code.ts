@@ -85,8 +85,11 @@ figma.ui.onmessage = async (msg) => {
       const baseVars = baseMatch ? await varsByName(baseMatch.id) : new Map<string, figma.Variable>()
       const baseHasSecondary = baseVars.has('brand-secondary/paper-1')
       const extsOfBase = baseMatch ? extensions.filter(e => e.rootVariableCollectionId === baseMatch!.id) : []
-      const existingExt = extsOfBase.find(e => e.getPluginData(BRAND_KEY) === brand)
-        ?? extsOfBase.find(e => e.name === brand)
+      // case-insensitive identity: "l1-near-black" typed by hand must overwrite
+      // L1-near-black, never create a sibling that differs only by case
+      const norm = (s: string) => s.trim().toLowerCase()
+      const existingExt = extsOfBase.find(e => norm(e.getPluginData(BRAND_KEY)) === norm(brand))
+        ?? extsOfBase.find(e => norm(e.name) === norm(brand))
 
       // Nudge before surprising changes (v1's idiom — each needs a second Apply):
       // overwriting a brand, or ADDING the file's secondary (the deliberate posture flip;
