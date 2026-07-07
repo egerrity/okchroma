@@ -17,6 +17,7 @@ import * as path from 'path'
 import { BRANDS } from '../src/brands'
 import { SECONDARIES } from '../src/secondaries'
 import { buildBaseColumns, buildBrandColumns, COLUMNS, type FlatTok, type TokenColumns } from '../plugin-ext/payload'
+import { ROSTER, rosterSpec } from '../plugin-ext/roster'
 
 const EPS = 1 / 1024
 const eq = (a: FlatTok, b: FlatTok) =>
@@ -49,8 +50,8 @@ function overridesFor(brand: TokenColumns, base: TokenColumns, label: string): R
 }
 
 const base = buildBaseColumns()
-type Snap = { base: Record<string, number>; brands: Record<string, Record<string, string[]>> }
-const snap: Snap = { base: {}, brands: {} }
+type Snap = { base: Record<string, number>; brands: Record<string, Record<string, string[]>>; roster: Record<string, Record<string, string[]>> }
+const snap: Snap = { base: {}, brands: {}, roster: {} }
 for (const col of COLUMNS) snap.base[col] = base[col].length
 
 for (const b of BRANDS) {
@@ -65,6 +66,17 @@ for (const b of BRANDS) {
   snap.brands[b.slug] = overridesFor(tokens, base, b.slug)
 }
 
+// The bulk roster (plugin-ext/roster.ts) goes through the same gate — exactly what the
+// footer action sends, so the plugin's batch totals reconcile against this snapshot.
+for (const e of ROSTER) {
+  const tokens = buildBrandColumns(rosterSpec(e), e.neutralLevel ?? 'default')
+  snap.roster[e.name] = overridesFor(tokens, base, `roster/${e.name}`)
+}
+// the seed canary IS the diff-correctness assertion: the base seed applied as a brand
+// must inherit everything
+if (COLUMNS.some(c => snap.roster['okchroma'][c].length > 0))
+  fails.push(`roster/okchroma: the seed canary has overrides (${COLUMNS.map(c => snap.roster['okchroma'][c].length).join('·')}) — the diff is misfiring`)
+
 if (bless) {
   fs.writeFileSync(SNAP_PATH, JSON.stringify(snap, null, 1))
   console.log(`blessed: override-set snapshot written to ${SNAP_PATH} (${Object.keys(snap.brands).length} brands × ${COLUMNS.length} columns)`)
@@ -72,29 +84,33 @@ if (bless) {
   fails.push(`no snapshot at ${SNAP_PATH} — run audit:ext:bless once to establish it`)
 } else {
   const prev = JSON.parse(fs.readFileSync(SNAP_PATH, 'utf8')) as Snap
-  if (!prev.base || !prev.brands) {
-    fails.push('snapshot predates the mode-columns shape — run audit:ext:bless')
+  if (!prev.base || !prev.brands || !prev.roster) {
+    fails.push('snapshot predates the current shape — run audit:ext:bless')
   } else {
     for (const col of COLUMNS) {
       if (prev.base[col] !== snap.base[col])
         fails.push(`base ${col}: token count moved ${prev.base[col]} → ${snap.base[col]}`)
     }
-    const slugs = new Set([...Object.keys(prev.brands), ...Object.keys(snap.brands)])
-    for (const slug of slugs) {
-      const o = prev.brands[slug]
-      const c = snap.brands[slug]
-      if (!o || !c) { fails.push(`${slug}: ${!o ? 'new brand (re-bless)' : 'brand vanished'}`); continue }
-      for (const col of COLUMNS) {
-        const ov = o[col] ?? [], cv = c[col] ?? []
-        if (ov.join('\n') !== cv.join('\n')) {
-          const added = cv.filter(p => !ov.includes(p))
-          const gone = ov.filter(p => !cv.includes(p))
-          fails.push(`${slug} ${col}: override set moved (${ov.length}→${cv.length}`
-            + `${added.length ? `; +${added.slice(0, 3).join(', ')}${added.length > 3 ? '…' : ''}` : ''}`
-            + `${gone.length ? `; -${gone.slice(0, 3).join(', ')}${gone.length > 3 ? '…' : ''}` : ''})`)
+    const compare = (label: string, old: Record<string, Record<string, string[]>>, cur: Record<string, Record<string, string[]>>) => {
+      const slugs = new Set([...Object.keys(old), ...Object.keys(cur)])
+      for (const slug of slugs) {
+        const o = old[slug]
+        const c = cur[slug]
+        if (!o || !c) { fails.push(`${label}${slug}: ${!o ? 'new entry (re-bless)' : 'entry vanished'}`); continue }
+        for (const col of COLUMNS) {
+          const ov = o[col] ?? [], cv = c[col] ?? []
+          if (ov.join('\n') !== cv.join('\n')) {
+            const added = cv.filter(p => !ov.includes(p))
+            const gone = ov.filter(p => !cv.includes(p))
+            fails.push(`${label}${slug} ${col}: override set moved (${ov.length}→${cv.length}`
+              + `${added.length ? `; +${added.slice(0, 3).join(', ')}${added.length > 3 ? '…' : ''}` : ''}`
+              + `${gone.length ? `; -${gone.slice(0, 3).join(', ')}${gone.length > 3 ? '…' : ''}` : ''})`)
+          }
         }
       }
     }
+    compare('', prev.brands, snap.brands)
+    compare('roster/', prev.roster, snap.roster)
   }
 }
 

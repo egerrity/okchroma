@@ -4,6 +4,7 @@ import { generateNeutralScale, type GeneratedScale, type ColorStop, type Neutral
 import { SIGNALS } from '../src/engine/signals'
 import { toHex } from '../src/engine/cssRender'
 import { buildBrandColumns, buildBaseColumns } from './payload'
+import { ROSTER, rosterSpec } from './roster'
 
 // ─── State ───────────────────────────────────────────────────────────────────
 
@@ -65,6 +66,7 @@ const applyBtn        = $<HTMLButtonElement>('apply-btn')
 const statusEl        = $<HTMLElement>('status')
 const smokeBtn        = $<HTMLButtonElement>('smoke-btn')
 const smokeLog        = $<HTMLElement>('smoke-log')
+const rosterBtn       = $<HTMLButtonElement>('roster-btn')
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -399,6 +401,26 @@ window.addEventListener('message', e => {
     }
   }).pluginMessage
   if (!msg) return
+  // an active roster batch consumes done/error/confirm itself (sequential applies)
+  if (rosterIdx !== null && (msg.type === 'done' || msg.type === 'error' || msg.type === 'confirm')) {
+    const entry = ROSTER[rosterIdx]
+    if (msg.type === 'done') {
+      rosterTotals.set += msg.set ?? 0
+      rosterTotals.removed += msg.removed ?? 0
+      rosterTotals.inherited += msg.inherited ?? 0
+      rosterTotals.baseCreated = rosterTotals.baseCreated || !!msg.baseCreated
+      if (rosterIdx + 1 < ROSTER.length) { sendRosterEntry(rosterIdx + 1); return }
+      rosterIdx = null
+      applyBtn.disabled = false
+      setStatus(`✓ roster: ${ROSTER.length} brands · ${rosterTotals.set} overridden · ${rosterTotals.inherited} inherited`
+        + `${rosterTotals.removed ? ` · ${rosterTotals.removed} reverted` : ''}${rosterTotals.baseCreated ? ' · base created' : ''}`, 'ok')
+      return
+    }
+    rosterIdx = null
+    applyBtn.disabled = false
+    setStatus(`Roster stopped at ${entry.name} — ${msg.message ?? msg.type}`, 'err')
+    return
+  }
   applyBtn.disabled = false
   if (msg.type === 'done') {
     pendingName = null
@@ -424,6 +446,36 @@ smokeBtn.addEventListener('click', () => {
   smokeLog.style.display = ''
   smokeLog.textContent = 'running…'
   parent.postMessage({ pluginMessage: { type: 'smoke' } }, '*')
+})
+
+// ─── Bulk roster — the edge-case brand set, one batch confirm, sequential applies ─────
+// Every entry goes through the UNCHANGED single-apply path (confirmed: true after the
+// one arming click); the handler above accumulates totals and advances the queue.
+
+let rosterIdx: number | null = null // active batch position; null = idle
+let rosterArmed = false
+let rosterTotals = { set: 0, removed: 0, inherited: 0, baseCreated: false }
+
+function sendRosterEntry(i: number) {
+  const e = ROSTER[i]
+  rosterIdx = i
+  setStatus(`roster ${i + 1}/${ROSTER.length} — ${e.name}…`)
+  const brandTokens = buildBrandColumns(rosterSpec(e), e.neutralLevel ?? 'default')
+  const baseTokens = buildBaseColumns()
+  parent.postMessage({ pluginMessage: { type: 'apply', brand: e.name, brandTokens, baseTokens, hasSecondary: false, confirmed: true } }, '*')
+}
+
+rosterBtn.addEventListener('click', () => {
+  if (rosterIdx !== null) return // batch already running
+  if (!rosterArmed) {
+    rosterArmed = true
+    setStatus(`Will apply the ${ROSTER.length}-brand test roster — creates the base if missing, overwrites existing roster extensions. Click again.`, 'err')
+    return
+  }
+  rosterArmed = false
+  applyBtn.disabled = true
+  rosterTotals = { set: 0, removed: 0, inherited: 0, baseCreated: false }
+  sendRosterEntry(0)
 })
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
