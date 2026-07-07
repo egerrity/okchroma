@@ -11,14 +11,14 @@
     {
       "name": "reqtoken-render",
       "runtimeExecutable": "sh",
-      "runtimeArgs": ["-c", "npx serve ./render -l $PORT --no-clipboard"],
+      "runtimeArgs": ["-c", "npx serve /Users/emilygerrity/okchroma-reqtoken/render -l $PORT --no-clipboard"],
       "autoPort": true,
       "port": 3002
     },
     {
       "name": "reqtoken-demo",
       "runtimeExecutable": "sh",
-      "runtimeArgs": ["-c", "npx serve . -l $PORT --no-clipboard"],
+      "runtimeArgs": ["-c", "npx serve /Users/emilygerrity/okchroma-reqtoken -l $PORT --no-clipboard"],
       "autoPort": true,
       "port": 3003
     }
