@@ -412,12 +412,14 @@ window.addEventListener('message', e => {
       if (rosterIdx + 1 < ROSTER.length) { sendRosterEntry(rosterIdx + 1); return }
       rosterIdx = null
       applyBtn.disabled = false
+      rosterBtn.disabled = false
       setStatus(`✓ roster: ${ROSTER.length} brands · ${rosterTotals.set} overridden · ${rosterTotals.inherited} inherited`
         + `${rosterTotals.removed ? ` · ${rosterTotals.removed} reverted` : ''}${rosterTotals.baseCreated ? ' · base created' : ''}`, 'ok')
       return
     }
     rosterIdx = null
     applyBtn.disabled = false
+    rosterBtn.disabled = false
     setStatus(`Roster stopped at ${entry.name} — ${msg.message ?? msg.type}`, 'err')
     return
   }
@@ -469,11 +471,13 @@ rosterBtn.addEventListener('click', () => {
   if (rosterIdx !== null) return // batch already running
   if (!rosterArmed) {
     rosterArmed = true
-    setStatus(`Will apply the ${ROSTER.length}-brand test roster — creates the base if missing, overwrites existing roster extensions. Click again.`, 'err')
+    setStatus(`Applies the fixed ${ROSTER.length}-brand test set (ignores the fields above; overwrites existing roster extensions). `
+      + 'Keep the plugin open until it finishes. Click the same button again to start.', 'err')
     return
   }
   rosterArmed = false
   applyBtn.disabled = true
+  rosterBtn.disabled = true
   rosterTotals = { set: 0, removed: 0, inherited: 0, baseCreated: false }
   sendRosterEntry(0)
 })

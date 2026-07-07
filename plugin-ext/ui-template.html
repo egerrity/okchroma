@@ -185,6 +185,16 @@ body {
 .apply-btn:hover:not(:disabled) { background: #6d5fc0; }
 .apply-btn:disabled { opacity: .5; cursor: not-allowed; }
 
+/* the roster's OWN button — separate from the brand form above; runs the fixed test set */
+.roster-btn {
+  width: 100%; height: 32px; border-radius: 9px; margin-top: 8px;
+  background: transparent; border: 1.5px solid #d9d9de; color: #555;
+  font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer;
+  transition: border-color .1s, color .1s, opacity .1s;
+}
+.roster-btn:hover:not(:disabled) { border-color: #7c6fcd; color: #1a1a1a; }
+.roster-btn:disabled { opacity: .5; cursor: not-allowed; }
+
 /* ── Status ── */
 .status { margin-top: 8px; font-size: 11px; text-align: center; min-height: 16px; color: #888; }
 .status.ok  { color: #16a34a; font-weight: 600; }
@@ -294,11 +304,11 @@ body {
 <div class="matrix" id="matrix"></div>
 
 <button class="apply-btn" id="apply-btn">Apply to Figma</button>
+<button class="roster-btn" id="roster-btn" title="Applies the edge-case brand set — one extension per roster entry, all solve columns. Ignores the fields above.">Apply test roster (16 brands)</button>
 <div class="status" id="status"></div>
 
-<div style="margin-top:10px;text-align:center;display:flex;gap:14px;justify-content:center">
+<div style="margin-top:10px;text-align:center">
   <button class="smoke-link" id="smoke-btn" title="Runs the extended-collections API probes on scratch collections, then removes them">Run Enterprise smoke test</button>
-  <button class="smoke-link" id="roster-btn" title="Applies the edge-case brand set — one extension per roster entry, all solve columns">Apply test roster</button>
 </div>
 <pre class="smoke-log" id="smoke-log" style="display:none"></pre>
 

@@ -74,8 +74,8 @@ for (const e of ROSTER) {
 }
 // the seed canary IS the diff-correctness assertion: the base seed applied as a brand
 // must inherit everything
-if (COLUMNS.some(c => snap.roster['okchroma'][c].length > 0))
-  fails.push(`roster/okchroma: the seed canary has overrides (${COLUMNS.map(c => snap.roster['okchroma'][c].length).join('·')}) — the diff is misfiring`)
+if (COLUMNS.some(c => snap.roster['seed-canary'][c].length > 0))
+  fails.push(`roster/seed-canary: the seed canary has overrides (${COLUMNS.map(c => snap.roster['seed-canary'][c].length).join('·')}) — the diff is misfiring`)
 
 if (bless) {
   fs.writeFileSync(SNAP_PATH, JSON.stringify(snap, null, 1))

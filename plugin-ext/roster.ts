@@ -26,7 +26,9 @@ export interface RosterEntry {
 }
 
 export const ROSTER: RosterEntry[] = [
-  { name: 'okchroma', hex: '#E93D82', note: 'seed canary — zero overrides expected' },
+  // Named to self-describe in the collection picker: it LOOKS like a duplicate of the
+  // base on purpose — the diff-correctness check, an extension that inherits everything.
+  { name: 'seed-canary', hex: '#E93D82', note: 'the base seed as a brand — zero overrides expected' },
   { name: 'fis-eggplant', hex: '#532371', plannedSecondaryHex: '#4BCD3E', note: 'real theme' },
   { name: 'blue', hex: '#044BAF', note: 'legacy default · info-color → magenta' },
   { name: 'orange', hex: '#BC3F01', note: 'real theme, warm' },
