@@ -53,9 +53,9 @@ overrides — **existing brands inherit the base default until individually re-a
 1. Build: `npm run plugin-ext:build` (repo root).
 2. Figma desktop → **Plugins → Development → Import plugin from manifest…** →
    pick `plugin-ext/manifest.json` — or download `okchroma-extended.zip` from the demo site’s /install.html (built fresh from main by the Pages workflow).
-   The manifest carries no `id` on purpose (development import doesn't need one; an id
-   only exists once published, which this plugin isn’t yet). If your Figma build insists
-   on an id, create a throwaway via **New plugin…** and copy its generated id in.
+   The manifest CARRIES a Figma-minted `id` (1656395729131258955, minted 2026-07-07 via
+   the New-plugin flow): private pluginData — the base/extension tags — throws without
+   one ("Cannot get private plugin data in a plugin without an ID"). Don't remove it.
 3. Run in a design file on an **Enterprise** org.
 
 ## First Enterprise run — smoke test first

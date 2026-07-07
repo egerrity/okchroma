@@ -1,5 +1,6 @@
 {
   "name": "OKChroma Extended",
+  "id": "1656395729131258955",
   "api": "1.0.0",
   "main": "dist/plugin-ext-code.js",
   "ui": "dist/plugin-ext-ui.html",
