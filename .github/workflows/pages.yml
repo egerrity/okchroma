@@ -45,6 +45,7 @@ jobs:
           mkdir -p _site
           cp -r dist _site/dist
           cp -r tokens _site/tokens
+          cp demo/favicon.png _site/favicon.png
           sed 's#\.\./dist/#dist/#g; s#\.\./tokens/#tokens/#g' demo/index.html > _site/index.html
 
       # Early-access plugin install: /install.html + /okchroma-plugin.zip.
