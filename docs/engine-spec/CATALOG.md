@@ -425,3 +425,28 @@ counterpart of the C8 gold story — same H-K mechanism, one band cooler). Chili
 (true red, H20 everywhere) shows no break — the read is specific to the orange band.
 Candidate knobs for the round (owner decides): the s7|s8 scaffold seam · the C6 dark
 overshoot · dark highlight-band chroma/L for H35–55. Relates C6 (open knob), C8 V1/V2.
+
+**C8 — LIGHT COOL-YELLOW HUE SNAP (owner question, 2026-07-08: "why does lemon-bright
+look orange-brown at that color? it basically has to get olive — what mechanism makes
+it jump from the greeny-yellow darkening to golden tan at 8").** Verdicts from the
+candidates page first: B (brandSat form) OUT; D 0.35 vs 0.50 read near-identical; and
+ONE RULE only — the "Golden Milk half dose" phrasing was my description of where its
+L lands on the single brightness ramp, NOT a per-color case (formula is uniform:
+0.35 × min(1, C/0.13) × clamp((L−0.70)/0.20)). MECHANISM TRACED: the light warm drift
+(wDrift → lightHueAt, producers.ts) bends every ramp toward the gold spine as stops
+darken; its hue weight is the day-one gaussian gauss(ΔH from 83, σ28) — still 0.73 at
+H105 — so a green-yellow ramp snaps warm exactly at the s7|s8 lightness drop (light
+ΔL 0.20). Measured: lemon-bright s7 H100.6 → s8 H85.6 (−15°), then H84–87 across the
+highlight band at L .62–.66 / C .11–.14 = golden tan. Band-wide but family-CORRECT for
+golds (signal H84: s7 H85 → s8 H68 is the gold path); wrong exactly where V1 said so
+in dark — the cool yellows. Dark got the declared falloff (zero by H104); light never
+did. WHAT-IF RENDERED (render/lemon-hue-whatif.html, patch-dump-restore, hashes
+distinct): wDrift × (1 − ramp(H, 88→104)) — the dark curve's cool-edge knots, one
+hue-keyed rule, all scales (the lemon swap variant included, matching dark V1: it now
+holds H107 flat instead of snapping to gold at 8). Verified: below H88 byte-identical
+(Golden Milk/Honey Lemon own ramps, canonical yellow signal); H104/lemon-bright hold
+identity hue at every stop → olive darkening; Chamomile (H92) highlights ~5° less
+golden (edge case for her eye). Margins with the falloff + D 0.35 together: worst
+lemon-bright 0.0148 = 2.5× the 0.006 bar (tightens because brand AND lemon variant
+both hold cool hues). AWAITING: her verdict on the falloff + the amp re-judge
+(0.35 vs 0.50) on the fixed page. Nothing shipped.
