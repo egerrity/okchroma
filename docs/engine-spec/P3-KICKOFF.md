@@ -52,6 +52,36 @@ only saturated stops differ.
   now; the ID-relative modulation of dark chroma is a deliberate redesign for this round.
   Interim asymmetry (light brands duller than their own dark) is owner-accepted.
 
+## Workstream-1 consumer audit (wcagY / apcaY — enumerated 2026-07-07, verify lines live)
+
+Every site below computes or consumes sRGB-primary luminance. Each needs a call: exact-P3
+Y, or accessibility-on-the-sRGB-clamp (conservative). Grep `wcagY|apcaY` to refresh.
+
+- **constraints.ts** — the definitions themselves, plus the SOLVERS `findLForY` /
+  `findLForContrast` (bisections that place L to hit a Y/ratio target — gamut-aware Y
+  changes the solved L, which moves stops).
+- **colorMath.ts** — `onTextIsWhite`: the on-text pole choice (max-|APCA Lc| preference)
+  AND the wcag lane's 4.5 ratioFloor flip. LEGAL question: does the wcag lane's
+  conformance floor compute on the rendered (P3) color or the sRGB fallback?
+- **reqtoken/producers.ts** — `whiteTextLcAt` (enforcement bisection), `onFillIsWhiteLight`,
+  the highlight band's Lc-60-by-placement, dark enforcement paths.
+- **reqtoken/resolve.ts** — the REQUIRE phase: every declared contrast clamp
+  (stop-8 3:1, stops 11/12 floors, cta enforcement, `unresolvable` fallback).
+- **perceptualL.ts** — the H-K machinery consumes luminance too (`perceptualRungL` /
+  `perceptualDarkC`) — a P3 switch changes perceptual placement, not just conformance.
+- **colorEngine.ts** — generateSubtleSecondary on-flags, render-pass consumers.
+- **spec.ts** — declares the ratio/Lc targets (data, not math — unchanged, but the
+  withProfile rewrite must keep meaning under the new Y).
+
+## Instruments ready for the calibration round (ported 2026-07-07)
+
+- `npm run sweep:collision` — the C7 invariant as a permanent gate (zero unfired
+  qualified holes, secondary annotation coverage, swap lane-invariance). Run it after
+  every P3 step; it is the regression net for the collision machinery.
+- `npm run lab:calibration` — emits dist/calibration-lab.html: the mute corridor solve
+  (t sweep), the yellow vividness boundary strip, and the paper-1/2 diagnostics — the
+  eye-check material for the post-P3 round, regenerated against whatever gamut is live.
+
 ## Measurement artifacts
 
 CATALOG C7 (this folder) carries the full C7 sweep + boost measurements; the sweep

@@ -14,6 +14,8 @@
     "audit:divergence": "esbuild scripts/divergence-audit.ts --bundle --platform=node --outfile=dist/divergence-audit.js && node dist/divergence-audit.js",
     "audit:divergence:bless": "esbuild scripts/divergence-audit.ts --bundle --platform=node --outfile=dist/divergence-audit.js && node dist/divergence-audit.js --bless",
     "sweep": "esbuild scripts/gamut-sweep.ts --bundle --platform=node --outfile=dist/gamut-sweep.js && node dist/gamut-sweep.js",
+    "sweep:collision": "esbuild scripts/collision-sweep.ts --bundle --platform=node --outfile=dist/collision-sweep.js && node dist/collision-sweep.js",
+    "lab:calibration": "esbuild scripts/calibration-lab.ts --bundle --platform=node --outfile=dist/calibration-lab.js && node dist/calibration-lab.js",
     "sweep:pole": "esbuild scripts/wcag-pole-sweep.ts --bundle --platform=node --outfile=dist/wcag-pole-sweep.js && node dist/wcag-pole-sweep.js",
     "smooth": "esbuild scripts/smoothness-audit.ts --bundle --platform=node --outfile=dist/smoothness-audit.js && node dist/smoothness-audit.js",
     "smooth:baseline": "esbuild scripts/smoothness-audit.ts --bundle --platform=node --outfile=dist/smoothness-audit.js && node dist/smoothness-audit.js --baseline",
