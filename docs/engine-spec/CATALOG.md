@@ -348,3 +348,16 @@ without the second breaks separation exactly where remedies fire; the aesthetic 
 asserts POST-REMEDY wash margins ≥ the bar — the collapse passed the gate. Add a
 post-remedy margin check to the sweep in the corridor round. Instrument:
 scratchpad clash-margin (checkHueCollision vs effective signal set, ±16° per signal).
+
+**C8 V2 — SHIPPED (owner spec, applied autonomously 2026-07-08).** Dark ink text
+register: ink-12 = body text → flat narrow cap DARK_INK12_MAX_C 0.040 (the all-hue
+median; measured range was .031–.213 — lemon .125, H120 .213 read NEON as body text);
+ink-11 → clamps to the sRGB ceiling = the pre-P3 register the flip un-pinned (yellow
+signal .179→.152, lemon .215→.184; sub-ceiling hues byte-unchanged). Both caps ride
+INSIDE darkInkChromaAt so the H-K placement solves see capped chroma (no post-hoc
+trim). Owner's exact directive: "use the pre-adjustment inks… make the range for
+ink-12 much narrower than it is." Gates 12/12, ZERO re-bless (drift inside every
+tolerance). Exhibit: render/ink-register-shipped.html; demo rebuilt. Light ink
+untouched (T11/T12 requires own that register). ALL THREE C8 VERDICTS now resolved:
+V1 shipped · V2 shipped · V3 = the envelope+corridor joint round (aesthetic 0.35
+target stands).

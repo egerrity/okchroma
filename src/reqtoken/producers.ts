@@ -14,7 +14,7 @@ import {
   DEEPER_STRENGTH, redRepelShiftDeg, RED_BAND_LO_H, applyChromaFloor,
   DARK_FLOOR_FULL_C, DARK_FLOOR_MUTED_MAX_C, onTextIsWhite,
 } from '../engine/colorMath'
-import { DARK_STOP_9_MIN_L, DARK_COLLIDER_MUTED_L, DARK_COLLIDER_MUTED_CHROMA_SCALE } from '../engine/stopTable'
+import { DARK_STOP_9_MIN_L, DARK_COLLIDER_MUTED_L, DARK_COLLIDER_MUTED_CHROMA_SCALE, DARK_INK12_MAX_C } from '../engine/stopTable'
 import { darkCtaTrim } from '../engine/darkChromaCurve'
 import type { GenerateOptions } from '../engine/colorEngine'   // type-only: erased at runtime, no cycle
 
@@ -250,11 +250,19 @@ export const darkScaleChromaAt = (ctx: Ctx, dctx: DarkCtx, stopIndex: number, mu
     ? ctx.opts.darkChromaCurve(L, dctx.darkHueAtL(L), ctx.brandC, dctx.darkC9)
     : applyChromaFloor(ctx.subtleC, multiplier, stopIndex, ctx.darkFloorStrength))
 
-// dark ink chroma (stops 11/12): floor over brandC; the curve call has NO ctaC arg (colorEngine.ts:416–422)
-export const darkInkChromaAt = (ctx: Ctx, dctx: DarkCtx, stopIndex: number, multiplier: number) => (L: number): number =>
-  ctx.cAt('dark', L, ctx.opts?.darkChromaCurve
-    ? ctx.opts.darkChromaCurve(L, dctx.darkHueAtL(L), ctx.brandC)
+// dark ink chroma (stops 11/12): floor over brandC; the curve call has NO ctaC arg (colorEngine.ts:416–422).
+// TEXT-REGISTER CEILINGS (C8 V2, owner spec 2026-07-08): ink-12 = body text, flat narrow cap
+// (DARK_INK12_MAX_C); ink-11 = the pre-P3 sRGB ceiling (text stays in the conservative gamut —
+// the wide gamut is for the scale, not ink). Caps ride INSIDE the producer so the H-K placement
+// solves see the capped chroma. stopIndex is sp.stop − 1 (10 = ink-11, 11 = ink-12).
+export const darkInkChromaAt = (ctx: Ctx, dctx: DarkCtx, stopIndex: number, multiplier: number) => (L: number): number => {
+  const H = dctx.darkHueAtL(L)
+  const c = ctx.cAt('dark', L, ctx.opts?.darkChromaCurve
+    ? ctx.opts.darkChromaCurve(L, H, ctx.brandC)
     : applyChromaFloor(ctx.brandC, multiplier, stopIndex, ctx.darkFloorStrength))
+  const cap = stopIndex >= 11 ? DARK_INK12_MAX_C : clampChromaToGamut(L, 0.52, H, 'srgb')
+  return Math.min(c, cap)
+}
 
 // dark highlight chroma (stops 9/10): curve override or the light blend through cAt('dark'), clamped (colorEngine.ts:469–472)
 export const darkHighlightChromaAt = (ctx: Ctx, dctx: DarkCtx, baseC: number, satFraction: number) => (L: number, h: number): number => {
