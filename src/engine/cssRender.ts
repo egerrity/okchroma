@@ -25,7 +25,13 @@ const p3Value = (s: ColorStop): string => {
   return `color(display-p3 ${e(r)} ${e(g)} ${e(b)})`
 }
 const p3Differs = (s: ColorStop): boolean => s.C > clampChromaToGamut(s.L, s.C, s.H, 'srgb') + 1e-4
+// Two gates, both required: @media (color-gamut: p3) = the DISPLAY can show P3 (an sRGB
+// display keeps the engine's own chroma-reduced fallback — never the browser's cruder
+// clamp of the P3 value); @supports = the browser parses color() (custom properties
+// accept any token stream, so without this an old browser would carry the unparsed
+// value to the var() site and break the property there).
 export const P3_SUPPORTS = '@supports (color: color(display-p3 1 1 1))'
+export const P3_MEDIA = '@media (color-gamut: p3)'
 
 export function stopsToVars(stops: ColorStop[], prefix: string): string {
   return [...stops]
@@ -102,8 +108,10 @@ export function neutralCss(selector: string, brandH: number, level: NeutralLevel
     `}`,
     ...(p3Light.length || p3Dark.length ? [
       `${P3_SUPPORTS} {`,
+      `${P3_MEDIA} {`,
       ...(p3Light.length ? [`${selector} {`, ...p3Light, `}`] : []),
       ...(p3Dark.length ? [`${selector}[data-theme="dark"] {`, ...p3Dark, `}`] : []),
+      `}`,
       `}`,
     ] : []),
   ].join('\n')
@@ -138,8 +146,10 @@ export function signalsCss(contrastProfile?: ContrastProfile): string {
     `}`,
     ...(p3LightBlocks.length || p3DarkBlocks.length ? [
       `${P3_SUPPORTS} {`,
+      `${P3_MEDIA} {`,
       ...(p3LightBlocks.length ? [`:root {`, ...p3LightBlocks, `}`] : []),
       ...(p3DarkBlocks.length ? [`[data-theme="dark"] {`, ...p3DarkBlocks, `}`] : []),
+      `}`,
       `}`,
     ] : []),
   ].join('\n')
@@ -298,8 +308,10 @@ export function brandCss(
     `}`,
     ...(p3Light.length || p3Dark.length ? [
       `${P3_SUPPORTS} {`,
+      `${P3_MEDIA} {`,
       ...(p3Light.length ? [`[data-brand="${slug}"] {`, ...p3Light, `}`] : []),
       ...(p3Dark.length ? [`[data-brand="${slug}"][data-theme="dark"] {`, ...p3Dark, `}`] : []),
+      `}`,
       `}`,
     ] : []),
   ].join('\n')
