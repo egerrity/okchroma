@@ -348,3 +348,33 @@ without the second breaks separation exactly where remedies fire; the aesthetic 
 asserts POST-REMEDY wash margins ≥ the bar — the collapse passed the gate. Add a
 post-remedy margin check to the sweep in the corridor round. Instrument:
 scratchpad clash-margin (checkHueCollision vs effective signal set, ±16° per signal).
+
+**C8 V2 — SHIPPED THEN REVERTED (447591f → revert 455109e, owner-directed reset
+2026-07-08, HANDOFF §0.5 step 1).** The dark ink text-register caps (ink-12 flat
+DARK_INK12_MAX_C 0.040; ink-11 clamped to the sRGB ceiling) shipped past a dropped
+objection; the owner directed them back out. Dark ink-11/12 return to the un-capped
+P3 register; the V2 defect (dark ink-11/12 far above the text register on yellow/green
+seeds — owner-confirmed) stands OPEN, parked for the holistic ink round mapped by C9
+(band limit / text discounts / which registers the H-K solve serves — one design, not
+piecemeal caps). Post-revert: src vs the 8c2faa3 re-bless = the V1 torsion curve alone
+(verified); gates 12/12 green, zero re-bless.
+
+**C9 — WHY THE INKS WENT NEON (owner asked; traced 2026-07-08).** Root cause of C8 V2:
+dark ink-11/12 ride perceptualDarkC — a FILL policy (equalize apparent-brightness
+boost across hues) that by construction pumps maximum chroma into the lowest-H-K hues
+(yellow-green) exactly where near-white sRGB room is biggest (H120 ink-12 ceiling
+.216 → solve converged .213 INSIDE sRGB; pre-dates P3; P3 only un-masked ink-11).
+TWO archaeology findings: (1) DOC-CODE MISMATCH — perceptualDarkC's own comment says
+bloom is "band-limited to the scale mid-band… the fill + text tiers keep their native
+chroma — so ink-11/ink-12 keep their separation," but NO band limit exists in the
+code; the text-tier exemption was intent that never shipped (same class as the June
+dark-L latent bug). (2) DEAD DISCOUNTS — DARK_STOP_11/12 chromaMultipliers (.95/.62)
+only apply on darkInkChromaAt's fallback branch; the darkChromaCurve branch every
+real brand/signal takes bypasses them (why H120 ink-12 .213 ≈ ink-11 .234 — the
+separation never fired). The shipped V2 caps are the declared register standing where
+these two lost mechanisms should have been. OPEN DESIGN OPTION (owner call, not
+urgent): implement the described band weight and/or re-route the multipliers through
+the curve path — could subsume the caps; V2's caps are correct-by-declaration either
+way. Log-don't-fix: nothing changed beyond V2's shipped caps. [Recovered 2026-07-08
+from stray main-checkout commit 6c55e4a; written before the V2 revert above — its
+"shipped caps" references are historical.]
