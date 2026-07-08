@@ -24,6 +24,7 @@
     "audit:secondary": "esbuild scripts/secondary-audit.ts --bundle --platform=node --outfile=dist/secondary-audit.js && node dist/secondary-audit.js",
     "plugin:build": "node esbuild.config.js --plugin",
     "plugin-ext:build": "node esbuild.config.js --plugin-ext",
+    "audit:register": "esbuild scripts/register-audit.ts --bundle --platform=node --outfile=dist/register-audit.js && node dist/register-audit.js",
     "audit:ext": "esbuild scripts/ext-override-audit.ts --bundle --platform=node --outfile=dist/ext-override-audit.js && node dist/ext-override-audit.js",
     "audit:ext:bless": "esbuild scripts/ext-override-audit.ts --bundle --platform=node --outfile=dist/ext-override-audit.js && node dist/ext-override-audit.js --bless",
     "typecheck": "tsc --noEmit",

@@ -51,7 +51,7 @@ const PROFILES: Array<{ lane: string; profile: ContrastProfile | undefined }> = 
   { lane: 'apca', profile: 'apca' },
 ]
 
-interface Row { signal: string; lane: string; hex: string; dH: number; fired: string[]; wmin: number; v: number; secWmin: number; secNoted: boolean }
+interface Row { signal: string; lane: string; hex: string; dH: number; fired: string[]; wmin: number; wminLight: number; v: number; secWmin: number; secNoted: boolean }
 const rows: Row[] = []
 
 for (const sig of SIGNALS)
@@ -75,6 +75,7 @@ for (const sig of SIGNALS)
       rows.push({
         signal: sig.name, lane, hex, dH, fired,
         wmin: Math.min(washMin(p, effective, 'light'), washMin(p, effective, 'dark')),
+        wminLight: washMin(p, effective, 'light'),
         v: h.vividness,
         secWmin: Math.min(washMin(sec, effective, 'light'), washMin(sec, effective, 'dark')),
         secNoted: t.secondary!.notes.some(n => n.includes(sig.name)),
@@ -89,11 +90,17 @@ for (const sig of SIGNALS) {
     const qualified = rs.filter(r => r.v >= HUE_COLLISION_MIN_V)
     const holes = qualified.filter(r => r.wmin < HARD_BAR && r.fired.length === 0)
     const firedUnder = qualified.filter(r => r.fired.length > 0 && r.wmin < HARD_BAR)
+    // C8 V3 gate hole (owner-caught): fired remedies must DELIVER separation — the
+    // post-remedy LIGHT wash margin is ASSERTED at the bar. Dark stays informational
+    // for now: the C7-logged residual (yellow's dark gold-spine hue degeneracy vs the
+    // lemon variant) is a known value-side item for the dark round, not a regression.
+    const firedUnderLight = qualified.filter(r => r.fired.length > 0 && r.wminLight < HARD_BAR)
     const secUnnoted = rs.filter(r => r.secWmin < HARD_BAR && !r.secNoted)
-    fail += holes.length + secUnnoted.length
-    const flag = holes.length || secUnnoted.length ? ' ✗' : ''
-    console.log(`  ${sig.name} · ${lane}: HOLES ${holes.length}/${qualified.length} · fired-under ${firedUnder.length} · derived-sec unnoted-under ${secUnnoted.length}${flag}`)
+    fail += holes.length + secUnnoted.length + firedUnderLight.length
+    const flag = holes.length || secUnnoted.length || firedUnderLight.length ? ' ✗' : ''
+    console.log(`  ${sig.name} · ${lane}: HOLES ${holes.length}/${qualified.length} · fired-under-LIGHT ${firedUnderLight.length} (asserted) · fired-under any-mode ${firedUnder.length} · derived-sec unnoted-under ${secUnnoted.length}${flag}`)
     holes.slice(0, 3).forEach(r => console.log(`    HOLE ${r.hex} dH${r.dH} v${r.v.toFixed(2)} wash ${r.wmin.toFixed(4)}`))
+    firedUnderLight.slice(0, 3).forEach(r => console.log(`    FIRED-UNDER-LIGHT ${r.hex} dH${r.dH} fired[${r.fired.join('|')}] wash ${r.wminLight.toFixed(4)}`))
   }
 }
 // fired-machinery lane divergence (informational: red type-2 value moves legitimately diverge)
