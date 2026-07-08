@@ -395,7 +395,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
     // only the OUTLINE secondary shows its ring, where the boundary IS the component
     if (stop.startsWith('cta')) {
       const ring = prefix === 'secondary' && computed.t.secondary?.style === 'outline'
-      return <div style={{ ...aa, boxSizing: 'border-box', background: cv(stop), color: cv('on-cta'), border: ring ? `1.5px solid ${cv('cta-stroke')}` : undefined }}>Aa</div>
+      return <div style={{ ...aa, boxSizing: 'border-box', background: cv(stop), color: cv('on-cta'), border: ring ? `1.5px solid ${cv('cta-border')}` : undefined }}>Aa</div>
     }
     if (stop.startsWith('ink')) return <div style={{ ...aa, fontSize: 18, fontWeight: 900, color: cv(stop) }}>Aa</div>
     return <div style={{ height: 36, borderRadius: 6, background: cv(stop), border: '1px solid var(--border-subtle)' }} />
@@ -847,7 +847,7 @@ function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typ
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {hasSecondary && <>
           <button style={{ ...btn, background: 'var(--secondary-wash-5)', color: 'var(--secondary-ink-12)' }}>Wash 5</button>
-          <button style={{ ...btn, background: 'var(--secondary-cta-1)', color: 'var(--secondary-on-cta)', borderColor: 'var(--secondary-cta-stroke)' }}>Secondary cta</button>
+          <button style={{ ...btn, background: 'var(--secondary-cta-1)', color: 'var(--secondary-on-cta)', borderColor: 'var(--secondary-cta-border)' }}>Secondary cta</button>
         </>}
         <button style={{ ...btn, background: 'var(--neutral-cta-1)', color: 'var(--neutral-on-cta)' }}>Neutral cta</button>
       </div>

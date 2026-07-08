@@ -32,7 +32,7 @@ const SIGNAL_ICON: Record<string, typeof AlertCircle> = {
 // info-color). Each family renders its cta-1 | cta-2 pair as one seamed pill in
 // on-cta text. Reads the live vars, so the per-brand signal overrides the
 // resolved theme carries show up here automatically; names the theme shifted
-// off-canonical get a "shifted" tag. The cta-stroke border is unconditional —
+// off-canonical get a "shifted" tag. The cta-border border is unconditional —
 // it's transparent everywhere except the outline secondary, where the ring IS
 // the component.
 export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; shifted?: string[] }) {
@@ -51,7 +51,7 @@ export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; 
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       background: `var(--${prefix}-${tok})`, color: `var(--${prefix}-on-cta)`,
       fontSize: 13, fontWeight: 600,
-      border: `1.5px solid var(--${prefix}-cta-stroke)`,
+      border: `1.5px solid var(--${prefix}-cta-border)`,
     }}>Aa</div>
   )
   return (
@@ -137,7 +137,7 @@ export function TokenCards({ prefix, kind, outlineCta }: { prefix: string; kind:
             // filled buttons carry NO stroke (the label identifies the button — WCAG 1.4.11
             // doesn't require a boundary); only the OUTLINE style keeps its ring, where the
             // boundary IS the component. Transparent border keeps layout identical.
-            border: `1.5px solid ${outlineCta ? v('cta-stroke') : 'transparent'}`,
+            border: `1.5px solid ${outlineCta ? v('cta-border') : 'transparent'}`,
             borderRadius: 999, padding: '12px 28px', fontSize: 15, fontWeight: 600, fontFamily: 'inherit',
             cursor: 'pointer', marginBottom: 18,
           }}>{ctaHover ? 'cta-2 on hover' : 'cta-1 button'}</button>

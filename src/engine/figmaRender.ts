@@ -14,7 +14,7 @@ export interface FigmaColorToken {
 }
 export type FigmaGroup = { [key: string]: FigmaColorToken | FigmaGroup }
 
-// the cta-stroke's transparent default (alpha 0 — the plugin aliases it onto system/transparent)
+// the cta-border's transparent default (alpha 0 — the plugin aliases it onto system/transparent)
 const TRANSPARENT_TOKEN: FigmaColorToken = {
   $type: 'color',
   $value: { colorSpace: 'srgb', components: [0, 0, 0], alpha: 0, hex: '#000000' },
@@ -55,10 +55,12 @@ function rampGroup(
 
   if (extra?.cta) g['cta-1'] = colorFromStop(extra.cta)
   if (extra?.ctaHover) g['cta-2'] = colorFromStop(extra.ctaHover)
-  // cta-stroke pairs with the cta pair, TRANSPARENT everywhere (the conditional gate is gone —
+  // cta-border pairs with the cta pair, TRANSPARENT everywhere (the conditional gate is gone —
   // owner 2026-07-04): the token stays for components + a future high-contrast re-solve; the
-  // outline secondary override is the only resolver (→ its own highlight-8)
-  if (extra?.cta) g['cta-stroke'] = TRANSPARENT_TOKEN
+  // outline secondary override is the only resolver (→ its own highlight-8).
+  // Renamed from cta-stroke (owner 2026-07-09) — both plugins migrate an existing
+  // cta-stroke variable IN PLACE (Figma keeps the id on rename, bindings survive).
+  if (extra?.cta) g['cta-border'] = TRANSPARENT_TOKEN
   g[onFillTokenName(kind)] = colorFromHex(onFillWhite)
   if (extra?.onHighlightWhite !== undefined) g[onFillTokenName('neutral')] = colorFromHex(extra.onHighlightWhite)
   if (extra?.identityHex) g['identity'] = colorFromHexString(extra.identityHex)
@@ -71,7 +73,7 @@ export interface ThemeInput {
 
   // the secondary's mode chip — 'outline' re-expresses the cta pair (mirrors cssRender's
   // outline override): cta-1 transparent, cta-2 the cta color at OUTLINE_HOVER_ALPHA,
-  // cta-stroke ALWAYS the secondary's own highlight-8, on-cta the secondary's ink-11.
+  // cta-border ALWAYS the secondary's own highlight-8, on-cta the secondary's ink-11.
   secondaryStyle?: SecondaryStyle
 
   neutralLevel?: NeutralLevel
@@ -126,7 +128,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
           $value: { colorSpace: 'srgb', components: [clamp01(e.r), clamp01(e.g), clamp01(e.b)], alpha: OUTLINE_HOVER_ALPHA, hex: toHex(e.r, e.g, e.b) },
         }
       }
-      if (s8) secondaryGroup['cta-stroke'] = colorFromStop(s8)
+      if (s8) secondaryGroup['cta-border'] = colorFromStop(s8)
       // on-cta = the family's ink-11, NOT a pole — the plugin aliases non-pole on-cta to the sibling ink-11
       if (s11) secondaryGroup[onFillTokenName('brand')] = colorFromStop(s11)
     }

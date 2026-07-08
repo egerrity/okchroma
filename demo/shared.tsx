@@ -79,10 +79,10 @@ export const COMPONENT_CSS = `
 .u-btn-neutral { background: var(--neutral-cta-1); color: var(--neutral-on-cta); }
 .u-btn-neutral:hover { background: var(--neutral-cta-2); }
 /* the SECONDARY cta pair (--secondary-cta-1/2 + on-cta), shown beside the brand
-   cta wherever that is showcased. cta-stroke is transparent for every style
+   cta wherever that is showcased. cta-border is transparent for every style
    except outline (where the ring IS the component), so the border is
    unconditional and layout never shifts. */
-.u-btn-secondary { background: var(--secondary-cta-1); color: var(--secondary-on-cta); border-color: var(--secondary-cta-stroke); }
+.u-btn-secondary { background: var(--secondary-cta-1); color: var(--secondary-on-cta); border-color: var(--secondary-cta-border); }
 .u-btn-secondary:hover { background: var(--secondary-cta-2); }
 .u-btn-ghost { background: transparent; color: var(--brand-fg); }
 .u-btn-ghost:hover { background: var(--brand-bg-subtle); }

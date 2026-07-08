@@ -27,6 +27,11 @@ const DARK_COLUMNS = new Set<Column>(['wcag-dark', 'apca-dark'])
 // Every variable carries the file's solve posture, visible without the plugin.
 const STAMP = 'OKChroma · modes: wcag 3:1/4.5/7:1 (default) · apca Lc 30/75/90'
 
+// Token renames (old leaf → new leaf), migrated IN PLACE on the existing variable —
+// Figma keeps the variable id on rename, so user bindings survive (owner 2026-07-09:
+// cheap by design; a future rename is one more entry). Mirrored in plugin/code.ts.
+const RENAMED_LEAVES: Array<[string, string]> = [['cta-stroke', 'cta-border']]
+
 const ENTERPRISE_MSG =
   'Extended collections need a Figma Enterprise org — this file’s plan doesn’t expose collection.extend(). '
   + 'The published OKChroma plugin (v1) covers every plan.'
@@ -131,6 +136,12 @@ figma.ui.onmessage = async (msg) => {
       let createdVars = 0
       const ensure = (path: string): figma.Variable => {
         let v = baseVars.get(path)
+        if (!v) for (const [oldLeaf, newLeaf] of RENAMED_LEAVES) {
+          if (!path.endsWith(`/${newLeaf}`)) continue
+          const legacyPath = path.slice(0, -newLeaf.length) + oldLeaf
+          const legacy = baseVars.get(legacyPath)
+          if (legacy) { legacy.name = path; baseVars.delete(legacyPath); baseVars.set(path, legacy); v = legacy }
+        }
         if (!v) { v = figma.variables.createVariable(path, base, 'COLOR'); baseVars.set(path, v); createdVars++ }
         v.description = STAMP
         v.scopes = ['ALL_SCOPES']

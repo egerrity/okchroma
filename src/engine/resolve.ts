@@ -206,7 +206,7 @@ export type SecondaryLevel = 'standard' | 'subtle'
 // The secondary's per-field MODE (owner design 2026-07-04: modes decoupled per family — the
 // mockup's chip dropdown). tint/pastel = the two subtle chroma models (both ride the locked
 // delta curve); outline = the tint ramp with the cta re-resolved (cta-1 transparent, cta-2 the
-// cta color at OUTLINE_HOVER_ALPHA, on-cta ink-11, cta-stroke always highlight-8); exact = the
+// cta color at OUTLINE_HOVER_ALPHA, on-cta ink-11, cta-border always highlight-8); exact = the
 // standard full ramp, advice-only.
 export type SecondaryStyle = 'tint' | 'pastel' | 'outline' | 'exact'
 export const SUBTLE_TINT_MULT = 8          // owner pick (light) from the finalists sweep

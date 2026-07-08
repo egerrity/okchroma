@@ -42,6 +42,28 @@ const pairName = (role: string, profile: Profile) => `${role}-${profile}`
 const profileStamp = (profile: Profile) =>
   profile === 'apca' ? 'OKChroma · contrast: APCA (Lc 30/75/90)' : 'OKChroma · contrast: WCAG (3:1/4.5/7:1)'
 
+// Token renames (old leaf → new leaf), migrated IN PLACE on the existing variable —
+// Figma keeps the variable id on rename, so user bindings survive (owner 2026-07-09:
+// cheap by design; a future rename is one more entry). Mirrored in plugin-ext/code.ts.
+const RENAMED_LEAVES: Array<[string, string]> = [['cta-stroke', 'cta-border']]
+// Look up `path` in `map`, first as-is, then under a renamed leaf's OLD name —
+// renaming the found variable to `path` in place (same idiom as the ink-13 move).
+function getOrMigrate(map: Map<string, figma.Variable>, path: string): figma.Variable | undefined {
+  const v = map.get(path)
+  if (v) return v
+  for (const [oldLeaf, newLeaf] of RENAMED_LEAVES) {
+    if (!path.endsWith(`/${newLeaf}`)) continue
+    const legacy = map.get(path.slice(0, -newLeaf.length) + oldLeaf)
+    if (legacy) {
+      legacy.name = path
+      map.delete(path.slice(0, -newLeaf.length) + oldLeaf)
+      map.set(path, legacy)
+      return legacy
+    }
+  }
+  return undefined
+}
+
 function flatten(node: TokenNode, prefix = ''): Array<{ path: string; r: number; g: number; b: number; a?: number }> {
   if ('$type' in node) {
     const leaf = node as TokenLeaf
@@ -226,7 +248,7 @@ figma.ui.onmessage = async (msg) => {
       const absPole = (white: boolean) => primByName.get(white ? 'system/abs-white' : 'system/abs-black')
 
       // Write a primitive. on-fill leaves ALIAS a shared invariant (always, so
-      // pre-existing raw on-fills get converted on re-apply); cta-stroke leaves ALIAS
+      // pre-existing raw on-fills get converted on re-apply); cta-border leaves ALIAS
       // per mode — system/transparent when the fill passes the boundary gate, the
       // family's own highlight-8 when it doesn't (alpha 0 in the payload = transparent);
       // every other leaf is a raw color, written on create or when `refresh` is set
@@ -237,7 +259,7 @@ figma.ui.onmessage = async (msg) => {
         darkMap: Map<string, { r: number; g: number; b: number; a?: number }>,
         refresh: boolean
       ): { v: figma.Variable; created: boolean } => {
-        let v = primByName.get(path)
+        let v = getOrMigrate(primByName, path)
         const created = !v
         if (!v) { v = figma.variables.createVariable(path, p.coll, 'COLOR'); primByName.set(path, v) }
         v.description = stamp // restamped every apply — the visible contrast posture
@@ -266,8 +288,8 @@ figma.ui.onmessage = async (msg) => {
             v.setValueForMode(pLight, figma.variables.createVariableAlias(transparent))
             v.setValueForMode(pDark, figma.variables.createVariableAlias(transparent))
           }
-        } else if (t.path === 'cta-stroke') {
-          const sibling8 = primByName.get(path.replace(/cta-stroke$/, 'highlight-8'))
+        } else if (t.path === 'cta-border') {
+          const sibling8 = primByName.get(path.replace(/cta-border$/, 'highlight-8'))
           const transparent = primByName.get('system/transparent')
           const target = (leaf?: { a?: number }) =>
             leaf?.a === 0 ? transparent : (sibling8 ?? transparent)
@@ -314,7 +336,7 @@ figma.ui.onmessage = async (msg) => {
       const aliasInto = (themePath: string, primPath: string, modeId: string = brandMode) => {
         const target = primVar.get(primPath) ?? primByName.get(primPath)
         if (!target) return
-        let v = themeByName.get(themePath)
+        let v = getOrMigrate(themeByName, themePath)
         if (!v) { v = figma.variables.createVariable(themePath, th.coll, 'COLOR'); themeByName.set(themePath, v) }
         v.description = stamp
         // the THEME aliases are what users bind — visible in every supported property

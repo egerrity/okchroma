@@ -53,23 +53,24 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
   const ctaHover = mode === 'light' ? s.ctaHover : s.ctaHoverDark
   const onCta = mode === 'light' ? s.onFillTextIsWhite : s.onFillTextIsWhiteDark
   const onHl = mode === 'light' ? s.onHighlightIsWhite : s.onHighlightIsWhiteDark
-  // cta-stroke: TRANSPARENT everywhere (owner 2026-07-04: the conditional 3:1 gate is gone —
+  // cta-border: TRANSPARENT everywhere (owner 2026-07-04: the conditional 3:1 gate is gone —
   // filled is filled). The token stays in the vocabulary so components carry
-  // `border: 1.5px solid var(...-cta-stroke)` unconditionally (layout never shifts) and a
+  // `border: 1.5px solid var(...-cta-border)` unconditionally (layout never shifts) and a
   // future high-contrast mode can re-solve it; the OUTLINE secondary override is the only
-  // resolver today (→ its own highlight-8).
+  // resolver today (→ its own highlight-8). Renamed from cta-stroke (owner 2026-07-09);
+  // the Figma side renamed with it — plugins migrate existing variables in place.
   return [
     stopsToVars(stops, prefix),
     `  --${prefix}-cta-1: ${stopHex(cta)};`,
     `  --${prefix}-cta-2: ${stopHex(ctaHover)};`,
-    `  --${prefix}-cta-stroke: transparent;`,
+    `  --${prefix}-cta-border: transparent;`,
     `  --${prefix}-${onFillTokenName('brand')}: ${onColor(onCta)};`,
     `  --${prefix}-${onFillTokenName('neutral')}: ${onColor(onHl!)};`,
   ]
 }
 
 // the P3 override body for one family+mode: only vars whose master rendition exceeds
-// sRGB (on-colors are poles, cta-stroke transparent — never overridden)
+// sRGB (on-colors are poles, cta-border transparent — never overridden)
 export function brandKindP3Body(prefix: string, s: GeneratedScale, mode: 'light' | 'dark'): string[] {
   const stops = mode === 'light' ? s.light : s.dark
   const cta = mode === 'light' ? s.cta : s.ctaDark
@@ -185,7 +186,7 @@ export function brandCss(
   // scales inside `r` were already resolved under it by resolveBrand)
   contrastProfile?: ContrastProfile,
   // the secondary's mode chip: 'outline' re-resolves the cta pair — cta-1 transparent, cta-2 the
-  // cta color at OUTLINE_HOVER_ALPHA (the tinted hover), on-cta ink-11, cta-stroke ALWAYS the
+  // cta color at OUTLINE_HOVER_ALPHA (the tinted hover), on-cta ink-11, cta-border ALWAYS the
   // gated highlight-8. Same tokens, different resolution — no component changes needed.
   secondaryStyle?: SecondaryStyle
 ): string {
@@ -230,7 +231,7 @@ export function brandCss(
       ...stops.map(x => alias(stopTokenName(x.stop))),
       alias('cta-1'),
       alias('cta-2'),
-      alias('cta-stroke'),
+      alias('cta-border'),
       alias(onFillTokenName('brand')),
       alias(onFillTokenName('neutral')),
     ]
@@ -266,7 +267,7 @@ export function brandCss(
     return [
       `  --secondary-cta-1: transparent;`,
       ...(s8e ? [`  --secondary-cta-2: rgba(${c(s8e.r)}, ${c(s8e.g)}, ${c(s8e.b)}, ${OUTLINE_HOVER_ALPHA});`] : []),
-      `  --secondary-cta-stroke: var(--secondary-highlight-8);`,
+      `  --secondary-cta-border: var(--secondary-highlight-8);`,
       `  --secondary-${onFillTokenName('brand')}: var(--secondary-ink-11);`,
     ]
   }

@@ -145,7 +145,7 @@ function themeInput(name: string) {
 }
 
 // the demo's top-card matrix: every family × ID + the 12 stops + the cta pair (light mode).
-// Stop 8 renders AS a stroke (it's the boundary stop); cta cells carry the family's cta-stroke.
+// Stop 8 renders AS a stroke (it's the boundary stop); cta cells carry the family's cta-border.
 function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
   const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
   const sigScales = signalScalesFor(cp)
