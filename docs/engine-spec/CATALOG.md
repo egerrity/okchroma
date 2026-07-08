@@ -450,3 +450,23 @@ golden (edge case for her eye). Margins with the falloff + D 0.35 together: wors
 lemon-bright 0.0148 = 2.5× the 0.006 bar (tightens because brand AND lemon variant
 both hold cool hues). AWAITING: her verdict on the falloff + the amp re-judge
 (0.35 vs 0.50) on the fixed page. Nothing shipped.
+
+**C10 — SCOPE CORRECTED (owner, 2026-07-08): "not specific to orange, it shows up in
+every ramp. it's just like a big c jump... 8 that much duller than 9."** Measured TRUE
+and hue-agnostic: LIGHT s8 chroma = the wash ladder's top constant (LIGHT_BASE_C ends
+0.112) while s9/s10 = the highlight machinery's own constant (HIGHLIGHT_LIGHT.baseC
+0.142) — a +27% step for EVERY brand at EVERY hue (muted brands carry the same ratio:
+Earl Grey .061→.078). Why it reads as a break, not a step: s8's L sits at the 3:1
+contrast floor (~.63–.65 = highlight territory, the stop-8 WCAG clamp), so two stops
+at near-equal lightness differ by a quarter of their chroma; near yellow s9 is also
+LIGHTER than s8 (H104: .64→.67) — darker AND duller. Root shape: the accent re-bucket
+(ea0a265) ruled stop 8 INTO the highlight family, but generation still treats it as
+top-of-wash — the label seam moved to 7|8, the chroma seam stayed at 8|9. Signals
+never show the dip (their boosted s8 is ceiling-pinned — byte-identical under the
+what-if). The earlier orange-red framing above stands only for the DARK part (s7|s8
+ΔL .130 scaffold seam + warm travel — dark round). WHAT-IF RENDERED
+(render/s8-register-whatif.html, hashes distinct, diff-set verified = {stop 8} only):
+LIGHT_BASE_C[8] rides the highlight register 0.142; the 3:1 L floor re-solves within
+±.01; Earl Grey's s8 lands exactly on its s9; Blue Lagoon's s8 sits a hair above its
+gamut-clamped s9. Awaiting owner verdict alongside the falloff + lift picks. Dark's
++5% step and L-seam remain parked for the dark round. Nothing shipped.
