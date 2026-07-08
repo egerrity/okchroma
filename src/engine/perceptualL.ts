@@ -90,11 +90,14 @@ export function perceptualRungL(rootL: number, C: number, H: number, keep = KEEP
   return solveLForApparent(grayApparentL(rootL, gamut) + keep * meanBoost(rootL, C, gamut), C, H, gamut)
 }
 
-// Bloom is a MID-lightness effect, so the redistribution is band-limited to the
-// scale mid-band (≈ stops 3–8): the deep darks keep their tint and the fill +
-// text tiers (≥ fill L) keep their native chroma — so ink-11/ink-12 keep their
-// separation. Mirrors the old loudnessCap bandWeight, now wrapping the principled
-// solve instead of a hand-tuned cap.
+// The dark FILL policy: equalize apparent-brightness boost across hues. By
+// construction it pumps maximum chroma into the lowest-H-K hues exactly where
+// near-white room is biggest — correct for fills, WRONG for text (the C9
+// yellow-green ink neon). The text tier (ink-11/12) is therefore EXEMPT:
+// darkInkChromaAt keeps native ID-relative chroma normalized to the declared
+// text register and never calls this. (The band limit this comment used to
+// promise was never in the code — C9 archaeology; the exemption now lives at
+// the consumer.)
 export function perceptualDarkC(L: number, H: number, nativeC: number, keep = KEEP_DARK, gamut: Gamut = MASTER_GAMUT): number {
   if (nativeC <= 0) return 0
   return solveCForApparent(L, H, grayApparentL(L, gamut) + keep * meanBoost(L, nativeC, gamut), gamut)

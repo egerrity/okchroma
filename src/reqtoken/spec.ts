@@ -47,6 +47,7 @@ export type StopReq = {
   satFraction?: number                // ladder param: envelope saturation fraction
   baseC?: number                      // ladder param (light): absolute base chroma for the ladder/envelope blend
   chromaMult?: number                 // param for produce.chroma === 'brand'
+  inkMaxC?: number                    // text-register ceiling: chroma = min(chromaMult × brandC, inkMaxC)
   require?: Require
 }
 
@@ -143,8 +144,8 @@ export const LIGHT: ModeSpec = {
     { stop: 9, rootL: HIGHLIGHT_LIGHT.rootL, group: 'highlight', produce: PL_LADDER, satFraction: SCALE_C_LIGHT[9].sat, baseC: SCALE_C_LIGHT[9].base },
     { stop: 10, rootL: HIGHLIGHT_LIGHT.rootL10, group: 'highlight', produce: PL_LADDER, satFraction: SCALE_C_LIGHT[10].sat, baseC: SCALE_C_LIGHT[10].base },
     // ink text: perceptual + contrast-required
-    { stop: 11, rootL: LIGHT_L[10], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[11].inkMult, require: T11 },
-    { stop: 12, rootL: LIGHT_L[11], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[12].inkMult, require: T12 },
+    { stop: 11, rootL: LIGHT_L[10], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[11].inkMult, inkMaxC: SCALE_C_LIGHT[11].inkMaxC, require: T11 },
+    { stop: 12, rootL: LIGHT_L[11], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[12].inkMult, inkMaxC: SCALE_C_LIGHT[12].inkMaxC, require: T12 },
   ],
   roles: [
     { role: 'cta', produce: { hue: 'constant', L: 'anchor', chroma: 'brand' }, floorL: 0, chromaMult: 1 },
@@ -172,8 +173,8 @@ export const DARK: ModeSpec = {
     { stop: 10, rootL: HIGHLIGHT_DARK.rootL10, group: 'highlight', produce: P_FIXED, satFraction: SCALE_C_DARK[10].sat, baseC: SCALE_C_DARK[10].base },
     // ink text: perceptual + the contrast requires DECLARED in dark too (Stage-5 flip): the scaffold already
     // clears them for every hue (the gate proves it), so values don't move — but the guarantee is now a rule.
-    { stop: 11, rootL: DARK_NEUTRAL_L[10], group: 'ink', produce: P_TEXT, chromaMult: SCALE_C_DARK[11].inkMult, require: T11 },
-    { stop: 12, rootL: DARK_NEUTRAL_L[11], group: 'ink', produce: P_TEXT, chromaMult: SCALE_C_DARK[12].inkMult, require: T12 },
+    { stop: 11, rootL: DARK_NEUTRAL_L[10], group: 'ink', produce: P_TEXT, chromaMult: SCALE_C_DARK[11].inkMult, inkMaxC: SCALE_C_DARK[11].inkMaxC, require: T11 },
+    { stop: 12, rootL: DARK_NEUTRAL_L[11], group: 'ink', produce: P_TEXT, chromaMult: SCALE_C_DARK[12].inkMult, inkMaxC: SCALE_C_DARK[12].inkMaxC, require: T12 },
   ],
   roles: [
     { role: 'cta', produce: { hue: 'constant', L: 'anchor', chroma: 'brand' }, floorL: DARK_STOP_9_MIN_L, chromaMult: 1 },

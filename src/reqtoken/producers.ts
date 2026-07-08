@@ -208,17 +208,21 @@ export function separationClampLight(
 // float-identical to the old inline calls; apca: findMaxLForApcaLc at the raw targetLc).
 export function placeLightText(
   ctx: Ctx, rootL: number, cMult: number, maxLFor: (C: number, H: number) => number, deepen: number,
+  maxC = Infinity,
 ): { L: number; C: number; H: number } {
-  const brandC = ctx.brandC
-  const anchorL = perceptualRungL(rootL, clampChromaToGamut(rootL, cMult * brandC, ctx.lightHueAt(rootL)), ctx.lightHueAt(rootL))
+  // ink chroma NORMALIZED to the text register (C9/C11): the ID-relative multiplier is
+  // ceiled at the declared band register, and the H-K anchor solve consumes the
+  // normalized value — the solve target stops moving with the seed's chroma.
+  const inkC = Math.min(cMult * ctx.brandC, maxC)
+  const anchorL = perceptualRungL(rootL, clampChromaToGamut(rootL, inkC, ctx.lightHueAt(rootL)), ctx.lightHueAt(rootL))
   let H = ctx.lightHueAt(anchorL)
-  let C = clampChromaToGamut(anchorL, cMult * brandC, H)
+  let C = clampChromaToGamut(anchorL, inkC, H)
   let L = Math.min(anchorL, maxLFor(C, H))
   H = ctx.lightHueAt(L)
-  C = clampChromaToGamut(L, cMult * brandC, H)
+  C = clampChromaToGamut(L, inkC, H)
   L = Math.min(anchorL, maxLFor(C, H))
   L = Math.min(L - deepen, maxLFor(C, ctx.lightHueAt(L - deepen)))
-  return { L, C: ctx.cAt('light', L, cMult * brandC), H: ctx.lightHueAt(L) }
+  return { L, C: ctx.cAt('light', L, inkC), H: ctx.lightHueAt(L) }
 }
 
 // ---- light highlight placement (stops 9/10): perceptual on the clamped highlight chroma (colorEngine.ts:462–465)
@@ -264,11 +268,14 @@ export const darkScaleChromaAt = (ctx: Ctx, dctx: DarkCtx, stopIndex: number, mu
     ? ctx.opts.darkChromaCurve(L, dctx.darkHueAtL(L), ctx.brandC, dctx.darkC9)
     : applyChromaFloor(ctx.subtleC, multiplier, stopIndex, ctx.darkFloorStrength))
 
-// dark ink chroma (stops 11/12): floor over brandC; the curve call has NO ctaC arg (colorEngine.ts:416–422)
-export const darkInkChromaAt = (ctx: Ctx, dctx: DarkCtx, stopIndex: number, multiplier: number) => (L: number): number =>
-  ctx.cAt('dark', L, ctx.opts?.darkChromaCurve
-    ? ctx.opts.darkChromaCurve(L, dctx.darkHueAtL(L), ctx.brandC)
-    : applyChromaFloor(ctx.brandC, multiplier, stopIndex, ctx.darkFloorStrength))
+// dark ink chroma (stops 11/12): the TEXT-TIER EXEMPTION (C9). The H-K fill policy
+// (perceptualDarkC via opts.darkChromaCurve) is a FILL equalizer — at ink lightness it
+// pumps maximum chroma into the lowest-H-K hues (the yellow-green neon). The text tier
+// keeps its native ID-relative chroma (the DARK_STOP_11/12 multipliers live again),
+// normalized to the declared text register — perceptualDarkC's documented band limit,
+// realized at the consumer.
+export const darkInkChromaAt = (ctx: Ctx, dctx: DarkCtx, stopIndex: number, multiplier: number, maxC = Infinity) => (L: number): number =>
+  ctx.cAt('dark', L, Math.min(applyChromaFloor(ctx.brandC, multiplier, stopIndex, ctx.darkFloorStrength), maxC))
 
 // dark highlight chroma (stops 9/10): curve override or the light blend through cAt('dark'), clamped (colorEngine.ts:469–472)
 export const darkHighlightChromaAt = (ctx: Ctx, dctx: DarkCtx, baseC: number, satFraction: number) => (L: number, h: number): number => {

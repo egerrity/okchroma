@@ -102,7 +102,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       // LIGHT: verbatim engine producers, dispatched by group
       if (sp.group === 'ink') {
         if (!sp.require) throw new Error(`light ink stop ${sp.stop} must declare a contrast require`)
-        placed = placeLightText(ctx, sp.rootL, sp.chromaMult ?? 1, maxLForOf(sp.require, sp.stop, false), deepenFor(sp.stop))
+        placed = placeLightText(ctx, sp.rootL, sp.chromaMult ?? 1, maxLForOf(sp.require, sp.stop, false), deepenFor(sp.stop), sp.inkMaxC)
         clamped = true
       } else if (sp.stop === 9 || sp.stop === 10) {
         placed = placeLightHighlight(ctx, sp.rootL, lightHighlightChromaAt(ctx, sp.baseC ?? 0, sp.satFraction ?? 1))
@@ -128,7 +128,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       // DARK: verbatim engine producers; 'fixed' stays at the hand-placed scaffold, 'perceptual' solves
       const d = dctx!
       const chromaAt =
-        sp.group === 'ink' ? darkInkChromaAt(ctx, d, sp.stop - 1, sp.chromaMult ?? 1)
+        sp.group === 'ink' ? darkInkChromaAt(ctx, d, sp.stop - 1, sp.chromaMult ?? 1, sp.inkMaxC)
         : (sp.stop === 9 || sp.stop === 10) ? undefined
         // chroma-floor index clamps at 0: stop 0 shares paper-1's tint treatment
         : darkScaleChromaAt(ctx, d, Math.max(0, sp.stop - 1), sp.satFraction ?? 1)

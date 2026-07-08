@@ -569,3 +569,33 @@ family, value axis); (3) outline-cta shape — colliding hues ship cta-border = 
 cta-1/2 transparent, label ink-11. Both rendered as buttons-in-context:
 render/red-decollider-viz.html. Side task spawned: cta-stroke → cta-border rename
 (owner's naming correction; Figma-variable migration question flagged).**
+
+**C9 + C11 — INK ROUND LANDED (owner ruling 2026-07-09: "(b) only" — (c)-alone ruled out
+("doesn't solve crazy yellows"); (b) vs (b)+(c) judged imperceptible in rendered context).**
+THE FIX (option b, the text-register normalization, both modes — one declared mechanism,
+no emit-side caps; the C8-V2 lesson):
+- SCALE_C ink entries gain `inkMaxC` (the text-register ceiling): light 11/12 = .150/.080,
+  dark 11/12 = .120/.045. Ink chroma = min(inkMult × brandC, inkMaxC) — muted brands sit
+  below the ceiling untouched; the ceiling feeds the PLACEMENT SOLVE, so L and apparent
+  register fall out of the pipeline.
+- TEXT-TIER EXEMPTION (the C9 band limit, realized at the consumer): darkInkChromaAt no
+  longer calls the perceptualDarkC fill policy — the dead DARK_STOP_11/12 discounts
+  (.95/.62) live again on the only path real brands take, normalized to the register.
+  perceptualDarkC's lying comment corrected.
+- placeLightText consumes the normalized chroma at every step (anchor solve, require
+  clamps, emit).
+MEASURED (24-seed instrument + 19-seed yellow range, real pipeline, exhibits
+render/ink-round.html + render/ink-round-yellows.html, data render/ink-round-data/):
+dark neon DEAD — lemon-bright ink-12 C .166→.045, H120 ink-11 .234→.120, dark s12
+apparent spread 1.1→0.0, s11 5.9→2.4; light s11 spread 10.4→8.0, s12 7.0→5.4 (excl
+rung-1: 5.8/2.2). Light YELLOWS: all 19 pin at 4.50 exactly — register uniform by law,
+byte-identical pre/post; residual 5.6 appL spread = what equal-4.5 reads across the band
+(cap-owned). Gates 13/13 green, ZERO re-bless (drift inside tolerance).
+NOT TAKEN: option (c) pin-aware solve (perceptualTextRungL, inkRefC) — measured (light
+s12 excl-rung-1 0.2; tuned refC .045 → s11 0.8, zero pins) and archived as
+render/ink-round-data/option-c.patch / option-bc.patch for a future light-wobble round.
+OPEN LEFTOVERS: (1) apca dark s11 under the new register floor-pins 24/24 (spread
+5.7→9.2) — the Lc-75 floor × register interaction wants its own look in the apca lane
+round; (2) light s11 pin-slice (the 4.5 cap register) stands, cap-owned by design;
+(3) dark s11 inkMaxC .120 is an owner-tunable knob (judged acceptable on the yellow
+specimens).

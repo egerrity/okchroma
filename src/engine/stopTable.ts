@@ -22,7 +22,12 @@ export const DARK_L  = [0.178, 0.213, 0.252, 0.285, 0.313, 0.348, 0.420, 0.550, 
 // round (which may normalize ink to a text register).
 // Stops 8–10 share one base register — the highlight family (C10, owner-approved
 // 2026-07-09); s8 keeps its historical sat 0.78 (the approved rows are the target).
-export interface ScaleChroma { base?: number; sat?: number; inkMult?: number }
+// inkMaxC = the TEXT REGISTER ceiling (C9/C11 ink round): ink chroma is the ID-relative
+// multiplier NORMALIZED to the band register — min(inkMult × brandC, inkMaxC) — and the
+// H-K placement solve consumes the normalized value, so lightness placement and apparent
+// register follow from the pipeline (no emit-side cap). Muted brands sit below the
+// ceiling untouched; the ceiling only trims the big-room hues (yellow-green worst).
+export interface ScaleChroma { base?: number; sat?: number; inkMult?: number; inkMaxC?: number }
 export const SCALE_C_LIGHT: Record<number, ScaleChroma> = {
   0: { base: 0.000, sat: 0.00 },
   1: { base: 0.004, sat: 0.50 },
@@ -35,8 +40,8 @@ export const SCALE_C_LIGHT: Record<number, ScaleChroma> = {
   8: { base: 0.142, sat: 0.78 },
   9: { base: 0.142, sat: 0.75 },
   10: { base: 0.142, sat: 0.75 },
-  11: { inkMult: 0.95 },
-  12: { inkMult: 0.50 },
+  11: { inkMult: 0.95, inkMaxC: 0.150 },
+  12: { inkMult: 0.50, inkMaxC: 0.080 },
 }
 // Dark: sat = the dark subtle-chroma ladder (values verbatim — the fold is
 // structure-only, byte-identical by contract); 9/10 declare the highlight params
@@ -53,8 +58,8 @@ export const SCALE_C_DARK: Record<number, ScaleChroma> = {
   8: { sat: 0.84 },
   9: { base: 0.142, sat: 0.75 },
   10: { base: 0.142, sat: 0.75 },
-  11: { inkMult: 0.95 },
-  12: { inkMult: 0.62 },
+  11: { inkMult: 0.95, inkMaxC: 0.120 },
+  12: { inkMult: 0.62, inkMaxC: 0.045 },
 }
 // ──────────────────────────────────────────────────────────────────────────────
 
