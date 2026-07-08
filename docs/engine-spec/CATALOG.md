@@ -265,3 +265,21 @@ dark ID-relative counterpart): low-L yellow is physically brown/orange, so the q
 is REGISTER (how light the dark-yellow roles sit and how much of the gold-band lift
 they carry), not hue drift — measure `darkCtaTrim`/dark rung L at H83–90 against the
 owner's read before proposing anything.
+
+**C8 — YELLOW-BAND EYE-CHECK VERDICTS (owner, 2026-07-08, render/yellow-band.html —
+white-column/dark-column exhibit, H55–111 + the canonical yellow signal).** Three
+verdicts, three mechanisms; fix HOLISTICALLY as one round, not per-symptom:
+(1) **"Dark mode as a whole is going too heavy on orange"** — the dark torsion tracks
+the gold spine, which points at H47–59 at low L: every dark stop in the band renders
+~20° warmer than seed (measured: yellow signal dark s1–s10 at H62–67 vs seed H84).
+Knob = WARM_TORSION strength/travel in dark; tuned pre-P3, never eye-calibrated in P3.
+(2) **Dark ink-11 pops neon on yellow/green seeds** — the P3 flip's largest movers:
+the H-K dark-chroma solve used to saturate on the sRGB ceiling at ink L (~0.87) and now
+converges higher (yellow signal ink-11 C 0.179 = 100% of the P3 ceiling vs washes at
+0.05–0.12). Chroma discontinuity vs the ramp = the dark ID-relative counterpart item,
+now visible. (Partly exhibit artifact — inks are text stops shown as fills — but the
+discontinuity is real.)
+(3) **Light gold band reads brown (orange side) / olive (green side) at highlight+cta**
+— the C7 gold-lift removal (brands ride identity chroma) + the highlight rung sitting
+at L .60–.64 where yellow physics reads brown. = the parked brand-side ID-relative
+gold-boost re-tune, no longer truncated by the ceiling.
