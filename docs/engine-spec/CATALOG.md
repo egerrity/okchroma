@@ -501,3 +501,36 @@ spread is the cost of ID-relative ink chroma; (b) normalize ink chroma to a text
 variance and most of the wobble in the same stroke as the dark ink-12 fix; (c) anchor the
 light ink apparent target at the pinned register band-wide (pin-aware solve). Exhibit with
 desaturated columns queued for the morning summary.
+
+**OVERNIGHT ROUND SHIPPED (2026-07-09, owner asleep — carried per her explicit delegation;
+NOTHING PUSHED).** Commits 5df1ac9 · a5fd7e9 · 8bc57b9 (+ lift 5f3bf1b reverted 77526f9):
+- **C10 RESOLVED — THE SCALE CHROMA TABLE (5df1ac9):** SCALE_C_LIGHT/SCALE_C_DARK are the
+  single declared source of per-stop chroma params; the stitched constants are DELETED.
+  Dark byte-identical (verified across brands+signals+overrides); light 8–10 share the
+  0.142 register — INCLUDING the signals' own ramps (unified model): red/green/info s8
+  closes its own 8|9 break (ΔE .030–.043; green s8 lands exactly on its s9 register).
+  Yellow signal untouched (ceiling-pinned). Byte-proof: shipped dump == the owner-judged
+  composite, cmp exact.
+- **C8 cool-yellow falloff SHIPPED (a5fd7e9):** light wDrift fades H88→H104 (the dark
+  curve's cool-edge knots); lemon + the lemon swap variant hold identity hue; below H88
+  byte-identical; residual footprint past the edge sub-perceptual (worst ΔE .0024).
+- **STRUCTURE GATE audit:register (8bc57b9):** table shape (8–10 one register; bounded
+  wash steps) + spec↔table binding + banned reappearance of the deleted constants.
+  "The stitching is fixed" now MEANS this gate is green — the owner's make-it-stick ask.
+  Plus sweep:collision asserts LIGHT post-remedy wash margins ≥ the bar (the C8 V3 hole).
+- **THE ID LIFT IS HELD (5f3bf1b → revert 77526f9), owner decision pending:** the new
+  assertion caught it FIRST RUN — the lift grazes the owner-closed red dH0 marginal
+  (#ff977e L.80 bright on-hue: wash 0.00604 → 0.00586 < the 0.006 bar, both lanes, 1 seed
+  class; measured pre/post, the lift owns the whole delta). Red-on-hue is at its hue-space
+  limit per the owner's own C7 ruling — register gap is the only lever there, and the lift
+  narrows it. OPTIONS FOR HER: (a) accept 0.00586 within the C7 ruling and encode the
+  red-dH0 marginal properly in the gate; (b) the fired-mute corridor round (near-signal
+  register discipline restores the margin structurally — the standing V3 coupling, now
+  measured to bind the brightness-ramp variant too); (c) reshape the lift. Re-land = one
+  revert of 77526f9. The VIVID_LIFT_* constants stay declared (dormant) as the landing pad.
+- Gates 13/13 green (incl. audit:register), ZERO re-bless — every drift inside tolerance.
+- Morning pages: render/round-before-after (both modes) · wobble-c11 (color vs desaturated
+  + C11 numbers; s8 apparent spread widened 9.9→12.7 L* with the register fix — luminance-
+  pinned stop, data for the ink round) · room-clamp (the hue-agnostic base measured: 5/24
+  highlight stop-cells clamped below the declared register, cyan/blue worst — the
+  fraction-of-room semantics flip is the rendered-option answer, owner-gated).
