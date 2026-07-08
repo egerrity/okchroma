@@ -548,3 +548,11 @@ live the primary washes rise past the pastel (s3 0.065, s5 0.103 vs 0.080) — f
 hierarchy restored with no secondary-side change. STILL OPEN FOR HER: the ink round
 questions (C9/C11 — three questions posed) and the orange-cta reverse exploration
 (two candidate shapes offered: fade-the-darkening-by-hue vs flip-who-moves).
+
+**C8 V3 — AMP RULED 0.50 (owner, 2026-07-09).** Live-demo eye-check: "50 looks better";
+#fff700 register-cross vs the yellow signal accepted ("acceptable"); red on-hue drift
+0.00586 → 0.00580 accepted ("the difference is imperceptible") after render/red-onhue-compare
+(magnified closest pairs; 108-seed band scan = ONE seed class under bar, dH0 L.80 C.17 only,
+±3° clears). Shipped 6c804e3: VIVID_LIFT_BLEND 0.50 + RED_ONHUE_ACCEPTED_FLOOR 0.0057
+(red dH0 only — the ratchet against future erosion). Gates 13/13. The yellow calibration
+round's light side is now CLOSED: table + s8 register + falloff + lift all live.
