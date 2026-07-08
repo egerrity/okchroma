@@ -76,17 +76,6 @@ export function buildContext(hex: string, opts?: ResolveOpts) {
 
   const brandSat = subtleC / Math.max(1e-6, maxChromaAt(brandL, brandH))
 
-  // the LIGHT envelope blend weight (C8 V3 + the owner's brightness correction,
-  // 2026-07-09): the muted path (u) OR the vivid-ID lift, whichever is stronger.
-  // Identity expresses through the room-relative envelope — the ROOM does the hue
-  // weighting (no gaussian, no hue table); the lift is one rule, ID-scaled by
-  // vividness × brightness. Signals are exempt (goldBoost carries their own lift —
-  // one lift per scale, never both). Dark blends keep u: the dark ID-relative
-  // counterpart is the parked dark round's design.
-  const envW = opts?.goldBoost
-    ? u
-    : Math.max(u, VIVID_LIFT_BLEND * Math.min(1, brandC / VIVID_C) * Math.min(1, Math.max(0, (brandL - VIVID_LIFT_L_LO) / VIVID_LIFT_L_RANGE)))
-
   const lightSpineRef = goldSpineHue(scaleL)
   const gOffPath = gauss(hueDelta(brandH, lightSpineRef), SPINE_OFFPATH_SIGMA)
   // the REAL light hue producer ('warm-drift'): inline spine drift with a dynamic cap (24+8u) PLUS the
@@ -106,7 +95,7 @@ export function buildContext(hex: string, opts?: ResolveOpts) {
 
   return {
     hex, opts, brandL, brandC, brandH, subtleC, cAt, archetype, scaleL,
-    darkFloorStrength, hueIsNoise, v, vSubtle, u, envW, chromaBoost, brandSat,
+    darkFloorStrength, hueIsNoise, v, vSubtle, u, chromaBoost, brandSat,
     lightHueAt, darkH, gOffPath, redShift,
   }
 }
@@ -117,13 +106,13 @@ export type Ctx = ReturnType<typeof buildContext>
 export const lightScaleChromaAt = (ctx: Ctx, baseC: number, satFraction: number) => (L: number): number => {
   const cLadder = ctx.vSubtle * ctx.chromaBoost * baseC
   const cEnv = ctx.brandSat * satFraction * maxChromaAt(L, ctx.lightHueAt(L))
-  return ctx.cAt('light', L, cLadder + ctx.envW * (cEnv - cLadder))
+  return ctx.cAt('light', L, cLadder + ctx.u * (cEnv - cLadder))
 }
 
 // ---- light highlight chroma (stops 9/10): same blend but gamut-CLAMPED before the solve (colorEngine.ts:441–442)
 export const lightHighlightChromaAt = (ctx: Ctx, baseC: number, satFraction: number) => (L: number, hh: number): number => {
   const hlLadderC = ctx.vSubtle * ctx.chromaBoost * baseC
-  return clampChromaToGamut(L, ctx.cAt('light', L, hlLadderC + ctx.envW * (ctx.brandSat * satFraction * maxChromaAt(L, hh) - hlLadderC)), hh)
+  return clampChromaToGamut(L, ctx.cAt('light', L, hlLadderC + ctx.u * (ctx.brandSat * satFraction * maxChromaAt(L, hh) - hlLadderC)), hh)
 }
 
 // ---- APCA metric primitives (the 'apca' contrast profile). apcaYAt mirrors wcagY's treatment of
