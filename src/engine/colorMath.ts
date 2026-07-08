@@ -65,6 +65,26 @@ export const RED_BAND_LO_SOFTNESS = 2
 
 export const VIVID_C = 0.13
 
+// The light warm drift's COOL EDGE (owner-approved 2026-07-09, CATALOG C8): the drift
+// weight fades from full at H88 to ZERO at H104 — the same cool-edge knots as the dark
+// WARM_TORSION.weight curve. Below H88 nothing changes; past it the cool yellows hold
+// their identity hue as stops darken (lemon darkens to olive, not golden tan), and the
+// warm-spine machinery is hue-banded in light exactly as it already is in dark. The
+// lemon swap variant (H≈107) rides the same rule, matching its dark behavior.
+export const LIGHT_DRIFT_COOL_HI = 88
+export const LIGHT_DRIFT_COOL_RANGE = 16
+
+// The ID-scaled paper/wash lift (owner design + approval 2026-07-09, CATALOG C8 V3):
+// vivid BRIGHT identities ride the room-relative envelope — the need scales with the
+// ID's vividness (C/VIVID_C, capped) AND its brightness (L ramp LO→LO+RANGE; an ID at
+// L 0.70 takes nothing, 0.90+ full). One rule, no per-color cases: where an ID lands
+// on these ramps IS its dose. Mid-L vivid colliders take zero lift by construction
+// (the red/green/info signals live at L .54–.65) — that is what protects the fired-case
+// margins the solo envelope broke. Signals are exempt (goldBoost carries their lift).
+export const VIVID_LIFT_BLEND = 0.35
+export const VIVID_LIFT_L_LO = 0.70
+export const VIVID_LIFT_L_RANGE = 0.20
+
 export const HUE_NOISE_C = 0.008
 
 export const MUTED_BLEND_DENOM = 0.55

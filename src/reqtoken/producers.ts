@@ -9,6 +9,7 @@ import { perceptualRungL } from '../engine/perceptualL'
 import {
   hexToOklch, maxChromaAt, goldSpineHue, torsionedHue, gauss, sigmoid, hueDelta,
   SPINE_OFFPATH_SIGMA, RED_TORSION_CENTER_H, RED_TORSION_SOFTNESS, VIVID_C, HUE_NOISE_C, MUTED_BLEND_DENOM,
+  LIGHT_DRIFT_COOL_HI, LIGHT_DRIFT_COOL_RANGE, VIVID_LIFT_BLEND, VIVID_LIFT_L_LO, VIVID_LIFT_L_RANGE,
   CREAM_UPPER_H, CREAM_UPPER_SOFTNESS,
   DEEPER_BAND_H_LO, DEEPER_BAND_H_HI, DEEPER_BAND_H_SOFT, DEEPER_BAND_U_LO, DEEPER_BAND_U_HI, DEEPER_BAND_U_SOFT,
   DEEPER_STRENGTH, redRepelShiftDeg, RED_BAND_LO_H, applyChromaFloor,
@@ -60,7 +61,9 @@ export function buildContext(hex: string, opts?: ResolveOpts) {
   const mutedness = mutednessRaw + deeperEffect * (1 - mutednessRaw)
   const u = S * creamGate * mutedness
   const gWarm = gauss(hueDelta(brandH, 83), 28)
-  const wDrift = S * (gWarm + (1 - gWarm) * mutedness * creamGate)
+  // the cool edge (LIGHT_DRIFT_COOL_*): drift weight fades H88→H104, zero past it —
+  // light's warm-spine drift is hue-banded like dark's torsion curve (CATALOG C8)
+  const wDrift = S * (gWarm + (1 - gWarm) * mutedness * creamGate) * (1 - Math.min(1, Math.max(0, (brandH - LIGHT_DRIFT_COOL_HI) / LIGHT_DRIFT_COOL_RANGE)))
   const driftCapDeg = 24 + 8 * u
 
   // The gold-band chroma lift (day-one eyeballed H-K correction) is SIGNAL-only
