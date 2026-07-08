@@ -81,7 +81,7 @@ export const LIGHT_DRIFT_COOL_RANGE = 16
 // on these ramps IS its dose. Mid-L vivid colliders take zero lift by construction
 // (the red/green/info signals live at L .54–.65) — that is what protects the fired-case
 // margins the solo envelope broke. Signals are exempt (goldBoost carries their lift).
-export const VIVID_LIFT_BLEND = 0.35
+export const VIVID_LIFT_BLEND = 0.50
 export const VIVID_LIFT_L_LO = 0.70
 export const VIVID_LIFT_L_RANGE = 0.20
 

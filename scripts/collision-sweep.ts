@@ -30,13 +30,14 @@ function oklchToHex(L: number, C: number, H: number): string {
 
 const WASH = [3, 4, 5, 6, 7]
 const HARD_BAR = 0.006
-// OWNER-ACCEPTED EXCEPTION (2026-07-09, "A is acceptable as is", extending her C7 ruling
-// that red differentiation is at its hue-space limit): brands sitting EXACTLY on the red
-// signal's hue have no hue exit left — the repel is at its identity-preserving max and
-// the ID lift spends part of the residual chroma gap (measured 0.00604 → 0.00586). The
-// accepted floor is scoped to red dH0 ONLY; anything below it — or any OTHER seed class
-// under HARD_BAR — still fails. A future change eroding this further needs a new ruling.
-const RED_ONHUE_ACCEPTED_FLOOR = 0.0058
+// OWNER-ACCEPTED EXCEPTION (2026-07-09, "A is acceptable as is"; extended same day for
+// the lift at 0.50: "the difference is imperceptible, we can just accept the drift there"
+// — judged on render/red-onhue-compare, magnified closest pairs). Red dH0 has no hue exit
+// left (the C7 hue-space-limit ruling); the lift spends part of the residual chroma gap
+// (0.00604 → 0.00580 at blend 0.50; one seed class in a 108-seed band scan). Floor scoped
+// to red dH0 ONLY; anything below it — or any OTHER seed class under HARD_BAR — still
+// fails. A future change eroding this further needs a new ruling.
+const RED_ONHUE_ACCEPTED_FLOOR = 0.0057
 const barFor = (signal: string, dH: number) => (signal === 'red' && dH === 0 ? RED_ONHUE_ACCEPTED_FLOOR : HARD_BAR)
 
 type Mode = 'light' | 'dark'
