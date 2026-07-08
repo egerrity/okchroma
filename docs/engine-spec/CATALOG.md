@@ -334,3 +334,17 @@ only by MUTED brands via u) is the natural mechanism: extend the blend to vivid 
 (weight from ID vividness) and the gamut geometry hue-weights automatically (yellow's
 light-stop room is the largest, blue's the smallest). Candidates rendered with BRIGHT
 IDs + muddy controls: render/id-envelope.html.
+
+**C8 V3 — SHIP REVERTED (3b95398): owner caught the collision interaction.** Her read
+("you took the thing keeping signals from clashing and multi-purposed it into the
+opposite") measured TRUE: with the 0.35 envelope, a vivid green brand ON the signal
+hue drops to worst wash ΔE 0.0059 — BELOW the C6-accepted 0.006 bar (pre-ship 0.0090);
+yellow margin −20% (0.0219→0.0174, still 2.9× bar); red/info unchanged; 2 remedy
+firings flipped. TWO findings: (1) the envelope (identity expression) and the parked
+FIRED-MUTE CORRIDOR (fired-case separation) are one design — shipping the first
+without the second breaks separation exactly where remedies fire; the aesthetic pick
+(0.35, bright IDs, owner-judged) stands as the target register for that joint round.
+(2) GATE HOLE: sweep:collision asserts qualified collisions FIRE remedies but never
+asserts POST-REMEDY wash margins ≥ the bar — the collapse passed the gate. Add a
+post-remedy margin check to the sweep in the corridor round. Instrument:
+scratchpad clash-margin (checkHueCollision vs effective signal set, ±16° per signal).
