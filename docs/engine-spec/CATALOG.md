@@ -534,3 +534,17 @@ NOTHING PUSHED).** Commits 5df1ac9 · a5fd7e9 · 8bc57b9 (+ lift 5f3bf1b reverte
   pinned stop, data for the ink round) · room-clamp (the hue-agnostic base measured: 5/24
   highlight stop-cells clamped below the declared register, cyan/blue worst — the
   fraction-of-room semantics flip is the rendered-option answer, owner-gated).
+
+**C8 V3 — RULED (a) AND RE-LANDED (owner, 2026-07-09: "A is acceptable as is").** The
+red on-hue bright marginal (0.00604 → 0.00586) is accepted within her C7 hue-space-limit
+ruling; the lift is live (re-land c073802) and the exception is a named owner-cited floor
+in sweep:collision (RED_ONHUE_ACCEPTED_FLOOR 0.0058, red dH0 only — further erosion still
+fails). Gates 13/13, byte-match to the judged composite re-proven on the live tree.
+BONUS RESOLUTION: the owner's secondaries observation ("secondaries end up looking more
+saturated at times") measured and CLOSED by the same ruling — the derived pastel is
+room-relative (35% of ceiling) while the primary rode the absolute ladder, so at big-room
+hues the pastel out-saturated its own primary (#FFF700 s3: 0.059 vs 0.022); with the lift
+live the primary washes rise past the pastel (s3 0.065, s5 0.103 vs 0.080) — family
+hierarchy restored with no secondary-side change. STILL OPEN FOR HER: the ink round
+questions (C9/C11 — three questions posed) and the orange-cta reverse exploration
+(two candidate shapes offered: fade-the-darkening-by-hue vs flip-who-moves).
