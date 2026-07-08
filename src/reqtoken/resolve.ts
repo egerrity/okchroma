@@ -8,8 +8,8 @@
 // The producers are verbatim ports of the pre-resolver engine, proven byte-identical at cutover (c7542b7);
 // the blessed snapshot audits are the standing regression gate.
 import { apparentL } from '../engine/perceptualL'
-import { clampChromaToGamut, wcagY, contrastRatio, findMaxLForContrast, apcaLc } from '../engine/constraints'
-import { hexToOklch, oklchToSrgbUnclamped } from '../engine/colorMath'
+import { clampChromaToGamut, wcagY, contrastRatio, legalRatio, findMaxLForContrast, apcaLc } from '../engine/constraints'
+import { hexToOklch, srgbEmitChannels } from '../engine/colorMath'
 import { hoverL } from '../engine/archetypes'
 import { MODE_SPECS, type ModeSpec, type StopReq, type RoleReq, type Require } from './spec'
 import {
@@ -22,7 +22,8 @@ import {
   apcaYAt, findMaxLForApcaLc, APCA_SOLVE_MARGIN_LC, APCA_TOL_LC,
 } from './producers'
 
-const oklchToSrgb = (L: number, C: number, H: number) => (Object.values(oklchToSrgbUnclamped(L, C, H)) as number[]).map(c => Math.max(0, Math.min(1, c))) as [number, number, number]
+// hex = the sRGB clamp-down of the resolved stop (gamut-map by chroma-reduction, §4B)
+const oklchToSrgb = (L: number, C: number, H: number) => (Object.values(srgbEmitChannels({ L, C, H })) as number[]).map(c => Math.max(0, Math.min(1, c))) as [number, number, number]
 const toHex = (rgb: [number, number, number]) => '#' + rgb.map(c => Math.round(c * 255).toString(16).padStart(2, '0')).join('')
 
 export type ResolvedStop = {
@@ -151,8 +152,9 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
           : chromaAt!(L)
         const isApca = req.metric === 'apca'
         const refMeasY = isApca ? refApcaYOf(2, sp.stop) : refYOf(2, sp.stop)
+        // wcag floors are D1 legality: both renditions of the fill must clear the target
         const measure = (L: number, C: number, H: number): number =>
-          isApca ? Math.abs(apcaLc(apcaYAt(L, C, H), refMeasY)) : contrastRatio(wcagY(L, C, H), refMeasY)
+          isApca ? Math.abs(apcaLc(apcaYAt(L, C, H), refMeasY)) : legalRatio(L, C, H, refMeasY)
         const reqTarget = isApca ? req.targetLc : req.target
         const tol = isApca ? APCA_TOL_LC : 1e-3
         const got0 = measure(placed.L, clampChromaToGamut(placed.L, placed.C, placed.H), placed.H)
@@ -175,7 +177,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     // verify any declared require against the emitted (gamut-clamped) values — total, fail loud
     if (sp.require?.metric === 'wcag') {
       const refY = refYOf(2, sp.stop)
-      const got = contrastRatio(wcagY(placed.L, clampChromaToGamut(placed.L, placed.C, placed.H), placed.H), refY)
+      const got = legalRatio(placed.L, clampChromaToGamut(placed.L, placed.C, placed.H), placed.H, refY)
       if (got < sp.require.target - 1e-3) unresolvable = `stop ${sp.stop}: contrast ${got.toFixed(2)} < required ${sp.require.target}`
     } else if (sp.require?.metric === 'apca') {
       const refA = refApcaYOf(2, sp.stop)
@@ -245,9 +247,10 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     const i10 = stops.findIndex(s => s.stop === 10)
     if (i10 >= 0) {
       const white = ons.onHighlightIsWhite
+      // PAIR law under D1: the shared pole must clear the floor on both renditions
       const poleRatio = (s: { L: number; C: number; H: number }) => {
-        const Y = wcagY(s.L, clampChromaToGamut(s.L, s.C, s.H), s.H)
-        return white ? contrastRatio(1.0, Y) : contrastRatio(Y, 0)
+        const gC = clampChromaToGamut(s.L, s.C, s.H)
+        return white ? legalRatio(s.L, gC, s.H, 1.0) : legalRatio(s.L, gC, s.H, 0)
       }
       const hl10 = stops[i10]
       if (poleRatio(hl10) < hlFloor - 1e-3) {

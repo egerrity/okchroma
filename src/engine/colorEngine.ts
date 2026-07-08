@@ -1,11 +1,10 @@
 import { type Archetype, classifyArchetype, hoverL } from './archetypes'
 import {
   wcagY,
-  contrastRatio,
+  legalRatio,
   findLForY,
   findLForContrast,
   apcaY,
-  apcaLc,
 } from './constraints'
 import {
   ILLUS_STOPS,
@@ -179,7 +178,7 @@ export function applyRedRepelRender(scale: GeneratedScale, enforceOnFillContrast
   scale.ctaHover = makeStop(scale.ctaHover.stop, scale.ctaHover.L, scale.ctaHover.C, H)
   if (enforceOnFillContrast && scale.onFillTextIsWhite) {
     const s9 = scale.cta
-    if (contrastRatio(1.0, wcagY(s9.L, s9.C, s9.H)) < 4.5) {
+    if (legalRatio(s9.L, s9.C, s9.H, 1.0) < 4.5) {
 
       const L = findLForContrast(s9.L, scale.brandC, H, 1.0, 4.6)
       scale.cta = makeStop(9, L, scale.brandC, H)

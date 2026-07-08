@@ -1,7 +1,7 @@
 import React from 'react'
 import { BRANDS } from '../src/brands'
 import { resolveBrand, type ResolvedBrand } from '../src/engine/resolve'
-import { annotationNote, toHex } from '../src/engine/cssRender'
+import { annotationNote, stopHex } from '../src/engine/cssRender'
 import { generateScale, generateIllustrationScale } from '../src/engine/colorEngine'
 import { remapSvg, SAMPLE_ILLUSTRATION } from '../src/illustration'
 
@@ -427,11 +427,11 @@ function IllusRow({ label, hex }: { label: string; hex: string }) {
       {stops.map((s, i) => (
         <div key={i} style={{ textAlign: 'center' }}>
           <div style={{
-            width: 64, height: 40, borderRadius: 6, background: toHex(s.r, s.g, s.b),
+            width: 64, height: 40, borderRadius: 6, background: stopHex(s),
             border: '1px solid var(--border-subtle)',
           }} />
           <div style={{ fontSize: 10, color: 'var(--fg-subtle)', marginTop: 4, userSelect: 'all', fontFamily: 'ui-monospace, monospace' }}>
-            {toHex(s.r, s.g, s.b).toUpperCase()}
+            {stopHex(s).toUpperCase()}
           </div>
           <div style={{ fontSize: 10, color: 'var(--fg-subtle)' }}>{ILLUS_SLOT_NAMES[i]} {i + 1}</div>
         </div>

@@ -7,7 +7,9 @@
 // P3 paths are separate branches, never substitutes: even mathematically equivalent
 // matrix chains differ ~1e-4 in XYZ (measured, P3-DESIGN.md §1d).
 export type Gamut = 'srgb' | 'p3'
-export const MASTER_GAMUT: Gamut = 'srgb'
+// PHASE B (owner "go ahead" 2026-07-08): the master is P3. Every generation-side
+// judgment tracks it; emit clamps DOWN to sRGB (srgbEmitChannels) for hex/Figma.
+export const MASTER_GAMUT: Gamut = 'p3'
 
 export function oklchToLinearRgb(L: number, C: number, H: number): [number, number, number] {
   const h = (H * Math.PI) / 180
@@ -80,6 +82,20 @@ export function contrastRatio(Y1: number, Y2: number): number {
   return (lighter + 0.05) / (darker + 0.05)
 }
 
+// ── D1 legality (owner ruling 2026-07-07): the strictly-safe rule ─────────────────
+// Under a wide master every WCAG legality verdict must hold on BOTH renditions of the
+// fill: the master (P3) pixels AND the sRGB clamp-down that hex/Figma/audit tools see.
+// legalRatio = the minimum ratio across renditions — a pass here passes everywhere.
+// The reference side (bgY) stays a single value: legality references are near-neutral
+// stops (paper-2, poles) whose rendition ΔY ≤ 1e-4 — sub-tolerance vs the +0.05 solve
+// margins. Under an sRGB master this degrades to the plain single-rendition ratio.
+export function legalRatio(L: number, C: number, H: number, otherY: number): number {
+  const r = contrastRatio(wcagY(L, C, H, MASTER_GAMUT), otherY)
+  if (MASTER_GAMUT === 'srgb') return r
+  const cS = clampChromaToGamut(L, C, H, 'srgb')
+  return Math.min(r, contrastRatio(wcagY(L, cS, H, 'srgb'), otherY))
+}
+
 export function findLForY(targetY: number, C: number, H: number, gamut: Gamut = MASTER_GAMUT): number {
   let lo = 0.005, hi = 0.999
   for (let i = 0; i < 20; i++) {
@@ -89,19 +105,20 @@ export function findLForY(targetY: number, C: number, H: number, gamut: Gamut = 
   return (lo + hi) / 2
 }
 
+// LEGALITY solver (D1): the predicate is legalRatio — the darkened fill must clear the
+// bar on both renditions. Monotone: both renditions' ratios rise as the fill darkens.
 export function findLForContrast(
   startL: number,
   C: number,
   H: number,
   bgY: number,
-  targetContrast: number,
-  gamut: Gamut = MASTER_GAMUT
+  targetContrast: number
 ): number {
-  if (contrastRatio(wcagY(startL, C, H, gamut), bgY) >= targetContrast) return startL
+  if (legalRatio(startL, C, H, bgY) >= targetContrast) return startL
   let lo = 0.05, hi = startL
   for (let i = 0; i < 20; i++) {
     const mid = (lo + hi) / 2
-    contrastRatio(wcagY(mid, C, H, gamut), bgY) >= targetContrast ? (lo = mid) : (hi = mid)
+    legalRatio(mid, C, H, bgY) >= targetContrast ? (lo = mid) : (hi = mid)
   }
   return lo
 }
@@ -128,11 +145,13 @@ export function apcaLc(txtY: number, bgY: number): number {
   return sapc > -0.1 ? 0 : (sapc + 0.027) * 100
 }
 
-export function findMaxLForContrast(C: number, H: number, bgY: number, targetContrast: number, gamut: Gamut = MASTER_GAMUT): number {
+// LEGALITY solver (D1): max L whose fill clears the bar on both renditions — the pass
+// set is the intersection of two downward intervals, itself a downward interval.
+export function findMaxLForContrast(C: number, H: number, bgY: number, targetContrast: number): number {
   let lo = 0.005, hi = 0.999
   for (let i = 0; i < 20; i++) {
     const mid = (lo + hi) / 2
-    contrastRatio(wcagY(mid, C, H, gamut), bgY) >= targetContrast ? (lo = mid) : (hi = mid)
+    legalRatio(mid, C, H, bgY) >= targetContrast ? (lo = mid) : (hi = mid)
   }
   return lo
 }

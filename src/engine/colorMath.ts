@@ -2,7 +2,7 @@
 // colorEngine.ts so the requirement-token resolver and the engine can share one implementation without an
 // import cycle (colorEngine → reqtoken/resolve → colorMath). No formula here may change without a parity
 // dump (scripts/p3-parity-dump.ts, before/after byte-compare) proving the output is byte-identical.
-import { clampChromaToGamut, oklchToLinearRgb, apcaLc, contrastRatio, wcagY, MASTER_GAMUT, type Gamut } from './constraints'
+import { clampChromaToGamut, oklchToLinearRgb, apcaLc, contrastRatio, legalRatio, encodedChannels, MASTER_GAMUT, type Gamut } from './constraints'
 import { GOLD_SPINE, WARM_TORSION } from './stopTable'
 
 function goldSpineHueTable(L: number): number {
@@ -160,6 +160,20 @@ export function oklchToSrgbUnclamped(L: number, C: number, H: number): { r: numb
   return { r: gm(rl), g: gm(gl), b: gm(bl) }
 }
 
+// THE sRGB clamp-down at emit (D6, P3-DESIGN §4B): gamut-map by chroma-reduction at
+// constant L/H, then encode — never per-channel clamping (which hue-shifts). For a
+// stop already inside sRGB this is exactly the shipped encoding. Every hex / Figma
+// component / rgba emit routes through this.
+export function srgbEmitChannels(s: { L: number; C: number; H: number }): { r: number; g: number; b: number } {
+  const c = clampChromaToGamut(s.L, s.C, s.H, 'srgb')
+  return oklchToSrgbUnclamped(s.L, c, s.H)
+}
+
+// the master rendition for CSS color(display-p3 …) emission — the stop's own channels
+// when the master is P3 (makeStop minted them in the master basis)
+export const masterEmitChannels = (s: { L: number; C: number; H: number }): [number, number, number] =>
+  encodedChannels(s.L, s.C, s.H, MASTER_GAMUT)
+
 export interface ColorStop {
   stop: number
   L: number
@@ -181,12 +195,13 @@ export const DARK_FLOOR_FULL_C = 0.022
 
 export const DARK_FLOOR_MUTED_MAX_C = 0.04
 
-// The master-gamut fork: chroma is clamped in the MASTER gamut. The r/g/b channels
-// stay sRGB-encoded in Phase A (master = srgb, so they coincide); the render/emit
-// channel split lands with the Phase-B flip (P3-DESIGN.md §4B).
+// The master-gamut fork: chroma clamps in the MASTER gamut and the r/g/b channels are
+// the master basis's own gamma-encoded components (P3 under the flip) — the perceptual
+// truth apcaY judges. Serialization to hex/Figma goes through srgbEmitChannels instead
+// (the render/emit split, P3-DESIGN.md §4B).
 export function makeStop(stop: number, L: number, C: number, H: number, gamut: Gamut = MASTER_GAMUT): ColorStop {
   const gamutC = clampChromaToGamut(L, C, H, gamut)
-  const { r, g, b } = oklchToSrgbUnclamped(L, gamutC, H)
+  const [r, g, b] = encodedChannels(L, gamutC, H, gamut)
   return { stop, L, C: gamutC, H, r, g, b }
 }
 
@@ -196,19 +211,21 @@ export function makeStop(stop: number, L: number, C: number, H: number, gamut: G
 // other pole when the preferred one fails (WCAG 4.5:1 has no dead zone, so the other pole
 // always passes; fills never move). The apca profile carries no ratio floor — its law is the
 // Lc bar (enforceLc re-solves enforced ctas; the highlight band clears Lc 60 by placement).
-export function onTextIsWhite(Y: number, L: number, C: number, H: number, enforce: boolean, ratioFloor?: number, gamut: Gamut = MASTER_GAMUT): boolean {
+// Every 4.5 check is D1 legality: legalRatio (both renditions). The Y arg (APCA
+// preference) is the caller's master-basis apcaY — D2. Ratio vs a pole passes
+// contrastRatio's other side as the pole's Y (white 1.0 / black 0).
+export function onTextIsWhite(Y: number, L: number, C: number, H: number, enforce: boolean, ratioFloor?: number): boolean {
   let white = Math.abs(apcaLc(1.0, Y)) >= Math.abs(apcaLc(0.0, Y))
   if (enforce) {
-    if (white && contrastRatio(1.0, wcagY(L, C, H, gamut)) < 4.5) {
-      if (contrastRatio(wcagY(L, C, H, gamut), 0) >= 4.5 && Math.abs(apcaLc(0.0, Y)) >= 45) white = false
-    } else if (!white && contrastRatio(wcagY(L, C, H, gamut), 0) < 4.5) {
-      if (contrastRatio(1.0, wcagY(L, C, H, gamut)) >= 4.5 && Math.abs(apcaLc(1.0, Y)) >= 45) white = true
+    if (white && legalRatio(L, C, H, 1.0) < 4.5) {
+      if (legalRatio(L, C, H, 0) >= 4.5 && Math.abs(apcaLc(0.0, Y)) >= 45) white = false
+    } else if (!white && legalRatio(L, C, H, 0) < 4.5) {
+      if (legalRatio(L, C, H, 1.0) >= 4.5 && Math.abs(apcaLc(1.0, Y)) >= 45) white = true
     }
   }
   // the conformance floor: the chosen pole must PASS — legality overrides preference
   if (ratioFloor !== undefined) {
-    const fillY = wcagY(L, C, H, gamut)
-    const chosen = white ? contrastRatio(1.0, fillY) : contrastRatio(fillY, 0)
+    const chosen = white ? legalRatio(L, C, H, 1.0) : legalRatio(L, C, H, 0)
     if (chosen < ratioFloor) white = !white
   }
   return white

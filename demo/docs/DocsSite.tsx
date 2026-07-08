@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { generateScale } from '../../src/engine/colorEngine'
-import { toHex } from '../../src/engine/cssRender'
+import { stopHex } from '../../src/engine/cssRender'
 import { emitDtcgRamp } from '../../src/reqtoken/dtcg'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -41,8 +41,8 @@ function Ramp({ hex, caption }: { hex: string; caption?: React.ReactNode }) {
     <figure className="d2-ramp">
       <div className="d2-ramp-row">
         {scale.light.map(s => (
-          <div key={s.stop} className="d2-ramp-cell" title={`stop ${s.stop} — ${toHex(s.r, s.g, s.b)}`}
-            style={{ background: toHex(s.r, s.g, s.b) }} />
+          <div key={s.stop} className="d2-ramp-cell" title={`stop ${s.stop} — ${stopHex(s)}`}
+            style={{ background: stopHex(s) }} />
         ))}
       </div>
       <div className="d2-ramp-row d2-ramp-nums">
@@ -86,8 +86,8 @@ function HueGrid() {
           return (
             <div className="d2-huegrid-row" key={hex}>
               {scale.light.map(s => (
-                <div key={s.stop} className="d2-huegrid-cell" title={`${hex} — stop ${s.stop} — ${toHex(s.r, s.g, s.b)}`}
-                  style={{ background: toHex(s.r, s.g, s.b) }} />
+                <div key={s.stop} className="d2-huegrid-cell" title={`${hex} — stop ${s.stop} — ${stopHex(s)}`}
+                  style={{ background: stopHex(s) }} />
               ))}
             </div>
           )

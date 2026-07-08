@@ -166,6 +166,17 @@ Classification of the consumers:
 
 ### Phase B — flip the master to P3 (owner-gated; the flip is a COMMIT, not just the constant)
 
+**LANDED 2026-07-08** (owner "go ahead"): everything below shipped in one commit.
+Measured movement vs the pre-flip parity reference: 15,756 emitted hex tokens moved
+(9,402 dark / 6,354 light — the pinned dark-wash population, as the sweeps predicted);
+largest single move Δ58/255 on dark inks of saturated green/yellow seeds. D1 verified
+end-to-end (222/222 enforced white-on-fill ctas clear 4.5 on both renditions). Gate
+status: 10 of 11 green (self-consistent gates follow the master; snapshot tolerances
+absorb the sub-0.015 moves); **audit:ext red pending the owner re-bless** — the
+override sets moved ±1 token where D1's stricter floor flipped near-4.5 on-highlight
+poles (the D5-class flips, now live). REMAINING: owner eye-check (D3 decided there) →
+one-shot re-bless.
+
 Flipping `MASTER_GAMUT` alone is NOT sufficient — the Phase-A review confirmed two
 structural pieces land with the flip commit, before or with the constant change:
 

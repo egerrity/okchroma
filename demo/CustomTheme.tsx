@@ -5,7 +5,7 @@ import {
 } from 'lucide-react'
 import { resolveBrand, resolveTheme, type SecondaryStyle } from '../src/engine/resolve'
 import { ARCHETYPES, type Archetype } from '../src/engine/archetypes'
-import { brandCss, signalsCss, toHex } from '../src/engine/cssRender'
+import { brandCss, signalsCss, stopHex } from '../src/engine/cssRender'
 import { inRedRepelBand, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
 import { wcagY, contrastRatio } from '../src/engine/constraints'
 import { HERO_ILLO } from './heroIllo'
@@ -196,7 +196,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   // whole theme — no separate neutral block.
   const overrideCss = computed.css
 
-  const shipsHex = toHex(computed.r.scale.cta.r, computed.r.scale.cta.g, computed.r.scale.cta.b).toUpperCase()
+  const shipsHex = stopHex(computed.r.scale.cta).toUpperCase()
 
   // ── Persistent horizontal controls bar — the single source of truth for
   // every color, pinned under the navbar on BOTH views, so editing is live
@@ -532,7 +532,7 @@ function checklistRows(rRec: ResolvedBrand, rung: RungMode, primaryHex: string):
   const origArch = classifyArchetype(rRec.scale.brandL)
   const rec = rung === 'recommended'
   const rows: CheckRow[] = []
-  const shipsHex = toHex(rRec.scale.cta.r, rRec.scale.cta.g, rRec.scale.cta.b).toUpperCase()
+  const shipsHex = stopHex(rRec.scale.cta).toUpperCase()
 
   if (rRec.rung1) {
     rows.push(rec

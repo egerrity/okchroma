@@ -16,7 +16,7 @@ import { trueY, clampChromaToGamutP3, oklchToLinearP3, gmEnc, apcaYP3 } from './
 const BAR = 4.5
 
 function seedHex(L: number, C: number, H: number): string {
-  const c = clampChromaToGamut(L, C, H) * 0.999
+  const c = clampChromaToGamut(L, C, H, 'srgb') * 0.999   // seeds are sRGB hexes by contract (D4)
   const { r, g, b } = oklchToSrgbUnclamped(L, c, H)
   const q = (v: number) => Math.round(Math.min(1, Math.max(0, v)) * 255).toString(16).padStart(2, '0')
   return `#${q(r)}${q(g)}${q(b)}`

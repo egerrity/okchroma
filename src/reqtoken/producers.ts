@@ -4,10 +4,10 @@
 // and proven byte-identical at cutover (commit c7542b7); the blessed snapshots are the standing gate — do not
 // "simplify" an expression here without eye-check + re-bless.
 import { classifyArchetype, medianLForArchetype, type Archetype } from '../engine/archetypes'
-import { clampChromaToGamut, wcagY, contrastRatio, findMaxLForContrast, findLForContrast, apcaY, apcaLc } from '../engine/constraints'
+import { clampChromaToGamut, legalRatio, findMaxLForContrast, findLForContrast, apcaY, apcaLc, encodedChannels } from '../engine/constraints'
 import { perceptualRungL } from '../engine/perceptualL'
 import {
-  hexToOklch, oklchToSrgbUnclamped, maxChromaAt, goldSpineHue, torsionedHue, gauss, sigmoid, hueDelta,
+  hexToOklch, maxChromaAt, goldSpineHue, torsionedHue, gauss, sigmoid, hueDelta,
   SPINE_OFFPATH_SIGMA, RED_TORSION_CENTER_H, RED_TORSION_SOFTNESS, VIVID_C, HUE_NOISE_C, MUTED_BLEND_DENOM,
   CREAM_UPPER_H, CREAM_UPPER_SOFTNESS,
   DEEPER_BAND_H_LO, DEEPER_BAND_H_HI, DEEPER_BAND_H_SOFT, DEEPER_BAND_U_LO, DEEPER_BAND_U_HI, DEEPER_BAND_U_SOFT,
@@ -118,7 +118,9 @@ export const lightHighlightChromaAt = (ctx: Ctx, baseC: number, satFraction: num
 // bisection is: against a near-white (light) or near-black (dark) paper-2, the reverse-polarity side of
 // the curve can never reach a passing |Lc|, so the passing set is a single downward (light) interval.
 export function apcaYAt(L: number, C: number, H: number): number {
-  const { r, g, b } = oklchToSrgbUnclamped(L, C, H)
+  // D2: channels AND coefficients in the master (P3) basis — encodedChannels pairs them;
+  // a mixed basis (sRGB channels under P3 weights) is neither gamut's Lc.
+  const [r, g, b] = encodedChannels(L, C, H)
   return apcaY(r, g, b)
 }
 // The solve measures in EMIT space — chroma gamut-clamped per candidate L — because Lc is polarity- and
@@ -214,16 +216,14 @@ export function placeLightHighlight(ctx: Ctx, rootL: number, chromaAt: (L: numbe
 // ---- on-fill (light), PRE-enforcement: judged at fill9 = the brand fill at scaleL (colorEngine.ts:271–273).
 // `enforce` resolves at the call site: caller opts override the spec's declared default.
 export function onFillIsWhiteLight(ctx: Ctx, enforce: boolean): boolean {
-  const fill9 = oklchToSrgbUnclamped(ctx.scaleL, clampChromaToGamut(ctx.scaleL, ctx.cAt('light', ctx.scaleL, ctx.brandC), ctx.brandH), ctx.brandH)
-  const fill9ApcaY = apcaY(fill9.r, fill9.g, fill9.b)
+  const fill9ApcaY = apcaYAt(ctx.scaleL, clampChromaToGamut(ctx.scaleL, ctx.cAt('light', ctx.scaleL, ctx.brandC), ctx.brandH), ctx.brandH)
   return onTextIsWhite(fill9ApcaY, ctx.scaleL, ctx.brandC, ctx.brandH, enforce)
 }
 
 // ---- on-highlight: judged at the emitted highlight-9 stop — perceptual preference, with the
 // declared conformance floor (spec.ons.onHighlight.ratioFloor: 4.5 under wcag, stripped under apca)
 export function onHighlightIsWhiteAt(L: number, C: number, H: number, ratioFloor?: number): boolean {
-  const { r, g, b } = oklchToSrgbUnclamped(L, C, H)
-  return onTextIsWhite(apcaY(r, g, b), L, C, H, false, ratioFloor)
+  return onTextIsWhite(apcaYAt(L, C, H), L, C, H, false, ratioFloor)
 }
 
 // ================= DARK producers (colorEngine.ts:378–434, 469–481, verbatim) =================
@@ -280,7 +280,7 @@ export function placeDark(dctx: DarkCtx, rootL: number, chromaAt: (L: number) =>
 export function ctaLightL(ctx: Ctx, onFillTextIsWhite: boolean, enforce: boolean): number {
   let light9L = ctx.scaleL
   if (enforce && onFillTextIsWhite
-      && contrastRatio(1.0, wcagY(ctx.scaleL, ctx.brandC, ctx.brandH)) < 4.5) {
+      && legalRatio(ctx.scaleL, ctx.brandC, ctx.brandH, 1.0) < 4.5) {
     light9L = findLForContrast(ctx.scaleL, ctx.brandC, ctx.brandH, 1.0, 4.6)
   }
   return light9L
@@ -289,7 +289,7 @@ export function ctaLightL(ctx: Ctx, onFillTextIsWhite: boolean, enforce: boolean
 // dark cta enforce re-solve: judged at the emitted base ctaDark; only a WHITE on-fill triggers it (:427–433)
 export function ctaDarkEnforcedL(ctx: Ctx, base: { L: number; C: number; H: number }, onFillIsWhiteDark: boolean, enforce: boolean): number | null {
   if (!(enforce && onFillIsWhiteDark)) return null
-  if (contrastRatio(1.0, wcagY(base.L, base.C, base.H)) >= 4.5) return null
+  if (legalRatio(base.L, base.C, base.H, 1.0) >= 4.5) return null
   return findLForContrast(base.L, base.C, ctx.darkH, 1.0, 4.6)
 }
 
@@ -334,6 +334,5 @@ export function ctaDarkEnforcedLApca(ctx: Ctx, base: { L: number; C: number; H: 
 
 // on-fill (dark): judged at the emitted (gamut-clamped) base ctaDark, PRE-enforcement (:424–425)
 export function onFillIsWhiteDarkAt(L: number, C: number, H: number, enforce: boolean): boolean {
-  const { r, g, b } = oklchToSrgbUnclamped(L, C, H)
-  return onTextIsWhite(apcaY(r, g, b), L, C, H, enforce)
+  return onTextIsWhite(apcaYAt(L, C, H), L, C, H, enforce)
 }
