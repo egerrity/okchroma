@@ -1,8 +1,8 @@
 // colorMath.ts — leaf module: the engine's shared color math and producer constants, hoisted VERBATIM from
 // colorEngine.ts so the requirement-token resolver and the engine can share one implementation without an
-// import cycle (colorEngine → reqtoken/resolve → colorMath). No formula here may change without the parity
-// gate (scripts/engine-parity.ts) proving the output is byte-identical.
-import { clampChromaToGamut, oklchToLinearRgb, apcaLc, contrastRatio, wcagY } from './constraints'
+// import cycle (colorEngine → reqtoken/resolve → colorMath). No formula here may change without a parity
+// dump (scripts/p3-parity-dump.ts, before/after byte-compare) proving the output is byte-identical.
+import { clampChromaToGamut, oklchToLinearRgb, apcaLc, contrastRatio, wcagY, MASTER_GAMUT, type Gamut } from './constraints'
 import { GOLD_SPINE, WARM_TORSION } from './stopTable'
 
 function goldSpineHueTable(L: number): number {
@@ -132,8 +132,8 @@ export function redRepelShiftDeg(brandH: number): number {
   return Math.max(shipped, floor)
 }
 
-export function maxChromaAt(L: number, H: number): number {
-  return clampChromaToGamut(L, 0.52, H)
+export function maxChromaAt(L: number, H: number, gamut: Gamut = MASTER_GAMUT): number {
+  return clampChromaToGamut(L, 0.52, H, gamut)
 }
 
 export function hexToOklch(hex: string): { L: number; C: number; H: number } {
@@ -181,8 +181,11 @@ export const DARK_FLOOR_FULL_C = 0.022
 
 export const DARK_FLOOR_MUTED_MAX_C = 0.04
 
-export function makeStop(stop: number, L: number, C: number, H: number): ColorStop {
-  const gamutC = clampChromaToGamut(L, C, H)
+// The master-gamut fork: chroma is clamped in the MASTER gamut. The r/g/b channels
+// stay sRGB-encoded in Phase A (master = srgb, so they coincide); the render/emit
+// channel split lands with the Phase-B flip (P3-DESIGN.md §4B).
+export function makeStop(stop: number, L: number, C: number, H: number, gamut: Gamut = MASTER_GAMUT): ColorStop {
+  const gamutC = clampChromaToGamut(L, C, H, gamut)
   const { r, g, b } = oklchToSrgbUnclamped(L, gamutC, H)
   return { stop, L, C: gamutC, H, r, g, b }
 }
@@ -193,18 +196,18 @@ export function makeStop(stop: number, L: number, C: number, H: number): ColorSt
 // other pole when the preferred one fails (WCAG 4.5:1 has no dead zone, so the other pole
 // always passes; fills never move). The apca profile carries no ratio floor — its law is the
 // Lc bar (enforceLc re-solves enforced ctas; the highlight band clears Lc 60 by placement).
-export function onTextIsWhite(Y: number, L: number, C: number, H: number, enforce: boolean, ratioFloor?: number): boolean {
+export function onTextIsWhite(Y: number, L: number, C: number, H: number, enforce: boolean, ratioFloor?: number, gamut: Gamut = MASTER_GAMUT): boolean {
   let white = Math.abs(apcaLc(1.0, Y)) >= Math.abs(apcaLc(0.0, Y))
   if (enforce) {
-    if (white && contrastRatio(1.0, wcagY(L, C, H)) < 4.5) {
-      if (contrastRatio(wcagY(L, C, H), 0) >= 4.5 && Math.abs(apcaLc(0.0, Y)) >= 45) white = false
-    } else if (!white && contrastRatio(wcagY(L, C, H), 0) < 4.5) {
-      if (contrastRatio(1.0, wcagY(L, C, H)) >= 4.5 && Math.abs(apcaLc(1.0, Y)) >= 45) white = true
+    if (white && contrastRatio(1.0, wcagY(L, C, H, gamut)) < 4.5) {
+      if (contrastRatio(wcagY(L, C, H, gamut), 0) >= 4.5 && Math.abs(apcaLc(0.0, Y)) >= 45) white = false
+    } else if (!white && contrastRatio(wcagY(L, C, H, gamut), 0) < 4.5) {
+      if (contrastRatio(1.0, wcagY(L, C, H, gamut)) >= 4.5 && Math.abs(apcaLc(1.0, Y)) >= 45) white = true
     }
   }
   // the conformance floor: the chosen pole must PASS — legality overrides preference
   if (ratioFloor !== undefined) {
-    const fillY = wcagY(L, C, H)
+    const fillY = wcagY(L, C, H, gamut)
     const chosen = white ? contrastRatio(1.0, fillY) : contrastRatio(fillY, 0)
     if (chosen < ratioFloor) white = !white
   }

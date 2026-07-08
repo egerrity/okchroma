@@ -143,23 +143,48 @@ Classification of the consumers:
   "equivalent" math differs at 1e-4 — byte-identity requires the existing expressions
   untouched). P3 paths: OKLab→XYZ direct (exact matrix) → linear-P3; apcaY with the
   SAPC display-p3 coefficients; clampChromaToGamut against the P3 cube.
-- `MASTER_GAMUT: Gamut = 'srgb'` — single flip point. perceptualL boostCache key
-  gains the gamut; module-level SIGNAL_SCALES cache likewise gamut-keyed.
-- ColorStop splits render from emit: L/C/H + rendered-gamut linear channels stay the
-  perceptual truth; hex/8-bit emit goes through an explicit sRGB gamut-map
-  (chroma-reduce, constant L/H) at the three emit paths.
-- All gates re-run green with zero value drift (the proof Phase A changed nothing).
+- `MASTER_GAMUT: Gamut = 'srgb'` — the flip constant. perceptualL boostCache key
+  gains the gamut (instruments run both gamuts in one process). SIGNAL_SCALES stays
+  profile-keyed only: generateScale takes no gamut opt, so a non-master pipeline scale
+  cannot be requested — gamut-keying it is deferred to whenever that opt exists.
+- Byte-identity proven two ways: scripts/p3-parity-dump.ts before/after byte-compare
+  (themeToFigma + css emit, 292 entries, both profiles) and the full gate suite.
 
-### Phase B — flip the master to P3 (owner-gated)
+### Phase B — flip the master to P3 (owner-gated; the flip is a COMMIT, not just the constant)
 
-- `MASTER_GAMUT = 'p3'`; cssRender emits hex (sRGB clamp-down) plus a
-  `color(display-p3 r g b)` override under `@supports (color: color(display-p3 1 1 1))`;
-  figmaRender/payload unchanged in shape (sRGB clamp-down per §3).
+Flipping `MASTER_GAMUT` alone is NOT sufficient — the Phase-A review confirmed two
+structural pieces land with the flip commit, before or with the constant change:
+
+- **ColorStop render/emit split + sRGB gamut-map at emit.** Stops carry the master
+  gamut's truth; hex/8-bit emit goes through an explicit sRGB gamut-map (chroma-reduce
+  at constant L/H) at the emit paths — cssRender toHex(:8) + rgba outline(:206),
+  figmaRender colorFromStop/clamp01 + inline outline(:120), reqtoken/resolve.ts:25
+  oklchToSrgb. Without this, out-of-sRGB stops get per-channel clamps (hue-distorting).
+- **apcaY channel-basis threading.** Every generation-side apcaY consumer feeds
+  sRGB-encoded channels today; under the P3 coefficient set that is a mixed basis.
+  Route through `encodedChannels(L,C,H,gamut)` (constraints.ts, added Phase A):
+  reqtoken apcaYAt (producers.ts:120) + on-text sites (producers.ts:217/225/337,
+  colorEngine.ts:241/298) — or the post-split ColorStop channels.
+- D1 ruling wired in: every 4.5/3.0 legality floor and enforcement solve requires the
+  chosen pole to clear the bar on BOTH the exact-P3 Y and the sRGB-clamp-down Y.
+- D2 ruling wired in: apca-profile pole preference and Lc enforcement compute on the
+  P3 basis.
+- cssRender emits hex (sRGB clamp-down) plus a `color(display-p3 r g b)` override
+  under `@supports (color: color(display-p3 1 1 1))`; figmaRender/payload unchanged
+  in shape (sRGB clamp-down per §3).
 - Gates re-pointed per §2; one-shot re-bless of all snapshots + smoothness
   re-baseline + figma-verify spot hexes, only after the owner eye-check
-  (TokenCards, full role sets, dark on dark).
+  (TokenCards, full role sets, dark on dark) — D3 (normalizer re-tune vs pin) is
+  decided AT this eye-check.
 
-## 5. Owner decisions queued (with recommendations)
+## 5. Owner decisions — RULED 2026-07-07
+
+All five closed by the owner: **D1 = both renditions must pass. D2 = P3 basis.
+D3 = deferred to the Phase-B eye-check. D4 = confirmed (seed input stays sRGB hex).
+D5 = strictly-safe** (ruled on the measured numbers; exhibit at
+scripts/p3-pole-examples.ts → render/p3-d5-poles.html — only 2 verdict flips exist
+in the whole sweep, green brand ctas near L 0.55). Original framing kept below for
+the record.
 
 - **D1 — legality Y for the wcag lane and every 4.5/3.0 enforcement floor.**
   Options: (a) sRGB clamp-down only (matches sRGB-measuring audit tools; but 1d shows

@@ -114,9 +114,9 @@ export interface GenerateOptions {
 
 // generateScale is now an ADAPTER over the requirement-token resolver (src/reqtoken): it compiles the caller
 // opts into a resolver invocation per mode and assembles the same GeneratedScale contract as before. The
-// producer/require/refine math lives in src/reqtoken/producers.ts (verbatim ports of the old body — the old
-// body itself is frozen in src/engine/legacy/ until Stage 7). Output is byte-identical: proven by
-// scripts/engine-parity.ts (legacy vs live) and scripts/reqtoken-parity-probe.ts (resolver vs legacy shape).
+// producer/require/refine math lives in src/reqtoken/producers.ts (verbatim ports of the old body; the
+// cutover was proven byte-identical before the legacy body and its parity gates were deleted in 8b79504 —
+// today's equivalent instrument is scripts/p3-parity-dump.ts, a before/after byte-compare).
 export function generateScale(
   hex: string,
   scaleName: string,

@@ -1,9 +1,13 @@
 
 
-import { oklchToLinearRgb, clampChromaToGamut, wcagY } from './constraints'
+import { oklchToLinearRgb, clampChromaToGamut, wcagY, oklchToXyz as oklchToXyzExact, MASTER_GAMUT, type Gamut } from './constraints'
 
 const Xn = 0.95047, Yn = 1.0, Zn = 1.08883
-function oklchToXyz(L: number, C: number, H: number): [number, number, number] {
+// srgb path: the shipped composed-matrix chain VERBATIM (its Math.max crush and matrix
+// rounding differ from the exact OKLab→XYZ at ~1e-4 — byte-identity forbids merging).
+// p3 path: the exact OKLab→XYZ, basis-free and crush-free — right for wide-gamut colors.
+function oklchToXyz(L: number, C: number, H: number, gamut: Gamut): [number, number, number] {
+  if (gamut === 'p3') return oklchToXyzExact(L, C, H)
   const [r, g, b] = oklchToLinearRgb(L, C, H)
   const R = Math.max(0, r), G = Math.max(0, g), B = Math.max(0, b)
   return [
@@ -35,27 +39,27 @@ function nayGamma(X: number, Y: number, Z: number, kQ: number): number {
 const GAMMA_WHITE =
   0.5 * (nayGamma(WP[0], WP[1], 1 - WP[0] - WP[1], -0.866) + nayGamma(WP[0], WP[1], 1 - WP[0] - WP[1], -0.134))
 
-export function apparentL(L: number, C: number, H: number): number {
-  const [X, Y, Z] = oklchToXyz(L, C, H)
+export function apparentL(L: number, C: number, H: number, gamut: Gamut = MASTER_GAMUT): number {
+  const [X, Y, Z] = oklchToXyz(L, C, H, gamut)
   return lstarFromY(Y * ((0.5 * (nayGamma(X, Y, Z, -0.866) + nayGamma(X, Y, Z, -0.134))) / GAMMA_WHITE))
 }
 
-export const grayApparentL = (L: number) => lstarFromY(wcagY(L, 0, 0))
+export const grayApparentL = (L: number, gamut: Gamut = MASTER_GAMUT) => lstarFromY(wcagY(L, 0, 0, gamut))
 
-export function solveLForApparent(target: number, C: number, H: number): number {
+export function solveLForApparent(target: number, C: number, H: number, gamut: Gamut = MASTER_GAMUT): number {
   let lo = 0.05, hi = 0.999
   for (let i = 0; i < 34; i++) {
     const m = (lo + hi) / 2
-    apparentL(m, clampChromaToGamut(m, C, H), H) < target ? (lo = m) : (hi = m)
+    apparentL(m, clampChromaToGamut(m, C, H, gamut), H, gamut) < target ? (lo = m) : (hi = m)
   }
   return (lo + hi) / 2
 }
 
-export function solveCForApparent(L: number, H: number, target: number): number {
+export function solveCForApparent(L: number, H: number, target: number, gamut: Gamut = MASTER_GAMUT): number {
   let lo = 0, hi = 0.4
   for (let i = 0; i < 32; i++) {
     const m = (lo + hi) / 2
-    apparentL(L, clampChromaToGamut(L, m, H), H) < target ? (lo = m) : (hi = m)
+    apparentL(L, clampChromaToGamut(L, m, H, gamut), H, gamut) < target ? (lo = m) : (hi = m)
   }
   return (lo + hi) / 2
 }
@@ -66,13 +70,15 @@ export const KEEP_DARK = 1.0
 const SWEEP = Array.from({ length: 18 }, (_, i) => i * 20)
 const boostCache = new Map<string, number>()
 
-function meanBoost(rootL: number, C: number): number {
-  const key = `${rootL.toFixed(4)}|${C.toFixed(4)}`
+// exported for the instruments (scripts/p3-math.ts) — one recipe, no script-side copies
+export function meanBoost(rootL: number, C: number, gamut: Gamut = MASTER_GAMUT): number {
+  // instruments run both gamuts in one process — the key must carry the gamut
+  const key = `${rootL.toFixed(4)}|${C.toFixed(4)}|${gamut}`
   const hit = boostCache.get(key)
   if (hit !== undefined) return hit
-  const gray = grayApparentL(rootL)
+  const gray = grayApparentL(rootL, gamut)
   let s = 0
-  for (const h of SWEEP) s += apparentL(rootL, clampChromaToGamut(rootL, C, h), h) - gray
+  for (const h of SWEEP) s += apparentL(rootL, clampChromaToGamut(rootL, C, h, gamut), h, gamut) - gray
   const v = s / SWEEP.length
   boostCache.set(key, v)
   return v
@@ -80,8 +86,8 @@ function meanBoost(rootL: number, C: number): number {
 
 // LIGHT rung target lightness: solve L so apparent = gray + KEEP·meanBoost. C/H
 // are the rung's own (already-derived) chroma/hue.
-export function perceptualRungL(rootL: number, C: number, H: number, keep = KEEP_LIGHT): number {
-  return solveLForApparent(grayApparentL(rootL) + keep * meanBoost(rootL, C), C, H)
+export function perceptualRungL(rootL: number, C: number, H: number, keep = KEEP_LIGHT, gamut: Gamut = MASTER_GAMUT): number {
+  return solveLForApparent(grayApparentL(rootL, gamut) + keep * meanBoost(rootL, C, gamut), C, H, gamut)
 }
 
 // Bloom is a MID-lightness effect, so the redistribution is band-limited to the
@@ -89,7 +95,7 @@ export function perceptualRungL(rootL: number, C: number, H: number, keep = KEEP
 // text tiers (≥ fill L) keep their native chroma — so ink-11/ink-12 keep their
 // separation. Mirrors the old loudnessCap bandWeight, now wrapping the principled
 // solve instead of a hand-tuned cap.
-export function perceptualDarkC(L: number, H: number, nativeC: number, keep = KEEP_DARK): number {
+export function perceptualDarkC(L: number, H: number, nativeC: number, keep = KEEP_DARK, gamut: Gamut = MASTER_GAMUT): number {
   if (nativeC <= 0) return 0
-  return solveCForApparent(L, H, grayApparentL(L) + keep * meanBoost(L, nativeC))
+  return solveCForApparent(L, H, grayApparentL(L, gamut) + keep * meanBoost(L, nativeC, gamut), gamut)
 }

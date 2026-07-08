@@ -6,16 +6,10 @@
 // this instrument measures how far, per (rootL, C, hue).
 // Run: esbuild scripts/p3-scaffold-sweep.ts --bundle --platform=node --outfile=dist/p3-scaffold-sweep.js && node dist/p3-scaffold-sweep.js
 import { clampChromaToGamut } from '../src/engine/constraints'
-import { apparentL as apparentLShipped, perceptualRungL as rungShipped, perceptualDarkC as darkCShipped, grayApparentL } from '../src/engine/perceptualL'
-import { apparentLP3, clampChromaToGamutP3, meanBoostP3, perceptualRungLP3, perceptualDarkCP3 } from './p3-math'
+import { apparentL as apparentLShipped, perceptualRungL as rungShipped, perceptualDarkC as darkCShipped, meanBoost } from '../src/engine/perceptualL'
+import { apparentLP3, meanBoostP3, perceptualRungLP3, perceptualDarkCP3 } from './p3-math'
 
-const SWEEP = Array.from({ length: 18 }, (_, i) => i * 20)
-function meanBoostShipped(rootL: number, C: number): number {
-  const gray = grayApparentL(rootL)
-  let s = 0
-  for (const h of SWEEP) s += apparentLShipped(rootL, clampChromaToGamut(rootL, C, h), h) - gray
-  return s / SWEEP.length
-}
+const meanBoostShipped = (rootL: number, C: number) => meanBoost(rootL, C, 'srgb')
 
 const f = (n: number, d = 4) => n.toFixed(d)
 
