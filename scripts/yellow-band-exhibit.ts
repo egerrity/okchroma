@@ -58,6 +58,12 @@ for (const H of [55, 62, 69, 76, 83, 90, 97, 104, 111]) {
   const t = resolveTheme({ primaryHex: hex, name: `h${H}` })
   addRow(`H ${H}`, `seed ${hex}`, t.themed.scale)
 }
+// bright lemon (owner request): very light, vivid, green-side yellow
+{
+  const hex = seedHex(0.92, 0.2, 105)
+  const t = resolveTheme({ primaryHex: hex, name: 'lemon' })
+  addRow('lemon', `seed ${hex}`, t.themed.scale, true)
+}
 
 const html = `<!doctype html><meta charset="utf-8"><title>Yellow band — light vs dark counterparts</title>
 <style>
