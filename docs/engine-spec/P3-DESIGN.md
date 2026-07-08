@@ -1,6 +1,6 @@
 # P3 master gamut — design proposal (pre-implementation)
 
-Status: DRAFT for owner review — no engine changes made. Successor to P3-KICKOFF.md;
+Status: **COMPLETE 2026-07-08** — P3 master live (Phase A 5dd7284, Phase B 7cb2654, gamut-media fix 3c1b5df), owner eye-check approved (D3: keep P3-normalized pastels), one-shot re-bless done, all 12 gates green. The calibration round (CATALOG C7 + the dark-yellow-reads-orange observation) is OPEN. Originally drafted pre-implementation: Successor to P3-KICKOFF.md;
 measurements below are from this session's sweeps (scripts in session scratchpad,
 grids recorded here per the CATALOG convention). Baseline: main @ acb6a83, all ten
 gates green on a fresh worktree.

@@ -251,3 +251,17 @@ bless. Affected gold-band named brands: Golden Milk, Chamomile, Honey Lemon.
 the calibration round (brand-side ID-relative boost re-tune · fired-mute corridor solve
 t≈0.4 · green-light signal boost · yellow boundary letter · dark ID-relative counterpart ·
 paper-2 chroma) queues behind it.**
+
+**P3 MASTER LANDED — CALIBRATION ROUND OPEN (2026-07-08, branch worktree-p3-master-gamut).**
+The engine generates in Display-P3 (7cb2654: D1 both-renditions legality · D2 P3 apca
+basis · emit = sRGB gamut-map + color(display-p3) @supports+color-gamut overrides;
+design/evidence in P3-DESIGN.md). Owner eye-check APPROVED: signals visibly gain
+(green strongest — matches the +29–34% band headroom); D3 ruled KEEP the P3-normalized
+pastels ("incredibly similar" to the sRGB-normalized register). One-shot re-bless done
+with the sign-off. NEW OBSERVATION for the round (owner, at the eye-check): **the
+yellow signal reads ORANGE in dark mode** — dark washes read brown-orange and the dark
+cta reads amber. Fold into the round's yellow items (vividness boundary letter + the
+dark ID-relative counterpart): low-L yellow is physically brown/orange, so the question
+is REGISTER (how light the dark-yellow roles sit and how much of the gold-band lift
+they carry), not hue drift — measure `darkCtaTrim`/dark rung L at H83–90 against the
+owner's read before proposing anything.
