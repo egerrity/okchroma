@@ -307,3 +307,17 @@ next lever = highlight-band L (candidates: HIGHLIGHT_LIGHT root +0.05/+0.09 glob
 render/highlight-register.html). Ink-11 cannot lighten (pinned by its 4.5 require) —
 if the register fix lands, ink-11's read is re-judged after. Exhibit strips now carry
 the ID chip (owner: unjudgeable without the brand identity).
+
+**C8 V3 — CLOSED AS MISREAD (owner, 2026-07-08).** With ID chips added to the strips,
+the owner's ruling: "the current register is perfectly fine for every color you
+displayed" — the light-column brown/olive read was the DISPLAYED IDENTITIES (the
+exhibit seeds at L .62–.78 / C .16 in H55–111 are themselves brown/olive/muddy-gold
+colors; the ramps rendered them faithfully). NOT an engine defect. The highlight-
+register candidates are REJECTED outright ("we aren't even trying to deal with the
+highlights"); the chroma-lift falsification measurement stands as data (gold-band
+highlights ride 85–94% of the P3 ceiling — useful for any future band work). Exhibit
+lesson recorded: never ask for a judgment without the identity chip on every row, and
+muddy-ID rows cannot carry a verdict about the engine. V3 leaves NO open engine work.
+REMAINING yellow item = V2 only (dark ink-11/12 text register — owner-confirmed
+defect). Bright-yellow IDs in light mode were never explicitly judged — open question
+for the owner, not an assumed defect.
