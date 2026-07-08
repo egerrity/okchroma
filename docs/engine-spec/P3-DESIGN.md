@@ -131,6 +131,20 @@ Classification of the consumers:
   coordinates is only correct in a DISPLAY_P3 document and would need a
   documentColorProfile branch in the plugin — plugin-ext work, deferred, out of scope
   for this branch.
+- **D6 (owner-ruled 2026-07-08, after the owner's own two-file A/B test): the published
+  library stays sRGB clamp-down.** The empirical test + research round established:
+  Figma never converts at any boundary (paste, plugin write, or the in-file convert
+  action — which documentedly leaves variable values untouched); the library path is
+  officially undocumented but mechanism-certain (values are raw and profile-less,
+  the consuming file's profile decides) — so P3-published variables render DULL in
+  every sRGB consumer file, silently, while hexes look right. No org/admin lever
+  exists (file profile is per-file; the only default is a per-USER preference;
+  new files default sRGB). The alternative — a gamut dimension as variable modes —
+  doubles the extended-collection mode set (wcag · wcag-dark · apca · apca-dark → 8,
+  i.e. 4 added modes): rejected as too much collection surface for design-time
+  vividness phones already get via the CSS output. Revisit only as a deliberate
+  org-wide profile rollout; the owner's own P3-profile authoring document can still
+  take true-P3 coordinates via the deferred plugin round.
 
 ## 4. Proposed design
 
@@ -179,12 +193,13 @@ structural pieces land with the flip commit, before or with the constant change:
 
 ## 5. Owner decisions — RULED 2026-07-07
 
-All five closed by the owner: **D1 = both renditions must pass. D2 = P3 basis.
+All six closed by the owner: **D1 = both renditions must pass. D2 = P3 basis.
 D3 = deferred to the Phase-B eye-check. D4 = confirmed (seed input stays sRGB hex).
 D5 = strictly-safe** (ruled on the measured numbers; exhibit at
 scripts/p3-pole-examples.ts → render/p3-d5-poles.html — only 2 verdict flips exist
-in the whole sweep, green brand ctas near L 0.55). Original framing kept below for
-the record.
+in the whole sweep, green brand ctas near L 0.55). **D6 = the Figma library publishes
+the sRGB clamp-down** (ruled 2026-07-08 after the owner's two-file gamut A/B test;
+evidence + rejected alternatives in §3). Original framing kept below for the record.
 
 - **D1 — legality Y for the wcag lane and every 4.5/3.0 enforcement floor.**
   Options: (a) sRGB clamp-down only (matches sRGB-measuring audit tools; but 1d shows
