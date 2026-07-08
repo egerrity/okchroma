@@ -334,14 +334,3 @@ only by MUTED brands via u) is the natural mechanism: extend the blend to vivid 
 (weight from ID vividness) and the gamut geometry hue-weights automatically (yellow's
 light-stop room is the largest, blue's the smallest). Candidates rendered with BRIGHT
 IDs + muddy controls: render/id-envelope.html.
-
-**C8 V3 — SHIPPED (owner pick 0.35, 2026-07-08).** The ID-scaled, room-distributed
-lift: vivid IDs ride the room-relative envelope (brandSat × maxChromaAt per stop) at
-VIVID_ENVELOPE_BLEND 0.35 × ramp(seed C, VIVID_C→0.17); muddy IDs keep the pure ladder
-(controls pixel-identical across candidates); signals exempt (one lift per scale —
-goldBoost is theirs); dark blends untouched (the dark counterpart is V2's redesign).
-Declared in colorMath (VIVID_ENVELOPE_BLEND/RAMP_HI) + buildContext envW — no gaussian,
-no bolt-on; replaces the C7-removed brand gold boost. Owner picked 35 from rendered
-0/35/40/45/50 with bright IDs + muddy controls; shipped output BYTE-MATCHES the judged
-rows. Gates 12/12 after ext re-bless (two vivid brands' paper-1 rejoined base — 4
-override-set entries, the only drift; value gates all inside tolerance).

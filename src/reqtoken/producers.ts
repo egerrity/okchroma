@@ -9,7 +9,6 @@ import { perceptualRungL } from '../engine/perceptualL'
 import {
   hexToOklch, maxChromaAt, goldSpineHue, torsionedHue, gauss, sigmoid, hueDelta,
   SPINE_OFFPATH_SIGMA, RED_TORSION_CENTER_H, RED_TORSION_SOFTNESS, VIVID_C, HUE_NOISE_C, MUTED_BLEND_DENOM,
-  VIVID_ENVELOPE_BLEND, VIVID_ENVELOPE_RAMP_HI,
   CREAM_UPPER_H, CREAM_UPPER_SOFTNESS,
   DEEPER_BAND_H_LO, DEEPER_BAND_H_HI, DEEPER_BAND_H_SOFT, DEEPER_BAND_U_LO, DEEPER_BAND_U_HI, DEEPER_BAND_U_SOFT,
   DEEPER_STRENGTH, redRepelShiftDeg, RED_BAND_LO_H, applyChromaFloor,
@@ -74,15 +73,6 @@ export function buildContext(hex: string, opts?: ResolveOpts) {
 
   const brandSat = subtleC / Math.max(1e-6, maxChromaAt(brandL, brandH))
 
-  // the LIGHT envelope blend weight (C8 V3, owner 2026-07-08): the muted path (u) OR the
-  // vivid-ID path, whichever is stronger. Vivid brands express identity through the
-  // room-relative envelope (the room does the hue weighting — no gaussian); muddy IDs
-  // (idRamp 0) keep the pure ladder. Signals are exempt (goldBoost carries their own
-  // lift — one lift per scale, never both). Dark's counterpart is the dark round's
-  // business (C8 V2, the ID-relative dark redesign) — dark blends keep u.
-  const idRamp = Math.min(1, Math.max(0, (brandC - VIVID_C) / (VIVID_ENVELOPE_RAMP_HI - VIVID_C)))
-  const envW = opts?.goldBoost ? u : Math.max(u, VIVID_ENVELOPE_BLEND * idRamp)
-
   const lightSpineRef = goldSpineHue(scaleL)
   const gOffPath = gauss(hueDelta(brandH, lightSpineRef), SPINE_OFFPATH_SIGMA)
   // the REAL light hue producer ('warm-drift'): inline spine drift with a dynamic cap (24+8u) PLUS the
@@ -102,7 +92,7 @@ export function buildContext(hex: string, opts?: ResolveOpts) {
 
   return {
     hex, opts, brandL, brandC, brandH, subtleC, cAt, archetype, scaleL,
-    darkFloorStrength, hueIsNoise, v, vSubtle, u, envW, chromaBoost, brandSat,
+    darkFloorStrength, hueIsNoise, v, vSubtle, u, chromaBoost, brandSat,
     lightHueAt, darkH, gOffPath, redShift,
   }
 }
@@ -113,13 +103,13 @@ export type Ctx = ReturnType<typeof buildContext>
 export const lightScaleChromaAt = (ctx: Ctx, baseC: number, satFraction: number) => (L: number): number => {
   const cLadder = ctx.vSubtle * ctx.chromaBoost * baseC
   const cEnv = ctx.brandSat * satFraction * maxChromaAt(L, ctx.lightHueAt(L))
-  return ctx.cAt('light', L, cLadder + ctx.envW * (cEnv - cLadder))
+  return ctx.cAt('light', L, cLadder + ctx.u * (cEnv - cLadder))
 }
 
 // ---- light highlight chroma (stops 9/10): same blend but gamut-CLAMPED before the solve (colorEngine.ts:441–442)
 export const lightHighlightChromaAt = (ctx: Ctx, baseC: number, satFraction: number) => (L: number, hh: number): number => {
   const hlLadderC = ctx.vSubtle * ctx.chromaBoost * baseC
-  return clampChromaToGamut(L, ctx.cAt('light', L, hlLadderC + ctx.envW * (ctx.brandSat * satFraction * maxChromaAt(L, hh) - hlLadderC)), hh)
+  return clampChromaToGamut(L, ctx.cAt('light', L, hlLadderC + ctx.u * (ctx.brandSat * satFraction * maxChromaAt(L, hh) - hlLadderC)), hh)
 }
 
 // ---- APCA metric primitives (the 'apca' contrast profile). apcaYAt mirrors wcagY's treatment of

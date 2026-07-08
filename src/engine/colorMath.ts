@@ -65,17 +65,6 @@ export const RED_BAND_LO_SOFTNESS = 2
 
 export const VIVID_C = 0.13
 
-// C8 V3 (owner design 2026-07-08): the brand-side replacement for the C7-removed gold
-// boost — the lift is scaled by the ID's chroma and distributed by ROOM. A vivid ID
-// rides the room-relative envelope (brandSat × maxChromaAt at each stop) at this blend;
-// the gamut geometry hue-weights it with no hue term ("yellow needs the most room" —
-// yellow's light-stop ceiling is the largest, blue's the smallest). Muddy IDs
-// (C ≤ VIVID_C) ride the ladder untouched; the ramp tops out at RAMP_HI. Owner picked
-// 0.35 from rendered 0/35/40/45/50 candidates. Signals are exempt — they carry their
-// own lift (goldBoost); a scale gets one or the other, never both.
-export const VIVID_ENVELOPE_BLEND = 0.35
-export const VIVID_ENVELOPE_RAMP_HI = 0.17
-
 export const HUE_NOISE_C = 0.008
 
 export const MUTED_BLEND_DENOM = 0.55
