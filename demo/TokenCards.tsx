@@ -25,6 +25,53 @@ const SIGNAL_ICON: Record<string, typeof AlertCircle> = {
   'info-color': Info,
 }
 
+// ─── CTA deconfliction row ────────────────────────────────────────────────────
+// Every cta side by side — the one spot where a colliding pair is visible in a
+// single glance: the brand cta pair, the secondary cta pair (when one exists),
+// the quiet neutral cta, and all four signal ctas (red / yellow / green /
+// info-color). Each family renders its cta-1 | cta-2 pair as one seamed pill in
+// on-cta text. Reads the live vars, so the per-brand signal overrides the
+// resolved theme carries show up here automatically; names the theme shifted
+// off-canonical get a "shifted" tag. The cta-stroke border is unconditional —
+// it's transparent everywhere except the outline secondary, where the ring IS
+// the component.
+export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; shifted?: string[] }) {
+  const families: Array<{ prefix: string; label: string }> = [
+    { prefix: 'brand', label: 'brand' },
+    ...(hasSecondary ? [{ prefix: 'secondary', label: 'secondary' }] : []),
+    { prefix: 'neutral', label: 'neutral' },
+    { prefix: 'red', label: 'red' },
+    { prefix: 'yellow', label: 'yellow' },
+    { prefix: 'green', label: 'green' },
+    { prefix: 'info-color', label: 'info-color' },
+  ]
+  const cell = (prefix: string, tok: 'cta-1' | 'cta-2') => (
+    <div title={`--${prefix}-${tok}`} style={{
+      flex: tok === 'cta-1' ? 1.6 : 1, height: 44, boxSizing: 'border-box',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: `var(--${prefix}-${tok})`, color: `var(--${prefix}-on-cta)`,
+      fontSize: 13, fontWeight: 600,
+      border: `1.5px solid var(--${prefix}-cta-stroke)`,
+    }}>Aa</div>
+  )
+  return (
+    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+      {families.map(f => (
+        <div key={f.prefix} style={{ flex: '1 1 104px', maxWidth: 220 }}>
+          <div style={{ display: 'flex', borderRadius: 8, overflow: 'hidden' }}>
+            {cell(f.prefix, 'cta-1')}
+            {cell(f.prefix, 'cta-2')}
+          </div>
+          <div style={{ marginTop: 5, fontSize: 11, textAlign: 'center', color: 'var(--fg-default)', fontWeight: 600 }}>
+            {f.label}
+            {shifted.includes(f.prefix) && <span style={{ fontWeight: 400, color: 'var(--info-fg)' }}> · shifted</span>}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function TokenCards({ prefix, kind, outlineCta }: { prefix: string; kind: RampKind; outlineCta?: boolean }) {
   const v = (t: string) => `var(--${prefix}-${t})`
   const isSignal = kind === 'signal'

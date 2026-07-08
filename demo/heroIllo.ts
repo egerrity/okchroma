@@ -1,8 +1,10 @@
 // the designer's test illustration (Downloads/test-illo.svg), repainted directly
 // from the unified 1–12 SCALE (2026-06-26; previously the bespoke 4-slot --illus-*
 // palette). It references the live ramp tokens, so it themes light/dark for free.
-// No cta (stops 9/10) is used — only paper/wash / ink. Shape → token:
-//   phone body + shadow → brand highlight-8 (the strong mid; shadow @0.3)
+// No cta is used, and NO STOP 8: 8 is the contrast-clamped accessibility stop —
+// it re-solves between the wcag/apca profiles, so illustration must draw only
+// from the profile-stable stops (0–7, 9–10, 11, 12). Shape → token:
+//   phone body + shadow → brand highlight-9 (the strong fill; shadow @0.3)
 //   head silhouettes     → brand ink-11 (deep vivid — pops on the screens)
 //   phone screens        → brand paper-1 (lightest surface)
 //   screen gradient       → brand wash-6 → wash-7
@@ -13,8 +15,8 @@
 // (Gradient + opacity survive: stop-color accepts var() inline in HTML.)
 export const HERO_ILLO = `
 <svg viewBox="0 0 214 186" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:auto">
-<ellipse cx="122.884" cy="177.985" rx="65.261" ry="7.55086" fill="var(--brand-highlight-8)" fill-opacity="0.3"/>
-<path d="M123.107 25.6272L62.8763 41.2214C58.2487 42.4195 55.5164 47.2623 56.7449 52.0074L87.5227 170.883C88.7576 175.653 93.5145 178.53 98.118 177.338L158.349 161.744C162.976 160.546 165.715 155.728 164.48 150.958L133.702 32.0825C132.467 27.3126 127.71 24.4353 123.107 25.6272Z" fill="var(--brand-highlight-8)"/>
+<ellipse cx="122.884" cy="177.985" rx="65.261" ry="7.55086" fill="var(--brand-highlight-9)" fill-opacity="0.3"/>
+<path d="M123.107 25.6272L62.8763 41.2214C58.2487 42.4195 55.5164 47.2623 56.7449 52.0074L87.5227 170.883C88.7576 175.653 93.5145 178.53 98.118 177.338L158.349 161.744C162.976 160.546 165.715 155.728 164.48 150.958L133.702 32.0825C132.467 27.3126 127.71 24.4353 123.107 25.6272Z" fill="var(--brand-highlight-9)"/>
 <path d="M138.119 157.822C138.435 159.044 137.575 160.309 136.183 160.669L119.206 165.065C117.814 165.425 116.448 164.736 116.131 163.515C115.815 162.293 116.675 161.028 118.067 160.668L135.045 156.272C136.437 155.912 137.803 156.601 138.119 157.822Z" fill="var(--brand-ink-12)"/>
 <rect x="62.8179" y="48.2773" width="65.8672" height="115.835" rx="3.2" transform="rotate(-14.5156 62.8179 48.2773)" fill="url(#heroIlloScreen)"/>
 <path d="M114.568 44.2656L79.4048 53.3695C76.364 54.1568 74.451 56.9275 75.1321 59.5581L84.0514 94.0076C84.7324 96.6382 87.7496 98.1325 90.7904 97.3452L125.953 88.2413C128.994 87.454 130.907 84.6833 130.226 82.0527L121.307 47.6031C120.625 44.9726 117.608 43.4783 114.568 44.2656Z" fill="var(--brand-paper-1)"/>

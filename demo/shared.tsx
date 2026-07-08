@@ -78,6 +78,12 @@ export const COMPONENT_CSS = `
    subtle slot reads neutral until a secondary claims it, never brand-again. */
 .u-btn-neutral { background: var(--neutral-cta-1); color: var(--neutral-on-cta); }
 .u-btn-neutral:hover { background: var(--neutral-cta-2); }
+/* the SECONDARY cta pair (--secondary-cta-1/2 + on-cta), shown beside the brand
+   cta wherever that is showcased. cta-stroke is transparent for every style
+   except outline (where the ring IS the component), so the border is
+   unconditional and layout never shifts. */
+.u-btn-secondary { background: var(--secondary-cta-1); color: var(--secondary-on-cta); border-color: var(--secondary-cta-stroke); }
+.u-btn-secondary:hover { background: var(--secondary-cta-2); }
 .u-btn-ghost { background: transparent; color: var(--brand-fg); }
 .u-btn-ghost:hover { background: var(--brand-bg-subtle); }
 /* Universal destructive rule (designer decision): destructive BUTTONS never
@@ -248,6 +254,7 @@ export function Showcase(props: {
           <SectionLabel>Buttons</SectionLabel>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
             <button className="u-btn u-btn-primary">Primary</button>
+            {props.secondaryHex && <button className="u-btn u-btn-secondary">Secondary</button>}
             <button className="u-btn u-btn-subtle">Subtle</button>
             <button className="u-btn u-btn-ghost">Ghost</button>
           </div>

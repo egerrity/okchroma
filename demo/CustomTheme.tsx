@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  Check, TriangleAlert, Sparkles, ArrowRight, ChevronDown, ChevronUp,
+  AlertCircle, Check, CheckCircle, TriangleAlert, Sparkles, ArrowRight, ChevronDown, ChevronUp,
   LayoutDashboard, FolderKanban, ListTodo, BarChart3, Users, Settings, Search, Download, Plus, Info,
 } from 'lucide-react'
 import { resolveBrand, resolveTheme, type SecondaryStyle } from '../src/engine/resolve'
@@ -14,7 +14,7 @@ import {
   normalizeHex,
   type RungMode,
 } from './shared'
-import { TokenCards, type RampKind } from './TokenCards'
+import { CtaRow, TokenCards, type RampKind } from './TokenCards'
 import { classifyArchetype } from '../src/engine/archetypes'
 import type { ResolvedBrand } from '../src/engine/resolve'
 
@@ -484,6 +484,13 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
         <div className="ct-pane">
           <div className="ct-pane-main">
             {swatchMatrix()}
+            {/* every cta together — brand pair, secondary pair, neutral, and the four
+                signals (red/yellow/green/info-color, with this brand's overrides) so a
+                colliding pair is visible in one glance */}
+            <div className="ct-colorblock">
+              <div className="ct-label" style={{ marginBottom: 8 }}>All ctas — deconfliction row</div>
+              <CtaRow hasSecondary={!!secondary || derived} shifted={computed.r.signalOverrides.map(o => o.name)} />
+            </div>
             {colorBlock('Primary scale', 'brand', 'brand', rRec, primary, primaryExtras)}
             {(secondary || derived) && colorBlock(derived ? 'Secondary scale — derived from primary' : 'Secondary scale', 'secondary', 'brand', null, secondary ?? primary, (
               computed.t.secondary && (
@@ -642,17 +649,23 @@ const dashCard: React.CSSProperties = {
 }
 
 function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
-  const nav: Array<[typeof LayoutDashboard, string, boolean?]> = [
-    [LayoutDashboard, 'Dashboard', true], [FolderKanban, 'Projects'], [ListTodo, 'Tasks'],
-    [BarChart3, 'Analytics'], [Users, 'Team'], [Settings, 'Settings'],
+  // Two LIVE items in the side nav: Dashboard (the overview) and Settings (the
+  // collision-stress page). The rest stay demo-only placeholders.
+  const [page, setPage] = useState<'overview' | 'settings'>('overview')
+  const nav: Array<{ Icon: typeof LayoutDashboard; label: string; goto?: 'overview' | 'settings' }> = [
+    { Icon: LayoutDashboard, label: 'Dashboard', goto: 'overview' }, { Icon: FolderKanban, label: 'Projects' },
+    { Icon: ListTodo, label: 'Tasks' }, { Icon: BarChart3, label: 'Analytics' }, { Icon: Users, label: 'Team' },
+    { Icon: Settings, label: 'Collision check', goto: 'settings' },
   ]
   return (
     <div className="dash">
       <aside className="dash-side">
         <div className="dash-logo"><span className="dash-logo-mark">◈</span> yourBrand</div>
         <nav className="dash-nav">
-          {nav.map(([Icon, label, active]) => (
-            <a key={label} href="#" className={`dash-navitem${active ? ' active' : ''}`} onClick={e => e.preventDefault()} title="For demo purposes only">
+          {nav.map(({ Icon, label, goto }) => (
+            <a key={label} href="#" className={`dash-navitem${goto === page ? ' active' : ''}`}
+              onClick={e => { e.preventDefault(); if (goto) setPage(goto) }}
+              title={goto ? undefined : 'For demo purposes only'}>
               <Icon size={16} aria-hidden /> {label}
             </a>
           ))}
@@ -666,12 +679,15 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
         </div>
       </aside>
 
-      <main className="dash-main">
+      {page === 'settings' ? <SettingsStress hasSecondary={hasSecondary} /> : <main className="dash-main">
         <div className="dash-topbar">
           <div style={{ fontSize: 18, fontWeight: 700 }}>Dashboard</div>
           <div className="dash-search"><Search size={14} aria-hidden /> Search…</div>
           <span style={{ flex: 1 }} />
           <button className="u-btn u-btn-subtle" style={{ padding: '6px 12px', fontSize: 13 }} title="Placeholder — export coming"><Download size={14} /> Export</button>
+          {/* the secondary CTA (--secondary-cta-1/2) beside the brand cta — only when a
+              secondary exists (the vars mirror brand otherwise, a duplicate button) */}
+          {hasSecondary && <button className="u-btn u-btn-secondary" style={{ padding: '6px 14px', fontSize: 13 }}>Share</button>}
           <button className="u-btn u-btn-primary" style={{ padding: '6px 14px', fontSize: 13 }}><Plus size={14} /> New project</button>
         </div>
 
@@ -725,8 +741,134 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
             <Feed who="Sam" what="shipped v2.1" when="1d" tone="brand" />
           </section>
         </div>
-      </main>
+      </main>}
     </div>
+  )
+}
+
+// ─── Collision check — 2×2 grid, one form card per signal ───────────────────
+// Owner spec (2026-07-09): four form cards on paper-0, one per signal
+// (red / yellow / green / info-color — by identity), each combining:
+//   ink-11 title + brand chip + the card signal's chip
+//   ink-12 short body
+//   focused input + resting input
+//   input with the signal's helper + an error (red) input
+//   the signal's alert message (its cta register)
+//   button row: primary wash-5 · primary cta · red cta
+//   button row: secondary wash-5 · secondary cta · neutral cta
+// All live vars — re-solves with the pickers, profile, and mode.
+const SIGNAL_CARDS: Array<{ sig: string; Icon: typeof Info; alert: string }> = [
+  { sig: 'red', Icon: AlertCircle, alert: 'We couldn\'t process the request. Try again.' },
+  { sig: 'yellow', Icon: TriangleAlert, alert: 'Usage is approaching the plan limit.' },
+  { sig: 'green', Icon: CheckCircle, alert: 'Changes saved. Everything is up to date.' },
+  { sig: 'info-color', Icon: Info, alert: 'A new version is available.' },
+]
+
+function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typeof Info; alert: string; hasSecondary: boolean }) {
+  const v = (t: string) => `var(--${sig}-${t})`
+  const chip = (prefix: string, label: string) => (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 6,
+      fontSize: 12, fontWeight: 500,
+      background: `var(--${prefix}-wash-4)`, color: `var(--${prefix}-ink-12)`,
+      border: `1px solid var(--${prefix}-wash-6)`,
+    }}>{label}</span>
+  )
+  const fieldLabel: React.CSSProperties = { fontSize: 11, fontWeight: 600, color: 'var(--fg-subtle)', marginBottom: 4 }
+  // the focused state, held statically (mirror of .ct-field:focus-within) so all
+  // four cards can show it at once
+  const focusRing: React.CSSProperties = { borderColor: 'var(--brand-highlight-8)', boxShadow: '0 0 0 3px var(--brand-bg-subtle)' }
+  const btn: React.CSSProperties = { padding: '8px 16px', borderRadius: 999, border: '1.5px solid transparent', cursor: 'pointer', fontSize: 13, fontWeight: 500, fontFamily: 'inherit' }
+  return (
+    <section style={{ background: 'var(--paper-0)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 18 }}>
+      {/* title row shows the ink-11 RANGE: signal ink vs neutral ink vs brand ink;
+          the subtitle (only when a secondary exists) adds secondary ink-11 */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, marginRight: 'auto' }}>
+          <span style={{ color: v('ink-11') }}>{sig}</span>
+          <span style={{ color: 'var(--neutral-ink-11)', fontWeight: 500 }}> vs </span>
+          <span style={{ color: 'var(--brand-ink-11)' }}>Brand-primary</span>
+        </div>
+        {chip('brand', 'brand')}
+        {chip(sig, sig)}
+      </div>
+      {hasSecondary && (
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--secondary-ink-11)', marginBottom: 6 }}>
+          This is a subtitle in Brand-secondary
+        </div>
+      )}
+      {/* body shows the ink-12 range, one sentence per family */}
+      <p style={{ fontSize: 12.5, lineHeight: 1.45, margin: '0 0 12px' }}>
+        <span style={{ color: v('ink-12') }}>This body copy is in {sig}'s ink-12. </span>
+        <span style={{ color: 'var(--brand-ink-12)' }}>This body copy is in brand-primary's ink-12. </span>
+        {hasSecondary && <span style={{ color: 'var(--secondary-ink-12)' }}>This body copy is in brand-secondary's ink-12. </span>}
+        <span style={{ color: 'var(--neutral-ink-12)' }}>This body copy is in neutral's ink-12.</span>
+      </p>
+
+      {/* inputs: focused + resting / signal helper + error */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '10px 12px', marginBottom: 12 }}>
+        <div>
+          <div style={fieldLabel}>Focused</div>
+          <div className="ct-field" style={focusRing}><input defaultValue="Editing…" spellCheck={false} /></div>
+        </div>
+        <div>
+          <div style={fieldLabel}>Resting</div>
+          <div className="ct-field"><input placeholder="Placeholder" spellCheck={false} /></div>
+        </div>
+        <div>
+          <div style={fieldLabel}>With helper</div>
+          <div className="ct-field"><input defaultValue="Value" spellCheck={false} /></div>
+          <div style={{ fontSize: 11, color: v('ink-11'), marginTop: 5 }}>Helper text in the {sig} register.</div>
+        </div>
+        <div>
+          <div style={fieldLabel}>Error</div>
+          <div className="ct-field err"><input defaultValue="Bad value" spellCheck={false} /></div>
+          <div className="ct-err-note">This field needs attention.</div>
+        </div>
+      </div>
+
+      {/* the signal's alert message — its cta register, same call as TokenCards */}
+      <div style={{
+        display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 12,
+        borderRadius: 8, padding: '9px 12px', fontSize: 12.5,
+        background: v('cta-1'), color: v('on-cta'),
+      }}>
+        <Icon size={15} style={{ flexShrink: 0, marginTop: 1 }} aria-hidden />
+        <span>{alert}</span>
+      </div>
+
+      {/* button rows: primary wash-5 · primary cta · red cta, then
+          secondary wash-5 · secondary cta · neutral cta */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+        <button style={{ ...btn, background: 'var(--brand-wash-5)', color: 'var(--brand-ink-12)' }}>Wash 5</button>
+        <button style={{ ...btn, background: 'var(--brand-cta-1)', color: 'var(--brand-on-cta)' }}>Primary cta</button>
+        <button style={{ ...btn, background: 'var(--red-cta-1)', color: 'var(--red-on-cta)' }}>Red cta</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {hasSecondary && <>
+          <button style={{ ...btn, background: 'var(--secondary-wash-5)', color: 'var(--secondary-ink-12)' }}>Wash 5</button>
+          <button style={{ ...btn, background: 'var(--secondary-cta-1)', color: 'var(--secondary-on-cta)', borderColor: 'var(--secondary-cta-stroke)' }}>Secondary cta</button>
+        </>}
+        <button style={{ ...btn, background: 'var(--neutral-cta-1)', color: 'var(--neutral-on-cta)' }}>Neutral cta</button>
+      </div>
+    </section>
+  )
+}
+
+function SettingsStress({ hasSecondary }: { hasSecondary: boolean }) {
+  return (
+    <main className="dash-main">
+      <div className="dash-topbar">
+        <div style={{ fontSize: 18, fontWeight: 700 }}>Collision check</div>
+        <span style={{ flex: 1 }} />
+        <span style={{ fontSize: 11.5, color: 'var(--fg-subtle)' }}>
+          one card per signal on paper-0 — try a red, gold, green, or blue seed above
+        </span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 14 }}>
+        {SIGNAL_CARDS.map(c => <SignalCard key={c.sig} {...c} hasSecondary={hasSecondary} />)}
+      </div>
+    </main>
   )
 }
 
