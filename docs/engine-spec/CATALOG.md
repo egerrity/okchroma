@@ -294,3 +294,16 @@ calibration reads en route: global-flat 0.17 was only the "safe" compromise; lem
 most-lemon at zero torsion; the canonical signal can carry near-full travel. Candidates
 rendered (render/yellow-torsion-curve.html): falloff = 1 − sigmoid((H − mid)/soft) on the
 dark torsion window weight — A mid96/soft5 · B mid90/soft5 · C mid100/soft6. Await pick.
+
+**C8 V3 — CHROMA-LIFT HYPOTHESIS FALSIFIED (owner round, 2026-07-08).** Rendered the
+brand-side lift two ways: gold-band gaussian (amp 1.0/1.7/2.4, ID-ramped) and the
+owner-directed hue-AGNOSTIC global ID-lift (amp 1.0/1.7, full circle). Verdict: the
+gold band DID NOT CHANGE ("look the same at both") while headroom hues went loud —
+measured cause: gold-band highlight-9/10 + ink-11 already sit at 85–94% of the P3
+ceiling (reds/blues/magentas 48–57%); the lift multiplied into a clamp. The brown/
+olive read is a REGISTER problem: at the placed highlight L (.60–.64) even ceiling-
+chroma yellow reads brown. The old H90 gaussian earns no brand-side re-introduction;
+next lever = highlight-band L (candidates: HIGHLIGHT_LIGHT root +0.05/+0.09 global,
+render/highlight-register.html). Ink-11 cannot lighten (pinned by its 4.5 require) —
+if the register fix lands, ink-11's read is re-judged after. Exhibit strips now carry
+the ID chip (owner: unjudgeable without the brand identity).
