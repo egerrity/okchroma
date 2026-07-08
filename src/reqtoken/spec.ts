@@ -11,9 +11,9 @@
 // stop-8 3:1 + text 4.5/7 requires; dark declares NO contrast requires (stop 8 + highlight are hand-placed).
 // Stage 5 of the migration flips the dark requires ON (the behavior change the owner approved).
 import {
-  LIGHT_L, DARK_NEUTRAL_L, LIGHT_STOPS, LIGHT_BASE_C, DARK_SUBTLE_CHROMA_MULT,
+  LIGHT_L, DARK_NEUTRAL_L, SCALE_C_LIGHT, SCALE_C_DARK,
   STOP_8_NONTEXT_CONTRAST,
-  STOP_11, STOP_12, STOP_11_CONTRAST, STOP_12_CONTRAST_FLOOR, DARK_STOP_11, DARK_STOP_12,
+  STOP_11_CONTRAST, STOP_12_CONTRAST_FLOOR,
   HIGHLIGHT_LIGHT, HIGHLIGHT_DARK, DARK_STOP_9_MIN_L,
 } from '../engine/stopTable'
 
@@ -129,22 +129,22 @@ const WASHSEP: Require = { metric: 'min-separation', against: 'prev', target: WA
 export const LIGHT: ModeSpec = {
   stops: [
     // paper-0: the resolved ladder extreme — in light it genuinely is white (rootL 1.0, zero chroma)
-    { stop: 0, rootL: 1.0, group: 'paper', produce: { hue: 'warm-drift', L: 'fixed', chroma: 'ladder' }, satFraction: 0, baseC: 0 },
+    { stop: 0, rootL: 1.0, group: 'paper', produce: { hue: 'warm-drift', L: 'fixed', chroma: 'ladder' }, satFraction: SCALE_C_LIGHT[0].sat, baseC: SCALE_C_LIGHT[0].base },
     // paper/wash/highlight-8: perceptual ladder/envelope blend on the RE-SPACED scaffold. Requires:
     // paper-2 stands ΔE ≥ 0.028 off paper-1; every wash seam stands ΔE ≥ 0.012 off its predecessor;
     // stop 8 keeps the 3:1 clamp — all against RESOLVED stops, so a pushed stop automatically
     // re-solves everything that references it (the seam chain, then 8/11/12).
     ...LIGHT_L.slice(0, 8).map((rootL, i): StopReq => ({
       stop: i + 1, rootL: LIGHT_WASH_ROOT_L[i + 1] ?? rootL, group: groupOf(i + 1), produce: PL_LADDER,
-      satFraction: LIGHT_STOPS[i].satFraction, baseC: LIGHT_BASE_C[i],
+      satFraction: SCALE_C_LIGHT[i + 1].sat, baseC: SCALE_C_LIGHT[i + 1].base,
       require: i === 1 ? P2SEP : i >= 2 && i <= 6 ? WASHSEP : i === 7 ? S8 : undefined,
     })),
     // highlight 9/10: perceptual ladder at the highlight scaffold
-    { stop: 9, rootL: HIGHLIGHT_LIGHT.rootL, group: 'highlight', produce: PL_LADDER, satFraction: HIGHLIGHT_LIGHT.satFraction, baseC: HIGHLIGHT_LIGHT.baseC },
-    { stop: 10, rootL: HIGHLIGHT_LIGHT.rootL10, group: 'highlight', produce: PL_LADDER, satFraction: HIGHLIGHT_LIGHT.satFraction, baseC: HIGHLIGHT_LIGHT.baseC },
+    { stop: 9, rootL: HIGHLIGHT_LIGHT.rootL, group: 'highlight', produce: PL_LADDER, satFraction: SCALE_C_LIGHT[9].sat, baseC: SCALE_C_LIGHT[9].base },
+    { stop: 10, rootL: HIGHLIGHT_LIGHT.rootL10, group: 'highlight', produce: PL_LADDER, satFraction: SCALE_C_LIGHT[10].sat, baseC: SCALE_C_LIGHT[10].base },
     // ink text: perceptual + contrast-required
-    { stop: 11, rootL: STOP_11.rootL, group: 'ink', produce: PL_TEXT, chromaMult: STOP_11.chromaMultiplier, require: T11 },
-    { stop: 12, rootL: STOP_12.rootL, group: 'ink', produce: PL_TEXT, chromaMult: STOP_12.chromaMultiplier, require: T12 },
+    { stop: 11, rootL: LIGHT_L[10], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[11].inkMult, require: T11 },
+    { stop: 12, rootL: LIGHT_L[11], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[12].inkMult, require: T12 },
   ],
   roles: [
     { role: 'cta', produce: { hue: 'constant', L: 'anchor', chroma: 'brand' }, floorL: 0, chromaMult: 1 },
@@ -157,23 +157,23 @@ export const DARK: ModeSpec = {
   stops: [
     // paper-0: the resolved ladder extreme — one seam BELOW paper-1, deep and brand-tinted, never the
     // absolute void (the old hard-coded #000000 was "too much"). Lift applies like the rest of the scale.
-    { stop: 0, rootL: PAPER0_DARK_ROOT_L, group: 'paper', produce: P_LIFT, satFraction: DARK_SUBTLE_CHROMA_MULT[0] },
+    { stop: 0, rootL: PAPER0_DARK_ROOT_L, group: 'paper', produce: P_LIFT, satFraction: SCALE_C_DARK[0].sat },
     // paper/wash 1–7: perceptual on the dark scaffold. stop 8: FIXED at the hand-placed scaffold BUT with the
     // 3:1 non-text require DECLARED (the Stage-5 flip, owner-approved): most hues already clear it from the
     // scaffold and don't move; low-luminance hues (blue) get raised until they read off the dark paper —
     // the blue-recede failure is prevented BY RULE, not by patch.
     ...DARK_NEUTRAL_L.slice(0, 8).map((rootL, i): StopReq => ({
       stop: i + 1, rootL, group: groupOf(i + 1), produce: i === 7 ? P_FIXED : P_LIFT,
-      satFraction: DARK_SUBTLE_CHROMA_MULT[i], require: i === 7 ? S8 : undefined,
+      satFraction: SCALE_C_DARK[i + 1].sat, require: i === 7 ? S8 : undefined,
     })),
     // highlight 9/10: FIXED at the hand-placed dark scaffold (solving = APCA body-text dead zone).
-    // Chroma params are the LIGHT highlight's baseC/satFraction — the engine reuses them in dark (:472).
-    { stop: 9, rootL: HIGHLIGHT_DARK.rootL, group: 'highlight', produce: P_FIXED, satFraction: HIGHLIGHT_LIGHT.satFraction, baseC: HIGHLIGHT_LIGHT.baseC },
-    { stop: 10, rootL: HIGHLIGHT_DARK.rootL10, group: 'highlight', produce: P_FIXED, satFraction: HIGHLIGHT_LIGHT.satFraction, baseC: HIGHLIGHT_LIGHT.baseC },
+    // Chroma params declared in SCALE_C_DARK (the values the engine had reused from light, :472).
+    { stop: 9, rootL: HIGHLIGHT_DARK.rootL, group: 'highlight', produce: P_FIXED, satFraction: SCALE_C_DARK[9].sat, baseC: SCALE_C_DARK[9].base },
+    { stop: 10, rootL: HIGHLIGHT_DARK.rootL10, group: 'highlight', produce: P_FIXED, satFraction: SCALE_C_DARK[10].sat, baseC: SCALE_C_DARK[10].base },
     // ink text: perceptual + the contrast requires DECLARED in dark too (Stage-5 flip): the scaffold already
     // clears them for every hue (the gate proves it), so values don't move — but the guarantee is now a rule.
-    { stop: 11, rootL: DARK_NEUTRAL_L[10], group: 'ink', produce: P_TEXT, chromaMult: DARK_STOP_11.chromaMultiplier, require: T11 },
-    { stop: 12, rootL: DARK_NEUTRAL_L[11], group: 'ink', produce: P_TEXT, chromaMult: DARK_STOP_12.chromaMultiplier, require: T12 },
+    { stop: 11, rootL: DARK_NEUTRAL_L[10], group: 'ink', produce: P_TEXT, chromaMult: SCALE_C_DARK[11].inkMult, require: T11 },
+    { stop: 12, rootL: DARK_NEUTRAL_L[11], group: 'ink', produce: P_TEXT, chromaMult: SCALE_C_DARK[12].inkMult, require: T12 },
   ],
   roles: [
     { role: 'cta', produce: { hue: 'constant', L: 'anchor', chroma: 'brand' }, floorL: DARK_STOP_9_MIN_L, chromaMult: 1 },
