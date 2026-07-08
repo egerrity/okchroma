@@ -286,3 +286,11 @@ first.
 — the C7 gold-lift removal (brands ride identity chroma) + the highlight rung sitting
 at L .60–.64 where yellow physics reads brown. = the parked brand-side ID-relative
 gold-boost re-tune, no longer truncated by the ceiling.
+
+**C8 verdict-1 DESIGN (owner, 2026-07-08): torsion as a HUE CURVE.** "Most important on
+oranges, then macaroni yellows, then warmer yellows, dropping off to none for the cool
+yellows" — portable/formulaic (no family flags; consistent with the unified model). Her
+calibration reads en route: global-flat 0.17 was only the "safe" compromise; lemon reads
+most-lemon at zero torsion; the canonical signal can carry near-full travel. Candidates
+rendered (render/yellow-torsion-curve.html): falloff = 1 − sigmoid((H − mid)/soft) on the
+dark torsion window weight — A mid96/soft5 · B mid90/soft5 · C mid100/soft6. Await pick.
