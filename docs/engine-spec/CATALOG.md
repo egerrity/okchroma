@@ -470,3 +470,34 @@ LIGHT_BASE_C[8] rides the highlight register 0.142; the 3:1 L floor re-solves wi
 ±.01; Earl Grey's s8 lands exactly on its s9; Blue Lagoon's s8 sits a hair above its
 gamut-clamped s9. Awaiting owner verdict alongside the falloff + lift picks. Dark's
 +5% step and L-seam remain parked for the dark round. Nothing shipped.
+
+## C11 — ink-band apparent-lightness wobble: the H-K promise breaks where requires and ID-relative chroma cross
+
+**Status:** OPEN (owner eye-check 2026-07-09, desaturated render/s8-register-whatif screenshots:
+"we should be seeing these colors normalize with hk, but red looks much darker than yellow…
+when you desaturate it it's very obvious how much wobble there is"). Log-don't-fix — joins the
+C9 holistic ink round. Nothing shipped.
+
+**Measured (scratchpad wobble.ts — 24 seeds: named brands + H0–330 sweep + red/yellow signals;
+light stops 8–12; apparent = engine apparentL; pin classification via legalRatio vs own paper-2):**
+- s9/s10 (H-K-solved highlight rungs): apparent spread **4.2–4.5 L\*** — equalization WORKING
+  (Chili 55.8 / Golden Milk 55.5 / Chamomile 55.5 at s10).
+- **s11: spread 10.4 L\*** — 9/24 seeds PINNED at the 4.5 require, 15/24 sit below it. Owner's
+  case measured: Chili Mocha s11 apparent 44.1 (L .396, C .180, ratio ≈ 7 — far below the pin)
+  vs Golden Milk 52.0 / Chamomile 50.3 (both PINNED at 4.5). Two owners → two registers.
+- s12: spread 7.0 L\*, 24/24 below-pin (the 7.0 AAA floor never binds; scaffold+solve own it).
+- s8: spread 9.9 L\* (the wash|highlight seam story, C10 — solve-owned with the emit margin).
+
+**Mechanism, two causes compounding:** (1) the 4.5 require CAPS max L per hue — high-luminance
+hues (gold band) get sliced at the pin while low-luminance-capable hues (red) solve far darker;
+(2) ink chroma is ID-RELATIVE (chromaMult × brandC: Chili .180 vs Chamomile ~.14 at s11, .100
+vs .075 at s12), and the H-K solve target moves with the stop's chroma — so even unpinned seeds
+land at different apparent registers. Same root as C9's dark neon: ink chroma is unnormalized;
+the text register is owned per-ID instead of per-band.
+
+**Options for the owner (the ink round, one design):** (a) accept — the pin is law and the
+spread is the cost of ID-relative ink chroma; (b) normalize ink chroma to a text register
+(the C9 band-limit/dead-discount design, applied to BOTH modes) — collapses the solve-target
+variance and most of the wobble in the same stroke as the dark ink-12 fix; (c) anchor the
+light ink apparent target at the pinned register band-wide (pin-aware solve). Exhibit with
+desaturated columns queued for the morning summary.
