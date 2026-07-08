@@ -1,12 +1,13 @@
 // secondary-audit.ts — THE SECONDARY GATE (SECONDARY-PLAN §7). Agnostic primary×secondary sweep
 // through resolveTheme; for every theme, the INVARIANT: the resolved secondary either CLEARS every
 // effective signal (light AND dark) or was DEMOTED to subtle with an annotation — never a silent
-// warning-only collision. Both contrast profiles. Also checks: the primary is byte-untouched by
-// theme resolution; adopted signal variants clear BOTH brand colors; subtle scales are valid;
-// the derived posture resolves.
+// hue-family collision. "Collides" = the TYPE-1 gate (checkHueCollision at the annotation
+// qualifier — CATALOG C7 split; the resolver's notes fire on the same test). Both contrast
+// profiles. Also checks: the primary is byte-untouched by theme resolution; subtle scales are
+// valid; the derived posture resolves.
 import { resolveBrand, resolveTheme, signalScalesFor } from '../src/engine/resolve'
 import { SIGNALS } from '../src/engine/signals'
-import { checkCollision } from '../src/engine/collision'
+import { checkHueCollision, SECONDARY_NOTE_MIN_V } from '../src/engine/collision'
 import { oklchToLinearRgb } from '../src/engine/constraints'
 import type { ContrastProfile, GeneratedScale } from '../src/engine/colorEngine'
 
@@ -25,8 +26,7 @@ let themes = 0, closeAdvice = 0, residuals = 0, exactAdvice = 0
 
 const clearsAll = (scale: GeneratedScale, effective: (n: typeof SIGNALS[number]['name']) => GeneratedScale) =>
   SIGNALS.every(def =>
-    !checkCollision(scale, effective(def.name), def, 'light').collides &&
-    !checkCollision(scale, effective(def.name), def, 'dark').collides)
+    !checkHueCollision(scale, effective(def.name), def, { minV: SECONDARY_NOTE_MIN_V }).collides)
 
 for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
   const cp = profile === 'apca' ? profile : undefined
@@ -68,9 +68,8 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
     if (secS.demoted)
       fails.push({ theme: id, check: 'exact-untouched', detail: 'exact secondary was reshaped' })
     for (const def of SIGNALS) {
-      const l = checkCollision(secS.scale, effectiveS(def.name), def, 'light')
-      const d = checkCollision(secS.scale, effectiveS(def.name), def, 'dark')
-      if ((l.collides || d.collides)) {
+      const h = checkHueCollision(secS.scale, effectiveS(def.name), def, { minV: SECONDARY_NOTE_MIN_V })
+      if (h.collides) {
         exactAdvice++
         if (!secS.notes.some(n => n.includes(`the ${def.name} signal`)))
           fails.push({ theme: id, check: 'exact-advice-silent', detail: `${def.name} collision without an advice note` })

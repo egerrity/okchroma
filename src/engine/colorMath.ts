@@ -105,9 +105,31 @@ export function inRedRepelBand(h: number): boolean {
 // separates a brand from the red signal exits by the NEAREST side. Cool of the pivot keeps
 // the shipped cool curve byte-identical; warm of it the same magnitude pushes warmer
 // ("tomato goes orange-er"), so a warm-of-red brand is never dragged THROUGH the signal.
+//
+// Near-pivot exit floor (owner directive 2026-07-07, CATALOG C7): the cool branch reuses
+// the torsion fade, which sags to ~0.65 exactly at the pivot — the brands ON the signal
+// hue got the weakest push (measured: dH0 light wash ΔE 0.003–0.005, under the 0.006 bar).
+// The floor restores full exit strength approaching the pivot; below ~H30.5 the shipped
+// curve wins the max and stays byte-identical. Ties at the pivot exit cool (owner rule).
+export const RED_EXIT_FLOOR_H = 30.8
+export const RED_EXIT_FLOOR_SOFTNESS = 0.9
+export const RED_WARM_EXIT_FLOOR_H = 35.3
+export const RED_WARM_EXIT_FLOOR_SOFTNESS = 0.8
+// 14, not RED_COOL_DEG: the spine drift eats ~3° of the exit at the wash stops (sweep:
+// a full 10.8 push lands dHueWash ≈ 9.4 — under the yardstick; 14 lands ≈ 12+, clearing
+// the 0.006 bar at the pivot). Both floors fade into the shipped curves away from the
+// pivot (cool of ~H31 / warm of ~H34.5 the shipped curve wins the max — unchanged).
+export const RED_PIVOT_EXIT_DEG = 14
+
 export function redRepelShiftDeg(brandH: number): number {
-  if (brandH <= RED_PIVOT_H) return -RED_COOL_DEG * redCoolWeight(brandH)
-  return RED_COOL_DEG * (1 - sigmoid((brandH - RED_WARM_EXIT_H) / RED_WARM_EXIT_SOFTNESS))
+  if (brandH <= RED_PIVOT_H) {
+    const shipped = RED_COOL_DEG * redCoolWeight(brandH)
+    const floor = RED_PIVOT_EXIT_DEG * sigmoid((brandH - RED_EXIT_FLOOR_H) / RED_EXIT_FLOOR_SOFTNESS)
+    return -Math.max(shipped, floor)
+  }
+  const shipped = RED_COOL_DEG * (1 - sigmoid((brandH - RED_WARM_EXIT_H) / RED_WARM_EXIT_SOFTNESS))
+  const floor = RED_PIVOT_EXIT_DEG * (1 - sigmoid((brandH - RED_WARM_EXIT_FLOOR_H) / RED_WARM_EXIT_FLOOR_SOFTNESS))
+  return Math.max(shipped, floor)
 }
 
 export function maxChromaAt(L: number, H: number): number {

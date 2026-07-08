@@ -57,4 +57,4 @@ export { stopTokenName, onFillTokenName, tokenOrder, type RampKind } from './eng
 // ── Supporting types + data ──────────────────────────────────────────────────
 export { classifyArchetype, type Archetype } from './engine/archetypes'
 export { SIGNALS, type SignalDef } from './engine/signals'
-export { checkCollision, checkAllCollisions } from './engine/collision'
+export { checkCollision, checkHueCollision, checkAllCollisions, type HueCollisionCheck } from './engine/collision'

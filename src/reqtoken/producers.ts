@@ -63,7 +63,11 @@ export function buildContext(hex: string, opts?: ResolveOpts) {
   const wDrift = S * (gWarm + (1 - gWarm) * mutedness * creamGate)
   const driftCapDeg = 24 + 8 * u
 
-  const chromaBoost = hueIsNoise
+  // The gold-band chroma lift (day-one eyeballed H-K correction) is SIGNAL-only
+  // (owner 2026-07-07, CATALOG C7): brands ride their own identity chroma — the fine-tune
+  // (ID-relative ramp, amplitude) is parked behind the P3 gamut work, where the sRGB
+  // ceiling stops truncating the amplitude. Signals keep the lift — it IS their shine.
+  const chromaBoost = hueIsNoise || !opts?.goldBoost
     ? 1
     : 1 + 1.7 * gauss(hueDelta(brandH, 90), 35) * S * (1 - (1 - creamGate) * (1 - v))
 

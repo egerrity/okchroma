@@ -139,3 +139,115 @@ nothing?); remedies get their own owner-decision round ONLY if the measurements 
 seeds ±35° per signal × L{0.55,0.65} × C{0.12,0.17} — NOTE under-covers the bright register
 where the green hole lives; re-sweep with L up to 0.8 + low-chroma seeds + DERIVED-SECONDARY
 seeds before fixing.
+
+**Re-sweep addendum (2026-07-07, expanded grid — session c7-sweep).** 2,720 primary seeds
+(±35° per signal × C{.04–.17} × L{.55–.80} × wcag+apca), 1,200 fine low-chroma, 1,344
+supplied-secondary; every seed via resolveTheme with a derived secondary; register ΔE
+stop-matched vs the EFFECTIVE (post-shift) signal. Bar below = 0.006, the C6-accepted wash
+separation.
+
+- *Unprotected primary holes (nothing fires, wash < bar, chromatic C ≥ .06):*
+  **info-color 34/272 (13%) wcag / 32 apca** — dH −13…+13, bright register L .73–.80,
+  #a497ff light wash byte-identical #eae9f9 (the "untested-likely" is now the WIDEST hole);
+  **yellow 22 (8%) per lane, lane-identical** — gold band dH −17…−3, L .55–.65, worst
+  #9f6105 wash 0.0020; **green 1 wcag vs 23 (8%) apca** — dH −9…+9, L .73–.80, #4ec465
+  byte-identical #dff3e1 (the lane hole, quantified); **red 3 wcag / 2 apca (1%)** — ONLY
+  dH0 bright (#ffa28d L.73–.80): NEW micro-finding — near-pivot UNDER-SHIFT (CORRECTED
+  from this addendum's first draft, which mis-called it a zero crossing: the cool branch
+  reuses the torsion fade, which sags to ~0.65 at the pivot → −7° exit instead of full,
+  and the warm branch's at-pivot 10.3° similarly lands dHueWash ≈ 9.4 after spine drift —
+  both under the ΔH 11–13 yardstick), and rung-1 (value move) can't separate a
+  hue-coincident ramp: red's dH0 rung-1 seeds sat wash 0.0032 fired.
+- *Lane facts:* the wash register is EXACTLY lane-invariant (max wcag↔apca wash-ΔE
+  difference 0.00000 over 1,320 same-machinery seed pairs), yet 149/1,320 seeds fire
+  DIFFERENT machinery per lane (green shift, componentRule, muted collider). The type-1
+  phenomenon is lane-global; the current metric is lane-local — the divergences are gate
+  artifacts, not value-honesty.
+- *Muted false-fire boundary:* red/green/info separate naturally as chroma falls (wash ΔE
+  at |dH|≤8: C.02 → .019–.024, C.06 → .012–.016, C.17 → ≤.007) — a wash-ΔE gate at
+  ~.006–.010 excludes muted seeds by itself. YELLOW does not: its wash register is
+  degenerate (even C.02–.03 seeds sit ≤ .005 from the yellow washes) — yellow's type-1
+  gate needs an explicit seed/ramp-chroma qualifier, wash-ΔE alone false-fires on browns.
+- *Existing remedies WOULD clear the primary holes at the accepted bar:* firing the
+  current remedies on every hole seed → 100% clear 0.006 (yellow→lemon worst 0.0061,
+  green best-variant 0.0069, info 0.0130); none of green/info reach 0.02 (swap hues are
+  wash-siblings — fine at the C6 bar, a decision if the owner wants more). Red dH0 has no
+  whole-ramp remedy today.
+- *Secondaries:* the DERIVED path runs NO collision inspection at all (early return —
+  not even the advice notes; resolve.ts:309–324). Measured vs effective signals:
+  **green 85 derived-pastel seeds wash < bar** (63 apca / 22 wcag; the primary's own
+  machinery fired in just 7 of them), **info-color 40**, red 0 (repel + pastel register
+  holds ≥ .006), yellow ~0. The would-be cta gate INVERTS: fires 0% where the green/info
+  holes are, 78% on yellow pastels whose washes are fine. Supplied-tint mirror: red notes
+  0/168 fired with 100% within .02; yellow notes 168/168 fired with 0% within .02.
+- *Secondary remedies under a corrected gate:* yield-subtle WORKS for yellow (exact→tint
+  clears every case past .02) and FAILS for red — the tint destination itself sits within
+  .02 in 100% / within .006 in 12–21% of near-signal cases (tint wash-5 C .048–.055: a
+  visibly pink ramp on red's washes, not washed to nothing), and an already-tint/pastel
+  secondary has NO further yield. swap-if-clears-both: every ADOPTABLE variant clears the
+  bar for the secondary (green .0069–.0226, info .0130–.0270) but adoptability under the
+  current cta semantics is partial (green tint 84/168, exact 51/168; info exact 87/168) —
+  the rest stay coincident with no move. ALSO: the remedy layer is DESIGNED but NOT WIRED —
+  signalSwapVariants is a dead import in resolve.ts, `demoted` is always false, the
+  secondary callers only push advice notes. Remedy round = its own owner decision
+  (per the 2026-07-07 scoping).
+
+**FIX IMPLEMENTED (2026-07-07, this branch — owner decisions: split the gate · lane-global
+type-1 · keep the tapered repel + full pivot exit, ties cool · 0.006/ΔH 11–13 yardstick ·
+secondaries detection+annotation only).**
+- `checkHueCollision` (collision.ts): TYPE-1 = wash-register hue distance (min over stops
+  3–7, both modes, vs the resolved ramps — spine drift included) ≤ 15° + vividness
+  qualifier v = brandC/VIVID_C ≥ 0.5 (PROVISIONAL — owner eye-check strip pending; the
+  gold/brown boundary is the owner's call). 15 not 13: the ΔE-per-ΔH slope varies by band
+  (violet reaches ΔE .005 at ΔH 13). Lane-global by construction. Wired into
+  warningVariant, pickSignalShift, and collisionStatus pending (non-red). Red rung-1 +
+  muted collider stay TYPE-2 (cta ΔE) untouched. Secondaries: both supplied paths note on
+  type-1 at SECONDARY_NOTE_MIN_V (any real hue); the DERIVED path gains the same notes
+  (was: zero inspection).
+- `redRepelShiftDeg` (colorMath.ts): near-pivot exit floors both sides
+  (RED_PIVOT_EXIT_DEG 14 — spine drift eats ~3° at the wash; sigmoid floors fade into the
+  shipped curves, byte-identical cool of ~H31 / warm of ~H34.5).
+- **Post-fix sweep (same 2,720/1,200/1,344 grid): ZERO unfired qualified holes at the
+  bar, all four signals, both lanes. Over-fire 0. Swap lane-divergence 0 (the 40 residual
+  divergences are red's type-2 value moves — legitimately lane-local). No same-machinery
+  value regressions.** Named-brand firing changes (ext-overrides audit, re-bless after
+  eye-check): GAINED black-currant + butterfly-pea (info, all 4 lanes), peppermint (green,
+  the missing wcag lanes), roster vs-green-teal #65C466 (green, the missing apca lanes —
+  the owner's original bug case); LOST taro-latte + lavender-latte (muted violets — the
+  family rule), mint-julep (wcag-only lane artifact), roster vs-info-magenta #044BAF
+  (blue, value-coincidence not family — **roster exemplar needs re-seeding**, plugin-ext
+  decision).
+- **Residuals (logged, not fixed here):** (1) yellow DARK degeneracy — dark's gold-spine
+  torsion collapses hue in the gold region: 46/258 lemon-fired seeds sit under the bar in
+  dark VS THE LEMON (they were equally coincident with canonical yellow pre-fix — no
+  regression, but the lemon swap cannot deliver dark separation by hue; needs a value-side
+  answer → remedy round). (2) red marginals: 2 seeds at 0.0060/0.00596 ≈ the bar
+  (dHueWash 11.4, inside the accepted 11–13 window) — OWNER-CLOSED 2026-07-07: red
+  differentiation is at its hue-space limit; anything further happens at the SEMANTIC
+  stage, not the ramp. (3) yellow muted-under 16 seeds (v < 0.5, wash-close, unfired) — correct per
+  the owner's family rule pending the vividness-threshold eye-check. (4) smoothness drift
+  at H33 moved (bigger exit = more identity travel) — mechanical re-baseline after
+  approval, per the C6 pattern.
+
+**GOLD BOOST → SIGNAL-ONLY (2026-07-07, same branch — owner-decided after the muting
+exploration).** The fired-remedy design round (rendered rounds 3–9: multiplicative → delta
+→ corridor solve) surfaced that colliding gold brands were FIGHTING the day-one gold-band
+chroma lift (`chromaBoost`, producers.ts: 1 + 1.7·gauss(H−90°, σ35) — initial-commit
+vintage, pre-dates all systematic H-K work; ~2.4× for browns, ~2.7× at the yellow signal;
+its visible footprint is paper/wash — highlights are ceiling-clamped either way, ink never
+had it). Measured: the sRGB gamut ceiling TRUNCATES the amplitude (1.7 vs 1.0 near-
+indistinguishable on vivid seeds), so fine-tuning now calibrates against a wall the P3
+work moves. Owner: interim dullness acceptable ("no one is using it"), ship subtractive
+now, tune after P3. LANDED: `goldBoost` opt (GenerateOptions), passed ONLY by signal
+generation (buildSignalScales, swapScale, lemonScale) — brands ride identity chroma;
+signals keep their shine; subtle secondaries/neutrals were already immune (chromaCurve
+bypasses the ladder). Post-change sweep: still ZERO unfired qualified holes; red's
+fired-under marginal CLEARED (red-adjacents carried a ~1.3× lift; worst now 0.0067 ≥ bar);
+yellow worst-vs-lemon light margin 3×'d (0.0116 → 0.0341). Snapshot drift: 19 named scales
+(all light stops, ΔE .016–.028, worst turmeric-latte wash-7) + 1 highlight-audit drift
+(lavender-latte-secondary, full-ramp demo secondary) — awaiting owner eye-check before
+bless. Affected gold-band named brands: Golden Milk, Chamomile, Honey Lemon.
+**SEQUENCING (owner): P3 master-gamut work is NEXT (docs/engine-spec/P3-KICKOFF.md);
+the calibration round (brand-side ID-relative boost re-tune · fired-mute corridor solve
+t≈0.4 · green-light signal boost · yellow boundary letter · dark ID-relative counterpart ·
+paper-2 chroma) queues behind it.**

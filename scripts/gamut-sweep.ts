@@ -16,7 +16,7 @@
 import { generateScale } from '../src/engine/colorEngine'
 import { clampChromaToGamut, oklchToLinearRgb } from '../src/engine/constraints'
 import { resolveBrand, SIGNAL_SCALES } from '../src/engine/resolve'
-import { checkCollision } from '../src/engine/collision'
+import { checkCollision, checkHueCollision } from '../src/engine/collision'
 
 function oklchToHex(L: number, C: number, H: number): string {
   const c = clampChromaToGamut(L, C, H)
@@ -86,9 +86,10 @@ for (const H of HUES) {
           }
         }
 
-        // 4. warning collisions always resolve to a variant
+        // 4. warning collisions always resolve to a variant — "collision" = the TYPE-1
+        //    hue gate (CATALOG C7 split), the same test warningVariant itself runs
         const warn = SIGNAL_SCALES.get('yellow')!
-        if (checkCollision(r.scale, warn.scale, warn.def, 'light').collides && r.warningVariant === null) {
+        if (checkHueCollision(r.scale, warn.scale, warn.def).collides && r.warningVariant === null) {
           warningUnhandled.push(hex)
         }
       } catch (e) {

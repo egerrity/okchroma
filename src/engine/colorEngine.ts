@@ -89,6 +89,11 @@ export interface GenerateOptions {
   // otherwise shifts them like a brand. Dark is already brand-only via coolRedDark.
   suppressRedCool?: boolean
 
+  // The gold-band chroma lift (H90 gaussian) is SIGNAL-only — it IS the yellow signal's
+  // shine. Brands ride their own identity chroma; the brand-side fine-tune (ID-relative
+  // ramp + amplitude) is parked behind the P3 gamut work (CATALOG C7, owner 2026-07-07).
+  goldBoost?: boolean
+
   style?: 'default' | 'deeper' | 'full-chroma'
 
   highlight?: boolean

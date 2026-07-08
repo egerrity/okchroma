@@ -7,6 +7,8 @@ import { SIGNALS, type SignalDef } from './signals'
 import { DARK_BRAND_FILL_MIN_L } from './stopTable'
 import {
   checkCollision,
+  checkHueCollision,
+  SECONDARY_NOTE_MIN_V,
   stopDeltaE,
   warningVariant,
   RUNG1_ARCHETYPE,
@@ -19,7 +21,7 @@ const buildSignalScales = (contrastProfile?: ContrastProfile): SignalScales =>
     SIGNALS.map(def => [
       def.name,
 
-      { def, scale: generateScale(def.hex, def.name, undefined, { highlight: true, darkChromaCurve, loudCta: true, darkFillMinL: def.darkFillMinL, enforceOnFillContrast: true, suppressRedCool: true, contrastProfile }) },
+      { def, scale: generateScale(def.hex, def.name, undefined, { highlight: true, darkChromaCurve, loudCta: true, darkFillMinL: def.darkFillMinL, enforceOnFillContrast: true, suppressRedCool: true, goldBoost: true, contrastProfile }) },
     ])
   )
 
@@ -58,9 +60,12 @@ function collisionStatus(scale: GeneratedScale, sigScales: SignalScales): { trig
   let trigger: SignalDef['name'] | null = null
   const pending: SignalDef['name'][] = []
   for (const { def, scale: sigScale } of sigScales.values()) {
-    if (checkCollision(scale, sigScale, def, 'light').collides) {
-      if (def.name === 'red') trigger = def.name
-      else pending.push(def.name)
+    if (def.name === 'red') {
+      // rung-1 eligibility stays TYPE-2 (cta ΔE): the dark-archetype regen is a value
+      // move; red's whole-ramp remedy is the always-on repel, not a gated rule (C7 split)
+      if (checkCollision(scale, sigScale, def, 'light').collides) trigger = def.name
+    } else if (checkHueCollision(scale, sigScale, def).collides) {
+      pending.push(def.name)
     }
   }
   return { trigger, pending }
@@ -305,6 +310,21 @@ export function resolveTheme(input: {
   // outline rides the tint ramp — its cta re-resolution happens at the EMITTERS
   const subtleModel = secStyle === 'pastel' ? { pastelK: SUBTLE_PASTEL_K } : { mult: SUBTLE_TINT_MULT }
 
+  const effectiveOf = (name: SignalDef['name']) =>
+    primary.signalOverrides.find(o => o.name === name)?.scale ?? sigScales.get(name)!.scale
+
+  // corrected detection for secondaries (C7): the TYPE-1 hue gate at the annotation
+  // qualifier, against the THEME's effective (post-shift) signal set. Advice only — the
+  // secondary remedy layer is its own owner round; no reshape happens here.
+  const signalNotesFor = (scale: GeneratedScale, wording: (name: SignalDef['name'], washDE: number) => string): string[] => {
+    const out: string[] = []
+    for (const def of SIGNALS) {
+      const h = checkHueCollision(scale, effectiveOf(def.name), def, { minV: SECONDARY_NOTE_MIN_V })
+      if (h.collides) out.push(wording(def.name, Math.min(h.washDeltaE.light, h.washDeltaE.dark)))
+    }
+    return out
+  }
+
   // ---- no secondary supplied: nothing, or the DERIVED subtle secondary (§2b) ----
   if (!input.secondaryHex) {
     if (!input.deriveSecondary) return { primary, themed: primary, secondary: null, signalOverrides: primary.signalOverrides, notes }
@@ -316,7 +336,11 @@ export function resolveTheme(input: {
         style: 'pastel',   // derived is ALWAYS pastel (owner: differentiates it from the
                            // same-hue brand + neutral rows — a tint ramp read as redundant)
         level: 'subtle', demoted: false, derived: true,
-        notes: ['secondary derived from the brand color (subtle register)'],
+        notes: [
+          'secondary derived from the brand color (subtle register)',
+          ...signalNotesFor(scale, (name, dE) =>
+            `derived secondary sits on the ${name} signal's hue (wash ΔE ${dE.toFixed(3)}) — it tracks the brand color; expected, annotated for the remedy round`),
+        ],
         distinctness: ctaDistinctness(primary.scale, scale),
       },
       signalOverrides: primary.signalOverrides, notes,
@@ -324,9 +348,7 @@ export function resolveTheme(input: {
   }
 
   // ---- supplied secondary, resolved under ITS OWN mode chip ----
-  const secNotes: string[] = []
-  const effectiveOf = (name: SignalDef['name']) =>
-    primary.signalOverrides.find(o => o.name === name)?.scale ?? sigScales.get(name)!.scale
+  let secNotes: string[] = []
   let scale: GeneratedScale
   let level: SecondaryLevel
 
@@ -336,12 +358,8 @@ export function resolveTheme(input: {
     const rSec = resolveBrand(input.secondaryHex, 'secondary', { ...opts, exact: true, skipCollisionRules: true })
     scale = rSec.scale
     level = 'standard'
-    for (const def of SIGNALS) {
-      const l = checkCollision(scale, effectiveOf(def.name), def, 'light')
-      const d = checkCollision(scale, effectiveOf(def.name), def, 'dark')
-      if (l.collides || d.collides)
-        secNotes.push(`secondary reads close to the ${def.name} signal (ΔE ${Math.min(l.deltaE, d.deltaE).toFixed(2)}) — exact keeps your color; consider more distance`)
-    }
+    secNotes = signalNotesFor(scale, (name, dE) =>
+      `secondary reads close to the ${name} signal (wash ΔE ${dE.toFixed(3)}) — exact keeps your color; consider more distance`)
   } else {
     // TINT / PASTEL / OUTLINE: the subtle register, PRIMARY-relative (the locked distance
     // curve) — every pair reads "the same amount of subtle next to its primary", both modes.
@@ -349,12 +367,8 @@ export function resolveTheme(input: {
     // owner-flagged as context-distinct; threshold calibration pending).
     scale = generateSubtleSecondary(input.secondaryHex, { contrastProfile: cp, ctaL: subtleCtaLFor(primary.scale), ...subtleModel })
     level = 'subtle'
-    for (const def of SIGNALS) {
-      const l = checkCollision(scale, effectiveOf(def.name), def, 'light')
-      const d = checkCollision(scale, effectiveOf(def.name), def, 'dark')
-      if (l.collides || d.collides)
-        secNotes.push(`subtle secondary still reads near ${def.name} by the numbers (ΔE ${Math.min(l.deltaE, d.deltaE).toFixed(2)}) — expected to separate in context; threshold calibration pending`)
-    }
+    secNotes = signalNotesFor(scale, (name, dE) =>
+      `subtle secondary still reads near ${name} by the numbers (wash ΔE ${dE.toFixed(3)}) — expected to separate in context; threshold calibration pending`)
   }
 
   const distinctness = ctaDistinctness(primary.scale, scale)

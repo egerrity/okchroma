@@ -2,7 +2,7 @@
 
 import { generateScale, type GeneratedScale, type ContrastProfile } from './colorEngine'
 import { darkChromaCurve } from './darkChromaCurve'
-import { checkCollision, YELLOW_SPLIT_H } from './collision'
+import { checkHueCollision, YELLOW_SPLIT_H } from './collision'
 import type { SignalDef } from './signals'
 
 type Side =
@@ -50,6 +50,7 @@ function swapScale(baseHex: string, def: SignalDef, contrastProfile?: ContrastPr
     darkFillMinL: def.darkFillMinL,
     enforceOnFillContrast: true,
     suppressRedCool: true,
+    goldBoost: true,
     contrastProfile,
   })
 }
@@ -63,6 +64,7 @@ function lemonScale(def: SignalDef, contrastProfile?: ContrastProfile): Generate
     loudCta: true,
     enforceOnFillContrast: true,
     suppressRedCool: true,
+    goldBoost: true,
     contrastProfile,
   })
 }
@@ -88,7 +90,9 @@ export function pickSignalShift(
 ): ShiftResult | null {
   const rule = SHIFT_RULES[def.name]
   if (!rule) return null
-  if (!checkCollision(brand, canonicalSignalScale, def, 'light').collides) return null
+  // a swap is a whole-ramp remedy — it gates on the TYPE-1 hue collision (CATALOG C7),
+  // covering both modes at once; the decision is also lane-global by construction
+  if (!checkHueCollision(brand, canonicalSignalScale, def).collides) return null
 
   const side = brand.brandH < rule.splitH ? rule.below : rule.atOrAbove
   if (side.kind === 'none') return null

@@ -289,24 +289,34 @@ const collisions: Article = {
     <>
       <Lead>The engine reserves four signal colors — red, yellow, green, info — named by identity. A brand that lands too close to one is kept distinct, so a brand element is never mistaken for a status.</Lead>
       <H2>Detecting a collision</H2>
-      <P>Two gates must both trip:</P>
+      <P>Two different things can collide, and each gets its own test:</P>
       <UL>
-        <LI><b>Hue gate</b> — the brand hue is within 30° of the signal's hue (same family).</LI>
-        <LI><b>Distance gate</b> — the OKLab ΔE between the two rendered fills is below threshold. This lets a dark maroon pass red: same family, but far enough apart in lightness that no one confuses the fills.</LI>
+        <LI><b>Hue (family) collision</b> — the brand and a signal share a hue family with real
+        chroma, so their ramps coincide at <i>every</i> scaffolded stop: at the wash stops the
+        lightness ladder and chroma normalization leave hue as the only differentiator. The test
+        measures the resolved wash hues (within 15°, either mode) plus a vividness qualifier —
+        a muted brown next to yellow, or a dusty lavender next to info, reads as its own thing
+        and doesn't trip it. The verdict is the same in every mode and contrast lane, so one
+        file carries one signal set.</LI>
+        <LI><b>Value collision</b> — two specific fills coincide at distinguishable hues, like a
+        deep brand cta landing on the red cta. The test is the OKLab ΔE between the rendered
+        fills, per mode (the dark threshold is stricter, 0.10 vs 0.16). This lets a dark maroon
+        pass red on the family test yet still get its fill separated.</LI>
       </UL>
       <P>
-        It runs per mode. Dark mode pins each fill's lightness, so a color can be clear in light and
-        collide in dark — the dark threshold is therefore stricter (0.10 vs 0.16). Code:{' '}
+        The family test drives whole-ramp remedies (swap the signal, repel the brand); the value
+        test drives value moves only. Code: <Code>checkHueCollision</Code> and{' '}
         <Code>checkCollision</Code> in <Code>collision.ts</Code>.
       </P>
       <H2>Resolving a collision</H2>
       <P>There's no choice ladder — resolution is automatic, and split by which signal is involved.</P>
       <H3>Red → the brand yields</H3>
       <P>
-        Red carries destructive meaning, so the brand gives way, never the reverse. A brand in the red
-        band (hue 12–35.5°) re-anchors to the <b>dark</b> archetype and cools a few degrees, so its solid
-        fill can't be confused with the error red — the hue is kept, the lightness moves. A red-adjacent
-        brand <i>outside</i> the band ships as-is, but destructive controls are flagged to use
+        Red carries destructive meaning, so the brand gives way, never the reverse. A red-adjacent
+        brand shifts a few degrees out the <i>nearest</i> side — cooler below the signal hue, warmer
+        above, full strength even dead on it — so its ramp never sits on red's. A brand whose cta also
+        lands on red's re-anchors to the <b>dark</b> archetype: the hue is kept, the lightness moves.
+        A red-adjacent brand outside the band ships as-is, but destructive controls are flagged to use
         outline-plus-icon styling instead of a solid red fill. In dark mode a colliding fill floats to a
         softer pastel.
       </P>
