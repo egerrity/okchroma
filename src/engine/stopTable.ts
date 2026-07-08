@@ -51,16 +51,6 @@ export const DARK_BRAND_FILL_MIN_L = 0.70
 export const DARK_STOP_11 = { chromaMultiplier: 0.95 }
 export const DARK_STOP_12 = { chromaMultiplier: 0.62 }
 
-// C8 V2 (owner directive 2026-07-08, applied autonomously on her spec): dark ink is
-// TEXT — it does not get the wide gamut. ink-12 is body text: its chroma range is
-// deliberately NARROW — a flat cap at the all-hue median (measured range was
-// .031–.213 across the circle, the yellow-green zone reading neon; capped range
-// .031–.040). ink-11 (secondary ink) returns to its pre-P3 register: the sRGB
-// ceiling, which capped it de facto before the master flip un-pinned it (the flip's
-// largest movers were exactly these stops). Both caps ride INSIDE the ink chroma
-// producer so the H-K placement solves see the capped chroma — no post-hoc trim.
-export const DARK_INK12_MAX_C = 0.040
-
 export const DARK_COLLIDER_MUTED_L = 0.80
 export const DARK_COLLIDER_MUTED_CHROMA_SCALE = 0.55
 
