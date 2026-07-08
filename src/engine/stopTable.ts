@@ -57,11 +57,14 @@ export const DARK_COLLIDER_MUTED_CHROMA_SCALE = 0.55
 export const GOLD_SPINE: Array<[number, number]> = [
   [0.30, 47], [0.57, 50], [0.74, 71], [0.80, 88], [0.87, 103], [0.97, 110],
 ]
+// The dark torsion's hue weight is a DECLARED CURVE (owner design 2026-07-08, CATALOG
+// C8 verdict 1): warm drift is identity-consistent for oranges, tolerable through the
+// macaroni yellows, and wrong for the cool yellows — so the weight is full from the
+// orange edge through H88 and ZERO by H104 (lemon holds its identity hue in dark; only
+// the low-L pigment physics remains). Replaces the old flat band 40–122 with edge
+// tapers — same mechanism class as GOLD_SPINE (piecewise-linear, hue-keyed).
 export const WARM_TORSION = {
-  bandLo: 40,
-
-  bandHi: 122,
-  taperDeg: 10,
+  weight: [[40, 0], [50, 1], [88, 1], [104, 0]] as Array<[number, number]>,
   travel: 0.55,
   capDeg: 24,
 }

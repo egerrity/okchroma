@@ -22,13 +22,23 @@ export function goldSpineHue(L: number): number {
   return goldSpineHueTable(L)
 }
 
+// the declared hue→weight curve (WARM_TORSION.weight), piecewise-linear like the spine
+function torsionWeight(brandH: number): number {
+  const pts = WARM_TORSION.weight
+  if (brandH <= pts[0][0]) return pts[0][1]
+  for (let i = 1; i < pts.length; i++) {
+    if (brandH <= pts[i][0]) {
+      const [h0, w0] = pts[i - 1]
+      const [h1, w1] = pts[i]
+      return w0 + ((w1 - w0) * (brandH - h0)) / (h1 - h0)
+    }
+  }
+  return pts[pts.length - 1][1]
+}
+
 export function torsionedHue(brandH: number, stopL: number, anchorL: number, offPathG: number): number {
-  const { bandLo, bandHi, taperDeg, travel, capDeg } = WARM_TORSION
-  const w = Math.min(
-    1,
-    Math.max(0, (brandH - bandLo) / taperDeg),
-    Math.max(0, (bandHi - brandH) / taperDeg)
-  )
+  const { travel, capDeg } = WARM_TORSION
+  const w = torsionWeight(brandH)
   if (w <= 0) return brandH
   const drift = travel * (goldSpineHue(stopL) - goldSpineHue(anchorL)) * w * offPathG
   return brandH + Math.max(-capDeg, Math.min(capDeg, drift))
