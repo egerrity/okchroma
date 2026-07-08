@@ -556,3 +556,16 @@ questions (C9/C11 — three questions posed) and the orange-cta reverse explorat
 ±3° clears). Shipped 6c804e3: VIVID_LIFT_BLEND 0.50 + RED_ONHUE_ACCEPTED_FLOOR 0.0057
 (red dH0 only — the ratchet against future erosion). Gates 13/13. The yellow calibration
 round's light side is now CLOSED: table + s8 register + falloff + lift all live.
+
+**SEQUENCING (owner, 2026-07-09 after push): branch PUSHED to origin/main (5804023 →
+deaffaf) for plugin testing; remaining work = fine-tuning. INK ROUND (C9/C11) DEFERRED
+by owner ("skip the wobble in the inks for now" — resourcing). NEXT = red de-collider
+round, VISUALIZE FIRST then plan: (1) exact-mode on-text legibility — measured: choice
+logic always picks the best pole (0/288 suboptimal), but 34/288 agnostic seed-lanes are
+TRUE dead zones (best pole Lc < 60; worst 55.8, mid-vivid pinks/corals) — exact cannot
+move the fill, so "guarantee" needs a design answer; (2) "red moves" shape — brand cta
+keeps vivid identity, the red signal cta takes the dark treatment per-brand (lemon-swap
+family, value axis); (3) outline-cta shape — colliding hues ship cta-border = cta color,
+cta-1/2 transparent, label ink-11. Both rendered as buttons-in-context:
+render/red-decollider-viz.html. Side task spawned: cta-stroke → cta-border rename
+(owner's naming correction; Figma-variable migration question flagged).**
