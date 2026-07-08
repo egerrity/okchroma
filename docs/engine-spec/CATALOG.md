@@ -321,3 +321,16 @@ muddy-ID rows cannot carry a verdict about the engine. V3 leaves NO open engine 
 REMAINING yellow item = V2 only (dark ink-11/12 text register — owner-confirmed
 defect). Bright-yellow IDs in light mode were never explicitly judged — open question
 for the owner, not an assumed defect.
+
+**C8 V3 — REOPENED (owner, 2026-07-08): the closure was itself a misread.** Her
+correction: the actual problem was never examined — the C7 boost removal ("super
+strong, pre-P3") left a gap whose replacement must be (1) scaled by THE ID'S CHROMA
+(muddy IDs get nothing — the rendered rounds only showed muddy IDs, so nothing could
+show) and (2) hue-distributed by THE AMOUNT OF ROOM ("this isn't necessarily a yellow
+round — we are talking about adjusting the hue based on the amount of room; yellow
+needs the most room"). Design consequence: no gaussian, no flat global lift — the
+engine's existing room-relative envelope (brandSat × maxChromaAt(L,H), today ridden
+only by MUTED brands via u) is the natural mechanism: extend the blend to vivid IDs
+(weight from ID vividness) and the gamut geometry hue-weights automatically (yellow's
+light-stop room is the largest, blue's the smallest). Candidates rendered with BRIGHT
+IDs + muddy controls: render/id-envelope.html.
