@@ -52,26 +52,14 @@ only saturated stops differ.
   now; the ID-relative modulation of dark chroma is a deliberate redesign for this round.
   Interim asymmetry (light brands duller than their own dark) is owner-accepted.
 
-## Workstream-1 consumer audit (wcagY / apcaY — enumerated 2026-07-07, verify lines live)
+## Workstream-1 consumer audit
 
-Every site below computes or consumes sRGB-primary luminance. Each needs a call: exact-P3
-Y, or accessibility-on-the-sRGB-clamp (conservative). Grep `wcagY|apcaY` to refresh.
-
-- **constraints.ts** — the definitions themselves, plus the SOLVERS `findLForY` /
-  `findLForContrast` (bisections that place L to hit a Y/ratio target — gamut-aware Y
-  changes the solved L, which moves stops).
-- **colorMath.ts** — `onTextIsWhite`: the on-text pole choice (max-|APCA Lc| preference)
-  AND the wcag lane's 4.5 ratioFloor flip. LEGAL question: does the wcag lane's
-  conformance floor compute on the rendered (P3) color or the sRGB fallback?
-- **reqtoken/producers.ts** — `whiteTextLcAt` (enforcement bisection), `onFillIsWhiteLight`,
-  the highlight band's Lc-60-by-placement, dark enforcement paths.
-- **reqtoken/resolve.ts** — the REQUIRE phase: every declared contrast clamp
-  (stop-8 3:1, stops 11/12 floors, cta enforcement, `unresolvable` fallback).
-- **perceptualL.ts** — the H-K machinery consumes luminance too (`perceptualRungL` /
-  `perceptualDarkC`) — a P3 switch changes perceptual placement, not just conformance.
-- **colorEngine.ts** — generateSubtleSecondary on-flags, render-pass consumers.
-- **spec.ts** — declares the ratio/Lc targets (data, not math — unchanged, but the
-  withProfile rewrite must keep meaning under the new Y).
+Superseded 2026-07-07 by the site-level audit: **P3-CONSUMER-AUDIT.md** (this folder) —
+every call site of the contrast/gamut primitives (172 sites across engine core, the
+reqtoken resolver, emitters + payload, and the script gates), each classified
+render-gamut-Y / legal-sRGB-question / gamut-clamp / emit-boundary / gate-instrument /
+neutral, with the Figma variable-P3 verification as an appendix. The design that rides
+it (two-phase parameterize-then-flip, owner decisions D1–D5) is **P3-DESIGN.md**.
 
 ## Instruments ready for the calibration round (ported 2026-07-07)
 
