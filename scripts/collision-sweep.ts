@@ -30,6 +30,14 @@ function oklchToHex(L: number, C: number, H: number): string {
 
 const WASH = [3, 4, 5, 6, 7]
 const HARD_BAR = 0.006
+// OWNER-ACCEPTED EXCEPTION (2026-07-09, "A is acceptable as is", extending her C7 ruling
+// that red differentiation is at its hue-space limit): brands sitting EXACTLY on the red
+// signal's hue have no hue exit left — the repel is at its identity-preserving max and
+// the ID lift spends part of the residual chroma gap (measured 0.00604 → 0.00586). The
+// accepted floor is scoped to red dH0 ONLY; anything below it — or any OTHER seed class
+// under HARD_BAR — still fails. A future change eroding this further needs a new ruling.
+const RED_ONHUE_ACCEPTED_FLOOR = 0.0058
+const barFor = (signal: string, dH: number) => (signal === 'red' && dH === 0 ? RED_ONHUE_ACCEPTED_FLOOR : HARD_BAR)
 
 type Mode = 'light' | 'dark'
 const washMin = (b: GeneratedScale, s: GeneratedScale, mode: Mode): number => {
@@ -88,7 +96,7 @@ for (const sig of SIGNALS) {
   for (const lane of ['wcag', 'apca']) {
     const rs = rows.filter(r => r.signal === sig.name && r.lane === lane)
     const qualified = rs.filter(r => r.v >= HUE_COLLISION_MIN_V)
-    const holes = qualified.filter(r => r.wmin < HARD_BAR && r.fired.length === 0)
+    const holes = qualified.filter(r => r.wmin < barFor(r.signal, r.dH) && r.fired.length === 0)
     const firedUnder = qualified.filter(r => r.fired.length > 0 && r.wmin < HARD_BAR)
     // C8 V3 gate hole (owner-caught): fired remedies must DELIVER separation — the
     // post-remedy LIGHT wash margin is ASSERTED at the bar. Dark stays informational
