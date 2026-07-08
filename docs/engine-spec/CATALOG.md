@@ -378,3 +378,50 @@ the curve path — could subsume the caps; V2's caps are correct-by-declaration 
 way. Log-don't-fix: nothing changed beyond V2's shipped caps. [Recovered 2026-07-08
 from stray main-checkout commit 6c55e4a; written before the V2 revert above — its
 "shipped caps" references are historical.]
+
+**C8 V2 — POST-REVERT RE-CONFIRMATION (owner, 2026-07-08, on render/state-comparison).**
+"In dark, almost all the ink-12s are still problematic for many colors in yellow" —
+expected with the caps out. Fresh measurements for the ink round: dark ink-12 C at
+L≈0.97 = H90 0.099 · H104 0.114 · lemon-bright 0.125 (yellow signal 0.049; the
+reverted body-text cap register was 0.040); ink-11 rides the P3 ceiling (0.201–0.215
+across the band). Defect OPEN, parked for the holistic ink round mapped by C9.
+
+**C8 V3 — NEED TERM CORRECTED (owner design input, 2026-07-08).** Her correction to the
+envelope's scaling: the paper/wash lift a brand needs depends on the ID being BRIGHT —
+"how much hue and chroma the given id color has." Light-mode ranking from her eye-check
+of render/state-comparison: the H55–111 sweep seeds (L .78) need ~nothing; Golden Milk
+(#ECAD2F, L .79) needs a little; Chamomile/Honey Lemon need more; lemon-bright the most.
+MEASURED: the reverted V3 C-only ramp ((brandC−0.13)/0.04) CONTRADICTS this ranking
+twice — it gives the sweep seeds MORE than Golden Milk (0.73–0.76 vs 0.50) and gives
+Honey Lemon (#FDCB6E, a pastel at C .125) ZERO. The missing term is an ID-BRIGHTNESS
+ramp. Candidates rendered through the real pipeline (render/id-need-candidates.html,
+patch-dump-restore, hashes distinct): D = min(1, C/0.13) × lRamp(L; .70→.90) at amp
+.35/.50; B = brandSat × lRamp at .35 — both reproduce her ranking (Golden Milk ≈ half
+of Chamomile/lemon's lift). STRUCTURAL BONUS: red/green/info signals live at mid L
+(.54–.65), so their on-hue vivid colliders take lRamp = 0 — green-onhue and Matcha
+margins are byte-unchanged under every candidate; the solo-envelope collapse case
+(wash 0.0059 < bar) cannot recur by construction. Margin cost at yellow: worst
+lemon-bright 0.0161–0.0177 at amp .35 (2.7–3× bar). FLAG: at amp .50 lemon-bright's
+washes cross ABOVE the signal register (w5 0.117 vs 0.094 — the pre-C7 failure shape);
+B35 is the only candidate keeping every brand at-or-under the signal register
+(lemon w5 0.091). Await her pick; the sweep:collision post-remedy margin assertion
+(the C8 V3 gate hole) still lands with whatever ships.
+
+## C10 — dark orange-red band: saturation loss + a break read between highlight-8 and 9
+
+**Status:** OPEN (owner eye-check 2026-07-08 on render/state-comparison: "the orange-reds
+lose too much of their saturation and it looks like something starts and stops between
+8 and 9"; greens read fine). Log-don't-fix — belongs to the dark calibration round.
+
+Measurements (real pipeline, current tip): (1) the dark L scaffold's largest seam is
+s7→s8: ΔL 0.130 vs 0.028–0.070 for every other adjacent pair — the solved 1–7 ladder
+hands off to the PLACED highlight band (8–10) in one jump (same seam exists in light,
+s7 .79 → s8 .65). (2) Orange-reds add hue travel across the band: Turmeric Latte dark
+runs H40 flat s1–s7 then s9 H43 · s10 H45 · cta H48 (seed H40.5); Chai s44→s48, cta
+H51 — the C6 warm-side exit (owner-approved, with its logged dark-overshoot knob) plus
+the V1 torsion curve compose there. (3) The register itself: dark highlight sits at
+L .55–.64 where orange pigment physics reads brown even at C .15–.18 (the dark
+counterpart of the C8 gold story — same H-K mechanism, one band cooler). Chili Mocha
+(true red, H20 everywhere) shows no break — the read is specific to the orange band.
+Candidate knobs for the round (owner decides): the s7|s8 scaffold seam · the C6 dark
+overshoot · dark highlight-band chroma/L for H35–55. Relates C6 (open knob), C8 V1/V2.
