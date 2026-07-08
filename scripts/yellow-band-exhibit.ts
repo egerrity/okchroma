@@ -35,12 +35,17 @@ const strip = (s: GeneratedScale, mode: 'light' | 'dark'): string => {
   ].join('')
 }
 
-const rows: string[] = []
+// two continuous COLUMNS (owner rule: the eye judges light on white, dark on dark —
+// never light strips floating on a dark page): rows aligned across both columns
+const leftRows: string[] = []
+const rightRows: string[] = []
 const addRow = (label: string, sub: string, scale: GeneratedScale, marked = false) => {
-  rows.push(`<div class="row${marked ? ' marked' : ''}">
+  leftRows.push(`<div class="rrow${marked ? ' marked' : ''}">
     <div class="lbl"><b>${label}</b><br><span>${sub}</span></div>
-    <div class="side light">${strip(scale, 'light')}</div>
-    <div class="side dark">${strip(scale, 'dark')}</div>
+    <div class="strip">${strip(scale, 'light')}</div>
+  </div>`)
+  rightRows.push(`<div class="rrow${marked ? ' marked-d' : ''}">
+    <div class="strip">${strip(scale, 'dark')}</div>
   </div>`)
 }
 
@@ -56,26 +61,29 @@ for (const H of [55, 62, 69, 76, 83, 90, 97, 104, 111]) {
 
 const html = `<!doctype html><meta charset="utf-8"><title>Yellow band — light vs dark counterparts</title>
 <style>
-  body { font: 14px/1.5 -apple-system, sans-serif; margin: 0; background:#1a1918; color:#e8e6e1; }
-  .note { padding: .9rem 1.4rem; background:#242220; font-size:.88rem; border-bottom:1px solid #3a3733; }
-  .head { display:flex; padding: .6rem 1.4rem .2rem; font-size:.75rem; letter-spacing:.05em; text-transform:uppercase; opacity:.65; }
-  .head .lbl { width:110px; flex-shrink:0; }
-  .head .t { flex:1; }
-  .row { display:flex; align-items:center; padding: .35rem 1.4rem; }
-  .row.marked { background:#26221a; border-block: 1px solid #4a4232; }
-  .lbl { width:110px; flex-shrink:0; font-size:.78rem; }
-  .lbl span { opacity:.6; font-size:.7rem; }
-  .side { display:flex; gap:2px; padding:6px; border-radius:6px; flex:1; }
-  .side.light { background:#faf9f7; margin-right:10px; }
-  .side.dark { background:#111110; }
+  body { font: 14px/1.5 -apple-system, sans-serif; margin: 0; background:#8a8783; }
+  .note { padding: .9rem 1.4rem; background:#f2f0ec; color:#222; font-size:.88rem; }
+  .cols { display:flex; align-items:stretch; }
+  .col { flex:1; padding: 1rem 1.2rem 2rem; }
+  .col.light { background:#faf9f7; color:#1a1a1a; }
+  .col.dark { background:#111110; color:#e8e6e1; }
+  .colhead { font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; opacity:.6; margin-bottom:.6rem; }
+  .rrow { display:flex; align-items:center; height:46px; }
+  .rrow.marked { background:#f3edda; border-radius:6px; }
+  .rrow.marked-d { background:#221e12; border-radius:6px; }
+  .lbl { width:96px; flex-shrink:0; font-size:.76rem; line-height:1.15; }
+  .lbl span { opacity:.6; font-size:.68rem; }
+  .strip { display:flex; gap:2px; flex:1; }
   .cell { flex:1; height:34px; border-radius:3px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.8rem; min-width:0; }
 </style>
-<div class="note"><b>Yellow band, holistically.</b> Each row: one hue's LIGHT ramp (left, on paper)
-beside its DARK counterpart (right, on dark) — full stops + cta pair, Aa = the computed on-color.
-Hues run the orange side (55) → gold (83–90, the signal's home) → the yellow-green side (111).
-Hover any cell for its L/C/H. The flagged row (yellow signal) is pinned first.</div>
-<div class="head"><div class="lbl"></div><div class="t">light</div><div class="t">dark</div></div>
-${rows.join('\n')}
+<div class="note"><b>Yellow band, holistically.</b> Left column (white): each hue's LIGHT ramp.
+Right column (dark): the same hue's DARK counterpart, row-aligned. Full stops + cta pair,
+Aa = the computed on-color. Hues run the orange side (55) → gold (83–90, the signal's home) →
+the yellow-green side (111); the flagged yellow-signal row is first, tinted. Hover any cell for L/C/H.</div>
+<div class="cols">
+  <div class="col light"><div class="colhead">light</div>${leftRows.join('\n')}</div>
+  <div class="col dark"><div class="colhead">dark</div>${rightRows.join('\n')}</div>
+</div>
 `
 mkdirSync('render', { recursive: true })
 writeFileSync('render/yellow-band.html', html)
