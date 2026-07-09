@@ -293,7 +293,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   // stop 10 must be a usable HOVER of stop 9 (owner 2026-07-10): under the delta carry, 9/10 re-reference off
   // near-together light highlights and can compress below a visible hover. Enforce a minimum lightness delta
   // (dark hover is LIGHTER). Delta-only — the seed-keyed scaffold already separates 9/10; runs LAST on 10.
-  if (mode === 'dark' && ctx.opts?.deltaLightStops) {
+  if (mode === 'dark' && ctx.opts?.deltaLightStops && !ctx.opts?.noDeltaHover) {
     const i9 = stops.findIndex(s => s.stop === 9), i10 = stops.findIndex(s => s.stop === 10)
     if (i9 >= 0 && i10 >= 0) {
       const HOVER_MIN_DL = 0.04

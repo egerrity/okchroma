@@ -116,6 +116,8 @@ export interface GenerateOptions {
   deltaLightStops?: { stop: number; L: number; C: number; H: number }[]
   deltaLightCta?: { L: number; C: number; H: number }
   deltaCarry?: boolean
+  // fall-out check instrument (not shipped): strip the 9→10 hover-delta bolt-on to see the pure gap
+  noDeltaHover?: boolean
 }
 
 // generateScale is now an ADAPTER over the requirement-token resolver (src/reqtoken): it compiles the caller
