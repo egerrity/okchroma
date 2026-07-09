@@ -4,7 +4,7 @@
 // and proven byte-identical at cutover (commit c7542b7); the blessed snapshots are the standing gate — do not
 // "simplify" an expression here without eye-check + re-bless.
 import { classifyArchetype, medianLForArchetype, type Archetype } from '../engine/archetypes'
-import { clampChromaToGamut, legalRatio, findMaxLForContrast, findLForContrast, apcaY, apcaLc, encodedChannels } from '../engine/constraints'
+import { clampChromaToGamut, wcagY, contrastRatio, legalRatio, findMaxLForContrast, findLForContrast, apcaY, apcaLc, encodedChannels } from '../engine/constraints'
 import { perceptualRungL } from '../engine/perceptualL'
 import {
   hexToOklch, maxChromaAt, goldSpineHue, torsionedHue, gauss, sigmoid, hueDelta,
@@ -306,6 +306,42 @@ export const darkHighlightChromaAt = (ctx: Ctx, dctx: DarkCtx, baseC: number, sa
 export function placeDark(dctx: DarkCtx, rootL: number, chromaAt: (L: number) => number, lift = false): { L: number; C: number; H: number } {
   let L = perceptualRungL(rootL, chromaAt(rootL), dctx.darkHueAtL(rootL))
   if (lift) L = Math.max(L, rootL)
+  return { L, C: chromaAt(L), H: dctx.darkHueAtL(L) }
+}
+
+// ===== DELTA-KEYED dark placement (dark round, gated by DELTA_DARK env; byte-identical when off) =====
+// Dark is a LIVE FUNCTION OF LIGHT: a light color sitting contrast Ci above the light ground (white)
+// becomes a dark color sitting the SAME Ci above the dark ground (~0.178, the neutral dark page — NOT pure
+// black; measuring against 0 sinks low washes below the real page → recede). C/H carry from light; only
+// lightness re-references. Gamut-aware L solve (a fixed out-of-gamut chroma inflates wcagY and crushes
+// high-luminance hues to L≈0 — the bisect re-clamps chroma per candidate L). Grounds are fixed achromatic
+// constants (symmetry, not exact bg numbers; the accessibility gates enforce contrast separately).
+const DELTA_LIGHT_GROUND_Y = 1.0                          // white
+const DELTA_DARK_GROUND_Y = wcagY(0.178, 0, 0)            // neutral dark page (≈ #111)
+function solveLForYInGamut(targetY: number, C: number, H: number): number {
+  let lo = 0.003, hi = 0.999
+  for (let i = 0; i < 26; i++) {
+    const m = (lo + hi) / 2
+    wcagY(m, clampChromaToGamut(m, C, H), H) < targetY ? (lo = m) : (hi = m)
+  }
+  return (lo + hi) / 2
+}
+// the CORE delta: reproduce `lightColor`'s contrast-from-white as the SAME contrast above the dark ground,
+// solved with the given chroma+hue. Floored at the dark ground so nothing sinks below the page.
+export function deltaDarkTargetL(
+  lightColor: { L: number; C: number; H: number }, C: number, H: number,
+): number {
+  const Ci = contrastRatio(wcagY(lightColor.L, lightColor.C, lightColor.H), DELTA_LIGHT_GROUND_Y)
+  const Yt = Math.min(0.999, Math.max(DELTA_DARK_GROUND_Y, Ci * (DELTA_DARK_GROUND_Y + 0.05) - 0.05))
+  return solveLForYInGamut(Yt, C, H)
+}
+export function placeDarkDelta(
+  dctx: DarkCtx, rootL: number, chromaAt: (L: number) => number,
+  lightStop: { L: number; C: number; H: number },
+): { L: number; C: number; H: number } {
+  const H0 = dctx.darkHueAtL(rootL)
+  const C0 = chromaAt(rootL)
+  const L = deltaDarkTargetL(lightStop, C0, H0)
   return { L, C: chromaAt(L), H: dctx.darkHueAtL(L) }
 }
 

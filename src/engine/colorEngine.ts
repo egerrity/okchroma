@@ -109,6 +109,13 @@ export interface GenerateOptions {
   // targets via withProfile() — the same declaration vs a different constraint. Default 'wcag' is the
   // shipped behavior, byte-identical when unset.
   contrastProfile?: ContrastProfile
+
+  // DELTA-KEYED dark (dark round): the resolved LIGHT stops + light cta, injected into the DARK resolve so
+  // dark is derived as a live function of light (carry chroma+hue, re-reference lightness to the dark ground).
+  // Set by generateScale under DELTA_DARK env; unset = the seed-keyed scaffold (byte-identical default).
+  deltaLightStops?: { stop: number; L: number; C: number; H: number }[]
+  deltaLightCta?: { L: number; C: number; H: number }
+  deltaCarry?: boolean
 }
 
 // generateScale is now an ADAPTER over the requirement-token resolver (src/reqtoken): it compiles the caller
@@ -133,7 +140,11 @@ export function generateScale(
       opts?.contrastProfile ?? 'wcag',
     )
   const lightRamp = resolveRamp(hex, 'light', compile(MODE_SPECS.light), rOpts)
-  const darkRamp = resolveRamp(hex, 'dark', compile(MODE_SPECS.dark), rOpts)
+  // DELTA-KEYED dark (gated): under DELTA_DARK the dark resolve derives from the resolved light stops.
+  // Env-read (not a persistent opt) so the default path is the seed-keyed scaffold, byte-identical.
+  const deltaDark = process.env.DELTA_DARK === '1'
+  const darkRamp = resolveRamp(hex, 'dark', compile(MODE_SPECS.dark),
+    deltaDark ? { ...rOpts, deltaLightStops: lightRamp.stops, deltaLightCta: lightRamp.roles.cta, deltaCarry: process.env.DELTA_CARRY === '1' } : rOpts)
 
   // metadata (brand identity fields on the scale)
   const { L: brandL, C: rawC, H: rawH } = hexToOklch(hex)

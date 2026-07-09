@@ -16,7 +16,7 @@ import {
   buildContext, buildDarkContext, type Ctx, type DarkCtx, type ResolveOpts,
   lightScaleChromaAt, lightHighlightChromaAt, placeLightScale, placeLightText, placeLightHighlight,
   separationClampLight,
-  darkScaleChromaAt, darkInkChromaAt, darkHighlightChromaAt, placeDark,
+  darkScaleChromaAt, darkInkChromaAt, darkHighlightChromaAt, placeDark, placeDarkDelta, deltaDarkTargetL,
   onFillIsWhiteLight, onFillIsWhiteDarkAt, onHighlightIsWhiteAt, ctaLightL, ctaDarkEnforcedL,
   ctaLightLApca, ctaDarkEnforcedLApca,
   apcaYAt, findMaxLForApcaLc, APCA_SOLVE_MARGIN_LC, APCA_TOL_LC,
@@ -132,14 +132,31 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         : (sp.stop === 9 || sp.stop === 10) ? undefined
         // chroma-floor index clamps at 0: stop 0 shares paper-1's tint treatment
         : darkScaleChromaAt(ctx, d, Math.max(0, sp.stop - 1), sp.satFraction ?? 1)
-      if (sp.stop === 9 || sp.stop === 10) {
+      // DELTA-KEYED (gated): derive dark from the resolved light twin for EVERY scale stop 1–12 — surfaces
+      // (1–7), fill (8), highlight (9/10), AND ink (11/12: carry light's ink chroma+hue, only lightness
+      // re-referenced; the T11/T12 contrast requires still floor L below). Default (no light stops) = today.
+      const dl = ctx.opts?.deltaLightStops
+      const ls = dl && sp.stop >= 1 && sp.stop <= 12 ? dl.find(s => s.stop === sp.stop) : undefined
+      if (ls && ctx.opts?.deltaCarry) {
+        // FULL CARRY: the dark stop IS the light color — chroma + hue carried, ONLY lightness re-referenced
+        // to the dark ground. emit gamut-clamps C; the declared dark requires below still floor it.
+        placed = { L: deltaDarkTargetL(ls, ls.C, ls.H), C: ls.C, H: ls.H }
+      } else if (sp.stop === 9 || sp.stop === 10) {
         const hlC = darkHighlightChromaAt(ctx, d, sp.baseC ?? 0, sp.satFraction ?? 1)
-        const H = d.darkHueAtL(sp.rootL)
-        placed = { L: sp.rootL, C: hlC(sp.rootL, H), H }
+        if (ls) {
+          placed = placeDarkDelta(d, sp.rootL, (L: number) => hlC(L, d.darkHueAtL(L)), ls)
+        } else {
+          const H = d.darkHueAtL(sp.rootL)
+          placed = { L: sp.rootL, C: hlC(sp.rootL, H), H }
+        }
       } else if (sp.produce.L === 'fixed') {
-        placed = { L: sp.rootL, C: chromaAt!(sp.rootL), H: d.darkHueAtL(sp.rootL) }
+        placed = ls
+          ? placeDarkDelta(d, sp.rootL, chromaAt!, ls)
+          : { L: sp.rootL, C: chromaAt!(sp.rootL), H: d.darkHueAtL(sp.rootL) }
       } else {
-        placed = placeDark(d, sp.rootL, chromaAt!, sp.produce.L === 'perceptual-lift')
+        placed = ls
+          ? placeDarkDelta(d, sp.rootL, chromaAt!, ls)
+          : placeDark(d, sp.rootL, chromaAt!, sp.produce.L === 'perceptual-lift')
       }
       // a declared dark require is a FLOOR: a hue whose placement already clears the target does not move;
       // a failing hue is raised (bisection) until it clears. This is the Stage-5 flip — blue's stop-8 rises
@@ -216,8 +233,16 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   } else {
     // dark: base cta from the pre-resolved anchor; judge on-fill at the emitted base; then the enforce re-solve
     const d = dctx!
-    cta = emitRole('cta', d.dark9L, ctx.cAt('dark', d.dark9L, d.darkC9), ctx.darkH)
-    ctaHover = emitRole('cta-hover', hoverL(d.dark9L), ctx.cAt('dark', hoverL(d.dark9L), d.darkC9), ctx.darkH)
+    // DELTA-KEYED cta (gated): the dark cta derives from the LIGHT cta's contrast — a distinct dark cta
+    // instead of the seed-blind value. Full-carry: the dark cta IS the light cta color, lightness re-referenced.
+    // The enforce re-solve below stays the legibility floor. Default (no light cta) = the seed-keyed value.
+    const dlCta = ctx.opts?.deltaLightCta, dlStops = ctx.opts?.deltaLightStops
+    const carry = !!ctx.opts?.deltaCarry && !!dlCta
+    const ctaC = carry ? dlCta!.C : d.darkC9
+    const ctaH = carry ? dlCta!.H : ctx.darkH
+    const cta9L = dlCta && dlStops ? deltaDarkTargetL(dlCta, ctaC, ctaH) : d.dark9L
+    cta = emitRole('cta', cta9L, ctx.cAt('dark', cta9L, ctaC), ctaH)
+    ctaHover = emitRole('cta-hover', hoverL(cta9L), ctx.cAt('dark', hoverL(cta9L), ctaC), ctaH)
     onFillIsWhite = onFillIsWhiteDarkAt(cta.L, cta.C, cta.H, enforceLc !== undefined ? false : onFillEnforce)
     const enforcedL = enforceLc !== undefined
       ? ctaDarkEnforcedLApca(ctx, cta, onFillIsWhite, onFillEnforce, enforceLc)
@@ -262,6 +287,18 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         }
         stops[i10] = emit(10, hl10.group, hi, hl10.C, hl10.H, true)
       }
+    }
+  }
+
+  // stop 10 must be a usable HOVER of stop 9 (owner 2026-07-10): under the delta carry, 9/10 re-reference off
+  // near-together light highlights and can compress below a visible hover. Enforce a minimum lightness delta
+  // (dark hover is LIGHTER). Delta-only — the seed-keyed scaffold already separates 9/10; runs LAST on 10.
+  if (mode === 'dark' && ctx.opts?.deltaLightStops) {
+    const i9 = stops.findIndex(s => s.stop === 9), i10 = stops.findIndex(s => s.stop === 10)
+    if (i9 >= 0 && i10 >= 0) {
+      const HOVER_MIN_DL = 0.04
+      const s9 = stops[i9], s10 = stops[i10]
+      if (s10.L - s9.L < HOVER_MIN_DL) stops[i10] = emit(10, s10.group, s9.L + HOVER_MIN_DL, s10.C, s10.H, true)
     }
   }
 
