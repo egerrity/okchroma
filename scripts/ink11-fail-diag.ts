@@ -19,7 +19,7 @@ console.log('seed        hue°  | light-ink11 ratio | dark-ink11 L     C(emit)  
 let fails = 0
 for (const hex of seeds) {
   const l = resolveRamp(hex, 'light', MODE_SPECS.light, base)
-  const d = resolveRamp(hex, 'dark', MODE_SPECS.dark, { ...base, deltaLightStops: l.stops, deltaLightCta: l.roles.cta, deltaCarry: true, noDeltaHover: true })
+  const d = resolveRamp(hex, 'dark', MODE_SPECS.dark, { ...base, deltaLightStops: l.stops, deltaLightCta: l.roles.cta, deltaCarry: true })
   const lp2 = l.stops.find(s => s.stop === 2)!, li = l.stops.find(s => s.stop === 11)!
   const dp2 = d.stops.find(s => s.stop === 2)!, di = d.stops.find(s => s.stop === 11)!
   const emitC = clampChromaToGamut(di.L, di.C, di.H)                 // what actually renders

@@ -29,9 +29,10 @@ const ok = (msg: string) => console.log('  ✓ ' + msg)
 // ── 1. table shape ────────────────────────────────────────────────────────────
 {
   const t = SCALE_C_LIGHT
-  if (!(t[8].base === t[9].base && t[9].base === t[10].base)) {
-    fail(`light highlight band 8–10 must share one base register: ${t[8].base}/${t[9].base}/${t[10].base}`)
-  } else ok(`light 8–10 share one base register (${t[8].base})`)
+  // stop 10 deleted (owner 2026-07-09) — the highlight band is 8–9
+  if (!(t[8].base === t[9].base)) {
+    fail(`light highlight band 8–9 must share one base register: ${t[8].base}/${t[9].base}`)
+  } else ok(`light 8–9 share one base register (${t[8].base})`)
   // wash run 1→7: strictly ascending, per-step ratio bounded (the historical ladder's
   // own max step is the bound — a bigger jump means a register cliff crept in)
   const MAX_WASH_STEP = 2.6 // paper 1→2 is ×2.5 by design (0.004→0.010); wash steps run ≤ ×1.8
@@ -42,7 +43,7 @@ const ok = (msg: string) => console.log('  ✓ ' + msg)
   }
   ok('light 1–7 ascend with bounded steps')
   const d = SCALE_C_DARK
-  if (!(d[9].base === d[10].base)) fail(`dark highlight 9/10 must share one base: ${d[9].base}/${d[10].base}`)
+  if (!(d[9].base === t[9].base)) fail(`dark highlight 9 must share the light base register: ${d[9].base}/${t[9].base}`)
   for (let i = 1; i < 8; i++) {
     const a = d[i].sat!, b = d[i + 1].sat!
     if (!(b >= a)) fail(`dark sat ladder must not descend ${i}→${i + 1}: ${a} → ${b}`)

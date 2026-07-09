@@ -27,7 +27,6 @@ accessibility category it carries.
 | `wash-7`       | 0.797  | 0.420 | ΔE ≥ 0.012 off `wash-6` (light) | decorative |
 | `highlight-8`  | 0.738  | 0.550 | 3:1 vs `paper-2` (both modes) | WCAG 1.4.11 non-text: boundaries, UI elements |
 | `highlight-9`  | 0.600  | 0.600 | — (placed) | element fills with on-text |
-| `highlight-10` | 0.560  | 0.640 | — (placed) | element fills with on-text |
 | `ink-11`       | 0.530  | 0.800 | 4.5:1 vs `paper-2` (both modes) | text, inverted fill |
 | `ink-12`       | 0.300  | 0.940 | 7:1 vs `paper-2` (both modes) | text, inverted fill |
 
@@ -92,7 +91,7 @@ Dark mode runs the same solve, but only where uniform apparent lightness is the 
 job: the paper/wash **surfaces** (1–7) and the ink **text** stops (11/12) are H-K-solved
 like light, so they read at one perceived lightness on every brand. The **highlight band**
 (8–10) is the exception — it stays placed at its `DARK_L` target, because those stops carry
-on-text (highlight-9/10) or a 3:1 border (highlight-8) and are hand-tuned for legibility;
+on-text (highlight-9) or a 3:1 border (highlight-8) and are hand-tuned for legibility;
 solving them would push some hues into the APCA body-text dead zone (and ride a solved
 surface up past the placed band). So the highlight band keeps a small per-hue
 apparent-lightness *wave* by design — legibility over uniformity — and `divergence-audit`

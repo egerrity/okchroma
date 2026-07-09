@@ -127,9 +127,10 @@ export const LIGHT: ModeSpec = {
       satFraction: SCALE_C_LIGHT[i + 1].sat, baseC: SCALE_C_LIGHT[i + 1].base,
       require: i === 7 ? S8 : undefined,
     })),
-    // highlight 9/10: perceptual ladder at the highlight scaffold
+    // highlight 9: perceptual ladder at the highlight scaffold. Stop 10 DELETED (owner 2026-07-09): no use
+    // case; two steps that close (weakest shipped ΔL 0.009) with one shared on-highlight token forced the
+    // PAIR-law hover machinery — removing the stop is the shape-fix. Other stop names/numbers unchanged.
     { stop: 9, rootL: HIGHLIGHT_LIGHT.rootL, group: 'highlight', produce: PL_LADDER, satFraction: SCALE_C_LIGHT[9].sat, baseC: SCALE_C_LIGHT[9].base },
-    { stop: 10, rootL: HIGHLIGHT_LIGHT.rootL10, group: 'highlight', produce: PL_LADDER, satFraction: SCALE_C_LIGHT[10].sat, baseC: SCALE_C_LIGHT[10].base },
     // ink text: perceptual + contrast-required
     { stop: 11, rootL: LIGHT_L[10], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[11].inkMult, inkMaxC: SCALE_C_LIGHT[11].inkMaxC, require: T11 },
     { stop: 12, rootL: LIGHT_L[11], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[12].inkMult, inkMaxC: SCALE_C_LIGHT[12].inkMaxC, require: T12 },
@@ -154,10 +155,9 @@ export const DARK: ModeSpec = {
       stop: i + 1, rootL, group: groupOf(i + 1), produce: i === 7 ? P_FIXED : P_LIFT,
       satFraction: SCALE_C_DARK[i + 1].sat, require: i === 7 ? S8 : undefined,
     })),
-    // highlight 9/10: FIXED at the hand-placed dark scaffold (solving = APCA body-text dead zone).
-    // Chroma params declared in SCALE_C_DARK (the values the engine had reused from light, :472).
+    // highlight 9: FIXED at the hand-placed dark scaffold (solving = APCA body-text dead zone).
+    // Chroma params declared in SCALE_C_DARK. Stop 10 DELETED (owner 2026-07-09, see the light spec note).
     { stop: 9, rootL: HIGHLIGHT_DARK.rootL, group: 'highlight', produce: P_FIXED, satFraction: SCALE_C_DARK[9].sat, baseC: SCALE_C_DARK[9].base },
-    { stop: 10, rootL: HIGHLIGHT_DARK.rootL10, group: 'highlight', produce: P_FIXED, satFraction: SCALE_C_DARK[10].sat, baseC: SCALE_C_DARK[10].base },
     // ink text: perceptual + the contrast requires DECLARED in dark too (Stage-5 flip): the scaffold already
     // clears them for every hue (the gate proves it), so values don't move — but the guarantee is now a rule.
     { stop: 11, rootL: DARK_NEUTRAL_L[10], group: 'ink', produce: P_TEXT, chromaMult: SCALE_C_DARK[11].inkMult, inkMaxC: SCALE_C_DARK[11].inkMaxC, require: T11 },

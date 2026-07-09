@@ -22,7 +22,7 @@ for (const n of [11, 12]) {
   let maxDrop = -9, maxDropNearBar = -9, nearBarCount = 0
   for (const hex of seeds) {
     const l = resolveRamp(hex, 'light', MODE_SPECS.light, base)
-    const d = resolveRamp(hex, 'dark', MODE_SPECS.dark, { ...base, deltaLightStops: l.stops, deltaLightCta: l.roles.cta, deltaCarry: true, noDeltaHover: true })
+    const d = resolveRamp(hex, 'dark', MODE_SPECS.dark, { ...base, deltaLightStops: l.stops, deltaLightCta: l.roles.cta, deltaCarry: true })
     const lr = ratioVs2(l, n), dr = ratioVs2(d, n), drop = lr - dr
     maxDrop = Math.max(maxDrop, drop)
     if (lr <= BAR[n] + 0.05) { nearBarCount++; maxDropNearBar = Math.max(maxDropNearBar, drop) }   // light sits within 0.05 of bar
@@ -37,7 +37,7 @@ for (const mode of ['light', 'dark'] as const) {
   const counts: Record<number, number> = { 8: 0, 11: 0, 12: 0 }
   for (const hex of seeds) {
     const l = resolveRamp(hex, 'light', MODE_SPECS.light, base)
-    const r = mode === 'light' ? l : resolveRamp(hex, 'dark', MODE_SPECS.dark, { ...base, deltaLightStops: l.stops, deltaLightCta: l.roles.cta, deltaCarry: true, noDeltaHover: true })
+    const r = mode === 'light' ? l : resolveRamp(hex, 'dark', MODE_SPECS.dark, { ...base, deltaLightStops: l.stops, deltaLightCta: l.roles.cta, deltaCarry: true })
     for (const n of [8, 11, 12]) { const g = ratioVs2(r, n); if (g >= BAR[n] - 1e-3 && g < BAR[n]) counts[n]++ }
   }
   console.log(`  ${mode.padEnd(5)}: stop8 ${counts[8]}   ink11 ${counts[11]}   ink12 ${counts[12]}   (of ${seeds.length})`)

@@ -16,8 +16,8 @@ const SHARED_NAMES: Record<number, string> = {
 }
 
 export function stopTokenName(stop: number): string {
+  // highlight-10 DELETED (owner 2026-07-09) — no rename cascade: every other stop keeps its number.
   if (stop === 9) return 'highlight-9'
-  if (stop === 10) return 'highlight-10'
   const name = SHARED_NAMES[stop]
   if (!name) throw new Error(`stopTokenName: unexpected stop ${stop}`)
   return name
@@ -40,7 +40,7 @@ export function onFillTokenName(kind: RampKind): string {
 // this, not by stop number.
 const TOKEN_ORDER = [
   'paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'wash-6', 'wash-7',
-  'highlight-8', 'highlight-9', 'highlight-10', 'on-highlight',
+  'highlight-8', 'highlight-9', 'on-highlight',
   'ink-11', 'ink-12',
   'cta-1', 'cta-2', 'on-cta',
   'identity',

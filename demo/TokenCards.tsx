@@ -94,13 +94,12 @@ export function TokenCards({ prefix, kind, outlineCta }: { prefix: string; kind:
     { n: 7, tok: 'wash-7', fg: v('ink-12') },
     { n: 8, tok: 'highlight-8', fg: v('ink-12') },
     { n: 9, tok: 'highlight-9', fg: v('on-highlight') },
-    { n: 10, tok: 'highlight-10', fg: v('on-highlight') },
     { n: 11, tok: 'ink-11', fg: v('paper-1') },
     { n: 12, tok: 'ink-12', fg: v('paper-1') },
   ]
   const groups = [
     { label: 'paper', span: 2 }, { label: 'wash', span: 5 },
-    { label: 'highlight', span: 3 }, { label: 'ink', span: 2 },
+    { label: 'highlight', span: 2 }, { label: 'ink', span: 2 },
   ]
 
   const Icon = SIGNAL_ICON[prefix] ?? AlertCircle
@@ -160,8 +159,10 @@ export function TokenCards({ prefix, kind, outlineCta }: { prefix: string; kind:
         ) : (
           <div style={{ ...box, background: v('highlight-9') }}>
             <div style={{ ...boxLabel, color: v('on-highlight') }}>inset &middot; highlight</div>
-            <div style={{ background: v('highlight-10'), borderRadius: 8, padding: '10px 12px' }}>
-              <div style={{ ...boxBody, color: v('on-highlight') }}>Emphasis copy in on-highlight text.</div>
+            {/* the emphasis inset is the INVERTED fill (owner 2026-07-09): ink-12 with paper-1 text —
+                highlight-10 deleted */}
+            <div style={{ background: v('ink-12'), borderRadius: 8, padding: '10px 12px' }}>
+              <div style={{ ...boxBody, color: v('paper-1') }}>Emphasis copy in paper-1 text.</div>
             </div>
           </div>
         )}
@@ -179,7 +180,7 @@ export function TokenCards({ prefix, kind, outlineCta }: { prefix: string; kind:
       </div>
       {/* Bracketed group labels — each bracket spans its stops so the
           paper/wash/highlight/ink grouping reads unambiguously. */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 5, marginTop: 6 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(11, 1fr)', gap: 5, marginTop: 6 }}>
         {groups.map(g => (
           <div key={g.label} style={{ gridColumn: `span ${g.span}`, display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 0 }}>
             <div style={{ width: '100%', height: 6, borderLeft: '1px solid var(--border-default)', borderRight: '1px solid var(--border-default)', borderBottom: '1px solid var(--border-default)', borderRadius: '0 0 5px 5px' }} />

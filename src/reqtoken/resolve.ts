@@ -104,7 +104,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         if (!sp.require) throw new Error(`light ink stop ${sp.stop} must declare a contrast require`)
         placed = placeLightText(ctx, sp.rootL, sp.chromaMult ?? 1, maxLForOf(sp.require, sp.stop, false), deepenFor(sp.stop), sp.inkMaxC)
         clamped = true
-      } else if (sp.stop === 9 || sp.stop === 10) {
+      } else if (sp.stop === 9) {
         placed = placeLightHighlight(ctx, sp.rootL, lightHighlightChromaAt(ctx, sp.baseC ?? 0, sp.satFraction ?? 1))
       } else if (sp.produce.L === 'fixed') {
         // fixed light stop (paper-0): sits exactly at its declared extreme
@@ -129,7 +129,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       const d = dctx!
       const chromaAt =
         sp.group === 'ink' ? darkInkChromaAt(ctx, d, sp.stop - 1, sp.chromaMult ?? 1, sp.inkMaxC)
-        : (sp.stop === 9 || sp.stop === 10) ? undefined
+        : sp.stop === 9 ? undefined
         // chroma-floor index clamps at 0: stop 0 shares paper-1's tint treatment
         : darkScaleChromaAt(ctx, d, Math.max(0, sp.stop - 1), sp.satFraction ?? 1)
       // DELTA-KEYED (gated): derive dark from the resolved light twin for EVERY scale stop 1–12 — surfaces
@@ -149,7 +149,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         if (ctx.opts.deltaChromaEq && sp.group !== 'ink') C = ctx.cAt('dark', L, perceptualDarkC(L, ls.H, ctx.brandC))  // old H-K chroma equalizer
         if (ctx.opts.deltaInkRegister && sp.group === 'ink') C = chromaAt!(L)                                      // old dark ink register (darkInkChromaAt)
         placed = { L, C, H: ls.H }
-      } else if (sp.stop === 9 || sp.stop === 10) {
+      } else if (sp.stop === 9) {
         const hlC = darkHighlightChromaAt(ctx, d, sp.baseC ?? 0, sp.satFraction ?? 1)
         if (ls) {
           placed = placeDarkDelta(d, sp.rootL, (L: number) => hlC(L, d.darkHueAtL(L)), ls)
@@ -172,7 +172,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       // metric-blind (wcag ratio or |APCA Lc|); the wcag path computes the exact old floats.
       if (sp.require && sp.require.metric !== 'min-separation') {
         const req = sp.require
-        const cAtL = (L: number) => (sp.stop === 9 || sp.stop === 10)
+        const cAtL = (L: number) => sp.stop === 9
           ? darkHighlightChromaAt(ctx, d, sp.baseC ?? 0, sp.satFraction ?? 1)(L, d.darkHueAtL(L))
           : chromaAt!(L)
         const isApca = req.metric === 'apca'
@@ -273,45 +273,8 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     onHighlightIsWhite: hl9 ? onHighlightIsWhiteAt(hl9.L, hl9.C, hl9.H, spec.ons.onHighlight.ratioFloor) : true,
   }
 
-  // the PAIR law (wcag profile): on-highlight is ONE token shared by hl-9 and its hover hl-10,
-  // so the chosen pole must pass the floor on BOTH. For straddling hues no single pole passes
-  // both fills — the HOVER re-solves toward hl-9 (the only movable member: an offset
-  // convention, not an identity placement; the pole passes at hl-9, so by continuity a passing
-  // L exists between them). Same shape as the cta enforcement: the fill yields to the law.
-  const hlFloor = spec.ons.onHighlight.ratioFloor
-  if (hlFloor !== undefined && hl9) {
-    const i10 = stops.findIndex(s => s.stop === 10)
-    if (i10 >= 0) {
-      const white = ons.onHighlightIsWhite
-      // PAIR law under D1: the shared pole must clear the floor on both renditions
-      const poleRatio = (s: { L: number; C: number; H: number }) => {
-        const gC = clampChromaToGamut(s.L, s.C, s.H)
-        return white ? legalRatio(s.L, gC, s.H, 1.0) : legalRatio(s.L, gC, s.H, 0)
-      }
-      const hl10 = stops[i10]
-      if (poleRatio(hl10) < hlFloor - 1e-3) {
-        // bisect L between the failing hover and the passing hl-9 (ratio is monotonic in L)
-        let lo = hl10.L, hi = hl9.L
-        for (let i = 0; i < 24; i++) {
-          const m = (lo + hi) / 2
-          poleRatio({ L: m, C: hl10.C, H: hl10.H }) < hlFloor + 0.05 ? (lo = m) : (hi = m)
-        }
-        stops[i10] = emit(10, hl10.group, hi, hl10.C, hl10.H, true)
-      }
-    }
-  }
-
-  // stop 10 must be a usable HOVER of stop 9 (owner 2026-07-10): under the delta carry, 9/10 re-reference off
-  // near-together light highlights and can compress below a visible hover. Enforce a minimum lightness delta
-  // (dark hover is LIGHTER). Delta-only — the seed-keyed scaffold already separates 9/10; runs LAST on 10.
-  if (mode === 'dark' && ctx.opts?.deltaLightStops && !ctx.opts?.noDeltaHover) {
-    const i9 = stops.findIndex(s => s.stop === 9), i10 = stops.findIndex(s => s.stop === 10)
-    if (i9 >= 0 && i10 >= 0) {
-      const HOVER_MIN_DL = 0.04
-      const s9 = stops[i9], s10 = stops[i10]
-      if (s10.L - s9.L < HOVER_MIN_DL) stops[i10] = emit(10, s10.group, s9.L + HOVER_MIN_DL, s10.C, s10.H, true)
-    }
-  }
+  // (The former PAIR law — the shared on-highlight pole passing on both hl-9 and its hover hl-10 — died with
+  // stop 10 (owner 2026-07-09): with one highlight fill, on-highlight is judged at hl-9 alone, above.)
 
   return { mode, seed, stops, roles: { cta, ctaHover }, ons }
 }

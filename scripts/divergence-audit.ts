@@ -103,18 +103,18 @@ const WAVE_HUES = Array.from({ length: 24 }, (_, i) => i * 15)
 const lAp = (s: ColorStop) => apparentL(s.L, s.C, s.H)
 const perStop: { stop: number; light: number; dark: number }[] = []
 const ctaSpread = { light: { lo: 999, hi: -999 }, dark: { lo: 999, hi: -999 } }
-for (let i = 0; i < 12; i++) {
+for (const stopN of [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12]) {   // stop 10 deleted (owner 2026-07-09)
   const lv: number[] = [], dv: number[] = []
   for (const H of WAVE_HUES) {
     const s = generateScale(synthHex(0.62, 0.18, H), `wave-h${H}`, undefined, BRAND_FLOOR)
-    lv.push(lAp(s.light[i])); dv.push(lAp(s.dark[i]))
-    if (i === 0) {
+    lv.push(lAp(s.light.find(x => x.stop === stopN)!)); dv.push(lAp(s.dark.find(x => x.stop === stopN)!))
+    if (stopN === 1) {
       const cl = lAp(s.cta), cd = lAp(s.ctaDark)
       ctaSpread.light.lo = Math.min(ctaSpread.light.lo, cl); ctaSpread.light.hi = Math.max(ctaSpread.light.hi, cl)
       ctaSpread.dark.lo = Math.min(ctaSpread.dark.lo, cd); ctaSpread.dark.hi = Math.max(ctaSpread.dark.hi, cd)
     }
   }
-  perStop.push({ stop: i + 1, light: Math.max(...lv) - Math.min(...lv), dark: Math.max(...dv) - Math.min(...dv) })
+  perStop.push({ stop: stopN, light: Math.max(...lv) - Math.min(...lv), dark: Math.max(...dv) - Math.min(...dv) })
 }
 const worstDark = perStop.reduce((m, p) => Math.max(m, p.dark), 0)
 console.log(`\n=== C. dark-L apparent-lightness wave (24-hue vivid sweep, CIE L*) — REPORT ONLY ===`)
@@ -127,11 +127,16 @@ console.log(`  worst dark vivid-stop wave ${f1(worstDark)} L*  ·  dark CTA wave
 // Light clamps stop 8 to 3:1, stops 11/12 to 4.5/7 (vs paper-2 = stop 2). Dark
 // places them directly with no clamp. Sweep agnostically; report the worst dark
 // ratio so W2 decides whether a dark clamp is needed or the scaffold already clears.
-const vsPaper2 = (arr: ColorStop[], i: number) => contrastRatio(wcagY(arr[i].L, arr[i].C, arr[i].H), wcagY(arr[1].L, arr[1].C, arr[1].H))
+// find by STOP number — the arrays are stops 1..9,11,12 since stop 10's deletion (owner 2026-07-09)
+const vsPaper2 = (arr: ColorStop[], stop: number) => {
+  const st = arr.find(s => s.stop === stop)!
+  const p2 = arr.find(s => s.stop === 2)!
+  return contrastRatio(wcagY(st.L, st.C, st.H), wcagY(p2.L, p2.C, p2.H))
+}
 const dark = { s8: 999, s8at: '', s11: 999, s11at: '', s12: 999, s12at: '' }
 for (let H = 0; H < 360; H += 15) for (const C of [0.04, 0.10, 0.16, 0.22]) for (const L of [0.45, 0.6, 0.7, 0.82]) {
   const s = generateScale(synthHex(L, C, H), `dc-h${H}c${C}l${L}`, undefined, BRAND_FLOOR)
-  const c8 = vsPaper2(s.dark, 7), c11 = vsPaper2(s.dark, 10), c12 = vsPaper2(s.dark, 11)
+  const c8 = vsPaper2(s.dark, 8), c11 = vsPaper2(s.dark, 11), c12 = vsPaper2(s.dark, 12)
   if (c8 < dark.s8) { dark.s8 = c8; dark.s8at = `H${H} C${C} L${L}` }
   if (c11 < dark.s11) { dark.s11 = c11; dark.s11at = `H${H} C${C} L${L}` }
   if (c12 < dark.s12) { dark.s12 = c12; dark.s12at = `H${H} C${C} L${L}` }

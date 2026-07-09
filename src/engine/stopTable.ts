@@ -43,7 +43,6 @@ export const SCALE_C_LIGHT: Record<number, ScaleChroma> = {
   7: { base: 0.086, sat: 0.78 },
   8: { base: 0.142, sat: 0.78 },
   9: { base: 0.142, sat: 0.75 },
-  10: { base: 0.142, sat: 0.75 },
   11: { inkMult: 0.95, inkMaxC: 0.150 },
   12: { inkMult: 0.50, inkMaxC: 0.080 },
 }
@@ -61,7 +60,6 @@ export const SCALE_C_DARK: Record<number, ScaleChroma> = {
   7: { sat: 0.80 },
   8: { sat: 0.84 },
   9: { base: 0.142, sat: 0.75 },
-  10: { base: 0.142, sat: 0.75 },
   11: { inkMult: 0.95, inkMaxC: 0.120 },
   12: { inkMult: 0.62, inkMaxC: 0.045 },
 }
@@ -79,8 +77,9 @@ export const STOP_8_NONTEXT_CONTRAST = 3.0
 export const YELLOW_BAND = { centerH: 92, sigmaDeg: 20 }
 
 // L-axis scaffolds only — chroma params live in the SCALE_C tables above.
-export const HIGHLIGHT_LIGHT = { rootL: LIGHT_L[8], rootL10: LIGHT_L[9] }
-export const HIGHLIGHT_DARK = { rootL: DARK_L[8], rootL10: DARK_L[9] }
+// (rootL10 deleted with stop 10, owner 2026-07-09; the LIGHT_L/DARK_L arrays keep their shape — ink rootLs index them.)
+export const HIGHLIGHT_LIGHT = { rootL: LIGHT_L[8] }
+export const HIGHLIGHT_DARK = { rootL: DARK_L[8] }
 
 const DARK_CHROMA_ANCHORS_MID = [0.66, 0.72]
 export const DARK_NEUTRAL_L = [...DARK_L.slice(0, 8), ...DARK_CHROMA_ANCHORS_MID, DARK_L[10], DARK_L[11]]

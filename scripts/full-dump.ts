@@ -18,6 +18,6 @@ for (const hex of seeds) {
   const l = resolveRamp(hex, 'light', MODE_SPECS.light, base)
   out.push(line('LIGHT', hex, l))
   out.push(line('TODAY', hex, resolveRamp(hex, 'dark', MODE_SPECS.dark, base)))
-  out.push(line('DELTA', hex, resolveRamp(hex, 'dark', MODE_SPECS.dark, { ...base, deltaLightStops: l.stops, deltaLightCta: l.roles.cta, deltaCarry: true, noDeltaHover: true })))
+  out.push(line('DELTA', hex, resolveRamp(hex, 'dark', MODE_SPECS.dark, { ...base, deltaLightStops: l.stops, deltaLightCta: l.roles.cta, deltaCarry: true })))
 }
 console.log(out.join('\n'))

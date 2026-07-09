@@ -123,13 +123,11 @@
   --alert-high-bg-subtle:             var(--red-wash-3);
   --alert-high-bg-subtle-hover:       var(--red-wash-4);
   --alert-high-bg-emphasis:           var(--red-highlight-9);
-  --alert-high-bg-emphasis-hover:     var(--red-highlight-10);
   --alert-high-border-subtle:         var(--red-wash-4);
   --alert-high-border-subtle-hover:   var(--red-wash-5);
   --alert-high-border-default:       var(--red-wash-6);
   --alert-high-border-default-hover: var(--red-highlight-8);
   --alert-high-border-emphasis:       var(--red-highlight-9);
-  --alert-high-border-emphasis-hover: var(--red-highlight-10);
 
   --alert-med-fg:                     var(--yellow-ink-12);
   --alert-med-fg-hover:               var(--yellow-ink-11);
@@ -140,13 +138,11 @@
   --alert-med-bg-subtle:              var(--yellow-wash-3);
   --alert-med-bg-subtle-hover:        var(--yellow-wash-4);
   --alert-med-bg-emphasis:            var(--yellow-highlight-9);
-  --alert-med-bg-emphasis-hover:      var(--yellow-highlight-10);
   --alert-med-border-subtle:          var(--yellow-wash-4);
   --alert-med-border-subtle-hover:    var(--yellow-wash-5);
   --alert-med-border-default:        var(--yellow-wash-6);
   --alert-med-border-default-hover:  var(--yellow-highlight-8);
   --alert-med-border-emphasis:        var(--yellow-highlight-9);
-  --alert-med-border-emphasis-hover:  var(--yellow-highlight-10);
 
   --positive-fg:                      var(--green-ink-12);
   --positive-fg-hover:                var(--green-ink-11);
@@ -157,13 +153,11 @@
   --positive-bg-subtle:               var(--green-wash-3);
   --positive-bg-subtle-hover:         var(--green-wash-4);
   --positive-bg-emphasis:             var(--green-highlight-9);
-  --positive-bg-emphasis-hover:       var(--green-highlight-10);
   --positive-border-subtle:           var(--green-wash-4);
   --positive-border-subtle-hover:     var(--green-wash-5);
   --positive-border-default:         var(--green-wash-6);
   --positive-border-default-hover:   var(--green-highlight-8);
   --positive-border-emphasis:         var(--green-highlight-9);
-  --positive-border-emphasis-hover:   var(--green-highlight-10);
 
   --info-fg:                          var(--info-color-ink-12);
   --info-fg-hover:                    var(--info-color-ink-11);
@@ -174,11 +168,9 @@
   --info-bg-subtle:                   var(--info-color-wash-3);
   --info-bg-subtle-hover:             var(--info-color-wash-4);
   --info-bg-emphasis:                 var(--info-color-highlight-9);
-  --info-bg-emphasis-hover:           var(--info-color-highlight-10);
   --info-border-subtle:               var(--info-color-wash-4);
   --info-border-subtle-hover:         var(--info-color-wash-5);
   --info-border-default:             var(--info-color-wash-6);
   --info-border-default-hover:       var(--info-color-highlight-8);
   --info-border-emphasis:             var(--info-color-highlight-9);
-  --info-border-emphasis-hover:       var(--info-color-highlight-10);
 }

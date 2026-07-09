@@ -24,13 +24,13 @@ const ctaLc = (c: any, white: boolean) => Math.abs(apcaLc(white ? 1.0 : blackApc
 
 // carry opts: the light twin injected; PURE = deltaCarry + hover stripped + no bolt-on. `extra` layers ONE.
 const carry = (light: ResolvedRamp, extra: Partial<ResolveOpts> = {}): ResolveOpts =>
-  ({ ...base, deltaLightStops: light.stops, deltaLightCta: light.roles.cta, deltaCarry: true, noDeltaHover: true, ...extra })
+  ({ ...base, deltaLightStops: light.stops, deltaLightCta: light.roles.cta, deltaCarry: true, ...extra })
 // the three bolt-ons under review — each re-enables one real engine mechanism on top of the pure carry.
 // (hover / H-K place / ink register were ruled out 2026-07-09.)
 const BOLTONS: [string, (light: ResolvedRamp) => ResolveOpts][] = [
   ['+ chroma-eq (perceptualDarkC)', l => carry(l, { deltaChromaEq: true })],
   ['+ lift floor (recede)', l => carry(l, { deltaLiftFloor: true })],
-  ['+ darkCtaTrim cta', l => ({ ...base, deltaLightStops: l.stops, deltaCarry: true, noDeltaHover: true })],
+  ['+ darkCtaTrim cta', l => ({ ...base, deltaLightStops: l.stops, deltaCarry: true })],
 ]
 
 // ---- console: what each bolt-on moves vs the pure fall-out, agnostic hue×chroma sweep (NOT named brands) ----
@@ -43,7 +43,7 @@ for (const [name, mk] of BOLTONS) {
     const l = resolveRamp(hex, 'light', MODE_SPECS.light, base)
     const pure = resolveRamp(hex, 'dark', MODE_SPECS.dark, carry(l))
     const col = resolveRamp(hex, 'dark', MODE_SPECS.dark, mk(l))
-    for (let n = 1; n <= 12; n++) { const a = pure.stops.find(s => s.stop === n)!, b = col.stops.find(s => s.stop === n)!; sumDE += dE(a, b); nDE++ }
+    for (const a of pure.stops.filter(s => s.stop >= 1)) { const b = col.stops.find(s => s.stop === a.stop)!; sumDE += dE(a, b); nDE++ }
     ctaDL += Math.abs(pure.roles.cta.L - col.roles.cta.L)
   }
   console.log(`  ${name.padEnd(34)} mean stop ΔE ${(sumDE / nDE).toFixed(4)}   mean cta ΔL ${(ctaDL / seeds.length).toFixed(4)}`)

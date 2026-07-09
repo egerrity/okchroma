@@ -17,7 +17,7 @@ const cE = (s: any) => clampChromaToGamut(s.L, s.C, s.H)
 const seeds: string[] = []
 for (let H = 0; H < 360; H += 20) for (const C of [0.06, 0.13, 0.19]) for (const L of [0.5, 0.68]) seeds.push(hx(L, C, H))
 
-const STOPS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+const STOPS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12]   // stop 10 deleted (owner 2026-07-09)
 const impureH: Record<number, number> = {}, impureC: Record<number, number> = {}, worstH: Record<number, number> = {}, worstC: Record<number, number> = {}
 for (const n of STOPS) { impureH[n] = 0; impureC[n] = 0; worstH[n] = 0; worstC[n] = 0 }
 

@@ -116,8 +116,6 @@ export interface GenerateOptions {
   deltaLightStops?: { stop: number; L: number; C: number; H: number }[]
   deltaLightCta?: { L: number; C: number; H: number }
   deltaCarry?: boolean
-  // fall-out check instrument (not shipped): strip the 9→10 hover-delta bolt-on to see the pure gap
-  noDeltaHover?: boolean
   // per-bolt-on instruments (not shipped): layer exactly ONE old dark mechanism onto the pure carry, so the
   // eye can see what that piece does. Each is a REAL engine fn (no reimplementation); default off = identical.
   deltaHKPlace?: boolean     // place carried C/H by the old apparent-L rung (perceptualRungL @ scaffold), not luminance
@@ -139,20 +137,22 @@ export function generateScale(
 ): GeneratedScale {
   // compile: opts + the built-in declaration → per-mode resolver runs. enforceOnFillContrast is passed
   // explicitly (generateScale's contract defaults it OFF; the spec's declared default only applies to
-  // direct resolver users). The highlight flag gates stops 9/10 out of the compiled spec; the contrast
+  // direct resolver users). The highlight flag gates stop 9 out of the compiled spec; the contrast
   // profile rewrites the wcag requires (withProfile is the identity for 'wcag' — byte-identical default).
   const rOpts = { ...opts, forcedArchetype, enforceOnFillContrast: !!opts?.enforceOnFillContrast }
   const compile = (spec: ModeSpec): ModeSpec =>
     withProfile(
-      opts?.highlight ? spec : { ...spec, stops: spec.stops.filter(s => s.stop !== 9 && s.stop !== 10) },
+      opts?.highlight ? spec : { ...spec, stops: spec.stops.filter(s => s.stop !== 9) },
       opts?.contrastProfile ?? 'wcag',
     )
   const lightRamp = resolveRamp(hex, 'light', compile(MODE_SPECS.light), rOpts)
   // DELTA-KEYED dark (gated): under DELTA_DARK the dark resolve derives from the resolved light stops.
   // Env-read (not a persistent opt) so the default path is the seed-keyed scaffold, byte-identical.
-  const deltaDark = process.env.DELTA_DARK === '1'
+  // guarded for the browser bundle (no `process` global — the raw read crashed the demo, caught 2026-07-09)
+  const env = typeof process !== 'undefined' ? process.env : undefined
+  const deltaDark = env?.DELTA_DARK === '1'
   const darkRamp = resolveRamp(hex, 'dark', compile(MODE_SPECS.dark),
-    deltaDark ? { ...rOpts, deltaLightStops: lightRamp.stops, deltaLightCta: lightRamp.roles.cta, deltaCarry: process.env.DELTA_CARRY === '1' } : rOpts)
+    deltaDark ? { ...rOpts, deltaLightStops: lightRamp.stops, deltaLightCta: lightRamp.roles.cta, deltaCarry: env?.DELTA_CARRY === '1' } : rOpts)
 
   // metadata (brand identity fields on the scale)
   const { L: brandL, C: rawC, H: rawH } = hexToOklch(hex)

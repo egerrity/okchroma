@@ -89,9 +89,11 @@ function audit(name: string, hex: string, scale: GeneratedScale, errorComponentR
       detail: `dark keeps ${(retention * 100).toFixed(0)}% of light chroma (stops 1–8)`,
     })
   }
-  // D: 11/12 separation
-  const sepL = stopDeltaE(scale.light[10], scale.light[11])
-  const sepD = stopDeltaE(scale.dark[10], scale.dark[11])
+  // D: 11/12 separation (find by STOP — the array is stops 1..9,11,12 since stop 10's deletion)
+  const li11 = scale.light.find(s => s.stop === 11)!, li12 = scale.light.find(s => s.stop === 12)!
+  const da11 = scale.dark.find(s => s.stop === 11)!, da12 = scale.dark.find(s => s.stop === 12)!
+  const sepL = stopDeltaE(li11, li12)
+  const sepD = stopDeltaE(da11, da12)
   if (sepD < sepL * TEXTSEP_RATIO) {
     findings['D 11/12 convergence'].push({
       name, hex, severity: sepL * TEXTSEP_RATIO - sepD,

@@ -132,7 +132,7 @@ flowchart TD
 | # | Stage | File · function | In → Out |
 |---|-------|-----------------|----------|
 | 1 | Decode + context | `producers.ts` · `buildContext` | hex + opts → OKLCH seed, archetype, and the aesthetic state (chroma boost, mutedness, cream gate, warm-drift caps, red-cool weights) |
-| 2 | Compile | `colorEngine.ts` · `generateScale` (adapter) | caller opts + the built-in declaration → a per-mode `ModeSpec` for the resolver (e.g. the `highlight` flag gates stops 9/10 out) |
+| 2 | Compile | `colorEngine.ts` · `generateScale` (adapter) | caller opts + the built-in declaration → a per-mode `ModeSpec` for the resolver (e.g. the `highlight` flag gates stop 9 out) |
 | 3 | Resolve stops | `resolve.ts` · `resolveRamp` | per declared stop: **produce** (hue → chroma → `perceptualRungL`) → **require** (declared floors bind: contrast down-clamp in light, raise-off-paper in dark, seam separation) → **refine** (chroma yields to gamut). Stops resolve in order, so a require can reference an already-resolved stop |
 | 4 | Resolve roles + ons | `resolve.ts` | off-scale `cta`/`cta-hover` roles (anchor = the brand's own lightness, floored in dark; the on-fill enforce re-solve last); `on-cta`/`on-highlight` poles chosen by the declared `ons` rules — never feeding back into a fill |
 | 5 | Assemble | `colorEngine.ts` adapter | resolved ramps → the same `GeneratedScale` contract as always (light[], dark[], cta×4, on-booleans) |
@@ -152,7 +152,7 @@ Structural facts worth stating plainly:
   declared `ModeSpec` and land on one `GeneratedScale`. `brandKindBody(prefix, scale, mode)`
   (`cssRender.ts:26`) picks `scale.light` vs `scale.dark` per mode; CSS emits a
   `[data-brand]` block (light) and a `[data-brand][data-theme="dark"]` block (dark).
-- **`highlight-9/10` are ordinary scale stops; `cta-1/2` are the only off-scale tokens** —
+- **`highlight-9` is an ordinary scale stop; `cta-1/2` are the only off-scale tokens** —
   in the declaration they are literally different kinds: stops carry numbers, the cta is a
   named **role** with no number, so the historical stop-9/cta confusion cannot recur.
 
@@ -181,7 +181,7 @@ ResolvedBrand  = { scale, shearDeg, rung1, darkCollider, warningVariant,
 | 1–2 | `paper-1`, `paper-2` | surfaces / backgrounds |
 | 3–7 | `wash-3` … `wash-7` | low-hierarchy fills, borders, decorative |
 | 8 | `highlight-8` | WCAG 1.4.11 **3:1** non-text step (borders, UI elements) |
-| 9–10 | `highlight-9`, `highlight-10` | emphasis fills — **scale stops** 9–10, same machinery as the rest |
+| 9 | `highlight-9` | emphasis fill — a **scale stop**, same machinery as the rest (stop 10 deleted 2026-07-09) |
 | 11–12 | `ink-11`, `ink-12` | text (4.5:1 / 7:1) |
 | off-scale | `cta-1`, `cta-2` | the **only** off-scale tokens: the pulled-out solid button fill + hover |
 | computed | `on-cta`, `on-highlight` | black/white text for those fills |
@@ -306,7 +306,7 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
   **highlight band** (8–10): light solves it, dark holds it at `DARK_L` (solving it would
   re-enter the APCA dead zone), so dark's highlight keeps a small per-hue wave by design.
   `divergence-audit` (`scripts/divergence-audit.ts`) gates the rest family × mode × stop —
-  it caught the neutral 9/10 chroma bypass and the red-signal cool.
+  it caught the neutral highlight chroma bypass and the red-signal cool.
 
 #### Differentiation (brand vs. status signals)
 
@@ -330,7 +330,7 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
 - The neutral is **derived from the brand hue** (`generateNeutralScale`): a near-gray
   (C ≈ 0.006) at the brand's hue, run back through `generateScale` with a `neutralChromaCurve`.
   Tint levels `pure` / `default` / `branded` scale the tint, applied at **every** stop in
-  both modes — the `highlight` rungs 9/10 follow the tint curve like the rest of the ramp
+  both modes — the `highlight` rung 9 follows the tint curve like the rest of the ramp
   (they route through `cAt` in dark as in light). Its `cta` is intentionally **low-hierarchy**,
   tracking the scale's own stop 4 (cta) / stop 5 (hover) so it **flips per mode** — a
   near-white wash in light, a dark wash in dark — with `on-cta` recomputed for legibility in each.

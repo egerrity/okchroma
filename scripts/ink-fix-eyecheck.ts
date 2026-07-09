@@ -18,7 +18,7 @@ const BEFORE: Record<string, { L: number; C: number; H: number }> = {
 }
 for (const seed of ['#75603b', '#825b00']) {
   const l = resolveRamp(seed, 'light', MODE_SPECS.light, base)
-  const d = resolveRamp(seed, 'dark', MODE_SPECS.dark, { ...base, deltaLightStops: l.stops, deltaLightCta: l.roles.cta, deltaCarry: true, noDeltaHover: true })
+  const d = resolveRamp(seed, 'dark', MODE_SPECS.dark, { ...base, deltaLightStops: l.stops, deltaLightCta: l.roles.cta, deltaCarry: true })
   const p2 = d.stops.find(s => s.stop === 2)!, after = d.stops.find(s => s.stop === 11)!
   const bef = BEFORE[seed]
   const p2Y = wcagY(p2.L, p2.C, p2.H)

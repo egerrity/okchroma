@@ -59,7 +59,6 @@ for (const C of CHROMAS) for (const H of HUES) {
       seed, C, H, mode,
       slots: [
         { slot: 'highlight-9', fill: b.stops.find(s => s.stop === 9)!, current: b.onHl! },
-        { slot: 'highlight-10', fill: b.stops.find(s => s.stop === 10)!, current: b.onHl! },
         { slot: 'cta', fill: b.cta, current: b.onCta! },
         { slot: 'neutral cta (quiet)', fill: nn.cta, current: nn.onCta! },
         { slot: 'derived-secondary cta', fill: dd.cta, current: dd.onCta! },
@@ -69,7 +68,7 @@ for (const C of CHROMAS) for (const H of HUES) {
 }
 
 // ── counts ──
-const SLOTS = ['highlight-9', 'highlight-10', 'cta', 'neutral cta (quiet)', 'derived-secondary cta']
+const SLOTS = ['highlight-9', 'cta', 'neutral cta (quiet)', 'derived-secondary cta']
 const counts: Record<string, { light: [number, number]; dark: [number, number] }> = {}
 for (const s of SLOTS) counts[s] = { light: [0, 0], dark: [0, 0] }
 for (const c of cases) for (const s of c.slots) {
@@ -120,8 +119,8 @@ const grand = SLOTS.reduce((a, s) => a + counts[s].light[1] + counts[s].dark[1],
 // dark mode ascends (break when shifted-9 lands at/below hl-8 — the band inverts).
 type Shift = {
   H: number; C: number; mode: 'light' | 'dark'
-  s8: ColorStop; s9: ColorStop; s10: ColorStop; ink11: ColorStop
-  req9: number; req10: number; d9: number; d10: number; breaks: boolean
+  s8: ColorStop; s9: ColorStop; ink11: ColorStop
+  req9: number; d9: number; breaks: boolean
 }
 const shifts: Shift[] = []
 for (const c of cases) {
@@ -129,11 +128,10 @@ for (const c of cases) {
   const r = resolveBrand(c.seed, 'brand')
   const stops = c.mode === 'light' ? r.scale.light : r.scale.dark
   const s8 = stops.find(s => s.stop === 8)!, s9 = stops.find(s => s.stop === 9)!
-  const s10 = stops.find(s => s.stop === 10)!, ink11 = stops.find(s => s.stop === 11)!
+  const ink11 = stops.find(s => s.stop === 11)!
   const req9 = findLForContrast(s9.L, s9.C, s9.H, 1.0, 4.5)
-  const req10 = findLForContrast(s10.L, s10.C, s10.H, 1.0, 4.5)
   const breaks = c.mode === 'light' ? req9 <= ink11.L + 0.02 : req9 <= s8.L + 0.02
-  shifts.push({ H: c.H, C: c.C, mode: c.mode, s8, s9, s10, ink11, req9, req10, d9: req9 - s9.L, d10: req10 - s10.L, breaks })
+  shifts.push({ H: c.H, C: c.C, mode: c.mode, s8, s9, ink11, req9, d9: req9 - s9.L, breaks })
 }
 const shiftHex = (L: number, C: number, H: number) => seedHex(L, clampChromaToGamut(L, C, H), H)
 const stat = (mode: 'light' | 'dark') => {
@@ -150,11 +148,9 @@ const chipL = (bg: string, white: boolean, label: string, w = 60) =>
   `<div style="width:${w}px;height:34px;border-radius:7px;background:${bg};color:${white ? '#fff' : '#000'};display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:600">${label}</div>`
 const ladder = (s: Shift, shifted: boolean) => {
   const nine = shifted ? s.req9 : s.s9.L
-  const ten = shifted ? s.req10 : s.s10.L
   return `<div style="display:flex;gap:2px">
     ${chipL(shiftHex(s.s8.L, s.s8.C, s.s8.H), false, '8')}
     ${chipL(shiftHex(nine, s.s9.C, s.s9.H), true, shifted ? 'Aa 9*' : 'Aa 9')}
-    ${chipL(shiftHex(ten, s.s10.C, s.s10.H), true, shifted ? 'Aa 10*' : 'Aa 10')}
     ${chipL(shiftHex(s.ink11.L, s.ink11.C, s.ink11.H), true, '11')}
   </div>`
 }

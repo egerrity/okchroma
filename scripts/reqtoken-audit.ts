@@ -64,9 +64,8 @@ for (const H of HUES) for (const C of CHROMAS) {
       const bad = mode === 'light' ? ladder[i].L > ladder[i - 1].L + 1e-6 : ladder[i].L < ladder[i - 1].L - 1e-6
       if (bad) fails.push({ seed: id, mode, check: 'monotonic-L', detail: `stop ${ladder[i].stop} L${ladder[i].L.toFixed(3)} vs ${ladder[i - 1].L.toFixed(3)}`, sev: 10 })
     }
-    const h9 = byStop(9)!, h10 = byStop(10)!
-    const hlBad = mode === 'light' ? h10.L > h9.L + 1e-6 : h10.L < h9.L - 1e-6
-    if (hlBad) fails.push({ seed: id, mode, check: 'highlight-order', detail: `9 L${h9.L.toFixed(3)} vs 10 L${h10.L.toFixed(3)}`, sev: 10 })
+    // (the 9→10 highlight-order check died with stop 10 — owner 2026-07-09)
+    const h9 = byStop(9)!
     // dark 8<9: the require-raised stop 8 must not ride past the hand-placed highlight 9 (Stage-5 constraint)
     if (mode === 'dark') {
       const s8d = byStop(8)!

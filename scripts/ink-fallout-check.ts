@@ -23,7 +23,7 @@ const stat = (a: number[]) => `min ${Math.min(...a).toFixed(2)}  med ${med(a).to
 function pure(hex: string, profile: ContrastProfile): ResolvedRamp {
   const lspec = withProfile(MODE_SPECS.light, profile), dspec = withProfile(MODE_SPECS.dark, profile)
   const l = resolveRamp(hex, 'light', lspec, base)
-  return resolveRamp(hex, 'dark', dspec, { ...base, deltaLightStops: l.stops, deltaLightCta: l.roles.cta, deltaCarry: true, noDeltaHover: true })
+  return resolveRamp(hex, 'dark', dspec, { ...base, deltaLightStops: l.stops, deltaLightCta: l.roles.cta, deltaCarry: true })
 }
 const WBAR: Record<number, number> = { 8: 3.0, 11: 4.5, 12: 7.0 }, ABAR: Record<number, number> = { 8: 30, 11: 75, 12: 90 }
 

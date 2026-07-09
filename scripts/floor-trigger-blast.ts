@@ -20,7 +20,7 @@ const ratioVs2 = (r: ReturnType<typeof resolveRamp>, n: number) => { const p2 = 
 for (const [label, mk] of [
   ['light', (hex: string) => resolveRamp(hex, 'light', MODE_SPECS.light, base)],
   ['today-dark (SHIPPED)', (hex: string) => resolveRamp(hex, 'dark', MODE_SPECS.dark, base)],
-  ['delta-carry dark', (hex: string) => { const l = resolveRamp(hex, 'light', MODE_SPECS.light, base); return resolveRamp(hex, 'dark', MODE_SPECS.dark, { ...base, deltaLightStops: l.stops, deltaLightCta: l.roles.cta, deltaCarry: true, noDeltaHover: true }) }],
+  ['delta-carry dark', (hex: string) => { const l = resolveRamp(hex, 'light', MODE_SPECS.light, base); return resolveRamp(hex, 'dark', MODE_SPECS.dark, { ...base, deltaLightStops: l.stops, deltaLightCta: l.roles.cta, deltaCarry: true }) }],
 ] as [string, (hex: string) => ReturnType<typeof resolveRamp>][]) {
   const inBand: Record<number, number> = { 8: 0, 11: 0, 12: 0 }
   for (const hex of seeds) { const r = mk(hex); for (const n of [8, 11, 12]) { const g = ratioVs2(r, n); if (g >= BAR[n] - 1e-3 && g < BAR[n]) inBand[n]++ } }
