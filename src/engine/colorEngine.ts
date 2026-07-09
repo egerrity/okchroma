@@ -118,6 +118,12 @@ export interface GenerateOptions {
   deltaCarry?: boolean
   // fall-out check instrument (not shipped): strip the 9→10 hover-delta bolt-on to see the pure gap
   noDeltaHover?: boolean
+  // per-bolt-on instruments (not shipped): layer exactly ONE old dark mechanism onto the pure carry, so the
+  // eye can see what that piece does. Each is a REAL engine fn (no reimplementation); default off = identical.
+  deltaHKPlace?: boolean     // place carried C/H by the old apparent-L rung (perceptualRungL @ scaffold), not luminance
+  deltaChromaEq?: boolean    // replace carried C with the old H-K chroma equalizer (perceptualDarkC)
+  deltaLiftFloor?: boolean   // floor carried L at the scaffold rootL (the old "lift, never sink" recede floor)
+  deltaInkRegister?: boolean // ink stops 11/12: swap carried light-ink C for the dark text register (darkInkChromaAt / SCALE_C_DARK inkMaxC)
 }
 
 // generateScale is now an ADAPTER over the requirement-token resolver (src/reqtoken): it compiles the caller

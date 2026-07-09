@@ -7,7 +7,7 @@
 //
 // The producers are verbatim ports of the pre-resolver engine, proven byte-identical at cutover (c7542b7);
 // the blessed snapshot audits are the standing regression gate.
-import { apparentL } from '../engine/perceptualL'
+import { apparentL, perceptualRungL, perceptualDarkC } from '../engine/perceptualL'
 import { clampChromaToGamut, wcagY, contrastRatio, legalRatio, findMaxLForContrast, apcaLc } from '../engine/constraints'
 import { hexToOklch, srgbEmitChannels } from '../engine/colorMath'
 import { hoverL } from '../engine/archetypes'
@@ -138,9 +138,17 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       const dl = ctx.opts?.deltaLightStops
       const ls = dl && sp.stop >= 1 && sp.stop <= 12 ? dl.find(s => s.stop === sp.stop) : undefined
       if (ls && ctx.opts?.deltaCarry) {
-        // FULL CARRY: the dark stop IS the light color — chroma + hue carried, ONLY lightness re-referenced
-        // to the dark ground. emit gamut-clamps C; the declared dark requires below still floor it.
-        placed = { L: deltaDarkTargetL(ls, ls.C, ls.H), C: ls.C, H: ls.H }
+        // FULL CARRY (pure fall-out): the dark stop IS the light color — chroma + hue carried, ONLY lightness
+        // re-referenced to the dark ground. emit gamut-clamps C; the declared dark requires below still floor it.
+        let L = deltaDarkTargetL(ls, ls.C, ls.H)
+        let C = ls.C
+        // PER-BOLT-ON INSTRUMENTS (gated, default off → byte-identical): layer exactly ONE old dark mechanism
+        // onto the pure carry, real engine fns only. Only one is set per resolve (one column of the exhibit).
+        if (ctx.opts.deltaHKPlace) L = perceptualRungL(sp.rootL, ls.C, ls.H)                                       // old apparent-L placement
+        if (ctx.opts.deltaLiftFloor) L = Math.max(L, sp.rootL)                                                     // old lift/recede floor
+        if (ctx.opts.deltaChromaEq && sp.group !== 'ink') C = ctx.cAt('dark', L, perceptualDarkC(L, ls.H, ctx.brandC))  // old H-K chroma equalizer
+        if (ctx.opts.deltaInkRegister && sp.group === 'ink') C = chromaAt!(L)                                      // old dark ink register (darkInkChromaAt)
+        placed = { L, C, H: ls.H }
       } else if (sp.stop === 9 || sp.stop === 10) {
         const hlC = darkHighlightChromaAt(ctx, d, sp.baseC ?? 0, sp.satFraction ?? 1)
         if (ls) {
@@ -173,7 +181,10 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         const measure = (L: number, C: number, H: number): number =>
           isApca ? Math.abs(apcaLc(apcaYAt(L, C, H), refMeasY)) : legalRatio(L, C, H, refMeasY)
         const reqTarget = isApca ? req.targetLc : req.target
-        const tol = isApca ? APCA_TOL_LC : 1e-3
+        // wcag trigger tightened 1e-3 → 1e-5 (2026-07-09): the dark contrast requirement is enforced to the
+        // bar, not within a 0.001 slack. Catches delta-carry inks that inherit light's exactly-on-bar solve and
+        // land ~0.0001 under. Keeps a float-noise guard (not 0). apca path (APCA_TOL_LC) unchanged.
+        const tol = isApca ? APCA_TOL_LC : 1e-5
         const got0 = measure(placed.L, clampChromaToGamut(placed.L, placed.C, placed.H), placed.H)
         if (got0 < reqTarget - tol) {
           const target = reqTarget + (isApca ? APCA_SOLVE_MARGIN_LC : 0.05)
