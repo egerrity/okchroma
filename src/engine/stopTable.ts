@@ -3,7 +3,11 @@ export interface StopSpec {
   chromaMultiplier: number
 }
 
-export const LIGHT_L = [0.993, 0.982, 0.960, 0.936, 0.903, 0.860, 0.806, 0.738, 0.600, 0.560, 0.530, 0.300]
+// Stops 1–8 (paper→highlight-8) are a GEOMETRIC ladder — gaps grow ~1.25× per step — so every adjacent
+// stop is distinct by construction and paper-2 falls onto its ID curve with no clamp (owner 2026-07-09,
+// distribution "B"; separation is a shape property, not a delta — see spec.ts). Indices 8–11 = highlight
+// 9/10 + ink 11/12 scaffolds, unchanged.
+export const LIGHT_L = [0.987, 0.970, 0.950, 0.924, 0.892, 0.852, 0.801, 0.738, 0.600, 0.560, 0.530, 0.300]
 export const DARK_L  = [0.178, 0.213, 0.252, 0.285, 0.313, 0.348, 0.420, 0.550, 0.600, 0.640, 0.800, 0.940]
 
 // ─── THE SCALE CHROMA TABLE ───────────────────────────────────────────────────

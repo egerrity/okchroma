@@ -105,34 +105,27 @@ const T12: Require = { metric: 'wcag', against: 'paper-2', target: STOP_12_CONTR
 
 const ONS = { onFill: { metric: 'apca-pole', enforce: true } as OnReq, onHighlight: { metric: 'apca-pole', enforce: false, ratioFloor: 4.5 } as OnReq }
 
-// paper-2 separation (Stage 6): pre-fix light stop1↔2 ΔE_OK measured 0.009–0.017 (median 0.013); dark ~0.035.
-// OWNER PICKED 0.028 from the render sweep (scripts/paper2-sweep.ts → render/paper2.html, 2026-07-02):
-// light stop 2 must stand at least this far off paper-1. Light-only — dark already reads right.
-export const PAPER2_MIN_SEPARATION = 0.028
-export const PAPER2_SEPARATION_CANDIDATES = [0.020, 0.028, 0.035]
-const P2SEP: Require = { metric: 'min-separation', against: 'paper-1', target: PAPER2_MIN_SEPARATION }
-
-// the standing seam guarantee: every wash stop stays distinct (ΔE ≥ this) from its resolved predecessor.
-// paper-2 earns its 0.028 off paper-1 CHROMA-FIRST (producers.ts separationClampLight); washes 3–7 sit at
-// their natural L and the same clamp earns each seam via chroma (falling to L only where there's no room).
-// (Historical: a 2026-07-02 fix darkened paper-2's L and shoved 3–7 down a fixed LIGHT_WASH_ROOT_L respace
-// to make room; the chroma-first clamp made both unnecessary — one clamp, no respace — dropped 2026-07-10.)
-export const WASH_SEAM_MIN_SEPARATION = 0.012
-const WASHSEP: Require = { metric: 'min-separation', against: 'prev', target: WASH_SEAM_MIN_SEPARATION }
+// paper/wash separation is a PROPERTY OF THE LIGHT_L SHAPE, not a runtime delta (owner 2026-07-09,
+// render/paper2-distributions.html, distribution "B"). The near-white ladder's gaps grow geometrically
+// (~1.25×/step), so paper-2 stands ~0.017 ΔE off paper-1 and every wash seam holds BY CONSTRUCTION —
+// paper-2 falls onto its ID curve with nothing clamped. This REPLACES the old min-separation deltas: the
+// former 0.028 target was unreachable near white (the gamut can't earn it via chroma), so it was enforced by
+// darkening / chroma-spend — which pushed paper-2's chroma off-curve and past wash-3 on wide-gamut hues (the
+// shipped e87f760 bug). stop-8's 3:1 stays: it is a real contrast requirement, not a separation delta.
+// (The resolver still SUPPORTS a min-separation require for portable specs; our spec just no longer declares
+// one. Light-only; dark already reads right.)
 
 export const LIGHT: ModeSpec = {
   stops: [
     // paper-0: the resolved ladder extreme — in light it genuinely is white (rootL 1.0, zero chroma)
     { stop: 0, rootL: 1.0, group: 'paper', produce: { hue: 'warm-drift', L: 'fixed', chroma: 'ladder' }, satFraction: SCALE_C_LIGHT[0].sat, baseC: SCALE_C_LIGHT[0].base },
-    // paper/wash/highlight-8: perceptual ladder/envelope blend on the natural LIGHT_L scaffold. Requires:
-    // paper-2 stands ΔE ≥ 0.028 off paper-1; every wash seam stands ΔE ≥ 0.012 off its predecessor;
-    // stop 8 keeps the 3:1 clamp — all against RESOLVED stops, so a clamped stop automatically
-    // re-solves everything that references it (the seam chain, then 8/11/12). Separation is earned
-    // chroma-first (separationClampLight), darkening L only where the near-white gamut can't supply it.
+    // paper/wash/highlight-8: perceptual ladder/envelope blend on the geometric LIGHT_L scaffold. Separation
+    // falls out of the shape (see above) — no min-separation require. Only stop 8 carries a require: the WCAG
+    // 3:1 vs the resolved paper-2 (re-solves automatically since it references paper-2).
     ...LIGHT_L.slice(0, 8).map((rootL, i): StopReq => ({
       stop: i + 1, rootL, group: groupOf(i + 1), produce: PL_LADDER,
       satFraction: SCALE_C_LIGHT[i + 1].sat, baseC: SCALE_C_LIGHT[i + 1].base,
-      require: i === 1 ? P2SEP : i >= 2 && i <= 6 ? WASHSEP : i === 7 ? S8 : undefined,
+      require: i === 7 ? S8 : undefined,
     })),
     // highlight 9/10: perceptual ladder at the highlight scaffold
     { stop: 9, rootL: HIGHLIGHT_LIGHT.rootL, group: 'highlight', produce: PL_LADDER, satFraction: SCALE_C_LIGHT[9].sat, baseC: SCALE_C_LIGHT[9].base },
