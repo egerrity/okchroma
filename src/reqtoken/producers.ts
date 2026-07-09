@@ -173,9 +173,11 @@ export function placeLightScale(
   return { L, C: chromaAt(L), H: ctx.lightHueAt(L) }
 }
 
-// ---- min-separation clamp (light): push the stop's L DOWN until its OKLab ΔE (the house stopDeltaE metric)
-// from the resolved reference stop clears the target. A floor: an already-separated placement doesn't move.
-// Hue/chroma track L; downstream contrast requires re-solve automatically because they reference the
+// ---- min-separation clamp (light): earn the stop's OKLab ΔE (the house stopDeltaE metric) off the resolved
+// reference stop CHROMA-FIRST — spend the budget on chroma up to the brand's own saturation envelope
+// (brandSat·maxChroma, identity-safe: a neutral brand's ceiling ≈ 0 so it falls back to pure-L), darkening L
+// only for the residual the near-white gamut can't supply. A floor: an already-separated placement doesn't
+// move. Hue/chroma track L; downstream contrast requires re-solve automatically because they reference the
 // RESOLVED stop (never a cached Y).
 export function separationClampLight(
   ctx: Ctx, placed: { L: number; C: number; H: number }, chromaAt: (L: number) => number,
@@ -183,23 +185,35 @@ export function separationClampLight(
 ): { L: number; C: number; H: number } {
   const rad = (h: number) => (h * Math.PI) / 180
   const refA = ref.C * Math.cos(rad(ref.H)), refB = ref.C * Math.sin(rad(ref.H))
-  const dE = (L: number): number => {
+  // ΔE at an arbitrary (L, chroma) — chroma gamut-clamped, matching the emit metric (resolve.ts verify)
+  const dEat = (L: number, C: number): number => {
     const H = ctx.lightHueAt(L)
-    const C = clampChromaToGamut(L, chromaAt(L), H)
-    const a = C * Math.cos(rad(H)), b = C * Math.sin(rad(H))
+    const gC = clampChromaToGamut(L, C, H)
+    const a = gC * Math.cos(rad(H)), b = gC * Math.sin(rad(H))
     return Math.sqrt((L - ref.L) ** 2 + (a - refA) ** 2 + (b - refB) ** 2)
   }
-  if (dE(placed.L) >= target) return placed
+  if (dEat(placed.L, chromaAt(placed.L)) >= target) return placed
   const margin = target + 5e-4          // solve a hair past so the gamut-trimmed emit still clears
-  let fail = placed.L                    // too light (under-separated)
-  let pass = placed.L - 0.12             // darker end; extend if even this is under-separated
-  for (let guard = 0; guard < 4 && dE(pass) < margin; guard++) pass -= 0.12
-  for (let i = 0; i < 30; i++) {
-    const m = (fail + pass) / 2
-    dE(m) >= margin ? (pass = m) : (fail = m)
+
+  // the chroma ceiling: the brand's own saturation envelope, never below the curve chroma (chroma can only
+  // EARN distinctness, never lose it). A neutral brand's brandSat ≈ 0 → ceiling ≈ the curve chroma → the
+  // residual falls to L, exactly as a pure-L clamp would. Dropping L raises the ceiling too.
+  const ceilingAt = (L: number): number => {
+    const H = ctx.lightHueAt(L)
+    return clampChromaToGamut(L, Math.max(chromaAt(L), ctx.brandSat * maxChromaAt(L, H)), H)
   }
-  const H = ctx.lightHueAt(pass)
-  return { L: pass, C: chromaAt(pass), H }
+  // (1) natural L, chroma raised to the ceiling — enough? spend only the chroma the target needs.
+  if (dEat(placed.L, ceilingAt(placed.L)) >= margin) {
+    let loC = chromaAt(placed.L), hiC = ceilingAt(placed.L)
+    for (let i = 0; i < 30; i++) { const m = (loC + hiC) / 2; dEat(placed.L, m) >= margin ? (hiC = m) : (loC = m) }
+    return { L: placed.L, C: hiC, H: ctx.lightHueAt(placed.L) }
+  }
+  // (2) even the ceiling at natural L falls short → darken L (raises the ceiling too), chroma pinned at it.
+  let fail = placed.L, pass = placed.L - 0.12
+  const clearsCeil = (L: number) => dEat(L, ceilingAt(L)) >= margin
+  for (let guard = 0; guard < 4 && !clearsCeil(pass); guard++) pass -= 0.12
+  for (let i = 0; i < 30; i++) { const m = (fail + pass) / 2; clearsCeil(m) ? (pass = m) : (fail = m) }
+  return { L: pass, C: ceilingAt(pass), H: ctx.lightHueAt(pass) }
 }
 
 // ---- light text stops 11/12: the EXACT 3-call Math.min sequence incl. the deepen re-solve

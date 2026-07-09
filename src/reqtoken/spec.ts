@@ -112,18 +112,11 @@ export const PAPER2_MIN_SEPARATION = 0.028
 export const PAPER2_SEPARATION_CANDIDATES = [0.020, 0.028, 0.035]
 const P2SEP: Require = { metric: 'min-separation', against: 'paper-1', target: PAPER2_MIN_SEPARATION }
 
-// wash re-space (owner-picked S=0.015 from scripts/wash-respace-sweep.ts → render/wash-respace.html):
-// the 3–7 scaffold shifts down to absorb the paper-2 push HOLISTICALLY (not a per-seam patch), tapering
-// into the 7↔8 room: rootL_i = LIGHT_L[i−1] − 0.015·(1 − 0.4·(i−3)/4). Literal values declared:
-export const LIGHT_WASH_ROOT_L: Record<number, number> = {
-  3: 0.945,     // 0.960 − 0.0150
-  4: 0.9225,    // 0.936 − 0.0135
-  5: 0.891,     // 0.903 − 0.0120
-  6: 0.8495,    // 0.860 − 0.0105
-  7: 0.797,     // 0.806 − 0.0090
-}
-// the standing seam guarantee: every wash stop stays distinct from its resolved predecessor. After the
-// re-space these floors bind almost nowhere — they are the gate against future collapse, not the shape.
+// the standing seam guarantee: every wash stop stays distinct (ΔE ≥ this) from its resolved predecessor.
+// paper-2 earns its 0.028 off paper-1 CHROMA-FIRST (producers.ts separationClampLight); washes 3–7 sit at
+// their natural L and the same clamp earns each seam via chroma (falling to L only where there's no room).
+// (Historical: a 2026-07-02 fix darkened paper-2's L and shoved 3–7 down a fixed LIGHT_WASH_ROOT_L respace
+// to make room; the chroma-first clamp made both unnecessary — one clamp, no respace — dropped 2026-07-10.)
 export const WASH_SEAM_MIN_SEPARATION = 0.012
 const WASHSEP: Require = { metric: 'min-separation', against: 'prev', target: WASH_SEAM_MIN_SEPARATION }
 
@@ -131,12 +124,13 @@ export const LIGHT: ModeSpec = {
   stops: [
     // paper-0: the resolved ladder extreme — in light it genuinely is white (rootL 1.0, zero chroma)
     { stop: 0, rootL: 1.0, group: 'paper', produce: { hue: 'warm-drift', L: 'fixed', chroma: 'ladder' }, satFraction: SCALE_C_LIGHT[0].sat, baseC: SCALE_C_LIGHT[0].base },
-    // paper/wash/highlight-8: perceptual ladder/envelope blend on the RE-SPACED scaffold. Requires:
+    // paper/wash/highlight-8: perceptual ladder/envelope blend on the natural LIGHT_L scaffold. Requires:
     // paper-2 stands ΔE ≥ 0.028 off paper-1; every wash seam stands ΔE ≥ 0.012 off its predecessor;
-    // stop 8 keeps the 3:1 clamp — all against RESOLVED stops, so a pushed stop automatically
-    // re-solves everything that references it (the seam chain, then 8/11/12).
+    // stop 8 keeps the 3:1 clamp — all against RESOLVED stops, so a clamped stop automatically
+    // re-solves everything that references it (the seam chain, then 8/11/12). Separation is earned
+    // chroma-first (separationClampLight), darkening L only where the near-white gamut can't supply it.
     ...LIGHT_L.slice(0, 8).map((rootL, i): StopReq => ({
-      stop: i + 1, rootL: LIGHT_WASH_ROOT_L[i + 1] ?? rootL, group: groupOf(i + 1), produce: PL_LADDER,
+      stop: i + 1, rootL, group: groupOf(i + 1), produce: PL_LADDER,
       satFraction: SCALE_C_LIGHT[i + 1].sat, baseC: SCALE_C_LIGHT[i + 1].base,
       require: i === 1 ? P2SEP : i >= 2 && i <= 6 ? WASHSEP : i === 7 ? S8 : undefined,
     })),
