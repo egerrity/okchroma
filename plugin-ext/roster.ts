@@ -20,6 +20,7 @@
 // property computationally — the in-file canary extension was retired, owner call).
 
 import type { NeutralLevel } from '../src/engine/colorEngine'
+import type { SecondaryStyle } from '../src/engine/resolve'
 import type { ThemeSpec } from './payload'
 
 export interface RosterEntry {
@@ -30,18 +31,21 @@ export interface RosterEntry {
   // A real secondary the bulk action APPLIES (activated 2026-07-07 — fis is the
   // group-add exerciser: the batch's first apply flips the base's secondary posture on).
   secondaryHex?: string
+  // The secondary's render mode; default 'tint'. 'exact' ships the hex as-is (used for
+  // fis's real accent and monochrome's true-grey seed).
+  secondaryStyle?: SecondaryStyle
   note: string
 }
 
 export const ROSTER: RosterEntry[] = [
-  { name: 'fis-eggplant', hex: '#532371', secondaryHex: '#4BCD3E', note: 'real theme + real secondary (adds the group)' },
+  { name: 'fis-eggplant', hex: '#532371', secondaryHex: '#4BCD3E', secondaryStyle: 'exact', note: 'real theme + real secondary at exact (adds the group)' },
   { name: 'L1-near-black', hex: '#07074F', style: 'deeper', secondaryHex: '#C8A35D', note: 'near-black band + deeper (dark-roast accent)' },
   { name: 'L2-dark', hex: '#003359', style: 'deeper', secondaryHex: '#B3863D', note: 'dark band + deeper (espresso accent)' },
   { name: 'L3-rich', hex: '#A50034', secondaryHex: '#6DCDB8', note: 'rich band (cranberry)' },
   { name: 'L4-vivid', hex: '#E35205', secondaryHex: '#031B41', note: 'vivid band (turmeric latte — orange-side)' },
   { name: 'L5-bright', hex: '#05C3DE', secondaryHex: '#233D7D', note: 'bright band (L .75) (blue-lagoon accent)' },
   { name: 'L6-light', hex: '#FDCB6E', secondaryHex: '#4A8B2C', note: 'light band (lemon shift — light is inherently yellow-adjacent) (honey-lemon accent)' },
-  { name: 'monochrome', hex: '#6E6E6E', neutralLevel: 'pure', note: 'achromatic + true-grey neutral' },
+  { name: 'monochrome', hex: '#6E6E6E', neutralLevel: 'pure', secondaryHex: '#808080', secondaryStyle: 'exact', note: 'achromatic + true-grey neutral (mid-grey secondary at exact)' },
   { name: 'teal', hex: '#005C7A', note: 'real theme, no collisions (H229)' },
   { name: 'vs-green (shifts lime)', hex: '#22A559', note: 'green → yellow-side, both lanes' },
   { name: 'vs-green (shifts teal)', hex: '#65C466', note: 'green → teal-side, wcag lane only' },
@@ -60,4 +64,5 @@ export const rosterSpec = (e: RosterEntry): ThemeSpec => ({
   name: e.name,
   style: e.style,
   secondaryHex: e.secondaryHex ?? null,
+  secondaryStyle: e.secondaryStyle,
 })
