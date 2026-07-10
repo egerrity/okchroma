@@ -9,7 +9,7 @@
 // the blessed snapshot audits are the standing regression gate.
 import { apparentL, perceptualRungL, perceptualDarkC, solveLForApparent } from '../engine/perceptualL'
 import { clampChromaToGamut, wcagY, contrastRatio, legalRatio, findMaxLForContrast, apcaLc } from '../engine/constraints'
-import { hexToOklch, srgbEmitChannels, maxChromaAt } from '../engine/colorMath'
+import { hexToOklch, srgbEmitChannels } from '../engine/colorMath'
 import { hoverL } from '../engine/archetypes'
 import { MODE_SPECS, type ModeSpec, type StopReq, type RoleReq, type Require } from './spec'
 import {
@@ -18,7 +18,7 @@ import {
   separationClampLight,
   darkScaleChromaAt, darkInkChromaAt, darkHighlightChromaAt, placeDark, placeDarkDelta, deltaDarkTargetL,
   onFillIsWhiteLight, onFillIsWhiteDarkAt, onHighlightIsWhiteAt, ctaLightL, ctaDarkEnforcedL,
-  ctaLightLApca, ctaDarkEnforcedLApca,
+  ctaLightLApca, ctaDarkEnforcedLApca, exitCtaL,
   apcaYAt, findMaxLForApcaLc, APCA_SOLVE_MARGIN_LC, APCA_TOL_LC,
 } from './producers'
 
@@ -30,7 +30,7 @@ export type ResolvedStop = {
   stop: number; group: string; L: number; C: number; H: number; hex: string; Y: number; appL: number
   clamped: boolean; unresolvable?: string
 }
-export type ResolvedRole = { role: RoleReq['role']; L: number; C: number; H: number; hex: string; Y: number; appL: number; enforced?: boolean }
+export type ResolvedRole = { role: RoleReq['role']; L: number; C: number; H: number; hex: string; Y: number; appL: number; enforced?: boolean; repelled?: boolean }
 export type Seed = { hex: string; L: number; C: number; H: number }
 export type ResolvedRamp = {
   mode: 'light' | 'dark'
@@ -291,12 +291,33 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   if (mode === 'light') {
     // on-fill judged PRE-enforcement at fill9 (:271–273); the enforce re-solve feeds FROM it (:354–358)
     onFillIsWhite = onFillIsWhiteLight(ctx, enforceLc !== undefined ? false : onFillEnforce)
-    const light9L = enforceLc !== undefined
+    let light9L = enforceLc !== undefined
       ? ctaLightLApca(ctx, onFillIsWhite, onFillEnforce, enforceLc)
       : ctaLightL(ctx, onFillIsWhite, onFillEnforce)
-    cta = emitRole('cta', light9L, ctx.cAt('light', light9L, (ctaReq.chromaMult ?? 1) * ctx.brandC), ctx.brandH)
+    // C12 VALUE EXIT v6 (owner-approved 2026-07-10): a cta inside the red-family gate
+    // (opts.ctaRepel — red's cta + the brand's declared direction, injected by resolveBrand;
+    // the resolver has no cross-scale view) exits along L in THAT direction until both the
+    // gate releases and P2 clears (exitCtaL). Direction is the brand's class (deep seeds
+    // down, the rest up) — never nearest. Identity-keep brands never get this opt (their
+    // red moves instead). No-op (null) when outside the gate — byte-identical path.
+    const ctaCFor = (L: number) => ctx.cAt('light', L, (ctaReq.chromaMult ?? 1) * ctx.brandC)
+    let repelled = false
+    if (ctx.opts?.ctaRepel) {
+      const rp = ctx.opts.ctaRepel
+      const exitL = exitCtaL(light9L, ctaCFor, ctx.brandH, rp.light, rp.up)
+      if (exitL !== null) {
+        light9L = exitL
+        repelled = true
+      }
+    }
+    cta = emitRole('cta', light9L, ctaCFor(light9L), ctx.brandH)
     ctaHover = emitRole('cta-hover', hoverL(light9L), ctx.cAt('light', hoverL(light9L), (hoverReq?.chromaMult ?? 1) * ctx.brandC), ctx.brandH)
     if (light9L !== ctx.scaleL) { cta.enforced = true; ctaHover.enforced = true }
+    if (repelled) {
+      cta.repelled = true; ctaHover.repelled = true
+      // the shipped pole re-judged AT the exited fill (the pre-enforce judge ran at scaleL)
+      onFillIsWhite = onFillIsWhiteDarkAt(cta.L, cta.C, cta.H, enforceLc !== undefined ? false : onFillEnforce)
+    }
   } else {
     // dark: base cta from the pre-resolved anchor; judge on-fill at the emitted base; then the enforce re-solve
     const d = dctx!
@@ -316,6 +337,9 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       ctaHover = emitRole('cta-hover', hoverL(enforcedL), ctx.cAt('dark', hoverL(enforcedL), d.darkC9), ctx.darkH)
       cta.enforced = true; ctaHover.enforced = true
     }
+    // C12 v6: NO dark exit. Under the Lc-60 on-cta bar the enforced dark ctas sit deep
+    // enough that nothing lands inside red's gate in dark geometry (measured: zero fired
+    // across the agnostic grid, both profiles) — collision-sweep asserts it stays zero.
   }
 
   // on-highlight: judged at the emitted highlight-9 — never feeds back into the fill. The

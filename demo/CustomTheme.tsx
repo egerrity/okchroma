@@ -163,7 +163,10 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
 
   // The RECOMMENDED resolution, always — exact mode skips the rules, so the
   // checklist and toasts need to know what WOULD have fired to flag it red.
-  const rRec = useMemo(() => resolveBrand(primary, 'Custom brand'), [primary])
+  // PROFILE-AWARE (C12 v6): the red treatment legitimately diverges per lane (a red-move
+  // in apca can be a self-exit in wcag), so banners/checklist resolve under the toggle —
+  // the old profile-less resolve here silently pinned them to wcag.
+  const rRec = useMemo(() => resolveBrand(primary, 'Custom brand', { contrastProfile: profile === 'apca' ? 'apca' : undefined }), [primary, profile])
 
   // Collision/caveat notices as dismissible toasts. Keys include the
   // primary so a new color re-surfaces them.
@@ -173,11 +176,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   // alert under the mode toggle. Toasts keep only the milder notices.
   const toasts = useMemo(() => {
     const list: Array<{ key: string; kind: 'warn' | 'info'; text: string }> = []
-    if (rung === 'recommended' && rRec.errorComponentRule) list.push({
-      key: `cr:${primary}`, kind: 'warn',
-      text: 'Collision notice: this primary neighbors the error signal. Your color is kept exactly — destructive buttons render as outlines next to brand buttons.',
-    })
-    if (rung === 'exact' && !rRec.rung1) list.push({
+    if (rung === 'exact' && !rRec.redRepel && !rRec.signalOverrides.some(o => o.name === 'red')) list.push({
       key: `ex:${primary}`, kind: 'info',
       text: 'Exact mode: your hex ships untouched. Accessibility outcomes are reviewed with you rather than guaranteed by the engine.',
     })
@@ -440,21 +439,30 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
           <span className="ct-swatch sm" style={{ background: shipsHex }} />{shipsHex}
         </span>
       )}
-      {rung === 'exact' && rRec.rung1 && (
+      {rung === 'exact' && (rRec.redRepel || rRec.signalOverrides.some(o => o.name === 'red')) && (
         <div className="ct-alert-warn">
           <TriangleAlert size={14} style={{ flexShrink: 0, marginTop: 1 }} />
           <span>
-            Color conflicts with error red — darker primary color recommended.{' '}
+            Color sits in the error signal's register — recommended mode separates the action color automatically.{' '}
             <a href="#" onClick={e => e.preventDefault()} title="Documentation link — coming">Learn more</a>
           </span>
         </div>
       )}
-      {rung === 'recommended' && rRec.rung1 && (
+      {rung === 'recommended' && rRec.redRepel && (
         <div className="ct-alert-text">
           <TriangleAlert size={13} style={{ flexShrink: 0, marginTop: 1 }} />
           <span>
             Collision notice: this primary sits in the error signal's register. Recommended mode
-            re-anchored it darker so destructive actions stay unmistakable.
+            stepped the action color clear of red — your hue is kept.
+          </span>
+        </div>
+      )}
+      {rung === 'recommended' && !rRec.redRepel && rRec.signalOverrides.some(o => o.name === 'red') && (
+        <div className="ct-alert-text">
+          <TriangleAlert size={13} style={{ flexShrink: 0, marginTop: 1 }} />
+          <span>
+            Collision notice: your color IS a true red, so it stays exactly yours — the error
+            signal takes a per-brand variant to stay clearly distinct beside it.
           </span>
         </div>
       )}
@@ -543,14 +551,18 @@ function checklistRows(rRec: ResolvedBrand, rung: RungMode, primaryHex: string):
   const rows: CheckRow[] = []
   const shipsHex = stopHex(rRec.scale.cta).toUpperCase()
 
-  if (rRec.rung1) {
+  const redMove = rRec.signalOverrides.find(o => o.name === 'red')
+  if (rRec.redRepel) {
     rows.push(rec
-      ? { key: 'hue', tone: 'adjusted', label: `conflict with error red resolved — ${primaryHex.toUpperCase()} → ${shipsHex}`, detail: 'This primary sits in the error signal\'s register. The primary color is darkened per UX best practices so destructive actions stay unmistakable; your hue is kept.' }
-      : { key: 'hue', tone: 'fail', label: 'color conflicts with error red — darker primary recommended', detail: 'Exact mode ships the hex untouched, so the error-signal conflict is not resolved at the color level. Destructive buttons render as outlines everywhere as a backstop.' })
-  } else if (rRec.errorComponentRule) {
+      ? { key: 'hue', tone: 'adjusted', label: `conflict with error red resolved — ${primaryHex.toUpperCase()} → ${shipsHex}`, detail: 'This primary sits in the error signal\'s register. The action color steps clear in its declared direction — deep brands go deeper, everyone else lighter — until it reads truly distinct beside red, and keeps your hue.' }
+      : { key: 'hue', tone: 'fail', label: 'color conflicts with error red — separation not applied', detail: 'Exact mode ships the hex untouched, so the error-signal conflict is not resolved at the color level. Destructive buttons render as outlines everywhere as a backstop.' })
+    if (rec && redMove) {
+      rows.push({ key: 'vivid', tone: 'adjusted', label: `max-vivid red arc — the error signal also moves (${redMove.note})`, detail: 'At full saturation this close to red, the pair still vibrates even after the action color steps aside — so the error signal also takes a per-brand variant, on the opposite side of your action color.' })
+    }
+  } else if (redMove) {
     rows.push(rec
-      ? { key: 'hue', tone: 'adjusted', label: `${origArch} + error-adjacent hue → component rule`, detail: 'A warm-side neighbor of the error signal. Your color is kept exactly; destructive buttons render as outlines in button groups, with a required icon.' }
-      : { key: 'hue', tone: 'fail', label: `${origArch} + error-adjacent hue — components only`, detail: 'Exact mode: the hue ships as-is. Destructive buttons render as outlines everywhere.' })
+      ? { key: 'hue', tone: 'adjusted', label: `your color IS a true red — the error signal moves instead (${redMove.note})`, detail: 'This brand sits in the heart of the error range, so moving it would erase its identity. The action color keeps your exact register; the error signal takes a per-brand variant from the error-credible range, clearly distinct beside your buttons.' }
+      : { key: 'hue', tone: 'fail', label: 'color conflicts with error red — separation not applied', detail: 'Exact mode ships the hex untouched, so the error-signal conflict is not resolved at the color level. Destructive buttons render as outlines everywhere as a backstop.' })
   } else {
     rows.push({ key: 'hue', tone: 'pass', label: `${origArch} archetype, no signal conflicts`, detail: 'The hue clears every signal gate; the fill anchors at your exact color.' })
   }
@@ -565,11 +577,9 @@ function checklistRows(rRec: ResolvedBrand, rung: RungMode, primaryHex: string):
     rows.push({ key: 'warn', tone: 'standard', label: 'warning signal kept standard amber', detail: 'A cool-yellow brand: the standard amber warning is already clearly distinct.' })
   }
 
-  rows.push(rRec.darkCollider
-    ? { key: 'dark', tone: rec ? 'adjusted' : 'fail', label: 'dark mode: fill floats to the pastel register', detail: 'In dark mode the brand fill and error red would meet; the brand floats to a pastel register and picks up black text — two extra separation channels.' }
-    : rec
-      ? { key: 'dark', tone: 'pass', label: 'dark mode: calculated from brand color', detail: 'The dark palette derives from your brand color on the same rules — fills only lift when they would vanish on a dark background.' }
-      : { key: 'dark', tone: 'pass', label: 'dark mode preserves identity', detail: 'Dark mode only lifts fills that would vanish — never pulls a vivid fill down, never cuts its chroma.' })
+  rows.push(rec
+    ? { key: 'dark', tone: 'pass', label: 'dark mode: calculated from brand color', detail: 'The dark palette derives from your brand color on the same rules — fills only lift when they would vanish on a dark background. Dark action colors sit deep enough that the red conflict never arises there.' }
+    : { key: 'dark', tone: 'pass', label: 'dark mode preserves identity', detail: 'Dark mode only lifts fills that would vanish — never pulls a vivid fill down, never cuts its chroma.' })
 
   if (rec) {
     rows.push({ key: 'a11y', tone: 'pass', label: 'contrast optimized with APCA, fills clear WCAG AA', detail: 'APCA picks the on-fill text polarity; WCAG 4.5:1 bounds every fill in both modes, by construction, verified on every build.' })

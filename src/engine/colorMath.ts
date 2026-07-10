@@ -56,6 +56,73 @@ export function hueDelta(h: number, center: number): number {
   return d
 }
 
+// OKLab euclidean distance between two OKLCH points — the type-2 register metric.
+// Lives here (pure math) so the collision gate (stopDeltaE) and the cta repel producer
+// share ONE implementation.
+export function oklabDist(a: { L: number; C: number; H: number }, b: { L: number; C: number; H: number }): number {
+  const rad = (h: number) => (h * Math.PI) / 180
+  const a1 = a.C * Math.cos(rad(a.H)), b1 = a.C * Math.sin(rad(a.H))
+  const a2 = b.C * Math.cos(rad(b.H)), b2 = b.C * Math.sin(rad(b.H))
+  return Math.sqrt((a.L - b.L) ** 2 + (a1 - a2) ** 2 + (b1 - b2) ** 2)
+}
+
+// ── C12 RED-FAMILY GATE (owner-calibrated 2026-07-10 on raw button pairs; fit v5,
+// 0/67 of her marks misclassified) ─────────────────────────────────────────────────
+// The perceptual "confusable with the red signal" distance around red's cta. Plain OKLab
+// distance does NOT line up with confusability (owner-measured): each axis carries its own
+// weight — DARKER persists as danger (×0.65, the zone reaches ΔL .139), LIGHTER pinkifies
+// fast (×1.6, ends at ΔL .057), DUST kills similarity fast (×1.4, ends at ΔC .065), the
+// GOLD-side hue exit is faster than the magenta side (arc ×1.6 vs ×1 — orange leaves the
+// family at ~22°, pink stays to ~27°), and MORE-saturated-than-red never exits (super-red
+// is still red). One radius G gates firing AND release; releaseMargin is the solve headroom.
+export const RED_GATE = {
+  wDark: 0.65, wLight: 1.60, wDust: 1.40, wGoldArc: 1.60,
+  G: 0.090, releaseMargin: 0.005,
+} as const
+export function redGateDist(c: { L: number; C: number; H: number }, red: { L: number; C: number; H: number }): number {
+  const dh = ((c.H - red.H + 540) % 360) - 180   // signed: + gold-ward, − magenta-ward
+  const meanC = 2 * Math.sqrt(Math.max(0, c.C) * Math.max(0, red.C))
+  const arcMag = meanC * Math.sin(Math.abs(Math.min(0, dh)) * Math.PI / 360)
+  const arcGold = meanC * Math.sin(Math.max(0, dh) * Math.PI / 360)
+  return Math.hypot(
+    RED_GATE.wDark * Math.max(0, red.L - c.L),
+    RED_GATE.wLight * Math.max(0, c.L - red.L),
+    RED_GATE.wDust * Math.max(0, red.C - c.C),
+    Math.max(0, c.C - red.C),
+    arcMag,
+    RED_GATE.wGoldArc * arcGold,
+  )
+}
+
+// ── C12 TREATMENT REGIONS (owner data 2026-07-10, proposal approved same day) ────────────
+// Identity-keep box: brands whose IDENTITY is itself a credible error color (her Instrument-D
+// error-core checks; lHi extended .58→.62 for the unruled vivid-L0.60 slice — veto-flagged and
+// accepted at proposal). Membership is judged on the NOMINAL seed values so gamut clamping
+// cannot eject vivid deep cells. Fired box members keep their cta — the RED moves instead.
+export const RED_KEEP_BOX = { hLo: 20, hHi: 44, cMin: 0.18, lLo: 0.50, lHi: 0.62 } as const
+export function inRedKeepBox(L: number, C: number, H: number): boolean {
+  const h = ((H % 360) + 360) % 360
+  return h >= RED_KEEP_BOX.hLo && h <= RED_KEEP_BOX.hHi && C >= RED_KEEP_BOX.cMin - 1e-9 &&
+    L >= RED_KEEP_BOX.lLo && L <= RED_KEEP_BOX.lHi
+}
+// Vivid arc (owner 2026-07-10, anchors #FF7300…#FF0000…#FF006F — "move brand AND red"):
+// the near-gamut-max warm arc around red. Independent of FIRING: even a non-confusable
+// max-vivid neighbor vibrates beside canonical red (the P2 adjacency problem), so red takes
+// a per-brand variant here regardless — and the brand ALSO self-exits when it fires.
+// Her anchors measure vividness .88–.90; bounds derived from them, flagged for her veto.
+export const RED_VIVID_ARC = { hLo: 5, hHi: 50, vividMin: 0.85, lLo: 0.55, lHi: 0.75 } as const
+export function inRedVividArc(L: number, C: number, H: number): boolean {
+  const h = ((H % 360) + 360) % 360
+  if (h < RED_VIVID_ARC.hLo || h > RED_VIVID_ARC.hHi) return false
+  if (L <= RED_VIVID_ARC.lLo || L > RED_VIVID_ARC.lHi) return false
+  return C / maxChromaAt(L, h) >= RED_VIVID_ARC.vividMin
+}
+
+// Self-move direction pivot (her rulings: L0.45 fired → all dark · L0.55 → zero dark).
+export const RED_DEEP_PIVOT = 0.50
+// Red-variant domain floor: the recorded bottom of her error-eligible range (L0.35 slice empty).
+export const RED_VARIANT_L_MIN = 0.45
+
 export const RED_TORSION_CENTER_H = 35.5
 export const RED_TORSION_SOFTNESS = 3.5
 

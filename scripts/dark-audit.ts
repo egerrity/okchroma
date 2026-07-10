@@ -16,7 +16,7 @@ import { BRANDS } from '../src/brands'
 import { SECONDARIES } from '../src/secondaries'
 import { SIGNALS } from '../src/engine/signals'
 import { resolveBrand, signalScalesFor } from '../src/engine/resolve'
-import { checkCollision, stopDeltaE } from '../src/engine/collision'
+import { RED_GATE, redGateDist, checkCollision, stopDeltaE } from '../src/engine/collision'
 import { wcagY, contrastRatio, apcaY, apcaLc } from '../src/engine/constraints'
 import type { GeneratedScale } from '../src/engine/colorEngine'
 
@@ -58,7 +58,7 @@ const findings: Record<string, Finding[]> = {
   'F on-fill compliance (WCAG 4.5 + APCA 45)': [],
 }
 
-function audit(name: string, hex: string, scale: GeneratedScale, errorComponentRule = false) {
+function audit(name: string, hex: string, scale: GeneratedScale, redRepelled = false) {
   // A: adjacent steps 1–8
   for (let i = 0; i < 7; i++) {
     const dLight = stopDeltaE(scale.light[i], scale.light[i + 1])
@@ -117,11 +117,11 @@ function audit(name: string, hex: string, scale: GeneratedScale, errorComponentR
     }
   }
 
-  // E: dark-mode red collision on the resolved scale. Orange-side
-  // colliders are exempt — they intentionally keep identity; separation is
-  // the uniform destructive component rule (outline in groups + icon).
+  // E: dark-mode red collision on the resolved scale. No exemptions since the C12
+  // gate — every brand cta sits outside the owner-calibrated red-family gate per mode
+  // (redRepelled is report metadata, not an exemption).
   const err = SIGNAL_SCALES.get('red')!
-  if (name !== 'red' && !errorComponentRule && checkCollision(scale, err.scale, err.def, 'dark').collides) {
+  if (name !== 'red' && redGateDist(scale.ctaDark, err.scale.ctaDark) <= RED_GATE.G - 1e-3) {
     findings['E dark error collision'].push({
       name, hex, severity: 1,
       detail: `resolved scale still collides with red in dark mode`,
@@ -129,11 +129,11 @@ function audit(name: string, hex: string, scale: GeneratedScale, errorComponentR
   }
 }
 
-let componentRuleCount = 0
+let repelCount = 0
 for (const b of BRANDS) {
   const r = resolveBrand(b.hex, b.slug, { contrastProfile: SHIPPED_PROFILE })
-  if (r.errorComponentRule) componentRuleCount++
-  audit(b.name, b.hex, r.scale, r.errorComponentRule)
+  if (r.redRepel) repelCount++
+  audit(b.name, b.hex, r.scale, !!r.redRepel)
 }
 for (const sig of SIGNALS) {
   audit(sig.name, sig.hex, SIGNAL_SCALES.get(sig.name)!.scale)
@@ -141,7 +141,7 @@ for (const sig of SIGNALS) {
 
 const auditedCount = BRANDS.length + SIGNALS.length
 console.log(`audited ${auditedCount} scales (${BRANDS.length} brands + ${SIGNALS.length} signals)`)
-console.log(`orange-side error colliders on the component rule: ${componentRuleCount}\n`)
+console.log(`red-repelled brand ctas: ${repelCount}\n`)
 for (const [check, list] of Object.entries(findings)) {
   list.sort((a, b) => b.severity - a.severity)
   console.log(`${check}: ${list.length} failures`)

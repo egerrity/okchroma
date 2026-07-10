@@ -160,9 +160,8 @@ export function annotationNote(r: ResolvedBrand, opts?: { archetypeOverride?: st
   let note = ''
   if (r.shearDeg !== 0) note += ` · shear ${r.shearDeg > 0 ? '+' : ''}${r.shearDeg.toFixed(1)}°`
   if (opts?.archetypeOverride) note += ` · archetype override → ${opts.archetypeOverride}`
-  if (r.rung1) note += ` · conflict with red resolved — primary darkened`
-  if (r.darkCollider) note += ` · dark mode: fill shifts to a softer register to stay distinct from red`
-  if (r.errorComponentRule) note += ` · neighbors red — destructive actions use outline styling in groups`
+  if (r.redRepel) note += ` · conflict with red resolved — the action color steps clear of red (value move, hue kept)`
+  else if (r.signalOverrides.some(o => o.name === 'red')) note += ` · conflict with red resolved — the brand keeps its exact color and the error signal ships a per-brand variant`
   if (r.warningVariant === 'lemon') note += ` · yellow signal shifted to a cooler lemon`
   if (r.warningVariant === 'macaroni') note += ` · yellow signal kept standard amber (cool-yellow brand)`
   for (const o of r.signalOverrides.filter(o => o.name !== 'yellow')) note += ` · ${o.note}`

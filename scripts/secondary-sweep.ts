@@ -344,7 +344,7 @@ function demotionSection(): string {
   const rows = (['light', 'dark'] as const).map(mode =>
     modeRow([
       themeCard('red primary + coral secondary', redMirror, mode,
-        `MIRROR of rung-1: primary ${redMirror.primary.rung1 ? 'darkened (rung 1)' : 'kept'} · secondary → ${redMirror.secondary!.level}${redMirror.secondary!.demoted ? ' (auto)' : ''} — escapes lighter/quieter, opposite register`),
+        `MIRROR of the red repel: primary cta ${redMirror.primary.redRepel ? 'stepped clear of red (value repel)' : 'kept'} · secondary → ${redMirror.secondary!.level}${redMirror.secondary!.demoted ? ' (auto)' : ''} — escapes lighter/quieter, opposite register`),
       themeCard('gold secondary — as demoted (subtle)', gold, mode,
         gold.secondary!.notes.map(n => n).join(' · ') || 'no demotion'),
       themeCard('same gold — undemoted for comparison', goldStd, mode,

@@ -31,7 +31,8 @@ export type { ColorStop } from './colorMath'
 
 import { resolveRamp, type ResolvedStop } from '../reqtoken/resolve'
 import { MODE_SPECS, type ModeSpec } from '../reqtoken/spec'
-import { withProfile, DEFAULT_APCA_LC_MAP, type ContrastProfile } from '../reqtoken/profiles'
+import { withProfile, DEFAULT_APCA_LC_MAP, CTA_ONFILL_ENFORCE_LC, type ContrastProfile } from '../reqtoken/profiles'
+import { whiteTextLcAt, findLForWhiteTextLc, APCA_SOLVE_MARGIN_LC } from '../reqtoken/producers'
 export type { ContrastProfile } from '../reqtoken/profiles'
 
 export interface GeneratedScale {
@@ -52,6 +53,9 @@ export interface GeneratedScale {
   ctaDark: ColorStop
   ctaHoverDark: ColorStop
 
+  // C12 value repel: per-mode fired flags (the cta exited red's register) — annotation/audit data
+  ctaRepelled?: { light: boolean; dark: boolean }
+
   onHighlightIsWhite?: boolean
   onHighlightIsWhiteDark?: boolean
 
@@ -70,8 +74,6 @@ export interface GenerateOptions {
   chromaScale?: number
 
   subtleChromaScale?: number
-
-  darkColliderFill?: 'muted'
 
   stop11DeepenL?: number
   stop12DeepenL?: number
@@ -102,6 +104,15 @@ export interface GenerateOptions {
   darkChromaCurve?: (L: number, H: number, brandC: number, ctaC?: number) => number
 
   loudCta?: boolean
+
+  // C12 VALUE EXIT v6 (owner-approved 2026-07-10): red's resolved LIGHT cta + the brand's
+  // declared exit direction (deep seeds down, else up — never nearest), injected by
+  // resolveBrand — the resolver has no cross-scale view. A cta inside the red-family gate
+  // (RED_GATE, colorMath.ts) exits along L until the gate releases AND P2 clears (p2.ts).
+  // No dark member — dark never fires under the Lc-60 on-cta bar (collision-sweep asserts).
+  // Identity-keep brands never get this opt (their red moves instead). Absent (signals,
+  // neutral, secondary, exact) = byte-identical.
+  ctaRepel?: { light: { L: number; C: number; H: number }; up: boolean }
 
   heat?: number
 
@@ -176,6 +187,7 @@ export function generateScale(
     ctaHover: makeStop(10, lightRamp.roles.ctaHover.L, lightRamp.roles.ctaHover.C, lightRamp.roles.ctaHover.H),
     ctaDark,
     ctaHoverDark: makeStop(10, darkRamp.roles.ctaHover.L, darkRamp.roles.ctaHover.C, darkRamp.roles.ctaHover.H),
+    ctaRepelled: { light: !!lightRamp.roles.cta.repelled, dark: !!darkRamp.roles.cta.repelled },
     onHighlightIsWhite: opts?.highlight ? lightRamp.ons.onHighlightIsWhite : undefined,
     onHighlightIsWhiteDark: opts?.highlight ? darkRamp.ons.onHighlightIsWhite : undefined,
     identityHex: hex.toUpperCase(),
@@ -194,7 +206,17 @@ export function applyRedRepelRender(scale: GeneratedScale, enforceOnFillContrast
   scale.ctaHover = makeStop(scale.ctaHover.stop, scale.ctaHover.L, scale.ctaHover.C, H)
   if (enforceOnFillContrast && scale.onFillTextIsWhite) {
     const s9 = scale.cta
-    if (legalRatio(s9.L, s9.C, s9.H, 1.0) < 4.5) {
+    if (contrastProfile === 'apca') {
+      // apca lane: the on-cta law is the declared Lc bar (owner contract 2026-07-10).
+      // The old solve here ran white-only WCAG 4.5 REGARDLESS of profile — the shipped
+      // quirk the owner caught in the C12 calibration round; under the Lc-60 bar it
+      // darkened light near-red ctas back INTO the red gate (collision-sweep caught it).
+      if (whiteTextLcAt(s9.L, s9.C, s9.H) < CTA_ONFILL_ENFORCE_LC) {
+        const L = findLForWhiteTextLc(s9.L, scale.brandC, H, CTA_ONFILL_ENFORCE_LC + APCA_SOLVE_MARGIN_LC)
+        scale.cta = makeStop(9, L, scale.brandC, H)
+        scale.ctaHover = makeStop(10, hoverL(L), scale.brandC, H)
+      }
+    } else if (legalRatio(s9.L, s9.C, s9.H, 1.0) < 4.5) {
 
       const L = findLForContrast(s9.L, scale.brandC, H, 1.0, 4.6)
       scale.cta = makeStop(9, L, scale.brandC, H)

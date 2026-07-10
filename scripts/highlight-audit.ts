@@ -26,6 +26,7 @@ import { wcagY, contrastRatio, apcaY, apcaLc, clampChromaToGamut, oklchToLinearR
 import { YELLOW_BAND, DARK_BRAND_FILL_MIN_L } from '../src/engine/stopTable'
 import { generateNeutralScale, generateScale, type GeneratedScale, type ColorStop } from '../src/engine/colorEngine'
 import { darkChromaCurve } from '../src/engine/darkChromaCurve'
+import { CTA_ONFILL_ENFORCE_LC } from '../src/reqtoken/profiles'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -158,12 +159,12 @@ for (const { h, s } of neutralWcag) {
 // ── 4. Signals — on-cta legible under each profile's own law, clean 12-stop scale ──
 const SIGNALS_WCAG = signalScalesFor(undefined)
 for (const sig of SIGNALS) {
-  // apca lane (shipped): the enforcement guarantees the WHITE pole (Lc-75 re-solve); a black
-  // pole is pole-choice-only — assert it is genuinely the better pole (green dark reads black
-  // at Lc ~63, the known green-white-text follow-up — not a gate failure)
+  // apca lane (shipped): the enforcement guarantees the WHITE pole. Bar = the DECLARED
+  // CTA_ONFILL_ENFORCE_LC (owner ruling 2026-07-10: base ctas enforce to Lc 60, large-text —
+  // the hardcoded 74 was the Lc-75 era's shadow), minus the same 1-Lc solve slack.
   const s = SIGNAL_SCALES.get(sig.name)!.scale
   for (const [mode, st, pol] of [['light', s.cta, s.onFillTextIsWhite], ['dark', s.ctaDark, s.onFillTextIsWhiteDark]] as const) {
-    if (pol) ok(onApcaLc(st, true) >= 74, `signal ${sig.name} ${mode} apca: enforced white on-cta below Lc 74 (${onApcaLc(st, true).toFixed(1)})`)
+    if (pol) ok(onApcaLc(st, true) >= CTA_ONFILL_ENFORCE_LC - 1, `signal ${sig.name} ${mode} apca: enforced white on-cta below Lc ${CTA_ONFILL_ENFORCE_LC - 1} (${onApcaLc(st, true).toFixed(1)})`)
     else ok(onApcaLc(st, false) >= onApcaLc(st, true), `signal ${sig.name} ${mode} apca: black pole chosen but white reads better`)
   }
   ok(s.light.length === 11 && s.dark.length === 11, `signal ${sig.name} not a clean 11-stop scale (light ${s.light.length}, dark ${s.dark.length})`)

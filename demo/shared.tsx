@@ -390,10 +390,8 @@ export function Readout({ r }: { r: ResolvedBrand }) {
     <div style={{ fontSize: 12 }}>
       {chip(`archetype: ${r.scale.archetype}`, true)}
       {chip(`shear ${r.shearDeg > 0 ? '+' : ''}${r.shearDeg.toFixed(1)}°`, r.shearDeg !== 0)}
-      {chip('rung 1 → dark', !!r.rung1)}
-      {chip('component rule', r.errorComponentRule)}
+      {chip(`red repel${r.redRepel ? `: ${[r.redRepel.light ? 'light' : '', r.redRepel.dark ? 'dark' : ''].filter(Boolean).join('+')}` : ''}`, !!r.redRepel)}
       {chip(`warning: ${r.warningVariant ?? 'canonical'}`, !!r.warningVariant)}
-      {chip('dark collider', !!r.darkCollider)}
       {chip(`pending: ${r.pending.join(', ') || 'none'}`, r.pending.length > 0)}
     </div>
   )

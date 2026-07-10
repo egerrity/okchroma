@@ -17,7 +17,7 @@
 import { generateScale } from '../src/engine/colorEngine'
 import { clampChromaToGamut, oklchToLinearRgb } from '../src/engine/constraints'
 import { resolveBrand, SIGNAL_SCALES } from '../src/engine/resolve'
-import { checkCollision, checkHueCollision } from '../src/engine/collision'
+import { RED_GATE, redGateDist, checkCollision, checkHueCollision } from '../src/engine/collision'
 
 function oklchToHex(L: number, C: number, H: number): string {
   const c = clampChromaToGamut(L, C, H)
@@ -39,8 +39,7 @@ let crashed = 0
 const errorResidual: string[] = []
 const shearInduced: string[] = []
 const warningUnhandled: string[] = []
-let rung1Count = 0
-let componentRuleCount = 0
+let repelCount = 0
 let shearCount = 0
 let lemonCount = 0
 let macaroniCount = 0
@@ -63,16 +62,15 @@ for (const H of HUES) {
         }
 
         if (r.shearDeg !== 0) shearCount++
-        if (r.rung1) rung1Count++
-        if (r.errorComponentRule) componentRuleCount++
+        if (r.redRepel) repelCount++
         if (r.warningVariant === 'lemon') lemonCount++
         if (r.warningVariant === 'macaroni') macaroniCount++
         for (const p of r.pending) pendingCounts[p] = (pendingCounts[p] ?? 0) + 1
 
-        // 2. error guarantee: any residual collision must carry the
-        // component-rule flag (orange-side, intentional identity keep)
+        // 2. error guarantee (C12 gate): NO brand cta may sit inside the owner-calibrated
+        // red-family gate — the repel releases at the boundary by construction
         const err = SIGNAL_SCALES.get('red')!
-        if (checkCollision(r.scale, err.scale, err.def, 'light').collides && !r.errorComponentRule) {
+        if (redGateDist(r.scale.cta, err.scale.cta) <= RED_GATE.G - 1e-3) {
           errorResidual.push(`${hex} (L${L} C${C} H${H})`)
         }
 
@@ -103,7 +101,7 @@ for (const H of HUES) {
 
 console.log(`swept ${total} brand colors (${HUES.length} hues x ${LIGHTNESSES.length} L x ${CHROMAS.length} C)`)
 console.log(`crashes/malformed: ${crashed}`)
-console.log(`sheared: ${shearCount} | rung-1 dark: ${rung1Count} | component rule (orange): ${componentRuleCount} | lemon: ${lemonCount} | macaroni: ${macaroniCount}`)
+console.log(`sheared: ${shearCount} | red repel: ${repelCount} | lemon: ${lemonCount} | macaroni: ${macaroniCount}`)
 console.log(`pending (unresolved non-error): ${JSON.stringify(pendingCounts)}`)
 console.log(`ERROR residual without a resolution: ${errorResidual.length}`)
 errorResidual.slice(0, 10).forEach(s => console.log(`  ${s}`))

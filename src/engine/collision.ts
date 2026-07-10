@@ -3,14 +3,23 @@
 import type { GeneratedScale, ColorStop } from './colorEngine'
 import type { SignalDef } from './signals'
 import { SIGNALS } from './signals'
-import { VIVID_C, HUE_NOISE_C } from './colorMath'
+import { VIVID_C, HUE_NOISE_C, oklabDist } from './colorMath'
 
 export const HUE_GATE_DEG = 30
 export const DELTA_E_THRESHOLD = 0.16
 
 export const DARK_DELTA_E_THRESHOLD = 0.10
 
-export const RUNG1_ARCHETYPE = 'dark' as const
+// ── C12 VALUE REPEL (owner design 2026-07-09→10; replaces the whole red TYPE-2 remedy
+// family: rung-1's forced-dark archetype, the warm-forced bright anchor, and the cool-side
+// muted dark collider). ONE RULE, ONE METRIC: a brand cta must sit outside the
+// owner-calibrated RED-FAMILY GATE around red's cta in its own mode (redGateDist/RED_GATE,
+// colorMath.ts — fitted 0/67 to her raw-pair confusability marks). Inside → the cta exits
+// along L to the nearest release (dark mode: up only — the prominence floor owns the down
+// side). Chroma and hue ride the existing cta formula (no new color rule; hue stays
+// identity). Under the gate's weights the light exit is cheap (lighter pinkifies out of the
+// family fast) so releases land below the APCA dead zone with white text intact.
+export { RED_GATE, redGateDist } from './colorMath'
 
 export type Mode = 'light' | 'dark'
 
@@ -29,10 +38,7 @@ function hueDistance(h1: number, h2: number): number {
 }
 
 export function stopDeltaE(s1: ColorStop, s2: ColorStop): number {
-  const rad = (h: number) => (h * Math.PI) / 180
-  const a1 = s1.C * Math.cos(rad(s1.H)), b1 = s1.C * Math.sin(rad(s1.H))
-  const a2 = s2.C * Math.cos(rad(s2.H)), b2 = s2.C * Math.sin(rad(s2.H))
-  return Math.sqrt((s1.L - s2.L) ** 2 + (a1 - a2) ** 2 + (b1 - b2) ** 2)
+  return oklabDist(s1, s2)
 }
 
 export function checkCollision(

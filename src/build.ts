@@ -27,8 +27,7 @@ function generateBrandCss(brand: Brand): string {
     const ra = resolveBrand(secondaryHex, `${name} accent`, { exact: brand.exact, style: brand.style, contrastProfile: SHIPPED_PROFILE })
     secondary = ra.scale
     if (ra.shearDeg !== 0) noteSuffix += ` · secondary shear ${ra.shearDeg > 0 ? '+' : ''}${ra.shearDeg.toFixed(1)}°`
-    if (ra.rung1) noteSuffix += ` · secondary rung 1 → dark`
-    if (ra.errorComponentRule) noteSuffix += ` · secondary error collision → component rule`
+    if (ra.redRepel) noteSuffix += ` · secondary action color stepped clear of red`
   }
 
   return brandCss(slug, name, r, secondary, noteSuffix, 'default', SHIPPED_PROFILE)

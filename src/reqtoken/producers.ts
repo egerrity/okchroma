@@ -7,7 +7,7 @@ import { classifyArchetype, medianLForArchetype, type Archetype } from '../engin
 import { clampChromaToGamut, wcagY, contrastRatio, legalRatio, findMaxLForContrast, findLForContrast, apcaY, apcaLc, encodedChannels } from '../engine/constraints'
 import { perceptualRungL, apparentL, grayApparentL, solveLForApparent } from '../engine/perceptualL'
 import {
-  hexToOklch, maxChromaAt, goldSpineHue, torsionedHue, gauss, sigmoid, hueDelta,
+  hexToOklch, maxChromaAt, goldSpineHue, torsionedHue, gauss, sigmoid, hueDelta, oklabDist, redGateDist, RED_GATE,
   SPINE_OFFPATH_SIGMA, RED_TORSION_CENTER_H, RED_TORSION_SOFTNESS, VIVID_C, HUE_NOISE_C, MUTED_BLEND_DENOM,
   LIGHT_DRIFT_COOL_HI, LIGHT_DRIFT_COOL_RANGE, VIVID_LIFT_BLEND, VIVID_LIFT_L_LO, VIVID_LIFT_L_RANGE,
   CREAM_UPPER_H, CREAM_UPPER_SOFTNESS,
@@ -15,7 +15,8 @@ import {
   DEEPER_STRENGTH, redRepelShiftDeg, RED_BAND_LO_H, applyChromaFloor,
   DARK_FLOOR_FULL_C, DARK_FLOOR_MUTED_MAX_C, onTextIsWhite,
 } from '../engine/colorMath'
-import { DARK_STOP_9_MIN_L, DARK_COLLIDER_MUTED_L, DARK_COLLIDER_MUTED_CHROMA_SCALE } from '../engine/stopTable'
+import { p2Diff, P2_D, P2_D_UP } from '../engine/p2'
+import { DARK_STOP_9_MIN_L } from '../engine/stopTable'
 import { darkCtaTrim } from '../engine/darkChromaCurve'
 import type { GenerateOptions } from '../engine/colorEngine'   // type-only: erased at runtime, no cycle
 
@@ -265,12 +266,8 @@ export function onHighlightIsWhiteAt(L: number, C: number, H: number, ratioFloor
 // `specFloorL` = the declared role floor (spec data); caller opts (darkFillMinL) override it.
 export function buildDarkContext(ctx: Ctx, specFloorL: number = DARK_STOP_9_MIN_L) {
   const opts = ctx.opts
-  let dark9L = Math.max(ctx.scaleL, opts?.darkFillMinL ?? specFloorL)
-  let darkC9 = opts?.darkChromaCurve && !opts?.loudCta ? ctx.brandC * darkCtaTrim(ctx.darkH) : ctx.brandC
-  if (opts?.darkColliderFill === 'muted') {
-    dark9L = DARK_COLLIDER_MUTED_L
-    darkC9 = ctx.brandC * DARK_COLLIDER_MUTED_CHROMA_SCALE
-  }
+  const dark9L = Math.max(ctx.scaleL, opts?.darkFillMinL ?? specFloorL)
+  const darkC9 = opts?.darkChromaCurve && !opts?.loudCta ? ctx.brandC * darkCtaTrim(ctx.darkH) : ctx.brandC
   const darkHueAtL = (L: number) => torsionedHue(ctx.darkH, L, dark9L, ctx.gOffPath)
   return { dark9L, darkC9, darkHueAtL }
 }
@@ -398,4 +395,31 @@ export function ctaDarkEnforcedLApca(ctx: Ctx, base: { L: number; C: number; H: 
 // on-fill (dark): judged at the emitted (gamut-clamped) base ctaDark, PRE-enforcement (:424–425)
 export function onFillIsWhiteDarkAt(L: number, C: number, H: number, enforce: boolean): boolean {
   return onTextIsWhite(apcaYAt(L, C, H), L, C, H, enforce)
+}
+
+// ================= C12 VALUE EXIT v6 (the two-problem design, owner-approved 2026-07-10) ==
+// FIRE = the owner's confusability gate (redGateDist ≤ G — "could be mistaken for the
+// signal", her 100-mark category). DELIVERY = the exit continues along L until BOTH clear:
+// the gate (G + margin — not error-confusable) AND P2 (helmlab ≥ P2_D_UP/P2_D — truly
+// different beside red, her flush-strip marks). Two metrics because they answer different
+// questions; the v5 release-at-boundary (minimum possible move) is exactly what she rejected.
+// DIRECTION is the caller's declared class (deep seeds exit down, the rest up — never
+// nearest). Dark never fires under the Lc-60 on-cta bar (collision-sweep asserts zero) —
+// there is no dark exit. Chroma/hue ride the caller's cta formula; hue stays identity.
+// Returns null = outside the gate, no exit — byte-identical path.
+export function exitCtaL(
+  baseL: number, cFor: (L: number) => number, H: number,
+  red: { L: number; C: number; H: number },
+  up: boolean,
+): number | null {
+  const at = (L: number) => ({ L, C: clampChromaToGamut(L, cFor(L), H), H })
+  if (redGateDist(at(baseL), red) > RED_GATE.G) return null
+  const release = RED_GATE.G + RED_GATE.releaseMargin
+  const bar = up ? P2_D_UP : P2_D
+  for (let L = baseL; up ? L <= 0.96 : L >= 0.04; L += up ? 0.005 : -0.005) {
+    const p = at(L)
+    if (redGateDist(p, red) >= release && p2Diff(p, red) >= bar) return L
+  }
+  // unreachable exit parks at the extreme — the gate verify downstream flags it loud
+  return up ? 0.97 : 0.03
 }

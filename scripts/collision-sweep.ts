@@ -13,7 +13,7 @@
 
 import { resolveTheme, signalScalesFor } from '../src/engine/resolve'
 import { SIGNALS, type SignalDef } from '../src/engine/signals'
-import { checkCollision, checkHueCollision, stopDeltaE, HUE_COLLISION_MIN_V } from '../src/engine/collision'
+import { checkCollision, checkHueCollision, stopDeltaE, HUE_COLLISION_MIN_V, RED_GATE, redGateDist } from '../src/engine/collision'
 import { clampChromaToGamut, oklchToLinearRgb } from '../src/engine/constraints'
 import type { GeneratedScale, ContrastProfile } from '../src/engine/colorEngine'
 
@@ -60,7 +60,7 @@ const PROFILES: Array<{ lane: string; profile: ContrastProfile | undefined }> = 
   { lane: 'apca', profile: 'apca' },
 ]
 
-interface Row { signal: string; lane: string; hex: string; dH: number; fired: string[]; wmin: number; wminLight: number; v: number; secWmin: number; secNoted: boolean }
+interface Row { signal: string; lane: string; hex: string; dH: number; fired: string[]; wmin: number; wminLight: number; v: number; secWmin: number; secNoted: boolean; ctaSepLight: number; ctaSepDark: number }
 const rows: Row[] = []
 
 for (const sig of SIGNALS)
@@ -73,11 +73,12 @@ for (const sig of SIGNALS)
       const effective = t.themed.signalOverrides.find(o => o.name === sig.name)?.scale ?? canonical
       const p = t.primary.scale
       const fired = [
-        ...(t.primary.rung1 ? [`rung1`] : []),
-        ...(t.primary.darkCollider ? ['darkCollider'] : []),
+        // C12: the value repel is a TYPE-2 VALUE move (per-mode) — legitimately lane-local
+        // per the C7 taxonomy, so it is NOT classed with the type-1 swaps/variants that
+        // must stay lane-global.
+        ...(t.primary.redRepel ? [`ctaRepel:${[t.primary.redRepel.light ? 'L' : '', t.primary.redRepel.dark ? 'D' : ''].join('')}`] : []),
         ...(t.primary.warningVariant ? [`variant:${t.primary.warningVariant}`] : []),
         ...t.themed.signalOverrides.map(o => `shift:${o.note}`),
-        ...(t.primary.errorComponentRule ? ['componentRule'] : []),
       ]
       const h = checkHueCollision(p, canonical, sig)
       const sec = t.secondary!.scale
@@ -88,6 +89,13 @@ for (const sig of SIGNALS)
         v: h.vividness,
         secWmin: Math.min(washMin(sec, effective, 'light'), washMin(sec, effective, 'dark')),
         secNoted: t.secondary!.notes.some(n => n.includes(sig.name)),
+        // C12 v6 gate delivery: EVERY brand cta must sit OUTSIDE the owner-calibrated
+        // red-family gate per mode, measured against the EFFECTIVE red for that brand —
+        // the per-brand variant when the red moved (identity-keep class), else canonical.
+        // Dark is asserted against canonical: dark never fires under the Lc-60 bar and
+        // there is no dark variant (the variant is light-lane machinery).
+        ctaSepLight: redGateDist(p.cta, (t.primary.signalOverrides.find(o => o.name === 'red')?.scale ?? signalScalesFor(profile).get('red')!.scale).cta),
+        ctaSepDark: redGateDist(p.ctaDark, signalScalesFor(profile).get('red')!.scale.ctaDark),
       })
     }
 
@@ -105,9 +113,12 @@ for (const sig of SIGNALS) {
     // lemon variant) is a known value-side item for the dark round, not a regression.
     const firedUnderLight = qualified.filter(r => r.fired.length > 0 && r.wminLight < HARD_BAR)
     const secUnnoted = rs.filter(r => r.secWmin < HARD_BAR && !r.secNoted)
-    fail += holes.length + secUnnoted.length + firedUnderLight.length
-    const flag = holes.length || secUnnoted.length || firedUnderLight.length ? ' ✗' : ''
-    console.log(`  ${sig.name} · ${lane}: HOLES ${holes.length}/${qualified.length} · fired-under-LIGHT ${firedUnderLight.length} (asserted) · fired-under any-mode ${firedUnder.length} · derived-sec unnoted-under ${secUnnoted.length}${flag}`)
+    // C12 gate delivery — every brand cta outside the red-family gate, per mode
+    const repelUnder = rs.filter(r => r.ctaSepLight < RED_GATE.G - 1e-3 || r.ctaSepDark < RED_GATE.G - 1e-3)
+    fail += holes.length + secUnnoted.length + firedUnderLight.length + repelUnder.length
+    const flag = holes.length || secUnnoted.length || firedUnderLight.length || repelUnder.length ? ' ✗' : ''
+    console.log(`  ${sig.name} · ${lane}: HOLES ${holes.length}/${qualified.length} · fired-under-LIGHT ${firedUnderLight.length} (asserted) · fired-under any-mode ${firedUnder.length} · derived-sec unnoted-under ${secUnnoted.length} · repel-under ${repelUnder.length} (asserted)${flag}`)
+    repelUnder.slice(0, 3).forEach(r => console.log(`    REPEL-UNDER ${r.hex} dH${r.dH} sepL ${r.ctaSepLight.toFixed(4)} sepD ${r.ctaSepDark.toFixed(4)} fired[${r.fired.join('|')}]`))
     holes.slice(0, 3).forEach(r => console.log(`    HOLE ${r.hex} dH${r.dH} v${r.v.toFixed(2)} wash ${r.wmin.toFixed(4)}`))
     firedUnderLight.slice(0, 3).forEach(r => console.log(`    FIRED-UNDER-LIGHT ${r.hex} dH${r.dH} fired[${r.fired.join('|')}] wash ${r.wminLight.toFixed(4)}`))
   }
@@ -116,9 +127,14 @@ for (const sig of SIGNALS) {
 const byKey = new Map<string, Row[]>()
 for (const r of rows) { const k = `${r.signal}|${r.hex}`; (byKey.get(k) ?? byKey.set(k, []).get(k)!).push(r) }
 let div = 0, swapDiv = 0
-for (const [, pair] of byKey) if (pair.length === 2 && JSON.stringify(pair[0].fired) !== JSON.stringify(pair[1].fired)) {
-  div++
-  if (pair.some(p => p.fired.some(f => f.startsWith('shift:') || f.startsWith('variant:')))) swapDiv++
+// the lane-global invariant covers TYPE-1 machinery only (swaps/variants); the C12 cta exit
+// AND the C12 red variant are per-lane TYPE-2 value machinery and legitimately diverge by
+// lane (a red-move in apca can be a self-exit in wcag; variant positions differ per lane's
+// text law) — both excluded from the assert
+const laneGlobal = (r: Row) => r.fired.filter(f => (f.startsWith('shift:') && !f.startsWith('shift:red')) || f.startsWith('variant:'))
+for (const [, pair] of byKey) if (pair.length === 2) {
+  if (JSON.stringify(pair[0].fired) !== JSON.stringify(pair[1].fired)) div++
+  if (JSON.stringify(laneGlobal(pair[0])) !== JSON.stringify(laneGlobal(pair[1]))) swapDiv++
 }
 console.log(`lane divergence: ${div} total, ${swapDiv} involving swaps/variants (must be 0 — type-1 is lane-global)`)
 if (swapDiv) fail += swapDiv

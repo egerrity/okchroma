@@ -40,6 +40,7 @@
     "typescript": "^5.4.0"
   },
   "dependencies": {
+    "helmlab": "^0.14.0",
     "lucide-react": "^1.17.0"
   }
 }

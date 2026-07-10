@@ -98,8 +98,6 @@ export const DARK_STOP_9_MIN_L = 0.63
 
 export const DARK_BRAND_FILL_MIN_L = 0.70
 
-export const DARK_COLLIDER_MUTED_L = 0.80
-export const DARK_COLLIDER_MUTED_CHROMA_SCALE = 0.55
 
 export const GOLD_SPINE: Array<[number, number]> = [
   [0.30, 47], [0.57, 50], [0.74, 71], [0.80, 88], [0.87, 103], [0.97, 110],
