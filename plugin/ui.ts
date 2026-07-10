@@ -144,8 +144,10 @@ function themeInput(name: string) {
   }
 }
 
-// the demo's top-card matrix: every family × ID + the 12 stops + the cta pair (light mode).
+// the demo's top-card matrix: every family × ID + the 11 stops + the cta pair (light mode).
 // Stop 8 renders AS a stroke (it's the boundary stop); cta cells carry the family's cta-border.
+// Cells iterate the scale's ACTUAL stops (stop 10 deleted 2026-07-09) — a future stop change
+// reshapes the grid instead of throwing into updatePreview's catch.
 function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
   const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
   const sigScales = signalScalesFor(cp)
@@ -174,10 +176,11 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     cells.push(row.idHex
       ? `<div class="mx-aa" style="background:${row.idHex};color:${idText(row.idHex)};font-weight:700;font-size:10px" title="identity">ID</div>`
       : `<div class="mx-cell"></div>`)
-    for (let n = 1; n <= 12; n++) {
-      const h = hx(st(n))
+    for (const s of row.scale.light) {
+      const n = s.stop
+      const h = hx(s)
       if (n === 8) cells.push(`<div class="mx-cell" style="border:2px solid ${h}" title="highlight-8"></div>`)
-      else if (n === 9 || n === 10) cells.push(`<div class="mx-aa" style="background:${h};color:${pole(row.scale.onHighlightIsWhite)}" title="highlight-${n}">Aa</div>`)
+      else if (n === 9) cells.push(`<div class="mx-aa" style="background:${h};color:${pole(row.scale.onHighlightIsWhite)}" title="highlight-9">Aa</div>`)
       else if (n >= 11) cells.push(`<div class="mx-aa" style="color:${h};font-size:15px;font-weight:800" title="ink-${n}">Aa</div>`)
       else cells.push(`<div class="mx-cell" style="background:${h};box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)" title="${n <= 2 ? 'paper' : 'wash'}-${n}"></div>`)
     }
@@ -225,13 +228,15 @@ function updatePreview() {
     }
 
     // chip TONES (Figma spec): the family's own wash/ink; outline = the outline treatment;
-    // exact = neutral-grey "hands off"
+    // exact = neutral-grey "hands off". Stops looked up by IDENTITY, never array position
+    // (positions shift when the stop set changes — the stop-10 deletion lesson).
     const hxs = (s: { r: number; g: number; b: number }) => toHex(s.r, s.g, s.b)
+    const at = (arr: ColorStop[], n: number) => arr.find(s => s.stop === n)!
     if (primaryMode === 'exact') {
       primaryChip.style.background = '#ededf0'; primaryChip.style.color = '#646464'; primaryChip.style.borderColor = 'transparent'
     } else {
-      primaryChip.style.background = hxs(t.themed.scale.light[3])
-      primaryChip.style.color = hxs(t.themed.scale.light[11])
+      primaryChip.style.background = hxs(at(t.themed.scale.light, 4))
+      primaryChip.style.color = hxs(at(t.themed.scale.light, 12))
       primaryChip.style.borderColor = 'transparent'
     }
     if (t.secondary) {
@@ -239,13 +244,17 @@ function updatePreview() {
       if (secondaryStyle === 'exact') {
         secondaryChip.style.background = '#ededf0'; secondaryChip.style.color = '#646464'; secondaryChip.style.borderColor = 'transparent'
       } else if (secondaryStyle === 'outline') {
-        secondaryChip.style.background = 'transparent'; secondaryChip.style.color = hxs(sl[10]); secondaryChip.style.borderColor = hxs(sl[7])
+        secondaryChip.style.background = 'transparent'; secondaryChip.style.color = hxs(at(sl, 11)); secondaryChip.style.borderColor = hxs(at(sl, 8))
       } else {
-        secondaryChip.style.background = hxs(sl[5]); secondaryChip.style.color = hxs(sl[11]); secondaryChip.style.borderColor = 'transparent'
+        secondaryChip.style.background = hxs(at(sl, 6)); secondaryChip.style.color = hxs(at(sl, 12)); secondaryChip.style.borderColor = 'transparent'
       }
     }
     syncInfoLines()
-  } catch { /* ignore partial hex during typing */ }
+  } catch (e) {
+    // partial hex mid-typing lands here by design; anything else is a REAL break —
+    // log it so the preview can't go blank silently again (the stop-10 lesson)
+    console.warn('okchroma preview render failed:', e)
+  }
 }
 
 // ─── Apply ───────────────────────────────────────────────────────────────────
