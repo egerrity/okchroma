@@ -35,12 +35,12 @@ export interface RosterEntry {
 
 export const ROSTER: RosterEntry[] = [
   { name: 'fis-eggplant', hex: '#532371', secondaryHex: '#4BCD3E', note: 'real theme + real secondary (adds the group)' },
-  { name: 'L1-near-black', hex: '#07074F', style: 'deeper', note: 'near-black band + deeper' },
-  { name: 'L2-dark', hex: '#003359', style: 'deeper', note: 'dark band + deeper' },
-  { name: 'L3-rich', hex: '#860249', note: 'rich band' },
-  { name: 'L4-vivid', hex: '#2081E2', note: 'vivid band (L .60)' },
-  { name: 'L5-bright', hex: '#05C3DE', note: 'bright band (L .75)' },
-  { name: 'L6-light', hex: '#FDCB6E', note: 'light band (lemon shift — light is inherently yellow-adjacent)' },
+  { name: 'L1-near-black', hex: '#07074F', style: 'deeper', secondaryHex: '#C8A35D', note: 'near-black band + deeper (dark-roast accent)' },
+  { name: 'L2-dark', hex: '#003359', style: 'deeper', secondaryHex: '#B3863D', note: 'dark band + deeper (espresso accent)' },
+  { name: 'L3-rich', hex: '#A50034', secondaryHex: '#6DCDB8', note: 'rich band (cranberry)' },
+  { name: 'L4-vivid', hex: '#E35205', secondaryHex: '#031B41', note: 'vivid band (turmeric latte — orange-side)' },
+  { name: 'L5-bright', hex: '#05C3DE', secondaryHex: '#233D7D', note: 'bright band (L .75) (blue-lagoon accent)' },
+  { name: 'L6-light', hex: '#FDCB6E', secondaryHex: '#4A8B2C', note: 'light band (lemon shift — light is inherently yellow-adjacent) (honey-lemon accent)' },
   { name: 'monochrome', hex: '#6E6E6E', neutralLevel: 'pure', note: 'achromatic + true-grey neutral' },
   { name: 'teal', hex: '#005C7A', note: 'real theme, no collisions (H229)' },
   { name: 'vs-green (shifts lime)', hex: '#22A559', note: 'green → yellow-side, both lanes' },
