@@ -1,0 +1,18 @@
+{
+  "date": "2026-07-10",
+  "round_1": "VOID — owner had True Tone on while marking (screenshots in session transcript). Not used.",
+  "round_2": {
+    "source": "ladder-checks.json (live checkboxes, True Tone off), LIGHT mode only",
+    "marks_first_truly_different": {
+      "up": { "H16 C0.18": 0.08, "H28 C0.2": 0.10, "H36 C0.2": 0.10, "H36 C0.14": 0.02, "H44 C0.17": 0.02 },
+      "down": { "H16 C0.18": 0.02, "H28 C0.2": 0.18, "H36 C0.2": 0.18, "H36 C0.14": 0.02, "H44 C0.17": "UNMARKED — confirm: none reads different, or skipped?" }
+    },
+    "metric_distance_at_marks_v7": {
+      "up": { "H16 C0.18": 0.141, "H28 C0.2": 0.161, "H36 C0.2": 0.161, "H36 C0.14": 0.082, "H44 C0.17": 0.071 },
+      "down": { "H16 C0.18": 0.061, "H28 C0.2": 0.127, "H36 C0.2": 0.135, "H36 C0.14": 0.077 }
+    },
+    "inside_fire_range_note": "4 marks sit INSIDE the fire radius (G .090): H36 C0.14 both dirs, H44 C0.17 up, H16 C0.18 down — side-by-side seams reveal differences the at-a-glance gate calls confusable. Wiring frame (her net applied to delivery): delivery = max(release floor G+margin, her mark) — no cta ever ships inside the confusable range; her small marks mean 'release floor suffices here', no extra distance.",
+    "pattern": "vivid warm needs real distance: UP raw +0.10 (metric ~0.16; lands at the white-text boundary) / DOWN raw −0.18 (metric ~0.13) — matches her old 0.18 value-carried read and 'dark gets scarier' (dark needs the most raw distance). Pink-side down separates instantly (burgundy vs red); dusty and orange-side separate at the release floor.",
+    "open": ["H44 C0.17 down unmarked", "DARK mode section entirely unmarked — next round"]
+  }
+}

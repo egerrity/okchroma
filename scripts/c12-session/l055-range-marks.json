@@ -1,0 +1,21 @@
+{
+  "date": "2026-07-10",
+  "purpose": "RANGE refit data from the direction-sort session (instrument A / c12-gate-fit.ts). Owner crossed strips = 'does not conflict — reads pink or gold' = CLEAR; green-checked = CONFLICT. Same raw-chip semantic as her original 67 MARKS. NOTE anchor: instrument compared vs apca red CTA; gate-fit axes() uses the red SIGNAL SEED — harmonize anchors before fitting.",
+  "format": "[L, C, H, conflict]",
+  "her_net": "owner 2026-07-10: 'if something seems like it really conflicts and I am missing it, it goes light' — crossed cells INSIDE her fitted gate (G .090) flip to conflict→light instead of clear. Applied to 5 cells below (H12 C0.17, H20/H24/H28/H32 C0.14). H8 C0.17 = exact boundary (.0904 vs cta), kept her cross.",
+  "marks": [
+    [0.55, 0.17, 356, false], [0.55, 0.14, 0, false], [0.55, 0.17, 0, false], [0.55, 0.14, 4, false], [0.55, 0.17, 4, false],
+    [0.55, 0.12, 8, false], [0.55, 0.14, 8, false], [0.55, 0.17, 8, false], [0.55, 0.12, 12, false], [0.55, 0.14, 12, false],
+    [0.55, 0.12, 16, false], [0.55, 0.14, 16, false], [0.55, 0.12, 20, false], [0.55, 0.12, 24, false],
+    [0.55, 0.12, 28, false], [0.55, 0.12, 32, false],
+    [0.55, 0.12, 36, false], [0.55, 0.12, 40, false], [0.55, 0.12, 44, false], [0.55, 0.14, 44, false], [0.55, 0.2, 56, false], [0.55, 0.2, 60, false],
+    [0.55, 0.17, 12, false], [0.55, 0.14, 20, false], [0.55, 0.14, 24, false], [0.55, 0.14, 28, false], [0.55, 0.14, 32, false],
+    [0.55, 0.14, 36, false], [0.55, 0.14, 40, false], [0.55, 0.2, 52, false],
+    [0.55, 0.17, 16, true], [0.55, 0.17, 20, true], [0.55, 0.17, 24, true], [0.55, 0.17, 28, true], [0.55, 0.17, 32, true]
+  ],
+  "net_resolution_2026_07_10": "owner eye-check on the 8 net-flipped cells: 'all light for these if they would break the formula, but I think they look distinct from an error' — SCENARIO-B fit run (c12-gate-fit-v7.ts, all 8 as CLEAR): 0/100 PERFECT — formula survives, all 8 revert to CLEAR/out-of-range. No light fallback needed.",
+  "FIT_V7_FINAL": "wDark 0.70 · wLight 1.60 · wDust 1.40 · wGold 1.60 · G 0.090 — 0/100 hard misses, fence 5/15; edges: dark dL .129 / light dL .057 / dust dC .065 / magenta 27deg / gold 22deg / vivid never exits. ~= v5 confirmed on 100 marks (only wDark .65->.70).",
+  "boundary_case_kept_her_cross": ["H8 C0.17 (gd .0904 vs cta / .099 vs seed)"],
+  "golds_ruling": "none conflict — confirmed by v7 fit (H52/H56/H60 C0.2 all clear/out)",
+  "not_included": "verbal-light rows (direction rulings; range membership decided by the fitted gate at wiring)"
+}

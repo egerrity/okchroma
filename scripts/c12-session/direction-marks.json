@@ -1,0 +1,38 @@
+{
+  "date": "2026-07-10",
+  "source": "owner marks on render/c12-direction-sort.html (light section, P.130 provisional range, apca; v2 buckets + v3 flush strips)",
+  "light": {
+    "L0.45": { "fired": 29, "ruling": "all dark" },
+    "L0.65": { "fired": 31, "ruling": "all light" },
+    "L0.73": { "fired": 0, "ruling": "none fire" },
+    "L0.55": {
+      "fired": 60,
+      "no_conflict_crossed_out_of_range": [
+        "H356 C0.17", "H0 C0.14", "H0 C0.17", "H4 C0.14", "H4 C0.17",
+        "H8 C0.12", "H8 C0.14", "H8 C0.17", "H12 C0.12", "H12 C0.14", "H12 C0.17",
+        "H16 C0.12", "H16 C0.14", "H20 C0.12", "H20 C0.14", "H24 C0.12", "H24 C0.14",
+        "H28 C0.12", "H28 C0.14", "H32 C0.12", "H32 C0.14"
+      ],
+      "conflict_goes_light_checked": ["H16 C0.17", "H20 C0.17", "H24 C0.17", "H28 C0.17", "H32 C0.17"],
+      "goes_light_verbal": {
+        "disagree_bucket_23": ["H356 C0.2", "H0 C0.2", "H4 C0.2", "H8 C0.2", "H12 C0.2", "H16 C0.2", "H20 C0.2", "H24 C0.2", "H28 C0.2", "H32 C0.2", "H36 C0.17", "H36 C0.2", "H40 C0.17", "H40 C0.2", "H44 C0.17", "H44 C0.2", "H48 C0.14", "H48 C0.17", "H48 C0.2", "H52 C0.14", "H52 C0.17", "H56 C0.17", "H60 C0.17"],
+        "both_tie": ["H48 C0.12"],
+        "one_axis_light": ["H56 C0.14"],
+        "her_words": "these all go light so they read as pink/orange instead of a darker color that could be red — NOTE her caveat below: some of these may not conflict at all (range question, not direction)"
+      },
+      "golds_ruling_2026_07_10": {
+        "her_words": "I think none of the golds conflict, but same as before if there is something mathematically inconsistent about that, they go light. The logic is that for these more saturated colors, when they go dark they get scarier. lighter looks more salmon/pink/orange.",
+        "resolution": "all previously-open rows crossed unless inside her fit; net flips H36 C0.14 / H40 C0.14 / H52 C0.2 to LIGHT; H36 C0.12, H40 C0.12, H44 C0.12, H44 C0.14, H56 C0.2, H60 C0.2 OUT"
+      },
+      "net_cells_eye_check_2026_07_10": {
+        "her_words": "all light for these if they would break the formula, but I think they look distinct from an error.",
+        "resolution": "scenario-B fit (all 8 net cells CLEAR) = 0/100 perfect — formula survives, her eye wins: all 8 OUT of range. Net rule retired for these cells."
+      },
+      "FINAL": "L0.55 CLOSED: 30 out-of-range (22 crossed + 8 eye-confirmed) · 30 light (5 checked + 25 verbal) · 0 dark. Fit v7 = range CONFIRMED ~v5 shape on 100 marks (wDark .70, G .090, 0/100).",
+      "direction_principle": "saturated colors never exit dark (dark = scarier, reads danger-adjacent); light exit reads salmon/pink/orange = own identity. Deep seeds (L0.45) exit dark; everything else light."
+    }
+  },
+  "dark": { "ruling": "OPEN — not yet sorted; light rulings do not auto-carry" },
+  "her_caveat": "I think there is a lot of stuff in here that doesn't conflict because it reads pink or gold. — crossed cells = out of the fire range (feeds instrument A refit as CLEAR marks); some verbal-light rows may also fall out of range on the refit",
+  "her_net": "owner 2026-07-10: 'I may be doing something that doesn't make sense mathematically, but for the ones I shared there, if something seems like it really conflicts and I am missing it, it goes light' — DECLARED PRECEDENCE for this session's L0.55 marks: her cross + metric-strong conflict (inside fitted gate G .090) => stays in range, exits LIGHT. Flipped: H12 C0.17, H20 C0.14, H24 C0.14, H28 C0.14, H32 C0.14. Boundary kept her cross: H8 C0.17 (.0904)."
+}

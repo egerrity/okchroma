@@ -1,0 +1,864 @@
+diff --git a/.claude/launch.json b/.claude/launch.json
+index 0ec89ab..a9a0f6b 100644
+--- a/.claude/launch.json
++++ b/.claude/launch.json
+@@ -2,25 +2,16 @@
+   "version": "0.0.1",
+   "configurations": [
+     {
+-      "name": "demo",
+-      "runtimeExecutable": "sh",
+-      "runtimeArgs": ["-c", "npx serve . -l $PORT --no-clipboard"],
+-      "autoPort": true,
+-      "port": 3001
+-    },
+-    {
+-      "name": "reqtoken-render",
+-      "runtimeExecutable": "sh",
+-      "runtimeArgs": ["-c", "npx serve /Users/emilygerrity/okchroma-reqtoken/render -l $PORT --no-clipboard"],
+-      "autoPort": true,
+-      "port": 3002
++      "name": "render-static",
++      "runtimeExecutable": "python3",
++      "runtimeArgs": ["-m", "http.server", "8321", "--directory", "render"],
++      "port": 8321
+     },
+     {
+-      "name": "reqtoken-demo",
+-      "runtimeExecutable": "sh",
+-      "runtimeArgs": ["-c", "npx serve /Users/emilygerrity/okchroma-reqtoken -l $PORT --no-clipboard"],
+-      "autoPort": true,
+-      "port": 3003
++      "name": "demo",
++      "runtimeExecutable": "python3",
++      "runtimeArgs": ["-m", "http.server", "8322", "--directory", "."],
++      "port": 8322
+     }
+   ]
+ }
+diff --git a/demo/CustomTheme.tsx b/demo/CustomTheme.tsx
+index 0709e2c..4539671 100644
+--- a/demo/CustomTheme.tsx
++++ b/demo/CustomTheme.tsx
+@@ -173,11 +173,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
+   // alert under the mode toggle. Toasts keep only the milder notices.
+   const toasts = useMemo(() => {
+     const list: Array<{ key: string; kind: 'warn' | 'info'; text: string }> = []
+-    if (rung === 'recommended' && rRec.errorComponentRule) list.push({
+-      key: `cr:${primary}`, kind: 'warn',
+-      text: 'Collision notice: this primary neighbors the error signal. Your color is kept exactly — destructive buttons render as outlines next to brand buttons.',
+-    })
+-    if (rung === 'exact' && !rRec.rung1) list.push({
++    if (rung === 'exact' && !rRec.redRepel) list.push({
+       key: `ex:${primary}`, kind: 'info',
+       text: 'Exact mode: your hex ships untouched. Accessibility outcomes are reviewed with you rather than guaranteed by the engine.',
+     })
+@@ -440,21 +436,21 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
+           <span className="ct-swatch sm" style={{ background: shipsHex }} />{shipsHex}
+         </span>
+       )}
+-      {rung === 'exact' && rRec.rung1 && (
++      {rung === 'exact' && rRec.redRepel && (
+         <div className="ct-alert-warn">
+           <TriangleAlert size={14} style={{ flexShrink: 0, marginTop: 1 }} />
+           <span>
+-            Color conflicts with error red — darker primary color recommended.{' '}
++            Color sits in the error signal's register — recommended mode separates the action color automatically.{' '}
+             <a href="#" onClick={e => e.preventDefault()} title="Documentation link — coming">Learn more</a>
+           </span>
+         </div>
+       )}
+-      {rung === 'recommended' && rRec.rung1 && (
++      {rung === 'recommended' && rRec.redRepel && (
+         <div className="ct-alert-text">
+           <TriangleAlert size={13} style={{ flexShrink: 0, marginTop: 1 }} />
+           <span>
+             Collision notice: this primary sits in the error signal's register. Recommended mode
+-            re-anchored it darker so destructive actions stay unmistakable.
++            stepped the action color clear of red — your hue is kept.
+           </span>
+         </div>
+       )}
+@@ -543,14 +539,10 @@ function checklistRows(rRec: ResolvedBrand, rung: RungMode, primaryHex: string):
+   const rows: CheckRow[] = []
+   const shipsHex = stopHex(rRec.scale.cta).toUpperCase()
+ 
+-  if (rRec.rung1) {
+-    rows.push(rec
+-      ? { key: 'hue', tone: 'adjusted', label: `conflict with error red resolved — ${primaryHex.toUpperCase()} → ${shipsHex}`, detail: 'This primary sits in the error signal\'s register. The primary color is darkened per UX best practices so destructive actions stay unmistakable; your hue is kept.' }
+-      : { key: 'hue', tone: 'fail', label: 'color conflicts with error red — darker primary recommended', detail: 'Exact mode ships the hex untouched, so the error-signal conflict is not resolved at the color level. Destructive buttons render as outlines everywhere as a backstop.' })
+-  } else if (rRec.errorComponentRule) {
++  if (rRec.redRepel) {
+     rows.push(rec
+-      ? { key: 'hue', tone: 'adjusted', label: `${origArch} + error-adjacent hue → component rule`, detail: 'A warm-side neighbor of the error signal. Your color is kept exactly; destructive buttons render as outlines in button groups, with a required icon.' }
+-      : { key: 'hue', tone: 'fail', label: `${origArch} + error-adjacent hue — components only`, detail: 'Exact mode: the hue ships as-is. Destructive buttons render as outlines everywhere.' })
++      ? { key: 'hue', tone: 'adjusted', label: `conflict with error red resolved — ${primaryHex.toUpperCase()} → ${shipsHex}`, detail: 'This primary sits in the error signal\'s register. The action color steps clear of red in its own direction — lighter or deeper, whichever is nearer — and keeps your hue.' }
++      : { key: 'hue', tone: 'fail', label: 'color conflicts with error red — separation not applied', detail: 'Exact mode ships the hex untouched, so the error-signal conflict is not resolved at the color level. Destructive buttons render as outlines everywhere as a backstop.' })
+   } else {
+     rows.push({ key: 'hue', tone: 'pass', label: `${origArch} archetype, no signal conflicts`, detail: 'The hue clears every signal gate; the fill anchors at your exact color.' })
+   }
+@@ -565,8 +557,8 @@ function checklistRows(rRec: ResolvedBrand, rung: RungMode, primaryHex: string):
+     rows.push({ key: 'warn', tone: 'standard', label: 'warning signal kept standard amber', detail: 'A cool-yellow brand: the standard amber warning is already clearly distinct.' })
+   }
+ 
+-  rows.push(rRec.darkCollider
+-    ? { key: 'dark', tone: rec ? 'adjusted' : 'fail', label: 'dark mode: fill floats to the pastel register', detail: 'In dark mode the brand fill and error red would meet; the brand floats to a pastel register and picks up black text — two extra separation channels.' }
++  rows.push(rRec.redRepel?.dark
++    ? { key: 'dark', tone: rec ? 'adjusted' : 'fail', label: 'dark mode: action color steps clear of red', detail: 'In dark mode the action color and error red would meet at the same register; the action color lifts until the pair reads clearly distinct.' }
+     : rec
+       ? { key: 'dark', tone: 'pass', label: 'dark mode: calculated from brand color', detail: 'The dark palette derives from your brand color on the same rules — fills only lift when they would vanish on a dark background.' }
+       : { key: 'dark', tone: 'pass', label: 'dark mode preserves identity', detail: 'Dark mode only lifts fills that would vanish — never pulls a vivid fill down, never cuts its chroma.' })
+diff --git a/demo/shared.tsx b/demo/shared.tsx
+index 58f2916..e669274 100644
+--- a/demo/shared.tsx
++++ b/demo/shared.tsx
+@@ -390,10 +390,8 @@ export function Readout({ r }: { r: ResolvedBrand }) {
+     <div style={{ fontSize: 12 }}>
+       {chip(`archetype: ${r.scale.archetype}`, true)}
+       {chip(`shear ${r.shearDeg > 0 ? '+' : ''}${r.shearDeg.toFixed(1)}°`, r.shearDeg !== 0)}
+-      {chip('rung 1 → dark', !!r.rung1)}
+-      {chip('component rule', r.errorComponentRule)}
++      {chip(`red repel${r.redRepel ? `: ${[r.redRepel.light ? 'light' : '', r.redRepel.dark ? 'dark' : ''].filter(Boolean).join('+')}` : ''}`, !!r.redRepel)}
+       {chip(`warning: ${r.warningVariant ?? 'canonical'}`, !!r.warningVariant)}
+-      {chip('dark collider', !!r.darkCollider)}
+       {chip(`pending: ${r.pending.join(', ') || 'none'}`, r.pending.length > 0)}
+     </div>
+   )
+diff --git a/scripts/collision-sweep.ts b/scripts/collision-sweep.ts
+index a548b02..efa7916 100644
+--- a/scripts/collision-sweep.ts
++++ b/scripts/collision-sweep.ts
+@@ -13,7 +13,7 @@
+ 
+ import { resolveTheme, signalScalesFor } from '../src/engine/resolve'
+ import { SIGNALS, type SignalDef } from '../src/engine/signals'
+-import { checkCollision, checkHueCollision, stopDeltaE, HUE_COLLISION_MIN_V } from '../src/engine/collision'
++import { checkCollision, checkHueCollision, stopDeltaE, HUE_COLLISION_MIN_V, RED_GATE, redGateDist } from '../src/engine/collision'
+ import { clampChromaToGamut, oklchToLinearRgb } from '../src/engine/constraints'
+ import type { GeneratedScale, ContrastProfile } from '../src/engine/colorEngine'
+ 
+@@ -60,7 +60,7 @@ const PROFILES: Array<{ lane: string; profile: ContrastProfile | undefined }> =
+   { lane: 'apca', profile: 'apca' },
+ ]
+ 
+-interface Row { signal: string; lane: string; hex: string; dH: number; fired: string[]; wmin: number; wminLight: number; v: number; secWmin: number; secNoted: boolean }
++interface Row { signal: string; lane: string; hex: string; dH: number; fired: string[]; wmin: number; wminLight: number; v: number; secWmin: number; secNoted: boolean; ctaSepLight: number; ctaSepDark: number }
+ const rows: Row[] = []
+ 
+ for (const sig of SIGNALS)
+@@ -73,11 +73,12 @@ for (const sig of SIGNALS)
+       const effective = t.themed.signalOverrides.find(o => o.name === sig.name)?.scale ?? canonical
+       const p = t.primary.scale
+       const fired = [
+-        ...(t.primary.rung1 ? [`rung1`] : []),
+-        ...(t.primary.darkCollider ? ['darkCollider'] : []),
++        // C12: the value repel is a TYPE-2 VALUE move (per-mode) — legitimately lane-local
++        // per the C7 taxonomy, so it is NOT classed with the type-1 swaps/variants that
++        // must stay lane-global.
++        ...(t.primary.redRepel ? [`ctaRepel:${[t.primary.redRepel.light ? 'L' : '', t.primary.redRepel.dark ? 'D' : ''].join('')}`] : []),
+         ...(t.primary.warningVariant ? [`variant:${t.primary.warningVariant}`] : []),
+         ...t.themed.signalOverrides.map(o => `shift:${o.note}`),
+-        ...(t.primary.errorComponentRule ? ['componentRule'] : []),
+       ]
+       const h = checkHueCollision(p, canonical, sig)
+       const sec = t.secondary!.scale
+@@ -88,6 +89,10 @@ for (const sig of SIGNALS)
+         v: h.vividness,
+         secWmin: Math.min(washMin(sec, effective, 'light'), washMin(sec, effective, 'dark')),
+         secNoted: t.secondary!.notes.some(n => n.includes(sig.name)),
++        // C12 gate delivery: EVERY brand cta must sit OUTSIDE the owner-calibrated
++        // red-family gate per mode — asserted below for all seeds (the rule is always-on).
++        ctaSepLight: redGateDist(p.cta, signalScalesFor(profile).get('red')!.scale.cta),
++        ctaSepDark: redGateDist(p.ctaDark, signalScalesFor(profile).get('red')!.scale.ctaDark),
+       })
+     }
+ 
+@@ -105,9 +110,12 @@ for (const sig of SIGNALS) {
+     // lemon variant) is a known value-side item for the dark round, not a regression.
+     const firedUnderLight = qualified.filter(r => r.fired.length > 0 && r.wminLight < HARD_BAR)
+     const secUnnoted = rs.filter(r => r.secWmin < HARD_BAR && !r.secNoted)
+-    fail += holes.length + secUnnoted.length + firedUnderLight.length
+-    const flag = holes.length || secUnnoted.length || firedUnderLight.length ? ' ✗' : ''
+-    console.log(`  ${sig.name} · ${lane}: HOLES ${holes.length}/${qualified.length} · fired-under-LIGHT ${firedUnderLight.length} (asserted) · fired-under any-mode ${firedUnder.length} · derived-sec unnoted-under ${secUnnoted.length}${flag}`)
++    // C12 gate delivery — every brand cta outside the red-family gate, per mode
++    const repelUnder = rs.filter(r => r.ctaSepLight < RED_GATE.G - 1e-3 || r.ctaSepDark < RED_GATE.G - 1e-3)
++    fail += holes.length + secUnnoted.length + firedUnderLight.length + repelUnder.length
++    const flag = holes.length || secUnnoted.length || firedUnderLight.length || repelUnder.length ? ' ✗' : ''
++    console.log(`  ${sig.name} · ${lane}: HOLES ${holes.length}/${qualified.length} · fired-under-LIGHT ${firedUnderLight.length} (asserted) · fired-under any-mode ${firedUnder.length} · derived-sec unnoted-under ${secUnnoted.length} · repel-under ${repelUnder.length} (asserted)${flag}`)
++    repelUnder.slice(0, 3).forEach(r => console.log(`    REPEL-UNDER ${r.hex} dH${r.dH} sepL ${r.ctaSepLight.toFixed(4)} sepD ${r.ctaSepDark.toFixed(4)} fired[${r.fired.join('|')}]`))
+     holes.slice(0, 3).forEach(r => console.log(`    HOLE ${r.hex} dH${r.dH} v${r.v.toFixed(2)} wash ${r.wmin.toFixed(4)}`))
+     firedUnderLight.slice(0, 3).forEach(r => console.log(`    FIRED-UNDER-LIGHT ${r.hex} dH${r.dH} fired[${r.fired.join('|')}] wash ${r.wminLight.toFixed(4)}`))
+   }
+@@ -116,9 +124,12 @@ for (const sig of SIGNALS) {
+ const byKey = new Map<string, Row[]>()
+ for (const r of rows) { const k = `${r.signal}|${r.hex}`; (byKey.get(k) ?? byKey.set(k, []).get(k)!).push(r) }
+ let div = 0, swapDiv = 0
+-for (const [, pair] of byKey) if (pair.length === 2 && JSON.stringify(pair[0].fired) !== JSON.stringify(pair[1].fired)) {
+-  div++
+-  if (pair.some(p => p.fired.some(f => f.startsWith('shift:') || f.startsWith('variant:')))) swapDiv++
++// the lane-global invariant covers TYPE-1 machinery only (swaps/variants); the C12 cta repel
++// is a per-mode TYPE-2 value move and legitimately diverges by lane — excluded from the assert
++const laneGlobal = (r: Row) => r.fired.filter(f => f.startsWith('shift:') || f.startsWith('variant:'))
++for (const [, pair] of byKey) if (pair.length === 2) {
++  if (JSON.stringify(pair[0].fired) !== JSON.stringify(pair[1].fired)) div++
++  if (JSON.stringify(laneGlobal(pair[0])) !== JSON.stringify(laneGlobal(pair[1]))) swapDiv++
+ }
+ console.log(`lane divergence: ${div} total, ${swapDiv} involving swaps/variants (must be 0 — type-1 is lane-global)`)
+ if (swapDiv) fail += swapDiv
+diff --git a/scripts/dark-audit.ts b/scripts/dark-audit.ts
+index c18f232..dd1b3a5 100644
+--- a/scripts/dark-audit.ts
++++ b/scripts/dark-audit.ts
+@@ -16,7 +16,7 @@ import { BRANDS } from '../src/brands'
+ import { SECONDARIES } from '../src/secondaries'
+ import { SIGNALS } from '../src/engine/signals'
+ import { resolveBrand, signalScalesFor } from '../src/engine/resolve'
+-import { checkCollision, stopDeltaE } from '../src/engine/collision'
++import { RED_GATE, redGateDist, checkCollision, stopDeltaE } from '../src/engine/collision'
+ import { wcagY, contrastRatio, apcaY, apcaLc } from '../src/engine/constraints'
+ import type { GeneratedScale } from '../src/engine/colorEngine'
+ 
+@@ -58,7 +58,7 @@ const findings: Record<string, Finding[]> = {
+   'F on-fill compliance (WCAG 4.5 + APCA 45)': [],
+ }
+ 
+-function audit(name: string, hex: string, scale: GeneratedScale, errorComponentRule = false) {
++function audit(name: string, hex: string, scale: GeneratedScale, redRepelled = false) {
+   // A: adjacent steps 1–8
+   for (let i = 0; i < 7; i++) {
+     const dLight = stopDeltaE(scale.light[i], scale.light[i + 1])
+@@ -117,11 +117,11 @@ function audit(name: string, hex: string, scale: GeneratedScale, errorComponentR
+     }
+   }
+ 
+-  // E: dark-mode red collision on the resolved scale. Orange-side
+-  // colliders are exempt — they intentionally keep identity; separation is
+-  // the uniform destructive component rule (outline in groups + icon).
++  // E: dark-mode red collision on the resolved scale. No exemptions since the C12
++  // gate — every brand cta sits outside the owner-calibrated red-family gate per mode
++  // (redRepelled is report metadata, not an exemption).
+   const err = SIGNAL_SCALES.get('red')!
+-  if (name !== 'red' && !errorComponentRule && checkCollision(scale, err.scale, err.def, 'dark').collides) {
++  if (name !== 'red' && redGateDist(scale.ctaDark, err.scale.ctaDark) <= RED_GATE.G - 1e-3) {
+     findings['E dark error collision'].push({
+       name, hex, severity: 1,
+       detail: `resolved scale still collides with red in dark mode`,
+@@ -129,11 +129,11 @@ function audit(name: string, hex: string, scale: GeneratedScale, errorComponentR
+   }
+ }
+ 
+-let componentRuleCount = 0
++let repelCount = 0
+ for (const b of BRANDS) {
+   const r = resolveBrand(b.hex, b.slug, { contrastProfile: SHIPPED_PROFILE })
+-  if (r.errorComponentRule) componentRuleCount++
+-  audit(b.name, b.hex, r.scale, r.errorComponentRule)
++  if (r.redRepel) repelCount++
++  audit(b.name, b.hex, r.scale, !!r.redRepel)
+ }
+ for (const sig of SIGNALS) {
+   audit(sig.name, sig.hex, SIGNAL_SCALES.get(sig.name)!.scale)
+@@ -141,7 +141,7 @@ for (const sig of SIGNALS) {
+ 
+ const auditedCount = BRANDS.length + SIGNALS.length
+ console.log(`audited ${auditedCount} scales (${BRANDS.length} brands + ${SIGNALS.length} signals)`)
+-console.log(`orange-side error colliders on the component rule: ${componentRuleCount}\n`)
++console.log(`red-repelled brand ctas: ${repelCount}\n`)
+ for (const [check, list] of Object.entries(findings)) {
+   list.sort((a, b) => b.severity - a.severity)
+   console.log(`${check}: ${list.length} failures`)
+diff --git a/scripts/gamut-sweep.ts b/scripts/gamut-sweep.ts
+index e05e3f4..b9a7b4f 100644
+--- a/scripts/gamut-sweep.ts
++++ b/scripts/gamut-sweep.ts
+@@ -16,7 +16,7 @@
+ import { generateScale } from '../src/engine/colorEngine'
+ import { clampChromaToGamut, oklchToLinearRgb } from '../src/engine/constraints'
+ import { resolveBrand, SIGNAL_SCALES } from '../src/engine/resolve'
+-import { checkCollision, checkHueCollision } from '../src/engine/collision'
++import { RED_GATE, redGateDist, checkCollision, checkHueCollision } from '../src/engine/collision'
+ 
+ function oklchToHex(L: number, C: number, H: number): string {
+   const c = clampChromaToGamut(L, C, H)
+@@ -38,8 +38,7 @@ let crashed = 0
+ const errorResidual: string[] = []
+ const shearInduced: string[] = []
+ const warningUnhandled: string[] = []
+-let rung1Count = 0
+-let componentRuleCount = 0
++let repelCount = 0
+ let shearCount = 0
+ let lemonCount = 0
+ let macaroniCount = 0
+@@ -62,16 +61,15 @@ for (const H of HUES) {
+         }
+ 
+         if (r.shearDeg !== 0) shearCount++
+-        if (r.rung1) rung1Count++
+-        if (r.errorComponentRule) componentRuleCount++
++        if (r.redRepel) repelCount++
+         if (r.warningVariant === 'lemon') lemonCount++
+         if (r.warningVariant === 'macaroni') macaroniCount++
+         for (const p of r.pending) pendingCounts[p] = (pendingCounts[p] ?? 0) + 1
+ 
+-        // 2. error guarantee: any residual collision must carry the
+-        // component-rule flag (orange-side, intentional identity keep)
++        // 2. error guarantee (C12 gate): NO brand cta may sit inside the owner-calibrated
++        // red-family gate — the repel releases at the boundary by construction
+         const err = SIGNAL_SCALES.get('red')!
+-        if (checkCollision(r.scale, err.scale, err.def, 'light').collides && !r.errorComponentRule) {
++        if (redGateDist(r.scale.cta, err.scale.cta) <= RED_GATE.G - 1e-3) {
+           errorResidual.push(`${hex} (L${L} C${C} H${H})`)
+         }
+ 
+@@ -102,7 +100,7 @@ for (const H of HUES) {
+ 
+ console.log(`swept ${total} brand colors (${HUES.length} hues x ${LIGHTNESSES.length} L x ${CHROMAS.length} C)`)
+ console.log(`crashes/malformed: ${crashed}`)
+-console.log(`sheared: ${shearCount} | rung-1 dark: ${rung1Count} | component rule (orange): ${componentRuleCount} | lemon: ${lemonCount} | macaroni: ${macaroniCount}`)
++console.log(`sheared: ${shearCount} | red repel: ${repelCount} | lemon: ${lemonCount} | macaroni: ${macaroniCount}`)
+ console.log(`pending (unresolved non-error): ${JSON.stringify(pendingCounts)}`)
+ console.log(`ERROR residual without a resolution: ${errorResidual.length}`)
+ errorResidual.slice(0, 10).forEach(s => console.log(`  ${s}`))
+diff --git a/scripts/secondary-sweep.ts b/scripts/secondary-sweep.ts
+index 5c6f739..25fc9e2 100644
+--- a/scripts/secondary-sweep.ts
++++ b/scripts/secondary-sweep.ts
+@@ -344,7 +344,7 @@ function demotionSection(): string {
+   const rows = (['light', 'dark'] as const).map(mode =>
+     modeRow([
+       themeCard('red primary + coral secondary', redMirror, mode,
+-        `MIRROR of rung-1: primary ${redMirror.primary.rung1 ? 'darkened (rung 1)' : 'kept'} · secondary → ${redMirror.secondary!.level}${redMirror.secondary!.demoted ? ' (auto)' : ''} — escapes lighter/quieter, opposite register`),
++        `MIRROR of the red repel: primary cta ${redMirror.primary.redRepel ? 'stepped clear of red (value repel)' : 'kept'} · secondary → ${redMirror.secondary!.level}${redMirror.secondary!.demoted ? ' (auto)' : ''} — escapes lighter/quieter, opposite register`),
+       themeCard('gold secondary — as demoted (subtle)', gold, mode,
+         gold.secondary!.notes.map(n => n).join(' · ') || 'no demotion'),
+       themeCard('same gold — undemoted for comparison', goldStd, mode,
+diff --git a/src/build.ts b/src/build.ts
+index ba1e1c1..c40192c 100644
+--- a/src/build.ts
++++ b/src/build.ts
+@@ -27,8 +27,7 @@ function generateBrandCss(brand: Brand): string {
+     const ra = resolveBrand(secondaryHex, `${name} accent`, { exact: brand.exact, style: brand.style, contrastProfile: SHIPPED_PROFILE })
+     secondary = ra.scale
+     if (ra.shearDeg !== 0) noteSuffix += ` · secondary shear ${ra.shearDeg > 0 ? '+' : ''}${ra.shearDeg.toFixed(1)}°`
+-    if (ra.rung1) noteSuffix += ` · secondary rung 1 → dark`
+-    if (ra.errorComponentRule) noteSuffix += ` · secondary error collision → component rule`
++    if (ra.redRepel) noteSuffix += ` · secondary action color stepped clear of red`
+   }
+ 
+   return brandCss(slug, name, r, secondary, noteSuffix, 'default', SHIPPED_PROFILE)
+diff --git a/src/engine/collision.ts b/src/engine/collision.ts
+index fa83cfe..083010b 100644
+--- a/src/engine/collision.ts
++++ b/src/engine/collision.ts
+@@ -3,14 +3,23 @@
+ import type { GeneratedScale, ColorStop } from './colorEngine'
+ import type { SignalDef } from './signals'
+ import { SIGNALS } from './signals'
+-import { VIVID_C, HUE_NOISE_C } from './colorMath'
++import { VIVID_C, HUE_NOISE_C, oklabDist } from './colorMath'
+ 
+ export const HUE_GATE_DEG = 30
+ export const DELTA_E_THRESHOLD = 0.16
+ 
+ export const DARK_DELTA_E_THRESHOLD = 0.10
+ 
+-export const RUNG1_ARCHETYPE = 'dark' as const
++// ── C12 VALUE REPEL (owner design 2026-07-09→10; replaces the whole red TYPE-2 remedy
++// family: rung-1's forced-dark archetype, the warm-forced bright anchor, and the cool-side
++// muted dark collider). ONE RULE, ONE METRIC: a brand cta must sit outside the
++// owner-calibrated RED-FAMILY GATE around red's cta in its own mode (redGateDist/RED_GATE,
++// colorMath.ts — fitted 0/67 to her raw-pair confusability marks). Inside → the cta exits
++// along L to the nearest release (dark mode: up only — the prominence floor owns the down
++// side). Chroma and hue ride the existing cta formula (no new color rule; hue stays
++// identity). Under the gate's weights the light exit is cheap (lighter pinkifies out of the
++// family fast) so releases land below the APCA dead zone with white text intact.
++export { RED_GATE, redGateDist } from './colorMath'
+ 
+ export type Mode = 'light' | 'dark'
+ 
+@@ -29,10 +38,7 @@ function hueDistance(h1: number, h2: number): number {
+ }
+ 
+ export function stopDeltaE(s1: ColorStop, s2: ColorStop): number {
+-  const rad = (h: number) => (h * Math.PI) / 180
+-  const a1 = s1.C * Math.cos(rad(s1.H)), b1 = s1.C * Math.sin(rad(s1.H))
+-  const a2 = s2.C * Math.cos(rad(s2.H)), b2 = s2.C * Math.sin(rad(s2.H))
+-  return Math.sqrt((s1.L - s2.L) ** 2 + (a1 - a2) ** 2 + (b1 - b2) ** 2)
++  return oklabDist(s1, s2)
+ }
+ 
+ export function checkCollision(
+diff --git a/src/engine/colorEngine.ts b/src/engine/colorEngine.ts
+index 3fb0205..163579d 100644
+--- a/src/engine/colorEngine.ts
++++ b/src/engine/colorEngine.ts
+@@ -52,6 +52,9 @@ export interface GeneratedScale {
+   ctaDark: ColorStop
+   ctaHoverDark: ColorStop
+ 
++  // C12 value repel: per-mode fired flags (the cta exited red's register) — annotation/audit data
++  ctaRepelled?: { light: boolean; dark: boolean }
++
+   onHighlightIsWhite?: boolean
+   onHighlightIsWhiteDark?: boolean
+ 
+@@ -71,8 +74,6 @@ export interface GenerateOptions {
+ 
+   subtleChromaScale?: number
+ 
+-  darkColliderFill?: 'muted'
+-
+   stop11DeepenL?: number
+   stop12DeepenL?: number
+ 
+@@ -103,6 +104,13 @@ export interface GenerateOptions {
+ 
+   loudCta?: boolean
+ 
++  // C12 VALUE REPEL v2 (owner-calibrated gate 2026-07-10): red's resolved cta per mode,
++  // injected by resolveBrand — the resolver has no cross-scale view. A cta inside the
++  // red-family gate (RED_GATE, colorMath.ts) exits along L to the nearest release (dark:
++  // up only — the prominence floor owns the down side); chroma/hue ride the existing cta
++  // formula. Absent (signals, neutral, secondary, exact) = byte-identical.
++  ctaRepel?: { light: { L: number; C: number; H: number }; dark: { L: number; C: number; H: number } }
++
+   heat?: number
+ 
+   // contrast PROFILE (opt-in): 'apca' re-solves every declared wcag contrast require under APCA Lc
+@@ -176,6 +184,7 @@ export function generateScale(
+     ctaHover: makeStop(10, lightRamp.roles.ctaHover.L, lightRamp.roles.ctaHover.C, lightRamp.roles.ctaHover.H),
+     ctaDark,
+     ctaHoverDark: makeStop(10, darkRamp.roles.ctaHover.L, darkRamp.roles.ctaHover.C, darkRamp.roles.ctaHover.H),
++    ctaRepelled: { light: !!lightRamp.roles.cta.repelled, dark: !!darkRamp.roles.cta.repelled },
+     onHighlightIsWhite: opts?.highlight ? lightRamp.ons.onHighlightIsWhite : undefined,
+     onHighlightIsWhiteDark: opts?.highlight ? darkRamp.ons.onHighlightIsWhite : undefined,
+     identityHex: hex.toUpperCase(),
+diff --git a/src/engine/colorMath.ts b/src/engine/colorMath.ts
+index 285e5f4..88cc9e5 100644
+--- a/src/engine/colorMath.ts
++++ b/src/engine/colorMath.ts
+@@ -56,6 +56,44 @@ export function hueDelta(h: number, center: number): number {
+   return d
+ }
+ 
++// OKLab euclidean distance between two OKLCH points — the type-2 register metric.
++// Lives here (pure math) so the collision gate (stopDeltaE) and the cta repel producer
++// share ONE implementation.
++export function oklabDist(a: { L: number; C: number; H: number }, b: { L: number; C: number; H: number }): number {
++  const rad = (h: number) => (h * Math.PI) / 180
++  const a1 = a.C * Math.cos(rad(a.H)), b1 = a.C * Math.sin(rad(a.H))
++  const a2 = b.C * Math.cos(rad(b.H)), b2 = b.C * Math.sin(rad(b.H))
++  return Math.sqrt((a.L - b.L) ** 2 + (a1 - a2) ** 2 + (b1 - b2) ** 2)
++}
++
++// ── C12 RED-FAMILY GATE (owner-calibrated 2026-07-10 on raw button pairs; fit v5,
++// 0/67 of her marks misclassified) ─────────────────────────────────────────────────
++// The perceptual "confusable with the red signal" distance around red's cta. Plain OKLab
++// distance does NOT line up with confusability (owner-measured): each axis carries its own
++// weight — DARKER persists as danger (×0.65, the zone reaches ΔL .139), LIGHTER pinkifies
++// fast (×1.6, ends at ΔL .057), DUST kills similarity fast (×1.4, ends at ΔC .065), the
++// GOLD-side hue exit is faster than the magenta side (arc ×1.6 vs ×1 — orange leaves the
++// family at ~22°, pink stays to ~27°), and MORE-saturated-than-red never exits (super-red
++// is still red). One radius G gates firing AND release; releaseMargin is the solve headroom.
++export const RED_GATE = {
++  wDark: 0.65, wLight: 1.60, wDust: 1.40, wGoldArc: 1.60,
++  G: 0.090, releaseMargin: 0.005,
++} as const
++export function redGateDist(c: { L: number; C: number; H: number }, red: { L: number; C: number; H: number }): number {
++  const dh = ((c.H - red.H + 540) % 360) - 180   // signed: + gold-ward, − magenta-ward
++  const meanC = 2 * Math.sqrt(Math.max(0, c.C) * Math.max(0, red.C))
++  const arcMag = meanC * Math.sin(Math.abs(Math.min(0, dh)) * Math.PI / 360)
++  const arcGold = meanC * Math.sin(Math.max(0, dh) * Math.PI / 360)
++  return Math.hypot(
++    RED_GATE.wDark * Math.max(0, red.L - c.L),
++    RED_GATE.wLight * Math.max(0, c.L - red.L),
++    RED_GATE.wDust * Math.max(0, red.C - c.C),
++    Math.max(0, c.C - red.C),
++    arcMag,
++    RED_GATE.wGoldArc * arcGold,
++  )
++}
++
+ export const RED_TORSION_CENTER_H = 35.5
+ export const RED_TORSION_SOFTNESS = 3.5
+ 
+diff --git a/src/engine/cssRender.ts b/src/engine/cssRender.ts
+index b615742..b7144c5 100644
+--- a/src/engine/cssRender.ts
++++ b/src/engine/cssRender.ts
+@@ -160,9 +160,7 @@ export function annotationNote(r: ResolvedBrand, opts?: { archetypeOverride?: st
+   let note = ''
+   if (r.shearDeg !== 0) note += ` · shear ${r.shearDeg > 0 ? '+' : ''}${r.shearDeg.toFixed(1)}°`
+   if (opts?.archetypeOverride) note += ` · archetype override → ${opts.archetypeOverride}`
+-  if (r.rung1) note += ` · conflict with red resolved — primary darkened`
+-  if (r.darkCollider) note += ` · dark mode: fill shifts to a softer register to stay distinct from red`
+-  if (r.errorComponentRule) note += ` · neighbors red — destructive actions use outline styling in groups`
++  if (r.redRepel) note += ` · conflict with red resolved — the action color steps ${r.redRepel.light && r.redRepel.dark ? 'clear of red in both modes' : r.redRepel.light ? 'clear of red' : 'clear of red in dark mode'} (value move, hue kept)`
+   if (r.warningVariant === 'lemon') note += ` · yellow signal shifted to a cooler lemon`
+   if (r.warningVariant === 'macaroni') note += ` · yellow signal kept standard amber (cool-yellow brand)`
+   for (const o of r.signalOverrides.filter(o => o.name !== 'yellow')) note += ` · ${o.note}`
+diff --git a/src/engine/resolve.ts b/src/engine/resolve.ts
+index b5fb5ce..c1f0f18 100644
+--- a/src/engine/resolve.ts
++++ b/src/engine/resolve.ts
+@@ -1,6 +1,6 @@
+ 
+ 
+-import { generateScale, generateSubtleSecondary, applyRedRepelRender, inRedRepelBand, RED_PIVOT_H, type GeneratedScale, type ContrastProfile } from './colorEngine'
++import { generateScale, generateSubtleSecondary, applyRedRepelRender, inRedRepelBand, type GeneratedScale, type ContrastProfile } from './colorEngine'
+ import { darkChromaCurve } from './darkChromaCurve'
+ import type { Archetype } from './archetypes'
+ import { SIGNALS, type SignalDef } from './signals'
+@@ -11,8 +11,10 @@ import {
+   SECONDARY_NOTE_MIN_V,
+   stopDeltaE,
+   warningVariant,
+-  RUNG1_ARCHETYPE,
++  RED_GATE,
++  redGateDist,
+ } from './collision'
++import { apcaY, apcaLc, encodedChannels } from './constraints'
+ import { pickSignalShift, signalSwapVariants } from './signalShift'
+ 
+ type SignalScales = Map<SignalDef['name'], { def: SignalDef; scale: GeneratedScale }>
+@@ -45,30 +47,27 @@ export interface ResolvedBrand {
+   scale: GeneratedScale
+ 
+   shearDeg: number
+-  rung1: SignalDef['name'] | null
+ 
+-  darkCollider: 'muted' | null
++  // C12 VALUE REPEL: per-mode fired flags — the cta exited red's register (the one rule that
++  // replaced rung-1's forced-dark, the warm-forced bright anchor, and the muted dark collider).
++  // null = the require was satisfied without moving.
++  redRepel: { light: boolean; dark: boolean } | null
++
+   warningVariant: 'lemon' | 'macaroni' | null
+ 
+   pending: SignalDef['name'][]
+   signalOverrides: SignalOverride[]
+-
+-  errorComponentRule: boolean
+ }
+ 
+-function collisionStatus(scale: GeneratedScale, sigScales: SignalScales): { trigger: SignalDef['name'] | null; pending: SignalDef['name'][] } {
+-  let trigger: SignalDef['name'] | null = null
++// TYPE-1 (hue/family) detection for the non-red signals — red's TYPE-2 register proximity is
++// owned by the cta repel require inside the resolver (C12); no gate needed here (the ΔE metric
++// self-limits to red-adjacent registers).
++function hueCollisionPending(scale: GeneratedScale, sigScales: SignalScales): SignalDef['name'][] {
+   const pending: SignalDef['name'][] = []
+   for (const { def, scale: sigScale } of sigScales.values()) {
+-    if (def.name === 'red') {
+-      // rung-1 eligibility stays TYPE-2 (cta ΔE): the dark-archetype regen is a value
+-      // move; red's whole-ramp remedy is the always-on repel, not a gated rule (C7 split)
+-      if (checkCollision(scale, sigScale, def, 'light').collides) trigger = def.name
+-    } else if (checkHueCollision(scale, sigScale, def).collides) {
+-      pending.push(def.name)
+-    }
++    if (def.name !== 'red' && checkHueCollision(scale, sigScale, def).collides) pending.push(def.name)
+   }
+-  return { trigger, pending }
++  return pending
+ }
+ 
+ export function resolveBrand(
+@@ -94,7 +93,20 @@ export function resolveBrand(
+ ): ResolvedBrand {
+   const sigScales = signalScalesFor(opts?.contrastProfile)
+ 
++  // C12 VALUE REPEL: red's resolved cta pair + the declared distance, injected into the cta
++  // producer as a require (the resolver has no cross-scale view). Off for exact (hands-off by
++  // contract) and for the secondary (its red yield is the THEME's subtle treatment — the
++  // mirror of the repel, owner rule).
++  const red = sigScales.get('red')!.scale
++  const repelOpt = opts?.exact || opts?.skipCollisionRules ? {} : {
++    ctaRepel: {
++      light: { L: red.cta.L, C: red.cta.C, H: red.cta.H },
++      dark: { L: red.ctaDark.L, C: red.ctaDark.C, H: red.ctaDark.H },
++    },
++  }
++
+   const floor = {
++    ...repelOpt,
+     darkFillMinL: DARK_BRAND_FILL_MIN_L,
+     enforceOnFillContrast: !opts?.exact,
+ 
+@@ -107,51 +119,19 @@ export function resolveBrand(
+     contrastProfile: opts?.contrastProfile,
+   }
+ 
+-  const rung1Opts = { stop11DeepenL: 0.07, stop12DeepenL: 0.05 }
+   let scale = generateScale(hex, name, undefined, floor)
+ 
+-  let rung1: SignalDef['name'] | null = null
+   let pending: SignalDef['name'][] = []
+-  let errorComponentRule = false
+ 
+   if (opts?.archetypeOverride) {
+     scale = generateScale(hex, name, opts.archetypeOverride, floor)
+   } else if (!opts?.exact && !opts?.skipCollisionRules) {
+-    const status = collisionStatus(scale, sigScales)
+-    if (status.trigger) {
+-
+-      if (inRedRepelBand(scale.brandH)) {
+-        rung1 = status.trigger
+-        scale = generateScale(hex, name, RUNG1_ARCHETYPE, { ...floor, ...rung1Opts })
+-      } else {
+-        errorComponentRule = true
+-      }
+-    }
+-    pending = status.pending
++    pending = hueCollisionPending(scale, sigScales)
+   }
+ 
+-  let darkCollider: 'muted' | null = null
+-  if (!opts?.exact && !opts?.skipCollisionRules) {
+-    const err = sigScales.get('red')!
+-    // COOL SIDE ONLY: the muted float is the value-separation for brands whose dark hue
+-    // can't exit (the cool side owns the pink exit already). Warm of the pivot the repel
+-    // separates by hue and the directive's dark-cta treatment applies instead — muted's
+-    // pastel anchor would also re-collide the ramp (it re-anchors the dark torsion at the
+-    // pastel L, dragging every low stop back onto the signal hue).
+-    if (checkCollision(scale, err.scale, err.def, 'dark').collides) {
+-      if (inRedRepelBand(scale.brandH) && scale.brandH <= RED_PIVOT_H) {
+-        darkCollider = 'muted'
+-        scale = generateScale(
+-          hex,
+-          name,
+-          opts?.archetypeOverride ?? (rung1 ? RUNG1_ARCHETYPE : undefined),
+-          { darkColliderFill: darkCollider, ...floor, ...(rung1 ? rung1Opts : {}) }
+-        )
+-      } else {
+-        errorComponentRule = true
+-      }
+-    }
+-  }
++  const redRepel = scale.ctaRepelled && (scale.ctaRepelled.light || scale.ctaRepelled.dark)
++    ? scale.ctaRepelled
++    : null
+ 
+   const signalOverrides: SignalOverride[] = []
+ 
+@@ -170,16 +150,18 @@ export function resolveBrand(
+         pending = pending.filter(n => n !== sigName)
+       }
+     }
++
+   }
+ 
+-  // cta hue follows the repel. Cool side: rung-1's dark value separates on its own, the cta
+-  // keeps identity hue (!rung1 preserves the shipped values). Warm side: the dark treatment
+-  // AND the warm hue compose — "dark tomato, not dark red" (owner directive, CATALOG C6).
+-  if (!opts?.exact && !opts?.archetypeOverride && (!rung1 || scale.brandH > RED_PIVOT_H) && inRedRepelBand(scale.brandH)) {
++  // cta hue follows the C6 repel for in-band brands (the shipped "dark tomato" identity
++  // treatment) — EXCEPT when the C12 value repel fired in light: the repelled cta keeps the
++  // brand's own hue (owner ruling 2026-07-09, "maintain its own color"); its separation is the
++  // value exit, not a hue push.
++  if (!opts?.exact && !opts?.archetypeOverride && !redRepel?.light && inRedRepelBand(scale.brandH)) {
+     applyRedRepelRender(scale, true, opts?.contrastProfile)
+   }
+ 
+-  return { scale, shearDeg: 0, rung1, darkCollider, warningVariant: warnVariant, pending, signalOverrides, errorComponentRule }
++  return { scale, shearDeg: 0, redRepel, warningVariant: warnVariant, pending, signalOverrides }
+ }
+ 
+ // ════════════════════════════════════════════════════════════════════════════════════════
+@@ -306,6 +288,25 @@ export function resolveTheme(input: {
+   const sigScales = signalScalesFor(cp)
+   const notes: string[] = []
+ 
++  // C12 exact-mode ADVICE (owner ruling 2026-07-09: outline is "something we recommend
++  // for exact mode, not something we do"). Exact skips every collision rule, so the file
++  // carries recommendations instead: the outline shape for red-register clashes, and a
++  // legibility warning for the true dead zones (measured: 34/288 exact seed-lanes have
++  // no on-cta pole reaching Lc 60; the pick itself is already the best pole).
++  if (pExact) {
++    const red = sigScales.get('red')!
++    if (redGateDist(primary.scale.cta, red.scale.cta) <= RED_GATE.G)
++      notes.push("exact mode: this color sits in the red signal's family — outline style is recommended for destructive actions beside the primary cta")
++    const c = primary.scale.cta
++    const Ybg = apcaY(...encodedChannels(c.L, c.C, c.H))
++    const best = Math.max(
++      Math.abs(apcaLc(apcaY(...encodedChannels(1, 0, 0)), Ybg)),
++      Math.abs(apcaLc(apcaY(...encodedChannels(0, 0, 0)), Ybg))
++    )
++    if (best < 60)
++      notes.push(`exact mode: no on-cta text reaches APCA Lc 60 on this cta (best ${best.toFixed(0)}) — the better pole ships; recommended mode guarantees text contrast`)
++  }
++
+   // the subtle chroma model per style (tint = the owner's light pick ×8; pastel = k .35);
+   // outline rides the tint ramp — its cta re-resolution happens at the EMITTERS
+   const subtleModel = secStyle === 'pastel' ? { pastelK: SUBTLE_PASTEL_K } : { mult: SUBTLE_TINT_MULT }
+diff --git a/src/engine/stopTable.ts b/src/engine/stopTable.ts
+index d16ceeb..7809d0f 100644
+--- a/src/engine/stopTable.ts
++++ b/src/engine/stopTable.ts
+@@ -98,8 +98,6 @@ export const DARK_STOP_9_MIN_L = 0.63
+ 
+ export const DARK_BRAND_FILL_MIN_L = 0.70
+ 
+-export const DARK_COLLIDER_MUTED_L = 0.80
+-export const DARK_COLLIDER_MUTED_CHROMA_SCALE = 0.55
+ 
+ export const GOLD_SPINE: Array<[number, number]> = [
+   [0.30, 47], [0.57, 50], [0.74, 71], [0.80, 88], [0.87, 103], [0.97, 110],
+diff --git a/src/reqtoken/producers.ts b/src/reqtoken/producers.ts
+index 4c1496f..1173111 100644
+--- a/src/reqtoken/producers.ts
++++ b/src/reqtoken/producers.ts
+@@ -7,7 +7,7 @@ import { classifyArchetype, medianLForArchetype, type Archetype } from '../engin
+ import { clampChromaToGamut, wcagY, contrastRatio, legalRatio, findMaxLForContrast, findLForContrast, apcaY, apcaLc, encodedChannels } from '../engine/constraints'
+ import { perceptualRungL, apparentL, grayApparentL, solveLForApparent } from '../engine/perceptualL'
+ import {
+-  hexToOklch, maxChromaAt, goldSpineHue, torsionedHue, gauss, sigmoid, hueDelta,
++  hexToOklch, maxChromaAt, goldSpineHue, torsionedHue, gauss, sigmoid, hueDelta, oklabDist, redGateDist, RED_GATE,
+   SPINE_OFFPATH_SIGMA, RED_TORSION_CENTER_H, RED_TORSION_SOFTNESS, VIVID_C, HUE_NOISE_C, MUTED_BLEND_DENOM,
+   LIGHT_DRIFT_COOL_HI, LIGHT_DRIFT_COOL_RANGE, VIVID_LIFT_BLEND, VIVID_LIFT_L_LO, VIVID_LIFT_L_RANGE,
+   CREAM_UPPER_H, CREAM_UPPER_SOFTNESS,
+@@ -15,7 +15,7 @@ import {
+   DEEPER_STRENGTH, redRepelShiftDeg, RED_BAND_LO_H, applyChromaFloor,
+   DARK_FLOOR_FULL_C, DARK_FLOOR_MUTED_MAX_C, onTextIsWhite,
+ } from '../engine/colorMath'
+-import { DARK_STOP_9_MIN_L, DARK_COLLIDER_MUTED_L, DARK_COLLIDER_MUTED_CHROMA_SCALE } from '../engine/stopTable'
++import { DARK_STOP_9_MIN_L } from '../engine/stopTable'
+ import { darkCtaTrim } from '../engine/darkChromaCurve'
+ import type { GenerateOptions } from '../engine/colorEngine'   // type-only: erased at runtime, no cycle
+ 
+@@ -265,12 +265,8 @@ export function onHighlightIsWhiteAt(L: number, C: number, H: number, ratioFloor
+ // `specFloorL` = the declared role floor (spec data); caller opts (darkFillMinL) override it.
+ export function buildDarkContext(ctx: Ctx, specFloorL: number = DARK_STOP_9_MIN_L) {
+   const opts = ctx.opts
+-  let dark9L = Math.max(ctx.scaleL, opts?.darkFillMinL ?? specFloorL)
+-  let darkC9 = opts?.darkChromaCurve && !opts?.loudCta ? ctx.brandC * darkCtaTrim(ctx.darkH) : ctx.brandC
+-  if (opts?.darkColliderFill === 'muted') {
+-    dark9L = DARK_COLLIDER_MUTED_L
+-    darkC9 = ctx.brandC * DARK_COLLIDER_MUTED_CHROMA_SCALE
+-  }
++  const dark9L = Math.max(ctx.scaleL, opts?.darkFillMinL ?? specFloorL)
++  const darkC9 = opts?.darkChromaCurve && !opts?.loudCta ? ctx.brandC * darkCtaTrim(ctx.darkH) : ctx.brandC
+   const darkHueAtL = (L: number) => torsionedHue(ctx.darkH, L, dark9L, ctx.gOffPath)
+   return { dark9L, darkC9, darkHueAtL }
+ }
+@@ -399,3 +395,32 @@ export function ctaDarkEnforcedLApca(ctx: Ctx, base: { L: number; C: number; H:
+ export function onFillIsWhiteDarkAt(L: number, C: number, H: number, enforce: boolean): boolean {
+   return onTextIsWhite(apcaYAt(L, C, H), L, C, H, enforce)
+ }
++
++// ================= C12 VALUE REPEL v2 (owner-calibrated gate, 2026-07-10) =================
++// FIRE and RELEASE share ONE metric: the owner-fitted red-family gate (redGateDist /
++// RED_GATE, colorMath.ts — her raw-pair marks, 0/67 misclassified). A cta inside the gate
++// exits along L in the caller's chosen direction until the gate releases (G + margin).
++// Chroma/hue ride the caller's existing cta formula — no new color rule; hue stays identity.
++// Under the owner's weights the LIGHT exit is ~2.5× cheaper than the dark one (lighter
++// pinkifies out of the red family fast), so up-releases land BELOW the APCA dead zone with
++// white text intact — the gate metric itself retires the old text-bar/identity trade.
++// Returns null = outside the gate, no repel — byte-identical path.
++export function repelCtaL(
++  baseL: number, cFor: (L: number) => number, H: number,
++  red: { L: number; C: number; H: number },
++  up: boolean,
++): number | null {
++  const at = (L: number) => ({ L, C: clampChromaToGamut(L, cFor(L), H), H })
++  const gd = (L: number) => redGateDist(at(L), red)
++  if (gd(baseL) > RED_GATE.G) return null
++  const release = RED_GATE.G + RED_GATE.releaseMargin
++  let lo = up ? baseL : 0.03, hi = up ? 0.97 : baseL
++  for (let i = 0; i < 28; i++) {
++    const m = (lo + hi) / 2
++    const ok = gd(m) >= release
++    if (up) { ok ? (hi = m) : (lo = m) } else { ok ? (lo = m) : (hi = m) }
++  }
++  const L = up ? hi : lo
++  // unreachable exit parks at the extreme — the gate verify downstream flags it loud
++  return gd(L) < release ? (up ? 0.97 : 0.03) : L
++}
+diff --git a/src/reqtoken/resolve.ts b/src/reqtoken/resolve.ts
+index ba58b50..95969da 100644
+--- a/src/reqtoken/resolve.ts
++++ b/src/reqtoken/resolve.ts
+@@ -9,7 +9,7 @@
+ // the blessed snapshot audits are the standing regression gate.
+ import { apparentL, perceptualRungL, perceptualDarkC, solveLForApparent } from '../engine/perceptualL'
+ import { clampChromaToGamut, wcagY, contrastRatio, legalRatio, findMaxLForContrast, apcaLc } from '../engine/constraints'
+-import { hexToOklch, srgbEmitChannels, maxChromaAt } from '../engine/colorMath'
++import { hexToOklch, srgbEmitChannels } from '../engine/colorMath'
+ import { hoverL } from '../engine/archetypes'
+ import { MODE_SPECS, type ModeSpec, type StopReq, type RoleReq, type Require } from './spec'
+ import {
+@@ -18,7 +18,7 @@ import {
+   separationClampLight,
+   darkScaleChromaAt, darkInkChromaAt, darkHighlightChromaAt, placeDark, placeDarkDelta, deltaDarkTargetL,
+   onFillIsWhiteLight, onFillIsWhiteDarkAt, onHighlightIsWhiteAt, ctaLightL, ctaDarkEnforcedL,
+-  ctaLightLApca, ctaDarkEnforcedLApca,
++  ctaLightLApca, ctaDarkEnforcedLApca, repelCtaL,
+   apcaYAt, findMaxLForApcaLc, APCA_SOLVE_MARGIN_LC, APCA_TOL_LC,
+ } from './producers'
+ 
+@@ -30,7 +30,7 @@ export type ResolvedStop = {
+   stop: number; group: string; L: number; C: number; H: number; hex: string; Y: number; appL: number
+   clamped: boolean; unresolvable?: string
+ }
+-export type ResolvedRole = { role: RoleReq['role']; L: number; C: number; H: number; hex: string; Y: number; appL: number; enforced?: boolean }
++export type ResolvedRole = { role: RoleReq['role']; L: number; C: number; H: number; hex: string; Y: number; appL: number; enforced?: boolean; repelled?: boolean }
+ export type Seed = { hex: string; L: number; C: number; H: number }
+ export type ResolvedRamp = {
+   mode: 'light' | 'dark'
+@@ -291,12 +291,33 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
+   if (mode === 'light') {
+     // on-fill judged PRE-enforcement at fill9 (:271–273); the enforce re-solve feeds FROM it (:354–358)
+     onFillIsWhite = onFillIsWhiteLight(ctx, enforceLc !== undefined ? false : onFillEnforce)
+-    const light9L = enforceLc !== undefined
++    let light9L = enforceLc !== undefined
+       ? ctaLightLApca(ctx, onFillIsWhite, onFillEnforce, enforceLc)
+       : ctaLightL(ctx, onFillIsWhite, onFillEnforce)
+-    cta = emitRole('cta', light9L, ctx.cAt('light', light9L, (ctaReq.chromaMult ?? 1) * ctx.brandC), ctx.brandH)
++    // C12 VALUE REPEL v2 (owner-calibrated gate 2026-07-10): a cta inside the red-family
++    // gate (opts.ctaRepel — red's cta injected by resolveBrand; the resolver has no
++    // cross-scale view) exits along L to the NEAREST release — both directions solved,
++    // the smaller move ships. Chroma/hue = this same cta formula; hue stays identity.
++    // No-op (null) when outside the gate — the un-repelled path is byte-identical.
++    const ctaCFor = (L: number) => ctx.cAt('light', L, (ctaReq.chromaMult ?? 1) * ctx.brandC)
++    let repelled = false
++    if (ctx.opts?.ctaRepel) {
++      const rp = ctx.opts.ctaRepel
++      const upL = repelCtaL(light9L, ctaCFor, ctx.brandH, rp.light, true)
++      if (upL !== null) {
++        const downL = repelCtaL(light9L, ctaCFor, ctx.brandH, rp.light, false)
++        light9L = downL !== null && Math.abs(downL - light9L) < Math.abs(upL - light9L) ? downL : upL
++        repelled = true
++      }
++    }
++    cta = emitRole('cta', light9L, ctaCFor(light9L), ctx.brandH)
+     ctaHover = emitRole('cta-hover', hoverL(light9L), ctx.cAt('light', hoverL(light9L), (hoverReq?.chromaMult ?? 1) * ctx.brandC), ctx.brandH)
+     if (light9L !== ctx.scaleL) { cta.enforced = true; ctaHover.enforced = true }
++    if (repelled) {
++      cta.repelled = true; ctaHover.repelled = true
++      // the shipped pole re-judged AT the exited fill (the pre-enforce judge ran at scaleL)
++      onFillIsWhite = onFillIsWhiteDarkAt(cta.L, cta.C, cta.H, enforceLc !== undefined ? false : onFillEnforce)
++    }
+   } else {
+     // dark: base cta from the pre-resolved anchor; judge on-fill at the emitted base; then the enforce re-solve
+     const d = dctx!
+@@ -316,6 +337,20 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
+       ctaHover = emitRole('cta-hover', hoverL(enforcedL), ctx.cAt('dark', hoverL(enforcedL), d.darkC9), ctx.darkH)
+       cta.enforced = true; ctaHover.enforced = true
+     }
++    // C12 VALUE REPEL v2 (dark): the same gate solved in dark's own geometry — the
++    // prominence floor owns the down side, so the exit is UP-only, from the enforced base.
++    // The light exit is the gate's cheap direction, so the release stays near the floor.
++    if (ctx.opts?.ctaRepel) {
++      const rp = ctx.opts.ctaRepel
++      const cFor = (L: number) => ctx.cAt('dark', L, d.darkC9)
++      const rl = repelCtaL(cta.L, cFor, ctx.darkH, rp.dark, true)
++      if (rl !== null) {
++        cta = emitRole('cta', rl, cFor(rl), ctx.darkH)
++        ctaHover = emitRole('cta-hover', hoverL(rl), cFor(hoverL(rl)), ctx.darkH)
++        cta.repelled = true; ctaHover.repelled = true
++        onFillIsWhite = onFillIsWhiteDarkAt(cta.L, cta.C, cta.H, enforceLc !== undefined ? false : onFillEnforce)
++      }
++    }
+   }
+ 
+   // on-highlight: judged at the emitted highlight-9 — never feeds back into the fill. The

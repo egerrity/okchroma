@@ -1,0 +1,46 @@
+{
+  "purpose": "EVERYTHING the owner has ruled/marked for C12, one file — the deep proposal session's ground truth (2026-07-10). Sources: c12-gate-fit-v7.ts, direction-marks.json, delivery-marks.json, error-range-checks.json, two-problems-note.md, helmlab-collision-research.md, CATALOG C12 (parked design).",
+  "P1_confusable_gate_v7": {
+    "meaning": "does this color read as conflicting with the red signal, at a glance (CATEGORY, not distance)",
+    "metric": "redGateDist weights — refit v7 on 100 marks, 0/100: wDark 0.70, wLight 1.60, wDust 1.40, wGold 1.60, vivid never exits, G 0.090",
+    "edges_from_red_cta": { "dark_dL": 0.129, "light_dL": 0.057, "dust_dC": 0.065, "magenta_deg": 27, "gold_deg": 22 },
+    "anchor": "red signal cta (apca: L0.593 C0.194 H33.3)"
+  },
+  "error_eligible_range": {
+    "meaning": "colors she would ACCEPT as the error color itself (Instrument D, lone Delete buttons, no anchor)",
+    "core": ["H24 C0.2 L0.45", "H32 C0.2 L0.45", "H24 C0.2 L0.55", "H32 C0.2 L0.55", "H40 C0.2 L0.55"],
+    "edge_red_move_latitude_lighter": ["H24 C0.2 L0.65", "H32 C0.2 L0.65", "H32 C0.2 L0.75"],
+    "empty": "L0.35 slice ('no nothing') — deep maroons NOT error-eligible; nothing dusty (<=C0.16), pink (H<=16), or gold (H>=48 except H40 L0.55) at any lightness",
+    "reading": "error identity = vivid C0.2, H24-40, L0.45-0.55; signal may move lighter to L0.65 (H24-32) / L0.75 (H32) if de-conflicting, never darker than ~0.45"
+  },
+  "direction_rulings": {
+    "L0.45_fired": "all DARK",
+    "L0.55_fired": "all LIGHT (zero dark; 22 of 60 P.130-fired cells ruled out-of-range entirely)",
+    "L0.65_fired": "all LIGHT",
+    "L0.73": "none fire",
+    "principle": "saturated colors going dark get SCARIER; lighter reads salmon/pink/orange. Deep seeds exit dark (already deep = keeps character), everything else light",
+    "dark_mode": "NOT individually ruled — dark derives from the system (delta model), her explicit call"
+  },
+  "P2_truly_different": {
+    "meaning": "adjacent/side-by-side distinctness (vibration) — helmlab MetricSpace difference, COMBVD task == her flush strips",
+    "helmlab_at_her_marks": { "mean": 0.116, "up_mean": 0.112, "down_vivid": [0.126, 0.128, 0.133], "dusty_censored_at_rung1": [0.095, 0.099] },
+    "raw_marks": { "up": { "H16C0.18": 0.08, "H28C0.2": 0.10, "H36C0.2": 0.10, "H36C0.14": 0.02, "H44C0.17": 0.02 }, "down": { "H16C0.18": 0.02, "H28C0.2": 0.18, "H36C0.2": 0.18, "H36C0.14": 0.02, "H44C0.17": "unmarked" } },
+    "note": "4 marks INSIDE the P1 gate — P2 != P1 proven; wiring floor = never ship inside the P1 gate",
+    "helmlab_ruling": "owner 2026-07-10: allowed for collisions incl runtime"
+  },
+  "her_design_instinct": "move the RED for the vibrant colors (per-brand red variant) — echoes parked CATALOG C12: brand->bright + red->RICH per-brand variant, lemon-swap family; signalOverrides machinery shipped (yellow/green/info)",
+  "constraints": [
+    "apca dead zone: white text ends L~0.70, black begins L~0.77 (C0.16-0.2 warm band; deadzone.json) — up-exits land <=0.70 or >=0.77; owner ruled text-bar-wins historically",
+    "dark cta = prominence-floored anchor (delta model) — dark repel derived + verified, never calibrated",
+    "exact mode untouched (advice only); secondary = theme rules (skipCollisionRules); C6 hue repel ships for in-band brands EXCEPT when C12 value repel fired in light (hue stays identity)",
+    "no engine edits without owner OK; real pipeline for all measurement; exhibits clean (no unrequested markers); bless/commit only on her word",
+    "hover proximity known open knob (repelled-down hovers move toward red, unasserted)"
+  ],
+  "failure_modes_to_avoid": [
+    "release-at-boundary = invisible moves (v5 failure)",
+    "one number doing multiple jobs (fire/direction/delivery conflation)",
+    "nearest-release direction rule (owner never said it)",
+    "enforcement leaks in judging pages",
+    "over-doing it: 'de-collide red without overdoing it' (her framing at restart)"
+  ]
+}

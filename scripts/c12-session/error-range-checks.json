@@ -1,0 +1,18 @@
+{
+  "savedAt": "transcribed-from-owner-screenshots-2026-07-10",
+  "note": "Her round-1 checks were made on a page served from the wrong port (POST failed, corner showed NOT SAVED); transcribed here verbatim from her 4 screenshots (L0.45/0.55/0.65/0.75). TIERS (her words): L0.65+ checks = EDGE CASE — 'not my go to picks, but if we needed to de-conflict by going this direction [lighter]' = the red-move latitude, NOT core error range. L0.45/L0.55 = core. L0.35 CONFIRMED EMPTY (owner: 'no nothing' — deep maroons are NOT error-eligible; the error range does not extend down). DATASET COMPLETE.",
+  "marks": {
+    "H24|C0.2|L0.45": true,
+    "H32|C0.2|L0.45": true,
+    "H24|C0.2|L0.55": true,
+    "H32|C0.2|L0.55": true,
+    "H40|C0.2|L0.55": true,
+    "H24|C0.2|L0.65": true,
+    "H32|C0.2|L0.65": true,
+    "H32|C0.2|L0.75": true
+  },
+  "tiers": {
+    "core": ["H24|C0.2|L0.45", "H32|C0.2|L0.45", "H24|C0.2|L0.55", "H32|C0.2|L0.55", "H40|C0.2|L0.55"],
+    "edge_deconflict_lighter": ["H24|C0.2|L0.65", "H32|C0.2|L0.65", "H32|C0.2|L0.75"]
+  }
+}
