@@ -5,7 +5,7 @@
 // "simplify" an expression here without eye-check + re-bless.
 import { classifyArchetype, medianLForArchetype, type Archetype } from '../engine/archetypes'
 import { clampChromaToGamut, wcagY, contrastRatio, legalRatio, findMaxLForContrast, findLForContrast, apcaY, apcaLc, encodedChannels } from '../engine/constraints'
-import { perceptualRungL } from '../engine/perceptualL'
+import { perceptualRungL, apparentL, grayApparentL, solveLForApparent } from '../engine/perceptualL'
 import {
   hexToOklch, maxChromaAt, goldSpineHue, torsionedHue, gauss, sigmoid, hueDelta,
   SPINE_OFFPATH_SIGMA, RED_TORSION_CENTER_H, RED_TORSION_SOFTNESS, VIVID_C, HUE_NOISE_C, MUTED_BLEND_DENOM,
@@ -309,31 +309,23 @@ export function placeDark(dctx: DarkCtx, rootL: number, chromaAt: (L: number) =>
   return { L, C: chromaAt(L), H: dctx.darkHueAtL(L) }
 }
 
-// ===== DELTA-KEYED dark placement (dark round, gated by DELTA_DARK env; byte-identical when off) =====
-// Dark is a LIVE FUNCTION OF LIGHT: a light color sitting contrast Ci above the light ground (white)
-// becomes a dark color sitting the SAME Ci above the dark ground (~0.178, the neutral dark page — NOT pure
-// black; measuring against 0 sinks low washes below the real page → recede). C/H carry from light; only
-// lightness re-references. Gamut-aware L solve (a fixed out-of-gamut chroma inflates wcagY and crushes
-// high-luminance hues to L≈0 — the bisect re-clamps chroma per candidate L). Grounds are fixed achromatic
-// constants (symmetry, not exact bg numbers; the accessibility gates enforce contrast separately).
-const DELTA_LIGHT_GROUND_Y = 1.0                          // white
-const DELTA_DARK_GROUND_Y = wcagY(0.178, 0, 0)            // neutral dark page (≈ #111)
-function solveLForYInGamut(targetY: number, C: number, H: number): number {
-  let lo = 0.003, hi = 0.999
-  for (let i = 0; i < 26; i++) {
-    const m = (lo + hi) / 2
-    wcagY(m, clampChromaToGamut(m, C, H), H) < targetY ? (lo = m) : (hi = m)
-  }
-  return (lo + hi) / 2
-}
-// the CORE delta: reproduce `lightColor`'s contrast-from-white as the SAME contrast above the dark ground,
-// solved with the given chroma+hue. Floored at the dark ground so nothing sinks below the page.
+// ===== DELTA-KEYED dark placement (the dark model, owner 2026-07-09) =====
+// Dark is a LIVE FUNCTION OF LIGHT: a light color sitting an APPARENT-lightness distance below the light
+// ground (white) becomes a dark color sitting the SAME apparent distance above the dark ground (~0.178, the
+// neutral dark page — NOT pure black). C/H carry from light; only lightness re-references. APPARENT (H-K)
+// space, not raw luminance (v2): light's stops are themselves placed in apparent-lightness (perceptualRungL),
+// so re-referencing raw luminance warped light's cadence into dark — the measured wobble (4.10 → 3.58
+// |Δ²appL|) — and stripped yellow's H-K shine. Solved by the engine's apparent solver (gamut-aware),
+// clamped to the ground so nothing sinks below the page.
+const DELTA_DARK_GROUND_APP = grayApparentL(0.178)        // the dark page's apparent lightness
+const DELTA_LIGHT_GROUND_APP = grayApparentL(1.0)         // white's (≈ 100)
 export function deltaDarkTargetL(
   lightColor: { L: number; C: number; H: number }, C: number, H: number,
 ): number {
-  const Ci = contrastRatio(wcagY(lightColor.L, lightColor.C, lightColor.H), DELTA_LIGHT_GROUND_Y)
-  const Yt = Math.min(0.999, Math.max(DELTA_DARK_GROUND_Y, Ci * (DELTA_DARK_GROUND_Y + 0.05) - 0.05))
-  return solveLForYInGamut(Yt, C, H)
+  const lightApp = apparentL(lightColor.L, clampChromaToGamut(lightColor.L, lightColor.C, lightColor.H), lightColor.H)
+  const target = Math.min(DELTA_LIGHT_GROUND_APP - 0.5,
+    Math.max(DELTA_DARK_GROUND_APP + 0.5, DELTA_DARK_GROUND_APP + (DELTA_LIGHT_GROUND_APP - lightApp)))
+  return solveLForApparent(target, C, H)
 }
 export function placeDarkDelta(
   dctx: DarkCtx, rootL: number, chromaAt: (L: number) => number,

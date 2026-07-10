@@ -24,7 +24,7 @@ const ctaLc = (c: any, white: boolean) => Math.abs(apcaLc(white ? 1.0 : blackApc
 
 // carry opts: the light twin injected; PURE = deltaCarry + hover stripped + no bolt-on. `extra` layers ONE.
 const carry = (light: ResolvedRamp, extra: Partial<ResolveOpts> = {}): ResolveOpts =>
-  ({ ...base, deltaLightStops: light.stops, deltaLightCta: light.roles.cta, deltaCarry: true, ...extra })
+  ({ ...base, deltaLightStops: light.stops, deltaCarry: true, ...extra })
 // the three bolt-ons under review — each re-enables one real engine mechanism on top of the pure carry.
 // (hover / H-K place / ink register were ruled out 2026-07-09.)
 const BOLTONS: [string, (light: ResolvedRamp) => ResolveOpts][] = [

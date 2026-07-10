@@ -110,18 +110,17 @@ export interface GenerateOptions {
   // shipped behavior, byte-identical when unset.
   contrastProfile?: ContrastProfile
 
-  // DELTA-KEYED dark (dark round): the resolved LIGHT stops + light cta, injected into the DARK resolve so
-  // dark is derived as a live function of light (carry chroma+hue, re-reference lightness to the dark ground).
-  // Set by generateScale under DELTA_DARK env; unset = the seed-keyed scaffold (byte-identical default).
+  // DELTA-KEYED dark (THE dark model, owner 2026-07-09): the resolved LIGHT stops, injected into the DARK
+  // resolve — dark is a live function of light (carry chroma+hue for surfaces 1-9, re-reference lightness to
+  // the dark ground in apparent space; inks dark-native; cta prominence-floored). generateScale always sets
+  // these; direct resolveRamp callers opt in per call.
   deltaLightStops?: { stop: number; L: number; C: number; H: number }[]
-  deltaLightCta?: { L: number; C: number; H: number }
   deltaCarry?: boolean
   // per-bolt-on instruments (not shipped): layer exactly ONE old dark mechanism onto the pure carry, so the
   // eye can see what that piece does. Each is a REAL engine fn (no reimplementation); default off = identical.
   deltaHKPlace?: boolean     // place carried C/H by the old apparent-L rung (perceptualRungL @ scaffold), not luminance
   deltaChromaEq?: boolean    // replace carried C with the old H-K chroma equalizer (perceptualDarkC)
   deltaLiftFloor?: boolean   // floor carried L at the scaffold rootL (the old "lift, never sink" recede floor)
-  deltaInkRegister?: boolean // ink stops 11/12: swap carried light-ink C for the dark text register (darkInkChromaAt / SCALE_C_DARK inkMaxC)
 }
 
 // generateScale is now an ADAPTER over the requirement-token resolver (src/reqtoken): it compiles the caller
@@ -146,13 +145,11 @@ export function generateScale(
       opts?.contrastProfile ?? 'wcag',
     )
   const lightRamp = resolveRamp(hex, 'light', compile(MODE_SPECS.light), rOpts)
-  // DELTA-KEYED dark (gated): under DELTA_DARK the dark resolve derives from the resolved light stops.
-  // Env-read (not a persistent opt) so the default path is the seed-keyed scaffold, byte-identical.
-  // guarded for the browser bundle (no `process` global — the raw read crashed the demo, caught 2026-07-09)
-  const env = typeof process !== 'undefined' ? process.env : undefined
-  const deltaDark = env?.DELTA_DARK === '1'
+  // DELTA-KEYED dark IS the dark model (un-gated, owner 2026-07-09): dark is a live function of the resolved
+  // light — carry each stop's chroma+hue verbatim, re-reference only lightness to the dark ground (0.178, by
+  // luminance); the declared requires floor L. Replaces the seed-keyed DARK_L scaffold as the default.
   const darkRamp = resolveRamp(hex, 'dark', compile(MODE_SPECS.dark),
-    deltaDark ? { ...rOpts, deltaLightStops: lightRamp.stops, deltaLightCta: lightRamp.roles.cta, deltaCarry: env?.DELTA_CARRY === '1' } : rOpts)
+    { ...rOpts, deltaLightStops: lightRamp.stops, deltaCarry: true })
 
   // metadata (brand identity fields on the scale)
   const { L: brandL, C: rawC, H: rawH } = hexToOklch(hex)

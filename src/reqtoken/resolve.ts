@@ -7,9 +7,9 @@
 //
 // The producers are verbatim ports of the pre-resolver engine, proven byte-identical at cutover (c7542b7);
 // the blessed snapshot audits are the standing regression gate.
-import { apparentL, perceptualRungL, perceptualDarkC } from '../engine/perceptualL'
+import { apparentL, perceptualRungL, perceptualDarkC, solveLForApparent } from '../engine/perceptualL'
 import { clampChromaToGamut, wcagY, contrastRatio, legalRatio, findMaxLForContrast, apcaLc } from '../engine/constraints'
-import { hexToOklch, srgbEmitChannels } from '../engine/colorMath'
+import { hexToOklch, srgbEmitChannels, maxChromaAt } from '../engine/colorMath'
 import { hoverL } from '../engine/archetypes'
 import { MODE_SPECS, type ModeSpec, type StopReq, type RoleReq, type Require } from './spec'
 import {
@@ -132,22 +132,63 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         : sp.stop === 9 ? undefined
         // chroma-floor index clamps at 0: stop 0 shares paper-1's tint treatment
         : darkScaleChromaAt(ctx, d, Math.max(0, sp.stop - 1), sp.satFraction ?? 1)
-      // DELTA-KEYED (gated): derive dark from the resolved light twin for EVERY scale stop 1–12 — surfaces
-      // (1–7), fill (8), highlight (9/10), AND ink (11/12: carry light's ink chroma+hue, only lightness
-      // re-referenced; the T11/T12 contrast requires still floor L below). Default (no light stops) = today.
+      // DELTA-KEYED: derive dark from the resolved light twin for the SURFACE stops 1–9 (papers, washes,
+      // fill, highlight). INKS 11/12 are dark-native (owner 2026-07-09): text INVERTS across modes — there is
+      // no "same color, re-referenced" for a stop that crosses the paper; carrying a dark-gold ink's hue up
+      // ~0.3 L lands in a different hue family (gold→orange). The C9/C11 dark text register + the T11/T12
+      // requires own the inks, on the seed-keyed path below.
       const dl = ctx.opts?.deltaLightStops
-      const ls = dl && sp.stop >= 1 && sp.stop <= 12 ? dl.find(s => s.stop === sp.stop) : undefined
+      const ls = dl && sp.stop >= 1 && sp.stop <= 9 ? dl.find(s => s.stop === sp.stop) : undefined
       if (ls && ctx.opts?.deltaCarry) {
-        // FULL CARRY (pure fall-out): the dark stop IS the light color — chroma + hue carried, ONLY lightness
-        // re-referenced to the dark ground. emit gamut-clamps C; the declared dark requires below still floor it.
-        let L = deltaDarkTargetL(ls, ls.C, ls.H)
+        // THE CARRY: chroma + hue carried verbatim (OKLab C is near-uniform in perceived chroma — a
+        // saturation/gamut-ratio floor was tried and REJECTED, owner 2026-07-09: sRGB gamut geometry made
+        // blue→red washes hyper-chromatic while cyan→orange never moved); lightness re-referenced to the
+        // dark ground in APPARENT space (deltaDarkTargetL).
+        // REQUIREMENT stops (s8) carry their RECIPE, not a parity: light places s8 BY the 3:1-vs-paper-2
+        // clamp, so dark re-solves that same law against the dark paper-2 exactly (the require block below
+        // does the solve from the ground up). appL parity would land off-law and the floor's hue-dependent
+        // correction was the residual sRGB-shaped wobble (fired 84/108; whole-band 6.90 vs 0.72 for 1–7).
+        let L = sp.require && sp.require.metric !== 'min-separation' ? 0.05 : deltaDarkTargetL(ls, ls.C, ls.H)
         let C = ls.C
+        // BAND ORDER (owner 2026-07-09): the highlight fill (9) sits ABOVE its 3:1 rung (8). Light gets this
+        // free from near-white geometry; in dark the rung's luminance law reads hue-dependently in apparent
+        // terms and lands above parity-9 (inverted 108/108 under apca). Floor 9 at the rung's apparent plus
+        // light's own 8→9 apparent gap — the band's carried structure. Parity stands wherever it clears.
+        if (sp.stop === 9) {
+          const d8 = stops.find(s => s.stop === 8)
+          const l8 = dl!.find(s => s.stop === 8)
+          if (d8 && l8) {
+            const appOf = (s: { L: number; C: number; H: number }) => apparentL(s.L, clampChromaToGamut(s.L, s.C, s.H), s.H)
+            const floorApp = appOf(d8) + Math.max(0, appOf(l8) - appOf(ls))
+            if (appOf({ L, C, H: ls.H }) < floorApp) L = solveLForApparent(floorApp, C, ls.H)
+          }
+          // on-highlight legibility (apca profile): hl9 must keep a pole at the declared body bar
+          // (ons.onHighlight.enforceLc) — the band floor can land low-chroma fills in APCA's mid dead
+          // zone (both poles < 60; caught on the neutral h320). Raise L until the BLACK pole clears
+          // (lighter exits the zone upward, preserving the band order). wcag needs nothing: the 4.5
+          // ratioFloor pole-flip has no dead zone.
+          const hlLc = spec.ons.onHighlight.enforceLc
+          if (hlLc !== undefined) {
+            const blackY = apcaYAt(0, 0, 0)
+            const bestPole = (LL: number) => {
+              const y = apcaYAt(LL, clampChromaToGamut(LL, C, ls.H), ls.H)
+              return Math.max(Math.abs(apcaLc(1.0, y)), Math.abs(apcaLc(blackY, y)))
+            }
+            if (bestPole(L) < hlLc - APCA_TOL_LC) {
+              let lo = L, hi = 0.98
+              for (let i = 0; i < 24; i++) {
+                const m = (lo + hi) / 2
+                Math.abs(apcaLc(blackY, apcaYAt(m, clampChromaToGamut(m, C, ls.H), ls.H))) < hlLc + APCA_SOLVE_MARGIN_LC ? (lo = m) : (hi = m)
+              }
+              L = hi
+            }
+          }
+        }
         // PER-BOLT-ON INSTRUMENTS (gated, default off → byte-identical): layer exactly ONE old dark mechanism
         // onto the pure carry, real engine fns only. Only one is set per resolve (one column of the exhibit).
         if (ctx.opts.deltaHKPlace) L = perceptualRungL(sp.rootL, ls.C, ls.H)                                       // old apparent-L placement
         if (ctx.opts.deltaLiftFloor) L = Math.max(L, sp.rootL)                                                     // old lift/recede floor
         if (ctx.opts.deltaChromaEq && sp.group !== 'ink') C = ctx.cAt('dark', L, perceptualDarkC(L, ls.H, ctx.brandC))  // old H-K chroma equalizer
-        if (ctx.opts.deltaInkRegister && sp.group === 'ink') C = chromaAt!(L)                                      // old dark ink register (darkInkChromaAt)
         placed = { L, C, H: ls.H }
       } else if (sp.stop === 9) {
         const hlC = darkHighlightChromaAt(ctx, d, sp.baseC ?? 0, sp.satFraction ?? 1)
@@ -172,9 +213,16 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       // metric-blind (wcag ratio or |APCA Lc|); the wcag path computes the exact old floats.
       if (sp.require && sp.require.metric !== 'min-separation') {
         const req = sp.require
-        const cAtL = (L: number) => sp.stop === 9
-          ? darkHighlightChromaAt(ctx, d, sp.baseC ?? 0, sp.satFraction ?? 1)(L, d.darkHueAtL(L))
-          : chromaAt!(L)
+        // DELTA carry: the floor moves ONLY lightness — chroma+hue stay the carried light values (the model
+        // defines dark C/H as light's; recomputing them here was the last impurity, delta-purity.ts). The
+        // seed-keyed path keeps the old recompute byte-identically.
+        const carryReq = !!(ls && ctx.opts?.deltaCarry)
+        const cAtL = (L: number) => carryReq
+          ? ls!.C
+          : sp.stop === 9
+            ? darkHighlightChromaAt(ctx, d, sp.baseC ?? 0, sp.satFraction ?? 1)(L, d.darkHueAtL(L))
+            : chromaAt!(L)
+        const hAtL = (L: number) => (carryReq ? ls!.H : d.darkHueAtL(L))
         const isApca = req.metric === 'apca'
         const refMeasY = isApca ? refApcaYOf(2, sp.stop) : refYOf(2, sp.stop)
         // wcag floors are D1 legality: both renditions of the fill must clear the target
@@ -191,12 +239,12 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
           let lo = placed.L, hi = 1
           for (let pass = 0; pass < 24; pass++) {
             const m = (lo + hi) / 2
-            const mH = d.darkHueAtL(m)
+            const mH = hAtL(m)
             // apca measures in emit space (gamut-clamped) — see findMaxLForApcaLc; wcag keeps the raw floats
             const mC = isApca ? clampChromaToGamut(m, cAtL(m), mH) : cAtL(m)
             measure(m, mC, mH) < target ? (lo = m) : (hi = m)
           }
-          placed = { L: hi, C: cAtL(hi), H: d.darkHueAtL(hi) }
+          placed = { L: hi, C: cAtL(hi), H: hAtL(hi) }
           clamped = true
         }
       }
@@ -244,16 +292,13 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   } else {
     // dark: base cta from the pre-resolved anchor; judge on-fill at the emitted base; then the enforce re-solve
     const d = dctx!
-    // DELTA-KEYED cta (gated): the dark cta derives from the LIGHT cta's contrast — a distinct dark cta
-    // instead of the seed-blind value. Full-carry: the dark cta IS the light cta color, lightness re-referenced.
-    // The enforce re-solve below stays the legibility floor. Default (no light cta) = the seed-keyed value.
-    const dlCta = ctx.opts?.deltaLightCta, dlStops = ctx.opts?.deltaLightStops
-    const carry = !!ctx.opts?.deltaCarry && !!dlCta
-    const ctaC = carry ? dlCta!.C : d.darkC9
-    const ctaH = carry ? dlCta!.H : ctx.darkH
-    const cta9L = dlCta && dlStops ? deltaDarkTargetL(dlCta, ctaC, ctaH) : d.dark9L
-    cta = emitRole('cta', cta9L, ctx.cAt('dark', cta9L, ctaC), ctaH)
-    ctaHover = emitRole('cta-hover', hoverL(cta9L), ctx.cAt('dark', hoverL(cta9L), ctaC), ctaH)
+    // The cta is PROMINENCE-FLOORED, never carried (owner 2026-07-09): parity reproduces a bright brand's
+    // whisper (neon yellow's light cta sits near white → contrast ≈ nothing → a near-black dark cta, legible
+    // but brand-dead). Loudness is the cta's own requirement — the declared floor (dark9L) + trimmed brand
+    // chroma anchor it; the enforce re-solve below stays the legibility floor.
+    const cta9L = d.dark9L
+    cta = emitRole('cta', cta9L, ctx.cAt('dark', cta9L, d.darkC9), ctx.darkH)
+    ctaHover = emitRole('cta-hover', hoverL(cta9L), ctx.cAt('dark', hoverL(cta9L), d.darkC9), ctx.darkH)
     onFillIsWhite = onFillIsWhiteDarkAt(cta.L, cta.C, cta.H, enforceLc !== undefined ? false : onFillEnforce)
     const enforcedL = enforceLc !== undefined
       ? ctaDarkEnforcedLApca(ctx, cta, onFillIsWhite, onFillEnforce, enforceLc)

@@ -19,6 +19,6 @@ for (const hex of seeds) {
   const l = resolveRamp(hex, 'light', MODE_SPECS.light, base)
   out += dump(l) + '\n'
   out += dump(resolveRamp(hex, 'dark', MODE_SPECS.dark, base)) + '\n'                                                    // default dark
-  out += dump(resolveRamp(hex, 'dark', MODE_SPECS.dark, { ...base, deltaLightStops: l.stops, deltaLightCta: l.roles.cta, deltaCarry: true })) + '\n'  // pure carry
+  out += dump(resolveRamp(hex, 'dark', MODE_SPECS.dark, { ...base, deltaLightStops: l.stops, deltaCarry: true })) + '\n'  // pure carry
 }
 console.log('off-state hash:', createHash('sha256').update(out).digest('hex').slice(0, 16))

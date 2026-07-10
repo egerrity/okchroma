@@ -35,7 +35,7 @@ function accentModeCss(mode: AccentMode, primary: Family, subtle: Family): strin
     ['border-emphasis', 'cta-1'], ['border-emphasis-hover', 'cta-2'],
   ]
   const SUBTLE_ROLES: Array<[string, string]> = [
-    ['bg-faint', 'paper-2'], ['bg-subtle', 'wash-3'], ['bg-subtle-hover', 'wash-4'],
+    ['bg-faint', 'paper-2'], ['bg-subtle', 'wash-5'], ['bg-subtle-hover', 'wash-6'],
     ['border-subtle', 'wash-4'], ['border-subtle-hover', 'wash-5'],
   ]
   const lines: string[] = [`[data-accent-mode="${mode}"][data-brand] {`]

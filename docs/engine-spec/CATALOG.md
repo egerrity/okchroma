@@ -599,3 +599,57 @@ OPEN LEFTOVERS: (1) apca dark s11 under the new register floor-pins 24/24 (sprea
 round; (2) light s11 pin-slice (the 4.5 cap register) stands, cap-owned by design;
 (3) dark s11 inkMaxC .120 is an owner-tunable knob (judged acceptable on the yellow
 specimens).
+
+## C13 — dark mode was a second hand-tuned system: the seed-keyed DARK_L scaffold vs "dark = a function of light"
+
+**Found:** the dark ramp was built from its own hand-placed scaffold (`DARK_L`, the lift,
+`perceptualDarkC`, `torsionedHue`, `darkCtaTrim`) — an independent second system that had to be
+re-tuned for every light change and drifted from the brand's own light identity (dark washes loud,
+blue-recede patches, per-mechanism knobs).
+
+**LANDED (owner rulings 2026-07-09, the delta round):** dark is a LIVE FUNCTION of the resolved
+light, by recipe class:
+- **Surfaces 1–9 (papers/washes/fill/highlight): the carry.** Chroma + hue carried verbatim from
+  the light twin (OKLab C is near-uniform in perceived chroma; a saturation/gamut-ratio floor was
+  tried and REJECTED — sRGB gamut geometry made blue→red washes hyper-chromatic). Lightness
+  re-referenced to the dark ground (0.178, never absolute black) in APPARENT-lightness space
+  (Nayatani H-K — the same space light itself is placed in; a raw-luminance re-reference was tried
+  first and REJECTED: it warped light's cadence into dark = measured wobble |Δ²appL| 4.10 vs 3.58,
+  and stripped yellow's H-K shine).
+- **Requirement stops carry their RECIPE, not a parity.** s8 is placed BY its 3:1-vs-paper-2 law
+  against the dark paper-2 exactly (light places s8 by the same law; apparent-parity-then-floor
+  was the residual sRGB-shaped hue wobble, floor firing 84/108). All floors move ONLY L — C/H stay
+  carried (delta-purity: FULLY PURE, stops 1–9).
+- **Band order is carried structure:** the highlight fill (9) sits above its 3:1 rung (8) — free
+  geometry in light, inverted 108/108 in dark under apca (the rung's luminance law reads
+  hue-dependently in apparent terms). 9 is floored at the rung's apparent + light's own 8→9
+  apparent gap. Under apca, hl9 also honors the declared body bar (ons.onHighlight.enforceLc 60,
+  raised via the black pole — the band floor could land low-chroma neutrals in the mid dead zone).
+- **Inks 11/12 are DARK-NATIVE, never carried:** text INVERTS across modes — no "same color,
+  re-referenced" exists for a stop that crosses the paper (carrying a dark-gold ink up ~0.3 L lands
+  in a different hue family: gold→orange). The C9/C11 dark text register + T11/T12 requires own
+  them (the seed-keyed ink path).
+- **The cta is PROMINENCE-FLOORED, never carried:** parity reproduces a bright brand's whisper
+  (neon yellow's light cta ≈ white → a near-black dark cta, legible but brand-dead). The dark9L
+  floor + darkCtaTrim'd brand chroma anchor it; the legibility enforce stays. (`darkCtaTrim` is
+  thereby REPURPOSED from bolt-on to the cta's declared loudness rule.)
+
+**Deleted with the round:** stop 10 (no use case; its shared-token PAIR law + all 9→10 hover
+machinery died with it — see the 778d4b4 ledger), the dark require-floor's 1e-3 slack (92e4b6b),
+the delta env gates (DELTA_DARK/DELTA_CARRY — the carry IS the model now).
+
+**Ruled out on the A|B bolt-on exhibits:** H-K scaffold placement (perceptualRungL re-anchoring
+the per-stop scaffold), perceptualDarkC chroma equalization (the neon mechanism), the lift/recede
+floor (the carry's ground re-reference already prevents recede), the dark ink-register-on-carry
+hybrid, the 9→10 hover.
+
+**Measured at landing:** req:audit 0/288 both profiles · collision PASS · highlight lanes light
+63.6 / dark 60.5 Lc (4.51/4.50 wcag) · stop-8 3:1 both modes (576-pt agnostic) · hue-sweep
+smoother than the old scaffold at every stop outside the designed red-repel jump (s7 1.36→0.48) ·
+down-ramp wobble 1–7 = 0.72 (old scaffold 3.00) · dark-audit/divergence/highlight/ext/smooth
+re-blessed wholesale (the round's expected bless).
+
+**Known-and-accepted:** near-black brands read gray-muted in dark (Hunt territory — owner:
+"appropriate for the color"); residual hue-band ripple around orange/yellow exists in LIGHT too
+(inherited structure, a future light-side round if ever); the H33 red-repel jump is the shipped
+C6 design.

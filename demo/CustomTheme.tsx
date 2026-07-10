@@ -342,7 +342,9 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   // A color's scale + its collapsed engine decisions. Signals surface as
   // rows INSIDE each checklist (error/warning collisions), never as cards.
   const colorBlock = (label: string, prefix: string, kind: RampKind, r: ResolvedBrand | null, hex: string, extras?: React.ReactNode) => (
-    <div className="ct-colorblock">
+    // the card serves the ramp's OWN paper-1 (owner 2026-07-09): tokens sit on their own paper in both modes,
+    // so light↔dark compare on equal ground (the neutral surface-raised bg gave dark a different contrast)
+    <div className="ct-colorblock" style={{ background: `var(--${prefix}-paper-1)` }}>
       <div className="ct-label" style={{ marginBottom: 8 }}>{label}</div>
       <TokenCards prefix={prefix} kind={kind} outlineCta={prefix === 'secondary' && computed.t.secondary?.style === 'outline'} />
       {extras}
@@ -359,7 +361,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   const signalBlocks = () => SIGNAL_NAMES.map(name => {
     const override = computed.r.signalOverrides.find(o => o.name === name)
     return (
-      <div className="ct-colorblock" key={name}>
+      <div className="ct-colorblock" key={name} style={{ background: `var(--${name}-paper-1)` }}>
         <div className="ct-label" style={{ marginBottom: 8, display: 'flex', alignItems: 'baseline', gap: 8 }}>
           <span>{name}</span>
           {override && <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--info-fg)' }}>shifted · {override.note}</span>}
@@ -1040,8 +1042,8 @@ const PAGE_CSS = `
   --brand-fg-on-emphasis: var(--brand-on-cta);
   --brand-fg: var(--brand-ink-12);
   --brand-fg-alt: var(--brand-ink-11);
-  --brand-bg-subtle: var(--brand-wash-3);
-  --brand-bg-subtle-hover: var(--brand-wash-4);
+  --brand-bg-subtle: var(--brand-wash-5);
+  --brand-bg-subtle-hover: var(--brand-wash-6);
 }
 .ct-download { margin-left: 4px; }
 .ct-logo-mark {

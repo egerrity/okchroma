@@ -1,8 +1,7 @@
-// delta-purity.ts — LAYER 1 of the true-fall-out check. Is DELTA_DARK+DELTA_CARRY an HONEST pure carry?
-// Pure carry ⇒ each dark stop (C,H) == clamp(darkL, lightC, lightH): H carried exactly (gamut clamp can't
-// move hue), C = light C reduced ONLY by gamut. Any stop with ΔH≠0 or C ABOVE the gamut-carry = a bolt-on
-// tell: the value was recomputed by the old dark machinery (resolve.ts:188 require-floor → darkScaleChromaAt
-// / torsionedHue). Sweep agnostic seeds; report per stop.
+// delta-purity.ts — the carry-honesty gate for the SHIPPED delta model (owner 2026-07-09). Surfaces 1–9
+// carry the light stop's C+H exactly (C reduced only by gamut at the dark L; the s8 require-solve and the
+// 9-band-order floor move ONLY L). Inks 11/12 are dark-native by design and are NOT checked here. Any
+// surface stop with ΔH≠0 or C above the gamut-carry = a recompute leak. Sweep agnostic seeds; per stop.
 import { resolveRamp, type ResolveOpts } from '../src/reqtoken/resolve'
 import { MODE_SPECS } from '../src/reqtoken/spec'
 import { clampChromaToGamut } from '../src/engine/constraints'
@@ -17,13 +16,13 @@ const cE = (s: any) => clampChromaToGamut(s.L, s.C, s.H)
 const seeds: string[] = []
 for (let H = 0; H < 360; H += 20) for (const C of [0.06, 0.13, 0.19]) for (const L of [0.5, 0.68]) seeds.push(hx(L, C, H))
 
-const STOPS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12]   // stop 10 deleted (owner 2026-07-09)
+const STOPS = [1, 2, 3, 4, 5, 6, 7, 8, 9]   // surfaces only: inks are dark-native (not carried); stop 10 deleted
 const impureH: Record<number, number> = {}, impureC: Record<number, number> = {}, worstH: Record<number, number> = {}, worstC: Record<number, number> = {}
 for (const n of STOPS) { impureH[n] = 0; impureC[n] = 0; worstH[n] = 0; worstC[n] = 0 }
 
 for (const hex of seeds) {
   const l = resolveRamp(hex, 'light', MODE_SPECS.light, base)
-  const d = resolveRamp(hex, 'dark', MODE_SPECS.dark, { ...base, deltaLightStops: l.stops, deltaLightCta: l.roles.cta, deltaCarry: true })
+  const d = resolveRamp(hex, 'dark', MODE_SPECS.dark, { ...base, deltaLightStops: l.stops, deltaCarry: true })
   for (const n of STOPS) {
     const ls = l.stops.find(s => s.stop === n)!, ds = d.stops.find(s => s.stop === n)!
     const pureC = clampChromaToGamut(ds.L, ls.C, ls.H)          // carry: light C, reduced only by gamut at dark L

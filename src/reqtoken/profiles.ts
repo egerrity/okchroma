@@ -45,8 +45,10 @@ export function withProfile(spec: ModeSpec, profile: ContrastProfile, lcMap: LcM
       ...spec.ons,
       onFill: { ...spec.ons.onFill, enforceLc: textLc },
       // the apca law is the Lc bar (band placement + the highlight-audit gate), not the ratio —
-      // strip the wcag conformance floor so the pole stays purely perceptual
-      onHighlight: { ...spec.ons.onHighlight, ratioFloor: undefined },
+      // strip the wcag conformance floor so the pole stays purely perceptual. enforceLc 60 = APCA's
+      // body-text bar for the highlight fill (the highlight-audit's HL_BODY; declared here so the dark
+      // delta placement can respect it — the band-order floor could land hl9 in the mid dead zone).
+      onHighlight: { ...spec.ons.onHighlight, ratioFloor: undefined, enforceLc: 60 },
     },
   }
 }
