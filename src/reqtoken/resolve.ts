@@ -127,8 +127,14 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     } else {
       // DARK: verbatim engine producers; 'fixed' stays at the hand-placed scaffold, 'perceptual' solves
       const d = dctx!
+      const inkTwin = sp.group === 'ink' && ctx.opts?.deltaCarry && ctx.opts?.chromaCurve
+        ? ctx.opts.deltaLightStops?.find(s => s.stop === sp.stop) : undefined
       const chromaAt =
-        sp.group === 'ink' ? darkInkChromaAt(ctx, d, sp.stop - 1, sp.chromaMult ?? 1, sp.inkMaxC)
+        sp.group === 'ink'
+          // curve-bearing ramps (neutral, derived secondary): ink chroma = the light twin's (the curve's dark
+          // branch is keyed to the OLD dark L geography — sampling it at delta ink L's made the 11-jump).
+          // Low-chroma inks carry no hue-family risk; L and hue stay dark-native.
+          ? (inkTwin ? ((_L: number) => inkTwin.C) : darkInkChromaAt(ctx, d, sp.stop - 1, sp.chromaMult ?? 1, sp.inkMaxC))
         : sp.stop === 9 ? undefined
         // chroma-floor index clamps at 0: stop 0 shares paper-1's tint treatment
         : darkScaleChromaAt(ctx, d, Math.max(0, sp.stop - 1), sp.satFraction ?? 1)
@@ -140,10 +146,12 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       const dl = ctx.opts?.deltaLightStops
       const ls = dl && sp.stop >= 1 && sp.stop <= 9 ? dl.find(s => s.stop === sp.stop) : undefined
       if (ls && ctx.opts?.deltaCarry) {
-        // THE CARRY: chroma + hue carried verbatim (OKLab C is near-uniform in perceived chroma — a
-        // saturation/gamut-ratio floor was tried and REJECTED, owner 2026-07-09: sRGB gamut geometry made
-        // blue→red washes hyper-chromatic while cyan→orange never moved); lightness re-referenced to the
-        // dark ground in APPARENT space (deltaDarkTargetL).
+        // THE CARRY: chroma + hue carried verbatim from the light twin — for EVERY ramp kind (OKLab C is
+        // near-uniform in perceived chroma; a saturation/gamut-ratio floor was tried and REJECTED — sRGB
+        // geometry made blue→red washes hyper-chromatic; evaluating a declared chromaCurve at the DARK L was
+        // tried and REJECTED — the curves are keyed to the OLD dark's L geography, so the delta's paper L's
+        // landed in their wash-tint region and tinted the papers 8×, owner-caught). Lightness re-referenced
+        // to the dark ground in APPARENT space (deltaDarkTargetL).
         // REQUIREMENT stops (s8) carry their RECIPE, not a parity: light places s8 BY the 3:1-vs-paper-2
         // clamp, so dark re-solves that same law against the dark paper-2 exactly (the require block below
         // does the solve from the ground up). appL parity would land off-law and the floor's hue-dependent
@@ -217,12 +225,12 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         // defines dark C/H as light's; recomputing them here was the last impurity, delta-purity.ts). The
         // seed-keyed path keeps the old recompute byte-identically.
         const carryReq = !!(ls && ctx.opts?.deltaCarry)
+        const hAtL = (L: number) => (carryReq ? ls!.H : d.darkHueAtL(L))
         const cAtL = (L: number) => carryReq
           ? ls!.C
           : sp.stop === 9
-            ? darkHighlightChromaAt(ctx, d, sp.baseC ?? 0, sp.satFraction ?? 1)(L, d.darkHueAtL(L))
+            ? darkHighlightChromaAt(ctx, d, sp.baseC ?? 0, sp.satFraction ?? 1)(L, hAtL(L))
             : chromaAt!(L)
-        const hAtL = (L: number) => (carryReq ? ls!.H : d.darkHueAtL(L))
         const isApca = req.metric === 'apca'
         const refMeasY = isApca ? refApcaYOf(2, sp.stop) : refYOf(2, sp.stop)
         // wcag floors are D1 legality: both renditions of the fill must clear the target

@@ -49,8 +49,9 @@ const ok = (cond: boolean, msg: string) => { if (!cond) fails.push(msg) }
 // ── A. chroma-curve parity (HARD) — catches curve bypass under the delta model ────
 // A chromaCurve-bearing scale (the neutral) must emit the DECLARED chroma at every stop:
 //   LIGHT: the curve's chroma at the stop's own L (as always).
-//   DARK (the delta model, owner 2026-07-09): surfaces 1–9 CARRY the light stop's emitted chroma
-//     (re-clamped at the dark L); inks 11/12 are dark-native and stay on the curve.
+//   DARK (the delta model, owner 2026-07-09): every dark stop CARRIES the light twin's emitted chroma
+//     (re-clamped at the dark L) — curve ramps included, inks included (the curves' dark branches are keyed
+//     to the OLD dark L geography; evaluating them at delta L's tinted the papers — owner-caught).
 const PARITY_TOL = 0.004
 const NEUTRAL_HUES = [30, 90, 143, 210, 270, 320]
 const LEVELS: NeutralLevel[] = ['pure', 'default', 'branded']
@@ -63,10 +64,10 @@ for (const level of LEVELS) {
     for (const mode of ['light', 'dark'] as const) {
       const arr = mode === 'light' ? s.light : s.dark
       for (const st of arr) {
-        const lightTwin = mode === 'dark' && st.stop <= 9 ? s.light.find(x => x.stop === st.stop) : undefined
+        const lightTwin = mode === 'dark' ? s.light.find(x => x.stop === st.stop) : undefined
         const want = lightTwin
-          ? clampChromaToGamut(st.L, lightTwin.C, st.H)                      // carried surface
-          : clampChromaToGamut(st.L, curve(st.L, mode), st.H)                // on-curve (light; dark inks)
+          ? clampChromaToGamut(st.L, lightTwin.C, st.H)                      // dark: carried from light
+          : clampChromaToGamut(st.L, curve(st.L, mode), st.H)                // light: on-curve
         const gap = Math.abs(st.C - want)
         if (gap > worstParity.gap) { worstParity.gap = gap; worstParity.at = `${level} h${h} ${mode} stop ${st.stop}` }
         ok(gap <= PARITY_TOL, `chroma bypass: ${level} h${h} ${mode} stop ${st.stop} — emits C ${f(st.C)} vs declared ${f(want)} (gap ${f(gap)})`)
