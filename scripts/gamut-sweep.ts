@@ -2,7 +2,8 @@
 // domain. This walks brand space (hue x lightness x chroma) through the
 // complete resolution pipeline and asserts the rules are total:
 //
-//   1. Never crashes; always yields 12+12 finite stops and an on-fill.
+//   1. Never crashes; always yields 11+11 finite stops and an on-fill
+//      (stops 1-9 + 11/12 per side; stop 10 deleted, 778d4b4).
 //   2. The error guarantee: every error collision is RESOLVED — red-side
 //      brands by rung 1 (no residual color collision), orange-side brands
 //      by the uniform destructive component rule (flagged, identity kept).
@@ -55,9 +56,9 @@ for (const H of HUES) {
 
         // 1. structural sanity
         const all = [...r.scale.light, ...r.scale.dark]
-        const core = [...r.scale.light.slice(0, 12), ...r.scale.dark.slice(0, 12)]
-        if (core.length !== 24 || all.some(s => !isFinite(s.L) || !isFinite(s.r))) {
+        if (r.scale.light.length !== 11 || r.scale.dark.length !== 11 || all.some(s => !isFinite(s.L) || !isFinite(s.r))) {
           crashed++
+          console.error(`MALFORMED at ${hex}: light=${r.scale.light.length} dark=${r.scale.dark.length}`)
           continue
         }
 
@@ -110,3 +111,9 @@ console.log(`shear-induced new collisions: ${shearInduced.length}`)
 shearInduced.slice(0, 10).forEach(s => console.log(`  ${s}`))
 console.log(`warning collisions without a variant: ${warningUnhandled.length}`)
 warningUnhandled.slice(0, 10).forEach(s => console.log(`  ${s}`))
+
+const failed = crashed > 0 || errorResidual.length > 0 || shearInduced.length > 0 || warningUnhandled.length > 0
+if (failed) {
+  console.error('SWEEP FAILED')
+  process.exit(1)
+}
