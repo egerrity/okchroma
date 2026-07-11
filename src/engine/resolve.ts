@@ -1,6 +1,6 @@
 
 
-import { generateScale, generateSubtleSecondary, applyRedRepelRender, inRedRepelBand, type GeneratedScale, type ContrastProfile } from './colorEngine'
+import { generateScale, generateSubtleSecondary, type GeneratedScale, type ContrastProfile } from './colorEngine'
 import { darkChromaCurve } from './darkChromaCurve'
 import type { Archetype } from './archetypes'
 import { SIGNALS, type SignalDef } from './signals'
@@ -16,10 +16,11 @@ import {
 } from './collision'
 import { apcaY, apcaLc, encodedChannels, clampChromaToGamut, oklchToLinearRgb } from './constraints'
 import { pickSignalShift, signalSwapVariants } from './signalShift'
-import { hexToOklch, inRedKeepBox, inRedVividArc, RED_DEEP_PIVOT, RED_VARIANT_L_MIN, makeStop } from './colorMath'
+import { hexToOklch, hueDelta, makeStop, RED_SOLVE, redSolveDist } from './colorMath'
 import { hoverL } from './archetypes'
-import { p2Diff, P2_D, P2_D_FALLBACK } from './p2'
-import { buildContext, whiteTextLcAt, onFillIsWhiteDarkAt } from '../reqtoken/producers'
+import { p2Diff, P2_D, P2_D_UP } from './p2'
+import { buildContext, whiteTextLcAt, apcaYAt, onFillIsWhiteDarkAt } from '../reqtoken/producers'
+import { CTA_ONFILL_ENFORCE_LC } from '../reqtoken/profiles'
 
 type SignalScales = Map<SignalDef['name'], { def: SignalDef; scale: GeneratedScale }>
 const buildSignalScales = (contrastProfile?: ContrastProfile): SignalScales =>
@@ -74,22 +75,23 @@ function hueCollisionPending(scale: GeneratedScale, sigScales: SignalScales): Si
   return pending
 }
 
-// C12 v6 — the red-move variant: searched over the owner's error-eligible range along red's
-// own hue (floor = her recorded L0.45 bottom; ceiling = the lane's white-text law: apca Lc 60 /
-// wcag 4.5), NEAREST-canonical-first on the brand's declared side (brand cta at/above red →
-// deep first; below → light first). Conditions vs the brand's cta: gate release + P2, with
-// P2_D_FALLBACK (her mean mark) for domain-trapped brands. The variant cta is PINNED — it is
-// minted directly (makeStop), never re-enforced (enforcement would collapse it back onto
-// canonical red; generateSubtleSecondary's ctaL pin is the precedent). The ramp, washes, inks
-// and the ENTIRE dark side stay canonical red verbatim (dark never fires under the Lc-60 bar).
-const clamp01 = (v: number) => Math.min(1, Math.max(0, v))
-const whiteRatioAt = (L: number, C: number, H: number): number => {
-  const [r, g, b] = oklchToLinearRgb(L, clampChromaToGamut(L, C, H), H).map(clamp01)
-  const y = 0.2126 * r + 0.7152 * g + 0.0722 * b
-  return 1.05 / (y + 0.05)
-}
-function redMoveVariant(
+// C12 v8 — the RED COMPLEMENT (owner-settled 2026-07-10; model = scripts/c12-session/
+// joint-solve-model.md): red moves for B, the vibration problem — positioned inside her
+// calibrated zones (deep core L.45–.49 or the light edge tier L.65–.75; the .50–.58 middle
+// is ring territory and NEVER used — canonical itself lives there, which is why a lightened
+// brand ALWAYS takes a deep-core red), on the OPPOSITE side of the brand's final cta,
+// cool-first beside warm brands, first-clean-wins in preference order. Clean = the P2 bar
+// (.12 deep / .11 light) + solve-metric release + a passing pole. The variant cta is PINNED
+// (makeStop, never re-enforced — enforcement would collapse it back onto canonical red;
+// generateSubtleSecondary's ctaL pin is the precedent); ramp, washes, inks and the ENTIRE
+// dark side stay canonical red verbatim (dark never fires under the Lc-60 bar).
+// Returns null = canonical red already stands clean beside this brand.
+const blackLcAt = (L: number, C: number, H: number): number =>
+  Math.abs(apcaLc(apcaYAt(0, 0, 0), apcaYAt(L, clampChromaToGamut(L, C, H), H)))
+function redComplementVariant(
   brandCta: { L: number; C: number; H: number },
+  seed: { L: number; C: number; H: number },
+  brandWentUp: boolean,
   red: { def: SignalDef; scale: GeneratedScale },
   contrastProfile?: ContrastProfile,
 ): { scale: GeneratedScale; note: string } | null {
@@ -97,45 +99,46 @@ function redMoveVariant(
     highlight: true, darkChromaCurve, loudCta: true, darkFillMinL: red.def.darkFillMinL,
     enforceOnFillContrast: true, suppressRedCool: true, goldBoost: true, contrastProfile,
   } as any)
-  const vFor = (L: number) => rctx.cAt('light', L, rctx.brandC)
   const redCta = red.scale.cta
-  const release = RED_GATE.G + RED_GATE.releaseMargin
-  // lane ceiling: the lightest variant whose WHITE text is legal
-  let cap = RED_VARIANT_L_MIN
-  for (let L = RED_VARIANT_L_MIN; L <= 0.72; L += 0.002) {
-    const c = clampChromaToGamut(L, vFor(L), rctx.brandH)
-    const legal = contrastProfile === 'apca'
-      ? whiteTextLcAt(L, c, rctx.brandH) >= 60
-      : whiteRatioAt(L, vFor(L), rctx.brandH) >= 4.5
-    if (legal) cap = L
-    else break
-  }
-  const mk = (L: number) => ({ L, C: clampChromaToGamut(L, vFor(L), rctx.brandH), H: rctx.brandH })
-  const scan = (from: number, to: number, step: number, bar: number) => {
-    for (let L = from; step > 0 ? L <= to + 1e-9 : L >= to - 1e-9; L += step) {
-      const v = mk(L)
-      if (redGateDist(brandCta, v) >= release && p2Diff(brandCta, v) >= bar) return v
-    }
-    return null
-  }
-  const deepFirst = brandCta.L >= redCta.L
-  for (const bar of [P2_D, P2_D_FALLBACK]) {
-    const deep = () => scan(Math.min(redCta.L, cap), RED_VARIANT_L_MIN, -0.005, bar)
-    const light = () => redCta.L <= cap ? scan(redCta.L, cap, 0.005, bar) : null
-    const v = (deepFirst ? deep() : light()) ?? (deepFirst ? light() : deep())
-    if (v) {
-      const cta = makeStop(red.scale.cta.stop, v.L, vFor(v.L), rctx.brandH)
-      const hL = hoverL(v.L)
-      const ctaHover = makeStop(red.scale.ctaHover.stop, hL, rctx.cAt('light', hL, rctx.brandC), rctx.brandH)
-      const onFillTextIsWhite = onFillIsWhiteDarkAt(cta.L, cta.C, cta.H, true)
-      return {
-        scale: { ...red.scale, cta, ctaHover, onFillTextIsWhite },
-        // naming candidates only — the identity name is the owner's call at bless
-        note: `red → ${v.L < redCta.L ? 'rich' : 'coral'} L${v.L.toFixed(2)}`,
-      }
+  const release = RED_GATE.G + RED_SOLVE.ring
+  const at = (L: number, H: number) => ({ L, C: clampChromaToGamut(L, rctx.cAt('light', L, rctx.brandC), H), H })
+  const poleOk = (c: { L: number; C: number; H: number }): boolean =>
+    contrastProfile !== 'apca' || whiteTextLcAt(c.L, c.C, c.H) >= CTA_ONFILL_ENFORCE_LC ||
+    blackLcAt(c.L, c.C, c.H) >= CTA_ONFILL_ENFORCE_LC
+  const clean = (c: { L: number; C: number; H: number }): boolean =>
+    p2Diff(brandCta, c) >= (c.L < brandCta.L ? P2_D : P2_D_UP) &&
+    redSolveDist(brandCta, c) >= release && poleOk(c)
+  if (!brandWentUp && clean(redCta)) return null
+  const hues = hueDelta(seed.H, redCta.H) <= RED_SOLVE.redHueMagentaDh
+    ? RED_SOLVE.redHuesMagentaBrand : RED_SOLVE.redHuesWarmBrand
+  const wantLighter = brandCta.L <= redCta.L
+  const tiers = wantLighter
+    ? [[...RED_SOLVE.edgeL], RED_SOLVE.coreL.filter(l => l > brandCta.L)]
+    : [[...RED_SOLVE.coreL], [...RED_SOLVE.edgeL]]
+  let pick: { L: number; C: number; H: number } | null = null
+  outer: for (const tier of tiers) {
+    const ls = [...tier].sort((a, b) => wantLighter ? a - b : b - a)
+    for (const L of ls) for (const H of hues) {
+      const c = at(L, H)
+      const onSide = wantLighter ? c.L > brandCta.L : c.L < brandCta.L
+      if (!onSide || !clean(c)) continue
+      pick = c
+      break outer
     }
   }
-  return null
+  if (!pick) return null // no clean complement in her zones — canonical stands, sweeps flag the pair
+  const cta = makeStop(redCta.stop, pick.L, rctx.cAt('light', pick.L, rctx.brandC), pick.H)
+  const hL = hoverL(pick.L)
+  const ctaHover = makeStop(red.scale.ctaHover.stop, hL, rctx.cAt('light', hL, rctx.brandC), pick.H)
+  // pinned mints skip the producer's enforce-darken, so the wcag conformance floor rides
+  // the pole judge (a light coral variant must flip to black text, not ship white sub-4.5)
+  const onFillTextIsWhite = onFillIsWhiteDarkAt(cta.L, cta.C, cta.H, true, contrastProfile === 'apca' ? undefined : 4.5)
+  return {
+    scale: { ...red.scale, cta, ctaHover, onFillTextIsWhite },
+    // naming candidates only — the identity name is the owner's call at bless. No hue suffix:
+    // the plugin's note parser mints Figma variable paths from this string.
+    note: `red → ${pick.L < redCta.L ? 'rich' : 'coral'} L${pick.L.toFixed(2)}`,
+  }
 }
 
 export function resolveBrand(
@@ -161,24 +164,23 @@ export function resolveBrand(
 ): ResolvedBrand {
   const sigScales = signalScalesFor(opts?.contrastProfile)
 
-  // C12 v6 (owner-approved 2026-07-10): classify BEFORE generation. Identity-keep brands
-  // (inRedKeepBox on the NOMINAL seed — their color IS a credible error color) never move
-  // their cta: if fired, the RED moves instead (variant below). Everyone else carries the
-  // value-exit require with a DECLARED direction (deep seeds down, else up — her rulings;
-  // never nearest). Off for exact (hands-off) and the secondary (theme's subtle treatment).
+  // C12 v8 (owner-settled 2026-07-10; model = scripts/c12-session/joint-solve-model.md):
+  // ONE classification — the joint solve. The brand side rides opts.ctaSolve through
+  // generation (solveBrandExit, producers.ts: membership on the nominal seed, nearest-edge
+  // exit, her direction rules, brick-band diagonal); the red complement resolves after,
+  // against the brand's FINAL cta. Off for exact (hands-off — its true-red unification is
+  // the follow-up), the secondary (theme's subtle treatment), and archetypeOverride (the
+  // solve is pair-calibrated; neither half ships alone).
   const red = sigScales.get('red')!.scale
   const seedO = hexToOklch(hex)
   const collisions = !opts?.exact && !opts?.skipCollisionRules
-  const identityKeep = collisions && inRedKeepBox(seedO.L, seedO.C, seedO.H)
-  const exitOpt = !collisions || identityKeep ? {} : {
-    ctaRepel: {
-      light: { L: red.cta.L, C: red.cta.C, H: red.cta.H },
-      up: seedO.L >= RED_DEEP_PIVOT,
-    },
-  }
+  const solving = collisions && !opts?.archetypeOverride
+  const solveOpt = solving ? {
+    ctaSolve: { seed: seedO, red: { L: red.cta.L, C: red.cta.C, H: red.cta.H } },
+  } : {}
 
   const floor = {
-    ...exitOpt,
+    ...solveOpt,
     darkFillMinL: DARK_BRAND_FILL_MIN_L,
     enforceOnFillContrast: !opts?.exact,
 
@@ -201,39 +203,18 @@ export function resolveBrand(
     pending = hueCollisionPending(scale, sigScales)
   }
 
-  let redRepel = scale.ctaRepelled?.light ? { light: true, dark: false } : null
+  const redRepel = scale.ctaRepelled?.light ? { light: true, dark: false } : null
 
   const signalOverrides: SignalOverride[] = []
 
-  // C12 v6 red-move: a FIRED identity-keep brand keeps its cta; red gets a per-brand
-  // variant from the owner's error-eligible range (deep or light by the declared side
-  // rule). If no variant fits the lane's domain (wcag's white-4.5 cap squeezes the light
-  // side), the brand falls back to the standard self-exit, regenerated with the require.
-  let redMoved = false
-  if (identityKeep && !opts?.archetypeOverride && redGateDist(scale.cta, red.cta) <= RED_GATE.G) {
-    const v = redMoveVariant(scale.cta, sigScales.get('red')!, opts?.contrastProfile)
-    if (v) {
-      signalOverrides.push({ name: 'red', scale: v.scale, note: v.note })
-      redMoved = true
-    } else {
-      scale = generateScale(hex, name, undefined, {
-        ...floor,
-        ctaRepel: { light: { L: red.cta.L, C: red.cta.C, H: red.cta.H }, up: seedO.L >= RED_DEEP_PIVOT },
-      })
-      redRepel = scale.ctaRepelled?.light ? { light: true, dark: false } : null
-    }
-  }
-
-  // C12 vivid-arc (owner 2026-07-10, "move brand AND red"): the near-gamut-max warm arc gets
-  // a red variant INDEPENDENT of firing — a max-vivid neighbor vibrates beside canonical red
-  // even when it is not confusable. Solved against the brand's FINAL cta (post-exit when it
-  // fired, untouched when it did not). Keep-box brands already red-moved above.
-  if (!redMoved && collisions && !opts?.archetypeOverride && inRedVividArc(seedO.L, seedO.C, seedO.H)) {
-    const v = redMoveVariant(scale.cta, sigScales.get('red')!, opts?.contrastProfile)
-    if (v) {
-      signalOverrides.push({ name: 'red', scale: v.scale, note: v.note })
-      redMoved = true
-    }
+  // C12 v8 red complement: resolves for EVERY solving brand against its FINAL cta —
+  // independent of firing (a near-red neighbor vibrates beside canonical red even when not
+  // confusable). A lightened brand always gets a deep-core red; canonical stands only when
+  // it is already clean beside this brand.
+  if (solving) {
+    const brandWentUp = !!scale.ctaRepelled?.light && scale.cta.L > seedO.L + 1e-6
+    const v = redComplementVariant(scale.cta, seedO, brandWentUp, sigScales.get('red')!, opts?.contrastProfile)
+    if (v) signalOverrides.push({ name: 'red', scale: v.scale, note: v.note })
   }
 
   let warnVariant: 'lemon' | 'macaroni' | null = null
@@ -254,14 +235,10 @@ export function resolveBrand(
 
   }
 
-  // cta hue follows the C6 repel for in-band brands (the shipped "dark tomato" identity
-  // treatment) — EXCEPT when C12 fired in light (self-exit OR red-move): the treated brand
-  // keeps its own hue (owner ruling 2026-07-09, "maintain its own color"); separation is the
-  // value exit / the moved red, never a hue push. (Panel fix: the old predicate keyed on the
-  // repelled flag alone, so red-move brands still got hue-shifted — re-keyed on FIRED.)
-  if (!opts?.exact && !opts?.archetypeOverride && !redRepel?.light && !redMoved && inRedRepelBand(scale.brandH)) {
-    applyRedRepelRender(scale, true, opts?.contrastProfile)
-  }
+  // C6's light cta render hue-shift is RETIRED from this path (owner ruling 2026-07-10:
+  // "we are not supposed to be using that cooling … WE ARE DECOLLIDING THE RED"): cta red
+  // de-collision belongs to C12 alone (gate → split/exit/variant); no other machinery may
+  // move a cta to de-collide. The shift was cooling unfired deep maroons into fuchsia.
 
   return { scale, shearDeg: 0, redRepel, warningVariant: warnVariant, pending, signalOverrides }
 }

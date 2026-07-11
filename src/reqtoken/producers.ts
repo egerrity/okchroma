@@ -8,6 +8,7 @@ import { clampChromaToGamut, wcagY, contrastRatio, legalRatio, findMaxLForContra
 import { perceptualRungL, apparentL, grayApparentL, solveLForApparent } from '../engine/perceptualL'
 import {
   hexToOklch, maxChromaAt, goldSpineHue, torsionedHue, gauss, sigmoid, hueDelta, oklabDist, redGateDist, RED_GATE,
+  RED_SOLVE, redSolveDist, inBrickBand,
   SPINE_OFFPATH_SIGMA, RED_TORSION_CENTER_H, RED_TORSION_SOFTNESS, VIVID_C, HUE_NOISE_C, MUTED_BLEND_DENOM,
   LIGHT_DRIFT_COOL_HI, LIGHT_DRIFT_COOL_RANGE, VIVID_LIFT_BLEND, VIVID_LIFT_L_LO, VIVID_LIFT_L_RANGE,
   CREAM_UPPER_H, CREAM_UPPER_SOFTNESS,
@@ -104,11 +105,16 @@ export function buildContext(hex: string, opts?: ResolveOpts) {
     opts?.coolRedDark && !hueIsNoise && brandH > RED_BAND_LO_H
       ? brandH + redRepelShiftDeg(brandH)
       : brandH
+  // C12 v8 (owner ruling 2026-07-10 + research): the dark CTA does NOT ride the coolRedDark
+  // shift — cta red de-collision is C12's alone, and the identity-hue dark cta never fires
+  // the gate (0/1206 measured, the .70 prominence floor is structural). Ramp/ink/paper
+  // riders keep darkH — the wash protection lives in the light redShift via the delta model.
+  const darkCtaH = brandH
 
   return {
     hex, opts, brandL, brandC, brandH, subtleC, cAt, archetype, scaleL,
     darkFloorStrength, hueIsNoise, v, vSubtle, u, envW, chromaBoost, brandSat,
-    lightHueAt, darkH, gOffPath, redShift,
+    lightHueAt, darkH, darkCtaH, gOffPath, redShift,
   }
 }
 export type Ctx = ReturnType<typeof buildContext>
@@ -350,7 +356,7 @@ export function ctaLightL(ctx: Ctx, onFillTextIsWhite: boolean, enforce: boolean
 export function ctaDarkEnforcedL(ctx: Ctx, base: { L: number; C: number; H: number }, onFillIsWhiteDark: boolean, enforce: boolean): number | null {
   if (!(enforce && onFillIsWhiteDark)) return null
   if (legalRatio(base.L, base.C, base.H, 1.0) >= 4.5) return null
-  return findLForContrast(base.L, base.C, ctx.darkH, 1.0, 4.6)
+  return findLForContrast(base.L, base.C, ctx.darkCtaH, 1.0, 4.6)
 }
 
 // ================= the APCA on-text enforcement (the 'apca' profile's Lc-metric analog) =================
@@ -389,37 +395,78 @@ export function ctaLightLApca(ctx: Ctx, onFillTextIsWhite: boolean, enforce: boo
 export function ctaDarkEnforcedLApca(ctx: Ctx, base: { L: number; C: number; H: number }, onFillIsWhiteDark: boolean, enforce: boolean, thresholdLc: number): number | null {
   if (!(enforce && onFillIsWhiteDark)) return null
   if (whiteTextLcAt(base.L, base.C, base.H) >= thresholdLc) return null
-  return findLForWhiteTextLc(base.L, base.C, ctx.darkH, thresholdLc + APCA_SOLVE_MARGIN_LC)
+  return findLForWhiteTextLc(base.L, base.C, ctx.darkCtaH, thresholdLc + APCA_SOLVE_MARGIN_LC)
 }
 
-// on-fill (dark): judged at the emitted (gamut-clamped) base ctaDark, PRE-enforcement (:424–425)
-export function onFillIsWhiteDarkAt(L: number, C: number, H: number, enforce: boolean): boolean {
-  return onTextIsWhite(apcaYAt(L, C, H), L, C, H, enforce)
+// on-fill (dark): judged at the emitted (gamut-clamped) base ctaDark, PRE-enforcement (:424–425).
+// ratioFloor: the wcag conformance floor for POST-MOVE re-judges (a moved cta sits where the
+// enforce-darken can no longer guarantee white — the chosen pole must still pass 4.5; the
+// enforce branch's |Lc|≥45 taste guard must not block a legally-required flip).
+export function onFillIsWhiteDarkAt(L: number, C: number, H: number, enforce: boolean, ratioFloor?: number): boolean {
+  return onTextIsWhite(apcaYAt(L, C, H), L, C, H, enforce, ratioFloor)
 }
 
-// ================= C12 VALUE EXIT v6 (the two-problem design, owner-approved 2026-07-10) ==
-// FIRE = the owner's confusability gate (redGateDist ≤ G — "could be mistaken for the
-// signal", her 100-mark category). DELIVERY = the exit continues along L until BOTH clear:
-// the gate (G + margin — not error-confusable) AND P2 (helmlab ≥ P2_D_UP/P2_D — truly
-// different beside red, her flush-strip marks). Two metrics because they answer different
-// questions; the v5 release-at-boundary (minimum possible move) is exactly what she rejected.
-// DIRECTION is the caller's declared class (deep seeds exit down, the rest up — never
-// nearest). Dark never fires under the Lc-60 on-cta bar (collision-sweep asserts zero) —
-// there is no dark exit. Chroma/hue ride the caller's cta formula; hue stays identity.
-// Returns null = outside the gate, no exit — byte-identical path.
-export function exitCtaL(
-  baseL: number, cFor: (L: number) => number, H: number,
+// ================= C12 v8 — THE JOINT SOLVE, brand side (owner-settled 2026-07-10; model =
+// scripts/c12-session/joint-solve-model.md; supersedes the v6/v7 exitCtaL + arc-target) ====
+// MEMBERSHIP: the cta formula at the SEED's own L sits inside the widened region
+// (redSolveDist ≤ G) or in the warm brick band. EXIT: the nearest release edge in the solve
+// metric — clearing the region by the RING with a passing pole (pole-agnostic; apca's dead
+// zone is cleared, never parked in) — with her direction rules on top: noticeably-magenta
+// (not deep) lightens · gold-side vivid flips up to bright orange · on-hue vivid takes the
+// big dark throw. A dark landing inside the brick band takes the DIAGONAL (soft cool, slight
+// desat, extra depth — burgundy at near-identity hue). No P2 condition on the brand — the
+// vibration problem is the red complement's job (engine/resolve). Returns null = not a
+// member — byte-identical path. Dark never fires (collision-sweep asserts zero).
+export interface BrandExitLanding { L: number; H: number; cMul: number; up: boolean }
+export function solveBrandExit(
+  seed: { L: number; C: number; H: number },
+  cFor: (L: number) => number, brandH: number,
   red: { L: number; C: number; H: number },
-  up: boolean,
-): number | null {
-  const at = (L: number) => ({ L, C: clampChromaToGamut(L, cFor(L), H), H })
-  if (redGateDist(at(baseL), red) > RED_GATE.G) return null
-  const release = RED_GATE.G + RED_GATE.releaseMargin
-  const bar = up ? P2_D_UP : P2_D
-  for (let L = baseL; up ? L <= 0.96 : L >= 0.04; L += up ? 0.005 : -0.005) {
-    const p = at(L)
-    if (redGateDist(p, red) >= release && p2Diff(p, red) >= bar) return L
+  enforceLc?: number,
+): BrandExitLanding | null {
+  const at = (L: number) => ({ L, C: clampChromaToGamut(L, cFor(L), brandH), H: brandH })
+  const poleOk = (L: number, C: number, H: number): boolean => {
+    if (enforceLc === undefined) return true
+    if (whiteTextLcAt(L, C, H) >= enforceLc) return true
+    return Math.abs(apcaLc(apcaYAt(0, 0, 0), apcaYAt(L, clampChromaToGamut(L, C, H), H))) >= enforceLc
   }
-  // unreachable exit parks at the extreme — the gate verify downstream flags it loud
-  return up ? 0.97 : 0.03
+  const anchor = at(seed.L)
+  const dh = hueDelta(seed.H, red.H)
+  const member = redSolveDist(anchor, red) <= RED_GATE.G ||
+    (inBrickBand(seed.L, anchor.C, brandH) && dh > RED_SOLVE.magentaDh)
+  if (!member) return null
+  const release = RED_GATE.G + RED_SOLVE.ring
+  const travel = (dir: 1 | -1): number | null => {
+    for (let L = seed.L; L >= 0.28 && L <= 0.92; L += dir * 0.002) {
+      const c = at(L)
+      if (redSolveDist(c, red) >= release && poleOk(L, c.C, c.H)) return Math.abs(L - seed.L)
+    }
+    return null
+  }
+  const dn = travel(-1), up = travel(1)
+  // both-directions-trapped is unreachable on the current geometry (membership bounds seed L
+  // well inside the scan range; fleet-swept 0 hits both lanes) — the near-black park exists
+  // only as a defensive sentinel and nothing asserts on it today
+  if (dn === null && up === null) return { L: 0.03, H: brandH, cMul: 1, up: false }
+  const vivid = seed.C / Math.max(1e-6, maxChromaAt(seed.L, seed.H))
+  const magentaUp = dh <= RED_SOLVE.magentaDh && seed.L > RED_SOLVE.magentaMinL &&
+    up !== null && dn !== null && up <= RED_SOLVE.magentaUpRatio * dn
+  const goldBright = !magentaUp && vivid >= RED_SOLVE.vividMin && dh >= RED_SOLVE.goldDh &&
+    seed.L > RED_SOLVE.vividMinL && up !== null
+  const vividDown = !magentaUp && !goldBright && vivid >= RED_SOLVE.vividMin &&
+    dh > RED_SOLVE.magentaDh && dn !== null
+  const dir = magentaUp || goldBright ? 1 : vividDown ? -1 : dn !== null && (up === null || dn <= up) ? -1 : 1
+  const t = dir === -1 ? dn! : up!
+  let landing: BrandExitLanding = { L: seed.L + dir * t, H: brandH, cMul: 1, up: dir === 1 }
+  if (dir === -1) {
+    const l = at(landing.L)
+    if (inBrickBand(l.L, l.C, l.H)) {
+      landing = {
+        L: landing.L - RED_SOLVE.brickExtraDeep,
+        H: brandH + (dh >= RED_SOLVE.goldDh ? RED_SOLVE.brickCoolGold : RED_SOLVE.brickCool),
+        cMul: RED_SOLVE.brickDesat, up: false,
+      }
+    }
+  }
+  return landing
 }

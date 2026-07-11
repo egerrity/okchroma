@@ -118,6 +118,76 @@ export function inRedVividArc(L: number, C: number, H: number): boolean {
   return C / maxChromaAt(L, h) >= RED_VIVID_ARC.vividMin
 }
 
+// ── C12 v8 — THE JOINT SOLVE (owner-settled 2026-07-10, "as close as we will ever get";
+// full model = scripts/c12-session/joint-solve-model.md; every constant below is her
+// verdict-calibrated candidate from the accepted 50-row exhibit) ──────────────────────────
+// A (error-look): a brand whose cta sits inside the true-red region exits via the NEAREST
+// release edge — severity = depth into the region. B (vibration): the RED signal complements
+// from her calibrated zones, opposite side of the brand. Two movers, one geometry.
+export const RED_SOLVE = {
+  // the region: her v7 metric widened dark-ward + the dead-zone lip (nothing lands on it,
+  // nothing de-collides from it)
+  wDark: 0.60, ring: 0.020,
+  // direction rules: noticeably-magenta lightens (unless deep) · gold-side vivid flips to
+  // bright orange · on-hue vivid takes the big dark throw · else nearest edge
+  magentaDh: -14, magentaMinL: 0.53, magentaUpRatio: 2.5,
+  vividMin: 0.85, goldDh: 1.5, vividMinL: 0.53,
+  // the BRICK band: rusty-to-brick mid-dark vivid warms still read conflict-y (browns and
+  // magentas at this depth are fine); warm members are IN-REGION, dark landings must not
+  // park there → the DIAGONAL (soft cool + slight desat + extra depth, never the hard cool)
+  brickHLo: 20, brickHHi: 50, brickLLo: 0.36, brickLHi: 0.52, brickVividMin: 0.55,
+  brickCool: -4, brickCoolGold: -3, brickDesat: 0.85, brickExtraDeep: 0.02,
+  // red's usable zones (her density map, error-range-checks.json): deep core or the light
+  // edge tier — the .50-.58 middle is ring territory, canonical itself lives there, so a
+  // lightened brand ALWAYS gets a deep-core red. Cool-first beside warm brands.
+  coreL: [0.49, 0.47, 0.45], edgeL: [0.65, 0.68, 0.71, 0.75],
+  redHuesWarmBrand: [28, 24, 33.3, 38], redHuesMagentaBrand: [33.3, 38, 28],
+  redHueMagentaDh: -15,
+} as const
+// the v8 SOLVE metric: her v7 confusability shape with the widened dark reach
+export function redSolveDist(c: { L: number; C: number; H: number }, red: { L: number; C: number; H: number }): number {
+  const dh = ((c.H - red.H + 540) % 360) - 180
+  const meanC = 2 * Math.sqrt(Math.max(0, c.C) * Math.max(0, red.C))
+  const arcMag = meanC * Math.sin(Math.abs(Math.min(0, dh)) * Math.PI / 360)
+  const arcGold = meanC * Math.sin(Math.max(0, dh) * Math.PI / 360)
+  return Math.hypot(
+    RED_SOLVE.wDark * Math.max(0, red.L - c.L),
+    RED_GATE.wLight * Math.max(0, c.L - red.L),
+    RED_GATE.wDust * Math.max(0, red.C - c.C),
+    Math.max(0, c.C - red.C),
+    arcMag,
+    RED_GATE.wGoldArc * arcGold,
+  )
+}
+export function inBrickBand(L: number, C: number, H: number): boolean {
+  const h = ((H % 360) + 360) % 360
+  return h >= RED_SOLVE.brickHLo && h <= RED_SOLVE.brickHHi && L >= RED_SOLVE.brickLLo &&
+    L <= RED_SOLVE.brickLHi && C / Math.max(1e-6, maxChromaAt(L, h)) >= RED_SOLVE.brickVividMin
+}
+
+// ── (SUPERSEDED by the v8 joint solve, 2026-07-10 — kept as the CALIBRATION RECORD: the
+// split constants encode her anchor picks and remain consumed by the session instruments;
+// no engine path reads them) C12 vivid-arc OPPOSED SPLIT (owner-calibrated 28/28) ─────────
+// The arc's de-conflict is a split, never one-sided (her words: "the brand gets lighter, the
+// red error gets darker" — red NEVER lightens): each side's move is keyed to dh, the brand
+// seed's signed hue distance from red's cta (+ = gold-ward). Her three anchor picks fix the
+// curves: PINK #FF006F +0.04/−0.08 · RED #FF0000 +0.08/−0.12 · ORANGE #FF7300 ±0/−0.08/−5°
+// (red-darken window then shifted .10–.14 across the board at her word). The gold side never
+// lightens the brand but COOLS the red variant instead (her catch: a darker H33 red still
+// "leans orange" beside an orange brand; −15° was "too cool" — the knee keeps it ≤5°).
+export const RED_SPLIT = {
+  redDLBase: -0.10, redDLBump: -0.04, redDLSigma: 7,
+  brandDLMax: 0.08, brandSigmaMagenta: 21.5, brandSigmaGold: 6,
+  coolDeg: -5, coolKneeDh: 9, coolSoftness: 2.5,
+} as const
+export function vividSplit(dh: number): { redDL: number; brandDL: number; redDH: number } {
+  return {
+    redDL: RED_SPLIT.redDLBase + RED_SPLIT.redDLBump * gauss(dh, RED_SPLIT.redDLSigma),
+    brandDL: RED_SPLIT.brandDLMax * gauss(dh, dh < 0 ? RED_SPLIT.brandSigmaMagenta : RED_SPLIT.brandSigmaGold),
+    redDH: RED_SPLIT.coolDeg * sigmoid((dh - RED_SPLIT.coolKneeDh) / RED_SPLIT.coolSoftness),
+  }
+}
+
 // Self-move direction pivot (her rulings: L0.45 fired → all dark · L0.55 → zero dark).
 export const RED_DEEP_PIVOT = 0.50
 // Red-variant domain floor: the recorded bottom of her error-eligible range (L0.35 slice empty).

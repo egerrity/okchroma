@@ -6,7 +6,7 @@ import {
 import { resolveBrand, resolveTheme, type SecondaryStyle } from '../src/engine/resolve'
 import { ARCHETYPES, type Archetype } from '../src/engine/archetypes'
 import { brandCss, signalsCss, stopHex } from '../src/engine/cssRender'
-import { inRedRepelBand, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
+import { type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
 import { wcagY, contrastRatio } from '../src/engine/constraints'
 import { HERO_ILLO } from './heroIllo'
 import {
@@ -453,7 +453,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
           <TriangleAlert size={13} style={{ flexShrink: 0, marginTop: 1 }} />
           <span>
             Collision notice: this primary sits in the error signal's register. Recommended mode
-            stepped the action color clear of red — your hue is kept.
+            stepped the action color clear of red along its nearest exit.
           </span>
         </div>
       )}
@@ -461,8 +461,9 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
         <div className="ct-alert-text">
           <TriangleAlert size={13} style={{ flexShrink: 0, marginTop: 1 }} />
           <span>
-            Collision notice: your color IS a true red, so it stays exactly yours — the error
-            signal takes a per-brand variant to stay clearly distinct beside it.
+            Collision notice: your color lives in the error signal's neighborhood, so it stays
+            exactly yours — the error signal takes a per-brand variant to stay clearly distinct
+            beside it.
           </span>
         </div>
       )}
@@ -554,22 +555,19 @@ function checklistRows(rRec: ResolvedBrand, rung: RungMode, primaryHex: string):
   const redMove = rRec.signalOverrides.find(o => o.name === 'red')
   if (rRec.redRepel) {
     rows.push(rec
-      ? { key: 'hue', tone: 'adjusted', label: `conflict with error red resolved — ${primaryHex.toUpperCase()} → ${shipsHex}`, detail: 'This primary sits in the error signal\'s register. The action color steps clear in its declared direction — deep brands go deeper, everyone else lighter — until it reads truly distinct beside red, and keeps your hue.' }
+      ? { key: 'hue', tone: 'adjusted', label: `conflict with error red resolved — ${primaryHex.toUpperCase()} → ${shipsHex}`, detail: 'This primary sits in the error signal\'s register. The action color exits by its nearest edge — deep and vivid reds go deeper (into burgundy when needed), pinks lighten, vivid oranges brighten — until it reads clearly apart from red.' }
       : { key: 'hue', tone: 'fail', label: 'color conflicts with error red — separation not applied', detail: 'Exact mode ships the hex untouched, so the error-signal conflict is not resolved at the color level. Destructive buttons render as outlines everywhere as a backstop.' })
     if (rec && redMove) {
-      rows.push({ key: 'vivid', tone: 'adjusted', label: `max-vivid red arc — the error signal also moves (${redMove.note})`, detail: 'At full saturation this close to red, the pair still vibrates even after the action color steps aside — so the error signal also takes a per-brand variant, on the opposite side of your action color.' })
+      rows.push({ key: 'vivid', tone: 'adjusted', label: `the error signal also moves (${redMove.note})`, detail: 'Beside your treated action color the canonical error red would still sit too close — so the error signal takes a per-brand variant from the error-credible range, on the opposite side of your action color.' })
     }
   } else if (redMove) {
     rows.push(rec
-      ? { key: 'hue', tone: 'adjusted', label: `your color IS a true red — the error signal moves instead (${redMove.note})`, detail: 'This brand sits in the heart of the error range, so moving it would erase its identity. The action color keeps your exact register; the error signal takes a per-brand variant from the error-credible range, clearly distinct beside your buttons.' }
+      ? { key: 'hue', tone: 'adjusted', label: `your color keeps its exact register — the error signal moves instead (${redMove.note})`, detail: 'This brand lives in the error signal\'s neighborhood, and moving it would cost its identity. The action color stays exactly yours; the error signal takes a per-brand variant from the error-credible range, clearly distinct beside your buttons.' }
       : { key: 'hue', tone: 'fail', label: 'color conflicts with error red — separation not applied', detail: 'Exact mode ships the hex untouched, so the error-signal conflict is not resolved at the color level. Destructive buttons render as outlines everywhere as a backstop.' })
   } else {
     rows.push({ key: 'hue', tone: 'pass', label: `${origArch} archetype, no signal conflicts`, detail: 'The hue clears every signal gate; the fill anchors at your exact color.' })
   }
 
-  if (inRedRepelBand(rRec.scale.brandH)) {
-    rows.push({ key: 'redcool', tone: 'standard', label: 'standard red hue shift applied', detail: 'Red-adjacent hues rotate the fill a few degrees away from error red at render time — cooler below it, warmer above. Every decision is made on your raw hue first — this is presentation only.' })
-  }
 
   if (rRec.warningVariant === 'lemon') {
     rows.push({ key: 'warn', tone: rec ? 'adjusted' : 'fail', label: 'warning signal shifted to a cooler yellow', detail: 'This brand owns the warm gold range, so the warning signal moves to a cooler yellow to stay clearly distinct from brand surfaces.' })

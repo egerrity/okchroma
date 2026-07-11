@@ -105,14 +105,13 @@ export interface GenerateOptions {
 
   loudCta?: boolean
 
-  // C12 VALUE EXIT v6 (owner-approved 2026-07-10): red's resolved LIGHT cta + the brand's
-  // declared exit direction (deep seeds down, else up — never nearest), injected by
-  // resolveBrand — the resolver has no cross-scale view. A cta inside the red-family gate
-  // (RED_GATE, colorMath.ts) exits along L until the gate releases AND P2 clears (p2.ts).
-  // No dark member — dark never fires under the Lc-60 on-cta bar (collision-sweep asserts).
-  // Identity-keep brands never get this opt (their red moves instead). Absent (signals,
-  // neutral, secondary, exact) = byte-identical.
-  ctaRepel?: { light: { L: number; C: number; H: number }; up: boolean }
+  // C12 v8 — THE JOINT SOLVE, brand side (owner-settled 2026-07-10): the brand's nominal
+  // seed + the lane's resolved red cta, injected by resolveBrand — the resolver has no
+  // cross-scale view. The light cta exits the true-red region via solveBrandExit
+  // (producers.ts: nearest edge, her direction rules, brick-band diagonal). No dark member —
+  // dark never fires under the Lc-60 on-cta bar (collision-sweep asserts). Absent (signals,
+  // neutral, secondary, exact, archetypeOverride) = byte-identical.
+  ctaSolve?: { seed: { L: number; C: number; H: number }; red: { L: number; C: number; H: number } }
 
   heat?: number
 
@@ -196,34 +195,11 @@ export function generateScale(
   }
 }
 
-export function applyRedRepelRender(scale: GeneratedScale, enforceOnFillContrast: boolean, contrastProfile?: ContrastProfile): void {
-  if (scale.brandC < HUE_NOISE_C) return
-  const shift = redRepelShiftDeg(scale.brandH)
-  if (Math.abs(shift) <= 1e-9) return
-  const H = scale.brandH + shift
-
-  scale.cta = makeStop(scale.cta.stop, scale.cta.L, scale.cta.C, H)
-  scale.ctaHover = makeStop(scale.ctaHover.stop, scale.ctaHover.L, scale.ctaHover.C, H)
-  if (enforceOnFillContrast && scale.onFillTextIsWhite) {
-    const s9 = scale.cta
-    if (contrastProfile === 'apca') {
-      // apca lane: the on-cta law is the declared Lc bar (owner contract 2026-07-10).
-      // The old solve here ran white-only WCAG 4.5 REGARDLESS of profile — the shipped
-      // quirk the owner caught in the C12 calibration round; under the Lc-60 bar it
-      // darkened light near-red ctas back INTO the red gate (collision-sweep caught it).
-      if (whiteTextLcAt(s9.L, s9.C, s9.H) < CTA_ONFILL_ENFORCE_LC) {
-        const L = findLForWhiteTextLc(s9.L, scale.brandC, H, CTA_ONFILL_ENFORCE_LC + APCA_SOLVE_MARGIN_LC)
-        scale.cta = makeStop(9, L, scale.brandC, H)
-        scale.ctaHover = makeStop(10, hoverL(L), scale.brandC, H)
-      }
-    } else if (legalRatio(s9.L, s9.C, s9.H, 1.0) < 4.5) {
-
-      const L = findLForContrast(s9.L, scale.brandC, H, 1.0, 4.6)
-      scale.cta = makeStop(9, L, scale.brandC, H)
-      scale.ctaHover = makeStop(10, hoverL(L), scale.brandC, H)
-    }
-  }
-}
+// applyRedRepelRender DELETED (owner ruling 2026-07-10): C6's cta render hue-shift was the
+// last non-C12 machinery de-colliding red — it cooled unfired deep maroons into fuchsia.
+// Red cta de-collision is C12's alone (gate → split / exit / variant). The C6 register
+// (redRepelShiftDeg) survives only where the owner has not yet ruled: the dark-side
+// coolRedDark context hue (producers.ts) — flagged, awaiting her word.
 
 export interface IllustrationScale {
   stops: ColorStop[]

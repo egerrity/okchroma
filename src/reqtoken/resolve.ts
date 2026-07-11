@@ -9,7 +9,7 @@
 // the blessed snapshot audits are the standing regression gate.
 import { apparentL, perceptualRungL, perceptualDarkC, solveLForApparent } from '../engine/perceptualL'
 import { clampChromaToGamut, wcagY, contrastRatio, legalRatio, findMaxLForContrast, apcaLc } from '../engine/constraints'
-import { hexToOklch, srgbEmitChannels } from '../engine/colorMath'
+import { hexToOklch, srgbEmitChannels, redSolveDist, RED_GATE, RED_SOLVE } from '../engine/colorMath'
 import { hoverL } from '../engine/archetypes'
 import { MODE_SPECS, type ModeSpec, type StopReq, type RoleReq, type Require } from './spec'
 import {
@@ -18,7 +18,7 @@ import {
   separationClampLight,
   darkScaleChromaAt, darkInkChromaAt, darkHighlightChromaAt, placeDark, placeDarkDelta, deltaDarkTargetL,
   onFillIsWhiteLight, onFillIsWhiteDarkAt, onHighlightIsWhiteAt, ctaLightL, ctaDarkEnforcedL,
-  ctaLightLApca, ctaDarkEnforcedLApca, exitCtaL,
+  ctaLightLApca, ctaDarkEnforcedLApca, solveBrandExit,
   apcaYAt, findMaxLForApcaLc, APCA_SOLVE_MARGIN_LC, APCA_TOL_LC,
 } from './producers'
 
@@ -294,29 +294,56 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     let light9L = enforceLc !== undefined
       ? ctaLightLApca(ctx, onFillIsWhite, onFillEnforce, enforceLc)
       : ctaLightL(ctx, onFillIsWhite, onFillEnforce)
-    // C12 VALUE EXIT v6 (owner-approved 2026-07-10): a cta inside the red-family gate
-    // (opts.ctaRepel — red's cta + the brand's declared direction, injected by resolveBrand;
-    // the resolver has no cross-scale view) exits along L in THAT direction until both the
-    // gate releases and P2 clears (exitCtaL). Direction is the brand's class (deep seeds
-    // down, the rest up) — never nearest. Identity-keep brands never get this opt (their
-    // red moves instead). No-op (null) when outside the gate — byte-identical path.
+    // C12 v8: the wcag white-darken may not move a RED-NEIGHBORHOOD brand's cta toward red
+    // (it was dragging unfired near-red vivids back into the space the solve exists to keep
+    // clean — the |Lc|≥45 guard's third symptom). Scope is the NEIGHBORHOOD (within two rings
+    // of the region) — the solve metric's L terms are hue-blind, so "darkening = toward red"
+    // would otherwise fire wheel-wide (fleet-verified leak: teals and olives flipped). When
+    // black already passes 4.5 at the undarkened fill, the pole flips and the fill stays.
+    // Signals and everything hue-distant keep the shipped darken.
+    if (enforceLc === undefined && ctx.opts?.ctaSolve && light9L < ctx.scaleL - 1e-6) {
+      const at = (L: number) => ({ L, C: clampChromaToGamut(L, ctx.cAt('light', L, ctx.brandC), ctx.brandH), H: ctx.brandH })
+      const orig = at(ctx.scaleL)
+      const nearRed = redSolveDist(orig, ctx.opts.ctaSolve.red) <= RED_GATE.G + 2 * RED_SOLVE.ring
+      const towardRed = redSolveDist(at(light9L), ctx.opts.ctaSolve.red) < redSolveDist(orig, ctx.opts.ctaSolve.red)
+      if (nearRed && towardRed && legalRatio(orig.L, orig.C, orig.H, 0) >= 4.5) {
+        light9L = ctx.scaleL
+        onFillIsWhite = false
+      }
+    }
+    // C12 v8 — THE JOINT SOLVE, brand side (owner-settled 2026-07-10): a cta whose seed
+    // sits inside the true-red region (opts.ctaSolve — nominal seed + the lane's red cta,
+    // injected by resolveBrand) exits via solveBrandExit: nearest release edge with her
+    // direction rules; a brick-band dark landing takes the diagonal (landing carries its
+    // own hue + chroma multiplier). No P2 condition here — the red complement (engine/
+    // resolve) owns the vibration problem. No-op (null) when not a member.
     const ctaCFor = (L: number) => ctx.cAt('light', L, (ctaReq.chromaMult ?? 1) * ctx.brandC)
     let repelled = false
-    if (ctx.opts?.ctaRepel) {
-      const rp = ctx.opts.ctaRepel
-      const exitL = exitCtaL(light9L, ctaCFor, ctx.brandH, rp.light, rp.up)
-      if (exitL !== null) {
-        light9L = exitL
+    let ctaH = ctx.brandH
+    let ctaCMul = 1
+    if (ctx.opts?.ctaSolve) {
+      const landing = solveBrandExit(ctx.opts.ctaSolve.seed, ctaCFor, ctx.brandH, ctx.opts.ctaSolve.red, enforceLc)
+      if (landing !== null) {
+        light9L = landing.L
+        ctaH = landing.H
+        ctaCMul = landing.cMul
         repelled = true
       }
     }
-    cta = emitRole('cta', light9L, ctaCFor(light9L), ctx.brandH)
-    ctaHover = emitRole('cta-hover', hoverL(light9L), ctx.cAt('light', hoverL(light9L), (hoverReq?.chromaMult ?? 1) * ctx.brandC), ctx.brandH)
+    cta = emitRole('cta', light9L, ctaCFor(light9L) * ctaCMul, ctaH)
+    ctaHover = emitRole('cta-hover', hoverL(light9L), ctx.cAt('light', hoverL(light9L), (hoverReq?.chromaMult ?? 1) * ctx.brandC) * ctaCMul, ctaH)
     if (light9L !== ctx.scaleL) { cta.enforced = true; ctaHover.enforced = true }
     if (repelled) {
       cta.repelled = true; ctaHover.repelled = true
-      // the shipped pole re-judged AT the exited fill (the pre-enforce judge ran at scaleL)
-      onFillIsWhite = onFillIsWhiteDarkAt(cta.L, cta.C, cta.H, enforceLc !== undefined ? false : onFillEnforce)
+      // the shipped pole re-judged AT the exited fill (the pre-enforce judge ran at scaleL).
+      // Under wcag the conformance floor rides the re-judge (owner 2026-07-10, "not darkening
+      // the text at a wide enough range"): the moved fill sits where the enforce-darken can
+      // no longer guarantee white, so the chosen pole MUST pass 4.5 — the flip cannot be
+      // vetoed by the enforce branch's |Lc|≥45 taste guard. apca needs no floor here: the
+      // move itself delivers a passing pole (solveBrandExit's poleOk), preference picks it.
+      onFillIsWhite = onFillIsWhiteDarkAt(cta.L, cta.C, cta.H,
+        enforceLc !== undefined ? false : onFillEnforce,
+        enforceLc !== undefined ? undefined : 4.5)
     }
   } else {
     // dark: base cta from the pre-resolved anchor; judge on-fill at the emitted base; then the enforce re-solve
@@ -326,15 +353,17 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     // but brand-dead). Loudness is the cta's own requirement — the declared floor (dark9L) + trimmed brand
     // chroma anchor it; the enforce re-solve below stays the legibility floor.
     const cta9L = d.dark9L
-    cta = emitRole('cta', cta9L, ctx.cAt('dark', cta9L, d.darkC9), ctx.darkH)
-    ctaHover = emitRole('cta-hover', hoverL(cta9L), ctx.cAt('dark', hoverL(cta9L), d.darkC9), ctx.darkH)
+    // C12 v8: the dark cta rides IDENTITY hue (darkCtaH) — coolRedDark's shift is retired
+    // from the cta (owner ruling; research: identity-hue dark ctas never fire the gate).
+    cta = emitRole('cta', cta9L, ctx.cAt('dark', cta9L, d.darkC9), ctx.darkCtaH)
+    ctaHover = emitRole('cta-hover', hoverL(cta9L), ctx.cAt('dark', hoverL(cta9L), d.darkC9), ctx.darkCtaH)
     onFillIsWhite = onFillIsWhiteDarkAt(cta.L, cta.C, cta.H, enforceLc !== undefined ? false : onFillEnforce)
     const enforcedL = enforceLc !== undefined
       ? ctaDarkEnforcedLApca(ctx, cta, onFillIsWhite, onFillEnforce, enforceLc)
       : ctaDarkEnforcedL(ctx, cta, onFillIsWhite, onFillEnforce)
     if (enforcedL !== null) {
-      cta = emitRole('cta', enforcedL, ctx.cAt('dark', enforcedL, d.darkC9), ctx.darkH)
-      ctaHover = emitRole('cta-hover', hoverL(enforcedL), ctx.cAt('dark', hoverL(enforcedL), d.darkC9), ctx.darkH)
+      cta = emitRole('cta', enforcedL, ctx.cAt('dark', enforcedL, d.darkC9), ctx.darkCtaH)
+      ctaHover = emitRole('cta-hover', hoverL(enforcedL), ctx.cAt('dark', hoverL(enforcedL), d.darkC9), ctx.darkCtaH)
       cta.enforced = true; ctaHover.enforced = true
     }
     // C12 v6: NO dark exit. Under the Lc-60 on-cta bar the enforced dark ctas sit deep
