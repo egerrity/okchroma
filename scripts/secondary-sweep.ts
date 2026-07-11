@@ -38,8 +38,8 @@ function themeCard(label: string, t: ResolvedTheme, mode: 'light' | 'dark', note
   const stops = (sc: GeneratedScale) => (mode === 'light' ? sc.light : sc.dark)
   const paper1 = stops(p).find(x => x.stop === 1)!
   const paper2 = stops(p).find(x => x.stop === 2)!
-  const ink12 = stops(p).find(x => x.stop === 12)!
   const ink11 = stops(p).find(x => x.stop === 11)!
+  const ink10 = stops(p).find(x => x.stop === 10)!
   const pCta = mode === 'light' ? p.cta : p.ctaDark
   const pOn = (mode === 'light' ? p.onFillTextIsWhite : p.onFillTextIsWhiteDark) ? '#fff' : '#000'
   const sCta = mode === 'light' ? s.cta : s.ctaDark
@@ -58,13 +58,13 @@ function themeCard(label: string, t: ResolvedTheme, mode: 'light' | 'dark', note
     <div style="font-size:10.5px;font-weight:650;margin-bottom:4px">${label}</div>
     <div style="background:${stopHex(paper1)};border-radius:10px;padding:10px">
       <div style="background:${stopHex(paper2)};border-radius:8px;padding:10px">
-        <div style="color:${stopHex(ink12)};font-size:11.5px;font-weight:700;margin-bottom:6px">Card title</div>
+        <div style="color:${stopHex(ink11)};font-size:11.5px;font-weight:700;margin-bottom:6px">Card title</div>
         <div style="display:flex;gap:6px;margin-bottom:7px">
           <span style="background:${stopHex(pCta)};border:1.5px solid ${strokeOf(pCta, 'primary')};color:${pOn};border-radius:6px;padding:4px 9px;font-size:9.5px;font-weight:650">Primary</span>
           <span style="background:${stopHex(sCta)};border:1.5px solid ${strokeOf(sCta)};color:${sOn};border-radius:6px;padding:4px 9px;font-size:9.5px;font-weight:650">Secondary</span>
         </div>
         <span style="background:${stopHex(sHl)};border:1.5px solid ${strokeOf(sHl)};color:${(mode === 'light' ? s.onHighlightIsWhite : s.onHighlightIsWhiteDark) ? '#fff' : '#000'};border-radius:9px;padding:2px 8px;font-size:8.5px;font-weight:650">badge · hl-9</span>
-        <div style="background:${stopHex(sWash)};color:${stopHex(ink11)};border-radius:6px;padding:6px 8px;font-size:9px;margin-top:7px">secondary wash-4 inset</div>
+        <div style="background:${stopHex(sWash)};color:${stopHex(ink10)};border-radius:6px;padding:6px 8px;font-size:9px;margin-top:7px">secondary wash-4 inset</div>
       </div>
       <div style="display:flex;gap:4px;margin-top:7px">${chips.map(c => `<div style="flex:1;height:16px;border-radius:3px;background:${stopHex(c)}"></div>`).join('')}</div>
     </div>
@@ -215,18 +215,18 @@ function outlineCard(hex: string, mode: 'light' | 'dark'): string {
   const stops = mode === 'light' ? p.light : p.dark
   const paper1 = stops.find(x => x.stop === 1)!
   const paper2 = stops.find(x => x.stop === 2)!
-  const ink12 = stops.find(x => x.stop === 12)!
+  const ink11 = stops.find(x => x.stop === 11)!
   const pCta = mode === 'light' ? p.cta : p.ctaDark
   const pOn = (mode === 'light' ? p.onFillTextIsWhite : p.onFillTextIsWhiteDark) ? '#fff' : '#000'
   const sec = t.secondary!.scale
   const sStops = mode === 'light' ? sec.light : sec.dark
   const strokeHex = stopHex(sStops.find(x => x.stop === 8)!)
-  const textHex = stopHex(sStops.find(x => x.stop === 11)!)
+  const textHex = stopHex(sStops.find(x => x.stop === 10)!)
   return `<div style="flex:1;min-width:230px;max-width:290px">
     <div style="font-size:10.5px;font-weight:650;margin-bottom:4px">light · OUTLINE resolution</div>
     <div style="background:${stopHex(paper1)};border-radius:10px;padding:10px">
       <div style="background:${stopHex(paper2)};border-radius:8px;padding:10px">
-        <div style="color:${stopHex(ink12)};font-size:11.5px;font-weight:700;margin-bottom:6px">Card title</div>
+        <div style="color:${stopHex(ink11)};font-size:11.5px;font-weight:700;margin-bottom:6px">Card title</div>
         <div style="display:flex;gap:6px;margin-bottom:7px">
           <span style="background:${stopHex(pCta)};border:1.5px solid transparent;color:${pOn};border-radius:6px;padding:4px 9px;font-size:9.5px;font-weight:650">Primary</span>
           <span style="background:transparent;border:1.5px solid ${strokeHex};color:${textHex};border-radius:6px;padding:4px 9px;font-size:9.5px;font-weight:650">Secondary</span>
@@ -252,8 +252,8 @@ function finalistCard(tag: string, primaryHex: string, sHex: string | null, mode
   const st = (sc: GeneratedScale) => (mode === 'light' ? sc.light : sc.dark)
   const paper1 = st(p).find(x => x.stop === 1)!
   const paper2 = st(p).find(x => x.stop === 2)!
-  const ink12 = st(p).find(x => x.stop === 12)!
   const ink11 = st(p).find(x => x.stop === 11)!
+  const ink10 = st(p).find(x => x.stop === 10)!
   const pCta = mode === 'light' ? p.cta : p.ctaDark
   const pOn = (mode === 'light' ? p.onFillTextIsWhite : p.onFillTextIsWhiteDark) ? '#fff' : '#000'
   const sCta = mode === 'light' ? s.cta : s.ctaDark
@@ -264,7 +264,7 @@ function finalistCard(tag: string, primaryHex: string, sHex: string | null, mode
   const p8 = st(p).find(x => x.stop === 8)!
   const sWash3 = st(s).find(x => x.stop === 3)!
   const sWash4 = st(s).find(x => x.stop === 4)!
-  const sInk11 = st(s).find(x => x.stop === 11)!
+  const sInk10 = st(s).find(x => x.stop === 10)!
   const secStroke = adaptiveStroke(sCta, paper2, s8)
   const priStroke = adaptiveStroke(pCta, paper2, p8)
   const ramp = st(s).map(x => `<div style="flex:1;height:14px;border-radius:2px;background:${stopHex(x)}"></div>`).join('')
@@ -272,20 +272,20 @@ function finalistCard(tag: string, primaryHex: string, sHex: string | null, mode
     <div style="font-size:10.5px;font-weight:650;margin-bottom:4px">${tag}</div>
     <div style="background:${stopHex(paper1)};border-radius:10px;padding:10px">
       <div style="background:${stopHex(paper2)};border-radius:8px;padding:11px 12px">
-        <div style="color:${stopHex(ink12)};font-size:12px;font-weight:700">Projects overview</div>
-        <div style="color:${stopHex(ink11)};font-size:9.5px;line-height:1.4;margin:3px 0 8px">Primary drives the page; the secondary supports — chips, filters, quiet actions.</div>
+        <div style="color:${stopHex(ink11)};font-size:12px;font-weight:700">Projects overview</div>
+        <div style="color:${stopHex(ink10)};font-size:9.5px;line-height:1.4;margin:3px 0 8px">Primary drives the page; the secondary supports — chips, filters, quiet actions.</div>
         <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
           <span style="background:${stopHex(pCta)};border:1.5px solid ${priStroke};color:${pOn};border-radius:6px;padding:4px 10px;font-size:9.5px;font-weight:650">New project</span>
           <span style="background:${stopHex(sCta)};border:1.5px solid ${secStroke};color:${sOn};border-radius:6px;padding:4px 10px;font-size:9.5px;font-weight:650">Import</span>
-          <span style="background:transparent;border:1.5px solid ${stopHex(s8)};color:${stopHex(sInk11)};border-radius:6px;padding:4px 10px;font-size:9.5px;font-weight:650">Export</span>
+          <span style="background:transparent;border:1.5px solid ${stopHex(s8)};color:${stopHex(sInk10)};border-radius:6px;padding:4px 10px;font-size:9.5px;font-weight:650">Export</span>
         </div>
         <div style="display:flex;gap:5px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
           <span style="background:${stopHex(sHl)};color:${sOnHl};border-radius:8px;padding:2px 8px;font-size:8.5px;font-weight:650">Trialing</span>
-          <span style="background:${stopHex(sWash4)};color:${stopHex(sInk11)};border-radius:8px;padding:2px 8px;font-size:8.5px;font-weight:650">12 open</span>
-          <span style="color:${stopHex(sInk11)};font-size:8.5px;font-weight:650;text-decoration:underline">secondary link</span>
+          <span style="background:${stopHex(sWash4)};color:${stopHex(sInk10)};border-radius:8px;padding:2px 8px;font-size:8.5px;font-weight:650">12 open</span>
+          <span style="color:${stopHex(sInk10)};font-size:8.5px;font-weight:650;text-decoration:underline">secondary link</span>
         </div>
-        <div style="background:${stopHex(sWash3)};border-radius:6px;padding:6px 8px;font-size:9px;color:${stopHex(ink11)};margin-bottom:6px">selected row · secondary wash-3</div>
-        <div style="background:${stopHex(sWash4)};border-radius:6px;padding:6px 8px;font-size:9px;color:${stopHex(ink12)}">inset panel · secondary wash-4</div>
+        <div style="background:${stopHex(sWash3)};border-radius:6px;padding:6px 8px;font-size:9px;color:${stopHex(ink10)};margin-bottom:6px">selected row · secondary wash-3</div>
+        <div style="background:${stopHex(sWash4)};border-radius:6px;padding:6px 8px;font-size:9px;color:${stopHex(ink11)}">inset panel · secondary wash-4</div>
       </div>
       <div style="display:flex;gap:3px;margin-top:7px">${ramp}</div>
     </div>

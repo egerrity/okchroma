@@ -26,7 +26,7 @@ const ok = (cond: boolean, msg: string) => { if (!cond) fails.push(msg) }
 
 // Same families/modes — every family is emitted UNIFORMLY now: scale slot 9
 // is highlight-9 (stop 10 deleted, owner 2026-07-09), the cta is off-scale (cta-1/cta-2 + on-cta), and on-highlight
-// rides the rung. paper-1 (stop 1) and ink-12 (stop 12) are shared across ramps.
+// rides the rung. paper-1 (stop 1) and ink-11 (stop 11) are shared across ramps.
 for (const mode of ['light', 'dark'] as const) {
   const m = figma[mode] as any
   for (const fam of ['brand', 'secondary', 'neutral', 'red', 'yellow', 'green', 'info-color']) {
@@ -37,8 +37,8 @@ for (const mode of ['light', 'dark'] as const) {
     // (no user-input hex to echo).
     const isBrand = fam === 'brand' || fam === 'secondary'
     const tokens = isBrand
-      ? ['paper-1', 'cta-1', 'cta-2', 'highlight-9', 'ink-11', 'ink-12', 'on-cta', 'on-highlight', 'identity']
-      : ['paper-1', 'highlight-9', 'cta-1', 'cta-2', 'ink-12', 'on-highlight', 'on-cta']
+      ? ['paper-1', 'cta-1', 'cta-2', 'highlight-9', 'ink-10', 'ink-11', 'on-cta', 'on-highlight', 'identity']
+      : ['paper-1', 'highlight-9', 'cta-1', 'cta-2', 'ink-11', 'on-highlight', 'on-cta']
     for (const t of tokens) ok(!!m[fam][t], `${mode}.${fam}.${t} missing`)
     // Signals carry a DISTINCT loud cta (diverged from the highlight rung, F1);
     // they still have no identity (no user-input hex).

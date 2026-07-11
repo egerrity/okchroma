@@ -75,8 +75,8 @@ export interface GenerateOptions {
 
   subtleChromaScale?: number
 
+  stop10DeepenL?: number
   stop11DeepenL?: number
-  stop12DeepenL?: number
 
   darkFillMinL?: number
 

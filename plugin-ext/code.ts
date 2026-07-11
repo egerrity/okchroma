@@ -30,7 +30,16 @@ const STAMP = 'OKChroma · modes: wcag 3:1/4.5/7:1 (default) · apca Lc 30/75/90
 // Token renames (old leaf → new leaf), migrated IN PLACE on the existing variable —
 // Figma keeps the variable id on rename, so user bindings survive (owner 2026-07-09:
 // cheap by design; a future rename is one more entry). Mirrored in plugin/code.ts.
-const RENAMED_LEAVES: Array<[string, string]> = [['cta-stroke', 'cta-border']]
+// The ink renumber entries (owner 2026-07-10) shift every name DOWN by one; safe only
+// because tokens are processed in ladder (ascending) order and each migration self-deletes
+// its consumed key — new ink-10 eats old ink-11 BEFORE new ink-11 is looked up. Any future
+// renumber must keep that ascending order.
+const RENAMED_LEAVES: Array<[string, string]> = [
+  ['cta-stroke', 'cta-border'],
+  ['ink-11', 'ink-10'],
+  ['ink-12', 'ink-11'],
+  ['ink-13', 'ink-12'],
+]
 
 const ENTERPRISE_MSG =
   'Extended collections need a Figma Enterprise org — this file’s plan doesn’t expose collection.extend(). '

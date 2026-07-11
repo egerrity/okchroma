@@ -5,8 +5,8 @@ export interface StopSpec {
 
 // Stops 1–8 (paper→highlight-8) are a GEOMETRIC ladder — gaps grow ~1.25× per step — so every adjacent
 // stop is distinct by construction and paper-2 falls onto its ID curve with no clamp (owner 2026-07-09,
-// distribution "B"; separation is a shape property, not a delta — see spec.ts). Indices 8–11 = highlight
-// 9/10 + ink 11/12 scaffolds, unchanged.
+// distribution "B"; separation is a shape property, not a delta — see spec.ts). Indices 8–11 = highlight-9
+// + ink scaffolds (index 9 = the retired stop-10 rootL, kept so the ink indices don't shift), unchanged.
 export const LIGHT_L = [0.987, 0.970, 0.950, 0.924, 0.892, 0.852, 0.801, 0.738, 0.600, 0.560, 0.530, 0.300]
 export const DARK_L  = [0.178, 0.213, 0.252, 0.285, 0.313, 0.348, 0.420, 0.550, 0.600, 0.640, 0.800, 0.940]
 
@@ -24,7 +24,7 @@ export const DARK_L  = [0.178, 0.213, 0.252, 0.285, 0.313, 0.348, 0.420, 0.550, 
 // contrast requires; the base is deliberately hue-agnostic); inkMult = the ink
 // stops' ID-relative multiplier semantics, declared here pending the C9/C11 ink
 // round (which may normalize ink to a text register).
-// Stops 8–10 share one base register — the highlight family (C10, owner-approved
+// Stops 8–9 share one base register — the highlight family (C10, owner-approved
 // 2026-07-09); s8 keeps its historical sat 0.78 (the approved rows are the target).
 // inkMaxC = the TEXT REGISTER ceiling (C9/C11 ink round): ink chroma is the ID-relative
 // multiplier NORMALIZED to the band register — min(inkMult × brandC, inkMaxC) — and the
@@ -43,11 +43,11 @@ export const SCALE_C_LIGHT: Record<number, ScaleChroma> = {
   7: { base: 0.086, sat: 0.78 },
   8: { base: 0.142, sat: 0.78 },
   9: { base: 0.142, sat: 0.75 },
-  11: { inkMult: 0.95, inkMaxC: 0.150 },
-  12: { inkMult: 0.50, inkMaxC: 0.080 },
+  10: { inkMult: 0.95, inkMaxC: 0.150 },
+  11: { inkMult: 0.50, inkMaxC: 0.080 },
 }
 // Dark: sat = the dark subtle-chroma ladder (values verbatim — the fold is
-// structure-only, byte-identical by contract); 9/10 declare the highlight params
+// structure-only, byte-identical by contract); 9 declares the highlight params
 // the engine already reused from light (was HIGHLIGHT_LIGHT via spec).
 export const SCALE_C_DARK: Record<number, ScaleChroma> = {
   0: { sat: 0.40 },
@@ -60,14 +60,14 @@ export const SCALE_C_DARK: Record<number, ScaleChroma> = {
   7: { sat: 0.80 },
   8: { sat: 0.84 },
   9: { base: 0.142, sat: 0.75 },
-  11: { inkMult: 0.95, inkMaxC: 0.120 },
-  12: { inkMult: 0.62, inkMaxC: 0.045 },
+  10: { inkMult: 0.95, inkMaxC: 0.120 },
+  11: { inkMult: 0.62, inkMaxC: 0.045 },
 }
 // ──────────────────────────────────────────────────────────────────────────────
 
 // Stop 8 (highlight-8) carries the WCAG 1.4.11 non-text 3:1 guarantee against
 // paper-2 (the scale's own stop 2). The light ramp clamps its perceptual rung L
-// down to this ceiling — the same kind of contrast bound stops 11/12 already use
+// down to this ceiling — the same kind of contrast bound stops 10/11 already use
 // (findMaxLForContrast). Dark stop 8 clears 3:1 from DARK_L[7] directly, so the
 // clamp is light-only.
 export const STOP_8_NONTEXT_CONTRAST = 3.0
@@ -84,9 +84,9 @@ export const HIGHLIGHT_DARK = { rootL: DARK_L[8] }
 const DARK_CHROMA_ANCHORS_MID = [0.66, 0.72]
 export const DARK_NEUTRAL_L = [...DARK_L.slice(0, 8), ...DARK_CHROMA_ANCHORS_MID, DARK_L[10], DARK_L[11]]
 
-export const STOP_11_CONTRAST = 4.5
+export const STOP_10_CONTRAST = 4.5
 
-export const STOP_12_CONTRAST_FLOOR = 7.0
+export const STOP_11_CONTRAST_FLOOR = 7.0
 
 // Dark fill min-L family — one concept (how light a fed dark fill may sit),
 // parameterized by consumer via the `darkFillMinL` opt: DARK_STOP_9_MIN_L is the

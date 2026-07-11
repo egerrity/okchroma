@@ -113,13 +113,13 @@ const total = SLOTS.reduce((a, s) => a + counts[s].light[0] + counts[s].dark[0],
 const grand = SLOTS.reduce((a, s) => a + counts[s].light[1] + counts[s].dark[1], 0)
 
 // ── ② THE SHIFT LEDGER — the owner's alternative: keep white text, MOVE the highlights.
-// For every hue: solve how far hl-9/10 must DROP for white to hit 4.5:1, then show what that
-// does to the ladder around them (hl-8 · hl-9 · hl-10 · ink-11). A "break" = the shifted stop
+// For every hue: solve how far hl-9 must DROP for white to hit 4.5:1, then show what that
+// does to the ladder around it (hl-8 · hl-9 · ink-11). A "break" = the shifted stop
 // crosses its neighbor: light mode descends in L (break when shifted-9 lands at/below ink-11);
 // dark mode ascends (break when shifted-9 lands at/below hl-8 — the band inverts).
 type Shift = {
   H: number; C: number; mode: 'light' | 'dark'
-  s8: ColorStop; s9: ColorStop; ink11: ColorStop
+  s8: ColorStop; s9: ColorStop; ink10: ColorStop
   req9: number; d9: number; breaks: boolean
 }
 const shifts: Shift[] = []
@@ -128,10 +128,10 @@ for (const c of cases) {
   const r = resolveBrand(c.seed, 'brand')
   const stops = c.mode === 'light' ? r.scale.light : r.scale.dark
   const s8 = stops.find(s => s.stop === 8)!, s9 = stops.find(s => s.stop === 9)!
-  const ink11 = stops.find(s => s.stop === 11)!
+  const ink10 = stops.find(s => s.stop === 10)!
   const req9 = findLForContrast(s9.L, s9.C, s9.H, 1.0, 4.5)
-  const breaks = c.mode === 'light' ? req9 <= ink11.L + 0.02 : req9 <= s8.L + 0.02
-  shifts.push({ H: c.H, C: c.C, mode: c.mode, s8, s9, ink11, req9, d9: req9 - s9.L, breaks })
+  const breaks = c.mode === 'light' ? req9 <= ink10.L + 0.02 : req9 <= s8.L + 0.02
+  shifts.push({ H: c.H, C: c.C, mode: c.mode, s8, s9, ink10, req9, d9: req9 - s9.L, breaks })
 }
 const shiftHex = (L: number, C: number, H: number) => seedHex(L, clampChromaToGamut(L, C, H), H)
 const stat = (mode: 'light' | 'dark') => {
@@ -151,7 +151,7 @@ const ladder = (s: Shift, shifted: boolean) => {
   return `<div style="display:flex;gap:2px">
     ${chipL(shiftHex(s.s8.L, s.s8.C, s.s8.H), false, '8')}
     ${chipL(shiftHex(nine, s.s9.C, s.s9.H), true, shifted ? 'Aa 9*' : 'Aa 9')}
-    ${chipL(shiftHex(s.ink11.L, s.ink11.C, s.ink11.H), true, '11')}
+    ${chipL(shiftHex(s.ink10.L, s.ink10.C, s.ink10.H), true, '11')}
   </div>`
 }
 const shiftSection = (mode: 'light' | 'dark') => {
@@ -168,7 +168,7 @@ const shiftSection = (mode: 'light' | 'dark') => {
     </div>`).join('')
   return `<div style="background:${bg};color:${fg};padding:26px 30px;border-radius:16px;margin:20px 0">
     <h2 style="margin:0 0 4px;font-size:17px">${mode.toUpperCase()} — the shift ledger (C .17): keep white, move the fill</h2>
-    <div style="font-size:12px;color:${sub};max-width:78ch;line-height:1.5">Left ladder = shipped 8·9·10·11. Right = 9/10 re-solved so WHITE passes 4.5:1 (starred).
+    <div style="font-size:12px;color:${sub};max-width:78ch;line-height:1.5">Left ladder = shipped 8·9·11. Right = 9 re-solved so WHITE passes 4.5:1 (starred).
     <b>median drop ${st.median.toFixed(3)} L · worst ${st.max.toFixed(3)} L · ${st.breaks}/${st.n} band breaks</b> (shifted 9 crosses ${mode === 'light' ? 'ink-11' : 'highlight-8'} — the ladder inverts).</div>
     <div style="margin-top:10px">${rows}</div></div>`
 }
@@ -184,7 +184,7 @@ so nothing ever needs to move a fill — adopting strict wcag-pole is <b>purely 
 ${section('light')}
 ${section('dark')}
 <h1 style="font-size:20px;margin:30px 0 6px">② Or: keep white text and SHIFT the highlights?</h1>
-<p style="font-size:13px;color:#555;line-height:1.5;max-width:70ch">The alternative to flipping text: re-solve hl-9/10 darker until white passes 4.5:1.
+<p style="font-size:13px;color:#555;line-height:1.5;max-width:70ch">The alternative to flipping text: re-solve hl-9 darker until white passes 4.5:1.
 The ledger shows the required drop per hue and flags where the band inverts against its neighbors.</p>
 ${shiftSection('light')}
 ${shiftSection('dark')}

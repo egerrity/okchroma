@@ -45,9 +45,19 @@ const profileStamp = (profile: Profile) =>
 // Token renames (old leaf → new leaf), migrated IN PLACE on the existing variable —
 // Figma keeps the variable id on rename, so user bindings survive (owner 2026-07-09:
 // cheap by design; a future rename is one more entry). Mirrored in plugin-ext/code.ts.
-const RENAMED_LEAVES: Array<[string, string]> = [['cta-stroke', 'cta-border']]
+// The ink renumber entries (owner 2026-07-10) shift every name DOWN by one; they are
+// safe only because tokens are processed in ladder (ascending) order and each migration
+// self-deletes its consumed key — new ink-10 eats old ink-11 BEFORE new ink-11 is looked
+// up, so the direct map.get never wrongly hits a stale same-name variable. Any future
+// renumber must keep that ascending order.
+const RENAMED_LEAVES: Array<[string, string]> = [
+  ['cta-stroke', 'cta-border'],
+  ['ink-11', 'ink-10'],
+  ['ink-12', 'ink-11'],
+  ['ink-13', 'ink-12'],
+]
 // Look up `path` in `map`, first as-is, then under a renamed leaf's OLD name —
-// renaming the found variable to `path` in place (same idiom as the ink-13 move).
+// renaming the found variable to `path` in place (same idiom as the anchor's system→neutral move).
 function getOrMigrate(map: Map<string, figma.Variable>, path: string): figma.Variable | undefined {
   const v = map.get(path)
   if (v) return v
@@ -204,7 +214,7 @@ figma.ui.onmessage = async (msg) => {
       //   - abs-white / abs-black — mode-INVARIANT poles; on-fill tokens alias
       //     one PER MODE (a flipping on-fill = abs-white in light, abs-black in
       //     dark), so text stays a true pole regardless of the ladder.
-      //   - ink-13 — the literal ink extreme beyond ink-12 (black→white).
+      //   - ink-12 — the literal ink extreme beyond ink-11 (black→white).
       //   - paper-0 is NOT static anymore: the engine resolves it (white in
       //     light; one seam below paper-1 in dark, neutral-tinted) and it rides
       //     the neutral ramp at system/neutral/<tint>/paper-0.
@@ -218,14 +228,16 @@ figma.ui.onmessage = async (msg) => {
       const STATIC_UTILS: Array<{ path: string; light?: figma.RGBA; dark?: figma.RGBA; elevation?: boolean }> = [
         { path: 'system/paper-raised', elevation: true },
         { path: 'system/paper-sunken', elevation: true },
-        { path: 'system/ink-13', light: K, dark: W },
+        { path: 'system/ink-12', light: K, dark: W },
         { path: 'system/abs-black', light: K, dark: K },
         { path: 'system/abs-white', light: W, dark: W },
         { path: 'system/transparent', light: { r: 1, g: 1, b: 1, a: 0 }, dark: { r: 1, g: 1, b: 1, a: 0 } },
         { path: 'system/scrim', light: { r: 0, g: 0, b: 0, a: 0.6 }, dark: { r: 0, g: 0, b: 0, a: 0.6 } },
       ]
       for (const u of STATIC_UTILS) {
-        const existing = primByName.get(u.path)
+        // getOrMigrate (not .get): the anchor was renamed ink-13→ink-12 — existing
+        // files' system/ink-13 primitive is renamed in place instead of orphaned
+        const existing = getOrMigrate(primByName, u.path)
         if (existing) { existing.scopes = [] ; continue } // already seeded — just enforce the scope rule
         const v = figma.variables.createVariable(u.path, p.coll, 'COLOR')
         v.description = stamp
@@ -242,7 +254,7 @@ figma.ui.onmessage = async (msg) => {
 
       // An on-fill is always a pure pole; alias it PER MODE to abs-white/abs-black
       // (mode-divergent alias, like the elevation pair) instead of duplicating a
-      // value. Decoupled from the paper-0/ink-13 anchors on purpose: paper-0 is a
+      // value. Decoupled from the paper-0/ink-12 anchors on purpose: paper-0 is a
       // RESOLVED color now (near-black, tinted, in dark) — text must stay a pole.
       const isWhite = (c: { r: number; g: number; b: number }) => c.r + c.g + c.b > 1.5
       const absPole = (white: boolean) => primByName.get(white ? 'system/abs-white' : 'system/abs-black')
@@ -266,15 +278,15 @@ figma.ui.onmessage = async (msg) => {
         v.scopes = [] // primitives hidden from every picker (re-applies fix older files too)
         const dk = darkMap.get(t.path)
         // a TRUE pole (the engine's on-fills are exactly white or black); an outline
-        // secondary's on-cta is the family's ink-11 instead — alias the sibling, not a pole
+        // secondary's on-cta is the family's ink-10 instead — alias the sibling, not a pole
         const isPole = (c: { r: number; g: number; b: number }) => {
           const sum = c.r + c.g + c.b
           return sum > 2.97 || sum < 0.03
         }
         if (t.path === 'on-cta' || t.path === 'on-highlight') {
-          const sibling11 = primByName.get(path.replace(/on-(?:cta|highlight)$/, 'ink-11'))
+          const sibling10 = primByName.get(path.replace(/on-(?:cta|highlight)$/, 'ink-10'))
           const target = (leaf: { r: number; g: number; b: number }) =>
-            isPole(leaf) ? absPole(isWhite(leaf)) : (sibling11 ?? absPole(isWhite(leaf)))
+            isPole(leaf) ? absPole(isWhite(leaf)) : (sibling10 ?? absPole(isWhite(leaf)))
           const lightTarget = target(t)
           const darkTarget = target(dk ?? t)
           if (lightTarget && darkTarget) {
@@ -351,12 +363,14 @@ figma.ui.onmessage = async (msg) => {
       // Existing collections keep their historical order — no reorder API; drag or re-apply
       // on a fresh file.
 
-      // migration: ink-13 used to live under theme system/* — RENAME moves it into the
-      // neutral group with every user binding intact
+      // migration: the anchor used to live under theme system/ink-13 — RENAME moves it
+      // into the neutral group with every user binding intact, landing directly on the
+      // current name (post ink-13→ink-12 renumber). Files already on neutral/ink-13 are
+      // caught separately by the RENAMED_LEAVES entry via aliasInto's getOrMigrate.
       const staleInk = themeByName.get('system/ink-13')
       if (staleInk) {
-        staleInk.name = 'neutral/ink-13'
-        themeByName.set('neutral/ink-13', staleInk)
+        staleInk.name = 'neutral/ink-12'
+        themeByName.set('neutral/ink-12', staleInk)
         themeByName.delete('system/ink-13')
       }
 
@@ -368,15 +382,15 @@ figma.ui.onmessage = async (msg) => {
         for (const m of th.coll.modes) aliasInto(path, path, m.modeId)
       }
 
-      // ② neutral (+ ink-13, folded into the neutral group like paper-0 — its seed stays
-      // the system/ink-13 pole in the mode collection)
+      // ② neutral (+ ink-12 the anchor, folded into the neutral group like paper-0 — its
+      // seed stays the system/ink-12 pole in the mode collection)
       const neutralGrp = shared.find(g => g.theme === 'neutral')
       if (neutralGrp) {
         for (const t of flatten(neutralGrp.light)) {
           aliasInto(`neutral/${t.path}`, `${neutralGrp.prim}/${t.path}`)
-          if (t.path === 'ink-12') {
-            // ink-13 slots DIRECTLY after ink-12 — ladder order, before the cta/on tokens
-            for (const m of th.coll.modes) aliasInto('neutral/ink-13', 'system/ink-13', m.modeId)
+          if (t.path === 'ink-11') {
+            // the anchor slots DIRECTLY after ink-11 — ladder order, before the cta/on tokens
+            for (const m of th.coll.modes) aliasInto('neutral/ink-12', 'system/ink-12', m.modeId)
           }
         }
       }

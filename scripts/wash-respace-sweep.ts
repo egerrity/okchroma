@@ -92,7 +92,7 @@ const html = `<!doctype html><meta charset="utf-8"><title>wash re-space sweep</t
   .chip{display:inline-block;padding:5px 12px;border-radius:6px;font-size:12px;margin-right:6px}
 </style>
 <h1>wash 3–7 holistic re-space — pick the shift (paper-2 ≥ 0.028 declared in all variants)</h1>
-<div style="opacity:.65;font-size:12px">numbers under each strip = seam ΔE (1↔2 … 7↔8); red = under 0.010 · scaffold shifts DOWN by S at stop 3 tapering to 0.6·S at stop 7 (uses part of the 7↔8 room) · stops 8/11/12 re-solve automatically vs the pushed paper-2</div>
+<div style="opacity:.65;font-size:12px">numbers under each strip = seam ΔE (1↔2 … 7↔8); red = under 0.010 · scaffold shifts DOWN by S at stop 3 tapering to 0.6·S at stop 7 (uses part of the 7↔8 room) · stops 8/10/11 re-solve automatically vs the pushed paper-2</div>
 ${sections}`
 
 mkdirSync('render', { recursive: true })

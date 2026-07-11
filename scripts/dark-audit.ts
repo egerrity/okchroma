@@ -40,7 +40,7 @@ const ADJ_RATIO = 0.48
 const STEP_ABS_FLOOR = 0.06
 const SUBTLE_RATIO = 0.6
 // 0.6 → 0.58 (2026-06-29): the dark-L perceptual solve equalized the dark text
-// stops' apparent lightness, which tightened 11/12 measured separation slightly
+// stops' apparent lightness, which tightened 10/11 measured separation slightly
 // for one warm scale (Honey Lemon: dark ΔE 0.147 vs light 0.250 = 0.59×). Still
 // distinct text stops; recalibrate the parity bar to the new dark reality rather
 // than flag it (mirrors the ADJ_RATIO recalibration above).
@@ -53,7 +53,7 @@ const findings: Record<string, Finding[]> = {
   'A adjacent-step collapse': [],
   'B subtle-bg invisibility': [],
   'C chroma washout': [],
-  'D 11/12 convergence': [],
+  'D 10/11 convergence': [],
   'E dark error collision': [],
   'F on-fill compliance (WCAG 4.5 + APCA 45)': [],
 }
@@ -89,13 +89,13 @@ function audit(name: string, hex: string, scale: GeneratedScale, redRepelled = f
       detail: `dark keeps ${(retention * 100).toFixed(0)}% of light chroma (stops 1–8)`,
     })
   }
-  // D: 11/12 separation (find by STOP — the array is stops 1..9,11,12 since stop 10's deletion)
-  const li11 = scale.light.find(s => s.stop === 11)!, li12 = scale.light.find(s => s.stop === 12)!
-  const da11 = scale.dark.find(s => s.stop === 11)!, da12 = scale.dark.find(s => s.stop === 12)!
-  const sepL = stopDeltaE(li11, li12)
-  const sepD = stopDeltaE(da11, da12)
+  // D: 10/11 separation (find by STOP — contiguous stops 1..11 post-renumber)
+  const li10 = scale.light.find(s => s.stop === 10)!, li11 = scale.light.find(s => s.stop === 11)!
+  const da10 = scale.dark.find(s => s.stop === 10)!, da11 = scale.dark.find(s => s.stop === 11)!
+  const sepL = stopDeltaE(li10, li11)
+  const sepD = stopDeltaE(da10, da11)
   if (sepD < sepL * TEXTSEP_RATIO) {
-    findings['D 11/12 convergence'].push({
+    findings['D 10/11 convergence'].push({
       name, hex, severity: sepL * TEXTSEP_RATIO - sepD,
       detail: `ΔE(11,12): dark ${sepD.toFixed(3)} vs light ${sepL.toFixed(3)}`,
     })

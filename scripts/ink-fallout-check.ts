@@ -1,7 +1,7 @@
 // ink-fallout-check.ts — how do ink-11 / ink-12 contrast FALL OUT in the PURE carry (delta, no bolt-ons)?
 // Text-tier ink is light text on the dark paper-2. Bars: WCAG ink-11 ≥ 4.5 / ink-12 ≥ 7.0; APCA ink-11 ≥ Lc75
 // / ink-12 ≥ Lc90 (DEFAULT_APCA_LC_MAP). The dark require is a FLOOR — it solves the DECLARED metric only, so
-// the OTHER metric is a free fall-out. Run the pure carry under BOTH profiles; per profile report, for 11/12:
+// the OTHER metric is a free fall-out. Run the pure carry under BOTH profiles; per profile report, for 10/11:
 // the WCAG ratio and the APCA Lc that land (min/median/max), pass-count vs each bar, and any unresolvable.
 import { resolveRamp, type ResolvedRamp, type ResolveOpts } from '../src/reqtoken/resolve'
 import { MODE_SPECS } from '../src/reqtoken/spec'
@@ -30,7 +30,7 @@ const WBAR: Record<number, number> = { 8: 3.0, 11: 4.5, 12: 7.0 }, ABAR: Record<
 for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
   console.log(`\n===== PURE carry — ${profile.toUpperCase()} profile (solves ${profile === 'wcag' ? 'the WCAG ratio' : 'the APCA Lc'}; the other metric is free fall-out) =====`)
   const solved = profile === 'wcag' ? 'WCAG' : 'APCA'
-  for (const n of [8, 11, 12]) {
+  for (const n of [8, 10, 11]) {
     const wc: number[] = [], lc: number[] = []
     let unres = 0
     for (const hex of seeds) {
@@ -51,7 +51,7 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
 // REGRESSION check: under the WCAG profile, does the SHIPPED scaffold (today, no delta) already clear the
 // APCA bar — i.e. is the dual-metric gap NEW to the delta carry (which pulls L down to the single WCAG floor)?
 console.log(`\n===== WCAG profile — APCA Lc fall-out: TODAY (seed-keyed scaffold) vs PURE carry =====`)
-for (const n of [8, 11, 12]) {
+for (const n of [8, 10, 11]) {
   const t: number[] = [], p: number[] = []
   for (const hex of seeds) {
     const today = resolveRamp(hex, 'dark', MODE_SPECS.dark, base)

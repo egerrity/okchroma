@@ -89,7 +89,7 @@ export function brandKindP3Body(prefix: string, s: GeneratedScale, mode: 'light'
 // just scoped to an arbitrary selector.
 export function neutralCss(selector: string, brandH: number, level: NeutralLevel = 'default', contrastProfile?: ContrastProfile): string {
   const s = generateNeutralScale(brandH, level, contrastProfile)
-  // The universal paper-0/ink-13 anchors ride along: any scope that carries the
+  // The universal paper-0/ink-12 anchors ride along: any scope that carries the
   // ladder must also carry its mode-flipping extremes (semantic aliases like
   // --surface-raised resolve through them). paper-0 = the neutral's resolved
   // stop 0 (white in light; one seam below paper-1 in dark, never absolute black).
@@ -99,12 +99,12 @@ export function neutralCss(selector: string, brandH: number, level: NeutralLevel
   return [
     `${selector} {`,
     `  --paper-0: ${p0(s.paper0, '#ffffff')};`,
-    `  --ink-13: #000000;`,
+    `  --ink-12: #000000;`,
     ...brandKindBody('neutral', s, 'light'),
     `}`,
     `${selector}[data-theme="dark"] {`,
     `  --paper-0: ${p0(s.paper0Dark, '#000000')};`,
-    `  --ink-13: #ffffff;`,
+    `  --ink-12: #ffffff;`,
     ...brandKindBody('neutral', s, 'dark'),
     `}`,
     ...(p3Light.length || p3Dark.length ? [
@@ -185,7 +185,7 @@ export function brandCss(
   // scales inside `r` were already resolved under it by resolveBrand)
   contrastProfile?: ContrastProfile,
   // the secondary's mode chip: 'outline' re-resolves the cta pair — cta-1 transparent, cta-2 the
-  // cta color at OUTLINE_HOVER_ALPHA (the tinted hover), on-cta ink-11, cta-border ALWAYS the
+  // cta color at OUTLINE_HOVER_ALPHA (the tinted hover), on-cta ink-10, cta-border ALWAYS the
   // gated highlight-8. Same tokens, different resolution — no component changes needed.
   secondaryStyle?: SecondaryStyle
 ): string {
@@ -248,11 +248,11 @@ export function brandCss(
   // Universal scale anchors — positions 0 and 13 that extend the paper→ink
   // ladder past its generated stops, flipping with the mode. paper-0 is now a
   // RESOLVED stop of the neutral ramp (white in light; one seam below paper-1
-  // in dark — never absolute black). ink-13 stays the literal ink extreme.
+  // in dark — never absolute black). ink-12 (the anchor) stays the literal ink extreme.
   // Emitted per mode block so each resolves to the right pole.
   const p0hex = (s: ColorStop | undefined, fallback: string) => (s ? stopHex(s) : fallback)
-  const lightAnchors = [`  --paper-0: ${p0hex(nScale.paper0, '#ffffff')};`, `  --ink-13: #000000;`]
-  const darkAnchors = [`  --paper-0: ${p0hex(nScale.paper0Dark, '#000000')};`, `  --ink-13: #ffffff;`]
+  const lightAnchors = [`  --paper-0: ${p0hex(nScale.paper0, '#ffffff')};`, `  --ink-12: #000000;`]
+  const darkAnchors = [`  --paper-0: ${p0hex(nScale.paper0Dark, '#000000')};`, `  --ink-12: #ffffff;`]
 
   // outline re-resolution: emitted AFTER the secondary body so the cascade takes these values.
   // cta-2 = highlight-8 at OUTLINE_HOVER_ALPHA — the STABLE contrast-gated stop, the same one
@@ -267,7 +267,7 @@ export function brandCss(
       `  --secondary-cta-1: transparent;`,
       ...(s8e ? [`  --secondary-cta-2: rgba(${c(s8e.r)}, ${c(s8e.g)}, ${c(s8e.b)}, ${OUTLINE_HOVER_ALPHA});`] : []),
       `  --secondary-cta-border: var(--secondary-highlight-8);`,
-      `  --secondary-${onFillTokenName('brand')}: var(--secondary-ink-11);`,
+      `  --secondary-${onFillTokenName('brand')}: var(--secondary-ink-10);`,
     ]
   }
 

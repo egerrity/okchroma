@@ -119,7 +119,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     // uses — 9% of the generated subtle cta was imperceptible).
     if (input.secondaryStyle === 'outline' && input.secondary) {
       const s8 = secondary[mode].find(s => s.stop === 8)
-      const s11 = secondary[mode].find(s => s.stop === 11)
+      const s10 = secondary[mode].find(s => s.stop === 10)
       secondaryGroup['cta-1'] = TRANSPARENT_TOKEN
       if (s8) {
         const e = srgbEmitChannels(s8)
@@ -129,8 +129,8 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
         }
       }
       if (s8) secondaryGroup['cta-border'] = colorFromStop(s8)
-      // on-cta = the family's ink-11, NOT a pole — the plugin aliases non-pole on-cta to the sibling ink-11
-      if (s11) secondaryGroup[onFillTokenName('brand')] = colorFromStop(s11)
+      // on-cta = the family's ink-10, NOT a pole — the plugin aliases non-pole on-cta to the sibling ink-10
+      if (s10) secondaryGroup[onFillTokenName('brand')] = colorFromStop(s10)
     }
     const g: FigmaGroup = {
       brand: rampGroup(scale[mode], mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark, 'brand', brandExtra(scale, mode)),

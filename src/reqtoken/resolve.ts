@@ -92,7 +92,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     }
     throw new Error(`stop ${forWhom}: ${req.metric} is not a contrast require`)
   }
-  const deepenFor = (stop: number) => (stop === 11 ? ctx.opts?.stop11DeepenL ?? 0 : stop === 12 ? ctx.opts?.stop12DeepenL ?? 0 : 0)
+  const deepenFor = (stop: number) => (stop === 10 ? ctx.opts?.stop10DeepenL ?? 0 : stop === 11 ? ctx.opts?.stop11DeepenL ?? 0 : 0)
 
   for (const sp of spec.stops) {
     let placed: { L: number; C: number; H: number }
@@ -134,12 +134,15 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
           // curve-bearing ramps (neutral, derived secondary): ink chroma = the light twin's (the curve's dark
           // branch is keyed to the OLD dark L geography — sampling it at delta ink L's made the 11-jump).
           // Low-chroma inks carry no hue-family risk; L and hue stay dark-native.
-          ? (inkTwin ? ((_L: number) => inkTwin.C) : darkInkChromaAt(ctx, d, sp.stop - 1, sp.chromaMult ?? 1, sp.inkMaxC))
+          // ink stopIndex = sp.stop (NOT stop-1): the ink renumber (2026-07-10) moved the ink stop
+          // NUMBERS down to 10/11 but their chroma-floor ladder indices stayed at 10/11 — the old
+          // stop-1 mapping belonged to the 11/12 numbering.
+          ? (inkTwin ? ((_L: number) => inkTwin.C) : darkInkChromaAt(ctx, d, sp.stop, sp.chromaMult ?? 1, sp.inkMaxC))
         : sp.stop === 9 ? undefined
         // chroma-floor index clamps at 0: stop 0 shares paper-1's tint treatment
         : darkScaleChromaAt(ctx, d, Math.max(0, sp.stop - 1), sp.satFraction ?? 1)
       // DELTA-KEYED: derive dark from the resolved light twin for the SURFACE stops 1–9 (papers, washes,
-      // fill, highlight). INKS 11/12 are dark-native (owner 2026-07-09): text INVERTS across modes — there is
+      // fill, highlight). INKS 10/11 are dark-native (owner 2026-07-09): text INVERTS across modes — there is
       // no "same color, re-referenced" for a stop that crosses the paper; carrying a dark-gold ink's hue up
       // ~0.3 L lands in a different hue family (gold→orange). The C9/C11 dark text register + the T11/T12
       // requires own the inks, on the seed-keyed path below.

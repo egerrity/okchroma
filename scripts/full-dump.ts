@@ -1,5 +1,5 @@
 // full-dump.ts — dump every stop of light / today-dark / delta-carry per seed as diffable lines. Run on the
-// working tree and on HEAD (git stash), diff: expect ONLY delta-carry ink-11 lines for the 3 yellows to differ;
+// working tree and on HEAD (git stash), diff: expect ONLY delta-carry ink-10 lines for the 3 yellows to differ;
 // light + today-dark identical (proves shipped output untouched by the floor-trigger change).
 import { resolveRamp, type ResolveOpts } from '../src/reqtoken/resolve'
 import { MODE_SPECS } from '../src/reqtoken/spec'

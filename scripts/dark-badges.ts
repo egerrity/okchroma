@@ -11,7 +11,7 @@ import { SIGNALS } from '../src/engine/signals'
 
 const hx = (s: { r: number; g: number; b: number }) => '#' + [s.r, s.g, s.b].map(c => Math.round(Math.max(0, Math.min(1, c)) * 255).toString(16).padStart(2, '0')).join('')
 
-// the proposal: dark stops 1–7 lift (8–10 stay hand-placed; ink 11/12 unchanged)
+// the proposal: dark stops 1–7 lift (8–9 stay hand-placed; ink 10/11 unchanged)
 const LIFTED: ModeSpec = {
   ...MODE_SPECS.dark,
   stops: MODE_SPECS.dark.stops.map(sp =>
@@ -23,7 +23,7 @@ const LIFTED: ModeSpec = {
 const neutral = generateNeutralScale(250, 'default')
 const page = hx(neutral.dark[0])       // neutral paper-1: the app background
 const card = hx(neutral.dark[2])       // neutral wash-3: the table/card the badges sit on
-const cardText = hx(neutral.dark[11])  // neutral ink-12
+const cardText = hx(neutral.dark[11])  // neutral ink-11
 
 const SEEDS: [string, string][] = [
   ...SIGNALS.map(s => [s.name, s.hex] as [string, string]),
@@ -37,7 +37,7 @@ const pill = (bg: string, fg: string, label: string) =>
 
 function badgeRow(label: string, hex: string, spec: ModeSpec | undefined): string {
   const r = resolveRamp(hex, 'dark', spec)
-  const w3 = by(r, 3), w4 = by(r, 4), ink = by(r, 11)
+  const w3 = by(r, 3), w4 = by(r, 4), ink = by(r, 10)
   return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #ffffff12">
     <span style="width:86px;font-size:11px;opacity:.6">${label}</span>
     ${pill(w3.hex, ink.hex, 'wash-3 badge')}${pill(w4.hex, ink.hex, 'wash-4 badge')}
@@ -65,7 +65,7 @@ function ladder(title: string, spec: ModeSpec | undefined): string {
 const html = `<!doctype html><meta charset="utf-8"><title>dark badge lift — blue recede fix</title>
 <style>body{margin:0;padding:28px;background:#131316;color:#e8e8ea;font:14px/1.45 -apple-system,system-ui,sans-serif} h1{font-size:16px;font-weight:650}</style>
 <h1>blue-recede fix: dark scale 'perceptual-lift' (H-K solve floored at the scaffold) — pick</h1>
-<div style="opacity:.6;font-size:12px;margin-bottom:18px">badges = family wash-3/4 with ink-11 text, on the NEUTRAL dark card (the real Customers-table context) · left = today (blue/violet sink below the card) · right = lifted (floored at the scaffold; yellow/green keep their H-K lift, nothing ever sinks)</div>
+<div style="opacity:.6;font-size:12px;margin-bottom:18px">badges = family wash-3/4 with ink-10 text, on the NEUTRAL dark card (the real Customers-table context) · left = today (blue/violet sink below the card) · right = lifted (floored at the scaffold; yellow/green keep their H-K lift, nothing ever sinks)</div>
 <div style="display:flex;gap:16px;flex-wrap:wrap">${panel('current (perceptual)', undefined)}${panel("proposed (perceptual-lift)", LIFTED)}</div>
 <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:22px">${ladder('blue #2255cc dark ladder — current', undefined)}${ladder('blue — lifted', LIFTED)}</div>`
 

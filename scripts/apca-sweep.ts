@@ -94,7 +94,7 @@ function annotations(w: ResolvedRamp, a: ResolvedRamp): string {
     const pole = (x: ResolvedRamp) => (x.ons.onFillIsWhite ? 'w' : 'b') + (x.roles.cta.enforced ? '·enf' : '')
     return `<tr${moved ? ' style="font-weight:650"' : ' style="opacity:.55"'}><td>cta+on</td><td>L ${w.roles.cta.L.toFixed(3)} → ${a.roles.cta.L.toFixed(3)}</td><td>pole-Lc ${poleLc(w).toFixed(1)} → ${poleLc(a).toFixed(1)}</td><td>pole ${pole(w)} → ${pole(a)} · ratio ${poleRatio(w).toFixed(2)} → ${poleRatio(a).toFixed(2)}</td></tr>`
   }
-  return `<table style="font-size:9px;border-spacing:8px 1px;margin-top:4px">${[8, 11, 12].map(row).join('')}${ctaRow()}</table>`
+  return `<table style="font-size:9px;border-spacing:8px 1px;margin-top:4px">${[8, 10, 11].map(row).join('')}${ctaRow()}</table>`
 }
 
 function modeSection(cand: Candidate, mode: 'light' | 'dark', seeds: [string, string][] = SEEDS): string {
@@ -120,7 +120,7 @@ function movementTable(): string {
   const HUES = Array.from({ length: 24 }, (_, i) => i * 15)
   const rows = CANDIDATES.map(cand => {
     const cells = (['light', 'dark'] as const).map(mode =>
-      [8, 11, 12, 'cta' as const].map(n => {
+      [8, 10, 11, 'cta' as const].map(n => {
         const dls = HUES.map(H => {
           const hex = hx(0.62, 0.13, H)
           const w = resolveRamp(hex, mode)
@@ -159,7 +159,7 @@ const html = `<!doctype html><meta charset="utf-8"><title>APCA profile — recom
   only Lc≈24–29 under WCAG — the dark-polarity blind spot; toggle fills and borders read a touch stronger);
   <b>light stop-8 relaxes lighter</b> (the 3:1 clamp reads Lc≈54 — APCA says that over-demanded); <b>ctas keep their
   shipped look</b> (Lc 75 is the measured equivalent of the WCAG 4.5-white enforcement — that match is by design).
-  Ink 11/12 already clear their targets and barely move. Bold annotation rows = it moved; Aa on the button = the
+  Ink 10/11 already clear their targets and barely move. Bold annotation rows = it moved; Aa on the button = the
   on-text pole; Aa on chip 9 = on-highlight (identical in both profiles — it was already APCA-judged).
 </div>
 <h2 style="font-size:14px;margin:20px 0 2px">${RECOMMENDED.label}</h2>

@@ -3,7 +3,7 @@
 // complete resolution pipeline and asserts the rules are total:
 //
 //   1. Never crashes; always yields 11+11 finite stops and an on-fill
-//      (stops 1-9 + 11/12 per side; stop 10 deleted, 778d4b4).
+//      (contiguous stops 1-11 per side; old stop 10 deleted 778d4b4, ink renumbered down 2026-07-10).
 //   2. The error guarantee: every error collision is RESOLVED — by the C12 v8
 //      joint solve (brand nearest-edge exit and/or per-brand red complement;
 //      rung-1 and the component rule are deleted).

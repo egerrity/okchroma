@@ -26,7 +26,7 @@ On any other plan the plugin detects the missing API and reports it instead of w
   - `brand-primary/*`, `brand-secondary/*` (only if the file uses a secondary) — the
     operative `brand-` category is in the token name; the brand's NAME lives on the
     extension, so a designer reads `kirby → brand-primary/paper-1`.
-  - `neutral/*` (paper-0 … ink-13 in ladder order), `red/* yellow/* green/* info-color/*`,
+  - `neutral/*` (paper-0 … ink-12 in ladder order), `red/* yellow/* green/* info-color/*`,
     `system/*` (abs poles, transparent, scrim, and the scheme-divergent
     paper-raised/paper-sunken aliases — base-only, never overridden).
   - Values = the documented default seed: okchroma pink `#E93D82`, recommended mode,

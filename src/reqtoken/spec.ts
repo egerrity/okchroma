@@ -13,7 +13,7 @@
 import {
   LIGHT_L, DARK_NEUTRAL_L, SCALE_C_LIGHT, SCALE_C_DARK,
   STOP_8_NONTEXT_CONTRAST,
-  STOP_11_CONTRAST, STOP_12_CONTRAST_FLOOR,
+  STOP_10_CONTRAST, STOP_11_CONTRAST_FLOOR,
   HIGHLIGHT_LIGHT, HIGHLIGHT_DARK, DARK_STOP_9_MIN_L,
 } from '../engine/stopTable'
 
@@ -81,7 +81,7 @@ export type ModeSpec = {
   ons: { onFill: OnReq; onHighlight: OnReq }
 }
 
-const groupOf = (stop: number): Group => (stop <= 2 ? 'paper' : stop <= 7 ? 'wash' : stop <= 10 ? 'highlight' : 'ink')
+const groupOf = (stop: number): Group => (stop <= 2 ? 'paper' : stop <= 7 ? 'wash' : stop <= 9 ? 'highlight' : 'ink')
 
 // paper-0 — the ladder extreme BEYOND paper-1, now a resolved stop instead of a hard-coded absolute
 // (it was the last literal value in the system: #ffffff/#000000 pasted into the emitters). Light really
@@ -100,8 +100,8 @@ const P_TEXT: Producer = { hue: 'warm-torsion', L: 'perceptual', chroma: 'brand'
 
 // light stop-8 carries the WCAG 1.4.11 non-text 3:1 vs paper-2 (the scale's own resolved stop 2)
 const S8: Require = { metric: 'wcag', against: 'paper-2', target: STOP_8_NONTEXT_CONTRAST, level: 'AA' }
-const T11: Require = { metric: 'wcag', against: 'paper-2', target: STOP_11_CONTRAST, level: 'AA' }
-const T12: Require = { metric: 'wcag', against: 'paper-2', target: STOP_12_CONTRAST_FLOOR, level: 'AAA' }
+const T10: Require = { metric: 'wcag', against: 'paper-2', target: STOP_10_CONTRAST, level: 'AA' }
+const T11: Require = { metric: 'wcag', against: 'paper-2', target: STOP_11_CONTRAST_FLOOR, level: 'AAA' }
 
 const ONS = { onFill: { metric: 'apca-pole', enforce: true } as OnReq, onHighlight: { metric: 'apca-pole', enforce: false, ratioFloor: 4.5 } as OnReq }
 
@@ -127,13 +127,14 @@ export const LIGHT: ModeSpec = {
       satFraction: SCALE_C_LIGHT[i + 1].sat, baseC: SCALE_C_LIGHT[i + 1].base,
       require: i === 7 ? S8 : undefined,
     })),
-    // highlight 9: perceptual ladder at the highlight scaffold. Stop 10 DELETED (owner 2026-07-09): no use
-    // case; two steps that close (weakest shipped ΔL 0.009) with one shared on-highlight token forced the
-    // PAIR-law hover machinery — removing the stop is the shape-fix. Other stop names/numbers unchanged.
+    // highlight 9: perceptual ladder at the highlight scaffold. The second highlight step (old stop 10)
+    // was DELETED (owner 2026-07-09): no use case; two steps that close (weakest shipped ΔL 0.009) with one
+    // shared on-highlight token forced the PAIR-law hover machinery — removing the stop is the shape-fix.
+    // The ink stops were later renumbered down to close the gap (owner 2026-07-10), so stop 10 is now ink.
     { stop: 9, rootL: HIGHLIGHT_LIGHT.rootL, group: 'highlight', produce: PL_LADDER, satFraction: SCALE_C_LIGHT[9].sat, baseC: SCALE_C_LIGHT[9].base },
-    // ink text: perceptual + contrast-required
-    { stop: 11, rootL: LIGHT_L[10], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[11].inkMult, inkMaxC: SCALE_C_LIGHT[11].inkMaxC, require: T11 },
-    { stop: 12, rootL: LIGHT_L[11], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[12].inkMult, inkMaxC: SCALE_C_LIGHT[12].inkMaxC, require: T12 },
+    // ink text: perceptual + contrast-required (rootLs still index LIGHT_L by array position — unchanged)
+    { stop: 10, rootL: LIGHT_L[10], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[10].inkMult, inkMaxC: SCALE_C_LIGHT[10].inkMaxC, require: T10 },
+    { stop: 11, rootL: LIGHT_L[11], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[11].inkMult, inkMaxC: SCALE_C_LIGHT[11].inkMaxC, require: T11 },
   ],
   roles: [
     { role: 'cta', produce: { hue: 'constant', L: 'anchor', chroma: 'brand' }, floorL: 0, chromaMult: 1 },
@@ -156,12 +157,13 @@ export const DARK: ModeSpec = {
       satFraction: SCALE_C_DARK[i + 1].sat, require: i === 7 ? S8 : undefined,
     })),
     // highlight 9: FIXED at the hand-placed dark scaffold (solving = APCA body-text dead zone).
-    // Chroma params declared in SCALE_C_DARK. Stop 10 DELETED (owner 2026-07-09, see the light spec note).
+    // Chroma params declared in SCALE_C_DARK. Old stop 10 DELETED (owner 2026-07-09, see the light spec
+    // note); ink renumbered down 2026-07-10.
     { stop: 9, rootL: HIGHLIGHT_DARK.rootL, group: 'highlight', produce: P_FIXED, satFraction: SCALE_C_DARK[9].sat, baseC: SCALE_C_DARK[9].base },
     // ink text: perceptual + the contrast requires DECLARED in dark too (Stage-5 flip): the scaffold already
     // clears them for every hue (the gate proves it), so values don't move — but the guarantee is now a rule.
-    { stop: 11, rootL: DARK_NEUTRAL_L[10], group: 'ink', produce: P_TEXT, chromaMult: SCALE_C_DARK[11].inkMult, inkMaxC: SCALE_C_DARK[11].inkMaxC, require: T11 },
-    { stop: 12, rootL: DARK_NEUTRAL_L[11], group: 'ink', produce: P_TEXT, chromaMult: SCALE_C_DARK[12].inkMult, inkMaxC: SCALE_C_DARK[12].inkMaxC, require: T12 },
+    { stop: 10, rootL: DARK_NEUTRAL_L[10], group: 'ink', produce: P_TEXT, chromaMult: SCALE_C_DARK[10].inkMult, inkMaxC: SCALE_C_DARK[10].inkMaxC, require: T10 },
+    { stop: 11, rootL: DARK_NEUTRAL_L[11], group: 'ink', produce: P_TEXT, chromaMult: SCALE_C_DARK[11].inkMult, inkMaxC: SCALE_C_DARK[11].inkMaxC, require: T11 },
   ],
   roles: [
     { role: 'cta', produce: { hue: 'constant', L: 'anchor', chroma: 'brand' }, floorL: DARK_STOP_9_MIN_L, chromaMult: 1 },

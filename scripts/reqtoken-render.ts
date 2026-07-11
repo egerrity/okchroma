@@ -56,7 +56,7 @@ const html = `<!doctype html><meta charset="utf-8"><title>reqtoken eye-check</ti
   .chip{display:flex;gap:14px;align-items:center;padding:10px 18px;border-radius:8px;height:36px}
 </style>
 <h1>reqtoken ramps — scale stops 1–10 + off-scale cta + ink text (parity-shaped declaration)</h1>
-<div style="opacity:.65;font-size:12px">paper 1–2 · wash 3–7 · highlight 8–10 · cta = off-scale role with on-cta text · ink 11/12 as Aa on paper-2 · "·req" = the require clamp bound</div>
+<div style="opacity:.65;font-size:12px">paper 1–2 · wash 3–7 · highlight 8–9 · cta = off-scale role with on-cta text · ink 10/11 as Aa on paper-2 · "·req" = the require clamp bound</div>
 ${sections}`
 
 mkdirSync('render', { recursive: true })

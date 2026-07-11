@@ -7,13 +7,13 @@ import { AlertCircle, AlertTriangle, CheckCircle, Info } from 'lucide-react'
 // --surface-raised surface), so it lifts off the page consistently in both modes.
 //
 // Roles demonstrated in context, not as abstract chips:
-//   ink     → the heading + body copy ("ink family" called out in ink-11)
+//   ink     → the heading + body copy ("ink family" called out in ink-10)
 //   wash    → the inset surface(s)
 //   cta     → the full-round pill button (brand/secondary/neutral) OR, on signals,
 //             the ALERT callout (alerts use cta in signals; the pill is hidden)
 //   scale   → the numbered 1–12 ladder with paper/wash/highlight/ink labels
 //
-// The universal paper-0/ink-13 anchors are NOT shown here — they're one shared
+// The universal paper-0/ink-12 anchors are NOT shown here — they're one shared
 // white/black pair at the system level, not a per-ramp token.
 export type RampKind = 'brand' | 'neutral' | 'signal'
 
@@ -81,21 +81,21 @@ export function TokenCards({ prefix, kind, outlineCta }: { prefix: string; kind:
   const hasIdentity = prefix === 'brand' || prefix === 'secondary'
 
   // The 1–12 scale. Number text stays legible in BOTH modes by leaning on tokens
-  // that invert with the mode: ink-12 (high-contrast text) on the surface rungs,
+  // that invert with the mode: ink-11 (high-contrast text) on the surface rungs,
   // on-highlight (computed legible) on the highlight rungs, paper-1 (inverse of ink)
   // on the ink rungs.
   const scale: Array<{ n: number; tok: string; fg: string }> = [
-    { n: 1, tok: 'paper-1', fg: v('ink-12') },
-    { n: 2, tok: 'paper-2', fg: v('ink-12') },
-    { n: 3, tok: 'wash-3', fg: v('ink-12') },
-    { n: 4, tok: 'wash-4', fg: v('ink-12') },
-    { n: 5, tok: 'wash-5', fg: v('ink-12') },
-    { n: 6, tok: 'wash-6', fg: v('ink-12') },
-    { n: 7, tok: 'wash-7', fg: v('ink-12') },
-    { n: 8, tok: 'highlight-8', fg: v('ink-12') },
+    { n: 1, tok: 'paper-1', fg: v('ink-11') },
+    { n: 2, tok: 'paper-2', fg: v('ink-11') },
+    { n: 3, tok: 'wash-3', fg: v('ink-11') },
+    { n: 4, tok: 'wash-4', fg: v('ink-11') },
+    { n: 5, tok: 'wash-5', fg: v('ink-11') },
+    { n: 6, tok: 'wash-6', fg: v('ink-11') },
+    { n: 7, tok: 'wash-7', fg: v('ink-11') },
+    { n: 8, tok: 'highlight-8', fg: v('ink-11') },
     { n: 9, tok: 'highlight-9', fg: v('on-highlight') },
+    { n: 10, tok: 'ink-10', fg: v('paper-1') },
     { n: 11, tok: 'ink-11', fg: v('paper-1') },
-    { n: 12, tok: 'ink-12', fg: v('paper-1') },
   ]
   const groups = [
     { label: 'paper', span: 2 }, { label: 'wash', span: 5 },
@@ -114,14 +114,14 @@ export function TokenCards({ prefix, kind, outlineCta }: { prefix: string; kind:
       {hasIdentity && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 14 }}>
           <span style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0, background: v('identity'), border: '1px solid var(--border-subtle)' }} />
-          <span style={{ fontSize: 13, fontWeight: 600, color: v('ink-11') }}>identity</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: v('ink-10') }}>identity</span>
         </div>
       )}
 
-      {/* ink in context — heading + body, "ink family" called out in ink-11 */}
-      <div style={{ fontSize: 24, fontWeight: 700, color: v('ink-12'), lineHeight: 1.15, marginBottom: 8 }}>Aa Heading</div>
-      <p style={{ fontSize: 15, lineHeight: 1.5, color: v('ink-12'), margin: '0 0 16px' }}>
-        The <span style={{ color: v('ink-11') }}>ink family</span> is designed to contrast with the paper and wash stops and is perfect for text. It can also be used as an inverted fill.
+      {/* ink in context — heading + body, "ink family" called out in ink-10 */}
+      <div style={{ fontSize: 24, fontWeight: 700, color: v('ink-11'), lineHeight: 1.15, marginBottom: 8 }}>Aa Heading</div>
+      <p style={{ fontSize: 15, lineHeight: 1.5, color: v('ink-11'), margin: '0 0 16px' }}>
+        The <span style={{ color: v('ink-10') }}>ink family</span> is designed to contrast with the paper and wash stops and is perfect for text. It can also be used as an inverted fill.
       </p>
 
       {/* cta in context — the pill (hidden on signals, where cta lives in the alert).
@@ -145,8 +145,8 @@ export function TokenCards({ prefix, kind, outlineCta }: { prefix: string; kind:
       {/* in context — the wash inset, plus the highlight inset OR the signal alert */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 18 }}>
         <div style={{ ...box, background: v('wash-4') }}>
-          <div style={{ ...boxLabel, color: v('ink-11') }}>inset &middot; wash</div>
-          <div style={{ ...boxBody, color: v('ink-12') }}>Body copy in ink on a wash fill.</div>
+          <div style={{ ...boxLabel, color: v('ink-10') }}>inset &middot; wash</div>
+          <div style={{ ...boxBody, color: v('ink-11') }}>Body copy in ink on a wash fill.</div>
         </div>
         {isSignal ? (
           <div style={{ ...box, background: v('cta-1'), display: 'flex', gap: 10, alignItems: 'flex-start' }}>
@@ -159,9 +159,9 @@ export function TokenCards({ prefix, kind, outlineCta }: { prefix: string; kind:
         ) : (
           <div style={{ ...box, background: v('highlight-9') }}>
             <div style={{ ...boxLabel, color: v('on-highlight') }}>inset &middot; highlight</div>
-            {/* the emphasis inset is the INVERTED fill (owner 2026-07-09): ink-12 with paper-1 text —
+            {/* the emphasis inset is the INVERTED fill (owner 2026-07-09): ink-11 with paper-1 text —
                 highlight-10 deleted */}
-            <div style={{ background: v('ink-12'), borderRadius: 8, padding: '10px 12px' }}>
+            <div style={{ background: v('ink-11'), borderRadius: 8, padding: '10px 12px' }}>
               <div style={{ ...boxBody, color: v('paper-1') }}>Emphasis copy in paper-1 text.</div>
             </div>
           </div>

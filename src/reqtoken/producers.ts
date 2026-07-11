@@ -127,7 +127,7 @@ export const lightScaleChromaAt = (ctx: Ctx, baseC: number, satFraction: number)
   return ctx.cAt('light', L, cLadder + ctx.envW * (cEnv - cLadder))
 }
 
-// ---- light highlight chroma (stops 9/10): same blend but gamut-CLAMPED before the solve (colorEngine.ts:441–442)
+// ---- light highlight chroma (stop 9): same blend but gamut-CLAMPED before the solve (colorEngine.ts:441–442)
 export const lightHighlightChromaAt = (ctx: Ctx, baseC: number, satFraction: number) => (L: number, hh: number): number => {
   const hlLadderC = ctx.vSubtle * ctx.chromaBoost * baseC
   return clampChromaToGamut(L, ctx.cAt('light', L, hlLadderC + ctx.envW * (ctx.brandSat * satFraction * maxChromaAt(L, hh) - hlLadderC)), hh)
@@ -223,7 +223,7 @@ export function separationClampLight(
   return { L: pass, C: ceilingAt(pass), H: ctx.lightHueAt(pass) }
 }
 
-// ---- light text stops 11/12: the EXACT 3-call Math.min sequence incl. the deepen re-solve
+// ---- light text stops 10/11: the EXACT 3-call Math.min sequence incl. the deepen re-solve
 // (colorEngine.ts:363–374). The anchor solve uses raw gamut-clamped chroma; the emit chroma is cAt-wrapped.
 // `maxLFor` = the resolver-built metric closure (wcag: findMaxLForContrast at the raw ratio, no margin —
 // float-identical to the old inline calls; apca: findMaxLForApcaLc at the raw targetLc).
@@ -246,7 +246,7 @@ export function placeLightText(
   return { L, C: ctx.cAt('light', L, inkC), H: ctx.lightHueAt(L) }
 }
 
-// ---- light highlight placement (stops 9/10): perceptual on the clamped highlight chroma (colorEngine.ts:462–465)
+// ---- light highlight placement (stop 9): perceptual on the clamped highlight chroma (colorEngine.ts:462–465)
 export function placeLightHighlight(ctx: Ctx, rootL: number, chromaAt: (L: number, hh: number) => number): { L: number; C: number; H: number } {
   const L = perceptualRungL(rootL, chromaAt(rootL, ctx.lightHueAt(rootL)), ctx.lightHueAt(rootL))
   return { L, C: chromaAt(L, ctx.lightHueAt(L)), H: ctx.lightHueAt(L) }
@@ -285,7 +285,7 @@ export const darkScaleChromaAt = (ctx: Ctx, dctx: DarkCtx, stopIndex: number, mu
     ? ctx.opts.darkChromaCurve(L, dctx.darkHueAtL(L), ctx.brandC, dctx.darkC9)
     : applyChromaFloor(ctx.subtleC, multiplier, stopIndex, ctx.darkFloorStrength))
 
-// dark ink chroma (stops 11/12): the TEXT-TIER EXEMPTION (C9). The H-K fill policy
+// dark ink chroma (stops 10/11): the TEXT-TIER EXEMPTION (C9). The H-K fill policy
 // (perceptualDarkC via opts.darkChromaCurve) is a FILL equalizer — at ink lightness it
 // pumps maximum chroma into the lowest-H-K hues (the yellow-green neon). The text tier
 // keeps its native ID-relative chroma (the DARK_STOP_11/12 multipliers live again),
@@ -294,14 +294,14 @@ export const darkScaleChromaAt = (ctx: Ctx, dctx: DarkCtx, stopIndex: number, mu
 export const darkInkChromaAt = (ctx: Ctx, dctx: DarkCtx, stopIndex: number, multiplier: number, maxC = Infinity) => (L: number): number =>
   ctx.cAt('dark', L, Math.min(applyChromaFloor(ctx.brandC, multiplier, stopIndex, ctx.darkFloorStrength), maxC))
 
-// dark highlight chroma (stops 9/10): curve override or the light blend through cAt('dark'), clamped (colorEngine.ts:469–472)
+// dark highlight chroma (stop 9): curve override or the light blend through cAt('dark'), clamped (colorEngine.ts:469–472)
 export const darkHighlightChromaAt = (ctx: Ctx, dctx: DarkCtx, baseC: number, satFraction: number) => (L: number, h: number): number => {
   if (ctx.opts?.darkChromaCurve) return clampChromaToGamut(L, ctx.opts.darkChromaCurve(L, h, ctx.brandC), h)
   const hlLadderC = ctx.vSubtle * ctx.chromaBoost * baseC
   return clampChromaToGamut(L, ctx.cAt('dark', L, hlLadderC + ctx.u * (ctx.brandSat * satFraction * maxChromaAt(L, h) - hlLadderC)), h)
 }
 
-// dark perceptual placement (stops 1–7, 11/12): placeDarkStop verbatim (colorEngine.ts:396–399).
+// dark perceptual placement (stops 1–7, 10/11): placeDarkStop verbatim (colorEngine.ts:396–399).
 // `lift` = the 'perceptual-lift' producer: the H-K solve may raise a hue above its scaffold (low-boost
 // hues like yellow) but never place it BELOW (high-boost hues — blue/violet — otherwise sink under the
 // near-black neutral surfaces they render on: the blue-recede failure). "Dark fills lift, never sink,"

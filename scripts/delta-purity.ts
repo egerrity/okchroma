@@ -1,6 +1,6 @@
 // delta-purity.ts — the carry-honesty gate for the SHIPPED delta model (owner 2026-07-09). Surfaces 1–9
 // carry the light stop's C+H exactly (C reduced only by gamut at the dark L; the s8 require-solve and the
-// 9-band-order floor move ONLY L). Inks 11/12 are dark-native by design and are NOT checked here. Any
+// 9-band-order floor move ONLY L). Inks 10/11 are dark-native by design and are NOT checked here. Any
 // surface stop with ΔH≠0 or C above the gamut-carry = a recompute leak. Sweep agnostic seeds; per stop.
 import { resolveRamp, type ResolveOpts } from '../src/reqtoken/resolve'
 import { MODE_SPECS } from '../src/reqtoken/spec'

@@ -5,7 +5,7 @@
 //
 //   A. chroma-curve parity   every emitted stop of a chromaCurve-bearing scale
 //      (HARD)                (the neutral) must equal the curve at its L in BOTH
-//                            modes. Catches the dark highlight 9/10 bypass — the
+//                            modes. Catches the dark highlight-9 bypass — the
 //                            sidecar `highlight` block skips cAt in dark.
 //   B. signal hue fidelity   the red signal keeps its source hue (33.3°) in BOTH
 //      (HARD)                modes. The red-cool is a BRAND-only differentiator;
@@ -13,7 +13,7 @@
 //   C. dark-L apparent wave  REPORT-ONLY: per-hue apparent-lightness spread,
 //      (REPORT)              light (≈flat) vs dark (waves). The fix is a separate
 //                            effort; this ships its gate.
-//   D. dark text contrast    REPORT: dark stop 8/11/12 vs paper-2, both modes,
+//   D. dark text contrast    REPORT: dark stop 8/10/11 vs paper-2, both modes,
 //      (REPORT)              swept agnostically. Drives the W2 decision.
 //
 // Failures print worst-first with the input. `--bless` records the matrix after
@@ -107,7 +107,7 @@ const WAVE_HUES = Array.from({ length: 24 }, (_, i) => i * 15)
 const lAp = (s: ColorStop) => apparentL(s.L, s.C, s.H)
 const perStop: { stop: number; light: number; dark: number }[] = []
 const ctaSpread = { light: { lo: 999, hi: -999 }, dark: { lo: 999, hi: -999 } }
-for (const stopN of [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12]) {   // stop 10 deleted (owner 2026-07-09)
+for (const stopN of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]) {   // contiguous post-renumber (ink 2026-07-10)
   const lv: number[] = [], dv: number[] = []
   for (const H of WAVE_HUES) {
     const s = generateScale(synthHex(0.62, 0.18, H), `wave-h${H}`, undefined, BRAND_FLOOR)
@@ -128,27 +128,27 @@ console.log(`  CTA  |    ${f1(ctaSpread.light.hi - ctaSpread.light.lo).padStart(
 console.log(`  worst dark vivid-stop wave ${f1(worstDark)} L*  ·  dark CTA wave ${f1(ctaSpread.dark.hi - ctaSpread.dark.lo)} L*`)
 
 // ── D. dark text-stop contrast (REPORT) — drives the W2 decision ──────────────
-// Light clamps stop 8 to 3:1, stops 11/12 to 4.5/7 (vs paper-2 = stop 2). Dark
+// Light clamps stop 8 to 3:1, stops 10/11 to 4.5/7 (vs paper-2 = stop 2). Dark
 // places them directly with no clamp. Sweep agnostically; report the worst dark
 // ratio so W2 decides whether a dark clamp is needed or the scaffold already clears.
-// find by STOP number — the arrays are stops 1..9,11,12 since stop 10's deletion (owner 2026-07-09)
+// find by STOP number — the arrays are contiguous stops 1..11 (ink renumbered down 2026-07-10)
 const vsPaper2 = (arr: ColorStop[], stop: number) => {
   const st = arr.find(s => s.stop === stop)!
   const p2 = arr.find(s => s.stop === 2)!
   return contrastRatio(wcagY(st.L, st.C, st.H), wcagY(p2.L, p2.C, p2.H))
 }
-const dark = { s8: 999, s8at: '', s11: 999, s11at: '', s12: 999, s12at: '' }
+const dark = { s8: 999, s8at: '', s10: 999, s10at: '', s11: 999, s11at: '' }
 for (let H = 0; H < 360; H += 15) for (const C of [0.04, 0.10, 0.16, 0.22]) for (const L of [0.45, 0.6, 0.7, 0.82]) {
   const s = generateScale(synthHex(L, C, H), `dc-h${H}c${C}l${L}`, undefined, BRAND_FLOOR)
-  const c8 = vsPaper2(s.dark, 8), c11 = vsPaper2(s.dark, 11), c12 = vsPaper2(s.dark, 12)
+  const c8 = vsPaper2(s.dark, 8), c10 = vsPaper2(s.dark, 10), c11 = vsPaper2(s.dark, 11)
   if (c8 < dark.s8) { dark.s8 = c8; dark.s8at = `H${H} C${C} L${L}` }
+  if (c10 < dark.s10) { dark.s10 = c10; dark.s10at = `H${H} C${C} L${L}` }
   if (c11 < dark.s11) { dark.s11 = c11; dark.s11at = `H${H} C${C} L${L}` }
-  if (c12 < dark.s12) { dark.s12 = c12; dark.s12at = `H${H} C${C} L${L}` }
 }
 console.log(`\n=== D. dark text contrast vs paper-2 (agnostic worst) — REPORT ===`)
 console.log(`  stop 8  worst ${dark.s8.toFixed(2)}:1 (${dark.s8at})  [light floor 3.0]`)
-console.log(`  stop 11 worst ${dark.s11.toFixed(2)}:1 (${dark.s11at})  [light floor 4.5]`)
-console.log(`  stop 12 worst ${dark.s12.toFixed(2)}:1 (${dark.s12at})  [light floor 7.0]`)
+console.log(`  stop 10 worst ${dark.s10.toFixed(2)}:1 (${dark.s10at})  [light floor 4.5]`)
+console.log(`  stop 11 worst ${dark.s11.toFixed(2)}:1 (${dark.s11at})  [light floor 7.0]`)
 
 // ── Snapshot — full family × mode × stop L/C/H (the regression + provenance gate)
 const SNAP_PATH = path.join(process.cwd(), 'scripts', 'divergence-snapshot.json')

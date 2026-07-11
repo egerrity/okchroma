@@ -182,7 +182,7 @@ ResolvedBrand  = { scale, shearDeg, redRepel: {light,dark}|null,
 | 3–7 | `wash-3` … `wash-7` | low-hierarchy fills, borders, decorative |
 | 8 | `highlight-8` | WCAG 1.4.11 **3:1** non-text step (borders, UI elements) |
 | 9 | `highlight-9` | emphasis fill — a **scale stop**, same machinery as the rest (stop 10 deleted 2026-07-09) |
-| 11–12 | `ink-11`, `ink-12` | text (4.5:1 / 7:1) |
+| 11–12 | `ink-10`, `ink-11` | text (4.5:1 / 7:1) |
 | off-scale | `cta-1`, `cta-2` | the **only** off-scale tokens: the pulled-out solid button fill + hover |
 | computed | `on-cta`, `on-highlight` | black/white text for those fills |
 | literal | `identity` | the exact input hex (brand / secondary only) |
@@ -209,8 +209,8 @@ it. Three phases per stop, in order:
   `okchroma-reqtoken@2` — they are the house style *of this resolver*, not portable data.
 - **require** — declared floors, checked and enforced against **resolved** stops (never a
   cached value, so a pushed stop automatically re-solves everything referencing it):
-  - `{ metric: 'wcag', against: 'paper-2', target }` — `highlight-8` 3:1, `ink-11` 4.5,
-    `ink-12` 7.0, declared in **both modes** (light clamps down; dark raises off the
+  - `{ metric: 'wcag', against: 'paper-2', target }` — `highlight-8` 3:1, `ink-10` 4.5,
+    `ink-11` 7.0, declared in **both modes** (light clamps down; dark raises off the
     paper; a placement that already clears doesn't move).
   - `{ metric: 'min-separation', against: 'paper-1' | 'prev', target }` — OKLab ΔE seam
     floors: `paper-2` ≥ 0.028 off `paper-1`; every wash seam ≥ 0.012 off its predecessor
@@ -273,7 +273,7 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
   lightness matches a common target. → A high-boost hue (blue) is placed at a lower
   measured L, a low-boost hue (yellow-green) higher, so every step reads the same across
   brands. **The light ramp solves every stop. The dark ramp solves the paper/wash surfaces
-  (1–7) and the ink text stops (11/12) the same way, but holds the highlight band (8–10) at
+  (1–7) and the ink text stops (10/11) the same way, but holds the highlight band (8–9) at
   its `DARK_L` placement — those stops are legibility/3:1-constrained (solving them would
   re-enter the APCA dead zone and ride a solved surface up past the placed band), so they
   keep a small per-hue apparent-lightness wave by design. `divergence-audit` reports that
@@ -290,7 +290,7 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
   a requirement on the declared stop (`spec.ts`): light iterates a fixed-point clamp down;
   dark raises a failing hue off the near-black paper (today's dark scaffold already clears
   it everywhere measured — the declaration makes that a guarantee, not an observation).
-- **Text-stop contrast floors, declared in both modes** — `ink-11` → 4.5:1, `ink-12` → 7:1
+- **Text-stop contrast floors, declared in both modes** — `ink-10` → 4.5:1, `ink-11` → 7:1
   against `paper-2`.
 - **Seam separation floors (light)** — `paper-2` must stand OKLab ΔE ≥ 0.028 off
   `paper-1`; every wash seam ≥ 0.012 off its predecessor. The wash rootLs (3–7) were
@@ -304,7 +304,7 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
   extremes — if neither clears, the *fill* moves, never the text.
 - **Light ↔ dark parity** — the modes match almost everywhere: the chroma curve, the hue
   treatment (incl. the brand-only red-cool), the contrast floors, and the apparent-lightness
-  solve on the surfaces (1–7) and text (11/12). The one deliberate difference is the
+  solve on the surfaces (1–7) and text (10/11). The one deliberate difference is the
   **highlight band** (8–10): light solves it, dark holds it at `DARK_L` (solving it would
   re-enter the APCA dead zone), so dark's highlight keeps a small per-hue wave by design.
   `divergence-audit` (`scripts/divergence-audit.ts`) gates the rest family × mode × stop —
@@ -433,7 +433,7 @@ into `_site/` (rewriting `../` paths for the `/okchroma/` project subpath) → p
 These are deliberate v1 scope boundaries, tracked for later work:
 
 1. **Mixed contrast model.** `highlight` on-text is judged by APCA (Lc 60); everything else
-   (`cta`, `ink-11/12`, `highlight-8`) uses WCAG. Under a strict WCAG 2.x audit, many
+   (`cta`, `ink-10/12`, `highlight-8`) uses WCAG. Under a strict WCAG 2.x audit, many
    highlight fills' text reads below 4.5:1 (fine under APCA). An opt-in APCA *profile* now
    exists (`contrastProfile: 'apca'` re-solves the scale's contrast requires under Lc targets
    via `withProfile()` — see docs/schema.md); the Lc map, default exposure, and moving the

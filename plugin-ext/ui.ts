@@ -190,18 +190,18 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
       const h = hx(s)
       if (n === 8) cells.push(`<div class="mx-cell" style="border:2px solid ${h}" title="highlight-8"></div>`)
       else if (n === 9) cells.push(`<div class="mx-aa" style="background:${h};color:${pole(row.scale.onHighlightIsWhite ?? false)}" title="highlight-9">Aa</div>`)
-      else if (n >= 11) cells.push(`<div class="mx-aa" style="color:${h};font-size:15px;font-weight:800" title="ink-${n}">Aa</div>`)
+      else if (n >= 10) cells.push(`<div class="mx-aa" style="color:${h};font-size:15px;font-weight:800" title="ink-${n}">Aa</div>`)
       else cells.push(`<div class="mx-cell" style="background:${h};box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)" title="${n <= 2 ? 'paper' : 'wash'}-${n}"></div>`)
     }
     const s8 = hx(st(8))
     if (row.outline) {
-      // outline's re-expressed pair: transparent fill + ring + ink-11 label; hover = the
+      // outline's re-expressed pair: transparent fill + ring + ink-10 label; hover = the
       // STABLE highlight-8 at 9% (the same stop the ring uses)
-      const ink11 = hx(st(11))
+      const ink10 = hx(st(10))
       const c8 = st(8)
       const rgb = `${Math.round(c8.r * 255)},${Math.round(c8.g * 255)},${Math.round(c8.b * 255)}`
-      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink11}" title="cta-1 (outline)">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink11};background:rgba(${rgb},0.09)" title="cta-2 (outline hover)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink10}" title="cta-1 (outline)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink10};background:rgba(${rgb},0.09)" title="cta-2 (outline hover)">Aa</div>`)
     } else {
       // filled cta cells carry NO stroke (filled is filled); only outline shows its ring
       const on = pole(row.scale.onFillTextIsWhite)

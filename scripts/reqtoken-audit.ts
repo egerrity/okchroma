@@ -71,9 +71,9 @@ for (const H of HUES) for (const C of CHROMAS) {
       const s8d = byStop(8)!
       if (s8d.L > h9.L + 1e-6) fails.push({ seed: id, mode, check: 'dark-8<9', detail: `8 L${s8d.L.toFixed(3)} > 9 L${h9.L.toFixed(3)}`, sev: 12 })
     }
-    const t11 = byStop(11)!, t12 = byStop(12)!
-    const inkBad = mode === 'light' ? t12.L > t11.L + 1e-6 : t12.L < t11.L - 1e-6
-    if (inkBad) fails.push({ seed: id, mode, check: 'ink-order', detail: `11 L${t11.L.toFixed(3)} vs 12 L${t12.L.toFixed(3)}`, sev: 10 })
+    const t10 = byStop(10)!, t11 = byStop(11)!
+    const inkBad = mode === 'light' ? t11.L > t10.L + 1e-6 : t11.L < t10.L - 1e-6
+    if (inkBad) fails.push({ seed: id, mode, check: 'ink-order', detail: `10 L${t10.L.toFixed(3)} vs 11 L${t11.L.toFixed(3)}`, sev: 10 })
     // 4. in-gamut + valid rgb for every stop
     for (const st of s) {
       const gC = clampChromaToGamut(st.L, st.C, st.H)

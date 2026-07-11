@@ -204,9 +204,9 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   // the chip TINTS with the selection (Figma spec): the family's own wash/ink; outline gets
   // the outline treatment; exact reads neutral-grey "hands off"
   const chipTone: Record<string, React.CSSProperties> = {
-    brand: { background: 'var(--brand-wash-4)', color: 'var(--brand-ink-12)' },
-    secondary: { background: 'var(--secondary-wash-6)', color: 'var(--secondary-ink-12)' },
-    outline: { background: 'transparent', color: 'var(--secondary-ink-11)', border: '1px solid var(--secondary-highlight-8)' },
+    brand: { background: 'var(--brand-wash-4)', color: 'var(--brand-ink-11)' },
+    secondary: { background: 'var(--secondary-wash-6)', color: 'var(--secondary-ink-11)' },
+    outline: { background: 'transparent', color: 'var(--secondary-ink-10)', border: '1px solid var(--secondary-highlight-8)' },
     grey: { background: 'var(--surface-sunken)', color: 'var(--fg-subtle)' },
   }
   const styleLabel: Record<SecondaryStyle, string> = { tint: 'Tint', pastel: 'Pastel', outline: 'Outline', exact: 'Exact' }
@@ -376,7 +376,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   // highlight/cta as "Aa" on their on-color, ink as "Aa" text, identity as an "ID"
   // chip (blank-but-spaced when a ramp has none, so columns stay justified). Themes
   // with the page toggle.
-  const SWATCH_STOPS = ['paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'wash-6', 'wash-7', 'highlight-8', 'highlight-9', 'ink-11', 'ink-12', 'cta-1', 'cta-2']
+  const SWATCH_STOPS = ['paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'wash-6', 'wash-7', 'highlight-8', 'highlight-9', 'ink-10', 'ink-11', 'cta-1', 'cta-2']
   const swatchRamps: Array<[string, string, boolean]> = [
     ['brand', 'primary', true],
     ...((secondary || derived) ? [['secondary', 'secondary', true] as [string, string, boolean]] : []),
@@ -759,8 +759,8 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
 // ─── Collision check — 2×2 grid, one form card per signal ───────────────────
 // Owner spec (2026-07-09): four form cards on paper-0, one per signal
 // (red / yellow / green / info-color — by identity), each combining:
-//   ink-11 title + brand chip + the card signal's chip
-//   ink-12 short body
+//   ink-10 title + brand chip + the card signal's chip
+//   ink-11 short body
 //   focused input + resting input
 //   input with the signal's helper + an error (red) input
 //   the signal's alert message (its cta register)
@@ -780,7 +780,7 @@ function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typ
     <span style={{
       display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 6,
       fontSize: 12, fontWeight: 500,
-      background: `var(--${prefix}-wash-4)`, color: `var(--${prefix}-ink-12)`,
+      background: `var(--${prefix}-wash-4)`, color: `var(--${prefix}-ink-11)`,
       border: `1px solid var(--${prefix}-wash-6)`,
     }}>{label}</span>
   )
@@ -791,28 +791,28 @@ function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typ
   const btn: React.CSSProperties = { padding: '8px 16px', borderRadius: 999, border: '1.5px solid transparent', cursor: 'pointer', fontSize: 13, fontWeight: 500, fontFamily: 'inherit' }
   return (
     <section style={{ background: 'var(--paper-0)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 18 }}>
-      {/* title row shows the ink-11 RANGE: signal ink vs neutral ink vs brand ink;
-          the subtitle (only when a secondary exists) adds secondary ink-11 */}
+      {/* title row shows the ink-10 RANGE: signal ink vs neutral ink vs brand ink;
+          the subtitle (only when a secondary exists) adds secondary ink-10 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
         <div style={{ fontSize: 15, fontWeight: 700, marginRight: 'auto' }}>
-          <span style={{ color: v('ink-11') }}>{sig}</span>
-          <span style={{ color: 'var(--neutral-ink-11)', fontWeight: 500 }}> vs </span>
-          <span style={{ color: 'var(--brand-ink-11)' }}>Brand-primary</span>
+          <span style={{ color: v('ink-10') }}>{sig}</span>
+          <span style={{ color: 'var(--neutral-ink-10)', fontWeight: 500 }}> vs </span>
+          <span style={{ color: 'var(--brand-ink-10)' }}>Brand-primary</span>
         </div>
         {chip('brand', 'brand')}
         {chip(sig, sig)}
       </div>
       {hasSecondary && (
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--secondary-ink-11)', marginBottom: 6 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--secondary-ink-10)', marginBottom: 6 }}>
           This is a subtitle in Brand-secondary
         </div>
       )}
-      {/* body shows the ink-12 range, one sentence per family */}
+      {/* body shows the ink-11 range, one sentence per family */}
       <p style={{ fontSize: 12.5, lineHeight: 1.45, margin: '0 0 12px' }}>
-        <span style={{ color: v('ink-12') }}>This body copy is in {sig}'s ink-12. </span>
-        <span style={{ color: 'var(--brand-ink-12)' }}>This body copy is in brand-primary's ink-12. </span>
-        {hasSecondary && <span style={{ color: 'var(--secondary-ink-12)' }}>This body copy is in brand-secondary's ink-12. </span>}
-        <span style={{ color: 'var(--neutral-ink-12)' }}>This body copy is in neutral's ink-12.</span>
+        <span style={{ color: v('ink-11') }}>This body copy is in {sig}'s ink-11. </span>
+        <span style={{ color: 'var(--brand-ink-11)' }}>This body copy is in brand-primary's ink-11. </span>
+        {hasSecondary && <span style={{ color: 'var(--secondary-ink-11)' }}>This body copy is in brand-secondary's ink-11. </span>}
+        <span style={{ color: 'var(--neutral-ink-11)' }}>This body copy is in neutral's ink-11.</span>
       </p>
 
       {/* inputs: focused + resting / signal helper + error */}
@@ -828,7 +828,7 @@ function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typ
         <div>
           <div style={fieldLabel}>With helper</div>
           <div className="ct-field"><input defaultValue="Value" spellCheck={false} /></div>
-          <div style={{ fontSize: 11, color: v('ink-11'), marginTop: 5 }}>Helper text in the {sig} register.</div>
+          <div style={{ fontSize: 11, color: v('ink-10'), marginTop: 5 }}>Helper text in the {sig} register.</div>
         </div>
         <div>
           <div style={fieldLabel}>Error</div>
@@ -850,13 +850,13 @@ function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typ
       {/* button rows: primary wash-5 · primary cta · red cta, then
           secondary wash-5 · secondary cta · neutral cta */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
-        <button style={{ ...btn, background: 'var(--brand-wash-5)', color: 'var(--brand-ink-12)' }}>Wash 5</button>
+        <button style={{ ...btn, background: 'var(--brand-wash-5)', color: 'var(--brand-ink-11)' }}>Wash 5</button>
         <button style={{ ...btn, background: 'var(--brand-cta-1)', color: 'var(--brand-on-cta)' }}>Primary cta</button>
         <button style={{ ...btn, background: 'var(--red-cta-1)', color: 'var(--red-on-cta)' }}>Red cta</button>
       </div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {hasSecondary && <>
-          <button style={{ ...btn, background: 'var(--secondary-wash-5)', color: 'var(--secondary-ink-12)' }}>Wash 5</button>
+          <button style={{ ...btn, background: 'var(--secondary-wash-5)', color: 'var(--secondary-ink-11)' }}>Wash 5</button>
           <button style={{ ...btn, background: 'var(--secondary-cta-1)', color: 'var(--secondary-on-cta)', borderColor: 'var(--secondary-cta-border)' }}>Secondary cta</button>
         </>}
         <button style={{ ...btn, background: 'var(--neutral-cta-1)', color: 'var(--neutral-on-cta)' }}>Neutral cta</button>
@@ -924,7 +924,7 @@ function CustomersTable({ hasSecondary }: { hasSecondary: boolean }) {
           const premium = c.plan !== 'Starter'
           // Premium plans carry the accent when a secondary exists, else the brand.
           const planBg = premium ? (hasSecondary ? 'var(--secondary-wash-3)' : 'var(--brand-bg-subtle)') : 'var(--surface-sunken)'
-          const planFg = premium ? (hasSecondary ? 'var(--secondary-ink-11)' : 'var(--brand-fg)') : 'var(--fg-subtle)'
+          const planFg = premium ? (hasSecondary ? 'var(--secondary-ink-10)' : 'var(--brand-fg)') : 'var(--fg-subtle)'
           return (
             <tr key={c.name}>
               <td>
@@ -1048,8 +1048,8 @@ const PAGE_CSS = `
   --brand-bg-emphasis: var(--brand-cta-1);
   --brand-bg-emphasis-hover: var(--brand-cta-2);
   --brand-fg-on-emphasis: var(--brand-on-cta);
-  --brand-fg: var(--brand-ink-12);
-  --brand-fg-alt: var(--brand-ink-11);
+  --brand-fg: var(--brand-ink-11);
+  --brand-fg-alt: var(--brand-ink-10);
   --brand-bg-subtle: var(--brand-wash-5);
   --brand-bg-subtle-hover: var(--brand-wash-6);
 }
@@ -1080,7 +1080,7 @@ const PAGE_CSS = `
 .ct-alert-warn {
   display: flex; gap: 8px; align-items: flex-start; margin-top: 8px;
   padding: 8px 10px; border-radius: 8px; font-size: 12px; line-height: 1.45;
-  background: var(--yellow-wash-4); border: 1px solid var(--yellow-highlight-8); color: var(--yellow-ink-12);
+  background: var(--yellow-wash-4); border: 1px solid var(--yellow-highlight-8); color: var(--yellow-ink-11);
 }
 .ct-alert-warn a { color: inherit; font-weight: 600; }
 .ct-alert-text {
@@ -1152,7 +1152,7 @@ const PAGE_CSS = `
 .ct-check:hover { background: var(--surface-sunken); border-radius: 6px; }
 .ct-tip {
   display: none; position: absolute; left: 0; bottom: calc(100% + 6px); z-index: 70;
-  width: 290px; background: var(--neutral-ink-12); color: var(--neutral-paper-1);
+  width: 290px; background: var(--neutral-ink-11); color: var(--neutral-paper-1);
   border-radius: 8px; padding: 9px 11px; font-size: 11px; line-height: 1.5;
   box-shadow: 0 8px 24px rgba(0,0,0,0.25); pointer-events: none;
 }

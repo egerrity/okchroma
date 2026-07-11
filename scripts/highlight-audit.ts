@@ -1,5 +1,5 @@
 // Highlight + off-scale-cta audit. Validates the additive tokens the dark-audit's
-// stop-1..12 window doesn't cover: the highlight rung (slot 9; stop 10 DELETED, owner 2026-07-09) and the off-scale
+// stop-1..11 window doesn't cover: the highlight rung (slot 9; stop 10 DELETED, owner 2026-07-09) and the off-scale
 // cta pair.
 //
 // What it gates (all code-grounded, verified against the real pipeline):

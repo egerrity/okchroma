@@ -1,6 +1,6 @@
 # The scale
 
-One brand color in, a 12-step scale out. Each step has a pre-reserved role and intended accessibility category — so the same step number does the same thing on every brand.
+One brand color in, an 11-stop scale out (numbered contiguously 1–11; the second highlight step was retired 2026-07-09 and the ink stops renumbered down to close the gap 2026-07-10). Each step has a pre-reserved role and intended accessibility category — so the same step number does the same thing on every brand.
 Lightness comes from a declared ladder; chroma is saturation-preserving (a fraction of the
 gamut the step allows, scaled by how saturated the brand is). Names fall in four groups
 — `paper`, `wash`, `highlight`, `ink` — plus the off-scale `cta` roles.
@@ -27,8 +27,8 @@ accessibility category it carries.
 | `wash-7`       | 0.797  | 0.420 | ΔE ≥ 0.012 off `wash-6` (light) | decorative |
 | `highlight-8`  | 0.738  | 0.550 | 3:1 vs `paper-2` (both modes) | WCAG 1.4.11 non-text: boundaries, UI elements |
 | `highlight-9`  | 0.600  | 0.600 | — (placed) | element fills with on-text |
-| `ink-11`       | 0.530  | 0.800 | 4.5:1 vs `paper-2` (both modes) | text, inverted fill |
-| `ink-12`       | 0.300  | 0.940 | 7:1 vs `paper-2` (both modes) | text, inverted fill |
+| `ink-10`       | 0.530  | 0.800 | 4.5:1 vs `paper-2` (both modes) | text, inverted fill |
+| `ink-11`       | 0.300  | 0.940 | 7:1 vs `paper-2` (both modes) | text, inverted fill |
 
 ¹ `paper-2`'s rootL is the producer target; the separation requirement pushes the resolved
 stop darker per seed (typically to L ≈ 0.967) until it stands ΔE ≥ 0.028 off `paper-1`.
@@ -46,6 +46,9 @@ collapse two adjacent steps.
 - Off the scale: `cta-1` / `cta-2` are **roles**, not stops — the pulled-out button fill +
   hover (also a 3:1 UI element). Fills that carry text ship `on-highlight` / `on-cta` —
   see [On-fill text](#on-fill-text).
+- Also off the scale despite the contiguous number: `ink-12` is the **universal anchor**
+  (literal #000000 light / #ffffff dark, paired with `paper-0`) — a mode-flipping constant,
+  not a per-brand resolved stop.
 - **Target vs emitted:** stops are H-K-solved from their rootL target (emitted L shifts by
   hue — see below), then the declared requirements bind: for luminous hues `highlight-8`
   lands well below its 0.738 target.
@@ -88,10 +91,10 @@ Example — `highlight-9` (target 0.600):
 - on screen, both read as the same step
 
 Dark mode runs the same solve, but only where uniform apparent lightness is the stop's
-job: the paper/wash **surfaces** (1–7) and the ink **text** stops (11/12) are H-K-solved
+job: the paper/wash **surfaces** (1–7) and the ink **text** stops (10/11) are H-K-solved
 like light, so they read at one perceived lightness on every brand. The **highlight band**
-(8–10) is the exception — it stays placed at its `DARK_L` target, because those stops carry
-on-text (highlight-9) or a 3:1 border (highlight-8) and are hand-tuned for legibility;
+(8–9) is the exception — it stays placed at its `DARK_L` target, because those stops carry
+on-text (highlight-9) or a 3:1 border (highlight-8) and is hand-tuned for legibility;
 solving them would push some hues into the APCA body-text dead zone (and ride a solved
 surface up past the placed band). So the highlight band keeps a small per-hue
 apparent-lightness *wave* by design — legibility over uniformity — and `divergence-audit`

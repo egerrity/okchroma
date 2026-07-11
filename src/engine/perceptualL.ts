@@ -93,7 +93,7 @@ export function perceptualRungL(rootL: number, C: number, H: number, keep = KEEP
 // The dark FILL policy: equalize apparent-brightness boost across hues. By
 // construction it pumps maximum chroma into the lowest-H-K hues exactly where
 // near-white room is biggest — correct for fills, WRONG for text (the C9
-// yellow-green ink neon). The text tier (ink-11/12) is therefore EXEMPT:
+// yellow-green ink neon). The text tier (ink-10/11) is therefore EXEMPT:
 // darkInkChromaAt keeps native ID-relative chroma normalized to the declared
 // text register and never calls this. (The band limit this comment used to
 // promise was never in the code — C9 archaeology; the exemption now lives at

@@ -661,3 +661,29 @@ re-blessed wholesale (the round's expected bless).
 "appropriate for the color"); residual hue-band ripple around orange/yellow exists in LIGHT too
 (inherited structure, a future light-side round if ever); the H33 red-repel jump is the shipped
 C6 design.
+
+## C14 — the ink renumber: closing the stop-10 gap (ink-11→10, ink-12→11, anchor ink-13→12)
+
+**Found (2026-07-10):** the stop-10 deletion (778d4b4, C-era note at the C12/C13 boundary) left the
+numbered scale non-contiguous — `1–9, [hole], 11, 12` — which reads as a bug to anyone meeting the
+system fresh, plus stale drift the deletion never cleaned ("12-step scale" in docs/scale.md, "stops
+9/10" comments across the engine and sweeps). The deletion entry recorded "no rename cascade" as the
+rationale at the time; the owner has since ruled the gap itself confusing and ordered it closed —
+this entry supersedes that aside, not the deletion (stop 10's second highlight step stays dead).
+
+**LANDED (owner-approved plan, 2026-07-10):** full renumber, names AND internal stop numbers in sync
+(`stopTokenName(10) === 'ink-10'`), one atomic commit:
+- **ink-11 → ink-10, ink-12 → ink-11** (the resolved text stops; 4.5:1 / 7:1 requires unchanged,
+  `inkMult`/`inkMaxC` registers byte-identical — only the keys moved). `T10`/`T11` requires,
+  `STOP_10_CONTRAST`/`STOP_11_CONTRAST_FLOOR`, `stop10DeepenL`/`stop11DeepenL` renamed to match.
+- **ink-13 → ink-12** (the universal anchor, #000000/#ffffff mode-flipping literal paired with
+  paper-0). Still OFF-scale semantically despite the contiguous number — a constant, not a
+  per-brand resolved stop (docs/scale.md carries the callout).
+- **Figma migration:** both plugins' `RENAMED_LEAVES` carry the three entries in ascending order
+  (the self-deleting migration map makes ascending processing the safety condition — documented at
+  the table). plugin/'s legacy `system/ink-13` theme migration retargets to `neutral/ink-12`; the
+  STATIC_UTILS anchor seed migrated via getOrMigrate instead of raw get so existing files rename in
+  place (bindings survive, no orphans).
+- Every hand-duplicated consumer (tokens/semantic.css, demo/*, sweeps/audits' stop predicates)
+  renamed in the same commit; snapshots re-blessed name-only (the value-drift gate: any hex/L/C
+  delta in the re-bless diff = a mis-keyed register = revert).
