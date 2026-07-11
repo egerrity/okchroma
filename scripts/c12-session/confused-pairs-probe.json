@@ -1,0 +1,257 @@
+{
+ "date": "2026-07-10",
+ "rows": [
+  {
+   "profile": "wcag",
+   "hex": "#BD0000",
+   "seedL": 0.501,
+   "seedH": 29.2,
+   "treat": "brand kept L0.50 · red → coral L0.64"
+  },
+  {
+   "profile": "wcag",
+   "hex": "#FF3D3D",
+   "seedL": 0.657,
+   "seedH": 26.2,
+   "treat": "brand exit · L0.66 · red canonical"
+  },
+  {
+   "profile": "wcag",
+   "hex": "#E5484D",
+   "seedL": 0.626,
+   "seedH": 23,
+   "treat": "brand exit ↑ L0.64 · red canonical"
+  },
+  {
+   "profile": "wcag",
+   "hex": "#9C0037",
+   "seedL": 0.441,
+   "seedH": 12.5,
+   "treat": "brand kept L0.44 · red canonical"
+  },
+  {
+   "profile": "wcag",
+   "hex": "#BA0043",
+   "seedL": 0.503,
+   "seedH": 12.6,
+   "treat": "brand exit ↑ L0.63 · red canonical"
+  },
+  {
+   "profile": "wcag",
+   "hex": "#D80050",
+   "seedL": 0.562,
+   "seedH": 12.3,
+   "treat": "brand exit ↑ L0.61 · red → rich L0.48"
+  },
+  {
+   "profile": "wcag",
+   "hex": "#9D002A",
+   "seedL": 0.441,
+   "seedH": 18.4,
+   "treat": "brand kept L0.44 · red canonical"
+  },
+  {
+   "profile": "wcag",
+   "hex": "#BB0034",
+   "seedL": 0.502,
+   "seedH": 18.3,
+   "treat": "brand exit ↑ L0.64 · red canonical"
+  },
+  {
+   "profile": "wcag",
+   "hex": "#DA003E",
+   "seedL": 0.563,
+   "seedH": 18.4,
+   "treat": "brand exit ↑ L0.63 · red → rich L0.48"
+  },
+  {
+   "profile": "wcag",
+   "hex": "#9F0019",
+   "seedL": 0.443,
+   "seedH": 24.4,
+   "treat": "brand kept L0.44 · red canonical"
+  },
+  {
+   "profile": "wcag",
+   "hex": "#BC0020",
+   "seedL": 0.501,
+   "seedH": 24.3,
+   "treat": "brand kept L0.50 · red → coral L0.64"
+  },
+  {
+   "profile": "wcag",
+   "hex": "#DB0027",
+   "seedL": 0.562,
+   "seedH": 24.3,
+   "treat": "brand exit ↑ L0.64 · red → rich L0.47"
+  },
+  {
+   "profile": "wcag",
+   "hex": "#9D0600",
+   "seedL": 0.439,
+   "seedH": 29.8,
+   "treat": "brand kept L0.44 · red canonical"
+  },
+  {
+   "profile": "wcag",
+   "hex": "#BB0900",
+   "seedL": 0.5,
+   "seedH": 29.8,
+   "treat": "brand exit ↓ L0.43 · red canonical"
+  },
+  {
+   "profile": "wcag",
+   "hex": "#DA0D00",
+   "seedL": 0.561,
+   "seedH": 29.8,
+   "treat": "brand exit ↑ L0.64 · red → rich L0.45"
+  },
+  {
+   "profile": "wcag",
+   "hex": "#942400",
+   "seedL": 0.44,
+   "seedH": 35.4,
+   "treat": "brand kept L0.44 · red canonical"
+  },
+  {
+   "profile": "wcag",
+   "hex": "#B02D00",
+   "seedL": 0.5,
+   "seedH": 35.5,
+   "treat": "brand exit ↑ L0.69 · red canonical"
+  },
+  {
+   "profile": "wcag",
+   "hex": "#CD3600",
+   "seedL": 0.56,
+   "seedH": 35.5,
+   "treat": "brand exit ↑ L0.64 · red → rich L0.45"
+  },
+  {
+   "profile": "apca",
+   "hex": "#BD0000",
+   "seedL": 0.501,
+   "seedH": 29.2,
+   "treat": "brand kept L0.50 · red → coral L0.65"
+  },
+  {
+   "profile": "apca",
+   "hex": "#FF3D3D",
+   "seedL": 0.657,
+   "seedH": 26.2,
+   "treat": "brand exit ↑ L0.77 · red canonical"
+  },
+  {
+   "profile": "apca",
+   "hex": "#E5484D",
+   "seedL": 0.626,
+   "seedH": 23,
+   "treat": "brand exit ↑ L0.69 · red canonical"
+  },
+  {
+   "profile": "apca",
+   "hex": "#9C0037",
+   "seedL": 0.441,
+   "seedH": 12.5,
+   "treat": "brand kept L0.44 · red canonical"
+  },
+  {
+   "profile": "apca",
+   "hex": "#BA0043",
+   "seedL": 0.503,
+   "seedH": 12.6,
+   "treat": "brand kept L0.50 · red canonical"
+  },
+  {
+   "profile": "apca",
+   "hex": "#D80050",
+   "seedL": 0.562,
+   "seedH": 12.3,
+   "treat": "brand exit ↑ L0.61 · red → rich L0.53"
+  },
+  {
+   "profile": "apca",
+   "hex": "#9D002A",
+   "seedL": 0.441,
+   "seedH": 18.4,
+   "treat": "brand kept L0.44 · red canonical"
+  },
+  {
+   "profile": "apca",
+   "hex": "#BB0034",
+   "seedL": 0.502,
+   "seedH": 18.3,
+   "treat": "brand kept L0.50 · red canonical"
+  },
+  {
+   "profile": "apca",
+   "hex": "#DA003E",
+   "seedL": 0.563,
+   "seedH": 18.4,
+   "treat": "brand exit ↑ L0.63 · red → rich L0.52"
+  },
+  {
+   "profile": "apca",
+   "hex": "#9F0019",
+   "seedL": 0.443,
+   "seedH": 24.4,
+   "treat": "brand kept L0.44 · red canonical"
+  },
+  {
+   "profile": "apca",
+   "hex": "#BC0020",
+   "seedL": 0.501,
+   "seedH": 24.3,
+   "treat": "brand kept L0.50 · red → coral L0.64"
+  },
+  {
+   "profile": "apca",
+   "hex": "#DB0027",
+   "seedL": 0.562,
+   "seedH": 24.3,
+   "treat": "brand exit ↑ L0.64 · red → rich L0.51"
+  },
+  {
+   "profile": "apca",
+   "hex": "#9D0600",
+   "seedL": 0.439,
+   "seedH": 29.8,
+   "treat": "brand kept L0.44 · red canonical"
+  },
+  {
+   "profile": "apca",
+   "hex": "#BB0900",
+   "seedL": 0.5,
+   "seedH": 29.8,
+   "treat": "brand exit ↓ L0.48 · red canonical"
+  },
+  {
+   "profile": "apca",
+   "hex": "#DA0D00",
+   "seedL": 0.561,
+   "seedH": 29.8,
+   "treat": "brand exit ↑ L0.64 · red → rich L0.49"
+  },
+  {
+   "profile": "apca",
+   "hex": "#942400",
+   "seedL": 0.44,
+   "seedH": 35.4,
+   "treat": "brand kept L0.44 · red canonical"
+  },
+  {
+   "profile": "apca",
+   "hex": "#B02D00",
+   "seedL": 0.5,
+   "seedH": 35.5,
+   "treat": "brand exit ↑ L0.77 · red canonical"
+  },
+  {
+   "profile": "apca",
+   "hex": "#CD3600",
+   "seedL": 0.56,
+   "seedH": 35.5,
+   "treat": "brand exit ↑ L0.64 · red → rich L0.49"
+  }
+ ]
+}
