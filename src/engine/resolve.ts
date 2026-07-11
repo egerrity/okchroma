@@ -160,6 +160,9 @@ export function resolveBrand(
     // yield goes LIGHTER (subtle), the MIRROR of rung-1's darken (owner rule; supersedes
     // "a secondary red earns rung 1 like a primary would").
     skipCollisionRules?: boolean
+
+    // opt-in APCA legibility clearance — threads into every generateScale call (wcag lane only, default off).
+    apcaClearance?: boolean
   }
 ): ResolvedBrand {
   const sigScales = signalScalesFor(opts?.contrastProfile)
@@ -191,6 +194,7 @@ export function resolveBrand(
 
     highlight: true,
     contrastProfile: opts?.contrastProfile,
+    apcaClearance: opts?.apcaClearance,
   }
 
   let scale = generateScale(hex, name, undefined, floor)
@@ -355,13 +359,14 @@ export function resolveTheme(input: {
   style?: 'default' | 'deeper' | 'full-chroma'
   archetypeOverride?: Archetype
   contrastProfile?: ContrastProfile
+  apcaClearance?: boolean
 }): ResolvedTheme {
   const pExact = input.primaryMode ? input.primaryMode === 'exact' : input.exact
   const pArchetype = input.primaryArchetype ?? input.archetypeOverride
   const secStyle: SecondaryStyle = input.secondaryStyle
     ?? (input.secondaryLevel === 'standard' ? 'exact' : input.secondaryLevel === 'subtle' ? 'tint'
       : input.exact ? 'exact' : 'tint')
-  const opts = { exact: pExact, style: input.style, contrastProfile: input.contrastProfile }
+  const opts = { exact: pExact, style: input.style, contrastProfile: input.contrastProfile, apcaClearance: input.apcaClearance }
   const primary = resolveBrand(input.primaryHex, input.name ?? 'brand', { ...opts, archetypeOverride: pArchetype })
   const cp = input.contrastProfile
   const sigScales = signalScalesFor(cp)

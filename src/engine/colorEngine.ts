@@ -120,6 +120,11 @@ export interface GenerateOptions {
   // shipped behavior, byte-identical when unset.
   contrastProfile?: ContrastProfile
 
+  // APCA legibility clearance (opt-in bolt-on, default off → byte-identical): in the wcag lane, push the
+  // cta fill until its chosen on-text pole also clears APCA Lc 60, keeping 4.5 as the hard floor. Gated so
+  // the shipped default is unchanged; flipped on for the A/B exhibit and, once blessed, by default.
+  apcaClearance?: boolean
+
   // DELTA-KEYED dark (THE dark model, owner 2026-07-09): the resolved LIGHT stops, injected into the DARK
   // resolve — dark is a live function of light (carry chroma+hue for surfaces 1-9, re-reference lightness to
   // the dark ground in apparent space; inks dark-native; cta prominence-floored). generateScale always sets

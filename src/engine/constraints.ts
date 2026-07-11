@@ -123,6 +123,25 @@ export function findLForContrast(
   return lo
 }
 
+// LEGALITY solver, UP direction: minimal LIGHTENING for the BLACK pole. Against black (bgY≈0) the ratio
+// RISES as the fill lightens, so the pass set is an UPWARD interval — mirror of findLForContrast. Returns
+// the least L that clears the bar (minimal move); if startL already passes, no move.
+export function findLForContrastUp(
+  startL: number,
+  C: number,
+  H: number,
+  bgY: number,
+  targetContrast: number
+): number {
+  if (legalRatio(startL, C, H, bgY) >= targetContrast) return startL
+  let lo = startL, hi = 0.999
+  for (let i = 0; i < 20; i++) {
+    const mid = (lo + hi) / 2
+    legalRatio(mid, C, H, bgY) >= targetContrast ? (hi = mid) : (lo = mid)
+  }
+  return hi
+}
+
 // channels must be the GAMUT's own gamma-encoded components (display-p3 shares the
 // sRGB transfer curve); the coefficient set is basis-dependent — same color reads up
 // to 0.0105 apart between bases (P3-DESIGN.md §1d, owner D2: pole judgments go P3)

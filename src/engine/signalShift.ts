@@ -26,14 +26,14 @@ const SHIFT_RULES: Partial<Record<SignalDef['name'], SignalShiftRule>> = {
 
   green: {
     splitH: 147,
-    below: { kind: 'swap', note: 'green → teal-side', baseHex: '#18AA6C' },
-    atOrAbove: { kind: 'swap', note: 'green → yellow-side', baseHex: '#5DA447' },
+    below: { kind: 'swap', note: 'green → teal-side', baseHex: '#42C585' },
+    atOrAbove: { kind: 'swap', note: 'green → yellow-side', baseHex: '#78C062' },
   },
 
   'info-color': {
     splitH: 273,
-    below: { kind: 'swap', note: 'info-color → magenta', baseHex: '#AB4ABA' },
-    atOrAbove: { kind: 'swap', note: 'info-color → blue', baseHex: '#0090FF' },
+    below: { kind: 'swap', note: 'info-color → magenta', baseHex: '#EC88FC' },
+    atOrAbove: { kind: 'swap', note: 'info-color → blue', baseHex: '#6AB5FF' },
   },
 }
 

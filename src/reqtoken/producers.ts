@@ -4,7 +4,7 @@
 // and proven byte-identical at cutover (commit c7542b7); the blessed snapshots are the standing gate — do not
 // "simplify" an expression here without eye-check + re-bless.
 import { classifyArchetype, medianLForArchetype, type Archetype } from '../engine/archetypes'
-import { clampChromaToGamut, wcagY, contrastRatio, legalRatio, findMaxLForContrast, findLForContrast, apcaY, apcaLc, encodedChannels } from '../engine/constraints'
+import { clampChromaToGamut, wcagY, contrastRatio, legalRatio, findMaxLForContrast, findLForContrast, findLForContrastUp, apcaY, apcaLc, encodedChannels } from '../engine/constraints'
 import { perceptualRungL, apparentL, grayApparentL, solveLForApparent } from '../engine/perceptualL'
 import {
   hexToOklch, maxChromaAt, goldSpineHue, torsionedHue, gauss, sigmoid, hueDelta, oklabDist, redGateDist, RED_GATE,
@@ -396,6 +396,51 @@ export function ctaDarkEnforcedLApca(ctx: Ctx, base: { L: number; C: number; H: 
   if (!(enforce && onFillIsWhiteDark)) return null
   if (whiteTextLcAt(base.L, base.C, base.H) >= thresholdLc) return null
   return findLForWhiteTextLc(base.L, base.C, ctx.darkCtaH, thresholdLc + APCA_SOLVE_MARGIN_LC)
+}
+
+// ================= the APCA legibility CLEARANCE (the wcag lane's opt-in dual gate) =================
+// The wcag cta fill enforces only 4.5 today (ctaLightL) — a chosen pole can clear 4.5 yet read dim in
+// APCA. The clearance adds the Lc bar ALONGSIDE 4.5, in the SAME fill direction the chosen pole already
+// wants: black under-reads → LIGHTEN, white under-reads → DARKEN. Both directions also raise the 4.5
+// ratio, so the two never conflict — 4.5 is the hard floor (never capped), Lc is the capped ambition.
+// Pole-symmetric; reuses the existing white-darken solvers and mirrors them upward for the black pole.
+
+// |Lc| of BLACK text on the fill at (L, C, H), chroma emit-clamped. Mirror of whiteTextLcAt; black's apcaY
+// is apcaYAt(0,0,0) (the same basis solveBrandExit's poleOk uses).
+export const blackTextLcAt = (L: number, C: number, H: number): number =>
+  Math.abs(apcaLc(apcaYAt(0, 0, 0), apcaYAt(L, clampChromaToGamut(L, C, H), H)))
+
+// LIGHTEN the fill from startL until BLACK text reads ≥ targetLc (mirror of findLForWhiteTextLc, upward);
+// cap-aware — returns capHiL (best-effort) if the cap is reached before the bar, or if it cannot move up.
+export function findLForBlackTextLc(startL: number, C: number, H: number, targetLc: number, capHiL: number): number {
+  if (blackTextLcAt(startL, C, H) >= targetLc) return startL
+  if (capHiL <= startL || blackTextLcAt(capHiL, C, H) < targetLc) return capHiL
+  let lo = startL, hi = capHiL
+  for (let i = 0; i < 20; i++) {
+    const mid = (lo + hi) / 2
+    blackTextLcAt(mid, C, H) >= targetLc ? (hi = mid) : (lo = mid)
+  }
+  return hi
+}
+
+// the pole-symmetric dual-gate cta anchor: satisfy BOTH 4.5 (hard, uncapped) and coLc (capped) by moving
+// the fill in the chosen pole's own direction. Same brandC/brandH basis as ctaLightL.
+export function ctaDualGateL(
+  ctx: Ctx, onFillTextIsWhite: boolean, enforce: boolean,
+  coLc: number, capLoL: number, capHiL: number,
+): number {
+  if (!enforce) return ctx.scaleL
+  const startL = ctx.scaleL, C = ctx.brandC, H = ctx.brandH
+  if (onFillTextIsWhite) {
+    // DARKEN: 4.5 is hard (uncapped); the Lc ambition is capped at capLoL
+    const l45 = legalRatio(startL, C, H, 1.0) >= 4.5 ? startL : findLForContrast(startL, C, H, 1.0, 4.6)
+    const lLc = findLForWhiteTextLc(startL, C, H, coLc + APCA_SOLVE_MARGIN_LC)
+    return Math.min(l45, Math.max(lLc, capLoL))
+  }
+  // LIGHTEN: 4.5 is hard (uncapped); the Lc ambition is capped at capHiL
+  const l45 = legalRatio(startL, C, H, 0) >= 4.5 ? startL : findLForContrastUp(startL, C, H, 0, 4.6)
+  const lLc = findLForBlackTextLc(startL, C, H, coLc + APCA_SOLVE_MARGIN_LC, capHiL)
+  return Math.max(l45, Math.min(lLc, capHiL))
 }
 
 // on-fill (dark): judged at the emitted (gamut-clamped) base ctaDark, PRE-enforcement (:424–425).

@@ -18,7 +18,7 @@ import {
   separationClampLight,
   darkScaleChromaAt, darkInkChromaAt, darkHighlightChromaAt, placeDark, placeDarkDelta, deltaDarkTargetL,
   onFillIsWhiteLight, onFillIsWhiteDarkAt, onHighlightIsWhiteAt, ctaLightL, ctaDarkEnforcedL,
-  ctaLightLApca, ctaDarkEnforcedLApca, solveBrandExit,
+  ctaLightLApca, ctaDarkEnforcedLApca, solveBrandExit, ctaDualGateL,
   apcaYAt, findMaxLForApcaLc, APCA_SOLVE_MARGIN_LC, APCA_TOL_LC,
 } from './producers'
 
@@ -40,6 +40,15 @@ export type ResolvedRamp = {
   ons: { onFillIsWhite: boolean; onHighlightIsWhite: boolean }
 }
 export type { ResolveOpts }
+
+// the loudness cap on the APCA-clearance move (v1 raw-L symmetric budget around the brand fill; owner-tuned
+// from the exhibit marks — plan open item 4). 4.5 is NEVER capped; only the Lc ambition is. No highlight-band
+// clamp: the highlight FILL sits at a mid L (often BELOW the cta), so a black-lighten moves AWAY from it —
+// there is no wash risk to guard, and clamping to it wrongly killed the move.
+const CTA_CLEARANCE_L_BUDGET = 0.16
+function ctaClearanceCaps(ctx: Ctx): [number, number] {
+  return [ctx.scaleL - CTA_CLEARANCE_L_BUDGET, ctx.scaleL + CTA_CLEARANCE_L_BUDGET]
+}
 
 // `spec` defaults to the built-in mode table; a parsed DTCG requirement bundle can be passed instead —
 // the resolver executes whatever declaration it's handed (portability: the token file is the source of truth).
@@ -290,6 +299,9 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   // the apca profile's on-text threshold (set by withProfile): pole judged pure apca-pole (the wcag flip
   // is metric-mixing and a no-op under Lc anyway); the cta enforce re-solve runs on Lc instead of 4.5.
   const enforceLc = spec.ons.onFill.enforceLc
+  // APCA legibility clearance (opt-in, default off → byte-identical): wcag lane only (enforceLc undefined),
+  // under opts.apcaClearance — the second Lc bar the cta fill must also clear, alongside the 4.5 floor.
+  const coLc = ctx.opts?.apcaClearance && enforceLc === undefined ? spec.ons.onFill.coEnforceLc : undefined
   let cta: ResolvedRole, ctaHover: ResolvedRole, onFillIsWhite: boolean
   if (mode === 'light') {
     // on-fill judged PRE-enforcement at fill9 (:271–273); the enforce re-solve feeds FROM it (:354–358)
@@ -314,6 +326,16 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         onFillIsWhite = false
       }
     }
+    // APCA legibility clearance (bolt-on): AFTER the near-red guard has chosen the shipped on-text pole
+    // (BLACK for a near-red), move the fill from scaleL to clear coLc in THAT pole's direction, capped — a
+    // red LIGHTENS (black → away from the deep-red error); greens/whites keep their pole (a passing white
+    // stays put). The brand red-exit (solveBrandExit, below) is OFF under the flag: the red-complement
+    // variant de-collides the SIGNAL against this final cta — the brand belongs to the clearance, not the
+    // brand-side collider. Default off → byte-identical.
+    if (coLc !== undefined) {
+      const [capLoL, capHiL] = ctaClearanceCaps(ctx)
+      light9L = ctaDualGateL(ctx, onFillIsWhite, onFillEnforce, coLc, capLoL, capHiL)
+    }
     // C12 v8 — THE JOINT SOLVE, brand side (owner-settled 2026-07-10): a cta whose seed
     // sits inside the true-red region (opts.ctaSolve — nominal seed + the lane's red cta,
     // injected by resolveBrand) exits via solveBrandExit: nearest release edge with her
@@ -324,7 +346,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     let repelled = false
     let ctaH = ctx.brandH
     let ctaCMul = 1
-    if (ctx.opts?.ctaSolve) {
+    if (ctx.opts?.ctaSolve && coLc === undefined) {
       const landing = solveBrandExit(ctx.opts.ctaSolve.seed, ctaCFor, ctx.brandH, ctx.opts.ctaSolve.red, enforceLc)
       if (landing !== null) {
         light9L = landing.L

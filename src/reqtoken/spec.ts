@@ -74,7 +74,12 @@ export type RoleReq = {
 // ENFORCEMENT itself (the fill re-solves to 4.5-white); onHighlight fills are placed by design and never
 // move, so its floor is the pole FLIP (4.5 has no dead zone — the other pole always passes).
 // withProfile('apca') strips the ratio floor; the apca law is the Lc bar.
-export type OnReq = { metric: 'apca-pole'; enforce: boolean; enforceLc?: number; ratioFloor?: number }
+// `coEnforceLc` (the APCA legibility CLEARANCE, opt-in bolt-on): a SECOND on-fill contrast requirement
+// that rides ALONGSIDE the wcag lane's 4.5 floor — read only in the wcag lane (enforceLc undefined) and
+// only under opts.apcaClearance. Where wcag and APCA disagree on whether the chosen pole reads, the fill
+// is pushed (lighten for black / darken for white) until it also clears this Lc bar, 4.5 staying the hard
+// floor. Distinct from `enforceLc` (the apca lane's SOLE bar); never both active at once.
+export type OnReq = { metric: 'apca-pole'; enforce: boolean; enforceLc?: number; ratioFloor?: number; coEnforceLc?: number }
 
 export type ModeSpec = {
   stops: StopReq[]
@@ -104,7 +109,7 @@ const S8: Require = { metric: 'wcag', against: 'paper-2', target: STOP_8_NONTEXT
 const T10: Require = { metric: 'wcag', against: 'paper-2', target: STOP_10_CONTRAST, level: 'AA' }
 const T11: Require = { metric: 'wcag', against: 'paper-2', target: STOP_11_CONTRAST_FLOOR, level: 'AAA' }
 
-const ONS = { onFill: { metric: 'apca-pole', enforce: true } as OnReq, onHighlight: { metric: 'apca-pole', enforce: false, ratioFloor: 4.5 } as OnReq }
+const ONS = { onFill: { metric: 'apca-pole', enforce: true, coEnforceLc: 60 } as OnReq, onHighlight: { metric: 'apca-pole', enforce: false, ratioFloor: 4.5, coEnforceLc: 60 } as OnReq }
 
 // paper/wash separation is a PROPERTY OF THE LIGHT_L SHAPE, not a runtime delta (owner 2026-07-09,
 // render/paper2-distributions.html, distribution "B"). The near-white ladder's gaps grow geometrically

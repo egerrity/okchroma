@@ -21,7 +21,7 @@ export const SIGNALS: SignalDef[] = [
 
   { name: 'yellow',     hex: '#FFC53D', L: 0.854, C: 0.157, H: 84.1, hueShift: { cool: 23, warm: 0 }, yieldChromaScale: 1.15 },
 
-  { name: 'green',      hex: '#46A758', L: 0.651, C: 0.147, H: 147.4, hueShift: { cool: 15, warm: 10 }, yieldChromaScale: 1, darkFillMinL: 0.75 },
+  { name: 'green',      hex: '#63C373', L: 0.739, C: 0.146, H: 147.6, hueShift: { cool: 15, warm: 10 }, yieldChromaScale: 1, darkFillMinL: 0.75 },
 
-  { name: 'info-color', hex: '#6E56CF', L: 0.542, C: 0.179, H: 288.0, hueShift: { cool: 15, warm: 15 }, yieldChromaScale: 1, darkFillMinL: 0.70 },
+  { name: 'info-color', hex: '#AFA3FF', L: 0.761, C: 0.130, H: 288.9, hueShift: { cool: 15, warm: 15 }, yieldChromaScale: 1, darkFillMinL: 0.70 },
 ]
