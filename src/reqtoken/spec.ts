@@ -3,8 +3,9 @@
 // (resolve.ts) executes it by calling the real engine functions; producer names ('perceptual', 'warm-torsion')
 // are references to named resolver capabilities, not formulas.
 //
-// NUMBERING TRUTH (owner-flagged; matches the engine): the SCALE is stops 1–12 — paper 1–2, wash 3–7,
-// highlight 8–10, ink 11–12. The cta is NOT a scale stop: it is an OFF-SCALE ROLE (cta / cta-hover), exactly
+// NUMBERING TRUTH (owner-flagged; matches the engine): the SCALE is stops 1–11 — paper 1–2, wash 3–7,
+// highlight 8–9, ink 10–11 (contiguous; old highlight-10 retired, ink renumbered down 2026-07-10). The
+// cta is NOT a scale stop: it is an OFF-SCALE ROLE (cta / cta-hover), exactly
 // like GeneratedScale.cta/ctaHover. The old prototype's "stop 9 = cta" pairing is dead.
 //
 // STAGE NOTE: this declaration is currently PARITY-SHAPED (mirrors okchroma today): light declares the

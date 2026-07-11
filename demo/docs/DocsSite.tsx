@@ -115,10 +115,11 @@ const overview: Article = {
         complete, accessible, theme-ready color system around them.
       </Lead>
       <P>
-        The output is a 12-step light ramp and dark ramp with pre-reserved roles, a solid CTA
-        resting/hover pair, a brand-tinted neutral ramp, and four status ramps (error, warning,
-        success, info) — each kept legible and visually distinct. Your exact input hex is preserved
-        in an identity swatch for logos and brand moments.
+        The output is a light and dark ramp with pre-reserved roles — 2 papers, 5 washes, 2
+        highlights, 2 inks — plus a solid CTA resting/hover pair and their on-text colors, a
+        brand-tinted neutral ramp, and four status ramps (error, warning, success, info) — each
+        kept legible and visually distinct. Your exact input hex is preserved in an identity swatch
+        for logos and brand moments.
       </P>
       <P>
         The point is <b>white-label predictability</b>: every ramp's stops land at the same perceived

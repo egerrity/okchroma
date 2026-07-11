@@ -1,6 +1,6 @@
 # The scale
 
-One brand color in, an 11-stop scale out (numbered contiguously 1–11; the second highlight step was retired 2026-07-09 and the ink stops renumbered down to close the gap 2026-07-10). Each step has a pre-reserved role and intended accessibility category — so the same step number does the same thing on every brand.
+One brand color in, a full ramp out: 2 papers, 5 washes, 2 highlights, and 2 inks (numbered contiguously 1–11), plus the off-scale cta/hover and their on-text colors. Each step has a pre-reserved role and intended accessibility category — so the same step number does the same thing on every brand.
 Lightness comes from a declared ladder; chroma is saturation-preserving (a fraction of the
 gamut the step allows, scaled by how saturated the brand is). Names fall in four groups
 — `paper`, `wash`, `highlight`, `ink` — plus the off-scale `cta` roles.

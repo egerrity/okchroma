@@ -3,8 +3,9 @@
 **A color-system engine.** Give it one (or two) brand color(s) and it generates a complete,
 accessible, theme-ready color system around it.
 
-The system includes a 12-step light ramp and dark ramp with pre-reserved roles + a
-solid CTA resting/hover pairing for each brand hex inputted. Alongside the brand color(s), it generates neutral, info-color, and red/yellow/green signal color scales. The inputted hex color(s) is/are preserved in identity swatches for logos or other brand identity moments.
+Each color family is a light and dark ramp built from pre-reserved roles — 2 papers,
+5 washes, 2 highlights, and 2 inks — plus a solid CTA resting/hover pair and their
+on-text colors, for each brand hex inputted. Alongside the brand color(s), it generates neutral, info-color, and red/yellow/green signal color scales. The inputted hex color(s) is/are preserved in identity swatches for logos or other brand identity moments.
 
 The point is **white-label predictability**: every ramps's stops land at the same
 perceived lightness and play the same role, so you map your design tokens to step
@@ -22,7 +23,7 @@ Output comes in two interchangeable forms carrying the same values:
 The live demo and the Figma plugin are previews/front-ends; the engine and its output are
 the product.
 
-> The 12-step "reserved role per step" model is a conceptual nod to
+> The "reserved role per step" model is a conceptual nod to
 > [Radix Colors](https://www.radix-ui.com/colors/docs/palette-composition/understanding-the-scale).
 > It is **not** a dependency and does not affect the math — all color computation is original.
 

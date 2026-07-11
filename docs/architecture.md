@@ -7,14 +7,15 @@
 ## 1. System Overview
 
 **OKChroma is a color-system engine.** You give it one brand color (a hex). It generates a
-complete, theme-ready color system around that color: a 12-step light ramp and a 12-step
-dark ramp, a solid call-to-action fill, an emphasis "highlight" rung, body/heading text
-colors, a brand-tinted neutral ramp, and four status ramps (error / warning / success /
-info) — each guaranteed legible and kept visually distinct from the others.
+complete, theme-ready color system around that color: a light and dark ramp built from
+pre-reserved roles — 2 papers, 5 washes, 2 highlights, and 2 inks — plus a solid
+call-to-action fill and hover, their on-text colors, a brand-tinted neutral ramp, and
+four status ramps (error / warning / success / info) — each guaranteed legible and kept
+visually distinct from the others.
 
 The core promise is **white-label predictability**: every brand's "step 9" lands at the
 same *perceived* lightness and plays the same role, so you define your design tokens
-against step **numbers** once (solid fill = step 9, body text = step 12, default border =
+against step **numbers** once (solid fill = step 9, body text = step 11, default border =
 step 6) and they hold for *any* brand color, with no per-brand re-tuning. Accessibility
 (WCAG contrast targets, plus APCA for emphasis fills) is built into the math rather than
 checked afterward.
@@ -34,7 +35,7 @@ design library.
 The **demo** (a live React app) and the **Figma plugin** are both front-ends that call the
 same engine. The engine and its output *are* the product; the demo is a preview.
 
-> Design lineage: the 12-step "reserved role per step" scale model is a nod to
+> Design lineage: the "reserved role per step" scale model is a nod to
 > [Radix Colors](https://www.radix-ui.com/colors/docs/palette-composition/understanding-the-scale)
 > as a conceptual inspiration. It is **not** a dependency and does not touch the math —
 > all color computation is original.
@@ -182,7 +183,7 @@ ResolvedBrand  = { scale, shearDeg, redRepel: {light,dark}|null,
 | 3–7 | `wash-3` … `wash-7` | low-hierarchy fills, borders, decorative |
 | 8 | `highlight-8` | WCAG 1.4.11 **3:1** non-text step (borders, UI elements) |
 | 9 | `highlight-9` | emphasis fill — a **scale stop**, same machinery as the rest (stop 10 deleted 2026-07-09) |
-| 11–12 | `ink-10`, `ink-11` | text (4.5:1 / 7:1) |
+| 10–11 | `ink-10`, `ink-11` | text (4.5:1 / 7:1) |
 | off-scale | `cta-1`, `cta-2` | the **only** off-scale tokens: the pulled-out solid button fill + hover |
 | computed | `on-cta`, `on-highlight` | black/white text for those fills |
 | literal | `identity` | the exact input hex (brand / secondary only) |
@@ -305,7 +306,7 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
 - **Light ↔ dark parity** — the modes match almost everywhere: the chroma curve, the hue
   treatment (incl. the brand-only red-cool), the contrast floors, and the apparent-lightness
   solve on the surfaces (1–7) and text (10/11). The one deliberate difference is the
-  **highlight band** (8–10): light solves it, dark holds it at `DARK_L` (solving it would
+  **highlight band** (8–9): light solves it, dark holds it at `DARK_L` (solving it would
   re-enter the APCA dead zone), so dark's highlight keeps a small per-hue wave by design.
   `divergence-audit` (`scripts/divergence-audit.ts`) gates the rest family × mode × stop —
   it caught the neutral highlight chroma bypass and the red-signal cool.

@@ -3,7 +3,7 @@
 // palette). It references the live ramp tokens, so it themes light/dark for free.
 // No cta is used, and NO STOP 8: 8 is the contrast-clamped accessibility stop —
 // it re-solves between the wcag/apca profiles, so illustration must draw only
-// from the profile-stable stops (0–7, 9–10, 11, 12). Shape → token:
+// from the profile-stable stops (0–7, 9, 10, 11). Shape → token:
 //   phone body + shadow → brand highlight-9 (the strong fill; shadow @0.3)
 //   head silhouettes     → brand ink-10 (deep vivid — pops on the screens)
 //   phone screens        → brand paper-1 (lightest surface)

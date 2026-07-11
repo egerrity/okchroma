@@ -2,7 +2,7 @@
 // 2026-07-09, CATALOG C10: "it shouldn't be stitched together mechanisms… how can we
 // make that stick?"). This audit is the answer: the invariant lives in the suite, not
 // in conversation. It fails when:
-//   1. TABLE SHAPE breaks the owner's register invariant — the highlight band (8–10)
+//   1. TABLE SHAPE breaks the owner's register invariant — the highlight band (8–9)
 //      must share ONE declared base register (the 8|9 "starts and stops" break was a
 //      second constant); the wash run (1–7) must ascend monotonically with a bounded
 //      per-step ratio (no hidden register cliff inside a lightness-adjacent run). The

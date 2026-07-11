@@ -22,7 +22,7 @@ export const FONT_STACK = "'Inter', -apple-system, system-ui, sans-serif"
 //   accented-inverse primary: accent  subtle: brand
 // The "accent" Family is emitted as the `secondary` primitive prefix (the role
 // was renamed in the token rename); prim() maps Family → primitive prefix.
-// Stops are the post-rename token names: scale paper/wash, the highlight-9/10
+// Stops are the post-rename token names: scale paper/wash, the highlight-9
 // rung, the cta-1/cta-2 fill pair, ink-10/ink-11 text, on-cta/on-highlight on-fill text.
 type Family = 'brand' | 'accent'
 function accentModeCss(mode: AccentMode, primary: Family, subtle: Family): string {
