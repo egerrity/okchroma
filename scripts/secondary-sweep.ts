@@ -344,7 +344,7 @@ function demotionSection(): string {
   const rows = (['light', 'dark'] as const).map(mode =>
     modeRow([
       themeCard('red primary + coral secondary', redMirror, mode,
-        `MIRROR of the red repel: primary cta ${redMirror.primary.redRepel ? 'stepped clear of red (value repel)' : 'kept'} · secondary → ${redMirror.secondary!.level}${redMirror.secondary!.demoted ? ' (auto)' : ''} — escapes lighter/quieter, opposite register`),
+        `MIRROR of the primary red exit: primary cta ${redMirror.primary.redRepel ? 'stepped clear of red (C12 solve)' : 'kept'} · secondary → ${redMirror.secondary!.level}${redMirror.secondary!.demoted ? ' (auto)' : ''} — escapes lighter/quieter, opposite register`),
       themeCard('gold secondary — as demoted (subtle)', gold, mode,
         gold.secondary!.notes.map(n => n).join(' · ') || 'no demotion'),
       themeCard('same gold — undemoted for comparison', goldStd, mode,
@@ -394,7 +394,7 @@ function signalMoveSection(): string {
 const html = `<!doctype html><meta charset="utf-8"><title>secondary — collision rules + subtle sweeps</title>
 <style>body{margin:0;padding:28px;background:#1b1b1e;color:#e8e8ea;font:14px/1.45 -apple-system,system-ui,sans-serif} h1{font-size:16px;font-weight:650}</style>
 <h1>secondary colors — the owner picks (SECONDARY-PLAN P1)</h1>
-<div style="opacity:.65;font-size:12px;max-width:880px">Rules already locked: red/yellow → secondary yields subtle (red = the rung-1 mirror) · green = one move, primary priority · info moves freely · auto-demote + annotate · quiet subtle cta · P↔S advice-only. On this page: the set-register-vs-delta question (⓪, live), the clamp strength, and the threshold question.</div>
+<div style="opacity:.65;font-size:12px;max-width:880px">Rules already locked: red/yellow → secondary yields subtle (red = the mirror of the primary red exit) · green = one move, primary priority · info moves freely · auto-demote + annotate · quiet subtle cta · P↔S advice-only. On this page: the set-register-vs-delta question (⓪, live), the clamp strength, and the threshold question.</div>
 ${finalistSection()}
 ${picksSection()}
 ${archetypeSection()}

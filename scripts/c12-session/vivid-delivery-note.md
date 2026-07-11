@@ -1,3 +1,9 @@
+> **⛔ SUPERSEDED (2026-07-10, C12 v8): the arc split described here (RED_SPLIT/vividSplit,
+> ctaArcTargetL/ctaArcCapL, arcRedVariant, exitCtaL) was replaced by the JOINT SOLVE — see
+> `scripts/c12-session/joint-solve-model.md`. The pole-agnostic / ratioFloor LESSONS carried
+> forward; the mechanisms named here are deleted. Her marks and the fitted rule remain the
+> calibration record (constants preserved in colorMath.ts as record-only).**
+
 # Vivid-arc delivery — Instrument E + pre-findings (2026-07-10, owner away; zero engine edits)
 
 ## ✅ RESOLVED SAME DAY — owner live session, rule CALIBRATED + BLESSED (28/28 holds)

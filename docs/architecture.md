@@ -170,8 +170,8 @@ GeneratedScale = { name, archetype, brandL/C/H,
                    onFillTextIsWhite(+Dark), light[], dark[],
                    cta, ctaHover, ctaDark, ctaHoverDark,
                    onHighlightIsWhite(+Dark)?, identityHex? }
-ResolvedBrand  = { scale, shearDeg, rung1, darkCollider, warningVariant,
-                   pending[], signalOverrides[], errorComponentRule }
+ResolvedBrand  = { scale, shearDeg, redRepel: {light,dark}|null,
+                   warningVariant, pending[], signalOverrides[] }
 ```
 
 #### (C) Output token vocabulary (`tokenNames.ts`)
@@ -252,7 +252,9 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
 - **Red-brand cooling** — `RED_COOL_DEG = 10.8°` (`colorMath.ts`); `redCoolWeight`
   ramps in above H ≈ 12° and out above H ≈ 35.5° (`inRedBand`). Warm reds rotate a few
   degrees **cooler** so a brand red reads as *brand*, not error red. Applied in light
-  (`lightHueAt`), in dark (`coolRedDark`), and as a final fill pass (`applyRedCoolRender`).
+  (`lightHueAt`) and to the dark ramp (`coolRedDark`) — the CTA is exempt on both sides
+  (C12 v8: cta red de-collision belongs to the joint solve alone; the old cta render pass
+  `applyRedCoolRender`/`applyRedRepelRender` is deleted and the dark cta rides identity hue).
   It is **brand-only**: the red *signal* keeps its identity hue in both modes — signals pass
   `suppressRedCool: true` (the light-side analogue of brands' `coolRedDark`), so the cool
   never touches them.
@@ -314,11 +316,13 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
   identity rather than meaning.
 - **Collision test** — `checkCollision` (`collision.ts`): a hue gate (≤ 30°) plus OKLab ΔE
   (≤ 0.16 light, ≤ 0.10 dark) between the brand fill and each signal fill.
-- **Red collision → darken ("rung 1")** — a red-band brand that collides with error red is
-  re-anchored to the `dark` archetype so its fill can't be mistaken for error; otherwise an
-  `errorComponentRule` flag tells components to style destructive actions as outlines.
-- **Dark red collision → "muted" float** — the dark fill floats to a soft pastel
-  (`L 0.80`, chroma × 0.55) and flips to black text — two extra channels of separation.
+- **Red collision → the joint solve (C12 v8)** — a brand whose cta sits inside the
+  owner-calibrated true-red region exits by its nearest edge (deep and vivid reds go
+  deeper — into burgundy when needed — pinks lighten, vivid oranges brighten; `RED_SOLVE`,
+  `solveBrandExit`), and the error signal complements from the error-credible range on the
+  opposite side of the brand when canonical red would still sit too close
+  (`redComplementVariant`). The older rung-1 darken, muted dark float, and
+  `errorComponentRule` are deleted.
 - **Signal shifts** — `pickSignalShift` (`signalShift.ts`): warning yellow → cooler *lemon*;
   success green → teal-side / yellow-side; info → magenta / blue. The direction depends on
   which side of a hue split the brand sits, so the signal stays distinct.

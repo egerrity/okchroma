@@ -1,3 +1,9 @@
+> **⛔ SUPERSEDED (2026-07-10, same day, C12 v8): DO NOT WORK FROM THIS DOC.** The open item
+> below was resolved and the entire v6 treatment model (keep-box, vivid-arc split, exitCtaL,
+> redMoveVariant, applyRedRepelRender) was REPLACED by the owner-settled JOINT SOLVE —
+> current ground truth = **`scripts/c12-session/joint-solve-model.md`** + the code.
+> Kept verbatim below as the historical v6 handoff record.
+
 # C12 HANDOFF — v6 + vivid-arc wired; ONE open design item (2026-07-10, owner-requested wrap)
 
 Committed as-is on `orange-red-collision` at the owner's word ("commit this as is with notes").

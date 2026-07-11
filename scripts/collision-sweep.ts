@@ -73,7 +73,7 @@ for (const sig of SIGNALS)
       const effective = t.themed.signalOverrides.find(o => o.name === sig.name)?.scale ?? canonical
       const p = t.primary.scale
       const fired = [
-        // C12: the value repel is a TYPE-2 VALUE move (per-mode) — legitimately lane-local
+        // C12 v8: the joint solve is a TYPE-2 move (light-side; dark rides identity hue) — legitimately lane-local
         // per the C7 taxonomy, so it is NOT classed with the type-1 swaps/variants that
         // must stay lane-global.
         ...(t.primary.redRepel ? [`ctaRepel:${[t.primary.redRepel.light ? 'L' : '', t.primary.redRepel.dark ? 'D' : ''].join('')}`] : []),

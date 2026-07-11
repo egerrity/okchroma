@@ -6,6 +6,13 @@ fixed holistically after owner sign-off.
 
 ## C6 — red-cool re-conflict: fixed-direction cool drives warm-of-red brands THROUGH the red signal
 
+> **⛔ SUPERSEDED IN PART by C12 v8 (2026-07-10):** the ramp-side `redRepelShiftDeg` cool
+> survives (light drift + dark-scale hue), but this entry's cta half is retired — the cta
+> render cool (`applyRedRepelRender`, née `applyRedCoolRender`) is DELETED (owner: cta red
+> de-collision is C12's alone), rung-1 and the muted dark collider are gone, and the dark
+> CTA now rides identity hue (`coolRedDark` is cta-off). Current model =
+> `scripts/c12-session/joint-solve-model.md`. Entry kept verbatim as the find-time record.
+
 **Status:** FIXED on fix/red-orange-cool (owner-approved 2026-07-07 via rendered review —
 "orange shift + dark" over the light-archetype cta what-if). The fix: signed
 `redRepelShiftDeg` (cool side byte-identical, warm side nearest-exit at the same 10.8°
@@ -201,7 +208,8 @@ secondaries detection+annotation only).**
   gold/brown boundary is the owner's call). 15 not 13: the ΔE-per-ΔH slope varies by band
   (violet reaches ΔE .005 at ΔH 13). Lane-global by construction. Wired into
   warningVariant, pickSignalShift, and collisionStatus pending (non-red). Red rung-1 +
-  muted collider stay TYPE-2 (cta ΔE) untouched. Secondaries: both supplied paths note on
+  muted collider stay TYPE-2 (cta ΔE) untouched. *(⛔ 2026-07-10: that type-2 half is
+  now the C12 v8 joint solve — rung-1 and the muted collider are deleted.)* Secondaries: both supplied paths note on
   type-1 at SECONDARY_NOTE_MIN_V (any real hue); the DERIVED path gains the same notes
   (was: zero inspection).
 - `redRepelShiftDeg` (colorMath.ts): near-pivot exit floors both sides

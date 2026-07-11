@@ -152,7 +152,7 @@ function measureScale(scale: GeneratedScale): Record<RampName, RampMetrics> {
   }
 }
 
-// Reporting segments on the RAW brand hue: red band (rung-1 / cool-rotation
+// Reporting segments on the RAW brand hue: red band (C12 solve / ramp cool-rotation
 // territory — drift there includes the DESIGNED 10.8° cool), the warm band
 // the gold spine serves, everything else.
 const segment = (h: number) => (h > 12 && h <= 35.5 ? 'red' : h > 35.5 && h <= 122 ? 'warm' : 'other')

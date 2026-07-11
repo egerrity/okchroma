@@ -4,10 +4,10 @@
 //
 //   1. Never crashes; always yields 11+11 finite stops and an on-fill
 //      (stops 1-9 + 11/12 per side; stop 10 deleted, 778d4b4).
-//   2. The error guarantee: every error collision is RESOLVED — red-side
-//      brands by rung 1 (no residual color collision), orange-side brands
-//      by the uniform destructive component rule (flagged, identity kept).
-//      A residual collision that is neither is a failure.
+//   2. The error guarantee: every error collision is RESOLVED — by the C12 v8
+//      joint solve (brand nearest-edge exit and/or per-brand red complement;
+//      rung-1 and the component rule are deleted).
+//      A residual collision is a failure.
 //   3. The shear never pushes a brand INTO a collision it didn't have.
 //   4. Every warning collision resolves to a variant (lemon or macaroni).
 //
@@ -68,7 +68,7 @@ for (const H of HUES) {
         for (const p of r.pending) pendingCounts[p] = (pendingCounts[p] ?? 0) + 1
 
         // 2. error guarantee (C12 gate): NO brand cta may sit inside the owner-calibrated
-        // red-family gate — the repel releases at the boundary by construction
+        // red-family gate — the joint solve releases past the boundary by construction
         const err = SIGNAL_SCALES.get('red')!
         if (redGateDist(r.scale.cta, err.scale.cta) <= RED_GATE.G - 1e-3) {
           errorResidual.push(`${hex} (L${L} C${C} H${H})`)

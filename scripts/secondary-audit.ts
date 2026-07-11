@@ -14,7 +14,7 @@ import type { ContrastProfile, GeneratedScale } from '../src/engine/colorEngine'
 const enc = (c: number) => { c = Math.max(0, Math.min(1, c)); return c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055 }
 const hx = (L: number, C: number, H: number) => '#' + oklchToLinearRgb(L, C, H).map(c => Math.round(enc(c) * 255).toString(16).padStart(2, '0')).join('')
 
-// primaries chosen to exercise the machinery: neutral-ish blue, red-band (rung1), green-forcing,
+// primaries chosen to exercise the machinery: neutral-ish blue, red-band (C12 solve), green-forcing,
 // info-forcing, gold. secondaries = agnostic 24-hue × 2-chroma sweep.
 const PRIMARIES = [hx(0.62, 0.13, 250), hx(0.55, 0.19, 29), hx(0.62, 0.17, 150), hx(0.55, 0.18, 285), hx(0.7, 0.14, 85)]
 const SEC_HUES = Array.from({ length: 24 }, (_, i) => i * 15)

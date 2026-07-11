@@ -1,3 +1,8 @@
+> **⛔ SUPERSEDED (2026-07-10, C12 v8): this proposal's treatment assignment (identity-keep
+> box, red-move variant, exitCtaL delivery, dark dust) never shipped past v6/v7 — the
+> owner-settled JOINT SOLVE replaced it. Current ground truth =
+> `scripts/c12-session/joint-solve-model.md`. Historical proposal record below.**
+
 # C12 PROPOSAL — two problems, two regions, two metrics (2026-07-10 deep session)
 
 ## ⚡ v2 STATUS (post-adversarial-panel, REAL pipeline geometry — the current truth)
