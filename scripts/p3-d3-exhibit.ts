@@ -1,3 +1,5 @@
+// @ts-nocheck — HISTORICAL RECORD (2026-07-12 strike: the offering collapsed to derived-default
+// vs custom; imports subtleCtaLFor (the struck quiet register), deleted from the engine). Not runnable against current src.
 // p3-d3-exhibit.ts — the D3 eye-check (P3-DESIGN §5): pastel-normalizer OLD (sRGB
 // ceiling) vs NEW (P3 ceiling). Both registers are in-sRGB colors — the gamut toggle
 // cannot show this; it is a before/after of the normalization itself. NEW = the real

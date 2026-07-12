@@ -34,9 +34,9 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
     const sHex = hx(0.62, C, H)
     const id = `${profile} p${pHex} s${sHex}`
     themes++
-    // LANE 1 — the DEFAULT (recommended) model: the secondary is SUBTLE by construction (owner:
-    // "subtle = recommended, standard = exact"). Invariant: it clears the signal set OR every
-    // residual is annotated — never a silent numeric collision.
+    // LANE 1 — a SUPPLIED secondary with no style = CUSTOM (owner 2026-07-12 strike: derived
+    // or custom, nothing else). Invariant: the hex ships as a standard hands-off ramp and
+    // every signal collision is annotated — never silent, never a reshape.
     const t = resolveTheme({ primaryHex: pHex, secondaryHex: sHex, contrastProfile: cp })
     const ref = resolveBrand(pHex, 'brand', { contrastProfile: cp })
     const sec = t.secondary!
@@ -47,12 +47,12 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
 
     const effective = (n: typeof SIGNALS[number]['name']) =>
       t.signalOverrides.find(o => o.name === n)?.scale ?? signalScalesFor(cp).get(n)!.scale
-    if (sec.level !== 'subtle')
-      fails.push({ theme: id, check: 'recommended-is-subtle', detail: `level ${sec.level} in recommended mode` })
+    if (sec.style !== 'exact' || sec.level !== 'standard')
+      fails.push({ theme: id, check: 'supplied-is-custom', detail: `style ${sec.style} level ${sec.level} for a supplied hex` })
     if (!clearsAll(sec.scale, effective)) {
       residuals++
-      if (!sec.notes.some(n => n.includes('still reads near')))
-        fails.push({ theme: id, check: 'subtle-residual-silent', detail: 'subtle secondary still collides without an annotation' })
+      if (!sec.notes.some(n => n.includes('reads close to the')))
+        fails.push({ theme: id, check: 'custom-residual-silent', detail: 'custom secondary collides with no annotation' })
     }
     if (t.notes.some(n => n.includes('close to the primary'))) closeAdvice++
 
@@ -95,7 +95,7 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
 }
 
 console.log(`=== secondary-audit: ${themes} themes resolved (both profiles) ===`)
-console.log(`muted lane (default): all subtle by construction · annotated residuals: ${residuals} · close-to-primary advice: ${closeAdvice}`)
+console.log(`custom lane (supplied hex, no style): hands-off ramps · annotated residuals: ${residuals} · close-to-primary advice: ${closeAdvice}`)
 console.log(`exact lane: hands-off ramps · annotated collision advice: ${exactAdvice}`)
 console.log(`failures: ${fails.length}`)
 const byCheck: Record<string, number> = {}

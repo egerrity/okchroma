@@ -1,3 +1,5 @@
+// @ts-nocheck — HISTORICAL RECORD (2026-07-12 strike: the offering collapsed to derived-default
+// vs custom; imports the struck muted/vibrant curves + subtleCtaLFor, deleted from the engine). Not runnable against current src.
 // secondary-dark-depth.ts — the DARK secondary-cta depth ladder (owner 2026-07-12: "they can
 // definitely sink more into the background than they do"). Measured: the SUBTLE_DARK_FLOOR
 // (0.22) never binds — the light-calibrated subtleDeltaFor curve (~0.17-0.21 drop) is what

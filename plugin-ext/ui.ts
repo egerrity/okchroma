@@ -13,15 +13,15 @@ let secondaryHex: string | null = null
 let neutralLevel: NeutralLevel = 'default'
 // per-family modes (parity with the demo): the primary's select = Recommended / Exact /
 // the six archetype anchors; the secondary's select = its style chip (custom only —
-// derived is always vibrant, the engine's call).
+// derived rides the default seed-transform, the engine's call).
 let primaryMode: 'recommended' | 'exact' | Archetype = 'recommended'
-let secondaryStyle: SecondaryStyle = 'muted'
+let secondaryStyle: SecondaryStyle = 'exact'
 // PREVIEW lens only — the apply always writes all four solve columns (wcag · wcag-dark ·
 // apca · apca-dark). WCAG is this plugin’s default lane, so it leads the preview too.
 let contrastProfile: ContrastProfile = 'wcag'
 let pendingName: string | null = null // brand armed for overwrite confirmation
 // The secondary is the demo's THREE-STATE field: none (default — just "+ Add secondary") →
-// derived (the input tracks the primary live; the engine derives the vibrant secondary) →
+// derived (the input tracks the primary live; the engine derives the default secondary) →
 // custom (user hex + style chip). The chevron menu moves between all three.
 type SecondaryMode = 'derived' | 'custom' | 'off'
 let secondaryMode: SecondaryMode = 'off'
@@ -97,11 +97,9 @@ function setStatus(text: string, tone: '' | 'ok' | 'err' = '') {
 // ─── The secondary field's three states ──────────────────────────────────────
 
 // the ⓘ copy per selection (Figma spec) — the always-visible tooltip replacement
-const STYLE_LABEL: Record<SecondaryStyle, string> = { default: 'Default', muted: 'Muted', vibrant: 'Vibrant', outline: 'Outline', exact: 'Exact' }
+const STYLE_LABEL: Record<SecondaryStyle, string> = { default: 'Default', outline: 'Outline', exact: 'Custom' }
 const STYLE_INFO: Record<SecondaryStyle, string> = {
   default: 'A lighter take on your primary — derived by default',
-  muted: 'A muted, brand-charactered take on the hue',
-  vibrant: 'A vibrant take — equally vivid at every hue',
   outline: 'Outline only',
   exact: 'Your hex ships untouched',
 }
@@ -140,7 +138,7 @@ function setSecondaryMode(mode: SecondaryMode) {
 // ─── Preview ─────────────────────────────────────────────────────────────────
 
 // the THEME input: primary + secondary posture, each under its OWN mode (per-family chips —
-// the demo's model exactly). Derived is always vibrant; the style select applies to custom only.
+// the demo's model exactly). Derived rides the default model; the style select applies to custom only.
 function themeInput(name: string) {
   const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
   return {
@@ -223,7 +221,7 @@ function updatePreview() {
     renderMatrix(t, nScale)
 
     // the bar's live swatches: neutral shows its highlight-9; a derived secondary shows the
-    // RESOLVED vibrant secondary (the input tracks the primary hex — that's the source, not the result)
+    // RESOLVED default secondary (the input tracks the primary hex — that's the source, not the result)
     const n9 = nScale.light.find(s => s.stop === 9)
     if (n9) neutralSwatch.style.background = toHex(n9.r, n9.g, n9.b)
     if (t.secondary) {

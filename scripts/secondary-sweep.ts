@@ -1,3 +1,5 @@
+// @ts-nocheck — HISTORICAL RECORD (2026-07-12 strike: the offering collapsed to derived-default
+// vs custom; imports subtleCtaLFor (the struck quiet register), deleted from the engine). Not runnable against current src.
 // secondary-sweep.ts — OWNER EYE-CHECK for the secondary work (SECONDARY-PLAN P1 sweeps).
 // Decisions on this page: ① the subtle clamp strength (mult 3 / 4.5 / 6) · ② whether the
 // collision thresholds over-demote (42% of arbitrary secondaries demote at DELTA_E 0.16/0.10 —

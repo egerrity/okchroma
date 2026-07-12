@@ -237,7 +237,6 @@ body {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         <select id="primary-mode">
           <option value="recommended" selected>Recommended</option>
-          <option value="exact">Exact</option>
           <optgroup label="Anchor archetype" id="archetype-group"></optgroup>
         </select>
       </span>
@@ -255,13 +254,12 @@ body {
       <input type="text" id="secondary-hex" value="" spellcheck="false" placeholder="enter a hex" />
       <span class="marker" id="secondary-marker" style="display:none">from primary</span>
       <span class="chip" id="secondary-chip" title="Secondary style" style="display:none">
-        <span id="secondary-chip-label">Muted</span>
+        <span id="secondary-chip-label">Custom</span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         <select id="secondary-style">
-          <option value="muted" selected>Muted</option>
-          <option value="vibrant">Vibrant</option>
+          <option value="exact" selected>Custom</option>
+          
           <option value="outline">Outline</option>
-          <option value="exact">Exact</option>
         </select>
       </span>
       <button class="menu-btn" id="secondary-menu-btn" title="Secondary options"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
