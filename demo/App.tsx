@@ -117,13 +117,18 @@ function PaletteGallery({ dark, onToggleDark }: { dark: boolean; onToggleDark: (
   const secondary = SECONDARIES[current.slug]
 
   // Recommended mode ships from the pre-built CSS; exact recomputes in
-  // the browser via the same engine + renderer the build uses.
+  // the browser via the same engine + renderer the build uses. Every
+  // resolve here stays in the SHIPPED lane (dist/ is built with the apca
+  // profile — src/build.ts SHIPPED_PROFILE): the engine defaults an
+  // unset profile to wcag, so a profile-less recompute would silently
+  // swap the lane under the toggle (and mismatch the prebuilt apca signals).
   const { overrideCss, resolved } = useMemo(() => {
-    const opts = rung === 'exact' ? { exact: true } : undefined
+    const profile = 'apca' as const
+    const opts = rung === 'exact' ? { exact: true, contrastProfile: profile } : { contrastProfile: profile }
     const r = resolveBrand(current.hex, current.name, opts)
     if (rung === 'recommended') return { overrideCss: '', resolved: r }
-    const accent = secondary ? resolveBrand(secondary, 'accent', { exact: true }).scale : null
-    return { overrideCss: brandCss(current.slug, current.name, r, accent), resolved: r }
+    const accent = secondary ? resolveBrand(secondary, 'accent', { exact: true, contrastProfile: profile }).scale : null
+    return { overrideCss: brandCss(current.slug, current.name, r, accent, '', 'default', profile), resolved: r }
   }, [current, rung, secondary])
 
   return (
