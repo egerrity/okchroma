@@ -151,7 +151,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
       primaryArchetype: primaryMode !== 'recommended' && primaryMode !== 'exact' ? primaryMode : undefined,
       secondaryHex: derived ? null : secondary,
       deriveSecondary: derived || undefined,
-      secondaryStyle: derived ? undefined : secondaryStyle,   // derived is always vibrant — no chip
+      secondaryStyle: derived ? undefined : secondaryStyle,   // derived has no chip — the default model runs on the primary
       contrastProfile: cp,
     })
     // signals ALWAYS re-emit under the selected profile: the static signals.css now carries the
@@ -209,7 +209,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
     outline: { background: 'transparent', color: 'var(--secondary-ink-10)', border: '1px solid var(--secondary-highlight-8)' },
     grey: { background: 'var(--surface-sunken)', color: 'var(--fg-subtle)' },
   }
-  const styleLabel: Record<SecondaryStyle, string> = { default: 'Default', outline: 'Outline', exact: 'Exact' }
+  const styleLabel: Record<SecondaryStyle, string> = { default: 'From brand', outline: 'Outline', exact: 'Custom' }
   // the ⓘ copy per selection (Figma spec) — the always-visible tooltip replacement
   const primaryInfo = primaryMode === 'recommended' ? 'Engine adjusts for optimal legibility'
     : primaryMode === 'exact' ? 'Your hex ships untouched'
@@ -217,7 +217,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   const secondaryInfo = secState === 'derived' ? 'A lighter take on your primary — derived by default'
     : secondaryStyle === 'exact' ? 'Your hex ships untouched'
     : secondaryStyle === 'outline' ? 'Outline only'
-    : 'Your hex ships untouched'
+    : 'Your color through the derived model — lifted, engine-normal'
   const neutralInfo = neutralLevel === 'default' ? 'Adds a touch of primary hue'
     : neutralLevel === 'branded' ? 'Adds a noticeable tint to neutral'
     : 'Neutrals are pure grey'
@@ -267,12 +267,13 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
               style={derived ? { color: 'var(--fg-subtle)' } : undefined}
               onChange={e => { setSecState('custom'); setSecondaryInput(e.target.value) }} spellCheck={false} />
             {derived ? (
-              // passive marker, not the style chip — derived is always vibrant, engine's call
+              // passive marker, not the style chip — derived is the default model, engine's call
               <span style={{ fontSize: 11, color: 'var(--fg-subtle)', marginLeft: 'auto', flexShrink: 0 }}>from primary</span>
             ) : (
               <ChipSelect value={secondaryStyle} title="Secondary style" label={styleLabel[secondaryStyle]}
                 tone={secondaryStyle === 'exact' ? chipTone.grey : secondaryStyle === 'outline' ? chipTone.outline : chipTone.secondary}
                 onChange={v => setSecondaryStyle(v as SecondaryStyle)}>
+                <option value="default">From brand</option>
                 <option value="exact">Custom</option>
                 <option value="outline">Outline</option>
               </ChipSelect>

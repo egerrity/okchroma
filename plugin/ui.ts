@@ -88,9 +88,9 @@ function setStatus(text: string, tone: '' | 'ok' | 'err' = '') {
 // ─── The secondary field's three states ──────────────────────────────────────
 
 // the ⓘ copy per selection (Figma spec) — the always-visible tooltip replacement
-const STYLE_LABEL: Record<SecondaryStyle, string> = { default: 'Default', outline: 'Outline', exact: 'Custom' }
+const STYLE_LABEL: Record<SecondaryStyle, string> = { default: 'From brand', outline: 'Outline', exact: 'Custom' }
 const STYLE_INFO: Record<SecondaryStyle, string> = {
-  default: 'A lighter take on your primary — derived by default',
+  default: 'Your color through the derived model — lifted, engine-normal',
   outline: 'Outline only',
   exact: 'Your hex ships untouched',
 }

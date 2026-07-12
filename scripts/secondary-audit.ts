@@ -56,6 +56,17 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
     }
     if (t.notes.some(n => n.includes('close to the primary'))) closeAdvice++
 
+    // LANE 1b — the 'default' style on a SUPPLIED hex = FROM BRAND (owner 2026-07-12): the
+    // user's color through the SAME model as the derived posture. Invariant: the shape is the
+    // default model's (style 'default', subtle, never demoted) — their pick is the seed, not
+    // the shipped ramp.
+    const tf = resolveTheme({ primaryHex: pHex, secondaryHex: sHex, secondaryStyle: 'default', contrastProfile: cp })
+    const secF = tf.secondary!
+    if (secF.style !== 'default' || secF.level !== 'subtle' || secF.demoted || secF.derived)
+      fails.push({ theme: id, check: 'from-brand-shape', detail: `style ${secF.style} level ${secF.level} demoted ${secF.demoted} derived ${secF.derived}` })
+    if (!secF.notes.some(n => n.includes('derived from your color')))
+      fails.push({ theme: id, check: 'from-brand-note', detail: 'from-brand secondary missing its model note' })
+
     // LANE 2 — the EXACT style (the owner model: standard IS exact — user's color ships as a
     // full ramp, hands off): the invariant is ADVICE — every signal collision must be annotated,
     // never silently absent and never a reshape.

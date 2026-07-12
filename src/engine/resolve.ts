@@ -443,17 +443,28 @@ export function resolveTheme(input: {
     return out
   }
 
+  // ONE default model, two seeds (owner 2026-07-12: '"from brand" custom … would just let
+  // them pick the color but do the same thing as derived from brand'): the derived posture
+  // transforms the PRIMARY; the 'default' style on a supplied hex transforms the USER'S color
+  // the same way — lift transform, engine-normal ramp, flat dark cta. One machinery.
+  const resolveDefaultModel = (seedHex: string) => {
+    const liftedHex = defaultSecondarySeed(seedHex)
+    return {
+      liftedHex,
+      scale: resolveBrand(liftedHex, 'secondary', {
+        skipCollisionRules: true, contrastProfile: cp,
+        darkCtaFlatApp: DEFAULT_SECONDARY.darkFlatGapApp,
+      }).scale,
+    }
+  }
+
   // ---- no secondary supplied: nothing, or the DERIVED subtle secondary (§2b) ----
   if (!input.secondaryHex) {
     if (!input.deriveSecondary) return { primary, themed: primary, secondary: null, signalOverrides: primary.signalOverrides, notes }
     // the DEFAULT model: transform the brand seed, resolve like a normal brand (secondary
     // convention: collisions are the theme's decisions). Everything — cta included — falls
     // out of the engine; the old quiet-register derived path is retired for the default.
-    const liftedHex = defaultSecondarySeed(input.primaryHex)
-    const scale = resolveBrand(liftedHex, 'secondary', {
-      skipCollisionRules: true, contrastProfile: cp,
-      darkCtaFlatApp: DEFAULT_SECONDARY.darkFlatGapApp,
-    } as any).scale
+    const { liftedHex, scale } = resolveDefaultModel(input.primaryHex)
     return {
       primary, themed: primary,
       secondary: {
@@ -466,6 +477,29 @@ export function resolveTheme(input: {
             `derived secondary sits on the ${name} signal's hue (wash ΔE ${dE.toFixed(3)}) — it tracks the brand color; expected, annotated for the remedy round`),
         ],
         distinctness: ctaDistinctness(primary.scale, scale),
+      },
+      signalOverrides: primary.signalOverrides, notes,
+    }
+  }
+
+  // ---- supplied hex + the 'default' style = FROM BRAND: the user's color through the SAME
+  // model as the derived posture. Their pick is the seed, not the shipped ramp — exact is the
+  // hands-off path.
+  if (secStyle === 'default') {
+    const { liftedHex, scale } = resolveDefaultModel(input.secondaryHex)
+    const distinctness = ctaDistinctness(primary.scale, scale)
+    if (distinctness.close)
+      notes.push(`secondary reads close to the primary (ΔE ${Math.min(distinctness.light, distinctness.dark).toFixed(2)}) — consider a more distinct color`)
+    return {
+      primary, themed: primary,
+      secondary: {
+        scale, style: 'default', level: 'subtle', demoted: false, derived: false,
+        notes: [
+          `secondary derived from your color (default model, seed ${liftedHex})`,
+          ...signalNotesFor(scale, (name, dE) =>
+            `derived secondary sits on the ${name} signal's hue (wash ΔE ${dE.toFixed(3)}) — it tracks your color; expected, annotated for the remedy round`),
+        ],
+        distinctness,
       },
       signalOverrides: primary.signalOverrides, notes,
     }
