@@ -1,5 +1,12 @@
 # HANDOFF → the WCAG/APCA session: C12 dark-cta + true-red-direction findings
 
+> **⛔ SUPERSEDED (same day, 2026-07-11) — historical record only.** Everything below has since
+> LANDED on main: Finding 3 → `trueRedBrightCut` 0.67 (f7245df) · Findings 1+2 → `solveDarkCtaExit`
+> P2-keyed (858053e) — **NOT the carry+loudnessFloor(H) rule proposed here**: the hue-keyed floor
+> DIED on computation (it re-piles same-hue pairs at red's own level; the #FF2600 case worsened).
+> The sweep's dark assertion did switch to p2 as proposed. The lane coupling resolved via
+> RESOLUTION-from-wcag-apca.md (clearance gated default-OFF). See CATALOG C12 + C15.
+
 **Written 2026-07-11.** Investigation-only session — **nothing wired, nothing committed**. The
 shipped engine is v8 @ `5e440ff` on main; both bugs below are live there. This hands over because
 **every open item here hinges on one variable the wcag/apca session owns: the enforced cta

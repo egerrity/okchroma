@@ -1,3 +1,9 @@
+// ⛔ SUPERSEDED (2026-07-11) — historical record only. The carry+loudnessFloor(H) rule this page
+// was built to calibrate DIED on computation (a hue-keyed floor re-piles same-hue pairs at red's
+// own level; the owner also ruled the floor must be derived, never mark-fitted). The shipped
+// answer = solveDarkCtaExit (producers.ts), the same travel solve on dark geometry keyed on P2 —
+// see c12-dark-solve.ts + CATALOG C12. The "awaits owner marks" plan is dead; do not resurrect.
+//
 // c12-dark-carry.ts — DARK-CTA carry+floor visualize (owner 2026-07-10, plan
 // i-think-we-are-smooth-pearl). The agnostic rule: darkCtaL = max( carry , loudnessFloor(H) ).
 // carry = deltaDarkTargetL (the surface delta, reused). loudnessFloor(H) = hue/gamut-room floor:

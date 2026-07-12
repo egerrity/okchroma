@@ -608,6 +608,62 @@ round; (2) light s11 pin-slice (the 4.5 cap register) stands, cap-owned by desig
 (3) dark s11 inkMaxC .120 is an owner-tunable knob (judged acceptable on the yellow
 specimens).
 
+## C12 — the red-family collision: a brand cta beside the red signal reads error-look or vibrates
+
+**Found (owner screenshots, 2026-07-09/10):** a brand whose cta lands near the red signal's cta
+fails in TWO distinct ways that no one metric covers — (A) **error-look**: the brand cta could be
+MISTAKEN for the red signal at a glance (a category, calibrated by her 100 raw button-pair marks →
+`redGateDist`, P1); (B) **vibration**: brand cta and red cta read as a clash when ADJACENT (a
+perceptual distance — her 9 flush-strip marks sit at one helmlab MetricSpace radius, mean .116,
+CV 12% → `p2Diff`, P2). Neither metric can do the other's job (helmlab research record). Earlier
+single-mechanism attempts (C6 repel, rung-1, the muted collider, the vivid-arc opposed split)
+each covered a slice and left holes.
+
+**LANDED — the v8 JOINT SOLVE (owner-settled 2026-07-10, "as close as we will ever get"; model =
+scripts/c12-session/joint-solve-model.md; pushed 5e440ff):**
+- **Brand side (`solveBrandExit`, producers):** membership = the cta formula at the seed's own L
+  inside the widened region (`redSolveDist ≤ G`, wDark .60) or the warm brick band. Exit = nearest
+  release edge (region + ring .020) with a passing pole, under her direction rules: noticeably-
+  magenta (dh ≤ −14, not deep) lightens · gold-side vivid flips up to bright orange · on-hue vivid
+  takes the big dark throw · else nearest edge. Dark landings inside the brick band (H20–50,
+  L.36–.52, vivid ≥ .55) take the DIAGONAL (−4°/−3° soft cool, C×.85, +.02 deep — burgundy, never
+  the hard cool). Rung-1, the muted collider, `exitCtaL`/`ctaArcCapL`/`ctaArcTargetL`, and C6's
+  `applyRedRepelRender` died with the round.
+- **Red side (`redComplementVariant`, engine/resolve):** the red signal complements from her
+  calibrated zones — deep core L .45–.49 or the light edge tier .65–.75 (the .50–.58 middle is
+  ring territory, canonical lives there) — opposite side of the brand's FINAL cta; cool-first
+  beside warm brands; brand-up ⇒ deep red always. Canonical red never lightens.
+- **TRUE-RED DIRECTION (2026-07-11, f7245df):** the vivid ≥ .85 carve shipped high-L/less-vivid
+  true reds the exact-mode-safety pattern (brand bright salmon + red deep) instead of the dark
+  throw. Her 27 marks decode to a BRIGHTNESS cutoff, not vividness: an on-hue red drifting UP
+  keeps the bright landing only when the up-exit lands ≥ `trueRedBrightCut` 0.67 (per-lane by
+  construction: wcag up-exits ~0.65 → dark; apca ~0.69 → bright). Scoped strictly on-hue — a
+  global gate deletion cascaded into pink/orange and was caught; vivid ≥ .85 stays dark (owner-
+  approved greys). Movers incl. derived secondaries (butterfly-pea's red accent).
+- **DARK (2026-07-11, 858053e): the dark cta falls out like every cta — the same solve on dark
+  geometry, keyed on P2.** The prominence floor piled every near-red brand's dark cta at ~L0.70
+  beside red's dark cta, and the sweep was BLIND to it: `redGateDist` passes the vibrating pairs
+  (0.11–0.20) while p2 reads 0.086–0.109 — the P1/P2 split resurfacing in dark. `solveDarkCtaExit`:
+  member = p2 < `P2_D_UP` beside the lane's red dark cta (`ctaSolve.redDark`) → travel the nearest
+  direction to p2 ≥ `P2_D` with a passing pole; red dark stays canonical. All movers = apca
+  near-reds lifting ~0.70→0.77 (brighter = more prominent); wcag never fires (red dark 0.585 vs
+  floor 0.70 already separates). The collision-sweep dark assertion switched `redGateDist` → p2.
+
+**Ruled out on computation (the dark round):** `loudnessFloor(H)` — a hue-keyed floor gives all
+reds ONE floor and re-piles same-hue pairs at red's own level (the owner's #FF2600 case WORSENED,
+p2 0.087→0.078); "+40% uniform carry" — the delta carry INVERTS lightness and collapses ring-zone
+near-reds; carry/variant hybrids — each cleared one lane and failed the other 12/70.
+
+**Measured at landing:** light mirror 50/50 + 26/26 + 70/70 hex-asserted vs the owner-accepted
+pages · collision-sweep 2720/2720 both assertions (light P1 release, dark P2 release) · dark
+over-fire 3/576 full-wheel (all within dh −4…+8) · signals/exact/secondary byte-identical at
+each step · ext/divergence/highlight re-blessed per round (movers only).
+
+**Known-and-accepted:** exact mode is HANDS-OFF (a consumer's true red BECOMES the red signal —
+unification is the open follow-up task) · 3 apca dusty-rose ring-zone pairs ship canonical (p2
+passes) · the dark P1 gate weights and p2 bars are LIGHT-calibrated (her marks were light pairs);
+a dark-native calibration round is queued if her eye disagrees with a passing dark pair.
+
 ## C13 — dark mode was a second hand-tuned system: the seed-keyed DARK_L scaffold vs "dark = a function of light"
 
 **Found:** the dark ramp was built from its own hand-placed scaffold (`DARK_L`, the lift,
@@ -687,3 +743,35 @@ this entry supersedes that aside, not the deletion (stop 10's second highlight s
 - Every hand-duplicated consumer (tokens/semantic.css, demo/*, sweeps/audits' stop predicates)
   renamed in the same commit; snapshots re-blessed name-only (the value-drift gate: any hex/L/C
   delta in the re-bless diff = a mis-keyed register = revert).
+
+## C15 — the on-cta razor + the one-sided enforce: Lc-60.0 ships, dead-zone fills ship the better-of-two-failing pole
+
+**Found (owner eyedropper, 2026-07-11, #E93D82):** white on the pink's dark cta read Lc 58 on her
+external checker — the engine shipped it at 60.0–60.2, a razor pass with zero headroom (screenshot
+color management, 8-bit rounding, and APCA-version skew each eat ~1–2 Lc). Two structural holes
+behind it: (1) the apca enforce FIRED only under 60 and SOLVED to 60.5, so the entire enforced
+class landed inside the razor band by construction (agnostic sweep: 222/384 apca ctas in [60,62)
+or under); (2) the enforce was WHITE-POLE ONLY — the judge correctly picks the better pole, but
+better-of-two-failing isn't passing, and no lighten-for-black solver existed (Lc 54.7 greens
+shipped) — the same one-sidedness the wcag-lane clearance (2169337, gated default-OFF) fixed for
+light. The only assertion was dark-audit F's report-only "APCA 45" — a very-large/bold headline
+minimum by APCA's own guidance, never a text bar, so nothing ever flagged.
+
+**LANDED (284f122, owner-accepted on render/c12-apca-enforce.html):**
+- `APCA_ENFORCE_MARGIN_LC` 2: both apca cta enforcers fire under threshold+2 and solve past it
+  (+0.5 solve margin) — nothing ships at the bar's edge.
+- Pole-symmetric enforce, both modes: black under-reads → LIGHTEN via `findLForBlackTextLc`
+  (cap 0.92), each pole fixed in its own direction. Both solve poleOks (`solveBrandExit`,
+  `solveDarkCtaExit`) honor the same margin — release landings can't ship the razor either.
+- dark-audit F: HARD gate, chosen-pole Lc ≥ 60 on the cta, both modes, shipped lane, exit-1.
+  The wcag 4.5 ratio stays the wcag lane's own contract (req:audit asserts per-lane).
+
+**Measured at landing:** 222/384 razor-or-under → 0 under 62 · F 26 standing failures → 0, gate
+load-bearing · her 27 C12 marks reproduce · interplay accepted: near-red apca light landings ride
+the margin (0.69→0.78, black text takes the pole) and dark p2 movers repositioned, all ≥ 0.117
+vs red.
+
+**Known-and-accepted:** the pole judge is P3-basis by owner ruling (D2) — the same physical color
+reads up to ~2 Lc apart between bases, which the margin absorbs; external sRGB checkers on a P3
+display measure a converted pixel, so razor-adjacent readings will always disagree slightly across
+toolchains — the margin, not basis litigation, is the defense.
