@@ -121,6 +121,14 @@ export interface GenerateOptions {
 
   heat?: number
 
+  // FLAT dark cta (the derived-secondary model, owner 2026-07-12 "flat g23 in dark"): the dark
+  // cta sits at this declared apparent distance above the dark ground instead of the prominence
+  // pin (max(scaleL, floor)) — even across hues by construction. The pin reproduces a light
+  // seed's pastel on the dark page; the pure carry near-vanishes a near-white seed's twin; this
+  // is the designed register between them. Set ONLY by the derived-secondary path; absent =
+  // byte-identical (brands, signals, custom secondaries keep the pin).
+  darkCtaFlatApp?: number
+
   // contrast PROFILE (opt-in): 'apca' re-solves every declared wcag contrast require under APCA Lc
   // targets via withProfile() — the same declaration vs a different constraint. Default 'wcag' is the
   // shipped behavior, byte-identical when unset.

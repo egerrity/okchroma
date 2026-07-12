@@ -16,7 +16,7 @@ import {
   buildContext, buildDarkContext, type Ctx, type DarkCtx, type ResolveOpts,
   lightScaleChromaAt, lightHighlightChromaAt, placeLightScale, placeLightText, placeLightHighlight,
   separationClampLight,
-  darkScaleChromaAt, darkInkChromaAt, darkHighlightChromaAt, placeDark, placeDarkDelta, deltaDarkTargetL,
+  darkScaleChromaAt, darkInkChromaAt, darkHighlightChromaAt, placeDark, placeDarkDelta, deltaDarkTargetL, flatDarkCtaL,
   onFillIsWhiteLight, onFillIsWhiteDarkAt, onHighlightIsWhiteAt, ctaLightL, ctaDarkEnforcedL,
   ctaLightLApca, ctaDarkEnforcedLApca, solveBrandExit, solveDarkCtaExit, ctaDualGateL,
   apcaYAt, findMaxLForApcaLc, APCA_SOLVE_MARGIN_LC, APCA_TOL_LC,
@@ -377,7 +377,13 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     // whisper (neon yellow's light cta sits near white → contrast ≈ nothing → a near-black dark cta, legible
     // but brand-dead). Loudness is the cta's own requirement — the declared floor (dark9L) + trimmed brand
     // chroma anchor it; the enforce re-solve below stays the legibility floor.
-    const cta9L = d.dark9L
+    // EXCEPTION — the FLAT register (opts.darkCtaFlatApp, the derived-secondary model, owner
+    // 2026-07-12): a derived pastel has no brand identity forcing it light — the pin would keep
+    // the light pastel on the dark page. The cta lands at the declared apparent distance above
+    // the dark ground instead; the enforce re-solve + p2 exit below still run over it.
+    const cta9L = ctx.opts?.darkCtaFlatApp !== undefined
+      ? flatDarkCtaL(d, (L: number) => ctx.cAt('dark', L, d.darkC9), ctx.darkCtaH, ctx.opts.darkCtaFlatApp)
+      : d.dark9L
     // C12 v8: the dark cta rides IDENTITY hue (darkCtaH) — coolRedDark's shift is retired
     // from the cta (owner ruling; research: identity-hue dark ctas never fire the gate).
     cta = emitRole('cta', cta9L, ctx.cAt('dark', cta9L, d.darkC9), ctx.darkCtaH)

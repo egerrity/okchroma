@@ -340,6 +340,17 @@ export function placeDarkDelta(
   return { L, C: chromaAt(L), H: dctx.darkHueAtL(L) }
 }
 
+// FLAT dark cta placement (the derived-secondary model, owner 2026-07-12 "flat g23 in dark"):
+// the cta lands at a DECLARED apparent distance above the dark ground — even across hues by
+// construction, independent of the light landing. Apparent (H-K) space, the delta model's own
+// ground; two passes settle the L↔C interaction (chroma is curve-keyed at the landing).
+export function flatDarkCtaL(dctx: DarkCtx, chromaAt: (L: number) => number, H: number, gapApp: number): number {
+  const target = DELTA_DARK_GROUND_APP + gapApp
+  let L = solveLForApparent(target, chromaAt(dctx.dark9L), H)
+  L = solveLForApparent(target, chromaAt(L), H)
+  return L
+}
+
 // ================= CTA roles (light :354–361, dark :413–433) =================
 
 // light cta anchor incl. the enforce re-solve (feeds from the PRE-enforcement on-fill boolean; 4.6-for-4.5 margin)

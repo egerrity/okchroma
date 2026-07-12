@@ -17,7 +17,7 @@ import {
 import { apcaY, apcaLc, encodedChannels, clampChromaToGamut, oklchToLinearRgb } from './constraints'
 import { pickSignalShift, signalSwapVariants } from './signalShift'
 import { hexToOklch, hueDelta, makeStop, maxChromaAt, RED_SOLVE, redSolveDist } from './colorMath'
-import { grayApparentL, solveCForApparent } from './perceptualL'
+import { apparentL, grayApparentL, solveCForApparent, solveLForApparent } from './perceptualL'
 import { subtleSecondaryChromaCurve } from './neutralCurve'
 import { hoverL } from './archetypes'
 import { p2Diff, P2_D, P2_D_UP } from './p2'
@@ -165,6 +165,10 @@ export function resolveBrand(
 
     // opt-in APCA legibility clearance — threads into every generateScale call (wcag lane only, default off).
     apcaClearance?: boolean
+
+    // internal (resolveTheme, derived secondary): the FLAT dark-cta register — see
+    // DEFAULT_SECONDARY.darkFlatGapApp. Absent for every other caller (the prominence pin holds).
+    darkCtaFlatApp?: number
   }
 ): ResolvedBrand {
   const sigScales = signalScalesFor(opts?.contrastProfile)
@@ -201,6 +205,7 @@ export function resolveBrand(
     highlight: true,
     contrastProfile: opts?.contrastProfile,
     apcaClearance: opts?.apcaClearance,
+    darkCtaFlatApp: opts?.darkCtaFlatApp,
   }
 
   let scale = generateScale(hex, name, undefined, floor)
@@ -299,13 +304,30 @@ export const normalizeSecondaryStyle = (s: LegacySecondaryStyle): SecondaryStyle
 // nears the background); chroma gently relative to the seed, bounded by the room at the
 // landing. The lifted seed then resolves as a NORMAL ramp — no pinned cta, no bespoke curve,
 // primary-independent by construction ("we just didn't try to set this for people").
-export const DEFAULT_SECONDARY = { rot: 12, kL: 0.65, kC: 0.5, kR: 0.4, lRoom: 0.97 } as const
+// The two GAP registers (owner 2026-07-12, picked on render/secondary-gap-combo.html: "a min
+// of g10 in light but a flat g23 in dark"), both in APPARENT (H-K) distance:
+//   minGapApp — the lifted seed keeps at least this distance from the light ground (white), so
+//     a near-white brand's derived secondary can't hug the paper (only chartreuse/yellow-class
+//     seeds move; the approved light look otherwise holds).
+//   darkFlatGapApp — the derived DARK cta sits at exactly this distance above the dark ground
+//     (navy's own unconstrained register), flat across hues; consumed by the resolver as
+//     opts.darkCtaFlatApp (the prominence pin is a brand-identity rule — a derived pastel has
+//     none, so it flips instead of shipping the light pastel on the dark page).
+export const DEFAULT_SECONDARY = { rot: 12, kL: 0.65, kC: 0.5, kR: 0.4, lRoom: 0.97, minGapApp: 10, darkFlatGapApp: 23 } as const
+const LIGHT_GROUND_APP = grayApparentL(1.0)
 export function defaultSecondarySeed(hex: string): string {
   const seed = hexToOklch(hex)
   const d = DEFAULT_SECONDARY
-  const L2 = seed.L + d.kL * Math.max(0, d.lRoom - seed.L)
+  let L2 = seed.L + d.kL * Math.max(0, d.lRoom - seed.L)
   const H2 = (seed.H + d.rot + 360) % 360
-  const C2 = Math.min(d.kC * seed.C, d.kR * maxChromaAt(L2, H2))
+  let C2 = Math.min(d.kC * seed.C, d.kR * maxChromaAt(L2, H2))
+  // the light minimum gap (two passes settle the L↔C interaction)
+  for (let i = 0; i < 2; i++) {
+    if (LIGHT_GROUND_APP - apparentL(L2, clampChromaToGamut(L2, C2, H2), H2) < d.minGapApp) {
+      L2 = solveLForApparent(LIGHT_GROUND_APP - d.minGapApp, C2, H2)
+      C2 = Math.min(d.kC * seed.C, d.kR * maxChromaAt(L2, H2))
+    }
+  }
   const cc = clampChromaToGamut(L2, C2, H2)
   const [rl, gl, bl] = oklchToLinearRgb(L2, cc, H2)
   const gm = (v: number) => { const x = Math.min(1, Math.max(0, v)); return x <= 0.0031308 ? 12.92 * x : 1.055 * x ** (1 / 2.4) - 0.055 }
@@ -428,7 +450,10 @@ export function resolveTheme(input: {
     // convention: collisions are the theme's decisions). Everything — cta included — falls
     // out of the engine; the old quiet-register derived path is retired for the default.
     const liftedHex = defaultSecondarySeed(input.primaryHex)
-    const scale = resolveBrand(liftedHex, 'secondary', { skipCollisionRules: true, contrastProfile: cp } as any).scale
+    const scale = resolveBrand(liftedHex, 'secondary', {
+      skipCollisionRules: true, contrastProfile: cp,
+      darkCtaFlatApp: DEFAULT_SECONDARY.darkFlatGapApp,
+    } as any).scale
     return {
       primary, themed: primary,
       secondary: {
