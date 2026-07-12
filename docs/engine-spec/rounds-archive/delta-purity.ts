@@ -2,12 +2,12 @@
 // carry the light stop's C+H exactly (C reduced only by gamut at the dark L; the s8 require-solve and the
 // 9-band-order floor move ONLY L). Inks 10/11 are dark-native by design and are NOT checked here. Any
 // surface stop with ΔH≠0 or C above the gamut-carry = a recompute leak. Sweep agnostic seeds; per stop.
-import { resolveRamp, type ResolveOpts } from '../src/reqtoken/resolve'
-import { MODE_SPECS } from '../src/reqtoken/spec'
-import { clampChromaToGamut } from '../src/engine/constraints'
-import { srgbEmitChannels, hueDelta } from '../src/engine/colorMath'
-import { darkChromaCurve } from '../src/engine/darkChromaCurve'
-import { DARK_BRAND_FILL_MIN_L } from '../src/engine/stopTable'
+import { resolveRamp, type ResolveOpts } from '../../../src/reqtoken/resolve'
+import { MODE_SPECS } from '../../../src/reqtoken/spec'
+import { clampChromaToGamut } from '../../../src/engine/constraints'
+import { srgbEmitChannels, hueDelta } from '../../../src/engine/colorMath'
+import { darkChromaCurve } from '../../../src/engine/darkChromaCurve'
+import { DARK_BRAND_FILL_MIN_L } from '../../../src/engine/stopTable'
 
 const base: ResolveOpts = { highlight: true, enforceOnFillContrast: true, coolRedDark: true, darkChromaCurve, darkFillMinL: DARK_BRAND_FILL_MIN_L }
 const hx = (L: number, C: number, H: number) => { const { L: l } = { L }; return '#' + (Object.values(srgbEmitChannels({ L, C, H })) as number[]).map(c => Math.round(Math.max(0, Math.min(1, c)) * 255).toString(16).padStart(2, '0')).join('') }

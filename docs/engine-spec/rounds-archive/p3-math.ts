@@ -6,11 +6,11 @@
 // the recorded P3-DESIGN.md §1 numbers through these delegations.
 import {
   oklchToXyz, oklchToLinearP3, clampChromaToGamut, apcaY,
-} from '../src/engine/constraints'
+} from '../../../src/engine/constraints'
 import {
   apparentL, solveLForApparent, solveCForApparent, perceptualRungL, perceptualDarkC,
   meanBoost, KEEP_LIGHT, KEEP_DARK,
-} from '../src/engine/perceptualL'
+} from '../../../src/engine/perceptualL'
 
 export { oklchToXyz, oklchToLinearP3 }
 export const trueY = (L: number, C: number, H: number) => oklchToXyz(L, C, H)[1]

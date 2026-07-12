@@ -8,11 +8,11 @@
 //   dark  — stop 8 reads Lc ≈ 24–29 (WCAG under-demands in dark polarity) · 11 ≈ 53–76 · 12 ≈ 89+
 // So light barely moves under any candidate; DARK is where the profile bites.
 import { writeFileSync, mkdirSync } from 'fs'
-import { resolveRamp, type ResolvedRamp, type ResolvedStop } from '../src/reqtoken/resolve'
-import { MODE_SPECS } from '../src/reqtoken/spec'
-import { withProfile, DEFAULT_APCA_LC_MAP, type LcMap } from '../src/reqtoken/profiles'
-import { apcaYAt } from '../src/reqtoken/producers'
-import { oklchToLinearRgb, apcaLc, clampChromaToGamut, wcagY, contrastRatio } from '../src/engine/constraints'
+import { resolveRamp, type ResolvedRamp, type ResolvedStop } from '../../../src/reqtoken/resolve'
+import { MODE_SPECS } from '../../../src/reqtoken/spec'
+import { withProfile, DEFAULT_APCA_LC_MAP, type LcMap } from '../../../src/reqtoken/profiles'
+import { apcaYAt } from '../../../src/reqtoken/producers'
+import { oklchToLinearRgb, apcaLc, clampChromaToGamut, wcagY, contrastRatio } from '../../../src/engine/constraints'
 
 const enc = (c: number) => { c = Math.max(0, Math.min(1, c)); return c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055 }
 const hx = (L: number, C: number, H: number) => '#' + oklchToLinearRgb(L, C, H).map(c => Math.round(enc(c) * 255).toString(16).padStart(2, '0')).join('')

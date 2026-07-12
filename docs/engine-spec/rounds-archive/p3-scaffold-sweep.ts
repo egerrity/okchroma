@@ -5,8 +5,8 @@
 // chroma to the gamut INSIDE the solve, so the master-gamut switch moves the scaffold —
 // this instrument measures how far, per (rootL, C, hue).
 // Run: esbuild scripts/p3-scaffold-sweep.ts --bundle --platform=node --outfile=dist/p3-scaffold-sweep.js && node dist/p3-scaffold-sweep.js
-import { clampChromaToGamut } from '../src/engine/constraints'
-import { apparentL as apparentLShipped, perceptualRungL as rungShipped, perceptualDarkC as darkCShipped, meanBoost } from '../src/engine/perceptualL'
+import { clampChromaToGamut } from '../../../src/engine/constraints'
+import { apparentL as apparentLShipped, perceptualRungL as rungShipped, perceptualDarkC as darkCShipped, meanBoost } from '../../../src/engine/perceptualL'
 import { apparentLP3, meanBoostP3, perceptualRungLP3, perceptualDarkCP3 } from './p3-math'
 
 const meanBoostShipped = (rootL: number, C: number) => meanBoost(rootL, C, 'srgb')

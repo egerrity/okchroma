@@ -6,10 +6,10 @@
 //      which emitted stops are pinned at the sRGB boundary, P3 headroom there,
 //      contrast deltas at full headroom (exact-P3 read vs sRGB-clamp-down read)
 // Run: esbuild scripts/p3-divergence-sweep.ts --bundle --platform=node --outfile=dist/p3-divergence-sweep.js && node dist/p3-divergence-sweep.js
-import { resolveTheme } from '../src/engine/resolve'
-import { generateNeutralScale, type GeneratedScale } from '../src/engine/colorEngine'
-import { clampChromaToGamut, wcagY, contrastRatio, apcaY, apcaLc } from '../src/engine/constraints'
-import { oklchToSrgbUnclamped, type ColorStop } from '../src/engine/colorMath'
+import { resolveTheme } from '../../../src/engine/resolve'
+import { generateNeutralScale, type GeneratedScale } from '../../../src/engine/colorEngine'
+import { clampChromaToGamut, wcagY, contrastRatio, apcaY, apcaLc } from '../../../src/engine/constraints'
+import { oklchToSrgbUnclamped, type ColorStop } from '../../../src/engine/colorMath'
 import { trueY, clampChromaToGamutP3, apcaYP3 } from './p3-math'
 
 const maxCsrgb = (L: number, H: number) => clampChromaToGamut(L, 0.52, H)

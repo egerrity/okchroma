@@ -156,8 +156,8 @@ the shipped WCAG 4.5-white cta enforcement lands at Lc ≈ 76–78, so a map's 4
 between releasing fills lighter at Lc 60 or reproducing the shipped ctas at Lc 75).
 Exposed as `contrastProfile: 'wcag' | 'apca'` on `GenerateOptions`; the default `'wcag'` is the
 identity (byte-identical shipped output). The Lc map (currently 3:1 → Lc 30, 4.5 → 60, 7 → 90)
-and any adoption/exposure are pending an owner decision — see `scripts/apca-sweep.ts` →
-`scripts/apca-sweep.ts` renders the candidate comparison (a local-only page).
+and any adoption/exposure are pending an owner decision — see `docs/engine-spec/rounds-archive/apca-sweep.ts` →
+`docs/engine-spec/rounds-archive/apca-sweep.ts` renders the candidate comparison (a local-only page).
 
 ### On-color rules (`ons`, group level)
 

@@ -70,7 +70,7 @@ export const KEEP_DARK = 1.0
 const SWEEP = Array.from({ length: 18 }, (_, i) => i * 20)
 const boostCache = new Map<string, number>()
 
-// exported for the instruments (scripts/p3-math.ts) — one recipe, no script-side copies
+// exported for the instruments (docs/engine-spec/rounds-archive/p3-math.ts) — one recipe, no script-side copies
 export function meanBoost(rootL: number, C: number, gamut: Gamut = MASTER_GAMUT): number {
   // instruments run both gamuts in one process — the key must carry the gamut
   const key = `${rootL.toFixed(4)}|${C.toFixed(4)}|${gamut}`

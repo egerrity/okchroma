@@ -3,14 +3,14 @@
 // / ink-12 ≥ Lc90 (DEFAULT_APCA_LC_MAP). The dark require is a FLOOR — it solves the DECLARED metric only, so
 // the OTHER metric is a free fall-out. Run the pure carry under BOTH profiles; per profile report, for 10/11:
 // the WCAG ratio and the APCA Lc that land (min/median/max), pass-count vs each bar, and any unresolvable.
-import { resolveRamp, type ResolvedRamp, type ResolveOpts } from '../src/reqtoken/resolve'
-import { MODE_SPECS } from '../src/reqtoken/spec'
-import { withProfile, type ContrastProfile } from '../src/reqtoken/profiles'
-import { legalRatio, apcaLc, wcagY } from '../src/engine/constraints'
-import { apcaYAt } from '../src/reqtoken/producers'
-import { srgbEmitChannels } from '../src/engine/colorMath'
-import { darkChromaCurve } from '../src/engine/darkChromaCurve'
-import { DARK_BRAND_FILL_MIN_L } from '../src/engine/stopTable'
+import { resolveRamp, type ResolvedRamp, type ResolveOpts } from '../../../src/reqtoken/resolve'
+import { MODE_SPECS } from '../../../src/reqtoken/spec'
+import { withProfile, type ContrastProfile } from '../../../src/reqtoken/profiles'
+import { legalRatio, apcaLc, wcagY } from '../../../src/engine/constraints'
+import { apcaYAt } from '../../../src/reqtoken/producers'
+import { srgbEmitChannels } from '../../../src/engine/colorMath'
+import { darkChromaCurve } from '../../../src/engine/darkChromaCurve'
+import { DARK_BRAND_FILL_MIN_L } from '../../../src/engine/stopTable'
 
 const base: ResolveOpts = { highlight: true, enforceOnFillContrast: true, coolRedDark: true, darkChromaCurve, darkFillMinL: DARK_BRAND_FILL_MIN_L }
 const hx = (s: { L: number; C: number; H: number }) => '#' + (Object.values(srgbEmitChannels(s)) as number[]).map(c => Math.round(Math.max(0, Math.min(1, c)) * 255).toString(16).padStart(2, '0')).join('')

@@ -6,12 +6,12 @@
 // the register/hue decisions get made against. Emits render/yellow-band.html.
 // Run: esbuild scripts/yellow-band-exhibit.ts --bundle --platform=node --outfile=dist/yellow-band-exhibit.js && node dist/yellow-band-exhibit.js
 import { writeFileSync, mkdirSync } from 'fs'
-import { resolveTheme, signalScalesFor } from '../src/engine/resolve'
-import { type GeneratedScale, type ColorStop } from '../src/engine/colorEngine'
-import { clampChromaToGamut } from '../src/engine/constraints'
-import { oklchToSrgbUnclamped } from '../src/engine/colorMath'
-import { stopHex } from '../src/engine/cssRender'
-import { stopTokenName } from '../src/engine/tokenNames'
+import { resolveTheme, signalScalesFor } from '../../../src/engine/resolve'
+import { type GeneratedScale, type ColorStop } from '../../../src/engine/colorEngine'
+import { clampChromaToGamut } from '../../../src/engine/constraints'
+import { oklchToSrgbUnclamped } from '../../../src/engine/colorMath'
+import { stopHex } from '../../../src/engine/cssRender'
+import { stopTokenName } from '../../../src/engine/tokenNames'
 
 function seedHex(L: number, C: number, H: number): string {
   const c = clampChromaToGamut(L, C, H, 'srgb') * 0.999

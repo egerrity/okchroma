@@ -1,11 +1,11 @@
 // full-dump.ts — dump every stop of light / today-dark / delta-carry per seed as diffable lines. Run on the
 // working tree and on HEAD (git stash), diff: expect ONLY delta-carry ink-10 lines for the 3 yellows to differ;
 // light + today-dark identical (proves shipped output untouched by the floor-trigger change).
-import { resolveRamp, type ResolveOpts } from '../src/reqtoken/resolve'
-import { MODE_SPECS } from '../src/reqtoken/spec'
-import { srgbEmitChannels } from '../src/engine/colorMath'
-import { darkChromaCurve } from '../src/engine/darkChromaCurve'
-import { DARK_BRAND_FILL_MIN_L } from '../src/engine/stopTable'
+import { resolveRamp, type ResolveOpts } from '../../../src/reqtoken/resolve'
+import { MODE_SPECS } from '../../../src/reqtoken/spec'
+import { srgbEmitChannels } from '../../../src/engine/colorMath'
+import { darkChromaCurve } from '../../../src/engine/darkChromaCurve'
+import { DARK_BRAND_FILL_MIN_L } from '../../../src/engine/stopTable'
 
 const base: ResolveOpts = { highlight: true, enforceOnFillContrast: true, coolRedDark: true, darkChromaCurve, darkFillMinL: DARK_BRAND_FILL_MIN_L }
 const hx = (s: { L: number; C: number; H: number }) => '#' + (Object.values(srgbEmitChannels(s)) as number[]).map(c => Math.round(Math.max(0, Math.min(1, c)) * 255).toString(16).padStart(2, '0')).join('')

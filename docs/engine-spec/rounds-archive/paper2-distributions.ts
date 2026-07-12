@@ -4,9 +4,9 @@
 // A/B/C drop the min-separation DELTAS entirely (stops fall where placed, on-curve) and KEEP stop-8's
 // contrast require (mapped per profile). Stops 0-8 shown.
 import { writeFileSync, mkdirSync } from 'fs'
-import { resolveRamp } from '../src/reqtoken/resolve'
-import { MODE_SPECS, type ModeSpec } from '../src/reqtoken/spec'
-import { withProfile, type ContrastProfile } from '../src/reqtoken/profiles'
+import { resolveRamp } from '../../../src/reqtoken/resolve'
+import { MODE_SPECS, type ModeSpec } from '../../../src/reqtoken/spec'
+import { withProfile, type ContrastProfile } from '../../../src/reqtoken/profiles'
 
 // column rootL overrides (stop -> rootL); null = current LIGHT_L. dropDelta strips min-separation requires.
 type Col = { label: string; rootLs: Record<number, number> | null; dropDelta: boolean }

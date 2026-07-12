@@ -92,7 +92,7 @@ const groupOf = (stop: number): Group => (stop <= 2 ? 'paper' : stop <= 7 ? 'was
 // paper-0 — the ladder extreme BEYOND paper-1, now a resolved stop instead of a hard-coded absolute
 // (it was the last literal value in the system: #ffffff/#000000 pasted into the emitters). Light really
 // is white (rootL 1.0, zero chroma). Dark sits one seam BELOW paper-1 — deep, brand-tinted, never the
-// void; rootL owner-picked from scripts/paper0-sweep.ts. The lift producer applies like the rest of the
+// void; rootL owner-picked from docs/engine-spec/rounds-archive/paper0-sweep.ts. The lift producer applies like the rest of the
 // dark scale.
 export const PAPER0_DARK_ROOT_L = 0.16    // owner-picked (revised 2026-07-02 from 0.145 — the tighter gap below paper-1)
 const PL_LADDER: Producer = { hue: 'warm-drift', L: 'perceptual', chroma: 'ladder' }

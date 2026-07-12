@@ -9,11 +9,11 @@
 //   [D] SHAPE GUARANTEES separation: every adjacent seam ≥ floor, monotonic, worst case = the smallest gap,
 //       for every agnostic seed — by construction, no per-seed logic.
 //   [E] stop-8 still clears its contrast in BOTH profiles (the one real require we KEEP).
-import { resolveRamp } from '../src/reqtoken/resolve'
-import { MODE_SPECS, type ModeSpec } from '../src/reqtoken/spec'
-import { buildContext, lightScaleChromaAt } from '../src/reqtoken/producers'
-import { clampChromaToGamut, wcagY, contrastRatio, apcaLc } from '../src/engine/constraints'
-import { withProfile, type ContrastProfile } from '../src/reqtoken/profiles'
+import { resolveRamp } from '../../../src/reqtoken/resolve'
+import { MODE_SPECS, type ModeSpec } from '../../../src/reqtoken/spec'
+import { buildContext, lightScaleChromaAt } from '../../../src/reqtoken/producers'
+import { clampChromaToGamut, wcagY, contrastRatio, apcaLc } from '../../../src/engine/constraints'
+import { withProfile, type ContrastProfile } from '../../../src/reqtoken/profiles'
 
 const B_ROOTL: Record<number, number> = { 1: 0.987, 2: 0.970, 3: 0.950, 4: 0.924, 5: 0.892, 6: 0.852, 7: 0.801, 8: 0.738 }
 const rad = (h: number) => (h * Math.PI) / 180
@@ -73,7 +73,7 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
     const s8 = g(r, 8), p2 = g(r, 2)
     const m = profile === 'wcag'
       ? contrastRatio(wcagY(s8.L, s8.C, s8.H), wcagY(p2.L, p2.C, p2.H))
-      : Math.abs(apcaLc(require('../src/reqtoken/producers').apcaYAt(s8.L, s8.C, s8.H), require('../src/reqtoken/producers').apcaYAt(p2.L, p2.C, p2.H)))
+      : Math.abs(apcaLc(require('../../../src/reqtoken/producers').apcaYAt(s8.L, s8.C, s8.H), require('../../../src/reqtoken/producers').apcaYAt(p2.L, p2.C, p2.H)))
     if (m < worst) { worst = m; worstSeed = hex }
   }
   const bar = profile === 'wcag' ? '3.0' : 'Lc 30'

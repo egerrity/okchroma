@@ -2,9 +2,9 @@
 // Rendered in the real context: a dark app shell — sunken side rail (paper-0 candidate) beside the paper-1
 // page with a raised paper-2 card. Candidates vs the old absolute black. Writes render/paper0.html.
 import { writeFileSync, mkdirSync } from 'fs'
-import { resolveRamp, type ResolvedRamp } from '../src/reqtoken/resolve'
-import { MODE_SPECS, type ModeSpec } from '../src/reqtoken/spec'
-import { oklchToLinearRgb } from '../src/engine/constraints'
+import { resolveRamp, type ResolvedRamp } from '../../../src/reqtoken/resolve'
+import { MODE_SPECS, type ModeSpec } from '../../../src/reqtoken/spec'
+import { oklchToLinearRgb } from '../../../src/engine/constraints'
 
 const enc = (c: number) => { c = Math.max(0, Math.min(1, c)); return c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055 }
 const hx = (L: number, C: number, H: number) => '#' + oklchToLinearRgb(L, C, H).map(c => Math.round(enc(c) * 255).toString(16).padStart(2, '0')).join('')

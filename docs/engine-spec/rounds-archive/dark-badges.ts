@@ -4,10 +4,10 @@
 // table), where blue/violet badges currently sit BELOW their own background's luminance.
 // Writes render/dark-badges.html. The DEFAULT spec is unchanged — this is the proposal.
 import { writeFileSync, mkdirSync } from 'fs'
-import { resolveRamp, type ResolvedRamp } from '../src/reqtoken/resolve'
-import { MODE_SPECS, type ModeSpec } from '../src/reqtoken/spec'
-import { generateNeutralScale } from '../src/engine/colorEngine'
-import { SIGNALS } from '../src/engine/signals'
+import { resolveRamp, type ResolvedRamp } from '../../../src/reqtoken/resolve'
+import { MODE_SPECS, type ModeSpec } from '../../../src/reqtoken/spec'
+import { generateNeutralScale } from '../../../src/engine/colorEngine'
+import { SIGNALS } from '../../../src/engine/signals'
 
 const hx = (s: { r: number; g: number; b: number }) => '#' + [s.r, s.g, s.b].map(c => Math.round(Math.max(0, Math.min(1, c)) * 255).toString(16).padStart(2, '0')).join('')
 

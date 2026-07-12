@@ -4,13 +4,13 @@
 // Columns ABUT — no borders, no gaps, no boxes (swatch adjacency is how seams read); labels sit above on the
 // page bg; data in labels only (L, hex, Δ). Dark page. Seeds by hex + hue (names aren't real). This pass shows
 // only the three under review: 9→10 hover, H-K place, ink register.
-import { resolveRamp, type ResolvedRamp, type ResolvedStop, type ResolveOpts } from '../src/reqtoken/resolve'
-import { MODE_SPECS } from '../src/reqtoken/spec'
-import { generateNeutralScale } from '../src/engine/colorEngine'
-import { clampChromaToGamut, apcaY, apcaLc, encodedChannels } from '../src/engine/constraints'
-import { srgbEmitChannels } from '../src/engine/colorMath'
-import { darkChromaCurve } from '../src/engine/darkChromaCurve'
-import { DARK_BRAND_FILL_MIN_L } from '../src/engine/stopTable'
+import { resolveRamp, type ResolvedRamp, type ResolvedStop, type ResolveOpts } from '../../../src/reqtoken/resolve'
+import { MODE_SPECS } from '../../../src/reqtoken/spec'
+import { generateNeutralScale } from '../../../src/engine/colorEngine'
+import { clampChromaToGamut, apcaY, apcaLc, encodedChannels } from '../../../src/engine/constraints'
+import { srgbEmitChannels } from '../../../src/engine/colorMath'
+import { darkChromaCurve } from '../../../src/engine/darkChromaCurve'
+import { DARK_BRAND_FILL_MIN_L } from '../../../src/engine/stopTable'
 
 const f = (n: number, d = 3) => n.toFixed(d)
 const rad = (h: number) => (h * Math.PI) / 180

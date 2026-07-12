@@ -4,10 +4,10 @@
 // the seam floors declared (paper-2 ≥ 0.028 off paper-1; every wash seam ≥ 0.012 off its resolved neighbor).
 // Writes render/wash-respace.html.
 import { writeFileSync, mkdirSync } from 'fs'
-import { resolveRamp, type ResolvedRamp } from '../src/reqtoken/resolve'
-import { MODE_SPECS, type ModeSpec, type Require, type StopReq } from '../src/reqtoken/spec'
-import { LIGHT_L } from '../src/engine/stopTable'
-import { oklchToLinearRgb } from '../src/engine/constraints'
+import { resolveRamp, type ResolvedRamp } from '../../../src/reqtoken/resolve'
+import { MODE_SPECS, type ModeSpec, type Require, type StopReq } from '../../../src/reqtoken/spec'
+import { LIGHT_L } from '../../../src/engine/stopTable'
+import { oklchToLinearRgb } from '../../../src/engine/constraints'
 
 const enc = (c: number) => { c = Math.max(0, Math.min(1, c)); return c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055 }
 const hx = (L: number, C: number, H: number) => '#' + oklchToLinearRgb(L, C, H).map(c => Math.round(enc(c) * 255).toString(16).padStart(2, '0')).join('')

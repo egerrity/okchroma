@@ -7,10 +7,10 @@
 // these stops; real Phase-B values land at or below this.
 // Run: esbuild scripts/p3-pole-examples.ts --bundle --platform=node --outfile=dist/p3-pole-examples.js && node dist/p3-pole-examples.js
 import { writeFileSync, mkdirSync } from 'fs'
-import { resolveTheme, signalScalesFor } from '../src/engine/resolve'
-import { type GeneratedScale } from '../src/engine/colorEngine'
-import { clampChromaToGamut, wcagY, contrastRatio, apcaLc } from '../src/engine/constraints'
-import { oklchToSrgbUnclamped, type ColorStop } from '../src/engine/colorMath'
+import { resolveTheme, signalScalesFor } from '../../../src/engine/resolve'
+import { type GeneratedScale } from '../../../src/engine/colorEngine'
+import { clampChromaToGamut, wcagY, contrastRatio, apcaLc } from '../../../src/engine/constraints'
+import { oklchToSrgbUnclamped, type ColorStop } from '../../../src/engine/colorMath'
 import { trueY, clampChromaToGamutP3, oklchToLinearP3, gmEnc, apcaYP3 } from './p3-math'
 
 const BAR = 4.5

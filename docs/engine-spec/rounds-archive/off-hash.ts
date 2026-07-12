@@ -2,11 +2,11 @@
 // opts OFF, two ways: (1) DEFAULT dark+light (no delta at all), (2) PURE CARRY (delta on, new opts off). Run
 // on the working tree, then on HEAD (git stash) — hashes must match, proving the instruments are inert off.
 import { createHash } from 'crypto'
-import { resolveRamp, type ResolveOpts } from '../src/reqtoken/resolve'
-import { MODE_SPECS } from '../src/reqtoken/spec'
-import { srgbEmitChannels } from '../src/engine/colorMath'
-import { darkChromaCurve } from '../src/engine/darkChromaCurve'
-import { DARK_BRAND_FILL_MIN_L } from '../src/engine/stopTable'
+import { resolveRamp, type ResolveOpts } from '../../../src/reqtoken/resolve'
+import { MODE_SPECS } from '../../../src/reqtoken/spec'
+import { srgbEmitChannels } from '../../../src/engine/colorMath'
+import { darkChromaCurve } from '../../../src/engine/darkChromaCurve'
+import { DARK_BRAND_FILL_MIN_L } from '../../../src/engine/stopTable'
 
 const base: ResolveOpts = { highlight: true, enforceOnFillContrast: true, coolRedDark: true, darkChromaCurve, darkFillMinL: DARK_BRAND_FILL_MIN_L }
 const hx = (s: { L: number; C: number; H: number }) => '#' + (Object.values(srgbEmitChannels(s)) as number[]).map(c => Math.round(Math.max(0, Math.min(1, c)) * 255).toString(16).padStart(2, '0')).join('')

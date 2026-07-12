@@ -207,7 +207,7 @@ structural pieces land with the flip commit, before or with the constant change:
 All six closed by the owner: **D1 = both renditions must pass. D2 = P3 basis.
 D3 = deferred to the Phase-B eye-check. D4 = confirmed (seed input stays sRGB hex).
 D5 = strictly-safe** (ruled on the measured numbers; exhibit at
-scripts/p3-pole-examples.ts → render/p3-d5-poles.html — only 2 verdict flips exist
+docs/engine-spec/rounds-archive/p3-pole-examples.ts → render/p3-d5-poles.html — only 2 verdict flips exist
 in the whole sweep, green brand ctas near L 0.55). **D6 = the Figma library publishes
 the sRGB clamp-down** (ruled 2026-07-08 after the owner's two-file gamut A/B test;
 evidence + rejected alternatives in §3). Original framing kept below for the record.
