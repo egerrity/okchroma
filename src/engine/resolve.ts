@@ -279,24 +279,29 @@ export function resolveBrand(
 export type SecondaryLevel = 'standard' | 'subtle'
 
 // The secondary's per-field MODE (owner design 2026-07-04: modes decoupled per family — the
-// mockup's chip dropdown). tint/pastel = the two subtle chroma models (both ride the locked
-// delta curve); outline = the tint ramp with the cta re-resolved (cta-1 transparent, cta-2 the
+// mockup's chip dropdown). muted/vibrant = the two subtle chroma models (both ride the locked
+// delta curve); outline = the muted ramp with the cta re-resolved (cta-1 transparent, cta-2 the
 // cta color at OUTLINE_HOVER_ALPHA, on-cta ink-11, cta-border always highlight-8); exact = the
 // standard full ramp, advice-only.
-export type SecondaryStyle = 'tint' | 'pastel' | 'outline' | 'exact'
+export type SecondaryStyle = 'muted' | 'vibrant' | 'outline' | 'exact'
+// legacy ids (pre-rename, owner 2026-07-12 "yes" to the rename): accepted at the input seam,
+// normalized to the canonical ids above — existing callers/files keep working.
+export type LegacySecondaryStyle = SecondaryStyle | 'tint' | 'pastel'
+export const normalizeSecondaryStyle = (s: LegacySecondaryStyle): SecondaryStyle =>
+  s === 'tint' ? 'muted' : s === 'pastel' ? 'vibrant' : s
 export const SUBTLE_TINT_MULT = 8          // owner pick (light) from the finalists sweep
 export const SUBTLE_PASTEL_K = 0.35
 
 // ── the v2 SUBTLE MODELS (owner 2026-07-11, accepted on render/secondary-models.html:
 // "what we are trying to offer is one that is muted and one that is more vibrant") ──────────
-// MUTED (rides the 'tint' id pending her rename call): the hue's OWN identity ramp × this
+// MUTED: the hue's OWN identity ramp × this
 // scale — brand-charactered quiet, no bespoke curve ("C2 is actually pretty close to what I
-// was thinking for the subtle version"). LIGHT ONLY — dark keeps the shipped tint curve
+// was thinking for the subtle version").
 // (the 2026-07-04 dark ruling).
 export const MUTED_IDENTITY_SCALE = 0.5
 // muted-dark stays UNDER vibrant-dark by at least this factor (the dark ordering guard below)
 export const MUTED_DARK_VIBRANT_CAP = 0.85
-// VIBRANT (rides the 'pastel' id): chroma solved per stop for a CONSTANT apparent-colorfulness
+// VIBRANT: chroma solved per stop for a CONSTANT apparent-colorfulness
 // boost over the stop's own gray — uniform vibrancy across hues BY CONSTRUCTION (her v1 verdict
 // on the k×gamut-ceiling candidate: "inconsistently vibrant across hues" — big-gamut greens read
 // vivid where small-gamut teals read dull at the same k). The boost profile is the accepted
@@ -354,7 +359,7 @@ export const OUTLINE_HOVER_ALPHA = 0.09    // owner: "8–10% of the resolved ct
 export interface ResolvedSecondary {
   scale: GeneratedScale
   style: SecondaryStyle          // the per-field mode this secondary resolved under
-  level: SecondaryLevel          // legacy shape: tint/pastel/outline → 'subtle', exact → 'standard'
+  level: SecondaryLevel          // legacy shape: muted/vibrant/outline → 'subtle', exact → 'standard'
   demoted: boolean               // auto-subtle fired (vs user-picked)
   derived: boolean               // generated from the brand hue (§2b posture, no hex supplied)
   notes: string[]
@@ -426,9 +431,10 @@ export function resolveTheme(input: {
   primaryMode?: 'recommended' | 'exact'
   primaryArchetype?: Archetype
   secondaryHex?: string | null
-  // the secondary's own mode chip; default 'tint'. Supersedes secondaryLevel (kept for
-  // programmatic compat: 'standard' ≈ 'exact', 'subtle' ≈ 'tint').
-  secondaryStyle?: SecondaryStyle
+  // the secondary's own mode chip; default 'muted'. Supersedes secondaryLevel (kept for
+  // programmatic compat: 'standard' ≈ 'exact', 'subtle' ≈ 'muted'). Legacy 'tint'/'pastel'
+  // ids are normalized (the 2026-07-12 rename).
+  secondaryStyle?: LegacySecondaryStyle
   secondaryLevel?: SecondaryLevel
   // §2b posture: no secondaryHex + deriveSecondary → a subtle secondary from the brand hue
   deriveSecondary?: boolean
@@ -442,9 +448,9 @@ export function resolveTheme(input: {
 }): ResolvedTheme {
   const pExact = input.primaryMode ? input.primaryMode === 'exact' : input.exact
   const pArchetype = input.primaryArchetype ?? input.archetypeOverride
-  const secStyle: SecondaryStyle = input.secondaryStyle
-    ?? (input.secondaryLevel === 'standard' ? 'exact' : input.secondaryLevel === 'subtle' ? 'tint'
-      : input.exact ? 'exact' : 'tint')
+  const secStyle: SecondaryStyle = (input.secondaryStyle && normalizeSecondaryStyle(input.secondaryStyle))
+    ?? (input.secondaryLevel === 'standard' ? 'exact' : input.secondaryLevel === 'subtle' ? 'muted'
+      : input.exact ? 'exact' : 'muted')
   const opts = { exact: pExact, style: input.style, contrastProfile: input.contrastProfile, apcaClearance: input.apcaClearance }
   const primary = resolveBrand(input.primaryHex, input.name ?? 'brand', { ...opts, archetypeOverride: pArchetype })
   const cp = input.contrastProfile
@@ -470,11 +476,11 @@ export function resolveTheme(input: {
       notes.push(`exact mode: no on-cta text reaches APCA Lc 60 on this cta (best ${best.toFixed(0)}) — the better pole ships; recommended mode guarantees text contrast`)
   }
 
-  // the subtle chroma model per style (v2, owner 2026-07-11): 'tint' rides the MUTED model
-  // (identity ramp × scale), 'pastel' rides VIBRANT (uniform apparent boost) — ids unchanged
-  // pending her rename call (muted/vibrant chip labels). outline rides the muted ramp — its
+  // the subtle chroma model per style (v2, owner 2026-07-11; ids renamed 2026-07-12):
+  // 'muted' = identity ramp × scale, 'vibrant' = uniform apparent boost. outline rides the
+  // muted ramp — its
   // cta re-resolution happens at the EMITTERS. Dark branches keep each style's shipped curve.
-  const subtleModelFor = (hex: string) => secStyle === 'pastel'
+  const subtleModelFor = (hex: string) => secStyle === 'vibrant'
     ? { curve: vibrantSecondaryCurve(hexToOklch(hex).H) }
     : { curve: mutedSecondaryCurve(hex) }
 
@@ -501,8 +507,8 @@ export function resolveTheme(input: {
       primary, themed: primary,
       secondary: {
         scale,
-        style: 'pastel',   // derived is ALWAYS pastel (owner: differentiates it from the
-                           // same-hue brand + neutral rows — a tint ramp read as redundant)
+        style: 'vibrant',  // derived is ALWAYS vibrant (owner: differentiates it from the
+                           // same-hue brand + neutral rows — a muted ramp read as redundant)
         level: 'subtle', demoted: false, derived: true,
         notes: [
           'secondary derived from the brand color (subtle register)',

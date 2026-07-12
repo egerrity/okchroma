@@ -31,7 +31,7 @@ export interface RosterEntry {
   // A real secondary the bulk action APPLIES (activated 2026-07-07 — fis is the
   // group-add exerciser: the batch's first apply flips the base's secondary posture on).
   secondaryHex?: string
-  // The secondary's render mode; default 'tint'. 'exact' ships the hex as-is (used for
+  // The secondary's render mode; default 'muted'. 'exact' ships the hex as-is (used for
   // fis's real accent and monochrome's true-grey seed).
   secondaryStyle?: SecondaryStyle
   note: string
@@ -57,7 +57,7 @@ export const ROSTER: RosterEntry[] = [
 ]
 
 // The ThemeSpec the bulk action resolves. Brands without a secondaryHex fall back to
-// the DERIVED pastel inside buildBrandColumns (written only when the file's posture is
+// the DERIVED vibrant secondary inside buildBrandColumns (written only when the file's posture is
 // on — which fis's first apply turns on).
 export const rosterSpec = (e: RosterEntry): ThemeSpec => ({
   primaryHex: e.hex,

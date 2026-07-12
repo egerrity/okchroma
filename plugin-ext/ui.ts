@@ -13,15 +13,15 @@ let secondaryHex: string | null = null
 let neutralLevel: NeutralLevel = 'default'
 // per-family modes (parity with the demo): the primary's select = Recommended / Exact /
 // the six archetype anchors; the secondary's select = its style chip (custom only —
-// derived is always pastel, the engine's call).
+// derived is always vibrant, the engine's call).
 let primaryMode: 'recommended' | 'exact' | Archetype = 'recommended'
-let secondaryStyle: SecondaryStyle = 'tint'
+let secondaryStyle: SecondaryStyle = 'muted'
 // PREVIEW lens only — the apply always writes all four solve columns (wcag · wcag-dark ·
 // apca · apca-dark). WCAG is this plugin’s default lane, so it leads the preview too.
 let contrastProfile: ContrastProfile = 'wcag'
 let pendingName: string | null = null // brand armed for overwrite confirmation
 // The secondary is the demo's THREE-STATE field: none (default — just "+ Add secondary") →
-// derived (the input tracks the primary live; the engine derives the pastel secondary) →
+// derived (the input tracks the primary live; the engine derives the vibrant secondary) →
 // custom (user hex + style chip). The chevron menu moves between all three.
 type SecondaryMode = 'derived' | 'custom' | 'off'
 let secondaryMode: SecondaryMode = 'off'
@@ -97,10 +97,10 @@ function setStatus(text: string, tone: '' | 'ok' | 'err' = '') {
 // ─── The secondary field's three states ──────────────────────────────────────
 
 // the ⓘ copy per selection (Figma spec) — the always-visible tooltip replacement
-const STYLE_LABEL: Record<SecondaryStyle, string> = { tint: 'Tint', pastel: 'Pastel', outline: 'Outline', exact: 'Exact' }
+const STYLE_LABEL: Record<SecondaryStyle, string> = { muted: 'Muted', vibrant: 'Vibrant', outline: 'Outline', exact: 'Exact' }
 const STYLE_INFO: Record<SecondaryStyle, string> = {
-  tint: 'Differentiates from primary with a lighter tint of hue',
-  pastel: 'Differentiates from primary with lower chroma and lighter tint',
+  muted: 'A muted, brand-charactered take on the hue',
+  vibrant: 'A vibrant take — equally vivid at every hue',
   outline: 'Outline only',
   exact: 'Your hex ships untouched',
 }
@@ -118,7 +118,7 @@ function syncInfoLines() {
     : `Anchored to the ${primaryMode} archetype`
   secondaryChipLabel.textContent = STYLE_LABEL[secondaryStyle]
   secondaryInfoLine.style.display = secondaryMode === 'off' ? 'none' : ''
-  secondaryInfo.textContent = secondaryMode === 'derived' ? 'A pastel derived from your primary' : STYLE_INFO[secondaryStyle]
+  secondaryInfo.textContent = secondaryMode === 'derived' ? 'A vibrant secondary derived from your primary' : STYLE_INFO[secondaryStyle]
   neutralLabel.textContent = NEUTRAL_LABEL[neutralLevel]
   neutralInfo.textContent = NEUTRAL_INFO[neutralLevel]
 }
@@ -139,7 +139,7 @@ function setSecondaryMode(mode: SecondaryMode) {
 // ─── Preview ─────────────────────────────────────────────────────────────────
 
 // the THEME input: primary + secondary posture, each under its OWN mode (per-family chips —
-// the demo's model exactly). Derived is always pastel; the style select applies to custom only.
+// the demo's model exactly). Derived is always vibrant; the style select applies to custom only.
 function themeInput(name: string) {
   const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
   return {
@@ -222,7 +222,7 @@ function updatePreview() {
     renderMatrix(t, nScale)
 
     // the bar's live swatches: neutral shows its highlight-9; a derived secondary shows the
-    // RESOLVED pastel (the input tracks the primary hex — that's the source, not the result)
+    // RESOLVED vibrant secondary (the input tracks the primary hex — that's the source, not the result)
     const n9 = nScale.light.find(s => s.stop === 9)
     if (n9) neutralSwatch.style.background = toHex(n9.r, n9.g, n9.b)
     if (t.secondary) {

@@ -85,17 +85,17 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
   }
 
   // 5. the derived posture (§2b): resolves for every primary, always subtle, never demoted,
-  //    and ALWAYS pastel (owner round 6b: pastel differentiates the same-hue rows) — even when
+  //    and ALWAYS vibrant (owner round 6b: it differentiates the same-hue rows) — even when
   //    a style leaks in from a lingering chip state
   for (const pHex of PRIMARIES) {
     const t = resolveTheme({ primaryHex: pHex, deriveSecondary: true, secondaryStyle: 'tint', contrastProfile: cp })
-    if (!t.secondary || !t.secondary.derived || t.secondary.level !== 'subtle' || t.secondary.demoted || t.secondary.style !== 'pastel')
+    if (!t.secondary || !t.secondary.derived || t.secondary.level !== 'subtle' || t.secondary.demoted || t.secondary.style !== 'vibrant')
       fails.push({ theme: `${profile} derived p${pHex}`, check: 'derived', detail: 'derived secondary malformed' })
   }
 }
 
 console.log(`=== secondary-audit: ${themes} themes resolved (both profiles) ===`)
-console.log(`tint lane (default): all subtle by construction · annotated residuals: ${residuals} · close-to-primary advice: ${closeAdvice}`)
+console.log(`muted lane (default): all subtle by construction · annotated residuals: ${residuals} · close-to-primary advice: ${closeAdvice}`)
 console.log(`exact lane: hands-off ramps · annotated collision advice: ${exactAdvice}`)
 console.log(`failures: ${fails.length}`)
 const byCheck: Record<string, number> = {}

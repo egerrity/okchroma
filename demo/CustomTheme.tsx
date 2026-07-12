@@ -100,9 +100,9 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   const [secMenuOpen, setSecMenuOpen] = useState(false)
   // per-family modes (owner design: exact decoupled per family, chips in the fields). The
   // primary's chip = Recommended / Exact / the six archetype anchors; the secondary's chip =
-  // Tint / Pastel / Outline / Exact.
+  // Muted / Vibrant / Outline / Exact.
   const [primaryMode, setPrimaryMode] = useState<'recommended' | 'exact' | Archetype>('recommended')
-  const [secondaryStyle, setSecondaryStyle] = useState<SecondaryStyle>('tint')
+  const [secondaryStyle, setSecondaryStyle] = useState<SecondaryStyle>('muted')
   // legacy shape for the checklist/toast logic: anchors count as recommended machinery
   const rung: RungMode = primaryMode === 'exact' ? 'exact' : 'recommended'
   // APCA is the DEFAULT (owner 2026-07-04, the true split): the perceptually-solved look ships;
@@ -151,7 +151,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
       primaryArchetype: primaryMode !== 'recommended' && primaryMode !== 'exact' ? primaryMode : undefined,
       secondaryHex: derived ? null : secondary,
       deriveSecondary: derived || undefined,
-      secondaryStyle: derived ? undefined : secondaryStyle,   // derived is always pastel — no chip
+      secondaryStyle: derived ? undefined : secondaryStyle,   // derived is always vibrant — no chip
       contrastProfile: cp,
     })
     // signals ALWAYS re-emit under the selected profile: the static signals.css now carries the
@@ -209,14 +209,14 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
     outline: { background: 'transparent', color: 'var(--secondary-ink-10)', border: '1px solid var(--secondary-highlight-8)' },
     grey: { background: 'var(--surface-sunken)', color: 'var(--fg-subtle)' },
   }
-  const styleLabel: Record<SecondaryStyle, string> = { tint: 'Tint', pastel: 'Pastel', outline: 'Outline', exact: 'Exact' }
+  const styleLabel: Record<SecondaryStyle, string> = { muted: 'Muted', vibrant: 'Vibrant', outline: 'Outline', exact: 'Exact' }
   // the ⓘ copy per selection (Figma spec) — the always-visible tooltip replacement
   const primaryInfo = primaryMode === 'recommended' ? 'Engine adjusts for optimal legibility'
     : primaryMode === 'exact' ? 'Your hex ships untouched'
     : `Anchored to the ${primaryMode} archetype`
-  const secondaryInfo = secState === 'derived' ? 'A pastel derived from your primary'
-    : secondaryStyle === 'tint' ? 'Differentiates from primary with a lighter tint of hue'
-    : secondaryStyle === 'pastel' ? 'Differentiates from primary with lower chroma and lighter tint'
+  const secondaryInfo = secState === 'derived' ? 'A vibrant secondary derived from your primary'
+    : secondaryStyle === 'muted' ? 'A muted, brand-charactered take on the hue'
+    : secondaryStyle === 'vibrant' ? 'A vibrant take — equally vivid at every hue'
     : secondaryStyle === 'outline' ? 'Outline only'
     : 'Your hex ships untouched'
   const neutralInfo = neutralLevel === 'default' ? 'Adds a touch of primary hue'
@@ -268,14 +268,14 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
               style={derived ? { color: 'var(--fg-subtle)' } : undefined}
               onChange={e => { setSecState('custom'); setSecondaryInput(e.target.value) }} spellCheck={false} />
             {derived ? (
-              // passive marker, not the style chip — derived is always pastel, engine's call
+              // passive marker, not the style chip — derived is always vibrant, engine's call
               <span style={{ fontSize: 11, color: 'var(--fg-subtle)', marginLeft: 'auto', flexShrink: 0 }}>from primary</span>
             ) : (
               <ChipSelect value={secondaryStyle} title="Secondary style" label={styleLabel[secondaryStyle]}
                 tone={secondaryStyle === 'exact' ? chipTone.grey : secondaryStyle === 'outline' ? chipTone.outline : chipTone.secondary}
                 onChange={v => setSecondaryStyle(v as SecondaryStyle)}>
-                <option value="tint">Tint</option>
-                <option value="pastel">Pastel</option>
+                <option value="muted">Muted</option>
+                <option value="vibrant">Vibrant</option>
                 <option value="outline">Outline</option>
                 <option value="exact">Exact</option>
               </ChipSelect>
