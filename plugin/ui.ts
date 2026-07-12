@@ -236,7 +236,7 @@ function updatePreview() {
       primaryChip.style.background = '#ededf0'; primaryChip.style.color = '#646464'; primaryChip.style.borderColor = 'transparent'
     } else {
       primaryChip.style.background = hxs(at(t.themed.scale.light, 4))
-      primaryChip.style.color = hxs(at(t.themed.scale.light, 12))
+      primaryChip.style.color = hxs(at(t.themed.scale.light, 11))
       primaryChip.style.borderColor = 'transparent'
     }
     if (t.secondary) {
@@ -244,9 +244,9 @@ function updatePreview() {
       if (secondaryStyle === 'exact') {
         secondaryChip.style.background = '#ededf0'; secondaryChip.style.color = '#646464'; secondaryChip.style.borderColor = 'transparent'
       } else if (secondaryStyle === 'outline') {
-        secondaryChip.style.background = 'transparent'; secondaryChip.style.color = hxs(at(sl, 11)); secondaryChip.style.borderColor = hxs(at(sl, 8))
+        secondaryChip.style.background = 'transparent'; secondaryChip.style.color = hxs(at(sl, 10)); secondaryChip.style.borderColor = hxs(at(sl, 8))
       } else {
-        secondaryChip.style.background = hxs(at(sl, 6)); secondaryChip.style.color = hxs(at(sl, 12)); secondaryChip.style.borderColor = 'transparent'
+        secondaryChip.style.background = hxs(at(sl, 6)); secondaryChip.style.color = hxs(at(sl, 11)); secondaryChip.style.borderColor = 'transparent'
       }
     }
     syncInfoLines()
