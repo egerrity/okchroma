@@ -1,3 +1,6 @@
+// @ts-nocheck — HISTORICAL RECORD: written + run in the musing-cohen worktree at 81f5519
+// (pre-v8 tree; imports exitCtaL, deleted with the v8 joint solve). Collected 2026-07-11 as a
+// record of the coolRedDark research — do not run against the current engine.
 // coolreddark-sweep.ts — RESEARCH instrument (2026-07-10, coolRedDark question):
 // what does the dark-context hue shift (producers.ts darkH, coolRedDark) actually protect,
 // and what happens to the dark cta if it runs at identity hue instead?

@@ -271,16 +271,24 @@ export function brandCss(
     ]
   }
 
-  // the P3 renditions, behind @supports — same cascade shape as the base blocks
+  // the P3 renditions, behind @supports — same cascade shape as the base blocks.
+  // Under the OUTLINE chip the secondary's cta pair is re-resolved (cta-1 transparent, cta-2 the
+  // rgba hover tint) and the P3 block sits LAST in the cascade — an out-of-sRGB secondary cta
+  // (the vivid cyan corner) would pop its fill back in over `transparent` (owner-caught,
+  // 2026-07-11). The cta-pair P3 overrides are dropped for outline; scale stops keep theirs.
+  const dropOutlineCta = (lines: string[]): string[] =>
+    secondaryStyle === 'outline'
+      ? lines.filter(l => !l.startsWith('  --secondary-cta-1:') && !l.startsWith('  --secondary-cta-2:'))
+      : lines
   const p3Light = [
     ...brandKindP3Body('brand', scale, 'light'),
-    ...(secondary ? brandKindP3Body('secondary', secondary, 'light') : []),
+    ...(secondary ? dropOutlineCta(brandKindP3Body('secondary', secondary, 'light')) : []),
     ...brandKindP3Body('neutral', nScale, 'light'),
     ...r.signalOverrides.flatMap(o => brandKindP3Body(o.name, o.scale, 'light')),
   ]
   const p3Dark = [
     ...brandKindP3Body('brand', scale, 'dark'),
-    ...(secondary ? brandKindP3Body('secondary', secondary, 'dark') : []),
+    ...(secondary ? dropOutlineCta(brandKindP3Body('secondary', secondary, 'dark')) : []),
     ...brandKindP3Body('neutral', nScale, 'dark'),
     ...r.signalOverrides.flatMap(o => brandKindP3Body(o.name, o.scale, 'dark')),
   ]
