@@ -77,7 +77,7 @@ function hueCollisionPending(scale: GeneratedScale, sigScales: SignalScales): Si
   return pending
 }
 
-// C12 v8 — the RED COMPLEMENT (owner-settled 2026-07-10; model = scripts/c12-session/
+// C12 v8 — the RED COMPLEMENT (owner-settled 2026-07-10; model = docs/engine-spec/c12-archive/
 // joint-solve-model.md): red moves for B, the vibration problem — positioned inside her
 // calibrated zones (deep core L.45–.49 or the light edge tier L.65–.75; the .50–.58 middle
 // is ring territory and NEVER used — canonical itself lives there, which is why a lightened
@@ -173,7 +173,7 @@ export function resolveBrand(
 ): ResolvedBrand {
   const sigScales = signalScalesFor(opts?.contrastProfile)
 
-  // C12 v8 (owner-settled 2026-07-10; model = scripts/c12-session/joint-solve-model.md):
+  // C12 v8 (owner-settled 2026-07-10; model = docs/engine-spec/c12-archive/joint-solve-model.md):
   // ONE classification — the joint solve. The brand side rides opts.ctaSolve through
   // generation (solveBrandExit, producers.ts: membership on the nominal seed, nearest-edge
   // exit, her direction rules, brick-band diagonal); the red complement resolves after,

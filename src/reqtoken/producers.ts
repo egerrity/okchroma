@@ -484,7 +484,7 @@ export function onFillIsWhiteDarkAt(L: number, C: number, H: number, enforce: bo
 }
 
 // ================= C12 v8 — THE JOINT SOLVE, brand side (owner-settled 2026-07-10; model =
-// scripts/c12-session/joint-solve-model.md; supersedes the v6/v7 exitCtaL + arc-target) ====
+// docs/engine-spec/c12-archive/joint-solve-model.md; supersedes the v6/v7 exitCtaL + arc-target) ====
 // MEMBERSHIP: the cta formula at the SEED's own L sits inside the widened region
 // (redSolveDist ≤ G) or in the warm brick band. EXIT: the nearest release edge in the solve
 // metric — clearing the region by the RING with a passing pole (pole-agnostic; apca's dead

@@ -119,7 +119,7 @@ export function inRedVividArc(L: number, C: number, H: number): boolean {
 }
 
 // ── C12 v8 — THE JOINT SOLVE (owner-settled 2026-07-10, "as close as we will ever get";
-// full model = scripts/c12-session/joint-solve-model.md; every constant below is her
+// full model = docs/engine-spec/c12-archive/joint-solve-model.md; every constant below is her
 // verdict-calibrated candidate from the accepted 50-row exhibit) ──────────────────────────
 // A (error-look): a brand whose cta sits inside the true-red region exits via the NEAREST
 // release edge — severity = depth into the region. B (vibration): the RED signal complements

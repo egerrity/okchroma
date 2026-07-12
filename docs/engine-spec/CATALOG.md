@@ -11,7 +11,7 @@ fixed holistically after owner sign-off.
 > render cool (`applyRedRepelRender`, née `applyRedCoolRender`) is DELETED (owner: cta red
 > de-collision is C12's alone), rung-1 and the muted dark collider are gone, and the dark
 > CTA now rides identity hue (`coolRedDark` is cta-off). Current model =
-> `scripts/c12-session/joint-solve-model.md`. Entry kept verbatim as the find-time record.
+> `docs/engine-spec/c12-archive/joint-solve-model.md`. Entry kept verbatim as the find-time record.
 
 **Status:** FIXED on fix/red-orange-cool (owner-approved 2026-07-07 via rendered review —
 "orange shift + dark" over the light-archetype cta what-if). The fix: signed
@@ -620,7 +620,7 @@ single-mechanism attempts (C6 repel, rung-1, the muted collider, the vivid-arc o
 each covered a slice and left holes.
 
 **LANDED — the v8 JOINT SOLVE (owner-settled 2026-07-10, "as close as we will ever get"; model =
-scripts/c12-session/joint-solve-model.md; pushed 5e440ff):**
+docs/engine-spec/c12-archive/joint-solve-model.md; pushed 5e440ff):**
 - **Brand side (`solveBrandExit`, producers):** membership = the cta formula at the seed's own L
   inside the widened region (`redSolveDist ≤ G`, wDark .60) or the warm brick band. Exit = nearest
   release edge (region + ring .020) with a passing pole, under her direction rules: noticeably-

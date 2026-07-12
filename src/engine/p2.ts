@@ -5,7 +5,7 @@
 // answers "do these two read distinct when adjacent" — a perceptual DISTANCE. Her 9 flush-strip
 // delivery marks sit at one radius in helmlab MetricSpace (mean .116, CV 12%; the metric's
 // COMBVD training task is literally adjacent-pair judgment). Neither metric can do the other's
-// job (research record: scripts/c12-session/helmlab-collision-research.md). Runtime helmlab use
+// job (research record: docs/engine-spec/c12-archive/helmlab-collision-research.md). Runtime helmlab use
 // owner-cleared 2026-07-10 ("we can use helmlab for collisions … they pass here").
 import { Helmlab } from 'helmlab'
 import { clampChromaToGamut, oklchToLinearRgb } from './constraints'
