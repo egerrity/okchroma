@@ -132,6 +132,11 @@ export const RED_SOLVE = {
   // bright orange · on-hue vivid takes the big dark throw · else nearest edge
   magentaDh: -14, magentaMinL: 0.53, magentaUpRatio: 2.5,
   vividMin: 0.85, goldDh: 1.5, vividMinL: 0.53,
+  // on-hue true reds that would drift UP take the bright landing ONLY when the up-exit reads
+  // intentionally light (≥ this cut); below it they commit to the dark throw. Her 27 marks
+  // (truered-dir-checks.json) split by lane at ~0.67: wcag up-exits ~0.65 → too dim → dark ·
+  // apca ~0.69 → stays bright + red deep. The gap [0.655,0.691] is clean.
+  trueRedBrightCut: 0.67,
   // the BRICK band: rusty-to-brick mid-dark vivid warms still read conflict-y (browns and
   // magentas at this depth are fine); warm members are IN-REGION, dark landings must not
   // park there → the DIAGONAL (soft cool + slight desat + extra depth, never the hard cool)

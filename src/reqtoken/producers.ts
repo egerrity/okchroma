@@ -494,13 +494,22 @@ export function solveBrandExit(
   // only as a defensive sentinel and nothing asserts on it today
   if (dn === null && up === null) return { L: 0.03, H: brandH, cMul: 1, up: false }
   const vivid = seed.C / Math.max(1e-6, maxChromaAt(seed.L, seed.H))
+  const onHue = dh > RED_SOLVE.magentaDh && dh < RED_SOLVE.goldDh
   const magentaUp = dh <= RED_SOLVE.magentaDh && seed.L > RED_SOLVE.magentaMinL &&
     up !== null && dn !== null && up <= RED_SOLVE.magentaUpRatio * dn
   const goldBright = !magentaUp && vivid >= RED_SOLVE.vividMin && dh >= RED_SOLVE.goldDh &&
     seed.L > RED_SOLVE.vividMinL && up !== null
   const vividDown = !magentaUp && !goldBright && vivid >= RED_SOLVE.vividMin &&
     dh > RED_SOLVE.magentaDh && dn !== null
-  const dir = magentaUp || goldBright ? 1 : vividDown ? -1 : dn !== null && (up === null || dn <= up) ? -1 : 1
+  const nearDark = dn !== null && (up === null || dn <= up)
+  // TRUE-RED DIRECTION (owner 2026-07-11, 27 marks): an on-hue red that would drift UP (the
+  // nearest edge is up, and it is not already vivid-dark) keeps the bright landing ONLY when
+  // the up-exit reads intentionally light — else it takes the dark throw. Below the cut the
+  // shipped "brand bright salmon + red deep" reads like the exact-mode safety pattern, not a
+  // brand that chose to go light. Per-lane by construction (wcag up-exits dim, apca bright).
+  const trueRedDim = onHue && !magentaUp && !goldBright && !vividDown && !nearDark &&
+    up !== null && dn !== null && seed.L + up < RED_SOLVE.trueRedBrightCut
+  const dir = magentaUp || goldBright ? 1 : vividDown || trueRedDim ? -1 : nearDark ? -1 : 1
   const t = dir === -1 ? dn! : up!
   let landing: BrandExitLanding = { L: seed.L + dir * t, H: brandH, cMul: 1, up: dir === 1 }
   if (dir === -1) {
