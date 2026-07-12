@@ -17,7 +17,7 @@ import {
   DARK_FLOOR_FULL_C, DARK_FLOOR_MUTED_MAX_C, onTextIsWhite,
 } from '../engine/colorMath'
 import { p2Diff, P2_D, P2_D_UP } from '../engine/p2'
-import { DARK_STOP_9_MIN_L } from '../engine/stopTable'
+import { DARK_STOP_9_MIN_L, DARK_CTA_C } from '../engine/stopTable'
 import { darkCtaTrim } from '../engine/darkChromaCurve'
 import type { GenerateOptions } from '../engine/colorEngine'   // type-only: erased at runtime, no cycle
 
@@ -273,7 +273,9 @@ export function onHighlightIsWhiteAt(L: number, C: number, H: number, ratioFloor
 export function buildDarkContext(ctx: Ctx, specFloorL: number = DARK_STOP_9_MIN_L) {
   const opts = ctx.opts
   const dark9L = Math.max(ctx.scaleL, opts?.darkFillMinL ?? specFloorL)
-  const darkC9 = opts?.darkChromaCurve && !opts?.loudCta ? ctx.brandC * darkCtaTrim(ctx.darkH) : ctx.brandC
+  // dark cta chroma by the DECLARED register (DARK_CTA_C, C16): brand = trimmed, signal = identity
+  const darkC9 = opts?.darkChromaCurve && DARK_CTA_C[opts?.darkCtaC ?? 'brand'].policy === 'trimmed'
+    ? ctx.brandC * darkCtaTrim(ctx.darkH) : ctx.brandC
   const darkHueAtL = (L: number) => torsionedHue(ctx.darkH, L, dark9L, ctx.gOffPath)
   return { dark9L, darkC9, darkHueAtL }
 }

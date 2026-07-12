@@ -8,8 +8,7 @@ import {
 } from './constraints'
 import {
   ILLUS_STOPS,
-  REFERENCE_H,
-} from './stopTable'
+  REFERENCE_H, type DarkCtaKind } from './stopTable'
 import { neutralChromaCurve, subtleSecondaryChromaCurve, type NeutralLevel } from './neutralCurve'
 
 export type { NeutralLevel } from './neutralCurve'
@@ -103,7 +102,10 @@ export interface GenerateOptions {
 
   darkChromaCurve?: (L: number, H: number, brandC: number, ctaC?: number) => number
 
-  loudCta?: boolean
+  // the DARK CTA chroma register key (DARK_CTA_C, C16): 'brand' (default) = trimmed,
+  // 'signal' = identity (dark cta keeps the seed's full chroma — canonical yellow/red
+  // stay byte-identical light<->dark). Replaces the retired loudCta boolean.
+  darkCtaC?: DarkCtaKind
 
   // C12 v8 — THE JOINT SOLVE, brand side (owner-settled 2026-07-10): the brand's nominal
   // seed + the lane's resolved red cta, injected by resolveBrand — the resolver has no

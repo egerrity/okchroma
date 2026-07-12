@@ -775,3 +775,44 @@ vs red.
 reads up to ~2 Lc apart between bases, which the margin absorbs; external sRGB checkers on a P3
 display measure a converted pixel, so razor-adjacent readings will always disagree slightly across
 toolchains — the margin, not basis litigation, is the defense.
+
+## C16 — the dark cta's chroma mechanism was undeclared: `darkCtaTrim` + the `loudCta` opt-out lived outside the SCALE_C contract
+
+**Status:** CLOSED (owner ruling 2026-07-12: **(a) declare, don't change** — executed same day,
+byte-identical, sha256 hash proof over signals + 72-brand sweep + themes, both lanes).
+Audit round 2026-07-09 (owner question out of the C12 round: "why does loudCta still exist?");
+exhibit + harness parked on `audit/loudcta` @ b0e1a70.
+
+**What the flag was.** `loudCta` was consumed exactly once (producers.ts buildDarkContext):
+`darkC9 = darkChromaCurve && !loudCta ? brandC × darkCtaTrim(darkH) : brandC`. No light-mode
+effect. Signals set it (buildSignalScales + the swap/lemon variants); brands never. Shipped
+asymmetry: **brand dark ctas chroma-trimmed** (×0.88 generic, ×0.766 near blue 265° / ×0.781
+near red-magenta 345°), **signal dark ctas identity** — canonical yellow #ffc53d and red
+#d94121 byte-identical light↔dark (the flag's purpose since the unification, ac81b36).
+
+**Measured (2026-07-09 audit, agnostic 12-hue × 3-L sweep at C 0.18, real pipeline,
+patch-dump-restore with hash proof, both profiles):** brands untrimmed = 70/72 dark ctas
+change (median ΔE 0.026, max 0.139) + two apca rows flip on-cta polarity via the Lc enforce
+re-solve; signals trimmed = ΔE 0.018–0.041 (info worst, blue lobe). Gates green in all three
+states but collision lane-divergence moves 47→71/58 — the flag was load-bearing at margins.
+
+**The structural finding (the C10 lens).** C10 ruled scale chroma mechanisms must live in one
+declared table with a gate — but its scope ended at the scale. The cta is off-scale; its dark
+chroma policy was a hidden per-caller boolean branching into undeclared curve constants. The
+name compounded it: `loudCta` never made anything loud — it *skipped the brand trim*.
+
+**Resolution (a, executed):**
+- `DARK_CTA_C` declared in stopTable.ts beside the SCALE_C tables — brand = trimmed register
+  (globalTrim 0.76 + the two lobes, values verbatim), signal = identity. `darkCtaTrim`
+  computes from the declared numbers; the local constants are gone.
+- The boolean is retired: `GenerateOptions.darkCtaC?: 'brand' | 'signal'` (default 'brand');
+  signal callers pass `'signal'`. `loudCta` joins register-audit's banned-names list.
+- register-audit §4: (i) binding — `darkCtaTrim` must match the declared register (72-hue
+  probe); (ii) identity — yellow/red dark ctas byte-match light through the real pipeline,
+  both lanes, ≤1 8-bit step (the C15 apca enforce margin nudges red one step; the trim this
+  guards against moves 10+ — policy and enforce noise separate cleanly).
+- Instrument drift fixed: divergence-audit's BRAND_FLOOR dropped `loudCta: true` — it now
+  measures synthetic brands in the state production ships (trimmed). Snapshot unchanged.
+
+Relates: C6 (warm-side dark cta), C10 (declared-table principle), C12 (the brand-vs-signal
+asymmetry the owner saw), C15 (the enforce margin that nudges red-apca one step).

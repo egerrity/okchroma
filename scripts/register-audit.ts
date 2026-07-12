@@ -19,8 +19,10 @@
 // Run: npm run audit:register
 import * as fs from 'fs'
 import * as path from 'path'
-import { SCALE_C_LIGHT, SCALE_C_DARK } from '../src/engine/stopTable'
+import { SCALE_C_LIGHT, SCALE_C_DARK, DARK_CTA_C } from '../src/engine/stopTable'
 import { MODE_SPECS } from '../src/reqtoken/spec'
+import { darkCtaTrim } from '../src/engine/darkChromaCurve'
+import { signalScalesFor } from '../src/engine/resolve'
 
 let failures = 0
 const fail = (msg: string) => { failures++; console.error('  ✗ ' + msg) }
@@ -78,6 +80,7 @@ const ok = (msg: string) => console.log('  ✓ ' + msg)
     [/\bDARK_SUBTLE_CHROMA_MULT\b/, 'DARK_SUBTLE_CHROMA_MULT (the old dark ladder)'],
     [/\bSTOP_11\b|\bSTOP_12\b|\bDARK_STOP_11\b|\bDARK_STOP_12\b/, 'the old per-stop ink constants'],
     [/HIGHLIGHT_(LIGHT|DARK)\s*=\s*\{[^}]*(baseC|satFraction)/s, 'chroma params on HIGHLIGHT_* (the old band constant)'],
+    [/\bloudCta\b/, 'loudCta (the retired hidden cta-chroma boolean — policy lives in DARK_CTA_C)'],
   ]
   const stripComments = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '')
   const walk = (dir: string): string[] =>
@@ -90,6 +93,40 @@ const ok = (msg: string) => console.log('  ✓ ' + msg)
     for (const [re, what] of banned) if (re.test(body)) { fail(`${what} reappeared in ${path.relative(root, f)}`); hits++ }
   }
   if (!hits) ok('no stitched scale-chroma mechanism present anywhere in src/')
+}
+
+// ── 4. the DARK CTA chroma register (C16, owner ruling 2026-07-12 'declare, don't
+// change') — the cta is off-scale so sections 1-2 never covered it. Two invariants:
+//   a. BINDING — darkCtaTrim computes from the DECLARED DARK_CTA_C.brand numbers
+//      (catches a re-inlined trim constant, the boolean's old failure mode).
+//   b. IDENTITY — signal dark ctas carry the seed's full chroma: canonical yellow and
+//      red cta hexes are byte-identical light<->dark through the REAL pipeline (the
+//      retired loudCta flag's original guarantee, now held by a gate).
+{
+  const rad = (d: number) => (d * Math.PI) / 180
+  const angDist = (h: number, c: number) => Math.abs((((h - c + 540) % 360)) - 180)
+  const lobeF = (h: number, c: number, w: number) => Math.pow(Math.max(0, Math.cos(rad((90 * angDist(h, c)) / w))), 1.5)
+  const b = DARK_CTA_C.brand
+  let bound = true
+  for (let H = 0; H < 360; H += 5) {
+    const declared = 1 - 0.5 * (1 - b.globalTrim * (1 - Math.max(...b.lobes.map(l => l.depth * lobeF(H, l.center, l.width)))))
+    if (Math.abs(declared - darkCtaTrim(H)) > 1e-12) { fail(`darkCtaTrim(${H}) ${darkCtaTrim(H)} != declared ${declared}`); bound = false }
+  }
+  if (bound) ok('darkCtaTrim binds to the declared DARK_CTA_C.brand register (72-hue probe)')
+  if (DARK_CTA_C.signal.policy !== 'identity') fail(`signal cta policy must be identity: ${DARK_CTA_C.signal.policy}`)
+  // tolerance 1/255 per channel: the C15 apca enforce margin nudges red's dark cta one
+  // 8-bit step; the TRIM this invariant guards against (x0.78 in the red-magenta lobe)
+  // moves 10+ steps — policy and enforce noise separate cleanly.
+  for (const cp of [undefined, 'apca' as const]) {
+    for (const name of ['yellow', 'red'] as const) {
+      const sc = signalScalesFor(cp).get(name)!.scale
+      const ch = (c: { r: number; g: number; b: number }) => [c.r, c.g, c.b].map(v => Math.round(Math.max(0, Math.min(1, v)) * 255))
+      const [a, d] = [ch(sc.cta), ch(sc.ctaDark)]
+      const maxStep = Math.max(...a.map((v, i) => Math.abs(v - d[i])))
+      if (maxStep > 1) fail(`${name} (${cp ?? 'wcag'}) dark cta lost light identity: ${a.join(',')} vs ${d.join(',')} (max step ${maxStep})`)
+    }
+  }
+  ok('signal identity invariant holds through the real pipeline (yellow/red, both lanes, <=1 8-bit step)')
 }
 
 if (failures) { console.error(`register-audit: ${failures} failure(s)`); process.exit(1) }

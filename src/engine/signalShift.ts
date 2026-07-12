@@ -46,7 +46,7 @@ function swapScale(baseHex: string, def: SignalDef, contrastProfile?: ContrastPr
   return generateScale(baseHex, def.name, undefined, {
     highlight: true,
     darkChromaCurve,
-    loudCta: true,
+    darkCtaC: 'signal',
     darkFillMinL: def.darkFillMinL,
     enforceOnFillContrast: true,
     suppressRedCool: true,
@@ -61,7 +61,7 @@ function lemonScale(def: SignalDef, contrastProfile?: ContrastProfile): Generate
     chromaScale: def.yieldChromaScale,
     highlight: true,
     darkChromaCurve,
-    loudCta: true,
+    darkCtaC: 'signal',
     enforceOnFillContrast: true,
     suppressRedCool: true,
     goldBoost: true,

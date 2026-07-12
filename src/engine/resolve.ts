@@ -30,7 +30,7 @@ const buildSignalScales = (contrastProfile?: ContrastProfile): SignalScales =>
     SIGNALS.map(def => [
       def.name,
 
-      { def, scale: generateScale(def.hex, def.name, undefined, { highlight: true, darkChromaCurve, loudCta: true, darkFillMinL: def.darkFillMinL, enforceOnFillContrast: true, suppressRedCool: true, goldBoost: true, contrastProfile }) },
+      { def, scale: generateScale(def.hex, def.name, undefined, { highlight: true, darkChromaCurve, darkCtaC: 'signal', darkFillMinL: def.darkFillMinL, enforceOnFillContrast: true, suppressRedCool: true, goldBoost: true, contrastProfile }) },
     ])
   )
 
@@ -98,7 +98,7 @@ function redComplementVariant(
   contrastProfile?: ContrastProfile,
 ): { scale: GeneratedScale; note: string } | null {
   const rctx = buildContext(red.def.hex, {
-    highlight: true, darkChromaCurve, loudCta: true, darkFillMinL: red.def.darkFillMinL,
+    highlight: true, darkChromaCurve, darkCtaC: 'signal', darkFillMinL: red.def.darkFillMinL,
     enforceOnFillContrast: true, suppressRedCool: true, goldBoost: true, contrastProfile,
   } as any)
   const redCta = red.scale.cta

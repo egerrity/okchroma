@@ -63,6 +63,27 @@ export const SCALE_C_DARK: Record<number, ScaleChroma> = {
   10: { inkMult: 0.95, inkMaxC: 0.120 },
   11: { inkMult: 0.62, inkMaxC: 0.045 },
 }
+// ── the DARK CTA chroma register (CATALOG C16, owner ruling 2026-07-12: "declare,
+// don't change"). The cta is off-scale, so the SCALE_C tables never covered it; its
+// dark chroma policy was a hidden per-caller boolean (loudCta) branching into curve
+// constants. Same values, now DECLARED per family kind: brand = the trimmed register
+// (identity chroma damped by the loudness lobes — darkCtaTrim in darkChromaCurve.ts
+// computes from THESE numbers), signal = identity (canonical yellow/red dark ctas
+// stay byte-identical to light — the retired flag's original purpose, unification
+// ac81b36). register-audit binds the trim fn to this table and holds the signal
+// identity invariant through the real pipeline.
+export const DARK_CTA_C = {
+  brand: {
+    policy: 'trimmed' as const,
+    globalTrim: 0.76,
+    lobes: [
+      { center: 265, width: 115, depth: 0.30 },   // blue
+      { center: 345, width: 110, depth: 0.26 },   // red-magenta
+    ],
+  },
+  signal: { policy: 'identity' as const },
+}
+export type DarkCtaKind = keyof typeof DARK_CTA_C
 // ──────────────────────────────────────────────────────────────────────────────
 
 // Stop 8 (highlight-8) carries the WCAG 1.4.11 non-text 3:1 guarantee against

@@ -42,7 +42,9 @@ const synthHex = (L: number, C: number, H: number) => {
   const h2 = (v: number) => Math.round(Math.max(0, Math.min(1, encSrgb(v))) * 255).toString(16).padStart(2, '0')
   return `#${h2(r)}${h2(g)}${h2(b)}`
 }
-const BRAND_FLOOR = { highlight: true, darkChromaCurve, loudCta: true, enforceOnFillContrast: true, darkFillMinL: DARK_BRAND_FILL_MIN_L } as const
+// PRODUCTION PARITY (C16 instrument fix): brands ship TRIMMED dark ctas — the old
+// loudCta:true here measured synthetic brands in a state production never ships.
+const BRAND_FLOOR = { highlight: true, darkChromaCurve, enforceOnFillContrast: true, darkFillMinL: DARK_BRAND_FILL_MIN_L } as const
 
 const fails: string[] = []
 const ok = (cond: boolean, msg: string) => { if (!cond) fails.push(msg) }
