@@ -118,8 +118,18 @@ export function neutralCss(selector: string, brandH: number, level: NeutralLevel
   ].join('\n')
 }
 
-// The canonical signal block (`:root` light + `[data-theme="dark"]`), per profile — the build
+// The canonical signal block (`:root` light + the dark selector below), per profile — the build
 // writes the wcag one to signals.css; the demo re-emits the apca one as an override when toggled.
+//
+// Dark selector: the compound `:root[data-theme="dark"]` (0,2,0) is the cascade guarantee — the
+// P3 light block re-declares out-of-sRGB stops under bare `:root` (0,1,0) LATER in the file, and
+// at equal specificity source order wins, so a flat `[data-theme="dark"]` (0,1,0) dark base lost
+// every var the P3 dark block omits to its LIGHT display-p3 rendition on a root-themed page
+// (near-white red washes inside dark UI). Same bug class as the owner-caught outline P3 pop
+// (2026-07-11, see brandCss) — brandCss/neutralCss were always immune because their dark
+// selectors compound the base selector. The bare `[data-theme="dark"]` stays in the list for
+// scoped carriers (the demo rides the attribute on divs, which `:root` P3 light never matches).
+const SIGNALS_DARK_SELECTOR = ':root[data-theme="dark"], [data-theme="dark"]'
 export function signalsCss(contrastProfile?: ContrastProfile): string {
   const sigScales = signalScalesFor(contrastProfile)
   const lightBlocks: string[] = []
@@ -142,14 +152,14 @@ export function signalsCss(contrastProfile?: ContrastProfile): string {
     `:root {`,
     ...lightBlocks,
     `}`,
-    `[data-theme="dark"] {`,
+    `${SIGNALS_DARK_SELECTOR} {`,
     ...darkBlocks,
     `}`,
     ...(p3LightBlocks.length || p3DarkBlocks.length ? [
       `${P3_SUPPORTS} {`,
       `${P3_MEDIA} {`,
       ...(p3LightBlocks.length ? [`:root {`, ...p3LightBlocks, `}`] : []),
-      ...(p3DarkBlocks.length ? [`[data-theme="dark"] {`, ...p3DarkBlocks, `}`] : []),
+      ...(p3DarkBlocks.length ? [`${SIGNALS_DARK_SELECTOR} {`, ...p3DarkBlocks, `}`] : []),
       `}`,
       `}`,
     ] : []),
