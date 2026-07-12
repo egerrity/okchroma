@@ -364,13 +364,19 @@ figma.ui.onmessage = async (msg) => {
       // on a fresh file.
 
       // migration: the anchor used to live under theme system/ink-13 — RENAME moves it
-      // into the neutral group with every user binding intact, landing directly on the
-      // current name (post ink-13→ink-12 renumber). Files already on neutral/ink-13 are
-      // caught separately by the RENAMED_LEAVES entry via aliasInto's getOrMigrate.
+      // into the neutral group with every user binding intact. It parks on the OLD name
+      // neutral/ink-13, NOT the final ink-12: on a pre-renumber file that final name is
+      // still occupied by the not-yet-migrated old SCALE ink-12, and jumping the anchor
+      // there clobbers that map entry — the neutral ladder then hijacks the anchor into
+      // scale ink-11 (mode-flipping #000/#fff bindings turn brand-tinted) and orphans
+      // the real scale variable. Parking on ink-13 keeps the ascending RENAMED_LEAVES
+      // discipline: the ladder frees ink-12 first, then its ['ink-13','ink-12'] entry
+      // finishes the anchor's move — the same path files already on neutral/ink-13 take
+      // via aliasInto's getOrMigrate. (Guard: never clobber an existing neutral/ink-13.)
       const staleInk = themeByName.get('system/ink-13')
-      if (staleInk) {
-        staleInk.name = 'neutral/ink-12'
-        themeByName.set('neutral/ink-12', staleInk)
+      if (staleInk && !themeByName.has('neutral/ink-13')) {
+        staleInk.name = 'neutral/ink-13'
+        themeByName.set('neutral/ink-13', staleInk)
         themeByName.delete('system/ink-13')
       }
 
