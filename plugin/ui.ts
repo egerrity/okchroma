@@ -259,6 +259,20 @@ function updatePreview() {
 
 // ─── Apply ───────────────────────────────────────────────────────────────────
 
+// The shared-primitive leaf for an overridden signal: readable label + the
+// RESOLVED light-cta hex. The hex is the dedup identity — never the note text:
+// C12 mints hue-less notes ("red → rich L0.49"), so two brands can share a note
+// while carrying DIFFERENT solved hues, and a note-derived key made the second
+// brand's theme alias the FIRST brand's red primitive (shared prims write
+// refresh=false — only consulted the first time). Identical resolved variants
+// across brands still dedup onto one primitive; the hex suffix also keeps '.'
+// out of Figma variable names. The label part is display-only.
+const variantKey = (ov: { note: string; scale: GeneratedScale }) => {
+  const label = ov.note.split('→').pop()!.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+  const c = ov.scale.cta
+  return `${label}-${toHex(c.r, c.g, c.b).slice(1)}`
+}
+
 function buildAndSend() {
   const name = toSpinal(collectionInput.value)
   if (!name) { setStatus('Enter a brand name first.', 'err'); return }
@@ -290,14 +304,14 @@ function buildAndSend() {
     const neutralKey = neutralLevel === 'pure'
       ? 'pure'
       : `${neutralLevel}-h${Math.round(r.scale.brandH)}`
-    // Per-signal variant key for Foundations dedup. An override note reads
-    // "warning → lemon" / "success → teal-side"; we key on the right-hand side
-    // (lemon, teal-side, …). No override → the canonical ramp, keyed 'base'.
+    // Per-signal variant key for Foundations dedup — keyed on the resolved
+    // variant's identity via variantKey (label + cta hex), never the note text.
+    // No override → the canonical ramp, keyed 'base'.
     const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
     const sigScales = signalScalesFor(cp)
     const signals = SIGNALS.map(s => {
       const ov = r.signalOverrides.find(o => o.name === s.name)
-      const variant = ov ? ov.note.split('→').pop()!.trim().toLowerCase().replace(/\s+/g, '-') : 'base'
+      const variant = ov ? variantKey(ov) : 'base'
       return { name: s.name, scale: ov?.scale ?? sigScales.get(s.name)!.scale, variant }
     })
 
