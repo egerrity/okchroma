@@ -111,6 +111,14 @@ export const COMPONENT_CSS = `
   outline: 2px solid var(--brand-highlight-8);
   outline-offset: 1px;
 }
+/* The app-chrome scope is brandless — it carries only the generated neutral
+   (App.tsx neutralCss), so --brand-highlight-8 doesn't exist there and the
+   rule above would go invalid at computed-value time (no ring at all on the
+   footer controls). Alias the ring source to the chrome's own neutral
+   highlight-8 — stop 8 of whichever ramp owns the scope. */
+[data-brand="chrome"] {
+  --brand-highlight-8: var(--neutral-highlight-8);
+}
 ${ACCENT_MODE_CSS}
 `
 
