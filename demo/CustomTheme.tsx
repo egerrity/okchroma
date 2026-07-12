@@ -10,7 +10,7 @@ import { type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngi
 import { wcagY, contrastRatio } from '../src/engine/constraints'
 import { HERO_ILLO } from './heroIllo'
 import {
-  BanIcon, Segmented,
+  Segmented,
   normalizeHex,
   type RungMode,
 } from './shared'
@@ -93,16 +93,16 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   const [primaryInput, setPrimaryInput] = useState('#E93D82')
   // The secondary is a three-state field (owner UX): none — just an "Add secondary"
   // button; derived — the field tracks the primary live (the engine derives the subtle
-  // tint; no style chip); custom — the user's own hex, style chip shown. Typing in
-  // derived mode detaches to custom; the trailing menu moves between all three.
+  // tint); custom — the user's own hex. ONE chip carries the whole offering (owner
+  // 2026-07-12): From primary / Custom (their hex through the model) / Exact / Remove.
+  // Typing in derived mode detaches to custom (the model) with the typed value.
   const [secState, setSecState] = useState<'none' | 'derived' | 'custom'>('none')
   const [secondaryInput, setSecondaryInput] = useState('')
-  const [secMenuOpen, setSecMenuOpen] = useState(false)
   // per-family modes (owner design: exact decoupled per family, chips in the fields). The
   // primary's chip = Recommended / Exact / the six archetype anchors; the secondary's chip =
   // Custom (exact) / Outline — the struck subtle models are gone (owner 2026-07-12).
   const [primaryMode, setPrimaryMode] = useState<'recommended' | 'exact' | Archetype>('recommended')
-  const [secondaryStyle, setSecondaryStyle] = useState<SecondaryStyle>('exact')
+  const [secondaryStyle, setSecondaryStyle] = useState<SecondaryStyle>('default')
   // legacy shape for the checklist/toast logic: anchors count as recommended machinery
   const rung: RungMode = primaryMode === 'exact' ? 'exact' : 'recommended'
   // APCA is the DEFAULT (owner 2026-07-04, the true split): the perceptually-solved look ships;
@@ -128,17 +128,6 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   const parsedSecondary = normalizeHex(secondaryInput)
   if (parsedSecondary) lastValidSecondary.current = parsedSecondary
   const secondary = secState === 'custom' ? (parsedSecondary ?? (secondaryInput ? lastValidSecondary.current : null)) : null
-
-  // Close the secondary menu on outside click
-  const popoverRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    if (!secMenuOpen) return
-    const onDown = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) setSecMenuOpen(false)
-    }
-    document.addEventListener('mousedown', onDown)
-    return () => document.removeEventListener('mousedown', onDown)
-  }, [secMenuOpen])
 
   const computed = useMemo(() => {
     const cp = profile === 'apca' ? ('apca' as const) : undefined
@@ -209,7 +198,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
     outline: { background: 'transparent', color: 'var(--secondary-ink-10)', border: '1px solid var(--secondary-highlight-8)' },
     grey: { background: 'var(--surface-sunken)', color: 'var(--fg-subtle)' },
   }
-  const styleLabel: Record<SecondaryStyle, string> = { default: 'From brand', outline: 'Outline', exact: 'Custom' }
+  const styleLabel: Record<SecondaryStyle, string> = { default: 'Custom', outline: 'Outline', exact: 'Exact' }
   // the ⓘ copy per selection (Figma spec) — the always-visible tooltip replacement
   const primaryInfo = primaryMode === 'recommended' ? 'Engine adjusts for optimal legibility'
     : primaryMode === 'exact' ? 'Your hex ships untouched'
@@ -246,7 +235,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
         <InfoLine text={primaryInfo} />
       </div>
 
-      <div className="ct-bar-field" style={{ position: 'relative' }} ref={popoverRef}>
+      <div className="ct-bar-field" style={{ position: 'relative' }}>
         <div className="ct-label">Secondary color</div>
         {secState === 'none' ? (
           // no secondary is the demo's default — the field only exists once added
@@ -266,44 +255,23 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
             <input value={derived ? primary.toUpperCase() : secondaryInput} placeholder="enter a hex"
               style={derived ? { color: 'var(--fg-subtle)' } : undefined}
               onChange={e => { setSecState('custom'); setSecondaryInput(e.target.value) }} spellCheck={false} />
-            {derived ? (
-              // passive marker, not the style chip — derived is the default model, engine's call
-              <span style={{ fontSize: 11, color: 'var(--fg-subtle)', marginLeft: 'auto', flexShrink: 0 }}>from primary</span>
-            ) : (
-              <ChipSelect value={secondaryStyle} title="Secondary style" label={styleLabel[secondaryStyle]}
-                tone={secondaryStyle === 'exact' ? chipTone.grey : secondaryStyle === 'outline' ? chipTone.outline : chipTone.secondary}
-                onChange={v => setSecondaryStyle(v as SecondaryStyle)}>
-                <option value="default">From brand</option>
-                <option value="exact">Custom</option>
-                <option value="outline">Outline</option>
-              </ChipSelect>
-            )}
-            <button className="ct-iconbtn" title="Secondary options" onClick={() => setSecMenuOpen(o => !o)}>
-              <ChevronDown size={12} strokeWidth={2.5} />
-            </button>
+            <ChipSelect value={derived ? 'from-primary' : secondaryStyle} title="Secondary options"
+              label={derived ? 'From primary' : styleLabel[secondaryStyle]}
+              tone={!derived && secondaryStyle === 'exact' ? chipTone.grey : chipTone.secondary}
+              onChange={v => {
+                if (v === 'from-primary') { setSecState('derived'); return }
+                if (v === 'remove') { setSecState('none'); setSecondaryInput(''); return }
+                if (!secondaryInput) setSecondaryInput(primary.toUpperCase())
+                setSecState('custom'); setSecondaryStyle(v as SecondaryStyle)
+              }}>
+              <option value="from-primary">From primary</option>
+              <option value="default">Custom</option>
+              <option value="exact">Exact</option>
+              <option value="remove">Remove</option>
+            </ChipSelect>
           </div>
         )}
         {secState !== 'none' && <InfoLine text={secondaryInfo} />}
-        {secMenuOpen && secState !== 'none' && (
-          <div className="ct-popover">
-            <button className="ct-suggest" style={derived ? { borderColor: 'var(--brand-highlight-8)' } : undefined}
-              onClick={() => { setSecMenuOpen(false); setSecState('derived') }}>
-              <span className="ct-swatch sm" style={{ background: 'var(--secondary-cta-1)' }} />
-              From primary
-            </button>
-            <button className="ct-suggest" style={secState === 'custom' ? { borderColor: 'var(--brand-highlight-8)' } : undefined}
-              onClick={() => {
-                // keep the pre-filled primary hex so "custom" starts from what derived showed
-                if (!secondaryInput) setSecondaryInput(primary.toUpperCase())
-                setSecMenuOpen(false); setSecState('custom')
-              }}>
-              Custom
-            </button>
-            <button className="ct-remove" onClick={() => { setSecMenuOpen(false); setSecState('none'); setSecondaryInput('') }}>
-              <BanIcon size={13} /> Remove
-            </button>
-          </div>
-        )}
       </div>
 
       <div className="ct-bar-field">

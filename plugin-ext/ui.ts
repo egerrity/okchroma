@@ -15,7 +15,7 @@ let neutralLevel: NeutralLevel = 'default'
 // the six archetype anchors; the secondary's select = its style chip (custom only —
 // derived rides the default seed-transform, the engine's call).
 let primaryMode: 'recommended' | 'exact' | Archetype = 'recommended'
-let secondaryStyle: SecondaryStyle = 'exact'
+let secondaryStyle: SecondaryStyle = 'default'
 // PREVIEW lens only — the apply always writes all four solve columns (wcag · wcag-dark ·
 // apca · apca-dark). WCAG is this plugin’s default lane, so it leads the preview too.
 let contrastProfile: ContrastProfile = 'wcag'
@@ -38,13 +38,11 @@ const primaryChip        = $<HTMLElement>('primary-chip')
 const primaryChipLabel   = $<HTMLElement>('primary-chip-label')
 const primaryInfo        = $<HTMLElement>('primary-info')
 const archetypeGroup     = $<HTMLElement>('archetype-group')
-const secondarySlot      = $<HTMLElement>('secondary-slot')
 const secondaryAddBtn    = $<HTMLButtonElement>('secondary-add')
 const secondaryField     = $<HTMLElement>('secondary-field')
 const secondaryHexInput  = $<HTMLInputElement>('secondary-hex')
 const secondaryPicker    = $<HTMLInputElement>('secondary-picker')
 const secondarySwatch    = $<HTMLElement>('secondary-swatch')
-const secondaryMarker    = $<HTMLElement>('secondary-marker')
 const secondaryStyleSelect = $<HTMLSelectElement>('secondary-style')
 const secondaryChip      = $<HTMLElement>('secondary-chip')
 const secondaryChipLabel = $<HTMLElement>('secondary-chip-label')
@@ -52,12 +50,6 @@ const secondaryInfo      = $<HTMLElement>('secondary-info')
 const secondaryInfoLine  = $<HTMLElement>('secondary-info-line')
 const neutralLabel       = $<HTMLElement>('neutral-label')
 const neutralInfo        = $<HTMLElement>('neutral-info')
-const secondaryMenuBtn   = $<HTMLButtonElement>('secondary-menu-btn')
-const secondaryMenu      = $<HTMLElement>('secondary-menu')
-const menuDerived        = $<HTMLButtonElement>('menu-derived')
-const menuDerivedSwatch  = $<HTMLElement>('menu-derived-swatch')
-const menuCustom         = $<HTMLButtonElement>('menu-custom')
-const menuRemove         = $<HTMLButtonElement>('menu-remove')
 const neutralSwatch   = $<HTMLElement>('neutral-swatch')
 const neutralSelect   = $<HTMLSelectElement>('neutral-select')
 const profileBtns     = document.querySelectorAll<HTMLButtonElement>('.seg-btn[data-profile]')
@@ -97,7 +89,7 @@ function setStatus(text: string, tone: '' | 'ok' | 'err' = '') {
 // ─── The secondary field's three states ──────────────────────────────────────
 
 // the ⓘ copy per selection (Figma spec) — the always-visible tooltip replacement
-const STYLE_LABEL: Record<SecondaryStyle, string> = { default: 'From brand', outline: 'Outline', exact: 'Custom' }
+const STYLE_LABEL: Record<SecondaryStyle, string> = { default: 'Custom', outline: 'Outline', exact: 'Exact' }
 const STYLE_INFO: Record<SecondaryStyle, string> = {
   default: 'Your color through the derived model — lifted, engine-normal',
   outline: 'Outline only',
@@ -115,7 +107,8 @@ function syncInfoLines() {
   primaryInfo.textContent = primaryMode === 'recommended' ? 'Engine adjusts for optimal legibility'
     : primaryMode === 'exact' ? 'Your hex ships untouched'
     : `Anchored to the ${primaryMode} archetype`
-  secondaryChipLabel.textContent = STYLE_LABEL[secondaryStyle]
+  secondaryChipLabel.textContent = secondaryMode === 'derived' ? 'From primary' : STYLE_LABEL[secondaryStyle]
+  secondaryStyleSelect.value = secondaryMode === 'derived' ? 'from-primary' : secondaryStyle
   secondaryInfoLine.style.display = secondaryMode === 'off' ? 'none' : ''
   secondaryInfo.textContent = secondaryMode === 'derived' ? 'A lighter take on your primary — derived by default' : STYLE_INFO[secondaryStyle]
   neutralLabel.textContent = NEUTRAL_LABEL[neutralLevel]
@@ -126,12 +119,9 @@ function setSecondaryMode(mode: SecondaryMode) {
   secondaryMode = mode
   secondaryAddBtn.style.display = mode === 'off' ? '' : 'none'
   secondaryField.style.display = mode === 'off' ? 'none' : ''
-  secondaryMarker.style.display = mode === 'derived' ? '' : 'none'
-  secondaryChip.style.display = mode === 'custom' ? '' : 'none'
+  secondaryChip.style.display = ''
   secondaryHexInput.classList.toggle('dim', mode === 'derived')
   if (mode !== 'custom') secondaryHexInput.classList.remove('invalid')
-  menuDerived.classList.toggle('on', mode === 'derived')
-  menuCustom.classList.toggle('on', mode === 'custom')
   updatePreview()
 }
 
@@ -227,7 +217,6 @@ function updatePreview() {
     if (t.secondary) {
       const c = t.secondary.scale.cta
       const h = toHex(c.r, c.g, c.b)
-      menuDerivedSwatch.style.background = h
       if (secondaryMode === 'derived') {
         secondarySwatch.style.background = h
         secondaryHexInput.value = primaryHex
@@ -356,20 +345,17 @@ secondaryPicker.addEventListener('input', () => {
   updatePreview()
 })
 
+// ONE select carries the whole offering (owner 2026-07-12): From primary / Custom (their
+// hex through the model) / Exact / Remove.
 secondaryStyleSelect.addEventListener('change', () => {
-  secondaryStyle = secondaryStyleSelect.value as SecondaryStyle
-  updatePreview()
-})
-
-secondaryMenuBtn.addEventListener('click', () => {
-  secondaryMenu.style.display = secondaryMenu.style.display === 'none' ? '' : 'none'
-})
-menuDerived.addEventListener('click', () => {
-  secondaryMenu.style.display = 'none'
-  setSecondaryMode('derived')
-})
-menuCustom.addEventListener('click', () => {
-  secondaryMenu.style.display = 'none'
+  const v = secondaryStyleSelect.value
+  if (v === 'from-primary') { setSecondaryMode('derived'); return }
+  if (v === 'remove') {
+    secondaryHex = null
+    secondaryHexInput.value = ''
+    setSecondaryMode('off')
+    return
+  }
   // custom starts from what derived showed — prefill the primary hex (demo parity)
   if (!secondaryHex) {
     secondaryHex = primaryHex
@@ -377,17 +363,8 @@ menuCustom.addEventListener('click', () => {
     secondaryPicker.value = primaryHex
     secondarySwatch.style.background = primaryHex
   }
+  secondaryStyle = v as SecondaryStyle
   setSecondaryMode('custom')
-})
-menuRemove.addEventListener('click', () => {
-  secondaryMenu.style.display = 'none'
-  secondaryHex = null
-  secondaryHexInput.value = ''
-  setSecondaryMode('off')
-})
-document.addEventListener('mousedown', e => {
-  if (secondaryMenu.style.display !== 'none' && !secondarySlot.contains(e.target as Node))
-    secondaryMenu.style.display = 'none'
 })
 
 neutralSelect.addEventListener('change', () => {
