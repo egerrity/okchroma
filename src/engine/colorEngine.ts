@@ -108,10 +108,16 @@ export interface GenerateOptions {
   // C12 v8 — THE JOINT SOLVE, brand side (owner-settled 2026-07-10): the brand's nominal
   // seed + the lane's resolved red cta, injected by resolveBrand — the resolver has no
   // cross-scale view. The light cta exits the true-red region via solveBrandExit
-  // (producers.ts: nearest edge, her direction rules, brick-band diagonal). No dark member —
-  // dark never fires under the Lc-60 on-cta bar (collision-sweep asserts). Absent (signals,
-  // neutral, secondary, exact, archetypeOverride) = byte-identical.
-  ctaSolve?: { seed: { L: number; C: number; H: number }; red: { L: number; C: number; H: number } }
+  // (producers.ts: nearest edge, her direction rules, brick-band diagonal). The DARK cta
+  // rides the same solve on dark geometry keyed on P2 (owner 2026-07-11, "dark falls out
+  // like every cta"): redDark = the lane's red dark cta, solveDarkCtaExit — the P1 gate is
+  // blind to dark vibration. Absent (signals, neutral, secondary, exact, archetypeOverride)
+  // = byte-identical.
+  ctaSolve?: {
+    seed: { L: number; C: number; H: number }
+    red: { L: number; C: number; H: number }
+    redDark: { L: number; C: number; H: number }
+  }
 
   heat?: number
 

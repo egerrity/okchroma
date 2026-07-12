@@ -179,7 +179,11 @@ export function resolveBrand(
   const collisions = !opts?.exact && !opts?.skipCollisionRules
   const solving = collisions && !opts?.archetypeOverride
   const solveOpt = solving ? {
-    ctaSolve: { seed: seedO, red: { L: red.cta.L, C: red.cta.C, H: red.cta.H } },
+    ctaSolve: {
+      seed: seedO,
+      red: { L: red.cta.L, C: red.cta.C, H: red.cta.H },
+      redDark: { L: red.ctaDark.L, C: red.ctaDark.C, H: red.ctaDark.H },
+    },
   } : {}
 
   const floor = {

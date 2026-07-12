@@ -524,3 +524,37 @@ export function solveBrandExit(
   }
   return landing
 }
+
+// ================= C12 dark — THE SAME SOLVE ON DARK GEOMETRY (owner 2026-07-11, "dark falls
+// out like every cta"; direction accepted on render/c12-dark-solve.html) =====================
+// The dark cta rides the shipped prominence floor UNLESS it P2-vibrates beside the red dark
+// cta — the P1 gate passes every vibrating dark pair (redGateDist 0.11-0.20; the known dark
+// blindness), so membership + release key on P2: member = p2 < P2_D_UP, travel the nearest
+// direction to p2 ≥ P2_D with a passing pole. Red dark stays canonical/static. Measured on
+// the near-red population (70 pairs, both lanes): 0 below bar (shipped: 12, worst 0.086);
+// every mover = the apca lane lifting UP ~0.70→0.77 (brighter = MORE prominent — no dead
+// buttons); wcag already separates (red dark 0.585 vs floor 0.70) and never fires. Full-wheel
+// over-fire: 3/576, all within dh −4…+6 of red. Returns null = not a member — byte-identical.
+export function solveDarkCtaExit(
+  cur: { L: number; C: number; H: number },
+  cFor: (L: number) => number, darkH: number,
+  redDark: { L: number; C: number; H: number },
+  enforceLc?: number,
+): number | null {
+  const at = (L: number) => ({ L, C: clampChromaToGamut(L, cFor(L), darkH), H: darkH })
+  if (p2Diff(cur, redDark) >= P2_D_UP) return null
+  const poleOk = (L: number, C: number, H: number): boolean => enforceLc !== undefined
+    ? (whiteTextLcAt(L, C, H) >= enforceLc || blackTextLcAt(L, C, H) >= enforceLc)
+    : (legalRatio(L, C, H, 1.0) >= 4.5 || legalRatio(L, C, H, 0) >= 4.5)
+  const travel = (dir: 1 | -1): number | null => {
+    for (let L = cur.L; L >= 0.28 && L <= 0.92; L += dir * 0.002) {
+      const c = at(L)
+      if (p2Diff(c, redDark) >= P2_D && poleOk(L, c.C, c.H)) return Math.abs(L - cur.L)
+    }
+    return null
+  }
+  const dn = travel(-1), up = travel(1)
+  if (dn === null && up === null) return null // trapped: keep the shipped floor (unreachable on measured geometry)
+  const dir = dn !== null && (up === null || dn <= up) ? -1 : 1
+  return cur.L + dir * (dir === -1 ? dn! : up!)
+}

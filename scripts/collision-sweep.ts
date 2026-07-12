@@ -14,6 +14,7 @@
 import { resolveTheme, signalScalesFor } from '../src/engine/resolve'
 import { SIGNALS, type SignalDef } from '../src/engine/signals'
 import { checkCollision, checkHueCollision, stopDeltaE, HUE_COLLISION_MIN_V, RED_GATE, redGateDist } from '../src/engine/collision'
+import { p2Diff, P2_D_UP } from '../src/engine/p2'
 import { clampChromaToGamut, oklchToLinearRgb } from '../src/engine/constraints'
 import type { GeneratedScale, ContrastProfile } from '../src/engine/colorEngine'
 
@@ -89,13 +90,14 @@ for (const sig of SIGNALS)
         v: h.vividness,
         secWmin: Math.min(washMin(sec, effective, 'light'), washMin(sec, effective, 'dark')),
         secNoted: t.secondary!.notes.some(n => n.includes(sig.name)),
-        // C12 v6 gate delivery: EVERY brand cta must sit OUTSIDE the owner-calibrated
-        // red-family gate per mode, measured against the EFFECTIVE red for that brand —
-        // the per-brand variant when the red moved (identity-keep class), else canonical.
-        // Dark is asserted against canonical: dark never fires under the Lc-60 bar and
-        // there is no dark variant (the variant is light-lane machinery).
+        // C12 gate delivery: EVERY brand cta must sit OUTSIDE the owner-calibrated
+        // red-family gate (LIGHT, P1) / outside the P2 vibration bar (DARK), measured
+        // against the EFFECTIVE red for that brand — the per-brand variant when the red
+        // moved (identity-keep class), else canonical. Dark keys on P2 (owner 2026-07-11):
+        // the P1 gate passes vibrating dark pairs (redGateDist 0.11-0.20 while p2 sits
+        // 0.086-0.109 — the dark blindness); solveDarkCtaExit delivers the release.
         ctaSepLight: redGateDist(p.cta, (t.primary.signalOverrides.find(o => o.name === 'red')?.scale ?? signalScalesFor(profile).get('red')!.scale).cta),
-        ctaSepDark: redGateDist(p.ctaDark, signalScalesFor(profile).get('red')!.scale.ctaDark),
+        ctaSepDark: p2Diff(p.ctaDark, signalScalesFor(profile).get('red')!.scale.ctaDark),
       })
     }
 
@@ -113,8 +115,8 @@ for (const sig of SIGNALS) {
     // lemon variant) is a known value-side item for the dark round, not a regression.
     const firedUnderLight = qualified.filter(r => r.fired.length > 0 && r.wminLight < HARD_BAR)
     const secUnnoted = rs.filter(r => r.secWmin < HARD_BAR && !r.secNoted)
-    // C12 gate delivery — every brand cta outside the red-family gate, per mode
-    const repelUnder = rs.filter(r => r.ctaSepLight < RED_GATE.G - 1e-3 || r.ctaSepDark < RED_GATE.G - 1e-3)
+    // C12 gate delivery — light outside the red-family gate (P1), dark outside the P2 bar
+    const repelUnder = rs.filter(r => r.ctaSepLight < RED_GATE.G - 1e-3 || r.ctaSepDark < P2_D_UP - 1e-3)
     fail += holes.length + secUnnoted.length + firedUnderLight.length + repelUnder.length
     const flag = holes.length || secUnnoted.length || firedUnderLight.length || repelUnder.length ? ' ✗' : ''
     console.log(`  ${sig.name} · ${lane}: HOLES ${holes.length}/${qualified.length} · fired-under-LIGHT ${firedUnderLight.length} (asserted) · fired-under any-mode ${firedUnder.length} · derived-sec unnoted-under ${secUnnoted.length} · repel-under ${repelUnder.length} (asserted)${flag}`)

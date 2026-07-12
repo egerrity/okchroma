@@ -18,7 +18,7 @@ import {
   separationClampLight,
   darkScaleChromaAt, darkInkChromaAt, darkHighlightChromaAt, placeDark, placeDarkDelta, deltaDarkTargetL,
   onFillIsWhiteLight, onFillIsWhiteDarkAt, onHighlightIsWhiteAt, ctaLightL, ctaDarkEnforcedL,
-  ctaLightLApca, ctaDarkEnforcedLApca, solveBrandExit, ctaDualGateL,
+  ctaLightLApca, ctaDarkEnforcedLApca, solveBrandExit, solveDarkCtaExit, ctaDualGateL,
   apcaYAt, findMaxLForApcaLc, APCA_SOLVE_MARGIN_LC, APCA_TOL_LC,
 } from './producers'
 
@@ -391,9 +391,27 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       ctaHover = emitRole('cta-hover', hoverL(enforcedL), ctx.cAt('dark', hoverL(enforcedL), d.darkC9), ctx.darkCtaH)
       cta.enforced = true; ctaHover.enforced = true
     }
-    // C12 v6: NO dark exit. Under the Lc-60 on-cta bar the enforced dark ctas sit deep
-    // enough that nothing lands inside red's gate in dark geometry (measured: zero fired
-    // across the agnostic grid, both profiles) — collision-sweep asserts it stays zero.
+    // C12 dark (owner 2026-07-11, "dark falls out like every cta"; supersedes the v6 "no dark
+    // exit" note): the FINAL enforced dark cta runs the same solve on dark geometry, keyed on
+    // P2 — the P1 gate passes vibrating dark pairs (the known blindness). Member = p2 < bar
+    // beside the lane's red dark cta (opts.ctaSolve.redDark) → nearest release with a passing
+    // pole; red dark stays canonical. Measured movers = apca near-reds lifting ~0.70→0.77;
+    // wcag never fires. Null = byte-identical.
+    if (ctx.opts?.ctaSolve) {
+      const darkCFor = (L: number) => ctx.cAt('dark', L, d.darkC9)
+      const exitL = solveDarkCtaExit(cta, darkCFor, ctx.darkCtaH, ctx.opts.ctaSolve.redDark, enforceLc)
+      if (exitL !== null) {
+        cta = emitRole('cta', exitL, darkCFor(exitL), ctx.darkCtaH)
+        ctaHover = emitRole('cta-hover', hoverL(exitL), darkCFor(hoverL(exitL)), ctx.darkCtaH)
+        cta.enforced = true; ctaHover.enforced = true
+        cta.repelled = true; ctaHover.repelled = true
+        // the pole re-judged AT the exited fill (mirrors the light repelled re-judge: wcag
+        // rides the 4.5 conformance floor; apca's move delivered a passing pole in-travel)
+        onFillIsWhite = onFillIsWhiteDarkAt(cta.L, cta.C, cta.H,
+          enforceLc !== undefined ? false : onFillEnforce,
+          enforceLc !== undefined ? undefined : 4.5)
+      }
+    }
   }
 
   // on-highlight: judged at the emitted highlight-9 — never feeds back into the fill. The
