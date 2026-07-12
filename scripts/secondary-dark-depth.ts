@@ -34,7 +34,7 @@ for (const profile of ['wcag', 'apca'] as const) {
     const baseDarkL = subtleCtaLFor(tm.primary.scale).dark
     const prim = { c: tm.primary.scale.ctaDark, w: tm.primary.scale.onFillTextIsWhiteDark }
     const neu = { c: nScale.ctaDark, w: nScale.onFillTextIsWhiteDark }
-    const curves = { muted: mutedSecondaryCurve(hex), vibrant: vibrantSecondaryCurve(H) }
+    const curves = { muted: mutedSecondaryCurve(hex), vibrant: vibrantSecondaryCurve(hex) }
     for (const style of ['muted', 'vibrant'] as const) {
       const cells = EXTRA.map(x => {
         const L = Math.max(0.22, baseDarkL - x)

@@ -307,10 +307,19 @@ export const MUTED_DARK_VIBRANT_CAP = 0.85
 // vivid where small-gamut teals read dull at the same k). The boost profile is the accepted
 // green specimen's, declared: [L, apparent boost] at the LIGHT_L scaffold. LIGHT ONLY — dark
 // keeps the shipped pastel flat k.
+// SMOOTH single-arc profile (owner wobble catch 2026-07-12: the first table was EXTRACTED
+// from the green specimen and baked green's gamut geometry in — a 5.02 bump at L.85 crashing
+// to 2.28 at L.92; hues whose stops land on the kink got per-stop chroma pops, gold's stop-7
+// worst). Designed arc: quiet at the white edge, plateau ~4.3 through the mid band, gentle
+// taper into the deep end — no data kinks for the per-stop solve to amplify.
 export const VIBRANT_BOOST: ReadonlyArray<readonly [number, number]> = [
-  [0.3, 3.023], [0.53, 4.191], [0.56, 4.197], [0.6, 4.184], [0.738, 4.353], [0.801, 4.718],
-  [0.852, 5.018], [0.892, 3.438], [0.924, 2.278], [0.95, 1.433], [0.97, 0.832], [0.987, 0.35],
+  [0.3, 3.0], [0.5, 4.1], [0.65, 4.3], [0.8, 4.3], [0.88, 3.4], [0.93, 2.2], [0.96, 1.2], [0.99, 0.35],
 ]
+// vividness ceiling for the vibrant solve (same owner catch): near white, high-H-K hues
+// (yellow worst) buy ENORMOUS chroma per unit of apparent boost — a uniform-apparent wash
+// solved to C .20-.24 on a derived yellow = neon. The solve keeps its uniform-apparent
+// target only while it fits under this fraction of the hue's own gamut ceiling.
+export const VIBRANT_MAX_VIVID = 0.6
 const vibrantBoostAt = (L: number): number => {
   const pts = VIBRANT_BOOST
   if (L <= pts[0][0]) return pts[0][1]
@@ -326,8 +335,38 @@ const vibrantBoostAt = (L: number): number => {
 // the quiet cta's dark L while old pastel-dark carries ~.04, teal worst). Vibrant's rule is
 // mode-agnostic by construction (a constant apparent boost over the stop's own gray — the dark
 // fill policy's own equalizer); muted rides the identity ramp's own DARK stops.
-export function vibrantSecondaryCurve(H: number): (L: number, mode: 'light' | 'dark') => number {
-  return (L, _mode) => solveCForApparent(L, H, grayApparentL(L) + vibrantBoostAt(L))
+// PAPER PARITY (owner catch 2026-07-12, #E7EA3E side-by-side: "something is making it much
+// brighter in the secondaries than in the regular application on primary"): the uniform boost
+// granted the PAPER stops 2-3× the chroma the primary ramp gives the same hex (paper-1 .010
+// brand vs .023 vibrant) — papers are the room's register, not identity carriers. The paper
+// band (L ≥ ~.965, blending out by .94) rides the hue's own IDENTITY paper chroma — the exact
+// treatment the primary application gives those stops; the boost model owns wash-3 downward.
+// Light branch only: dark paper chroma carries from the light twin under the delta model.
+const VIBRANT_PAPER_BLEND_HI = 0.965
+const VIBRANT_PAPER_BLEND_LO = 0.94
+export function vibrantSecondaryCurve(hex: string): (L: number, mode: 'light' | 'dark') => number {
+  const { H } = hexToOklch(hex)
+  const identity = resolveBrand(hex, 'sec-identity', {}).scale.light
+    .map(s => ({ L: s.L, C: s.C })).sort((a, b) => a.L - b.L)
+  const identityAt = (L: number): number => {
+    if (L <= identity[0].L) return identity[0].C
+    if (L >= identity[identity.length - 1].L) return identity[identity.length - 1].C
+    for (let i = 0; i < identity.length - 1; i++) if (L >= identity[i].L && L <= identity[i + 1].L) {
+      const t = (L - identity[i].L) / Math.max(1e-6, identity[i + 1].L - identity[i].L)
+      return identity[i].C + (identity[i + 1].C - identity[i].C) * t
+    }
+    return identity[identity.length - 1].C
+  }
+  const sm = (t: number) => { const x = Math.min(1, Math.max(0, t)); return x * x * (3 - 2 * x) }
+  return (L, mode) => {
+    const boostC = Math.min(
+      solveCForApparent(L, H, grayApparentL(L) + vibrantBoostAt(L)),
+      VIBRANT_MAX_VIVID * maxChromaAt(L, H),
+    )
+    if (mode === 'dark') return boostC
+    const w = sm((L - VIBRANT_PAPER_BLEND_LO) / (VIBRANT_PAPER_BLEND_HI - VIBRANT_PAPER_BLEND_LO))
+    return w * identityAt(L) + (1 - w) * boostC
+  }
 }
 export function mutedSecondaryCurve(hex: string): (L: number, mode: 'light' | 'dark') => number {
   const id = resolveBrand(hex, 'sec-identity', {}).scale
@@ -349,7 +388,7 @@ export function mutedSecondaryCurve(hex: string): (L: number, mode: 'light' | 'd
   // solves LOW for high-H-K hues). Muted-dark caps under vibrant-dark at the same L. Light is
   // NOT capped — the approved light cards stand (the same property exists at violet's light
   // highlight/ink band and read correctly in context there).
-  const vib = vibrantSecondaryCurve(hexToOklch(hex).H)
+  const vib = vibrantSecondaryCurve(hex)
   return (L, mode) => mode === 'dark'
     ? Math.min(MUTED_IDENTITY_SCALE * darkRamp(L), MUTED_DARK_VIBRANT_CAP * vib(L, 'dark'))
     : MUTED_IDENTITY_SCALE * lightRamp(L)
@@ -481,7 +520,7 @@ export function resolveTheme(input: {
   // muted ramp — its
   // cta re-resolution happens at the EMITTERS. Dark branches keep each style's shipped curve.
   const subtleModelFor = (hex: string) => secStyle === 'vibrant'
-    ? { curve: vibrantSecondaryCurve(hexToOklch(hex).H) }
+    ? { curve: vibrantSecondaryCurve(hex) }
     : { curve: mutedSecondaryCurve(hex) }
 
   const effectiveOf = (name: SignalDef['name']) =>
@@ -502,7 +541,7 @@ export function resolveTheme(input: {
   // ---- no secondary supplied: nothing, or the DERIVED subtle secondary (§2b) ----
   if (!input.secondaryHex) {
     if (!input.deriveSecondary) return { primary, themed: primary, secondary: null, signalOverrides: primary.signalOverrides, notes }
-    const scale = generateSubtleSecondary(input.primaryHex, { contrastProfile: cp, ctaL: subtleCtaLFor(primary.scale), curve: vibrantSecondaryCurve(hexToOklch(input.primaryHex).H) })
+    const scale = generateSubtleSecondary(input.primaryHex, { contrastProfile: cp, ctaL: subtleCtaLFor(primary.scale), curve: vibrantSecondaryCurve(input.primaryHex) })
     return {
       primary, themed: primary,
       secondary: {
