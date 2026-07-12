@@ -17,6 +17,7 @@ import { SECONDARIES } from '../src/secondaries'
 import { SIGNALS } from '../src/engine/signals'
 import { resolveBrand, signalScalesFor } from '../src/engine/resolve'
 import { RED_GATE, redGateDist, checkCollision, stopDeltaE } from '../src/engine/collision'
+import { p2Diff, P2_D_UP } from '../src/engine/p2'
 import { wcagY, contrastRatio, apcaY, apcaLc } from '../src/engine/constraints'
 import type { GeneratedScale } from '../src/engine/colorEngine'
 
@@ -122,13 +123,16 @@ function audit(name: string, hex: string, scale: GeneratedScale, redRepelled = f
   }
 
   // E: dark-mode red collision on the resolved scale. No exemptions since the C12
-  // gate — every brand cta sits outside the owner-calibrated red-family gate per mode
-  // (redRepelled is report metadata, not an exemption).
+  // gate (redRepelled is report metadata, not an exemption). Metric = P2 (owner rounds
+  // 2026-07-11): redGateDist is the P1 at-a-glance category and PASSES vibrating dark
+  // pairs (0.11-0.20 while p2 reads 0.086-0.109 — the documented dark blindness);
+  // solveDarkCtaExit delivers the p2 release, so E asserts the same bar the
+  // collision-sweep dark assertion uses.
   const err = SIGNAL_SCALES.get('red')!
-  if (name !== 'red' && redGateDist(scale.ctaDark, err.scale.ctaDark) <= RED_GATE.G - 1e-3) {
+  if (name !== 'red' && p2Diff(scale.ctaDark, err.scale.ctaDark) < P2_D_UP - 1e-3) {
     findings['E dark error collision'].push({
       name, hex, severity: 1,
-      detail: `resolved scale still collides with red in dark mode`,
+      detail: `dark cta vibrates beside red's (p2 ${p2Diff(scale.ctaDark, err.scale.ctaDark).toFixed(3)} < ${P2_D_UP})`,
     })
   }
 }

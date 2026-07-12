@@ -29,6 +29,7 @@ import { neutralChromaCurve } from '../src/engine/neutralCurve'
 import { apparentL, grayApparentL } from '../src/engine/perceptualL'
 import { darkChromaCurve } from '../src/engine/darkChromaCurve'
 import { wcagY, contrastRatio, clampChromaToGamut, oklchToLinearRgb } from '../src/engine/constraints'
+import { oklabDist } from '../src/engine/colorMath'
 import { DARK_BRAND_FILL_MIN_L } from '../src/engine/stopTable'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -177,11 +178,16 @@ if (process.argv.includes('--bless')) {
     const r = blessed[k]
     if (!r) { drift.push(`${k} (new, not in snapshot)`); continue }
     for (let i = 0; i < v.length; i += 3) {
-      if (Math.abs(v[i] - r[i]) > TOL || Math.abs(v[i + 1] - r[i + 1]) > TOL) { drift.push(`${k} token ${i / 3}: drift vs blessed`); break }
+      // full OKLab ΔE per (L,C,H) triple — the L/C-only compare let HUE drift ship invisibly
+      // under "the byte-identical guard" (2026-07-11 hunt)
+      const d = oklabDist({ L: v[i], C: v[i + 1], H: v[i + 2] }, { L: r[i], C: r[i + 1], H: r[i + 2] })
+      if (d > TOL) { drift.push(`${k} token ${i / 3}: ΔE ${d.toFixed(3)} vs blessed`); break }
     }
   }
   console.log(`\nsnapshot regression: ${drift.length === 0 ? 'clean — matches blessed' : `${drift.length} scales drifted`}`)
   drift.slice(0, 10).forEach(s => console.log(`   ${s}`))
+  // drift is LOAD-BEARING (2026-07-11 hunt: it printed but never failed — a silent guard)
+  if (drift.length) fails.push('divergence snapshot drift (see above)')
 } else {
   console.log(`\nno blessed divergence snapshot yet — run audit:divergence:bless after visual approval`)
 }

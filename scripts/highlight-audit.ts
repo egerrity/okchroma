@@ -27,6 +27,7 @@ import { YELLOW_BAND, DARK_BRAND_FILL_MIN_L } from '../src/engine/stopTable'
 import { generateNeutralScale, generateScale, type GeneratedScale, type ColorStop } from '../src/engine/colorEngine'
 import { darkChromaCurve } from '../src/engine/darkChromaCurve'
 import { CTA_ONFILL_ENFORCE_LC } from '../src/reqtoken/profiles'
+import { oklabDist } from '../src/engine/colorMath'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -200,7 +201,10 @@ if (process.argv.includes('--bless')) {
     const r = blessed[k]
     if (!r) { drift.push(`${k} (new, not in snapshot)`); continue }
     for (let i = 0; i < v.length; i += 3) {
-      if (Math.abs(v[i] - r[i]) > TOL) { drift.push(`${k} token ${i / 3}: ΔL ${Math.abs(v[i] - r[i]).toFixed(3)} vs blessed`); break }
+      // full OKLab ΔE per (L,C,H) triple — the L-only compare let C/H drift ship invisibly
+      // on the highlight rung and all four cta roles (2026-07-11 hunt)
+      const d = oklabDist({ L: v[i], C: v[i + 1], H: v[i + 2] }, { L: r[i], C: r[i + 1], H: r[i + 2] })
+      if (d > TOL) { drift.push(`${k} token ${i / 3}: ΔE ${d.toFixed(3)} vs blessed`); break }
     }
   }
   console.log(`\nhighlight snapshot regression: ${drift.length === 0 ? 'clean — matches blessed' : `${drift.length} drifted`}`)
