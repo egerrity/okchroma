@@ -55,7 +55,7 @@ const findings: Record<string, Finding[]> = {
   'C chroma washout': [],
   'D 10/11 convergence': [],
   'E dark error collision': [],
-  'F on-fill compliance (WCAG 4.5 + APCA 45)': [],
+  'F on-cta APCA legibility (Lc 60, shipped lane — HARD)': [],
 }
 
 function audit(name: string, hex: string, scale: GeneratedScale, redRepelled = false) {
@@ -100,19 +100,23 @@ function audit(name: string, hex: string, scale: GeneratedScale, redRepelled = f
       detail: `ΔE(11,12): dark ${sepD.toFixed(3)} vs light ${sepL.toFixed(3)}`,
     })
   }
-  // F: on-fill must pass both standards in both modes — WCAG 4.5:1 (the
-  // legal baseline a brand's compliance review runs) and APCA Lc 45 (the
-  // perceptual floor). Failures are the L 0.56–0.65 dead-zone fills.
+  // F: on-cta APCA legibility, HARD (owner 2026-07-11, the #E93D82 case: Lc 45 was never a
+  // text bar — APCA's own guidance puts 45 at very-large/bold headline minimums; cta labels
+  // live in the Lc-60 band, which is the lane's actual contract and what the pole-symmetric
+  // enforce now delivers with margin). This audit sweeps the SHIPPED (apca) profile, so the
+  // assertion is the apca lane's: chosen-pole Lc ≥ 60 on the cta, both modes. The wcag 4.5
+  // ratio is the WCAG lane's own contract (req:audit asserts it per-lane) — reported here
+  // informationally only when it also under-reads.
   for (const mode of ['light', 'dark'] as const) {
     const cta = mode === 'light' ? scale.cta : scale.ctaDark  // on-fill sits on the off-scale cta
     const white = mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark
     const fillY = wcagY(cta.L, cta.C, cta.H)
     const wcag = white ? contrastRatio(1.0, fillY) : contrastRatio(fillY, 0)
     const lc = Math.abs(apcaLc(white ? 1.0 : 0.0, apcaY(cta.r, cta.g, cta.b)))
-    if (wcag < 4.5 || lc < 45) {
-      findings['F on-fill compliance (WCAG 4.5 + APCA 45)'].push({
-        name, hex, severity: Math.max(0, 4.5 - wcag) + Math.max(0, 45 - lc) / 100,
-        detail: `${mode}: ${white ? 'white' : 'black'} on fill L ${cta.L.toFixed(2)} — WCAG ${wcag.toFixed(2)}:1, APCA Lc ${lc.toFixed(0)}`,
+    if (lc < 60) {
+      findings['F on-cta APCA legibility (Lc 60, shipped lane — HARD)'].push({
+        name, hex, severity: (60 - lc) / 100,
+        detail: `${mode}: ${white ? 'white' : 'black'} on fill L ${cta.L.toFixed(2)} — APCA Lc ${lc.toFixed(1)} (wcag ratio ${wcag.toFixed(2)}:1)`,
       })
     }
   }
@@ -146,6 +150,12 @@ for (const [check, list] of Object.entries(findings)) {
   list.sort((a, b) => b.severity - a.severity)
   console.log(`${check}: ${list.length} failures`)
   for (const f of list.slice(0, 5)) console.log(`   ${f.name} ${f.hex} — ${f.detail}`)
+  // F is LOAD-BEARING (owner 2026-07-11): sub-60 on-cta ships fail the build. A–E stay
+  // parity reports (standing tolerances, log-don't-fix per CATALOG).
+  if (check.includes('HARD') && list.length > 0) {
+    console.log(`   GATE: FAIL — ${check}`)
+    process.exitCode = 1
+  }
 }
 
 // ── Blessed-snapshot regression ──────────────────────────────────────────────

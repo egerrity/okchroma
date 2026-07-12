@@ -382,20 +382,41 @@ export function findLForWhiteTextLc(startL: number, C: number, H: number, target
   return lo
 }
 
-// light cta anchor under the apca profile (ctaLightL's shape; +0.5 Lc solve margin ≈ the 4.6-for-4.5 idiom)
+// The apca cta enforce FIRE margin (owner 2026-07-11, the #E93D82 razor: a cta shipping at
+// Lc 60.0-60.2 reads sub-60 on external checkers — screenshot color management, 8-bit
+// rounding, APCA-version skew all eat the zero headroom; the enforced class itself landed at
+// 60.5 by the solve margin, inside the same razor band). Fire when the chosen pole reads
+// under threshold + THIS margin; solve to clear it (+ the solve margin on top).
+export const APCA_ENFORCE_MARGIN_LC = 2.0
+
+// light cta anchor under the apca profile (ctaLightL's shape; +0.5 Lc solve margin ≈ the
+// 4.6-for-4.5 idiom). POLE-SYMMETRIC (owner 2026-07-11, the dead-zone gap: the judge rightly
+// picks the better pole, but better-of-two-failing isn't passing and only a white-darken
+// solver existed — the same one-sidedness the light clearance fixed for the wcag lane):
+// white under-reads → DARKEN, black under-reads → LIGHTEN (each pole's own direction).
 export function ctaLightLApca(ctx: Ctx, onFillTextIsWhite: boolean, enforce: boolean, thresholdLc: number): number {
-  let light9L = ctx.scaleL
-  if (enforce && onFillTextIsWhite && whiteTextLcAt(ctx.scaleL, ctx.brandC, ctx.brandH) < thresholdLc) {
-    light9L = findLForWhiteTextLc(ctx.scaleL, ctx.brandC, ctx.brandH, thresholdLc + APCA_SOLVE_MARGIN_LC)
+  if (!enforce) return ctx.scaleL
+  const fireLc = thresholdLc + APCA_ENFORCE_MARGIN_LC
+  if (onFillTextIsWhite) {
+    if (whiteTextLcAt(ctx.scaleL, ctx.brandC, ctx.brandH) >= fireLc) return ctx.scaleL
+    return findLForWhiteTextLc(ctx.scaleL, ctx.brandC, ctx.brandH, fireLc + APCA_SOLVE_MARGIN_LC)
   }
-  return light9L
+  if (blackTextLcAt(ctx.scaleL, ctx.brandC, ctx.brandH) >= fireLc) return ctx.scaleL
+  return findLForBlackTextLc(ctx.scaleL, ctx.brandC, ctx.brandH, fireLc + APCA_SOLVE_MARGIN_LC, 0.92)
 }
 
-// dark cta enforce re-solve under the apca profile (ctaDarkEnforcedL's shape)
+// dark cta enforce re-solve under the apca profile (ctaDarkEnforcedL's shape); pole-symmetric
+// like the light anchor above — the dark black-pole gap shipped Lc 54.7 greens (the judge's
+// pick was right; no lighten solver existed behind it).
 export function ctaDarkEnforcedLApca(ctx: Ctx, base: { L: number; C: number; H: number }, onFillIsWhiteDark: boolean, enforce: boolean, thresholdLc: number): number | null {
-  if (!(enforce && onFillIsWhiteDark)) return null
-  if (whiteTextLcAt(base.L, base.C, base.H) >= thresholdLc) return null
-  return findLForWhiteTextLc(base.L, base.C, ctx.darkCtaH, thresholdLc + APCA_SOLVE_MARGIN_LC)
+  if (!enforce) return null
+  const fireLc = thresholdLc + APCA_ENFORCE_MARGIN_LC
+  if (onFillIsWhiteDark) {
+    if (whiteTextLcAt(base.L, base.C, base.H) >= fireLc) return null
+    return findLForWhiteTextLc(base.L, base.C, ctx.darkCtaH, fireLc + APCA_SOLVE_MARGIN_LC)
+  }
+  if (blackTextLcAt(base.L, base.C, base.H) >= fireLc) return null
+  return findLForBlackTextLc(base.L, base.C, ctx.darkCtaH, fireLc + APCA_SOLVE_MARGIN_LC, 0.92)
 }
 
 // ================= the APCA legibility CLEARANCE (the wcag lane's opt-in dual gate) =================
@@ -472,8 +493,11 @@ export function solveBrandExit(
   const at = (L: number) => ({ L, C: clampChromaToGamut(L, cFor(L), brandH), H: brandH })
   const poleOk = (L: number, C: number, H: number): boolean => {
     if (enforceLc === undefined) return true
-    if (whiteTextLcAt(L, C, H) >= enforceLc) return true
-    return Math.abs(apcaLc(apcaYAt(0, 0, 0), apcaYAt(L, clampChromaToGamut(L, C, H), H))) >= enforceLc
+    // landings honor the same fire margin as the enforcers — a release point chosen at
+    // exactly Lc 60.0 is the same external-checker razor the margin exists to kill
+    const bar = enforceLc + APCA_ENFORCE_MARGIN_LC
+    if (whiteTextLcAt(L, C, H) >= bar) return true
+    return Math.abs(apcaLc(apcaYAt(0, 0, 0), apcaYAt(L, clampChromaToGamut(L, C, H), H))) >= bar
   }
   const anchor = at(seed.L)
   const dh = hueDelta(seed.H, red.H)
@@ -543,8 +567,10 @@ export function solveDarkCtaExit(
 ): number | null {
   const at = (L: number) => ({ L, C: clampChromaToGamut(L, cFor(L), darkH), H: darkH })
   if (p2Diff(cur, redDark) >= P2_D_UP) return null
+  // landings honor the enforce fire margin (see solveBrandExit's poleOk) — no Lc-60.0 razors
   const poleOk = (L: number, C: number, H: number): boolean => enforceLc !== undefined
-    ? (whiteTextLcAt(L, C, H) >= enforceLc || blackTextLcAt(L, C, H) >= enforceLc)
+    ? (whiteTextLcAt(L, C, H) >= enforceLc + APCA_ENFORCE_MARGIN_LC ||
+       blackTextLcAt(L, C, H) >= enforceLc + APCA_ENFORCE_MARGIN_LC)
     : (legalRatio(L, C, H, 1.0) >= 4.5 || legalRatio(L, C, H, 0) >= 4.5)
   const travel = (dir: 1 | -1): number | null => {
     for (let L = cur.L; L >= 0.28 && L <= 0.92; L += dir * 0.002) {
