@@ -213,7 +213,11 @@ export function resolveBrand(
     pending = hueCollisionPending(scale, sigScales)
   }
 
-  const redRepel = scale.ctaRepelled?.light ? { light: true, dark: false } : null
+  // per-mode fired flags, honestly: dark fires via solveDarkCtaExit (858053e) — the old
+  // light-only read predated it, hardcoded dark:false, and returned null for dark-only movers
+  const redRepel = scale.ctaRepelled?.light || scale.ctaRepelled?.dark
+    ? { light: !!scale.ctaRepelled?.light, dark: !!scale.ctaRepelled?.dark }
+    : null
 
   const signalOverrides: SignalOverride[] = []
 
