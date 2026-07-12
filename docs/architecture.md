@@ -89,6 +89,8 @@ flowchart TD
       CM[colorMath.ts · shared math + onTextIsWhite]
       CON[constraints.ts · OKLCH / gamut / WCAG / APCA]
       PL[perceptualL.ts · Helmholtz–Kohlrausch]
+      P2[p2.ts · side-by-side metric]
+      PROF[reqtoken/profiles.ts · wcag→apca compiler]
       ST[stopTable.ts · L tables + constants]
       AR[archetypes.ts]
       DCC[darkChromaCurve.ts]
@@ -105,7 +107,7 @@ flowchart TD
       BUILD[build.ts → dist/*.css]
       SEM[tokens/semantic.css]
       DEMO[demo/* React preview]
-      PLUG[plugin/* Figma plugin]
+      PLUG[plugin/* + plugin-ext/* Figma plugins]
     end
 
     B --> R
@@ -117,7 +119,8 @@ flowchart TD
     SPEC --> RES
     RES --> PROD
     SPEC <--> DTCG
-    PROD --> CM & CON & PL & ST & AR & DCC
+    PROD --> CM & CON & PL & P2 & ST & AR & DCC
+    PROF --> RES
     CE --> NC
     R --> CSS & FIG
     CSS --> TN
@@ -127,6 +130,68 @@ flowchart TD
     R --> DEMO
     R --> FIG --> PLUG
 ```
+
+
+#### (A1) Module inventory
+
+The same modules as a table — each piece, where it lives, what it does. Grouped bottom-up.
+
+**Foundations — color math & perception (`src/engine/`)**
+
+| Piece | Location | What it does |
+|---|---|---|
+| Color math core | `colorMath.ts` | Shared leaf module: OKLCH↔RGB, `makeStop` (gamut-clamped stop constructor), the on-text pole judge (`onTextIsWhite` — max-\|Lc\| preference, profile-law floors), the red-region metrics (`redGateDist` P1 + `redSolveDist`/`RED_GATE`/`RED_SOLVE`), `maxChromaAt`. No formula changes without a parity check. |
+| Gamut & contrast constraints | `constraints.ts` | The master-gamut layer (P3): every generation-side judgment (chroma clamp, WCAG Y/ratio, APCA Y/Lc) runs in the master basis; emit-side hex stays sRGB — the render/emit split. |
+| Perceptual lightness | `perceptualL.ts` | Nayatani Helmholtz–Kohlrausch apparent lightness: `apparentL`, the solvers (`solveLForApparent`, `solveCForApparent`), `perceptualRungL`, `perceptualDarkC`, `grayApparentL`. The space every placement solve works in. |
+| P2 metric | `p2.ts` | The "truly different side-by-side" distance (C12) with bars `P2_D`/`P2_D_UP` — distinct from P1's at-a-glance confusion. Drives the dark cta exit and the red complement. |
+
+**Declared registers — the data (`src/engine/`)**
+
+| Piece | Location | What it does |
+|---|---|---|
+| Stop tables | `stopTable.ts` | The declared numbers: L scaffolds, `SCALE_C_LIGHT`/`SCALE_C_DARK` chroma tables (one table per mode, C10), `DARK_CTA_C` (the C16 cta chroma register: brand = trimmed, signal = identity), stop-8's 3:1 bound, the yellow band, dark fill floors. |
+| Dark chroma policy | `darkChromaCurve.ts` | `darkChromaCurve` (the H-K fill equalizer) and `darkCtaTrim` (the brand dark-cta trim, computed from `DARK_CTA_C`). |
+| Signal identities | `signals.ts` | The four signals by identity — red, yellow, green, info-color — seed hexes + per-signal dark floors. |
+| Archetypes | `archetypes.ts` | The six lightness anchors (near-black → light), `classifyArchetype`, the hover rule (`hoverL`). |
+| Neutral curve | `neutralCurve.ts` | The neutral's chroma shape — the neutral is generated from the brand hue at three tint levels. |
+
+**The requirement-token resolver (`src/reqtoken/`)**
+
+| Piece | Location | What it does |
+|---|---|---|
+| Declaration | `spec.ts` | The requirement declaration as pure serializable data — every stop and role with its producer by name, contrast requires, register bindings. No math. |
+| Resolver | `resolve.ts` | Executes the declaration: per stop, producer (hue→chroma→L) → require (contrast clamp, iterated) → refine (chroma yields to gamut at emit). Assembles the cta roles: enforce re-solves (wcag 4.5 / apca Lc 60 + margin, pole-symmetric), the C12 exits, the prominence floor and its C16 flat-register exception. |
+| Producers | `producers.ts` | The named producer implementations — light/dark placement, the delta model (dark = f(light) in apparent space), cta anchors, APCA enforcement solvers, `solveBrandExit`/`solveDarkCtaExit`, `flatDarkCtaL` (the derived secondary's dark register). |
+| Profiles | `profiles.ts` | The contrast-profile compiler: `withProfile` maps every declared wcag require onto its APCA equivalent. APCA ships; wcag is the legal mode. |
+| Portability | `dtcg.ts` | Serializes the declaration to DTCG color tokens (frozen `$value` + the requirement in `$extensions`) and parses it back. |
+
+**Theme layer (`src/engine/`)**
+
+| Piece | Location | What it does |
+|---|---|---|
+| Scale generator | `colorEngine.ts` | `generateScale` — the adapter over the resolver — plus the `GeneratedScale` contract, `generateNeutralScale`, and `GenerateOptions`. |
+| Brand & theme resolver | `resolve.ts` | `resolveBrand`/`resolveTheme` — the top of the engine. Per-profile signal sets, collision machinery, the red complement variant, C12 `ctaSolve` injection, and the secondary offering: derived (`DEFAULT_SECONDARY` seed transform + gap registers), custom (same model, the user's seed), or exact. |
+| Collision gates | `collision.ts` | Type-1 hue-family detection (hue gate + ΔE gate, the C7 split) deciding signal collisions and annotation. |
+| Signal shifts | `signalShift.ts` | Per-brand signal adjustments — the shift/swap variants (lemon, macaroni) when a brand sits on a signal's hue. |
+
+**Emit — the output (`src/engine/`, `src/`)**
+
+| Piece | Location | What it does |
+|---|---|---|
+| CSS emitter | `cssRender.ts` | `brandCss`/`neutralCss`/`signalsCss` — custom properties per family and mode, on-cta/on-highlight poles, P3 `@supports` override blocks, the outline secondary's cta shape. |
+| Figma emitter | `figmaRender.ts` | `themeToFigma` — the same theme as Figma variable collections (both plugins consume it). |
+| Token vocabulary | `tokenNames.ts` | The shared naming — paper-1/2, wash-3–7, highlight-8/9, ink-10/11, cta-1/2, ons — one vocabulary across CSS and Figma. |
+| Public API | `index.ts` | The dependency-free entry point: `resolveBrand`/`resolveTheme`. |
+
+**Product data & pipelines (`src/`)**
+
+| Piece | Location | What it does |
+|---|---|---|
+| Roster | `brands.ts` · `secondaries.ts` | The representative drink-set brands + their secondaries — the demo/build input data. |
+| Token build | `build.ts` | The `npm run generate` entry: resolves the roster and writes the shipped CSS (APCA is the shipped default). |
+| Illustration pipeline | `illustration.ts` | Recolors designer SVGs — legend placeholder hexes map onto the resolved scale's stops. |
+
+Around the engine sit the 13 gates in `scripts/` (with their blessed snapshots) and the consumers — the demo preview, the two Figma plugins. The product boundary is the layers above: declaration in, resolved theme out, emitted as CSS or Figma variables.
 
 #### (B) Pipeline stages
 
