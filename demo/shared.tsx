@@ -245,7 +245,9 @@ export function Showcase(props: {
           <SectionLabel>Scales</SectionLabel>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <ScaleStrip label={`Brand (${hex})`} prefix="brand" />
-            {props.secondaryHex && <ScaleStrip label={`Accent (${props.secondaryHex})`} prefix="accent" />}
+            {/* the accent Family emits under the `secondary` primitive prefix
+                (see prim() above) — there is no --accent-* primitive */}
+            {props.secondaryHex && <ScaleStrip label={`Accent (${props.secondaryHex})`} prefix="secondary" />}
             <ScaleStrip label="Neutral" prefix="neutral" />
           </div>
         </section>
@@ -362,10 +364,10 @@ export function Showcase(props: {
         <section>
           <SectionLabel>Typography</SectionLabel>
           <p style={{ margin: 0, lineHeight: 1.6, color: 'var(--fg-default)' }}>
-            Default body text uses <strong>neutral-12</strong> for maximum readability.{' '}
-            <a href="#" className="u-link">Link text uses brand-11</a>,
+            Default body text uses <strong>neutral-ink-11</strong> for maximum readability.{' '}
+            <a href="#" className="u-link">Link text uses brand-ink-10</a>,
             which meets 4.5:1 AA contrast.{' '}
-            <span style={{ color: 'var(--fg-subtle)' }}>Subtle text uses neutral-11 for secondary information.</span>
+            <span style={{ color: 'var(--fg-subtle)' }}>Subtle text uses neutral-ink-10 for secondary information.</span>
           </p>
         </section>
 
@@ -397,14 +399,22 @@ export function Readout({ r }: { r: ResolvedBrand }) {
   )
 }
 
+// The emitted scale — the post-rename NAMED stops (paper/wash/highlight/ink,
+// contiguous 1–11; the engine emits no numeric --{prefix}-N vars). Kept in
+// emit order; cta stays off-scale and out of the strip.
+export const SCALE_STOP_NAMES = [
+  'paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'wash-6', 'wash-7',
+  'highlight-8', 'highlight-9', 'ink-10', 'ink-11',
+] as const
+
 // Labeled single-row scale strip — used where multiple scales stack tight
 export function ScaleStrip({ label, prefix }: { label: string; prefix: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
       <div style={{ width: 150, fontSize: 12, color: 'var(--fg-subtle)', flexShrink: 0 }}>{label}</div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 4, flex: 1 }}>
-        {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => (
-          <div key={n} title={`${prefix}-${n}`} style={{ height: 34, borderRadius: 4, background: `var(--${prefix}-${n})`, border: '1px solid var(--border-subtle)' }} />
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${SCALE_STOP_NAMES.length}, 1fr)`, gap: 4, flex: 1 }}>
+        {SCALE_STOP_NAMES.map(tok => (
+          <div key={tok} title={`${prefix}-${tok}`} style={{ height: 34, borderRadius: 4, background: `var(--${prefix}-${tok})`, border: '1px solid var(--border-subtle)' }} />
         ))}
       </div>
     </div>

@@ -76,7 +76,7 @@ export default function App() {
 const GX_LABEL: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: 'var(--fg-default)', marginBottom: 5 }
 const GX_FIELD: React.CSSProperties = {
   display: 'flex', alignItems: 'center', gap: 8, height: 38, boxSizing: 'border-box',
-  background: 'var(--surface-raised)', border: '1px solid var(--neutral-6)', borderRadius: 8,
+  background: 'var(--surface-raised)', border: '1px solid var(--border-default)', borderRadius: 8,
   padding: '0 12px', fontSize: 13, color: 'var(--fg-default)',
 }
 // The palette picker is the one editable control here — same field metrics as
@@ -98,11 +98,11 @@ function GxControl({ label, children }: { label: string; children: React.ReactNo
 function LockedField({ label, swatch, text, width = 152 }: { label: string; swatch?: string; text: string; width?: number }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
-      <div style={{ ...GX_LABEL, color: 'var(--neutral-11)' }}>{label}</div>
+      <div style={{ ...GX_LABEL, color: 'var(--fg-subtle)' }}>{label}</div>
       <div style={{ ...GX_FIELD, width }}>
-        {swatch && <span style={{ width: 20, height: 20, borderRadius: 5, flexShrink: 0, border: '1px solid var(--neutral-6)', background: swatch }} />}
+        {swatch && <span style={{ width: 20, height: 20, borderRadius: 5, flexShrink: 0, border: '1px solid var(--border-subtle)', background: swatch }} />}
         <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{text}</span>
-        <Lock size={13} style={{ flexShrink: 0, color: 'var(--neutral-8)' }} aria-label="locked" />
+        <Lock size={13} style={{ flexShrink: 0, color: 'var(--fg-subtle)' }} aria-label="locked" />
       </div>
     </div>
   )
