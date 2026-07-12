@@ -1,0 +1,959 @@
+{
+ "date": "2026-07-11",
+ "rows": [
+  {
+   "profile": "wcag",
+   "hex": "#B0003B",
+   "H": 14,
+   "L": 0.48,
+   "curBL": 0.436,
+   "propBL": 0.436,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#C83653",
+   "H": 14,
+   "L": 0.56,
+   "curBL": 0.641,
+   "propBL": 0.641,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#CF264F",
+   "H": 14,
+   "L": 0.56,
+   "curBL": 0.642,
+   "propBL": 0.642,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#D9004A",
+   "H": 14,
+   "L": 0.56,
+   "curBL": 0.635,
+   "propBL": 0.635,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#E53F60",
+   "H": 14,
+   "L": 0.62,
+   "curBL": 0.64,
+   "propBL": 0.64,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#A91D36",
+   "H": 18,
+   "L": 0.48,
+   "curBL": 0.427,
+   "propBL": 0.427,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#B10030",
+   "H": 19,
+   "L": 0.48,
+   "curBL": 0.42,
+   "propBL": 0.42,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#C9364A",
+   "H": 18,
+   "L": 0.56,
+   "curBL": 0.647,
+   "propBL": 0.647,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#D02645",
+   "H": 18,
+   "L": 0.56,
+   "curBL": 0.645,
+   "propBL": 0.645,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#DA003E",
+   "H": 18,
+   "L": 0.56,
+   "curBL": 0.643,
+   "propBL": 0.643,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#E63F56",
+   "H": 18,
+   "L": 0.62,
+   "curBL": 0.646,
+   "propBL": 0.646,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#EF2D50",
+   "H": 18,
+   "L": 0.62,
+   "curBL": 0.643,
+   "propBL": 0.643,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#A42B29",
+   "H": 26,
+   "L": 0.48,
+   "curBL": 0.406,
+   "propBL": 0.406,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#AB1D21",
+   "H": 26,
+   "L": 0.48,
+   "curBL": 0.39,
+   "propBL": 0.39,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#B30014",
+   "H": 26,
+   "L": 0.48,
+   "curBL": 0.384,
+   "propBL": 0.384,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#CA3735",
+   "H": 26,
+   "L": 0.56,
+   "curBL": 0.652,
+   "propBL": 0.386,
+   "changed": true
+  },
+  {
+   "profile": "wcag",
+   "hex": "#D2272B",
+   "H": 26,
+   "L": 0.56,
+   "curBL": 0.652,
+   "propBL": 0.386,
+   "changed": true
+  },
+  {
+   "profile": "wcag",
+   "hex": "#DC001C",
+   "H": 26,
+   "L": 0.56,
+   "curBL": 0.385,
+   "propBL": 0.385,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#E8403E",
+   "H": 26,
+   "L": 0.62,
+   "curBL": 0.653,
+   "propBL": 0.387,
+   "changed": true
+  },
+  {
+   "profile": "wcag",
+   "hex": "#F02E33",
+   "H": 26,
+   "L": 0.62,
+   "curBL": 0.649,
+   "propBL": 0.385,
+   "changed": true
+  },
+  {
+   "profile": "wcag",
+   "hex": "#FB0021",
+   "H": 26,
+   "L": 0.62,
+   "curBL": 0.386,
+   "propBL": 0.386,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#A32E21",
+   "H": 30,
+   "L": 0.48,
+   "curBL": 0.404,
+   "propBL": 0.404,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#A92316",
+   "H": 30,
+   "L": 0.48,
+   "curBL": 0.388,
+   "propBL": 0.388,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#B10800",
+   "H": 30,
+   "L": 0.48,
+   "curBL": 0.384,
+   "propBL": 0.384,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#C83B2B",
+   "H": 30,
+   "L": 0.56,
+   "curBL": 0.653,
+   "propBL": 0.383,
+   "changed": true
+  },
+  {
+   "profile": "wcag",
+   "hex": "#D02D1E",
+   "H": 30,
+   "L": 0.56,
+   "curBL": 0.653,
+   "propBL": 0.383,
+   "changed": true
+  },
+  {
+   "profile": "wcag",
+   "hex": "#DA0D00",
+   "H": 30,
+   "L": 0.56,
+   "curBL": 0.383,
+   "propBL": 0.383,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#E64533",
+   "H": 30,
+   "L": 0.62,
+   "curBL": 0.655,
+   "propBL": 0.383,
+   "changed": true
+  },
+  {
+   "profile": "wcag",
+   "hex": "#EE3524",
+   "H": 30,
+   "L": 0.62,
+   "curBL": 0.651,
+   "propBL": 0.383,
+   "changed": true
+  },
+  {
+   "profile": "wcag",
+   "hex": "#F91100",
+   "H": 30,
+   "L": 0.62,
+   "curBL": 0.384,
+   "propBL": 0.384,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#9D3721",
+   "H": 34,
+   "L": 0.48,
+   "curBL": 0.428,
+   "propBL": 0.428,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#A33015",
+   "H": 34,
+   "L": 0.48,
+   "curBL": 0.403,
+   "propBL": 0.403,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#AA2300",
+   "H": 34,
+   "L": 0.48,
+   "curBL": 0.39,
+   "propBL": 0.39,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#C1462B",
+   "H": 34,
+   "L": 0.56,
+   "curBL": 0.65,
+   "propBL": 0.396,
+   "changed": true
+  },
+  {
+   "profile": "wcag",
+   "hex": "#C83D1D",
+   "H": 34,
+   "L": 0.56,
+   "curBL": 0.654,
+   "propBL": 0.392,
+   "changed": true
+  },
+  {
+   "profile": "wcag",
+   "hex": "#D12E00",
+   "H": 34,
+   "L": 0.56,
+   "curBL": 0.391,
+   "propBL": 0.391,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#DD5233",
+   "H": 34,
+   "L": 0.62,
+   "curBL": 0.654,
+   "propBL": 0.392,
+   "changed": true
+  },
+  {
+   "profile": "wcag",
+   "hex": "#E54723",
+   "H": 34,
+   "L": 0.62,
+   "curBL": 0.654,
+   "propBL": 0.392,
+   "changed": true
+  },
+  {
+   "profile": "wcag",
+   "hex": "#EF3600",
+   "H": 34,
+   "L": 0.62,
+   "curBL": 0.39,
+   "propBL": 0.39,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#914520",
+   "H": 44,
+   "L": 0.48,
+   "curBL": 0.461,
+   "propBL": 0.461,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#964014",
+   "H": 44,
+   "L": 0.48,
+   "curBL": 0.46,
+   "propBL": 0.46,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#9C3B00",
+   "H": 43,
+   "L": 0.48,
+   "curBL": 0.45,
+   "propBL": 0.45,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#B8511C",
+   "H": 44,
+   "L": 0.56,
+   "curBL": 0.631,
+   "propBL": 0.631,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#C04A00",
+   "H": 43,
+   "L": 0.56,
+   "curBL": 0.643,
+   "propBL": 0.643,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#D35E22",
+   "H": 44,
+   "L": 0.62,
+   "curBL": 0.64,
+   "propBL": 0.64,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#DB5600",
+   "H": 43,
+   "L": 0.62,
+   "curBL": 0.646,
+   "propBL": 0.646,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#904614",
+   "H": 50,
+   "L": 0.48,
+   "curBL": 0.46,
+   "propBL": 0.46,
+   "changed": false
+  },
+  {
+   "profile": "wcag",
+   "hex": "#954200",
+   "H": 49,
+   "L": 0.48,
+   "curBL": 0.46,
+   "propBL": 0.46,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#C83653",
+   "H": 14,
+   "L": 0.56,
+   "curBL": 0.683,
+   "propBL": 0.683,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#CF264F",
+   "H": 14,
+   "L": 0.56,
+   "curBL": 0.684,
+   "propBL": 0.684,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#D9004A",
+   "H": 14,
+   "L": 0.56,
+   "curBL": 0.679,
+   "propBL": 0.679,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#E53F60",
+   "H": 14,
+   "L": 0.62,
+   "curBL": 0.682,
+   "propBL": 0.682,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#ED2D5C",
+   "H": 14,
+   "L": 0.62,
+   "curBL": 0.678,
+   "propBL": 0.678,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#C9364A",
+   "H": 18,
+   "L": 0.56,
+   "curBL": 0.689,
+   "propBL": 0.689,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#D02645",
+   "H": 18,
+   "L": 0.56,
+   "curBL": 0.687,
+   "propBL": 0.687,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#DA003E",
+   "H": 18,
+   "L": 0.56,
+   "curBL": 0.685,
+   "propBL": 0.685,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#E63F56",
+   "H": 18,
+   "L": 0.62,
+   "curBL": 0.688,
+   "propBL": 0.688,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#EF2D50",
+   "H": 18,
+   "L": 0.62,
+   "curBL": 0.685,
+   "propBL": 0.685,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#F90048",
+   "H": 18,
+   "L": 0.62,
+   "curBL": 0.676,
+   "propBL": 0.676,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#FF3A5D",
+   "H": 17,
+   "L": 0.68,
+   "curBL": 0.681,
+   "propBL": 0.681,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#A42B29",
+   "H": 26,
+   "L": 0.48,
+   "curBL": 0.448,
+   "propBL": 0.448,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#AB1D21",
+   "H": 26,
+   "L": 0.48,
+   "curBL": 0.432,
+   "propBL": 0.432,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#B30014",
+   "H": 26,
+   "L": 0.48,
+   "curBL": 0.426,
+   "propBL": 0.426,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#CA3735",
+   "H": 26,
+   "L": 0.56,
+   "curBL": 0.428,
+   "propBL": 0.428,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#D2272B",
+   "H": 26,
+   "L": 0.56,
+   "curBL": 0.428,
+   "propBL": 0.428,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#DC001C",
+   "H": 26,
+   "L": 0.56,
+   "curBL": 0.429,
+   "propBL": 0.429,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#E8403E",
+   "H": 26,
+   "L": 0.62,
+   "curBL": 0.695,
+   "propBL": 0.429,
+   "changed": true
+  },
+  {
+   "profile": "apca",
+   "hex": "#F02E33",
+   "H": 26,
+   "L": 0.62,
+   "curBL": 0.691,
+   "propBL": 0.429,
+   "changed": true
+  },
+  {
+   "profile": "apca",
+   "hex": "#FB0021",
+   "H": 26,
+   "L": 0.62,
+   "curBL": 0.428,
+   "propBL": 0.428,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#F75D56",
+   "H": 26,
+   "L": 0.68,
+   "curBL": 0.695,
+   "propBL": 0.427,
+   "changed": true
+  },
+  {
+   "profile": "apca",
+   "hex": "#FF524E",
+   "H": 26,
+   "L": 0.68,
+   "curBL": 0.694,
+   "propBL": 0.43,
+   "changed": true
+  },
+  {
+   "profile": "apca",
+   "hex": "#FF4041",
+   "H": 26,
+   "L": 0.68,
+   "curBL": 0.692,
+   "propBL": 0.43,
+   "changed": true
+  },
+  {
+   "profile": "apca",
+   "hex": "#A32E21",
+   "H": 30,
+   "L": 0.48,
+   "curBL": 0.446,
+   "propBL": 0.446,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#A92316",
+   "H": 30,
+   "L": 0.48,
+   "curBL": 0.432,
+   "propBL": 0.432,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#B10800",
+   "H": 30,
+   "L": 0.48,
+   "curBL": 0.424,
+   "propBL": 0.424,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#C83B2B",
+   "H": 30,
+   "L": 0.56,
+   "curBL": 0.427,
+   "propBL": 0.427,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#D02D1E",
+   "H": 30,
+   "L": 0.56,
+   "curBL": 0.423,
+   "propBL": 0.423,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#DA0D00",
+   "H": 30,
+   "L": 0.56,
+   "curBL": 0.425,
+   "propBL": 0.425,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#E64533",
+   "H": 30,
+   "L": 0.62,
+   "curBL": 0.697,
+   "propBL": 0.425,
+   "changed": true
+  },
+  {
+   "profile": "apca",
+   "hex": "#EE3524",
+   "H": 30,
+   "L": 0.62,
+   "curBL": 0.693,
+   "propBL": 0.423,
+   "changed": true
+  },
+  {
+   "profile": "apca",
+   "hex": "#F91100",
+   "H": 30,
+   "L": 0.62,
+   "curBL": 0.424,
+   "propBL": 0.424,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#F75F4C",
+   "H": 30,
+   "L": 0.68,
+   "curBL": 0.696,
+   "propBL": 0.424,
+   "changed": true
+  },
+  {
+   "profile": "apca",
+   "hex": "#FF5440",
+   "H": 30,
+   "L": 0.68,
+   "curBL": 0.696,
+   "propBL": 0.424,
+   "changed": true
+  },
+  {
+   "profile": "apca",
+   "hex": "#FF422F",
+   "H": 30,
+   "L": 0.68,
+   "curBL": 0.694,
+   "propBL": 0.424,
+   "changed": true
+  },
+  {
+   "profile": "apca",
+   "hex": "#9D3721",
+   "H": 34,
+   "L": 0.48,
+   "curBL": 0.46,
+   "propBL": 0.46,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#A33015",
+   "H": 34,
+   "L": 0.48,
+   "curBL": 0.445,
+   "propBL": 0.445,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#AA2300",
+   "H": 34,
+   "L": 0.48,
+   "curBL": 0.428,
+   "propBL": 0.428,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#C1462B",
+   "H": 34,
+   "L": 0.56,
+   "curBL": 0.438,
+   "propBL": 0.438,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#C83D1D",
+   "H": 34,
+   "L": 0.56,
+   "curBL": 0.426,
+   "propBL": 0.426,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#D12E00",
+   "H": 34,
+   "L": 0.56,
+   "curBL": 0.425,
+   "propBL": 0.425,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#DD5233",
+   "H": 34,
+   "L": 0.62,
+   "curBL": 0.696,
+   "propBL": 0.426,
+   "changed": true
+  },
+  {
+   "profile": "apca",
+   "hex": "#E54723",
+   "H": 34,
+   "L": 0.62,
+   "curBL": 0.696,
+   "propBL": 0.426,
+   "changed": true
+  },
+  {
+   "profile": "apca",
+   "hex": "#EF3600",
+   "H": 34,
+   "L": 0.62,
+   "curBL": 0.424,
+   "propBL": 0.424,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#F7603F",
+   "H": 34,
+   "L": 0.68,
+   "curBL": 0.697,
+   "propBL": 0.425,
+   "changed": true
+  },
+  {
+   "profile": "apca",
+   "hex": "#FF562F",
+   "H": 34,
+   "L": 0.68,
+   "curBL": 0.695,
+   "propBL": 0.425,
+   "changed": true
+  },
+  {
+   "profile": "apca",
+   "hex": "#FF450E",
+   "H": 35,
+   "L": 0.68,
+   "curBL": 0.426,
+   "propBL": 0.426,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#914520",
+   "H": 44,
+   "L": 0.48,
+   "curBL": 0.461,
+   "propBL": 0.461,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#964014",
+   "H": 44,
+   "L": 0.48,
+   "curBL": 0.46,
+   "propBL": 0.46,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#9C3B00",
+   "H": 43,
+   "L": 0.48,
+   "curBL": 0.462,
+   "propBL": 0.462,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#C04A00",
+   "H": 43,
+   "L": 0.56,
+   "curBL": 0.685,
+   "propBL": 0.685,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#CD6432",
+   "H": 44,
+   "L": 0.62,
+   "curBL": 0.673,
+   "propBL": 0.673,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#D35E22",
+   "H": 44,
+   "L": 0.62,
+   "curBL": 0.682,
+   "propBL": 0.682,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#DB5600",
+   "H": 43,
+   "L": 0.62,
+   "curBL": 0.688,
+   "propBL": 0.688,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#904614",
+   "H": 50,
+   "L": 0.48,
+   "curBL": 0.46,
+   "propBL": 0.46,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#954200",
+   "H": 49,
+   "L": 0.48,
+   "curBL": 0.46,
+   "propBL": 0.46,
+   "changed": false
+  },
+  {
+   "profile": "apca",
+   "hex": "#D26000",
+   "H": 49,
+   "L": 0.62,
+   "curBL": 0.67,
+   "propBL": 0.67,
+   "changed": false
+  }
+ ]
+}
