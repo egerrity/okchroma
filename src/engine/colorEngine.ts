@@ -284,6 +284,11 @@ export function generateSubtleSecondary(
     // neutral tint curve (whose tiny absolute peaks read grey-brown at mid L). Sweep-only until
     // the owner picks; when set, `mult` is ignored.
     pastelK?: number
+    // FULL curve override (the v2 muted/vibrant models, owner 2026-07-11): resolveTheme builds
+    // the style's curve (muted = identity ramp × scale; vibrant = uniform apparent boost) and
+    // hands it in — the resolver has the cross-scale view (resolveBrand) this module must not
+    // import. Takes precedence over pastelK/mult (both kept for the legacy sweep scripts).
+    curve?: (L: number, mode: 'light' | 'dark') => number
     // DELTA-anchored ctas (owner direction 2026-07-04): instead of the fixed wash-4/5 register,
     // anchor the quiet cta at an explicit L per mode — resolveTheme computes it RELATIVE to the
     // primary's cta ("the same amount of subtle next to the primary", bright-calibrated ≈ ±0.16;
@@ -293,9 +298,9 @@ export function generateSubtleSecondary(
   }
 ): GeneratedScale {
   const { H } = hexToOklch(hex)
-  const curve = opts?.pastelK !== undefined
+  const curve = opts?.curve ?? (opts?.pastelK !== undefined
     ? (L: number, _mode: 'light' | 'dark') => opts.pastelK! * maxChromaAt(L, H)
-    : subtleSecondaryChromaCurve(H, opts?.mult)
+    : subtleSecondaryChromaCurve(H, opts?.mult))
   const scale = generateScale(hex, 'secondary', 'light', {
     chromaCurve: curve,
     highlight: true,

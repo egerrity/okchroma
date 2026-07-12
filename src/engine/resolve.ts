@@ -16,7 +16,9 @@ import {
 } from './collision'
 import { apcaY, apcaLc, encodedChannels, clampChromaToGamut, oklchToLinearRgb } from './constraints'
 import { pickSignalShift, signalSwapVariants } from './signalShift'
-import { hexToOklch, hueDelta, makeStop, RED_SOLVE, redSolveDist } from './colorMath'
+import { hexToOklch, hueDelta, makeStop, maxChromaAt, RED_SOLVE, redSolveDist } from './colorMath'
+import { grayApparentL, solveCForApparent } from './perceptualL'
+import { subtleSecondaryChromaCurve } from './neutralCurve'
 import { hoverL } from './archetypes'
 import { p2Diff, P2_D, P2_D_UP } from './p2'
 import { buildContext, whiteTextLcAt, apcaYAt, onFillIsWhiteDarkAt } from '../reqtoken/producers'
@@ -280,6 +282,69 @@ export type SecondaryLevel = 'standard' | 'subtle'
 export type SecondaryStyle = 'tint' | 'pastel' | 'outline' | 'exact'
 export const SUBTLE_TINT_MULT = 8          // owner pick (light) from the finalists sweep
 export const SUBTLE_PASTEL_K = 0.35
+
+// ── the v2 SUBTLE MODELS (owner 2026-07-11, accepted on render/secondary-models.html:
+// "what we are trying to offer is one that is muted and one that is more vibrant") ──────────
+// MUTED (rides the 'tint' id pending her rename call): the hue's OWN identity ramp × this
+// scale — brand-charactered quiet, no bespoke curve ("C2 is actually pretty close to what I
+// was thinking for the subtle version"). LIGHT ONLY — dark keeps the shipped tint curve
+// (the 2026-07-04 dark ruling).
+export const MUTED_IDENTITY_SCALE = 0.5
+// muted-dark stays UNDER vibrant-dark by at least this factor (the dark ordering guard below)
+export const MUTED_DARK_VIBRANT_CAP = 0.85
+// VIBRANT (rides the 'pastel' id): chroma solved per stop for a CONSTANT apparent-colorfulness
+// boost over the stop's own gray — uniform vibrancy across hues BY CONSTRUCTION (her v1 verdict
+// on the k×gamut-ceiling candidate: "inconsistently vibrant across hues" — big-gamut greens read
+// vivid where small-gamut teals read dull at the same k). The boost profile is the accepted
+// green specimen's, declared: [L, apparent boost] at the LIGHT_L scaffold. LIGHT ONLY — dark
+// keeps the shipped pastel flat k.
+export const VIBRANT_BOOST: ReadonlyArray<readonly [number, number]> = [
+  [0.3, 3.023], [0.53, 4.191], [0.56, 4.197], [0.6, 4.184], [0.738, 4.353], [0.801, 4.718],
+  [0.852, 5.018], [0.892, 3.438], [0.924, 2.278], [0.95, 1.433], [0.97, 0.832], [0.987, 0.35],
+]
+const vibrantBoostAt = (L: number): number => {
+  const pts = VIBRANT_BOOST
+  if (L <= pts[0][0]) return pts[0][1]
+  if (L >= pts[pts.length - 1][0]) return pts[pts.length - 1][1]
+  for (let i = 0; i < pts.length - 1; i++) if (L >= pts[i][0] && L <= pts[i + 1][0]) {
+    const t = (L - pts[i][0]) / Math.max(1e-6, pts[i + 1][0] - pts[i][0])
+    return pts[i][1] + (pts[i + 1][1] - pts[i][1]) * t
+  }
+  return pts[pts.length - 1][1]
+}
+// Both models express the SAME identity in BOTH modes (owner catch 2026-07-11: with legacy
+// per-style dark branches the cta characters SWAPPED in dark — old tint-dark carries ~.07 C at
+// the quiet cta's dark L while old pastel-dark carries ~.04, teal worst). Vibrant's rule is
+// mode-agnostic by construction (a constant apparent boost over the stop's own gray — the dark
+// fill policy's own equalizer); muted rides the identity ramp's own DARK stops.
+export function vibrantSecondaryCurve(H: number): (L: number, mode: 'light' | 'dark') => number {
+  return (L, _mode) => solveCForApparent(L, H, grayApparentL(L) + vibrantBoostAt(L))
+}
+export function mutedSecondaryCurve(hex: string): (L: number, mode: 'light' | 'dark') => number {
+  const id = resolveBrand(hex, 'sec-identity', {}).scale
+  const ramp = (stops: { L: number; C: number }[]) => {
+    const pts = stops.map(s => ({ L: s.L, C: s.C })).sort((a, b) => a.L - b.L)
+    return (L: number): number => {
+      if (L <= pts[0].L) return pts[0].C
+      if (L >= pts[pts.length - 1].L) return pts[pts.length - 1].C
+      for (let i = 0; i < pts.length - 1; i++) if (L >= pts[i].L && L <= pts[i + 1].L) {
+        const t = (L - pts[i].L) / Math.max(1e-6, pts[i + 1].L - pts[i].L)
+        return pts[i].C + (pts[i + 1].C - pts[i].C) * t
+      }
+      return pts[pts.length - 1].C
+    }
+  }
+  const lightRamp = ramp(id.light), darkRamp = ramp(id.dark)
+  // DARK ordering guard (owner catch: vivid seeds — violet worst — carry enough identity chroma
+  // that muted-dark out-chromas vibrant-dark, reading swapped; vibrant's uniform-apparent target
+  // solves LOW for high-H-K hues). Muted-dark caps under vibrant-dark at the same L. Light is
+  // NOT capped — the approved light cards stand (the same property exists at violet's light
+  // highlight/ink band and read correctly in context there).
+  const vib = vibrantSecondaryCurve(hexToOklch(hex).H)
+  return (L, mode) => mode === 'dark'
+    ? Math.min(MUTED_IDENTITY_SCALE * darkRamp(L), MUTED_DARK_VIBRANT_CAP * vib(L, 'dark'))
+    : MUTED_IDENTITY_SCALE * lightRamp(L)
+}
 export const OUTLINE_HOVER_ALPHA = 0.09    // owner: "8–10% of the resolved cta color"
 
 export interface ResolvedSecondary {
@@ -327,12 +392,18 @@ export function subtleDeltaFor(distance: number): number {
 }
 const SUBTLE_LIGHT_POLE_CAP = 0.985
 const SUBTLE_DARK_FLOOR = 0.22
+// DARK EXTRA SINK (owner-locked 2026-07-12 on render/secondary-dark-depth.html, "back to .08
+// and lock it in"): the delta points above are LIGHT-calibrated and dark reused them — the
+// owner judged the dark secondary cta too prominent ("they can definitely sink more into the
+// background"; the 0.22 floor never binds, the delta was the holder). Dark-only; the approved
+// light landings are untouched.
+export const SUBTLE_DARK_EXTRA_SINK = 0.08
 export const subtleCtaLFor = (p: GeneratedScale): { light: number; dark: number } => {
   const p1L = p.light.find(s => s.stop === 1)!.L
   const dp1L = p.dark.find(s => s.stop === 1)!.L
   return {
     light: Math.min(p.cta.L + subtleDeltaFor(Math.abs(p.cta.L - p1L)), SUBTLE_LIGHT_POLE_CAP),
-    dark: Math.max(p.ctaDark.L - subtleDeltaFor(Math.abs(p.ctaDark.L - dp1L)), SUBTLE_DARK_FLOOR),
+    dark: Math.max(p.ctaDark.L - subtleDeltaFor(Math.abs(p.ctaDark.L - dp1L)) - SUBTLE_DARK_EXTRA_SINK, SUBTLE_DARK_FLOOR),
   }
 }
 
@@ -395,9 +466,13 @@ export function resolveTheme(input: {
       notes.push(`exact mode: no on-cta text reaches APCA Lc 60 on this cta (best ${best.toFixed(0)}) — the better pole ships; recommended mode guarantees text contrast`)
   }
 
-  // the subtle chroma model per style (tint = the owner's light pick ×8; pastel = k .35);
-  // outline rides the tint ramp — its cta re-resolution happens at the EMITTERS
-  const subtleModel = secStyle === 'pastel' ? { pastelK: SUBTLE_PASTEL_K } : { mult: SUBTLE_TINT_MULT }
+  // the subtle chroma model per style (v2, owner 2026-07-11): 'tint' rides the MUTED model
+  // (identity ramp × scale), 'pastel' rides VIBRANT (uniform apparent boost) — ids unchanged
+  // pending her rename call (muted/vibrant chip labels). outline rides the muted ramp — its
+  // cta re-resolution happens at the EMITTERS. Dark branches keep each style's shipped curve.
+  const subtleModelFor = (hex: string) => secStyle === 'pastel'
+    ? { curve: vibrantSecondaryCurve(hexToOklch(hex).H) }
+    : { curve: mutedSecondaryCurve(hex) }
 
   const effectiveOf = (name: SignalDef['name']) =>
     primary.signalOverrides.find(o => o.name === name)?.scale ?? sigScales.get(name)!.scale
@@ -417,7 +492,7 @@ export function resolveTheme(input: {
   // ---- no secondary supplied: nothing, or the DERIVED subtle secondary (§2b) ----
   if (!input.secondaryHex) {
     if (!input.deriveSecondary) return { primary, themed: primary, secondary: null, signalOverrides: primary.signalOverrides, notes }
-    const scale = generateSubtleSecondary(input.primaryHex, { contrastProfile: cp, ctaL: subtleCtaLFor(primary.scale), pastelK: SUBTLE_PASTEL_K })
+    const scale = generateSubtleSecondary(input.primaryHex, { contrastProfile: cp, ctaL: subtleCtaLFor(primary.scale), curve: vibrantSecondaryCurve(hexToOklch(input.primaryHex).H) })
     return {
       primary, themed: primary,
       secondary: {
@@ -454,7 +529,7 @@ export function resolveTheme(input: {
     // curve) — every pair reads "the same amount of subtle next to its primary", both modes.
     // Residuals are ANNOTATED, never silent (gold-vs-yellow can stay numerically close —
     // owner-flagged as context-distinct; threshold calibration pending).
-    scale = generateSubtleSecondary(input.secondaryHex, { contrastProfile: cp, ctaL: subtleCtaLFor(primary.scale), ...subtleModel })
+    scale = generateSubtleSecondary(input.secondaryHex, { contrastProfile: cp, ctaL: subtleCtaLFor(primary.scale), ...subtleModelFor(input.secondaryHex) })
     level = 'subtle'
     secNotes = signalNotesFor(scale, (name, dE) =>
       `subtle secondary still reads near ${name} by the numbers (wash ΔE ${dE.toFixed(3)}) — expected to separate in context; threshold calibration pending`)
