@@ -209,12 +209,12 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
     outline: { background: 'transparent', color: 'var(--secondary-ink-10)', border: '1px solid var(--secondary-highlight-8)' },
     grey: { background: 'var(--surface-sunken)', color: 'var(--fg-subtle)' },
   }
-  const styleLabel: Record<SecondaryStyle, string> = { muted: 'Muted', vibrant: 'Vibrant', outline: 'Outline', exact: 'Exact' }
+  const styleLabel: Record<SecondaryStyle, string> = { default: 'Default', muted: 'Muted', vibrant: 'Vibrant', outline: 'Outline', exact: 'Exact' }
   // the ⓘ copy per selection (Figma spec) — the always-visible tooltip replacement
   const primaryInfo = primaryMode === 'recommended' ? 'Engine adjusts for optimal legibility'
     : primaryMode === 'exact' ? 'Your hex ships untouched'
     : `Anchored to the ${primaryMode} archetype`
-  const secondaryInfo = secState === 'derived' ? 'A vibrant secondary derived from your primary'
+  const secondaryInfo = secState === 'derived' ? 'A lighter take on your primary — derived by default'
     : secondaryStyle === 'muted' ? 'A muted, brand-charactered take on the hue'
     : secondaryStyle === 'vibrant' ? 'A vibrant take — equally vivid at every hue'
     : secondaryStyle === 'outline' ? 'Outline only'

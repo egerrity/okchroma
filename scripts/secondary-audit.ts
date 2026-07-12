@@ -85,11 +85,11 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
   }
 
   // 5. the derived posture (§2b): resolves for every primary, always subtle, never demoted,
-  //    and ALWAYS vibrant (owner round 6b: it differentiates the same-hue rows) — even when
+  //    and ALWAYS the 'default' seed-transform model (owner 2026-07-12) — even when
   //    a style leaks in from a lingering chip state
   for (const pHex of PRIMARIES) {
     const t = resolveTheme({ primaryHex: pHex, deriveSecondary: true, secondaryStyle: 'tint', contrastProfile: cp })
-    if (!t.secondary || !t.secondary.derived || t.secondary.level !== 'subtle' || t.secondary.demoted || t.secondary.style !== 'vibrant')
+    if (!t.secondary || !t.secondary.derived || t.secondary.level !== 'subtle' || t.secondary.demoted || t.secondary.style !== 'default')
       fails.push({ theme: `${profile} derived p${pHex}`, check: 'derived', detail: 'derived secondary malformed' })
   }
 }

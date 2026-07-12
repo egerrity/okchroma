@@ -88,8 +88,9 @@ function setStatus(text: string, tone: '' | 'ok' | 'err' = '') {
 // ─── The secondary field's three states ──────────────────────────────────────
 
 // the ⓘ copy per selection (Figma spec) — the always-visible tooltip replacement
-const STYLE_LABEL: Record<SecondaryStyle, string> = { muted: 'Muted', vibrant: 'Vibrant', outline: 'Outline', exact: 'Exact' }
+const STYLE_LABEL: Record<SecondaryStyle, string> = { default: 'Default', muted: 'Muted', vibrant: 'Vibrant', outline: 'Outline', exact: 'Exact' }
 const STYLE_INFO: Record<SecondaryStyle, string> = {
+  default: 'A lighter take on your primary — derived by default',
   muted: 'A muted, brand-charactered take on the hue',
   vibrant: 'A vibrant take — equally vivid at every hue',
   outline: 'Outline only',
@@ -109,7 +110,7 @@ function syncInfoLines() {
     : `Anchored to the ${primaryMode} archetype`
   secondaryChipLabel.textContent = STYLE_LABEL[secondaryStyle]
   secondaryInfoLine.style.display = secondaryMode === 'off' ? 'none' : ''
-  secondaryInfo.textContent = secondaryMode === 'derived' ? 'A vibrant secondary derived from your primary' : STYLE_INFO[secondaryStyle]
+  secondaryInfo.textContent = secondaryMode === 'derived' ? 'A lighter take on your primary — derived by default' : STYLE_INFO[secondaryStyle]
   neutralLabel.textContent = NEUTRAL_LABEL[neutralLevel]
   neutralInfo.textContent = NEUTRAL_INFO[neutralLevel]
 }

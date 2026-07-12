@@ -4,6 +4,8 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'fs'
 import { clampChromaToGamut, oklchToLinearRgb } from '/Users/emilygerrity/okchroma/src/engine/constraints'
 import { resolveBrand } from '/Users/emilygerrity/okchroma/src/engine/resolve'
+import { generateNeutralScale } from '/Users/emilygerrity/okchroma/src/engine/colorEngine'
+import { hexToOklch } from '/Users/emilygerrity/okchroma/src/engine/colorMath'
 const SP = '/private/tmp/claude-501/-Users-emilygerrity-okchroma/ebd31ad1-e60f-4409-bafd-b31c7e4ee31e/scratchpad'
 const before: any = JSON.parse(readFileSync(`${SP}/yellow-before.json`, 'utf8'))
 const after: any = JSON.parse(readFileSync(`${SP}/yellow-after.json`, 'utf8'))
@@ -41,10 +43,33 @@ const primaryCardData = (hex: string) => {
   const pick = (c: any) => ({ L: c.L, C: c.C, H: c.H })
   return { light: b.light.map(pick), cta: pick(b.cta), onW: b.onFillTextIsWhite }
 }
+// C3 SEED-LIFT (owner proposal 2026-07-12: "picking a seed color that is lighter than the
+// brand by about 50% between where the brand seed is and the neutral cta on L and letting it
+// fall out of the engine normally") — no quiet-cta pin, no bespoke curve, primary-independent.
+const seedLiftCardData = (hex: string) => {
+  const seed = hexToOklch(hex)
+  const nCtaL = generateNeutralScale(seed.H, 'default', 'apca').cta.L
+  const L2 = seed.L + 0.5 * (nCtaL - seed.L)
+  const cc = clampChromaToGamut(L2, seed.C, seed.H)
+  const [rl, gl, bl] = oklchToLinearRgb(L2, cc, seed.H)
+  const gm = (v: number) => { const x = Math.min(1, Math.max(0, v)); return x <= 0.0031308 ? 12.92 * x : 1.055 * x ** (1 / 2.4) - 0.055 }
+  const ch = (v: number) => Math.round(gm(v) * 255).toString(16).padStart(2, '0')
+  const liftedHex = `#${ch(rl)}${ch(gl)}${ch(bl)}`
+  const b: any = resolveBrand(liftedHex, 'secondary', { skipCollisionRules: true, contrastProfile: 'apca' } as any).scale
+  const pick = (c: any) => ({ L: c.L, C: c.C, H: c.H })
+  return { data: { light: b.light.map(pick), cta: pick(b.cta), onW: b.onFillTextIsWhite }, liftedHex }
+}
 const rows = Object.keys(LABEL).map(k => {
   const secHex = k.split('|')[1] === 'derived' ? k.split('|')[0] : k.split('|')[1]
+  const lift = seedLiftCardData(secHex)
   return `<div class="row"><div class="rlab">${LABEL[k]}</div>
-<div class="cards">${card(primaryCardData(secHex), `PRIMARY application · ${secHex}`)}${card(before[k], 'BEFORE (the wobble)', true)}${card(after[k], 'AFTER (fixed)')}</div></div>`
+<div class="cards">${card(primaryCardData(secHex), `PRIMARY application · ${secHex}`)}${card(before[k], 'BEFORE (the wobble)', true)}${card(after[k], 'AFTER (fixed)')}${card(lift.data, `C3 · SEED-LIFT ${lift.liftedHex} (engine-normal)`)}</div></div>`
+}).join('')
+// cross-hue read for the seed-lift candidate
+const crossRows = [['#3BA55C','green'],['#0E7490','teal'],['#7C3AED','violet'],['#DB2777','pink'],['#DC2626','red']].map(([hex,name]) => {
+  const lift = seedLiftCardData(hex)
+  return `<div class="row"><div class="rlab">${hex} ${name} — seed-lift cross-hue read</div>
+<div class="cards">${card(primaryCardData(hex), `PRIMARY application · ${hex}`)}${card(lift.data, `C3 · SEED-LIFT ${lift.liftedHex}`)}</div></div>`
 }).join('')
 const html = `<!doctype html><meta charset="utf-8"><title>Yellow wobble — before/after</title>
 <style>
@@ -66,7 +91,7 @@ const html = `<!doctype html><meta charset="utf-8"><title>Yellow wobble — befo
 </style>
 <div class="note"><b>Yellow wobble — BEFORE (shipped f635c4e, from a pinned worktree) vs AFTER (the boost-arc + vividness-ceiling fix).</b>
 Light mode, APCA. Her two cases first, then true yellows; the muted control row is byte-identical (muted was never affected).</div>
-${rows}`
+${rows}\n<div class=\"note\"><b>C3 seed-lift across hues</b> — the same rule on the standard set.</div>\n${crossRows}`
 mkdirSync('/Users/emilygerrity/okchroma/render', { recursive: true })
 writeFileSync('/Users/emilygerrity/okchroma/render/secondary-yellow-check.html', html)
 console.log('written -> render/secondary-yellow-check.html')

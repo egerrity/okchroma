@@ -283,7 +283,7 @@ export type SecondaryLevel = 'standard' | 'subtle'
 // delta curve); outline = the muted ramp with the cta re-resolved (cta-1 transparent, cta-2 the
 // cta color at OUTLINE_HOVER_ALPHA, on-cta ink-11, cta-border always highlight-8); exact = the
 // standard full ramp, advice-only.
-export type SecondaryStyle = 'muted' | 'vibrant' | 'outline' | 'exact'
+export type SecondaryStyle = 'default' | 'muted' | 'vibrant' | 'outline' | 'exact'
 // legacy ids (pre-rename, owner 2026-07-12 "yes" to the rename): accepted at the input seam,
 // normalized to the canonical ids above — existing callers/files keep working.
 export type LegacySecondaryStyle = SecondaryStyle | 'tint' | 'pastel'
@@ -298,6 +298,26 @@ export const SUBTLE_PASTEL_K = 0.35
 // scale — brand-charactered quiet, no bespoke curve ("C2 is actually pretty close to what I
 // was thinking for the subtle version").
 // (the 2026-07-04 dark ruling).
+// ── the DEFAULT (derived) secondary — a SEED TRANSFORM (owner-picked "strong" on
+// render/secondary-default-model.html, 2026-07-12): slight hue rotation; L lifted
+// proportionally to the remaining room toward the light pole (the delta shrinks as the seed
+// nears the background); chroma gently relative to the seed, bounded by the room at the
+// landing. The lifted seed then resolves as a NORMAL ramp — no pinned cta, no bespoke curve,
+// primary-independent by construction ("we just didn't try to set this for people").
+export const DEFAULT_SECONDARY = { rot: 12, kL: 0.65, kC: 0.5, kR: 0.4, lRoom: 0.97 } as const
+export function defaultSecondarySeed(hex: string): string {
+  const seed = hexToOklch(hex)
+  const d = DEFAULT_SECONDARY
+  const L2 = seed.L + d.kL * Math.max(0, d.lRoom - seed.L)
+  const H2 = (seed.H + d.rot + 360) % 360
+  const C2 = Math.min(d.kC * seed.C, d.kR * maxChromaAt(L2, H2))
+  const cc = clampChromaToGamut(L2, C2, H2)
+  const [rl, gl, bl] = oklchToLinearRgb(L2, cc, H2)
+  const gm = (v: number) => { const x = Math.min(1, Math.max(0, v)); return x <= 0.0031308 ? 12.92 * x : 1.055 * x ** (1 / 2.4) - 0.055 }
+  const ch = (v: number) => Math.round(gm(v) * 255).toString(16).padStart(2, '0')
+  return `#${ch(rl)}${ch(gl)}${ch(bl)}`
+}
+
 export const MUTED_IDENTITY_SCALE = 0.5
 // muted-dark stays UNDER vibrant-dark by at least this factor (the dark ordering guard below)
 export const MUTED_DARK_VIBRANT_CAP = 0.85
@@ -541,16 +561,19 @@ export function resolveTheme(input: {
   // ---- no secondary supplied: nothing, or the DERIVED subtle secondary (§2b) ----
   if (!input.secondaryHex) {
     if (!input.deriveSecondary) return { primary, themed: primary, secondary: null, signalOverrides: primary.signalOverrides, notes }
-    const scale = generateSubtleSecondary(input.primaryHex, { contrastProfile: cp, ctaL: subtleCtaLFor(primary.scale), curve: vibrantSecondaryCurve(input.primaryHex) })
+    // the DEFAULT model: transform the brand seed, resolve like a normal brand (secondary
+    // convention: collisions are the theme's decisions). Everything — cta included — falls
+    // out of the engine; the old quiet-register derived path is retired for the default.
+    const liftedHex = defaultSecondarySeed(input.primaryHex)
+    const scale = resolveBrand(liftedHex, 'secondary', { skipCollisionRules: true, contrastProfile: cp } as any).scale
     return {
       primary, themed: primary,
       secondary: {
         scale,
-        style: 'vibrant',  // derived is ALWAYS vibrant (owner: differentiates it from the
-                           // same-hue brand + neutral rows — a muted ramp read as redundant)
+        style: 'default',
         level: 'subtle', demoted: false, derived: true,
         notes: [
-          'secondary derived from the brand color (subtle register)',
+          `secondary derived from the brand color (default model, seed ${liftedHex})`,
           ...signalNotesFor(scale, (name, dE) =>
             `derived secondary sits on the ${name} signal's hue (wash ΔE ${dE.toFixed(3)}) — it tracks the brand color; expected, annotated for the remedy round`),
         ],
