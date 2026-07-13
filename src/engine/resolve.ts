@@ -163,7 +163,9 @@ export function resolveBrand(
     // "a secondary red earns rung 1 like a primary would").
     skipCollisionRules?: boolean
 
-    // opt-in APCA legibility clearance — threads into every generateScale call (wcag lane only, default off).
+    // APCA legibility clearance (wcag lane only): the chosen cta pole must also clear the
+    // Lc bar, fill moving pole-preserving. DEFAULT ON since the 2026-07-13 dead-zone ruling;
+    // pass false to opt out (instrumentation/comparisons).
     apcaClearance?: boolean
 
     // internal (resolveTheme, derived secondary): the FLAT dark-cta register — see
@@ -204,7 +206,12 @@ export function resolveBrand(
 
     highlight: true,
     contrastProfile: opts?.contrastProfile,
-    apcaClearance: opts?.apcaClearance,
+    // DEFAULT ON (owner 2026-07-13, the cta dead-zone ruling: "pick closest to id that
+    // passes apca"): the wcag lane's chosen cta pole must also clear the APCA bar,
+    // moving the fill in that pole's own direction (pole-preserving = her candidate 1;
+    // the apca lane already guarantees its bar, so it ships unmoved). Brand-kind only —
+    // signals/neutral never pass through resolveBrand; exact mode has enforce off.
+    apcaClearance: opts?.apcaClearance ?? true,
     darkCtaFlatApp: opts?.darkCtaFlatApp,
   }
 

@@ -19,7 +19,7 @@ import {
   darkScaleChromaAt, darkInkChromaAt, darkHighlightChromaAt, placeDark, placeDarkDelta, deltaDarkTargetL, flatDarkCtaL,
   onFillIsWhiteLight, onFillIsWhiteDarkAt, onHighlightIsWhiteAt, ctaLightL, ctaDarkEnforcedL,
   ctaLightLApca, ctaDarkEnforcedLApca, solveBrandExit, solveDarkCtaExit, ctaDualGateL,
-  apcaYAt, findMaxLForApcaLc, APCA_SOLVE_MARGIN_LC, APCA_TOL_LC,
+  apcaYAt, findMaxLForApcaLc, APCA_SOLVE_MARGIN_LC, APCA_TOL_LC, APCA_ENFORCE_MARGIN_LC,
 } from './producers'
 
 // hex = the sRGB clamp-down of the resolved stop (gamut-map by chroma-reduction, §4B)
@@ -45,10 +45,10 @@ export type { ResolveOpts }
 // from the exhibit marks — plan open item 4). 4.5 is NEVER capped; only the Lc ambition is. No highlight-band
 // clamp: the highlight FILL sits at a mid L (often BELOW the cta), so a black-lighten moves AWAY from it —
 // there is no wash risk to guard, and clamping to it wrongly killed the move.
-const CTA_CLEARANCE_L_BUDGET = 0.16
-function ctaClearanceCaps(ctx: Ctx): [number, number] {
-  return [ctx.scaleL - CTA_CLEARANCE_L_BUDGET, ctx.scaleL + CTA_CLEARANCE_L_BUDGET]
-}
+// The clearance caps are the POLE caps (owner 2026-07-13 dead-zone ruling: the bar is the
+// goal, not an ambition — the old ±0.16 taste budget capped worst-case dead zones short of
+// legibility and is retired; 4.5 was never capped either way).
+const CTA_CLEARANCE_CAPS: [number, number] = [0.05, 0.92]
 
 // `spec` defaults to the built-in mode table; a parsed DTCG requirement bundle can be passed instead —
 // the resolver executes whatever declaration it's handed (portability: the token file is the source of truth).
@@ -333,8 +333,9 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     // variant de-collides the SIGNAL against this final cta — the brand belongs to the clearance, not the
     // brand-side collider. Default off → byte-identical.
     if (coLc !== undefined) {
-      const [capLoL, capHiL] = ctaClearanceCaps(ctx)
-      light9L = ctaDualGateL(ctx, onFillIsWhite, onFillEnforce, coLc, capLoL, capHiL)
+      const [capLoL, capHiL] = CTA_CLEARANCE_CAPS
+      // ship above the razor (C15): fire/solve at bar + margin, not at 60.0
+      light9L = ctaDualGateL(ctx, onFillIsWhite, onFillEnforce, coLc + APCA_ENFORCE_MARGIN_LC, capLoL, capHiL)
     }
     // C12 v8 — THE JOINT SOLVE, brand side (owner-settled 2026-07-10): a cta whose seed
     // sits inside the true-red region (opts.ctaSolve — nominal seed + the lane's red cta,

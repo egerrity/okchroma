@@ -1999,7 +1999,10 @@
     "neutral/wash-4",
     "neutral/wash-5",
     "neutral/wash-6",
-    "neutral/wash-7"
+    "neutral/wash-7",
+    "red/cta-1",
+    "red/cta-2",
+    "red/on-cta"
    ],
    "wcag-dark": [
     "brand-primary/cta-1",
@@ -3214,6 +3217,7 @@
     "brand-primary/identity",
     "brand-primary/ink-10",
     "brand-primary/ink-11",
+    "brand-primary/on-cta",
     "brand-primary/paper-1",
     "brand-primary/paper-2",
     "brand-primary/wash-3",
@@ -3435,9 +3439,7 @@
     "neutral/wash-4",
     "neutral/wash-5",
     "neutral/wash-6",
-    "neutral/wash-7",
-    "red/cta-1",
-    "red/cta-2"
+    "neutral/wash-7"
    ],
    "wcag-dark": [
     "brand-primary/cta-1",
@@ -6683,9 +6685,7 @@
     "neutral/wash-4",
     "neutral/wash-5",
     "neutral/wash-6",
-    "neutral/wash-7",
-    "red/cta-1",
-    "red/cta-2"
+    "neutral/wash-7"
    ],
    "wcag-dark": [
     "brand-primary/cta-1",
@@ -8480,6 +8480,7 @@
     "brand-primary/identity",
     "brand-primary/ink-10",
     "brand-primary/ink-11",
+    "brand-primary/on-cta",
     "brand-primary/paper-1",
     "brand-primary/paper-2",
     "brand-primary/wash-3",
@@ -8696,9 +8697,7 @@
     "neutral/wash-4",
     "neutral/wash-5",
     "neutral/wash-6",
-    "neutral/wash-7",
-    "red/cta-1",
-    "red/cta-2"
+    "neutral/wash-7"
    ],
    "wcag-dark": [
     "brand-primary/cta-1",

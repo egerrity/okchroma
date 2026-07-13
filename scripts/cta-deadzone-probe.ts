@@ -9,7 +9,12 @@
 // flags dead zones, and SIZES the two candidate fill moves the owner named:
 //   (1) LIGHTEN the fill until black clears the Lc bar (pole stays black), or
 //   (2) DARKEN the fill until white clears BOTH 4.5 and the Lc bar (pole flips to white).
-// MEASUREMENT ONLY — nothing wired. Exhibit → render/cta-deadzone.html.
+// 2026-07-13 ruling (owner, on this exhibit): signals excluded (static-seeded); goal = the
+// fill closest to identity whose chosen pole passes the APCA bar, per lane — candidate 1 in
+// wcag (pole-preserving move), shipped in apca (already passing). WIRED same day: the
+// apcaClearance dual-gate went default-ON for brand-kind resolution (CATALOG C18) — this
+// probe now measures the wired state (sweep reads 0 dead zones; the candidates columns show
+// what the solve chose between). Exhibit → render/cta-deadzone.html.
 import { writeFileSync, mkdirSync } from 'fs'
 import { resolveBrand, resolveTheme } from '../src/engine/resolve'
 import {

@@ -854,3 +854,41 @@ verified present in a pre-rename bless, not from this change).
 owner word on deletion — unreachable on both paths today, but removal is a capability cut.
 
 Relates: C7 (collision gates), the 2169337 seed lift, C15 (the apca enforce that motivated it).
+
+## C18 — wcag cta cross-metric dead zones: the APCA clearance is default-ON for brands
+
+**Status:** CLOSED (owner 2026-07-13, ruled on render/cta-deadzone.html: "goal is to pick
+closest to id that passes apca on both in dead zone. This looks like candidate 1 in both
+apca and wcag OR candidate 1 in wcag, shipped in apca." Signals explicitly excluded —
+static-seeded, already apca-legible by the 2169337 seed lifts.)
+
+**The dead zone.** A wcag cta whose ratio-passing pole fails the shipped APCA bar — legally
+passing, perceptually weak. Measured pre-fix: 28/96 agnostic sweep seeds (mid-light brands,
+black pole at ratio 5.8–9.3:1 reading Lc 40–60); 0/96 in the apca lane (its enforce
+guarantees its own bar). Owner case: green #22a559 — wcag black 6.59:1 at Lc 45.3 while
+apca ships white Lc 64.2. The default wcag lane had no lighten-for-black and no
+darken-and-flip: the pole judge locks the ratio-passing pole before any fill solve.
+
+**Resolution (the owner rule, per lane):** ship the fill closest to identity whose chosen
+pole passes the APCA bar. The apca lane already satisfies it (unmoved). The wcag lane now
+runs the pole-preserving clearance ALWAYS: `resolveBrand` defaults `apcaClearance` ON →
+`ctaDualGateL` after the near-red guard — black pole lightens / white pole darkens until
+the pole clears bar + margin (fire/ship at 60+2+0.5, the C15 razor lesson), 4.5 stays the
+hard floor. The ±0.16 taste budget is RETIRED (it capped worst-case dead zones short of
+legibility); caps are now the pole caps [0.05, 0.92]. Post-fix sweep: 0/96 dead, both lanes.
+Green ships #72c681 (black 9.89:1, Lc 62.5) under wcag — candidate 1.
+
+**Interplay (by the clearance design, C15-era):** with the clearance on, the wcag brand-side
+red exit (solveBrandExit) is off — the red COMPLEMENT variant de-collides the signal against
+the brand's final cleared cta. Collision sweep: zero unfired holes, both lanes, post-change.
+Named-brand firing changes re-blessed (hibiscus gains a red variant; turmeric-latte,
+roster/L4-vivid, vs-red-warmer no longer need theirs — their cleared ctas stand clean).
+Divergence re-bless: 11 scales, all the cta slot, all intended movers. Signals, neutral,
+and the entire apca lane hash-identical.
+
+**Scope + residuals:** LIGHT mode wcag. The wcag DARK lane still has only the white-darken
+enforce (no lighten-for-black) — dark dead zones unprobed, follow-up. Exact mode untouched
+(enforce off). The opts.apcaClearance flag remains as an opt-OUT for instruments.
+
+Relates: C15 (the margin + pole-symmetric apca enforce), the 2169337 clearance/seed-lift
+round (whose parked default-on this executes), C12 (the red interplay).
