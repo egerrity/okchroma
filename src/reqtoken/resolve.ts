@@ -347,8 +347,14 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     let repelled = false
     let ctaH = ctx.brandH
     let ctaCMul = 1
-    if (ctx.opts?.ctaSolve && coLc === undefined) {
-      const landing = solveBrandExit(ctx.opts.ctaSolve.seed, ctaCFor, ctx.brandH, ctx.opts.ctaSolve.red, enforceLc)
+    // C18 regression fix (owner 2026-07-13, "both of these reds should be going dark"): the
+    // exit runs UNDER the clearance too. The flag-era design assumed the clearance would move
+    // near-red brands, but a pure red's white pole passes both bars — nothing moved it, the
+    // brand squatted in red's register and forced the complement to the coral edge (lane
+    // mismatch vs apca, which kept its exit). Members exit as before; the landing's poleOk
+    // now also honors the clearance bar so the re-judged pole passes both metrics.
+    if (ctx.opts?.ctaSolve) {
+      const landing = solveBrandExit(ctx.opts.ctaSolve.seed, ctaCFor, ctx.brandH, ctx.opts.ctaSolve.red, enforceLc, coLc)
       if (landing !== null) {
         light9L = landing.L
         ctaH = landing.H

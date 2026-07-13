@@ -502,15 +502,24 @@ export function solveBrandExit(
   cFor: (L: number) => number, brandH: number,
   red: { L: number; C: number; H: number },
   enforceLc?: number,
+  // the wcag lane's clearance bar (C18): a wcag exit must land where a pole passes BOTH the
+  // 4.5 ratio and this Lc — the post-move re-judge then can't be forced onto a weak pole
+  coLc?: number,
 ): BrandExitLanding | null {
   const at = (L: number) => ({ L, C: clampChromaToGamut(L, cFor(L), brandH), H: brandH })
+  const blackLc = (L: number, C: number, H: number) =>
+    Math.abs(apcaLc(apcaYAt(0, 0, 0), apcaYAt(L, clampChromaToGamut(L, C, H), H)))
   const poleOk = (L: number, C: number, H: number): boolean => {
-    if (enforceLc === undefined) return true
     // landings honor the same fire margin as the enforcers — a release point chosen at
     // exactly Lc 60.0 is the same external-checker razor the margin exists to kill
-    const bar = enforceLc + APCA_ENFORCE_MARGIN_LC
-    if (whiteTextLcAt(L, C, H) >= bar) return true
-    return Math.abs(apcaLc(apcaYAt(0, 0, 0), apcaYAt(L, clampChromaToGamut(L, C, H), H))) >= bar
+    if (enforceLc !== undefined) {
+      const bar = enforceLc + APCA_ENFORCE_MARGIN_LC
+      return whiteTextLcAt(L, C, H) >= bar || blackLc(L, C, H) >= bar
+    }
+    if (coLc === undefined) return true
+    const bar = coLc + APCA_ENFORCE_MARGIN_LC
+    return (legalRatio(L, C, H, 1.0) >= 4.5 && whiteTextLcAt(L, C, H) >= bar)
+        || (legalRatio(L, C, H, 0) >= 4.5 && blackLc(L, C, H) >= bar)
   }
   const anchor = at(seed.L)
   const dh = hueDelta(seed.H, red.H)
