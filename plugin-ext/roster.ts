@@ -10,7 +10,7 @@
 //   teal                         standalone real-theme tester (H229 — collides with nothing)
 //   vs-*                         the colliders, named for the signal they stress (identity
 //                                names). vs-red pair = the BRAND moves (red-band design);
-//                                vs-yellow/green/info-color = the SIGNAL moves. Pairs cover
+//                                vs-yellow/green/blue = the SIGNAL moves. Pairs cover
 //                                both escape directions; vs-green (shifts teal) is the
 //                                wcag-lane-only exemplar; vs-red (warmer) #EA603E is the
 //                                standing regression hex for the red-orange cool fix.
@@ -51,8 +51,8 @@ export const ROSTER: RosterEntry[] = [
   { name: 'teal', hex: '#005C7A', note: 'real theme, no collisions (H229)' },
   { name: 'vs-green (shifts lime)', hex: '#22A559', note: 'green → yellow-side, both lanes' },
   { name: 'vs-green (shifts teal)', hex: '#65C466', note: 'green → teal-side, wcag lane only' },
-  { name: 'vs-info-color (shifts blue)', hex: '#4F46E5', note: 'info-color → blue' },
-  { name: 'vs-info-color (shifts magenta)', hex: '#044BAF', note: 'info-color → magenta (the legacy unify blue)' },
+  { name: 'vs-blue (shifts cyan)', hex: '#4F46E5', note: 'blue → cyan-side, both lanes' },
+  { name: 'vs-blue (no shift)', hex: '#044BAF', note: 'no collision since the seed lift — the magenta side is unreachable (accepted, C17)' },
   { name: 'vs-red (cooler)', hex: '#EE3123', note: 'cool of the red signal — separates healthily (cta #680000)' },
   { name: 'vs-red (warmer)', hex: '#EA603E', note: 'warm of the red signal — the dead-zone regression hex for the cool fix' },
   { name: 'vs-yellow', hex: '#F5B301', note: 'yellow → lemon' },

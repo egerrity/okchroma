@@ -39,7 +39,35 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['ink-11', 'ink-10'],
   ['ink-12', 'ink-11'],
   ['ink-13', 'ink-12'],
+  // blue-signal variant relabels (2026-07-13, info-color → blue): variant leaf =
+  // label + resolved light-cta hex (variantKey), so the relabel needs per-lane entries.
+  ['magenta-de8df6', 'magenta-side-de8df6'],
+  ['magenta-e290f9', 'magenta-side-e290f9'],
+  ['blue-7cb3f9', 'cyan-side-7cb3f9'],
+  ['blue-7eb5fb', 'cyan-side-7eb5fb'],
 ]
+// Group renames (old prefix → new), same in-place idiom — info-color → blue (2026-07-13);
+// covers the primitive (system/<signal>/…) and theme (<signal>/…) collections.
+const RENAMED_GROUPS: Array<[string, string]> = [
+  ['system/info-color/', 'system/blue/'],
+  ['info-color/', 'blue/'],
+]
+// Every legacy spelling of `path`: old leaf, old group, and old group + old leaf composed
+// (a file untouched since before BOTH renames needs e.g. system/info-color/ink-11 → system/blue/ink-10).
+function legacyCandidates(path: string): string[] {
+  const out: string[] = []
+  const leafVariants = [path]
+  for (const [oldLeaf, newLeaf] of RENAMED_LEAVES) {
+    if (path.endsWith(`/${newLeaf}`)) leafVariants.push(path.slice(0, -newLeaf.length) + oldLeaf)
+  }
+  for (const cand of leafVariants) {
+    if (cand !== path) out.push(cand)
+    for (const [oldPre, newPre] of RENAMED_GROUPS) {
+      if (cand.startsWith(newPre)) out.push(oldPre + cand.slice(newPre.length))
+    }
+  }
+  return out
+}
 
 const ENTERPRISE_MSG =
   'Extended collections need a Figma Enterprise org — this file’s plan doesn’t expose collection.extend(). '
@@ -145,11 +173,9 @@ figma.ui.onmessage = async (msg) => {
       let createdVars = 0
       const ensure = (path: string): figma.Variable => {
         let v = baseVars.get(path)
-        if (!v) for (const [oldLeaf, newLeaf] of RENAMED_LEAVES) {
-          if (!path.endsWith(`/${newLeaf}`)) continue
-          const legacyPath = path.slice(0, -newLeaf.length) + oldLeaf
+        if (!v) for (const legacyPath of legacyCandidates(path)) {
           const legacy = baseVars.get(legacyPath)
-          if (legacy) { legacy.name = path; baseVars.delete(legacyPath); baseVars.set(path, legacy); v = legacy }
+          if (legacy) { legacy.name = path; baseVars.delete(legacyPath); baseVars.set(path, legacy); v = legacy; break }
         }
         if (!v) { v = figma.variables.createVariable(path, base, 'COLOR'); baseVars.set(path, v); createdVars++ }
         v.description = STAMP

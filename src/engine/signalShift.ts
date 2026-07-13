@@ -30,10 +30,13 @@ const SHIFT_RULES: Partial<Record<SignalDef['name'], SignalShiftRule>> = {
     atOrAbove: { kind: 'swap', note: 'green → yellow-side', baseHex: '#78C062' },
   },
 
-  'info-color': {
+  // renamed by identity 2026-07-13 (owner: only purple-blue/cyan-blue remains): info-color → blue.
+  // The magenta side is UNREACHABLE since the 2169337 seed lift (blessed loss, CATALOG C17):
+  // primary gate 0/roster, secondary adoption 0/288 probed — machinery kept pending owner word.
+  'blue': {
     splitH: 273,
-    below: { kind: 'swap', note: 'info-color → magenta', baseHex: '#EC88FC' },
-    atOrAbove: { kind: 'swap', note: 'info-color → blue', baseHex: '#6AB5FF' },
+    below: { kind: 'swap', note: 'blue → magenta-side', baseHex: '#EC88FC' },
+    atOrAbove: { kind: 'swap', note: 'blue → cyan-side', baseHex: '#6AB5FF' },
   },
 }
 
@@ -69,8 +72,8 @@ function lemonScale(def: SignalDef, contrastProfile?: ContrastProfile): Generate
   })
 }
 
-// The swap variants a signal can OFFER (green: teal-side / yellow-side; info-color: magenta /
-// blue). Used by resolveTheme when a SECONDARY collides: a variant is adopted only if it clears
+// The swap variants a signal can OFFER (green: teal-side / yellow-side; blue: magenta-side /
+// cyan-side). Used by resolveTheme when a SECONDARY collides: a variant is adopted only if it clears
 // BOTH brand colors. red offers none (identity sacred) and yellow's lemon stays primary-only
 // (warningVariant machinery) — for those the secondary yields instead (SECONDARY-PLAN §2).
 export function signalSwapVariants(def: SignalDef, contrastProfile?: ContrastProfile): ShiftResult[] {

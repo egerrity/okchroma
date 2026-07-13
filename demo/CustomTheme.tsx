@@ -317,10 +317,10 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
     </div>
   )
 
-  // Signal ramps, so the per-brand signal shifts (yellow/green/info-color) are
+  // Signal ramps, so the per-brand signal shifts (yellow/green/blue) are
   // visually checkable in-app. Override note shown when this brand shifted a
   // signal away for extra distance. red is never shifted (engine owns red).
-  const SIGNAL_NAMES = ['red', 'yellow', 'green', 'info-color'] as const
+  const SIGNAL_NAMES = ['red', 'yellow', 'green', 'blue'] as const
   // Each signal gets its OWN card block (like brand/neutral) — titled by its real
   // token name. "shifted · …" shows when this brand pushed the signal off-canonical.
   const signalBlocks = () => SIGNAL_NAMES.map(name => {
@@ -347,7 +347,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
     ['brand', 'primary', true],
     ...((secondary || derived) ? [['secondary', 'secondary', true] as [string, string, boolean]] : []),
     ['neutral', 'neutral', false],
-    ['red', 'red', false], ['yellow', 'yellow', false], ['green', 'green', false], ['info-color', 'info-color', false],
+    ['red', 'red', false], ['yellow', 'yellow', false], ['green', 'green', false], ['blue', 'blue', false],
   ]
   const swatchCell = (prefix: string, stop: string) => {
     const cv = (t: string) => `var(--${prefix}-${t})`
@@ -462,7 +462,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
           <div className="ct-pane-main">
             {swatchMatrix()}
             {/* every cta together — brand pair, secondary pair, neutral, and the four
-                signals (red/yellow/green/info-color, with this brand's overrides) so a
+                signals (red/yellow/green/blue, with this brand's overrides) so a
                 colliding pair is visible in one glance */}
             <div className="ct-colorblock">
               <div className="ct-label" style={{ marginBottom: 8 }}>All ctas — deconfliction row</div>
@@ -724,7 +724,7 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
 
 // ─── Collision check — 2×2 grid, one form card per signal ───────────────────
 // Owner spec (2026-07-09): four form cards on paper-0, one per signal
-// (red / yellow / green / info-color — by identity), each combining:
+// (red / yellow / green / blue — by identity), each combining:
 //   ink-10 title + brand chip + the card signal's chip
 //   ink-11 short body
 //   focused input + resting input
@@ -737,7 +737,7 @@ const SIGNAL_CARDS: Array<{ sig: string; Icon: typeof Info; alert: string }> = [
   { sig: 'red', Icon: AlertCircle, alert: 'We couldn\'t process the request. Try again.' },
   { sig: 'yellow', Icon: TriangleAlert, alert: 'Usage is approaching the plan limit.' },
   { sig: 'green', Icon: CheckCircle, alert: 'Changes saved. Everything is up to date.' },
-  { sig: 'info-color', Icon: Info, alert: 'A new version is available.' },
+  { sig: 'blue', Icon: Info, alert: 'A new version is available.' },
 ]
 
 function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typeof Info; alert: string; hasSecondary: boolean }) {

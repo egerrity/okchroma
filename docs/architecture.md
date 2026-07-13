@@ -151,7 +151,7 @@ The same modules as a table — each piece, where it lives, what it does. Groupe
 |---|---|---|
 | Stop tables | `stopTable.ts` | The declared numbers: L scaffolds, `SCALE_C_LIGHT`/`SCALE_C_DARK` chroma tables (one table per mode, C10), `DARK_CTA_C` (the C16 cta chroma register: brand = trimmed, signal = identity), stop-8's 3:1 bound, the yellow band, dark fill floors. |
 | Dark chroma policy | `darkChromaCurve.ts` | `darkChromaCurve` (the H-K fill equalizer) and `darkCtaTrim` (the brand dark-cta trim, computed from `DARK_CTA_C`). |
-| Signal identities | `signals.ts` | The four signals by identity — red, yellow, green, info-color — seed hexes + per-signal dark floors. |
+| Signal identities | `signals.ts` | The four signals by identity — red, yellow, green, blue (renamed from info-color 2026-07-13) — seed hexes + per-signal dark floors. |
 | Archetypes | `archetypes.ts` | The six lightness anchors (near-black → light), `classifyArchetype`, the hover rule (`hoverL`). |
 | Neutral curve | `neutralCurve.ts` | The neutral's chroma shape — the neutral is generated from the brand hue at three tint levels. |
 
@@ -389,9 +389,11 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
   opposite side of the brand when canonical red would still sit too close
   (`redComplementVariant`). The older rung-1 darken, muted dark float, and
   `errorComponentRule` are deleted.
-- **Signal shifts** — `pickSignalShift` (`signalShift.ts`): warning yellow → cooler *lemon*;
-  success green → teal-side / yellow-side; info → magenta / blue. The direction depends on
-  which side of a hue split the brand sits, so the signal stays distinct.
+- **Signal shifts** — `pickSignalShift` (`signalShift.ts`): yellow → cooler *lemon*;
+  green → teal-side / yellow-side; blue → cyan-side. The direction depends on which side of
+  a hue split the brand sits, so the signal stays distinct. (Blue's magenta side is
+  unreachable since the 2026-07-11 seed lift — an accepted loss, CATALOG C17; the signal was
+  renamed from `info-color` to `blue` once only blue directions remained.)
 - **Advisory overlaps** — non-critical signal overlaps (`pending[]`) and any
   secondary-color collisions are *flagged, not auto-resolved* (intentional for v1).
 

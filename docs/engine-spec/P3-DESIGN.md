@@ -31,7 +31,7 @@ Agnostic seed sweep (36 hues × 3 L × 3 C, both profiles) through resolveTheme;
 - **yellow signal: ~100% pinned** at light 7–12 and dark 1–12 — the whole ramp rides
   the ceiling. Light stops 8–10 gain ΔC ≈ 0.019–0.021 (~15% over current 0.125–0.134):
   the measured gold-band truncation, exactly.
-- green signal dark 1–9 and info-color light 11/12 + both cta pairs: 100% pinned.
+- green signal dark 1–9 and blue (then info-color) light 11/12 + both cta pairs: 100% pinned.
 - signal light ctas: median headroom ΔC 0.048 — the largest single gain.
 - **KICKOFF CORRECTION: "stops 1–8 identical in both gamuts" holds in LIGHT mode only**
   (light wash pinning ≈ 0). Brand DARK paper/wash stops 1–7 are 33–56% pinned — the

@@ -111,7 +111,7 @@
 /* ─── Signal roles ──────────────────────────────────────────────────────────
    Aliases onto engine-generated signal primitives (dist/signals.css).
    Mode switching happens at the primitive layer, so one block covers both.
-   alert-high → red, alert-med → yellow, positive → green, info → info-color */
+   alert-high → red, alert-med → yellow, positive → green, info → blue */
 
 [data-brand] {
   --alert-high-fg:                    var(--red-ink-11);
@@ -159,18 +159,18 @@
   --positive-border-default-hover:   var(--green-highlight-8);
   --positive-border-emphasis:         var(--green-highlight-9);
 
-  --info-fg:                          var(--info-color-ink-11);
-  --info-fg-hover:                    var(--info-color-ink-10);
-  --info-fg-alt:                      var(--info-color-ink-10);
-  --info-fg-alt-hover:                var(--info-color-ink-11);
-  --info-fg-on-emphasis:              var(--info-color-on-highlight);
-  --info-bg-faint:                    var(--info-color-paper-2);
-  --info-bg-subtle:                   var(--info-color-wash-5);
-  --info-bg-subtle-hover:             var(--info-color-wash-6);
-  --info-bg-emphasis:                 var(--info-color-highlight-9);
-  --info-border-subtle:               var(--info-color-wash-4);
-  --info-border-subtle-hover:         var(--info-color-wash-5);
-  --info-border-default:             var(--info-color-wash-6);
-  --info-border-default-hover:       var(--info-color-highlight-8);
-  --info-border-emphasis:             var(--info-color-highlight-9);
+  --info-fg:                          var(--blue-ink-11);
+  --info-fg-hover:                    var(--blue-ink-10);
+  --info-fg-alt:                      var(--blue-ink-10);
+  --info-fg-alt-hover:                var(--blue-ink-11);
+  --info-fg-on-emphasis:              var(--blue-on-highlight);
+  --info-bg-faint:                    var(--blue-paper-2);
+  --info-bg-subtle:                   var(--blue-wash-5);
+  --info-bg-subtle-hover:             var(--blue-wash-6);
+  --info-bg-emphasis:                 var(--blue-highlight-9);
+  --info-border-subtle:               var(--blue-wash-4);
+  --info-border-subtle-hover:         var(--blue-wash-5);
+  --info-border-default:             var(--blue-wash-6);
+  --info-border-default-hover:       var(--blue-highlight-8);
+  --info-border-emphasis:             var(--blue-highlight-9);
 }

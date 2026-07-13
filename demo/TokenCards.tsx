@@ -22,14 +22,14 @@ const SIGNAL_ICON: Record<string, typeof AlertCircle> = {
   red: AlertCircle,
   yellow: AlertTriangle,
   green: CheckCircle,
-  'info-color': Info,
+  'blue': Info,
 }
 
 // ─── CTA deconfliction row ────────────────────────────────────────────────────
 // Every cta side by side — the one spot where a colliding pair is visible in a
 // single glance: the brand cta pair, the secondary cta pair (when one exists),
 // the quiet neutral cta, and all four signal ctas (red / yellow / green /
-// info-color). Each family renders its cta-1 | cta-2 pair as one seamed pill in
+// blue). Each family renders its cta-1 | cta-2 pair as one seamed pill in
 // on-cta text. Reads the live vars, so the per-brand signal overrides the
 // resolved theme carries show up here automatically; names the theme shifted
 // off-canonical get a "shifted" tag. The cta-border border is unconditional —
@@ -43,7 +43,7 @@ export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; 
     { prefix: 'red', label: 'red' },
     { prefix: 'yellow', label: 'yellow' },
     { prefix: 'green', label: 'green' },
-    { prefix: 'info-color', label: 'info-color' },
+    { prefix: 'blue', label: 'blue' },
   ]
   const cell = (prefix: string, tok: 'cta-1' | 'cta-2') => (
     <div title={`--${prefix}-${tok}`} style={{

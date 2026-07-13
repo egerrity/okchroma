@@ -29,7 +29,7 @@ const ok = (cond: boolean, msg: string) => { if (!cond) fails.push(msg) }
 // rides the rung. paper-1 (stop 1) and ink-11 (stop 11) are shared across ramps.
 for (const mode of ['light', 'dark'] as const) {
   const m = figma[mode] as any
-  for (const fam of ['brand', 'secondary', 'neutral', 'red', 'yellow', 'green', 'info-color']) {
+  for (const fam of ['brand', 'secondary', 'neutral', 'red', 'yellow', 'green', 'blue']) {
     ok(!!m[fam], `${mode}.${fam} missing`)
     // brand/secondary: full scale + highlight + off-scale cta + identity + both
     // on-text tokens. neutral: scale + highlight + cta + both on-text. signals:

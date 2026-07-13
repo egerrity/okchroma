@@ -306,7 +306,7 @@ function buildAndSend() {
     const { light, dark } = themeToFigma(r, { secondary, secondaryStyle: t.secondary?.style, neutralLevel, signals, contrastProfile: cp })
 
     // The engine now names signals by identity (red / yellow / green /
-    // info-color), so both the primitive path (system/<identity>/<variant>) and
+    // blue), so both the primitive path (system/<identity>/<variant>) and
     // the theme-collection group name are just s.name — no role→identity remap.
 
     // brand + secondary: unique per brand → raw values under brand/<brand>/<role>.

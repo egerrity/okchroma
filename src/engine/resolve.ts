@@ -243,7 +243,7 @@ export function resolveBrand(
     warnVariant = warningVariant(scale, warn.scale, warn.def)
     if (warnVariant) pending = pending.filter(n => n !== 'yellow')
 
-    for (const sigName of ['yellow', 'green', 'info-color'] as const) {
+    for (const sigName of ['yellow', 'green', 'blue'] as const) {
       const { def, scale: canonical } = sigScales.get(sigName)!
       const shift = pickSignalShift(scale, canonical, def, opts?.contrastProfile)
       if (shift) {
@@ -274,7 +274,7 @@ export function resolveBrand(
 //                calibrated by sweep — the numbers over-fire vs context; annotated.)
 //   green      → one move, primary priority: a swap variant is adopted only if the primary
 //                didn't spend green's move AND the variant clears BOTH brand colors.
-//   info-color → wide band, not sacred: variants are tried even if the primary already
+//   blue (was info-color) → wide band, not sacred: variants are tried even if the primary already
 //                shifted it — any adopted variant must still clear the primary.
 // Yields are REGISTER (L/chroma) only, never hue. Auto-demotion = the SUBTLE treatment
 // (one mechanism — also the user-facing secondaryLevel option), always annotated.

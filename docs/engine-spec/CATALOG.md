@@ -816,3 +816,41 @@ name compounded it: `loudCta` never made anything loud — it *skipped the brand
 
 Relates: C6 (warm-side dark cta), C10 (declared-table principle), C12 (the brand-vs-signal
 asymmetry the owner saw), C15 (the enforce margin that nudges red-apca one step).
+
+## C17 — the info-color signal renamed to `blue`; the magenta shift is an accepted loss
+
+**Status:** CLOSED (owner 2026-07-13: "info-color can now be named a color name. i think we
+can call it blue now that it is only purple-blue or cyan-blue").
+
+**The loss that enabled the name.** The 2026-07-11 seed lift (2169337, apca-legible seeds)
+lightened+desaturated the info seed `#6E56CF → #AFA3FF` (hue held ~289). The seed's wash
+tints stopped drifting toward blue, so blue-family brands (< splitH 273 — the only class
+that takes the magenta side) no longer land within the 15° wash-hue collision window: the
+magenta shift became structurally unreachable. Measured: primary gate — roster `#044BAF`
+produces zero info overrides (was the magenta exemplar); secondary adoption — 0/288 themes
+probed. The loss was observed and blessed at the seed-lift eye-check ("roster exemplar needs
+re-seeding") — this entry closes that thread as ACCEPTED, not re-seeded: no natural brand
+reaches the magenta half of the post-lift geometry.
+
+**The rename.** With only blue directions remaining (identity ~H289 purple-blue; the swap
+variant #6AB5FF cyan-blue), the signal takes its identity name: `info-color` → `blue`
+everywhere — def name + union, SHIFT_RULES key, swap notes (`blue → magenta-side` /
+`blue → cyan-side`, matching green's -side convention), CSS vars `--info-color-*` →
+`--blue-*` (semantic `--info-*` aliases stay, now pointing at blue), demo labels, roster
+fixtures (`vs-blue (shifts cyan)`; `#044BAF` relabeled `vs-blue (no shift)`).
+
+**Figma migration.** Both plugins migrate IN PLACE (variable ids survive, bindings hold):
+`RENAMED_GROUPS` (`system/info-color/* → system/blue/*`, theme `info-color/* → blue/*`) +
+variant-leaf entries for the relabels (`blue-<ctaHex> → cyan-side-<ctaHex>`, both lanes),
+composed with the existing leaf renames so a file untouched since before the ink renumber
+migrates `system/info-color/ink-11 → system/blue/ink-10` in one lookup.
+
+**Proof.** Values-only sha256 over signals + brand sweep + themes, both lanes: identical
+pre/post. Snapshots re-blessed name-normalized (ext + divergence proven name-only;
+dark-audit refresh also absorbed 4 pre-existing sub-tolerance numeric staleness entries —
+verified present in a pre-rename bless, not from this change).
+
+**The magenta machinery stays** (SHIFT_RULES.below + signalSwapVariants offer) pending an
+owner word on deletion — unreachable on both paths today, but removal is a capability cut.
+
+Relates: C7 (collision gates), the 2169337 seed lift, C15 (the apca enforce that motivated it).

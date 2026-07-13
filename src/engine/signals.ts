@@ -1,7 +1,7 @@
 
 
 export interface SignalDef {
-  name: 'red' | 'yellow' | 'green' | 'info-color'
+  name: 'red' | 'yellow' | 'green' | 'blue'
   hex: string
 
   L: number
@@ -23,5 +23,5 @@ export const SIGNALS: SignalDef[] = [
 
   { name: 'green',      hex: '#63C373', L: 0.739, C: 0.146, H: 147.6, hueShift: { cool: 15, warm: 10 }, yieldChromaScale: 1, darkFillMinL: 0.75 },
 
-  { name: 'info-color', hex: '#AFA3FF', L: 0.761, C: 0.130, H: 288.9, hueShift: { cool: 15, warm: 15 }, yieldChromaScale: 1, darkFillMinL: 0.70 },
+  { name: 'blue', hex: '#AFA3FF', L: 0.761, C: 0.130, H: 288.9, hueShift: { cool: 15, warm: 15 }, yieldChromaScale: 1, darkFillMinL: 0.70 },
 ]

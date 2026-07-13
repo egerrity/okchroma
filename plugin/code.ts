@@ -55,18 +55,47 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['ink-11', 'ink-10'],
   ['ink-12', 'ink-11'],
   ['ink-13', 'ink-12'],
+  // blue-signal variant relabels (2026-07-13, info-color → blue): the variant leaf is
+  // label + resolved light-cta hex (variantKey), so the relabel needs per-lane entries.
+  ['magenta-de8df6', 'magenta-side-de8df6'],
+  ['magenta-e290f9', 'magenta-side-e290f9'],
+  ['blue-7cb3f9', 'cyan-side-7cb3f9'],
+  ['blue-7eb5fb', 'cyan-side-7eb5fb'],
 ]
-// Look up `path` in `map`, first as-is, then under a renamed leaf's OLD name —
-// renaming the found variable to `path` in place (same idiom as the anchor's system→neutral move).
+// Group renames (old path prefix → new), migrated in place like the leaves — the
+// info-color signal was renamed by identity to blue (2026-07-13); both the primitive
+// collection (system/<signal>/…) and the theme collection (<signal>/…) carry the group.
+const RENAMED_GROUPS: Array<[string, string]> = [
+  ['system/info-color/', 'system/blue/'],
+  ['info-color/', 'blue/'],
+]
+// Every legacy spelling of `path` under the rename tables: old leaf, old group, and
+// old group + old leaf together (a file untouched since before BOTH renames needs the
+// composed lookup — e.g. system/info-color/ink-11 → system/blue/ink-10).
+function legacyCandidates(path: string): string[] {
+  const out: string[] = []
+  const leafVariants = [path]
+  for (const [oldLeaf, newLeaf] of RENAMED_LEAVES) {
+    if (path.endsWith(`/${newLeaf}`)) leafVariants.push(path.slice(0, -newLeaf.length) + oldLeaf)
+  }
+  for (const cand of leafVariants) {
+    if (cand !== path) out.push(cand)
+    for (const [oldPre, newPre] of RENAMED_GROUPS) {
+      if (cand.startsWith(newPre)) out.push(oldPre + cand.slice(newPre.length))
+    }
+  }
+  return out
+}
+// Look up `path` in `map`, first as-is, then under each legacy spelling — renaming the
+// found variable to `path` in place (Figma keeps the variable id, so bindings survive).
 function getOrMigrate(map: Map<string, figma.Variable>, path: string): figma.Variable | undefined {
   const v = map.get(path)
   if (v) return v
-  for (const [oldLeaf, newLeaf] of RENAMED_LEAVES) {
-    if (!path.endsWith(`/${newLeaf}`)) continue
-    const legacy = map.get(path.slice(0, -newLeaf.length) + oldLeaf)
+  for (const legacyPath of legacyCandidates(path)) {
+    const legacy = map.get(legacyPath)
     if (legacy) {
       legacy.name = path
-      map.delete(path.slice(0, -newLeaf.length) + oldLeaf)
+      map.delete(legacyPath)
       map.set(path, legacy)
       return legacy
     }
