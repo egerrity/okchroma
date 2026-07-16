@@ -1,4 +1,4 @@
-# Manual test plan — C19 cta family + APCA include toggle (plugin-ext)
+# Manual test plan — C19 cta family + APCA include toggle + neutral cta escape
 
 Follow top to bottom on the work computer. Needs a Figma **Enterprise** org (extended
 collections). Load `plugin-ext/dist/` via *Import plugin from manifest* (build is current:
@@ -87,6 +87,26 @@ right of the table shows the solve columns; hover a variable for its description
       component still resolves (id kept), no orphaned variables, no duplicates.
     - ☐ Six cta tokens per family; `cta-ink` in the mode collection is an **alias** to the
       sibling `ink-10` (shows as alias, not a raw color).
+
+## I. Neutral cta escape (Phase 3 — red-range brands)
+
+17. plugin-ext (or v1), enter a red primary, e.g. `#EA3E3E`, Recommended mode.
+    - ☐ A "**Neutral CTA (red-collision escape)**" checkbox appears under the primary
+      field (it hides for a blue hex — retype `#0B5FFF` to confirm, then back to red;
+      re-entering red should show it again, still remembering its checked state).
+18. Tick it. In the preview matrix, the primary row's three FILL cells go near-black
+    (light preview) — the cta-ink text cells and the ramp stay the brand's red.
+19. Apply the brand.
+    - ☐ `brand-primary/cta` value = the `neutral/ink-11` value exactly (near-black in the
+      light column, near-white in the dark column); `cta-hover`/`cta-pressed` step away
+      from it; `on-cta` = white in light, black in dark.
+    - ☐ `cta-ink` still matches the brand's own `ink-10` (links keep the brand color).
+    - ☐ **[v1]** the mode collection's `brand/<name>/primary/cta` shows as an ALIAS to
+      `system/neutral/<key>/ink-11`.
+20. Untick and re-apply. ☐ The cta family returns to the brand's red trio (v1: the alias
+    is replaced by raw values again).
+21. plugin-ext only: with the escape applied, run *Re-apply all brands*.
+    - ☐ The escaped brand keeps its escape after the batch (the recipe carries it).
 
 Anything that reads differently than a checkbox above: screenshot + which step — that's a
 bug, not your setup.
