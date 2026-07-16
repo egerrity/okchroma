@@ -24,8 +24,10 @@ const SPEC_KEY = 'okchroma-ext-spec'
 // Column order IS the mode-dropdown order: the default lane leads, pairs group by prefix.
 const COLUMNS: Column[] = ['wcag', 'wcag-dark', 'apca', 'apca-dark']
 const DARK_COLUMNS = new Set<Column>(['wcag-dark', 'apca-dark'])
-// Every variable carries the file's solve posture, visible without the plugin.
-const STAMP = 'OKChroma · modes: wcag 3:1/4.5/7:1 (default) · apca Lc 30/75/90'
+// Every variable carries the file's solve posture, visible without the plugin —
+// the apca clause only when the file actually carries those columns (Include APCA).
+const stampFor = (apcaOn: boolean) =>
+  `OKChroma · modes: wcag 3:1/4.5/7:1 (default)${apcaOn ? ' · apca Lc 30/75/90' : ''}`
 
 // Token renames (old leaf → new leaf), migrated IN PLACE on the existing variable —
 // Figma keeps the variable id on rename, so user bindings survive (owner 2026-07-09:
@@ -99,9 +101,9 @@ const toRGBA = (t: FlatTok): figma.RGBA =>
 
 figma.ui.onmessage = async (msg) => {
   if (msg.type === 'apply') {
-    const { brand, brandTokens, baseTokens, hasSecondary, confirmed, spec } = msg as unknown as {
+    const { brand, brandTokens, baseTokens, hasSecondary, confirmed, confirmedToken, spec, includeApca } = msg as unknown as {
       type: 'apply'; brand: string; brandTokens: TokenColumns; baseTokens: TokenColumns
-      hasSecondary: boolean; confirmed?: boolean; spec?: unknown
+      hasSecondary: boolean; confirmed?: boolean; confirmedToken?: string; spec?: unknown; includeApca?: boolean
     }
     try {
       const collections = await figma.variables.getLocalVariableCollectionsAsync()
@@ -109,15 +111,17 @@ figma.ui.onmessage = async (msg) => {
       const extensions = collections.filter(isExtension)
 
       // The owned base: tag first (survives renames); an untagged name match only counts
-      // when NO tagged base exists — and it must carry the v2 column contract. A "theme"
-      // collection with other modes (plugin v1's brand-mode collection, a hand-made one)
-      // is never adopted.
+      // when NO tagged base exists — and it must carry the v2 column contract (either the
+      // full four columns or the wcag-only pair — APCA is opt-in since the include toggle).
+      // A "theme" collection with other modes (plugin v1's brand-mode collection, a
+      // hand-made one) is never adopted.
       const tagged = locals.find(c => c.getPluginData(OWNER_KEY) === 'base')
       let baseMatch = tagged
       if (!baseMatch) {
         const byName = locals.find(c => c.name === BASE_NAME)
         if (byName) {
-          if (byName.modes.map(m => m.name).join(',') === COLUMNS.join(',')) baseMatch = byName
+          const names = byName.modes.map(m => m.name).join(',')
+          if (names === COLUMNS.join(',') || names === COLUMNS.slice(0, 2).join(',')) baseMatch = byName
           else {
             figma.ui.postMessage({ type: 'error', message:
               `A collection named "${BASE_NAME}" already exists in this file and isn’t an OKChroma Extended base `
@@ -126,6 +130,27 @@ figma.ui.onmessage = async (msg) => {
           }
         }
       }
+
+      // The file's APCA posture (owner ask 2026-07-16: "turn off APCA so it doesn't
+      // regenerate if I delete it"). Detection is LIVE from the base's mode names, so a
+      // hand-deleted apca PAIR self-heals to OFF. The toggle governs whether the apca
+      // columns should EXIST: any apca column present → the lane keeps being written
+      // regardless of the toggle (no data holes; delete BOTH columns to drop the lane,
+      // and with the toggle off no future apply recreates them). Toggle ON over a base
+      // without them = the posture flip; a missing HALF of a surviving pair is restored —
+      // both behind the confirm gate below, both seeded + backfilled.
+      // exact-name detection (matches the colIds/missingCols resolution — a stray user
+      // mode named "apca…" must not resurrect a deliberately deleted pair)
+      const baseHasApca = !!baseMatch && baseMatch.modes.some(m => m.name === 'apca' || m.name === 'apca-dark')
+      const apcaOn = !!includeApca || baseHasApca
+      const activeCols: Column[] = apcaOn ? COLUMNS : COLUMNS.slice(0, 2)
+      // Columns this apply would have to CREATE on an existing base — resolved BY NAME
+      // (adversarial review 2026-07-16: positional slot-reuse hijacked hand-deleted halves
+      // and user-added modes). The first column adopts the default mode by design (every
+      // prior apply named it wcag); the rest must match by name or be created.
+      const missingCols: Column[] = baseMatch
+        ? activeCols.filter(c => !baseMatch!.modes.some(m => m.name === c))
+        : []
 
       // Live-detect the file's posture BEFORE any mutation (the confirm gate fires first).
       const baseVars = baseMatch ? await varsByName(baseMatch.id) : new Map<string, figma.Variable>()
@@ -138,33 +163,59 @@ figma.ui.onmessage = async (msg) => {
         ?? extsOfBase.find(e => norm(e.name) === norm(brand))
 
       // Nudge before surprising changes (v1's idiom — each needs a second Apply):
-      // overwriting a brand, or ADDING the file's secondary (the deliberate posture flip;
-      // once on, the collection checks itself — secondary-less applies just derive).
+      // overwriting a brand, ADDING the file's secondary, or CREATING solve columns on an
+      // existing base (the apca posture flip / restoring a hand-deleted half). The confirm
+      // is REASON-SCOPED (adversarial review 2026-07-16): the UI echoes back the exact
+      // token it confirmed, so an overwrite confirm armed earlier can never authorize a
+      // posture flip ticked afterwards. Batch paths pass confirmed:true (their arm step is
+      // the confirm — the arm copy names the flip when the toggle is on).
       const overwrite = !!existingExt
       const addingSecondary = hasSecondary && !!baseMatch && !baseHasSecondary
-      if (!confirmed && (overwrite || addingSecondary)) {
-        const reasons: string[] = []
-        if (overwrite) reasons.push(`overwrite "${brand}"`)
-        if (addingSecondary) reasons.push(
-          'add a brand-secondary group to the base and update every existing brand with its derived secondary')
-        figma.ui.postMessage({ type: 'confirm', brand, message: `Will ${reasons.join(' + ')} — click Apply again.` })
+      const reasons: string[] = []
+      if (overwrite) reasons.push(`overwrite "${brand}"`)
+      if (addingSecondary) reasons.push(
+        'add a brand-secondary group to the base and update every existing brand with its derived secondary')
+      if (missingCols.length) reasons.push(
+        `add the ${missingCols.join(' + ')} column(s) to the base and regenerate ${extsOfBase.length ? `all ${extsOfBase.length} existing brand extension(s)` : 'the file'} to fill them (existing column values stay untouched)`)
+      const confirmToken = reasons.join(' | ')
+      const authorized = confirmed === true || (typeof confirmedToken === 'string' && confirmedToken === confirmToken)
+      if (!authorized && reasons.length) {
+        figma.ui.postMessage({ type: 'confirm', brand, token: confirmToken, message: `Will ${reasons.join(' + ')} — click Apply again.` })
         return
       }
 
-      // ── base: find or create, one mode per solve column ──────────────────────
+      // ── base: find or create ──────────────────────────────────────────────────
       const created = !baseMatch
       const base = baseMatch ?? figma.variables.createVariableCollection(BASE_NAME)
       base.setPluginData(OWNER_KEY, 'base')
-      const colIds: string[] = [base.modes[0].modeId]
-      for (let i = 1; i < COLUMNS.length; i++)
-        colIds.push(base.modes.length > i ? base.modes[i].modeId : base.addMode(COLUMNS[i]))
-      COLUMNS.forEach((name, i) => base.renameMode(colIds[i], name))
 
-      // ── feature-detect (plan §2.2): extended collections are Enterprise-only ──
+      // ── feature-detect (plan §2.2): extended collections are Enterprise-only.
+      // BEFORE any mode mutation (adversarial review 2026-07-16): a failed upgrade must
+      // not leave half-flipped, unseeded apca columns that the live detection would then
+      // read as "already on" forever.
       if (typeof base.extend !== 'function') {
         if (created) base.remove() // leave no husk behind on a non-Enterprise file
         figma.ui.postMessage({ type: 'error', message: ENTERPRISE_MSG })
         return
+      }
+
+      // ── one mode per ACTIVE solve column, resolved BY NAME (adversarial review
+      // 2026-07-16: the old positional slot-reuse relabeled hand-deleted halves into the
+      // wrong lane and hijacked user-added modes — a mode is adopted ONLY on exact name
+      // match; anything else is left untouched and the missing column is CREATED, behind
+      // the missingCols confirm above). Exactly one exception: a FRESH collection's
+      // unnamed default mode is adopted for the first column (it carries the values).
+      const colIds: string[] = []
+      for (let i = 0; i < activeCols.length; i++) {
+        const name = activeCols[i]
+        const m = base.modes.find(x => x.name === name)
+        if (m) { colIds.push(m.modeId); continue }
+        if (i === 0 && created) {
+          base.renameMode(base.modes[0].modeId, name)
+          colIds.push(base.modes[0].modeId)
+          continue
+        }
+        colIds.push(base.addMode(name))
       }
 
       // ── populate the base: CREATE-ONCE from the default seed ─────────────────
@@ -173,7 +224,7 @@ figma.ui.onmessage = async (msg) => {
       // (there is no second collection to hide behind) → ALL_SCOPES.
       const withSecondary = baseHasSecondary || hasSecondary
       const seedByCol = new Map<Column, Map<string, FlatTok>>(
-        COLUMNS.map(c => [c, new Map(baseTokens[c].map(t => [t.path, t]))]))
+        activeCols.map(c => [c, new Map(baseTokens[c].map(t => [t.path, t]))]))
       let createdVars = 0
       const ensure = (path: string): figma.Variable => {
         let v = baseVars.get(path)
@@ -182,7 +233,7 @@ figma.ui.onmessage = async (msg) => {
           if (legacy) { legacy.name = path; baseVars.delete(legacyPath); baseVars.set(path, legacy); v = legacy; break }
         }
         if (!v) { v = figma.variables.createVariable(path, base, 'COLOR'); baseVars.set(path, v); createdVars++ }
-        v.description = STAMP
+        v.description = stampFor(apcaOn)
         v.scopes = ['ALL_SCOPES']
         return v
       }
@@ -190,14 +241,45 @@ figma.ui.onmessage = async (msg) => {
       // the neutral exists.
       ensure('system/paper-raised')
       ensure('system/paper-sunken')
-      for (const t of baseTokens[COLUMNS[0]]) { // all columns share the path set
+      for (const t of baseTokens[activeCols[0]]) { // all columns share the path set
         if (!withSecondary && t.path.startsWith('brand-secondary/')) continue
         const before = createdVars
         const v = ensure(t.path)
-        if (createdVars > before) { // fresh variable → seed every column
-          for (let i = 0; i < COLUMNS.length; i++) {
-            const seed = seedByCol.get(COLUMNS[i])!.get(t.path)
+        if (createdVars > before) { // fresh variable → seed every active column
+          for (let i = 0; i < activeCols.length; i++) {
+            const seed = seedByCol.get(activeCols[i])!.get(t.path)
             if (seed) v.setValueForMode(colIds[i], toRGBA(seed))
+          }
+        }
+      }
+      // Columns CREATED on an existing base (the apca posture flip, or a hand-deleted
+      // half being restored — confirmed above): seed them for EVERY base variable,
+      // additively. Figma's addMode copies the DEFAULT mode's values into a new mode, so
+      // an unseeded new column would silently read wcag-light everywhere (adversarial
+      // review 2026-07-16). Runs AFTER the ensure loop so legacy names have migrated
+      // (cta-1→cta) and new rows exist; pre-existing columns are never touched (fresh
+      // vars were seeded above — re-setting the same seed here is idempotent). Variables
+      // whose paths are NOT in the current token set (stale/orphaned) can't be seeded —
+      // counted and reported so the default-copy values don't pass silently.
+      // NOTE the boundary (re-verify 2026-07-16): only columns THIS apply creates are
+      // seeded. A hand-recreated mode carrying the exact canonical name is ADOPTED as-is
+      // (values untouched) — the create-once contract cuts that way deliberately:
+      // rewriting an adopted column could destroy real user data, and the remedy for a
+      // wrong hand-made column is to delete it (the next apply restores it, confirmed +
+      // seeded). No withSecondary skip here: this loop only writes vars that already
+      // EXIST (it never creates), so a partial secondary group still gets true values
+      // instead of addMode's silent wcag-light copies.
+      const addedCols = missingCols
+      let orphaned = 0
+      if (addedCols.length) {
+        const known = new Set(baseTokens[activeCols[0]].map(t => t.path))
+        known.add('system/paper-raised'); known.add('system/paper-sunken')
+        for (const p of baseVars.keys()) if (!known.has(p)) orphaned++
+        for (const c of addedCols) {
+          const idx = activeCols.indexOf(c)
+          for (const t of baseTokens[c]) {
+            const v = baseVars.get(t.path)
+            if (v) v.setValueForMode(colIds[idx], toRGBA(t))
           }
         }
       }
@@ -211,7 +293,7 @@ figma.ui.onmessage = async (msg) => {
       if (p0 && p2) {
         const raised = baseVars.get('system/paper-raised')!
         const sunken = baseVars.get('system/paper-sunken')!
-        COLUMNS.forEach((c, i) => {
+        activeCols.forEach((c, i) => {
           const dark = DARK_COLUMNS.has(c)
           raised.setValueForMode(colIds[i], figma.variables.createVariableAlias(dark ? p2 : p0))
           sunken.setValueForMode(colIds[i], figma.variables.createVariableAlias(dark ? p0 : p2))
@@ -252,9 +334,9 @@ figma.ui.onmessage = async (msg) => {
       // file's posture is on — secondary stays opt-in, and once on, every brand derives.
       const secondaryMode: 'real' | 'derived' | 'none' = hasSecondary ? 'real' : (withSecondary ? 'derived' : 'none')
       const brandByCol = new Map<Column, Map<string, FlatTok>>(
-        COLUMNS.map(c => [c, new Map(brandTokens[c].map(t => [t.path, t]))]))
+        activeCols.map(c => [c, new Map(brandTokens[c].map(t => [t.path, t]))]))
       const work: string[] = []
-      for (const t of brandTokens[COLUMNS[0]]) {
+      for (const t of brandTokens[activeCols[0]]) {
         if (t.path.startsWith('system/')) continue
         if (secondaryMode === 'none' && t.path.startsWith('brand-secondary/')) continue
         work.push(t.path)
@@ -265,8 +347,8 @@ figma.ui.onmessage = async (msg) => {
         const v = baseVars.get(path)
         if (!v) continue
         const cur = overrides[v.id]
-        for (let i = 0; i < COLUMNS.length; i++) {
-          const tok = brandByCol.get(COLUMNS[i])!.get(path)
+        for (let i = 0; i < activeCols.length; i++) {
+          const tok = brandByCol.get(activeCols[i])!.get(path)
           if (!tok) continue
           if (valEq(v.valuesByMode[colIds[i]], tok)) {
             if (cur && cur[extColIds[i]] !== undefined) { v.removeOverrideForMode(extColIds[i]); removed++ }
@@ -275,14 +357,15 @@ figma.ui.onmessage = async (msg) => {
         }
       }
 
-      // The posture flip's collection-wide check: this apply just ADDED the secondary
-      // group to an existing base — hand every OTHER extension's stored recipe back to
-      // the UI, which re-applies each one (deriving its secondary). Recipes are stamped
-      // per apply; extensions without one are reported for a one-time manual re-apply.
+      // The posture flips' collection-wide check: this apply just ADDED the secondary
+      // group and/or the apca columns to an existing base — hand every OTHER extension's
+      // stored recipe back to the UI, which re-applies each one (deriving its secondary /
+      // filling its apca overrides). Recipes are stamped per apply; extensions without
+      // one are reported for a one-time manual re-apply.
       const secondaryAdded = hasSecondary && !baseHasSecondary && !created
       const backfill: unknown[] = []
       const unstamped: string[] = []
-      if (secondaryAdded) {
+      if (secondaryAdded || addedCols.length) {
         for (const e of extsOfBase) {
           if (e.id === ext.id) continue
           const raw = e.getPluginData(SPEC_KEY)
@@ -291,7 +374,7 @@ figma.ui.onmessage = async (msg) => {
         }
       }
 
-      figma.ui.postMessage({ type: 'done', brand, set, removed, inherited, createdVars, baseCreated: created, secondary: secondaryMode, secondaryAdded, backfill, unstamped })
+      figma.ui.postMessage({ type: 'done', brand, set, removed, inherited, createdVars, baseCreated: created, secondary: secondaryMode, secondaryAdded, addedCols, orphaned, backfill, unstamped })
     } catch (err) {
       figma.ui.postMessage({ type: 'error', message: String(err) })
     }

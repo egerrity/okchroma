@@ -16,10 +16,18 @@ let neutralLevel: NeutralLevel = 'default'
 // derived rides the default seed-transform, the engine's call).
 let primaryMode: 'recommended' | 'exact' | Archetype = 'recommended'
 let secondaryStyle: SecondaryStyle = 'default'
-// PREVIEW lens only — the apply always writes all four solve columns (wcag · wcag-dark ·
-// apca · apca-dark). WCAG is this plugin’s default lane, so it leads the preview too.
+// PREVIEW lens only — the apply writes the file's ACTIVE solve columns. WCAG is this
+// plugin’s default lane, so it leads the preview too.
 let contrastProfile: ContrastProfile = 'wcag'
-let pendingName: string | null = null // brand armed for overwrite confirmation
+// APCA columns are OPT-IN (owner 2026-07-16, default OFF): governs whether apply
+// creates the apca/apca-dark columns. A file already carrying them keeps being written
+// regardless (delete the columns to drop the lane; with this off they stay deleted —
+// no regeneration). Turning it on over an existing base = a confirm + full backfill.
+let includeApca = false
+// brand + the exact confirm TOKEN it was armed with (reason-scoped — the plugin only
+// honors a confirm whose reasons haven't changed since it was shown; changing the
+// toggle or fields between the two Applies re-confirms)
+let pendingConfirm: { name: string; token: string } | null = null
 // The secondary is the demo's THREE-STATE field: none (default — just "+ Add secondary") →
 // derived (the input tracks the primary live; the engine derives the default secondary) →
 // custom (user hex + style chip). The chevron menu moves between all three.
@@ -53,6 +61,7 @@ const neutralInfo        = $<HTMLElement>('neutral-info')
 const neutralSwatch   = $<HTMLElement>('neutral-swatch')
 const neutralSelect   = $<HTMLSelectElement>('neutral-select')
 const profileBtns     = document.querySelectorAll<HTMLButtonElement>('.seg-btn[data-profile]')
+const includeApcaBox  = $<HTMLInputElement>('include-apca')
 const matrixEl        = $<HTMLElement>('matrix')
 const applyBtn        = $<HTMLButtonElement>('apply-btn')
 const statusEl        = $<HTMLElement>('status')
@@ -284,9 +293,10 @@ function buildAndSend() {
     const brandTokens = buildBrandColumns(theme, neutralLevel)
     const baseTokens = buildBaseColumns()
 
-    // confirmed only when this exact name was just flagged as an overwrite.
-    const confirmed = pendingName === name
-    parent.postMessage({ pluginMessage: { type: 'apply', brand: name, brandTokens, baseTokens, hasSecondary: recipe.hasSecondary, confirmed, spec: recipe } }, '*')
+    // reason-scoped confirm: echo back the exact token the confirm was armed with —
+    // the plugin re-derives the reasons and only proceeds if they still match
+    const confirmedToken = pendingConfirm?.name === name ? pendingConfirm.token : undefined
+    parent.postMessage({ pluginMessage: { type: 'apply', brand: name, brandTokens, baseTokens, hasSecondary: recipe.hasSecondary, confirmedToken, spec: recipe, includeApca } }, '*')
   } catch (err) {
     applyBtn.disabled = false
     setStatus(String(err), 'err')
@@ -386,14 +396,30 @@ profileBtns.forEach(btn => {
   })
 })
 
+// Include APCA (default off): the ⓘ copy tracks the state so the flip's consequence —
+// the confirm + collection-wide backfill — is announced before Apply is ever pressed.
+// Changing the toggle DISARMS any armed batch (the arm copy described the old posture)
+// and clears a pending single-apply confirm (its token no longer matches anyway).
+includeApcaBox.addEventListener('change', () => {
+  includeApca = includeApcaBox.checked
+  rosterArmed = false
+  reapplyArmed = false
+  pendingConfirm = null
+  const copy = document.getElementById('include-apca-copy')
+  if (copy) copy.textContent = includeApca
+    ? 'On: Apply adds apca columns if missing (asks first, then updates every brand)'
+    : 'Off: new files get wcag only; delete both apca columns and they stay deleted'
+})
+
 applyBtn.addEventListener('click', buildAndSend)
 
 window.addEventListener('message', e => {
   const msg = (e.data as {
     pluginMessage?: {
-      type: string; message?: string; brand?: string; secondary?: string
+      type: string; message?: string; brand?: string; token?: string; secondary?: string
       set?: number; removed?: number; inherited?: number; createdVars?: number; baseCreated?: boolean
-      secondaryAdded?: boolean; backfill?: unknown[]; unstamped?: string[]; specs?: unknown[]
+      secondaryAdded?: boolean; addedCols?: string[]; orphaned?: number
+      backfill?: unknown[]; unstamped?: string[]; specs?: unknown[]
       lines?: string[]
     }
   }).pluginMessage
@@ -406,8 +432,13 @@ window.addEventListener('message', e => {
       qTotals.removed += msg.removed ?? 0
       qTotals.inherited += msg.inherited ?? 0
       qTotals.baseCreated = qTotals.baseCreated || !!msg.baseCreated
-      // the posture flip mid-batch: append the other extensions' recipes to this queue
-      if (msg.secondaryAdded) enqueueBackfill(msg.backfill ?? [], msg.unstamped)
+      // column additions + the orphan count must SURVIVE the batch (re-verify 2026-07-16:
+      // the flip's primary flow IS a batch — swallowing them hid the stale-value warning)
+      for (const c of msg.addedCols ?? []) if (!qTotals.addedCols.includes(c)) qTotals.addedCols.push(c)
+      qTotals.orphaned = Math.max(qTotals.orphaned, msg.orphaned ?? 0)
+      // a posture flip mid-batch (secondary group or solve columns added): append the
+      // other extensions' recipes to this queue
+      if (msg.secondaryAdded || msg.addedCols?.length) enqueueBackfill(msg.backfill ?? [], msg.unstamped)
       if (qi + 1 < queue.length) { qi++; sendQueueItem(); return }
       const label = qLabel, n = queue.length, un = qUnstamped
       queue = null
@@ -415,6 +446,7 @@ window.addEventListener('message', e => {
       rosterBtn.disabled = false
       setStatus(`✓ ${label}: ${n} brands · ${qTotals.set} overridden · ${qTotals.inherited} inherited`
         + `${qTotals.removed ? ` · ${qTotals.removed} reverted` : ''}${qTotals.baseCreated ? ' · base created' : ''}`
+        + `${qTotals.addedCols.length ? ` · ${qTotals.addedCols.join('+')} column(s) added${qTotals.orphaned ? ` (${qTotals.orphaned} stale variable(s) kept default values there)` : ''}` : ''}`
         + `${un.length ? ` · no stored recipe (re-apply manually): ${un.join(', ')}` : ''}`, 'ok')
       return
     }
@@ -427,16 +459,28 @@ window.addEventListener('message', e => {
   }
   applyBtn.disabled = false
   if (msg.type === 'done') {
-    pendingName = null
+    pendingConfirm = null
     const parts = [`${msg.set ?? 0} overridden`, `${msg.inherited ?? 0} inherited`]
     if (msg.removed) parts.push(`${msg.removed} reverted to base`)
     const grew = msg.baseCreated ? ' · base created' : (msg.createdVars ? ` · ${msg.createdVars} base tokens added` : '')
     const acc = msg.secondary === 'derived' ? ' · secondary derived' : ''
-    setStatus(`✓ ${msg.brand}: ${parts.join(' · ')}${grew}${acc}`, 'ok')
-    // the posture flip from a single apply: run the collection-wide secondary check now
-    if (msg.secondaryAdded) enqueueBackfill(msg.backfill ?? [], msg.unstamped)
+    const colsNote = msg.addedCols?.length
+      ? `${msg.addedCols.join('+')} column(s) added${msg.orphaned ? ` (${msg.orphaned} stale variable(s) kept default values there — not in the current token set)` : ''}`
+      : ''
+    setStatus(`✓ ${msg.brand}: ${parts.join(' · ')}${grew}${acc}${colsNote ? ` · ${colsNote}` : ''}`, 'ok')
+    // a posture flip from a single apply (secondary group or solve columns): run the
+    // collection-wide backfill now. The backfill queue's final summary must re-report the
+    // added columns + orphan count (this status line is overwritten by 'backfill 1/n'
+    // moments later), so they're carried into the fresh queue's totals.
+    if (msg.secondaryAdded || msg.addedCols?.length) {
+      enqueueBackfill(msg.backfill ?? [], msg.unstamped, colsNote || undefined)
+      if (queue) {
+        for (const c of msg.addedCols ?? []) if (!qTotals.addedCols.includes(c)) qTotals.addedCols.push(c)
+        qTotals.orphaned = Math.max(qTotals.orphaned, msg.orphaned ?? 0)
+      }
+    }
   } else if (msg.type === 'confirm') {
-    pendingName = msg.brand ?? null
+    pendingConfirm = msg.brand && msg.token !== undefined ? { name: msg.brand, token: msg.token } : null
     setStatus(msg.message ?? `"${msg.brand}" already exists — click Apply again`, 'err')
   } else if (msg.type === 'error') {
     setStatus(msg.message ?? 'Unknown error', 'err')
@@ -446,7 +490,7 @@ window.addEventListener('message', e => {
       setStatus(`No stored recipes to re-apply${msg.unstamped?.length ? ` — ${msg.unstamped.length} extension(s) predate recipes: ${msg.unstamped.join(', ')}` : ''}.`, 'err')
       return
     }
-    startQueue(items, 're-apply')
+    startQueue(items, 're-apply', reapplyApcaSnapshot)
     if (msg.unstamped?.length) qUnstamped.push(...msg.unstamped)
   } else if (msg.type === 'smoke-result') {
     smokeLog.style.display = ''
@@ -471,25 +515,35 @@ type Recipe = { brand: string; theme: ThemeSpec; neutralLevel: NeutralLevel; has
 let queue: Recipe[] | null = null // active batch; null = idle
 let qi = 0
 let qLabel = 'roster'
-let qTotals = { set: 0, removed: 0, inherited: 0, baseCreated: false }
+let qTotals = { set: 0, removed: 0, inherited: 0, baseCreated: false, addedCols: [] as string[], orphaned: 0 }
 let qUnstamped: string[] = []
+// the APCA posture a batch runs under is SNAPSHOTTED at queue start (re-verify
+// 2026-07-16: reading the live checkbox per item let a mid-batch tick flip the file's
+// posture with confirmed:true and no arm mention). The arm copy names what the snapshot
+// will do; ticking the box after arming resets the arms (see the change handler).
+let qIncludeApca = false
 let rosterArmed = false
 let reapplyArmed = false
+let reapplyApcaSnapshot = false // click-time posture, carried across the collect-specs round-trip
 
 function sendQueueItem() {
   const it = queue![qi]
   setStatus(`${qLabel} ${qi + 1}/${queue!.length} — ${it.brand}…`)
   const brandTokens = buildBrandColumns(it.theme, it.neutralLevel)
   const baseTokens = buildBaseColumns()
-  parent.postMessage({ pluginMessage: { type: 'apply', brand: it.brand, brandTokens, baseTokens, hasSecondary: it.hasSecondary, confirmed: true, spec: it } }, '*')
+  parent.postMessage({ pluginMessage: { type: 'apply', brand: it.brand, brandTokens, baseTokens, hasSecondary: it.hasSecondary, confirmed: true, spec: it, includeApca: qIncludeApca } }, '*')
 }
 
-function startQueue(items: Recipe[], label: string) {
+// apcaPosture: the snapshot the batch runs under — defaults to the toggle NOW, but
+// re-apply passes its CLICK-time snapshot through the async collect-specs round-trip
+// (ticking the toggle in that gap must not upgrade a batch armed under the old copy)
+function startQueue(items: Recipe[], label: string, apcaPosture: boolean = includeApca) {
   queue = items
   qi = 0
   qLabel = label
-  qTotals = { set: 0, removed: 0, inherited: 0, baseCreated: false }
+  qTotals = { set: 0, removed: 0, inherited: 0, baseCreated: false, addedCols: [], orphaned: 0 }
   qUnstamped = []
+  qIncludeApca = apcaPosture
   applyBtn.disabled = true
   rosterBtn.disabled = true
   sendQueueItem()
@@ -499,14 +553,16 @@ function startQueue(items: Recipe[], label: string) {
 // recipe re-applies (deriving its secondary). Mid-batch, recipes append to the running
 // queue (skipping brands already ahead of the cursor); from a single apply, they start
 // their own queue. Extensions without a recipe are reported for one manual re-apply.
-function enqueueBackfill(specs: unknown[], unstamped?: string[]) {
+function enqueueBackfill(specs: unknown[], unstamped?: string[], note?: string) {
   const items = (specs as Recipe[]).filter(s => s && typeof s.brand === 'string' && !!s.theme)
   if (!queue) {
     if (items.length) {
-      startQueue(items, 'secondary check')
+      startQueue(items, 'backfill')
       if (unstamped?.length) qUnstamped.push(...unstamped)
     } else if (unstamped?.length) {
-      setStatus(`Secondary added — no stored recipes to update; re-apply manually: ${unstamped.join(', ')}`, 'err')
+      // no queue will re-report the flip's details — carry them here so the added-columns
+      // + stale-variable note isn't lost when only recipe-less extensions exist
+      setStatus(`Posture changed${note ? ` (${note})` : ''} — no stored recipes to update; re-apply manually: ${unstamped.join(', ')}`, 'err')
     }
     return
   }
@@ -517,12 +573,16 @@ function enqueueBackfill(specs: unknown[], unstamped?: string[]) {
   for (const it of items) if (!ahead.has(it.brand)) queue.push(it)
 }
 
+// batch runs pass confirmed:true (the arm step IS their confirm) — so when the Include
+// APCA toggle is on, the arm copy must name the posture flip the batch may perform
+const apcaArmNote = () => (includeApca ? ' Include APCA is ON — adds apca columns if the file lacks them.' : '')
+
 rosterBtn.addEventListener('click', () => {
   if (queue) return // a batch is already running
   if (!rosterArmed) {
     rosterArmed = true
     setStatus(`Applies the fixed ${ROSTER.length}-brand test set (ignores the fields above; overwrites existing roster extensions). `
-      + 'Keep the plugin open until it finishes. Click the same button again to start.', 'err')
+      + `Keep the plugin open until it finishes.${apcaArmNote()} Click the same button again to start.`, 'err')
     return
   }
   rosterArmed = false
@@ -538,10 +598,13 @@ reapplyBtn.addEventListener('click', () => {
   if (queue) return
   if (!reapplyArmed) {
     reapplyArmed = true
-    setStatus('Rebuilds every brand from its stored recipe (posture + engine refresh). Keep the plugin open. Click again to run.', 'err')
+    setStatus(`Rebuilds every brand from its stored recipe (posture + engine refresh). Keep the plugin open.${apcaArmNote()} Click again to run.`, 'err')
     return
   }
   reapplyArmed = false
+  // snapshot NOW: collect-specs round-trips through the sandbox before the queue starts,
+  // and a toggle tick in that gap must not change the posture the arm copy promised
+  reapplyApcaSnapshot = includeApca
   parent.postMessage({ pluginMessage: { type: 'collect-specs' } }, '*')
 })
 

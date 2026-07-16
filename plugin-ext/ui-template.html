@@ -145,6 +145,13 @@ body {
   box-shadow: 0 1px 3px rgba(0,0,0,.12), 0 0 0 1px rgba(0,0,0,.04);
 }
 
+/* the Include-APCA checkbox line (under the preview seg) */
+.check-line {
+  display: flex; align-items: center; gap: 6px; margin-top: 8px;
+  font-size: 12px; font-weight: 600; color: #1a1a1a; cursor: pointer; user-select: none;
+}
+.check-line input[type="checkbox"] { accent-color: #7c6fcd; width: 14px; height: 14px; cursor: pointer; }
+
 /* ── Select ── */
 .select {
   height: 34px; border: 1.5px solid #e0e0e0; border-radius: 8px;
@@ -216,7 +223,7 @@ body {
 <body>
 
 <div style="margin-bottom:14px;padding:8px 10px;background:#f6f6f7;border:1px solid #ececec;border-radius:7px;font-size:11px;color:#666;line-height:1.4;">
-  <b>theme</b> is the base collection — bind these. Its modes are the solve columns: <b>wcag · wcag-dark · apca · apca-dark</b> (wcag is the default; every apply writes all four). Each brand becomes one <b>extension</b>, overriding only what differs. Needs a Figma <b>Enterprise</b> org (extended collections).
+  <b>theme</b> is the base collection — bind these. Its modes are the solve columns: <b>wcag · wcag-dark</b> always; <b>apca · apca-dark</b> when “Include APCA” is on (or already in the file). Each brand becomes one <b>extension</b>, overriding only what differs. Needs a Figma <b>Enterprise</b> org (extended collections).
 </div>
 
 <div class="section">
@@ -287,7 +294,12 @@ body {
       <button class="seg-btn active" data-profile="wcag">WCAG</button>
       <button class="seg-btn" data-profile="apca">APCA</button>
     </div>
-    <div class="info-line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span>Preview lens only — Apply writes all four modes</span></div>
+    <div class="info-line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span>Preview lens only — Apply writes the file’s columns</span></div>
+    <label class="check-line" for="include-apca">
+      <input type="checkbox" id="include-apca" />
+      <span>Include APCA columns</span>
+    </label>
+    <div class="info-line" id="include-apca-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span id="include-apca-copy">Off: new files get wcag only; delete both apca columns and they stay deleted</span></div>
   </div>
 </div>
 
