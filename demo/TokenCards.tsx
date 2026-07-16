@@ -29,8 +29,8 @@ const SIGNAL_ICON: Record<string, typeof AlertCircle> = {
 // Every cta side by side — the one spot where a colliding pair is visible in a
 // single glance: the brand cta pair, the secondary cta pair (when one exists),
 // the quiet neutral cta, and all four signal ctas (red / yellow / green /
-// blue). Each family renders its cta-1 | cta-2 pair as one seamed pill in
-// on-cta text. Reads the live vars, so the per-brand signal overrides the
+// blue). Each family renders its cta | cta-hover | cta-pressed trio as one seamed
+// pill in on-cta text. Reads the live vars, so the per-brand signal overrides the
 // resolved theme carries show up here automatically; names the theme shifted
 // off-canonical get a "shifted" tag. The cta-border border is unconditional —
 // it's transparent everywhere except the outline secondary, where the ring IS
@@ -45,9 +45,9 @@ export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; 
     { prefix: 'green', label: 'green' },
     { prefix: 'blue', label: 'blue' },
   ]
-  const cell = (prefix: string, tok: 'cta-1' | 'cta-2') => (
+  const cell = (prefix: string, tok: 'cta' | 'cta-hover' | 'cta-pressed') => (
     <div title={`--${prefix}-${tok}`} style={{
-      flex: tok === 'cta-1' ? 1.6 : 1, height: 44, boxSizing: 'border-box',
+      flex: tok === 'cta' ? 1.6 : 1, height: 44, boxSizing: 'border-box',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       background: `var(--${prefix}-${tok})`, color: `var(--${prefix}-on-cta)`,
       fontSize: 13, fontWeight: 600,
@@ -59,8 +59,9 @@ export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; 
       {families.map(f => (
         <div key={f.prefix} style={{ flex: '1 1 104px', maxWidth: 220 }}>
           <div style={{ display: 'flex', borderRadius: 8, overflow: 'hidden' }}>
-            {cell(f.prefix, 'cta-1')}
-            {cell(f.prefix, 'cta-2')}
+            {cell(f.prefix, 'cta')}
+            {cell(f.prefix, 'cta-hover')}
+            {cell(f.prefix, 'cta-pressed')}
           </div>
           <div style={{ marginTop: 5, fontSize: 11, textAlign: 'center', color: 'var(--fg-default)', fontWeight: 600 }}>
             {f.label}
@@ -75,7 +76,9 @@ export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; 
 export function TokenCards({ prefix, kind, outlineCta }: { prefix: string; kind: RampKind; outlineCta?: boolean }) {
   const v = (t: string) => `var(--${prefix}-${t})`
   const isSignal = kind === 'signal'
-  const [ctaHover, setCtaHover] = React.useState(false) // cta-1 → cta-2 on hover
+  const [ctaHover, setCtaHover] = React.useState(false)     // cta → cta-hover on hover
+  const [ctaPressed, setCtaPressed] = React.useState(false)  // → cta-pressed while held
+  const [linkState, setLinkState] = React.useState<'rest' | 'hover' | 'pressed'>('rest')
   // Only brand & secondary preserve an exact input hex (identity); neutral and
   // signals are generated and carry none.
   const hasIdentity = prefix === 'brand' || prefix === 'secondary'
@@ -122,24 +125,42 @@ export function TokenCards({ prefix, kind, outlineCta }: { prefix: string; kind:
       <div style={{ fontSize: 24, fontWeight: 700, color: v('ink-11'), lineHeight: 1.15, marginBottom: 8 }}>Aa Heading</div>
       <p style={{ fontSize: 15, lineHeight: 1.5, color: v('ink-11'), margin: '0 0 16px' }}>
         The <span style={{ color: v('ink-10') }}>ink family</span> is designed to contrast with the paper and wash stops and is perfect for text. It can also be used as an inverted fill.
+        {/* cta-ink in context — the 4.5 text-register link trio (rest matches ink-10;
+            hover/press walk the states) */}
+        {' '}Links ride the{' '}
+        <a
+          href="#"
+          onClick={e => e.preventDefault()}
+          onMouseEnter={() => setLinkState('hover')}
+          onMouseLeave={() => setLinkState('rest')}
+          onMouseDown={() => setLinkState('pressed')}
+          onMouseUp={() => setLinkState('hover')}
+          title={`--${prefix}-cta-ink${linkState === 'rest' ? '' : `-${linkState}`}`}
+          style={{
+            color: linkState === 'pressed' ? v('cta-ink-pressed') : linkState === 'hover' ? v('cta-ink-hover') : v('cta-ink'),
+            textDecoration: 'underline', textUnderlineOffset: 2,
+          }}
+        >cta-ink register</a>.
       </p>
 
       {/* cta in context — the pill (hidden on signals, where cta lives in the alert).
-          Hover swaps cta-1 → cta-2 and updates the label, demonstrating both. */}
+          Hover swaps cta → cta-hover; holding the button shows cta-pressed. */}
       {!isSignal && (
         <button
           onMouseEnter={() => setCtaHover(true)}
-          onMouseLeave={() => setCtaHover(false)}
+          onMouseLeave={() => { setCtaHover(false); setCtaPressed(false) }}
+          onMouseDown={() => setCtaPressed(true)}
+          onMouseUp={() => setCtaPressed(false)}
           style={{
             alignSelf: 'flex-start', width: 184, boxSizing: 'border-box', textAlign: 'center',
-            background: ctaHover ? v('cta-2') : v('cta-1'), color: v('on-cta'),
+            background: ctaPressed ? v('cta-pressed') : ctaHover ? v('cta-hover') : v('cta'), color: v('on-cta'),
             // filled buttons carry NO stroke (the label identifies the button — WCAG 1.4.11
             // doesn't require a boundary); only the OUTLINE style keeps its ring, where the
             // boundary IS the component. Transparent border keeps layout identical.
             border: `1.5px solid ${outlineCta ? v('cta-border') : 'transparent'}`,
             borderRadius: 999, padding: '12px 28px', fontSize: 15, fontWeight: 600, fontFamily: 'inherit',
             cursor: 'pointer', marginBottom: 18,
-          }}>{ctaHover ? 'cta-2 on hover' : 'cta-1 button'}</button>
+          }}>{ctaPressed ? 'cta-pressed held' : ctaHover ? 'cta-hover' : 'cta button'}</button>
       )}
 
       {/* in context — the wash inset, plus the highlight inset OR the signal alert */}
@@ -149,7 +170,7 @@ export function TokenCards({ prefix, kind, outlineCta }: { prefix: string; kind:
           <div style={{ ...boxBody, color: v('ink-11') }}>Body copy in ink on a wash fill.</div>
         </div>
         {isSignal ? (
-          <div style={{ ...box, background: v('cta-1'), display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+          <div style={{ ...box, background: v('cta'), display: 'flex', gap: 10, alignItems: 'flex-start' }}>
             <span style={{ flexShrink: 0, marginTop: 1, lineHeight: 0, color: v('on-cta') }}><Icon size={18} color={v('on-cta')} /></span>
             <div>
               <div style={{ ...boxLabel, color: v('on-cta') }}>alert &middot; cta</div>

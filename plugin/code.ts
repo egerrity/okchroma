@@ -61,6 +61,10 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['magenta-e290f9', 'magenta-side-e290f9'],
   ['blue-7cb3f9', 'cyan-side-7cb3f9'],
   ['blue-7eb5fb', 'cyan-side-7eb5fb'],
+  // cta semantic rename (owner 2026-07-16: states, never options) — cta-1/cta-2 →
+  // cta/cta-hover in place; cta-pressed + the cta-ink trio are NEW tokens (no migration).
+  ['cta-1', 'cta'],
+  ['cta-2', 'cta-hover'],
 ]
 // Group renames (old path prefix → new), migrated in place like the leaves — the
 // info-color signal was renamed by identity to blue (2026-07-13); both the primitive
@@ -328,6 +332,19 @@ figma.ui.onmessage = async (msg) => {
           if (transparent) {
             v.setValueForMode(pLight, figma.variables.createVariableAlias(transparent))
             v.setValueForMode(pDark, figma.variables.createVariableAlias(transparent))
+          }
+        } else if (t.path === 'cta-ink') {
+          // cta-ink MATCHES the family's ink-10 by construction (the 4.5 text-register
+          // cta, owner 2026-07-16) — alias the sibling so the relationship stays live in
+          // Figma (the on-cta→ink-10 idiom); the hover/pressed states are distinct values
+          // and ride the generic raw branch. Phase-4's custom link color converts to raw.
+          const siblingInk = primByName.get(path.replace(/cta-ink$/, 'ink-10'))
+          if (siblingInk) {
+            v.setValueForMode(pLight, figma.variables.createVariableAlias(siblingInk))
+            v.setValueForMode(pDark, figma.variables.createVariableAlias(siblingInk))
+          } else if (created || refresh) {
+            v.setValueForMode(pLight, { r: t.r, g: t.g, b: t.b })
+            if (dk) v.setValueForMode(pDark, { r: dk.r, g: dk.g, b: dk.b })
           }
         } else if (t.path === 'cta-border') {
           const sibling8 = primByName.get(path.replace(/cta-border$/, 'highlight-8'))

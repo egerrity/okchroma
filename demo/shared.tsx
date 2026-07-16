@@ -23,16 +23,17 @@ export const FONT_STACK = "'Inter', -apple-system, system-ui, sans-serif"
 // The "accent" Family is emitted as the `secondary` primitive prefix (the role
 // was renamed in the token rename); prim() maps Family → primitive prefix.
 // Stops are the post-rename token names: scale paper/wash, the highlight-9
-// rung, the cta-1/cta-2 fill pair, ink-10/ink-11 text, on-cta/on-highlight on-fill text.
+// rung, the cta/cta-hover/cta-pressed fill trio (+ the cta-ink link trio),
+// ink-10/ink-11 text, on-cta/on-highlight on-fill text.
 type Family = 'brand' | 'accent'
 function accentModeCss(mode: AccentMode, primary: Family, subtle: Family): string {
   const other = (f: Family): Family => (f === 'brand' ? 'accent' : 'brand')
   const prim = (f: Family): string => (f === 'brand' ? 'brand' : 'secondary')
   const PRIMARY_ROLES: Array<[string, string]> = [
     ['fg', 'ink-11'], ['fg-hover', 'ink-10'], ['fg-alt', 'ink-10'], ['fg-alt-hover', 'ink-11'], ['fg-on-emphasis', 'on-cta'],
-    ['bg-emphasis', 'cta-1'], ['bg-emphasis-hover', 'cta-2'],
+    ['bg-emphasis', 'cta'], ['bg-emphasis-hover', 'cta-hover'], ['bg-emphasis-pressed', 'cta-pressed'],
     ['border-default', 'wash-6'], ['border-default-hover', 'highlight-8'],
-    ['border-emphasis', 'cta-1'], ['border-emphasis-hover', 'cta-2'],
+    ['border-emphasis', 'cta'], ['border-emphasis-hover', 'cta-hover'],
   ]
   const SUBTLE_ROLES: Array<[string, string]> = [
     ['bg-faint', 'paper-2'], ['bg-subtle', 'wash-5'], ['bg-subtle-hover', 'wash-6'],
@@ -47,8 +48,11 @@ function accentModeCss(mode: AccentMode, primary: Family, subtle: Family): strin
     lines.push(`  --brand-${suffix}: var(--${prim(subtle)}-${tok});`)
     lines.push(`  --accent-${suffix}: var(--${prim(other(subtle))}-${tok});`)
   }
-  lines.push(`  --fg-link: var(--${prim(primary)}-ink-10);`)
-  lines.push(`  --fg-link-hover: var(--${prim(primary)}-ink-11);`)
+  // links ride the cta-ink trio now (the 4.5 text-register link escape — matches
+  // ink-10 by default, so the visual is unchanged until a custom link color exists)
+  lines.push(`  --fg-link: var(--${prim(primary)}-cta-ink);`)
+  lines.push(`  --fg-link-hover: var(--${prim(primary)}-cta-ink-hover);`)
+  lines.push(`  --fg-link-pressed: var(--${prim(primary)}-cta-ink-pressed);`)
   lines.push(`}`)
   if (subtle !== primary) {
     lines.push(`[data-accent-mode="${mode}"] .u-btn-subtle { color: var(--${prim(subtle)}-ink-11); }`)
@@ -71,19 +75,22 @@ export const COMPONENT_CSS = `
 }
 .u-btn-primary { background: var(--brand-bg-emphasis); color: var(--brand-fg-on-emphasis); }
 .u-btn-primary:hover { background: var(--brand-bg-emphasis-hover); }
+.u-btn-primary:active { background: var(--brand-bg-emphasis-pressed); }
 .u-btn-subtle { background: var(--brand-bg-subtle); color: var(--brand-fg); }
 .u-btn-subtle:hover { background: var(--brand-bg-subtle-hover); }
 /* the LOW-HIERARCHY button: the neutral's quiet scale-fed cta (stop 4/5). The
    secondary-showcase slots fall back to this when no secondary exists — a
    subtle slot reads neutral until a secondary claims it, never brand-again. */
-.u-btn-neutral { background: var(--neutral-cta-1); color: var(--neutral-on-cta); }
-.u-btn-neutral:hover { background: var(--neutral-cta-2); }
-/* the SECONDARY cta pair (--secondary-cta-1/2 + on-cta), shown beside the brand
-   cta wherever that is showcased. cta-border is transparent for every style
+.u-btn-neutral { background: var(--neutral-cta); color: var(--neutral-on-cta); }
+.u-btn-neutral:hover { background: var(--neutral-cta-hover); }
+.u-btn-neutral:active { background: var(--neutral-cta-pressed); }
+/* the SECONDARY cta trio (--secondary-cta/-hover/-pressed + on-cta), shown beside the
+   brand cta wherever that is showcased. cta-border is transparent for every style
    except outline (where the ring IS the component), so the border is
    unconditional and layout never shifts. */
-.u-btn-secondary { background: var(--secondary-cta-1); color: var(--secondary-on-cta); border-color: var(--secondary-cta-border); }
-.u-btn-secondary:hover { background: var(--secondary-cta-2); }
+.u-btn-secondary { background: var(--secondary-cta); color: var(--secondary-on-cta); border-color: var(--secondary-cta-border); }
+.u-btn-secondary:hover { background: var(--secondary-cta-hover); }
+.u-btn-secondary:active { background: var(--secondary-cta-pressed); }
 .u-btn-ghost { background: transparent; color: var(--brand-fg); }
 .u-btn-ghost:hover { background: var(--brand-bg-subtle); }
 /* Universal destructive rule (designer decision): destructive BUTTONS never
@@ -106,6 +113,7 @@ export const COMPONENT_CSS = `
 }
 .u-link { color: var(--fg-link); text-decoration: underline; }
 .u-link:hover { color: var(--fg-link-hover); }
+.u-link:active { color: var(--fg-link-pressed); }
 /* Stop 8 IS the ramp's focus-ring role — never the OS default accent */
 [data-brand] :is(input, select, textarea, button, a):focus-visible {
   outline: 2px solid var(--brand-highlight-8);

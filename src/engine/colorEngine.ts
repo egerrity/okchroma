@@ -1,4 +1,4 @@
-import { type Archetype, classifyArchetype, hoverL } from './archetypes'
+import { type Archetype, classifyArchetype, hoverL, pressedL } from './archetypes'
 import {
   wcagY,
   legalRatio,
@@ -49,8 +49,20 @@ export interface GeneratedScale {
 
   cta: ColorStop
   ctaHover: ColorStop
+  ctaPressed: ColorStop
   ctaDark: ColorStop
   ctaHoverDark: ColorStop
+  ctaPressedDark: ColorStop
+
+  // the cta-ink trio (owner respec 2026-07-16): the family's 4.5 text-register cta — the
+  // link-color escape. Rest matches ink-10 exactly; states via hoverL/pressedL, floored
+  // at the stop-10 contrast require.
+  ctaInk: ColorStop
+  ctaInkHover: ColorStop
+  ctaInkPressed: ColorStop
+  ctaInkDark: ColorStop
+  ctaInkHoverDark: ColorStop
+  ctaInkPressedDark: ColorStop
 
   // C12 value repel: per-mode fired flags (the cta exited red's register) — annotation/audit data
   ctaRepelled?: { light: boolean; dark: boolean }
@@ -198,15 +210,24 @@ export function generateScale(
   const cta = makeStop(9, lightRamp.roles.cta.L, lightRamp.roles.cta.C, lightRamp.roles.cta.H)
   const ctaDark = makeStop(9, darkRamp.roles.cta.L, darkRamp.roles.cta.C, darkRamp.roles.cta.H)
 
+  const roleStop = (r: { L: number; C: number; H: number }, stop: number) => makeStop(stop, r.L, r.C, r.H)
   return {
     name: scaleName, archetype, brandL, brandC, brandH,
     onFillTextIsWhite: lightRamp.ons.onFillIsWhite,
     onFillTextIsWhiteDark: darkRamp.ons.onFillIsWhite,
     light, dark,
     cta,
-    ctaHover: makeStop(10, lightRamp.roles.ctaHover.L, lightRamp.roles.ctaHover.C, lightRamp.roles.ctaHover.H),
+    ctaHover: roleStop(lightRamp.roles.ctaHover, 10),
+    ctaPressed: roleStop(lightRamp.roles.ctaPressed, 11),
     ctaDark,
-    ctaHoverDark: makeStop(10, darkRamp.roles.ctaHover.L, darkRamp.roles.ctaHover.C, darkRamp.roles.ctaHover.H),
+    ctaHoverDark: roleStop(darkRamp.roles.ctaHover, 10),
+    ctaPressedDark: roleStop(darkRamp.roles.ctaPressed, 11),
+    ctaInk: roleStop(lightRamp.roles.ctaInk, 12),
+    ctaInkHover: roleStop(lightRamp.roles.ctaInkHover, 13),
+    ctaInkPressed: roleStop(lightRamp.roles.ctaInkPressed, 14),
+    ctaInkDark: roleStop(darkRamp.roles.ctaInk, 12),
+    ctaInkHoverDark: roleStop(darkRamp.roles.ctaInkHover, 13),
+    ctaInkPressedDark: roleStop(darkRamp.roles.ctaInkPressed, 14),
     ctaRepelled: { light: !!lightRamp.roles.cta.repelled, dark: !!darkRamp.roles.cta.repelled },
     onHighlightIsWhite: opts?.highlight ? lightRamp.ons.onHighlightIsWhite : undefined,
     onHighlightIsWhiteDark: opts?.highlight ? darkRamp.ons.onHighlightIsWhite : undefined,
@@ -265,8 +286,12 @@ export function generateNeutralScale(
   const asCta = (stop: number, src: ColorStop) => makeStop(stop, src.L, src.C, src.H)
   scale.cta = asCta(9, scale.light[3])
   scale.ctaHover = asCta(10, scale.light[4])
+  scale.ctaPressed = asCta(11, scale.light[5])   // pressed continues the scale-fed ladder: stop 6
   scale.ctaDark = asCta(9, scale.dark[3])
   scale.ctaHoverDark = asCta(10, scale.dark[4])
+  scale.ctaPressedDark = asCta(11, scale.dark[5])
+  // cta-ink trio stays resolver-minted (the neutral's own ink-10 + floored states) — the
+  // quiet-fill override above touches only the fill trio.
   // the scale-fed neutral cta can't move, so on-text is judgment only: apca profile = pure
   // apca-pole (its law is the Lc bar); wcag profile = the mixing flip PLUS the conformance
   // floor — the chosen pole must pass 4.5 (the fill can't re-solve, so the pole flips).
@@ -322,13 +347,17 @@ export function generateSubtleSecondary(
     const mk = (stop: number, L: number, mode: 'light' | 'dark') => makeStop(stop, L, curve(L, mode), scale.brandH)
     scale.cta = mk(9, opts.ctaL.light, 'light')
     scale.ctaHover = mk(10, hoverL(opts.ctaL.light), 'light')
+    scale.ctaPressed = mk(11, pressedL(opts.ctaL.light), 'light')
     scale.ctaDark = mk(9, opts.ctaL.dark, 'dark')
     scale.ctaHoverDark = mk(10, hoverL(opts.ctaL.dark), 'dark')
+    scale.ctaPressedDark = mk(11, pressedL(opts.ctaL.dark), 'dark')
   } else {
     scale.cta = asCta(9, scale.light[3])
     scale.ctaHover = asCta(10, scale.light[4])
+    scale.ctaPressed = asCta(11, scale.light[5])
     scale.ctaDark = asCta(9, scale.dark[3])
     scale.ctaHoverDark = asCta(10, scale.dark[4])
+    scale.ctaPressedDark = asCta(11, scale.dark[5])
   }
   // quiet cta, judgment only (same law as the neutral's): wcag = mixing flip + the 4.5
   // conformance floor (pole flips when the preferred one fails); apca = pure apca-pole.

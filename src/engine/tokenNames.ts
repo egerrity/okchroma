@@ -37,14 +37,19 @@ export function onFillTokenName(kind: RampKind): string {
 // an explicit requirement of the original concept). Paper (1–2) / wash (3–7) then
 // the highlight group (highlight-8/9 — stop 8 is clamped to WCAG 1.4.11 3:1
 // non-text contrast vs paper-2 — + on-highlight) read as one contiguous ladder,
-// then the text stops (ink-10/11), then the pulled-out off-scale cta (cta-1/2 +
-// on-cta), then identity. A ramp skips tokens it doesn't have. Emitters sort by
+// then the text stops (ink-10/11), then the pulled-out off-scale cta family +
+// on-cta, then identity. A ramp skips tokens it doesn't have. Emitters sort by
 // this, not by stop number.
+// The cta family is SEMANTIC-named (owner ruling 2026-07-16: states, never options —
+// cta-1/cta-2 renamed in place to cta/cta-hover via both plugins' RENAMED_LEAVES;
+// pressed + the cta-ink trio, the 4.5 text-register link escape, added with it).
 const TOKEN_ORDER = [
   'paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'wash-6', 'wash-7',
   'highlight-8', 'highlight-9', 'on-highlight',
   'ink-10', 'ink-11',
-  'cta-1', 'cta-2', 'on-cta',
+  'cta', 'cta-hover', 'cta-pressed',
+  'cta-ink', 'cta-ink-hover', 'cta-ink-pressed',
+  'on-cta',
   'identity',
 ]
 export function tokenOrder(name: string): number {

@@ -21,3 +21,10 @@ export function hoverL(L: number): number {
   const delta = 0.03 / (L + 0.1)
   return L < 0.40 ? L + delta : L - delta
 }
+
+// pressed = hover's direction, doubled (owner rule 2026-07-16): the same shape as hoverL
+// with 2× the delta — the pressed state continues past hover, never crosses back.
+export function pressedL(L: number): number {
+  const delta = 0.06 / (L + 0.1)
+  return L < 0.40 ? L + delta : L - delta
+}

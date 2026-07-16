@@ -4,7 +4,7 @@ import { toHex } from './cssRender'
 import { srgbEmitChannels } from './colorMath'
 import { stopTokenName, onFillTokenName, tokenOrder, type RampKind } from './tokenNames'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
-import { OUTLINE_HOVER_ALPHA, type ResolvedBrand, type SecondaryStyle } from './resolve'
+import { OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, type ResolvedBrand, type SecondaryStyle } from './resolve'
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v))
 
@@ -47,15 +47,26 @@ function rampGroup(
   stops: ColorStop[],
   onFillWhite: boolean,
   kind: RampKind,
-  extra?: { onHighlightWhite?: boolean; identityHex?: string; cta?: ColorStop; ctaHover?: ColorStop },
+  extra?: {
+    onHighlightWhite?: boolean; identityHex?: string
+    cta?: ColorStop; ctaHover?: ColorStop; ctaPressed?: ColorStop
+    ctaInk?: ColorStop; ctaInkHover?: ColorStop; ctaInkPressed?: ColorStop
+  },
 ): FigmaGroup {
   const g: FigmaGroup = {}
   for (const s of [...stops].sort((a, b) => tokenOrder(stopTokenName(a.stop)) - tokenOrder(stopTokenName(b.stop))))
     g[stopTokenName(s.stop)] = colorFromStop(s)
 
-  if (extra?.cta) g['cta-1'] = colorFromStop(extra.cta)
-  if (extra?.ctaHover) g['cta-2'] = colorFromStop(extra.ctaHover)
-  // cta-border pairs with the cta pair, TRANSPARENT everywhere (the conditional gate is gone —
+  // the cta family, SEMANTIC-named (owner ruling 2026-07-16: states, never options).
+  // cta-1/cta-2 → cta/cta-hover ride both plugins' RENAMED_LEAVES in-place migration.
+  if (extra?.cta) g['cta'] = colorFromStop(extra.cta)
+  if (extra?.ctaHover) g['cta-hover'] = colorFromStop(extra.ctaHover)
+  if (extra?.ctaPressed) g['cta-pressed'] = colorFromStop(extra.ctaPressed)
+  // cta-ink trio: the family's 4.5 text-register cta (link escape) — rest matches ink-10
+  if (extra?.ctaInk) g['cta-ink'] = colorFromStop(extra.ctaInk)
+  if (extra?.ctaInkHover) g['cta-ink-hover'] = colorFromStop(extra.ctaInkHover)
+  if (extra?.ctaInkPressed) g['cta-ink-pressed'] = colorFromStop(extra.ctaInkPressed)
+  // cta-border pairs with the cta family, TRANSPARENT everywhere (the conditional gate is gone —
   // owner 2026-07-04): the token stays for components + a future high-contrast re-solve; the
   // outline secondary override is the only resolver (→ its own highlight-8).
   // Renamed from cta-stroke (owner 2026-07-09) — both plugins migrate an existing
@@ -72,7 +83,7 @@ export interface ThemeInput {
   secondary?: GeneratedScale | null
 
   // the secondary's mode chip — 'outline' re-expresses the cta pair (mirrors cssRender's
-  // outline override): cta-1 transparent, cta-2 the cta color at OUTLINE_HOVER_ALPHA,
+  // outline override): cta transparent, cta-hover/-pressed the cta color at OUTLINE alphas,
   // cta-border ALWAYS the secondary's own highlight-8, on-cta the secondary's ink-11.
   secondaryStyle?: SecondaryStyle
 
@@ -91,18 +102,21 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
   const secondaryOnFillLight = input.secondary ? input.secondary.onFillTextIsWhite : scale.onFillTextIsWhite
   const secondaryOnFillDark = input.secondary ? input.secondary.onFillTextIsWhiteDark : scale.onFillTextIsWhiteDark
 
+  // the full cta family per mode — one helper, every family call-site rides it
+  const ctaFamily = (s: GeneratedScale, mode: 'light' | 'dark') => (mode === 'light'
+    ? { cta: s.cta, ctaHover: s.ctaHover, ctaPressed: s.ctaPressed, ctaInk: s.ctaInk, ctaInkHover: s.ctaInkHover, ctaInkPressed: s.ctaInkPressed }
+    : { cta: s.ctaDark, ctaHover: s.ctaHoverDark, ctaPressed: s.ctaPressedDark, ctaInk: s.ctaInkDark, ctaInkHover: s.ctaInkHoverDark, ctaInkPressed: s.ctaInkPressedDark })
+
   const brandExtra = (s: GeneratedScale, mode: 'light' | 'dark') => ({
     onHighlightWhite: mode === 'light' ? s.onHighlightIsWhite : s.onHighlightIsWhiteDark,
     identityHex: s.identityHex,
-    cta: mode === 'light' ? s.cta : s.ctaDark,
-    ctaHover: mode === 'light' ? s.ctaHover : s.ctaHoverDark,
+    ...ctaFamily(s, mode),
   })
 
   const nScale = generateNeutralScale(scale.brandH, input.neutralLevel ?? 'default', input.contrastProfile)
   const neutralExtra = (mode: 'light' | 'dark') => ({
     onHighlightWhite: mode === 'light' ? nScale.onHighlightIsWhite : nScale.onHighlightIsWhiteDark,
-    cta: mode === 'light' ? nScale.cta : nScale.ctaDark,
-    ctaHover: mode === 'light' ? nScale.ctaHover : nScale.ctaHoverDark,
+    ...ctaFamily(nScale, mode),
   })
   const build = (mode: 'light' | 'dark'): FigmaGroup => {
     // paper-0 rides WITH the neutral ramp (its dark value is neutral-tinted, so it dedups and
@@ -120,15 +134,20 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     if (input.secondaryStyle === 'outline' && input.secondary) {
       const s8 = secondary[mode].find(s => s.stop === 8)
       const s10 = secondary[mode].find(s => s.stop === 10)
-      secondaryGroup['cta-1'] = TRANSPARENT_TOKEN
+      secondaryGroup['cta'] = TRANSPARENT_TOKEN
       if (s8) {
         const e = srgbEmitChannels(s8)
-        secondaryGroup['cta-2'] = {
+        const alphaTint = (alpha: number): FigmaColorToken => ({
           $type: 'color',
-          $value: { colorSpace: 'srgb', components: [clamp01(e.r), clamp01(e.g), clamp01(e.b)], alpha: OUTLINE_HOVER_ALPHA, hex: toHex(e.r, e.g, e.b) },
-        }
+          $value: { colorSpace: 'srgb', components: [clamp01(e.r), clamp01(e.g), clamp01(e.b)], alpha, hex: toHex(e.r, e.g, e.b) },
+        })
+        secondaryGroup['cta-hover'] = alphaTint(OUTLINE_HOVER_ALPHA)
+        // pressed = the hover tint at doubled alpha (pressed-doubles-hover, alpha register)
+        secondaryGroup['cta-pressed'] = alphaTint(OUTLINE_PRESSED_ALPHA)
       }
       if (s8) secondaryGroup['cta-border'] = colorFromStop(s8)
+      // cta-ink trio untouched: outline re-expresses the FILL trio only — links keep the
+      // exact ramp's text-register values already emitted by rampGroup
       // on-cta = the family's ink-10, NOT a pole — the plugin aliases non-pole on-cta to the sibling ink-10
       if (s10) secondaryGroup[onFillTokenName('brand')] = colorFromStop(s10)
     }
@@ -145,8 +164,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
         'brand',
         {
           onHighlightWhite: mode === 'light' ? sig.scale.onHighlightIsWhite : sig.scale.onHighlightIsWhiteDark,
-          cta: mode === 'light' ? sig.scale.cta : sig.scale.ctaDark,
-          ctaHover: mode === 'light' ? sig.scale.ctaHover : sig.scale.ctaHoverDark,
+          ...ctaFamily(sig.scale, mode),
         },
       )
     }

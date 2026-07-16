@@ -4,7 +4,7 @@ import { generateIllustrationScale, generateNeutralScale, type GeneratedScale, t
 import { srgbEmitChannels, masterEmitChannels } from './colorMath'
 import { clampChromaToGamut } from './constraints'
 import { stopTokenName, onFillTokenName, tokenOrder } from './tokenNames'
-import { signalScalesFor, OUTLINE_HOVER_ALPHA, type ResolvedBrand, type SecondaryStyle } from './resolve'
+import { signalScalesFor, OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, type ResolvedBrand, type SecondaryStyle } from './resolve'
 import { SIGNALS } from './signals'
 
 export function toHex(r: number, g: number, b: number): string {
@@ -43,14 +43,13 @@ export function stopsToVars(stops: ColorStop[], prefix: string): string {
 const onColor = (white: boolean) => (white ? '#ffffff' : '#000000')
 
 // A ramp body for one mode: the scale + highlight + text stops (from the scale
-// array, sorted by token order), the off-scale cta pair (cta-1/cta-2), and the
+// array, sorted by token order), the off-scale cta family (cta/cta-hover/cta-pressed + the cta-ink trio), and the
 // on-cta / on-highlight text tokens. identity is mode-invariant — the caller emits
 // it once (the neutral has none). Used for the brand, the (real) secondary, AND
 // the generated neutral — every family is emitted the same way.
 export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' | 'dark'): string[] {
   const stops = mode === 'light' ? s.light : s.dark
-  const cta = mode === 'light' ? s.cta : s.ctaDark
-  const ctaHover = mode === 'light' ? s.ctaHover : s.ctaHoverDark
+  const f = ctaFamilyOf(s, mode)
   const onCta = mode === 'light' ? s.onFillTextIsWhite : s.onFillTextIsWhiteDark
   const onHl = mode === 'light' ? s.onHighlightIsWhite : s.onHighlightIsWhiteDark
   // cta-border: TRANSPARENT everywhere (owner 2026-07-04: the conditional 3:1 gate is gone —
@@ -59,26 +58,38 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
   // future high-contrast mode can re-solve it; the OUTLINE secondary override is the only
   // resolver today (→ its own highlight-8). Renamed from cta-stroke (owner 2026-07-09);
   // the Figma side renamed with it — plugins migrate existing variables in place.
+  // cta family SEMANTIC-named (owner ruling 2026-07-16): cta/cta-hover/cta-pressed +
+  // the cta-ink trio (the 4.5 text-register link escape; rest matches ink-10).
   return [
     stopsToVars(stops, prefix),
-    `  --${prefix}-cta-1: ${stopHex(cta)};`,
-    `  --${prefix}-cta-2: ${stopHex(ctaHover)};`,
+    `  --${prefix}-cta: ${stopHex(f.cta)};`,
+    `  --${prefix}-cta-hover: ${stopHex(f.ctaHover)};`,
+    `  --${prefix}-cta-pressed: ${stopHex(f.ctaPressed)};`,
+    `  --${prefix}-cta-ink: ${stopHex(f.ctaInk)};`,
+    `  --${prefix}-cta-ink-hover: ${stopHex(f.ctaInkHover)};`,
+    `  --${prefix}-cta-ink-pressed: ${stopHex(f.ctaInkPressed)};`,
     `  --${prefix}-cta-border: transparent;`,
     `  --${prefix}-${onFillTokenName('brand')}: ${onColor(onCta)};`,
     `  --${prefix}-${onFillTokenName('neutral')}: ${onColor(onHl!)};`,
   ]
 }
 
+// the full cta family for one mode — shared by the base body and the P3 override body
+function ctaFamilyOf(s: GeneratedScale, mode: 'light' | 'dark') {
+  return mode === 'light'
+    ? { cta: s.cta, ctaHover: s.ctaHover, ctaPressed: s.ctaPressed, ctaInk: s.ctaInk, ctaInkHover: s.ctaInkHover, ctaInkPressed: s.ctaInkPressed }
+    : { cta: s.ctaDark, ctaHover: s.ctaHoverDark, ctaPressed: s.ctaPressedDark, ctaInk: s.ctaInkDark, ctaInkHover: s.ctaInkHoverDark, ctaInkPressed: s.ctaInkPressedDark }
+}
+
 // the P3 override body for one family+mode: only vars whose master rendition exceeds
 // sRGB (on-colors are poles, cta-border transparent — never overridden)
 export function brandKindP3Body(prefix: string, s: GeneratedScale, mode: 'light' | 'dark'): string[] {
   const stops = mode === 'light' ? s.light : s.dark
-  const cta = mode === 'light' ? s.cta : s.ctaDark
-  const ctaHover = mode === 'light' ? s.ctaHover : s.ctaHoverDark
+  const f = ctaFamilyOf(s, mode)
   const out: string[] = []
   for (const st of stops) if (p3Differs(st)) out.push(`  --${prefix}-${stopTokenName(st.stop)}: ${p3Value(st)};`)
-  if (p3Differs(cta)) out.push(`  --${prefix}-cta-1: ${p3Value(cta)};`)
-  if (p3Differs(ctaHover)) out.push(`  --${prefix}-cta-2: ${p3Value(ctaHover)};`)
+  for (const [name, st] of [['cta', f.cta], ['cta-hover', f.ctaHover], ['cta-pressed', f.ctaPressed], ['cta-ink', f.ctaInk], ['cta-ink-hover', f.ctaInkHover], ['cta-ink-pressed', f.ctaInkPressed]] as const)
+    if (p3Differs(st)) out.push(`  --${prefix}-${name}: ${p3Value(st)};`)
   return out
 }
 
@@ -194,7 +205,7 @@ export function brandCss(
   // the per-brand neutral is generated here, so it needs the caller's profile (the brand/secondary
   // scales inside `r` were already resolved under it by resolveBrand)
   contrastProfile?: ContrastProfile,
-  // the secondary's mode chip: 'outline' re-resolves the cta pair — cta-1 transparent, cta-2 the
+  // the secondary's mode chip: 'outline' re-resolves the fill trio — cta transparent, cta-hover the
   // cta color at OUTLINE_HOVER_ALPHA (the tinted hover), on-cta ink-10, cta-border ALWAYS the
   // gated highlight-8. Same tokens, different resolution — no component changes needed.
   secondaryStyle?: SecondaryStyle
@@ -238,8 +249,12 @@ export function brandCss(
     const alias = (name: string) => `  --${prefix}-${name}: var(--brand-${name});`
     return [
       ...stops.map(x => alias(stopTokenName(x.stop))),
-      alias('cta-1'),
-      alias('cta-2'),
+      alias('cta'),
+      alias('cta-hover'),
+      alias('cta-pressed'),
+      alias('cta-ink'),
+      alias('cta-ink-hover'),
+      alias('cta-ink-pressed'),
       alias('cta-border'),
       alias(onFillTokenName('brand')),
       alias(onFillTokenName('neutral')),
@@ -265,7 +280,7 @@ export function brandCss(
   const darkAnchors = [`  --paper-0: ${p0hex(nScale.paper0Dark, '#000000')};`, `  --ink-12: #ffffff;`]
 
   // outline re-resolution: emitted AFTER the secondary body so the cascade takes these values.
-  // cta-2 = highlight-8 at OUTLINE_HOVER_ALPHA — the STABLE contrast-gated stop, the same one
+  // cta-hover = highlight-8 at OUTLINE_HOVER_ALPHA (pressed doubles it) — the STABLE contrast-gated stop, the same one
   // the ring aliases (owner: 9% of the generated subtle cta was imperceptible — it's a very
   // light/dark color; the hover must reference a stable value).
   const outline = (mode: 'light' | 'dark'): string[] => {
@@ -273,22 +288,27 @@ export function brandCss(
     const s8 = (mode === 'light' ? secondary.light : secondary.dark).find(s => s.stop === 8)
     const c = (v: number) => Math.round(Math.min(1, Math.max(0, v)) * 255)
     const s8e = s8 ? srgbEmitChannels(s8) : null
+    // fill trio re-resolved; pressed = the hover tint at doubled alpha (pressed-doubles-hover).
+    // cta-ink trio untouched — links keep the exact ramp's text-register values.
     return [
-      `  --secondary-cta-1: transparent;`,
-      ...(s8e ? [`  --secondary-cta-2: rgba(${c(s8e.r)}, ${c(s8e.g)}, ${c(s8e.b)}, ${OUTLINE_HOVER_ALPHA});`] : []),
+      `  --secondary-cta: transparent;`,
+      ...(s8e ? [
+        `  --secondary-cta-hover: rgba(${c(s8e.r)}, ${c(s8e.g)}, ${c(s8e.b)}, ${OUTLINE_HOVER_ALPHA});`,
+        `  --secondary-cta-pressed: rgba(${c(s8e.r)}, ${c(s8e.g)}, ${c(s8e.b)}, ${OUTLINE_PRESSED_ALPHA});`,
+      ] : []),
       `  --secondary-cta-border: var(--secondary-highlight-8);`,
       `  --secondary-${onFillTokenName('brand')}: var(--secondary-ink-10);`,
     ]
   }
 
   // the P3 renditions, behind @supports — same cascade shape as the base blocks.
-  // Under the OUTLINE chip the secondary's cta pair is re-resolved (cta-1 transparent, cta-2 the
+  // Under the OUTLINE chip the secondary cta fill trio is re-resolved (cta transparent, cta-hover the
   // rgba hover tint) and the P3 block sits LAST in the cascade — an out-of-sRGB secondary cta
   // (the vivid cyan corner) would pop its fill back in over `transparent` (owner-caught,
   // 2026-07-11). The cta-pair P3 overrides are dropped for outline; scale stops keep theirs.
   const dropOutlineCta = (lines: string[]): string[] =>
     secondaryStyle === 'outline'
-      ? lines.filter(l => !l.startsWith('  --secondary-cta-1:') && !l.startsWith('  --secondary-cta-2:'))
+      ? lines.filter(l => !l.startsWith('  --secondary-cta:') && !l.startsWith('  --secondary-cta-hover:') && !l.startsWith('  --secondary-cta-pressed:'))
       : lines
   const p3Light = [
     ...brandKindP3Body('brand', scale, 'light'),

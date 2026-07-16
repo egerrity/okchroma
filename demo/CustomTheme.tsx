@@ -247,7 +247,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
             <label className="ct-swatch-btn" title="Open color picker">
               {/* the swatch always shows the RESOLVED secondary — in derived mode that's
                   the subtle tint the engine produced, not the primary hex in the input */}
-              <span className="ct-swatch" style={{ background: derived ? 'var(--secondary-cta-1)' : (secondary ?? 'var(--neutral-wash-5)') }} />
+              <span className="ct-swatch" style={{ background: derived ? 'var(--secondary-cta)' : (secondary ?? 'var(--neutral-wash-5)') }} />
               <input type="color" value={secondary ?? primary} onChange={e => { setSecState('custom'); setSecondaryInput(e.target.value.toUpperCase()) }} />
             </label>
             {/* derived: the input TRACKS the primary live (that's what derived means) and is
@@ -337,12 +337,12 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   })
 
   // TEMP — flat compare grid of every generated color (all ramps × all stops), for
-  // eyeballing the scale. cta-1/2 sit at the END so the 1–12 ladder reads unbroken.
-  // Each cell shows the token representatively: surfaces as plain swatches,
-  // highlight/cta as "Aa" on their on-color, ink as "Aa" text, identity as an "ID"
-  // chip (blank-but-spaced when a ramp has none, so columns stay justified). Themes
-  // with the page toggle.
-  const SWATCH_STOPS = ['paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'wash-6', 'wash-7', 'highlight-8', 'highlight-9', 'ink-10', 'ink-11', 'cta-1', 'cta-2']
+  // eyeballing the scale. The cta family sits at the END so the 1–12 ladder reads
+  // unbroken. Each cell shows the token representatively: surfaces as plain swatches,
+  // highlight/cta as "Aa" on their on-color, ink + cta-ink as "Aa" text, identity as
+  // an "ID" chip (blank-but-spaced when a ramp has none, so columns stay justified).
+  // Themes with the page toggle.
+  const SWATCH_STOPS = ['paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'wash-6', 'wash-7', 'highlight-8', 'highlight-9', 'ink-10', 'ink-11', 'cta', 'cta-hover', 'cta-pressed', 'cta-ink', 'cta-ink-hover', 'cta-ink-pressed']
   const swatchRamps: Array<[string, string, boolean]> = [
     ['brand', 'primary', true],
     ...((secondary || derived) ? [['secondary', 'secondary', true] as [string, string, boolean]] : []),
@@ -358,6 +358,9 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
     // renders AS a stroke: a ring of the color, not a fill.
     if (stop === 'highlight-8') return <div style={{ height: 36, borderRadius: 6, boxSizing: 'border-box', border: `2px solid ${cv(stop)}` }} />
     if (stop.startsWith('highlight')) return <div style={{ ...aa, background: cv(stop), color: cv('on-highlight') }}>Aa</div>
+    // cta-ink trio renders as TEXT (the 4.5 text-register link escape) — checked before
+    // the fill branch so the 'cta' prefix doesn't swallow it
+    if (stop.startsWith('cta-ink')) return <div style={{ ...aa, fontSize: 18, fontWeight: 900, textDecoration: 'underline', color: cv(stop) }}>Aa</div>
     // filled cta cells carry NO stroke (filled is filled — same call as the buttons);
     // only the OUTLINE secondary shows its ring, where the boundary IS the component
     if (stop.startsWith('cta')) {
@@ -661,7 +664,7 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
           <div className="dash-search"><Search size={14} aria-hidden /> Search…</div>
           <span style={{ flex: 1 }} />
           <button className="u-btn u-btn-subtle" style={{ padding: '6px 12px', fontSize: 13 }} title="Placeholder — export coming"><Download size={14} /> Export</button>
-          {/* the secondary CTA (--secondary-cta-1/2) beside the brand cta — only when a
+          {/* the secondary CTA (--secondary-cta/-hover) beside the brand cta — only when a
               secondary exists (the vars mirror brand otherwise, a duplicate button) */}
           {hasSecondary && <button className="u-btn u-btn-secondary" style={{ padding: '6px 14px', fontSize: 13 }}>Share</button>}
           <button className="u-btn u-btn-primary" style={{ padding: '6px 14px', fontSize: 13 }}><Plus size={14} /> New project</button>
@@ -807,7 +810,7 @@ function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typ
       <div style={{
         display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 12,
         borderRadius: 8, padding: '9px 12px', fontSize: 12.5,
-        background: v('cta-1'), color: v('on-cta'),
+        background: v('cta'), color: v('on-cta'),
       }}>
         <Icon size={15} style={{ flexShrink: 0, marginTop: 1 }} aria-hidden />
         <span>{alert}</span>
@@ -817,15 +820,15 @@ function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typ
           secondary wash-5 · secondary cta · neutral cta */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
         <button style={{ ...btn, background: 'var(--brand-wash-5)', color: 'var(--brand-ink-11)' }}>Wash 5</button>
-        <button style={{ ...btn, background: 'var(--brand-cta-1)', color: 'var(--brand-on-cta)' }}>Primary cta</button>
-        <button style={{ ...btn, background: 'var(--red-cta-1)', color: 'var(--red-on-cta)' }}>Red cta</button>
+        <button style={{ ...btn, background: 'var(--brand-cta)', color: 'var(--brand-on-cta)' }}>Primary cta</button>
+        <button style={{ ...btn, background: 'var(--red-cta)', color: 'var(--red-on-cta)' }}>Red cta</button>
       </div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {hasSecondary && <>
           <button style={{ ...btn, background: 'var(--secondary-wash-5)', color: 'var(--secondary-ink-11)' }}>Wash 5</button>
-          <button style={{ ...btn, background: 'var(--secondary-cta-1)', color: 'var(--secondary-on-cta)', borderColor: 'var(--secondary-cta-border)' }}>Secondary cta</button>
+          <button style={{ ...btn, background: 'var(--secondary-cta)', color: 'var(--secondary-on-cta)', borderColor: 'var(--secondary-cta-border)' }}>Secondary cta</button>
         </>}
-        <button style={{ ...btn, background: 'var(--neutral-cta-1)', color: 'var(--neutral-on-cta)' }}>Neutral cta</button>
+        <button style={{ ...btn, background: 'var(--neutral-cta)', color: 'var(--neutral-on-cta)' }}>Neutral cta</button>
       </div>
     </section>
   )
@@ -1011,8 +1014,9 @@ const PAGE_CSS = `
      flip. accentModeCss remaps the --brand-* semantic tokens at the root; re-pin
      the ones the chips use to the primary brand primitives (the named scale +
      fill roles, post token-rename). */
-  --brand-bg-emphasis: var(--brand-cta-1);
-  --brand-bg-emphasis-hover: var(--brand-cta-2);
+  --brand-bg-emphasis: var(--brand-cta);
+  --brand-bg-emphasis-hover: var(--brand-cta-hover);
+  --brand-bg-emphasis-pressed: var(--brand-cta-pressed);
   --brand-fg-on-emphasis: var(--brand-on-cta);
   --brand-fg: var(--brand-ink-11);
   --brand-fg-alt: var(--brand-ink-10);

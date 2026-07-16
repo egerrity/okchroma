@@ -892,3 +892,54 @@ enforce (no lighten-for-black) — dark dead zones unprobed, follow-up. Exact mo
 
 Relates: C15 (the margin + pole-symmetric apca enforce), the 2169337 clearance/seed-lift
 round (whose parked default-on this executes), C12 (the red interplay).
+
+## C19 — the cta family expands to six SEMANTIC tokens: cta / cta-hover / cta-pressed + the cta-ink trio
+
+**Status:** CLOSED (owner rulings at planning, 2026-07-16; diff owner-approved same day).
+Phase 1 of the five-phase roadmap (plan: five-lever roadmap 2026-07-16 — the APCA include
+toggle, the neutral cta escape, the cta-ink custom-color toggle, and the vividness lever
+follow as their own phases).
+
+**The respec.** The cta group grows from two tokens (cta-1/cta-2) to six, and the emitted
+names go SEMANTIC (owner: "more understandable, and keeps people from thinking they are
+options for different ctas; they are only ever going to be hover and pressed"):
+
+- **Fill trio** — `cta` / `cta-hover` / `cta-pressed`. Pressed = hover's direction,
+  DOUBLED (`pressedL`, archetypes.ts: `delta = 2 × 0.03/(L+0.1)`, same lighten-below-0.40
+  rule); chroma re-evaluated at the pressed L through the same register, hue constant.
+  Pressed tracks every cta re-emit (light single mint; dark base / enforce / p2-exit) and
+  the pinned red-complement mint. No dark-chroma policy of its own (register-audit
+  untouched). Neutral + subtle-secondary quiet ctas extend their scale-fed rule: rest =
+  stop 4, hover = stop 5, pressed = stop 6.
+- **Ink trio** — `cta-ink` / `cta-ink-hover` / `cta-ink-pressed`: the family's 4.5
+  TEXT-register cta, the link-color escape. Rest MATCHES the resolved ink-10 exactly
+  (owner rule; the v1 plugin writes it as an ALIAS to the sibling ink-10 — the
+  on-cta→ink-10 idiom — so the relationship stays live in Figma). States derive via the
+  same hoverL/pressedL machinery with the stop-10 contrast require held as a FLOOR
+  (dark states darken toward the paper; a violating state bisects back toward ink-10's
+  own L). Declared as reqtoken ROLES end-to-end (spec → resolver → dtcg), so the portable
+  bundle describes what the system emits. Visited: DROPPED (owner).
+- **Rename**: cta-1→cta, cta-2→cta-hover ride RENAMED_LEAVES in BOTH plugins (in-place,
+  ids/bindings survive — the cta-border/ink-renumber precedent). Outline re-expression:
+  cta transparent · cta-hover = highlight-8 @ 0.09 · cta-pressed @ 0.18
+  (OUTLINE_PRESSED_ALPHA, pressed-doubles-hover carried to the alpha register) ·
+  cta-ink trio untouched (links keep the exact ramp's text register).
+
+**Proof at land:** byte-identity vs d75d357 — 15,410 emitted tokens (31 brands + 32
+agnostic seed-cases, both lanes, derived/custom/outline/exact postures) zero value drift,
+additions exactly the new family; 67/67 brandCss blocks identical under the name map.
+Full gate suite green; highlight + divergence snapshots re-blessed (matrix shape grew to
+carry the six roles; values proven unchanged first). reqtoken-audit gains: pressed-travel
+(§5b), cta-ink anchor + state floors (§5c, hard — 0/288 fail), and a REPORT-ONLY
+pressed-fill pole read (§5d).
+
+**Residuals:** §5d reports 10/288 apca-lane vivid teal/cyan seeds (C0.2, H165–225) where
+the rest-chosen pole reads 4.15–4.38 wcag on the PRESSED fill — that lane's law is Lc
+(not violated), wcag lane fully clean; owner-visible every run, unruled. The wcag-lane
+pressed floor rides the states only for cta-ink; the FILL trio's pressed carries no
+contrast requirement of its own (same posture hover always had). Phase-4 (custom link
+color) converts the v1 cta-ink alias to raw values when it lands.
+
+Relates: C16 (DARK_CTA_C register — pressed inherits the cta's policy), C12 (red
+complement mints the pressed stop pinned), the 2026-07-12 secondary offering (outline
+re-expression extended).

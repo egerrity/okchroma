@@ -157,7 +157,10 @@ console.log(`  stop 11 worst ${dark.s11.toFixed(2)}:1 (${dark.s11at})  [light fl
 const SNAP_PATH = path.join(process.cwd(), 'scripts', 'divergence-snapshot.json')
 const TOL = 0.015
 const matrix = (s: GeneratedScale): number[] =>
-  [...s.light.slice(0, 12), ...s.dark.slice(0, 12), s.cta, s.ctaHover, s.ctaDark, s.ctaHoverDark].flatMap(c => [c.L, c.C, c.H])
+  [...s.light.slice(0, 12), ...s.dark.slice(0, 12),
+    s.cta, s.ctaHover, s.ctaPressed, s.ctaDark, s.ctaHoverDark, s.ctaPressedDark,
+    s.ctaInk, s.ctaInkHover, s.ctaInkPressed, s.ctaInkDark, s.ctaInkHoverDark, s.ctaInkPressedDark,
+  ].flatMap(c => [c.L, c.C, c.H])
 function snapshotOf(): Record<string, number[]> {
   const o: Record<string, number[]> = {}
   for (const b of BRANDS) {

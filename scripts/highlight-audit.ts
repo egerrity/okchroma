@@ -144,6 +144,9 @@ for (const { h, s } of neutralByHue) {
   ok(Math.abs(ctaD.L - s.dark[3].L) < 0.01, `neutral h${h} cta dark != stop4 (${f(ctaD.L)} vs ${f(s.dark[3].L)})`)
   ok(Math.abs(hovL.L - s.light[4].L) < 0.01, `neutral h${h} ctaHover light != stop5 (${f(hovL.L)} vs ${f(s.light[4].L)})`)
   ok(Math.abs(hovD.L - s.dark[4].L) < 0.01, `neutral h${h} ctaHover dark != stop5 (${f(hovD.L)} vs ${f(s.dark[4].L)})`)
+  // pressed continues the scale-fed ladder (stop 6) — the C19 extension of the stop-4/5 rule
+  ok(Math.abs(s.ctaPressed.L - s.light[5].L) < 0.01, `neutral h${h} ctaPressed light != stop6 (${f(s.ctaPressed.L)} vs ${f(s.light[5].L)})`)
+  ok(Math.abs(s.ctaPressedDark.L - s.dark[5].L) < 0.01, `neutral h${h} ctaPressed dark != stop6 (${f(s.ctaPressedDark.L)} vs ${f(s.dark[5].L)})`)
   // apca lane: highlight on-text at the body-text Lc bar, both modes
   ok(onApcaLc(hlL, s.onHighlightIsWhite) >= HL_BODY, `neutral h${h} apca light: highlight on-text below body-text (Lc ${onApcaLc(hlL, s.onHighlightIsWhite).toFixed(1)})`)
   ok(onApcaLc(hlD, s.onHighlightIsWhiteDark) >= HL_BODY, `neutral h${h} apca dark: highlight on-text below body-text (Lc ${onApcaLc(hlD, s.onHighlightIsWhiteDark).toFixed(1)})`)
@@ -183,7 +186,10 @@ for (const sig of SIGNALS) {
 const SNAP_PATH = path.join(process.cwd(), 'scripts', 'highlight-snapshot.json')
 const TOL = 0.015
 const rungAndCta = (s: GeneratedScale) =>
-  [s.light[8], s.dark[8], s.cta, s.ctaHover, s.ctaDark, s.ctaHoverDark].flatMap(c => [c.L, c.C, c.H])
+  [s.light[8], s.dark[8],
+    s.cta, s.ctaHover, s.ctaPressed, s.ctaDark, s.ctaHoverDark, s.ctaPressedDark,
+    s.ctaInk, s.ctaInkHover, s.ctaInkPressed, s.ctaInkDark, s.ctaInkHoverDark, s.ctaInkPressedDark,
+  ].flatMap(c => [c.L, c.C, c.H])
 const snapshot = (): Record<string, number[]> => {
   const o: Record<string, number[]> = {}
   for (const { name, scale } of items) o[name] = rungAndCta(scale)

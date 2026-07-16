@@ -10,7 +10,7 @@
 import { apparentL, perceptualRungL, perceptualDarkC, solveLForApparent } from '../engine/perceptualL'
 import { clampChromaToGamut, wcagY, contrastRatio, legalRatio, findMaxLForContrast, apcaLc } from '../engine/constraints'
 import { hexToOklch, srgbEmitChannels, redSolveDist, RED_GATE, RED_SOLVE } from '../engine/colorMath'
-import { hoverL } from '../engine/archetypes'
+import { hoverL, pressedL } from '../engine/archetypes'
 import { MODE_SPECS, type ModeSpec, type StopReq, type RoleReq, type Require } from './spec'
 import {
   buildContext, buildDarkContext, type Ctx, type DarkCtx, type ResolveOpts,
@@ -36,7 +36,12 @@ export type ResolvedRamp = {
   mode: 'light' | 'dark'
   seed: Seed
   stops: ResolvedStop[]
-  roles: { cta: ResolvedRole; ctaHover: ResolvedRole }
+  // the six-token cta family (owner respec 2026-07-16): the fill trio + the ink trio
+  // (cta-ink = the family's 4.5 text-register cta, anchored at the resolved stop 10)
+  roles: {
+    cta: ResolvedRole; ctaHover: ResolvedRole; ctaPressed: ResolvedRole
+    ctaInk: ResolvedRole; ctaInkHover: ResolvedRole; ctaInkPressed: ResolvedRole
+  }
   ons: { onFillIsWhite: boolean; onHighlightIsWhite: boolean }
 }
 export type { ResolveOpts }
@@ -58,6 +63,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   spec ??= MODE_SPECS[mode]
   const ctaReq = spec.roles.find(r => r.role === 'cta')
   const hoverReq = spec.roles.find(r => r.role === 'cta-hover')
+  const pressedReq = spec.roles.find(r => r.role === 'cta-pressed')
   if (!ctaReq) throw new Error('spec has no cta role')
   // enforce: caller opts override the spec's declared default (the declaration is the source of truth; the
   // cutover adapter always passes the flag explicitly, preserving generateScale's opts semantics).
@@ -102,6 +108,10 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     throw new Error(`stop ${forWhom}: ${req.metric} is not a contrast require`)
   }
   const deepenFor = (stop: number) => (stop === 10 ? ctx.opts?.stop10DeepenL ?? 0 : stop === 11 ? ctx.opts?.stop11DeepenL ?? 0 : 0)
+
+  // the dark ink-10 chroma closure, captured while the loop resolves stop 10 — the cta-ink
+  // states re-evaluate the SAME register at their own L (incl. the delta-carry twin carve-out)
+  let darkInk10ChromaAt: ((L: number) => number) | null = null
 
   for (const sp of spec.stops) {
     let placed: { L: number; C: number; H: number }
@@ -155,6 +165,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       // no "same color, re-referenced" for a stop that crosses the paper; carrying a dark-gold ink's hue up
       // ~0.3 L lands in a different hue family (gold→orange). The C9/C11 dark text register + the T11/T12
       // requires own the inks, on the seed-keyed path below.
+      if (sp.group === 'ink' && sp.stop === 10 && chromaAt) darkInk10ChromaAt = chromaAt
       const dl = ctx.opts?.deltaLightStops
       const ls = dl && sp.stop >= 1 && sp.stop <= 9 ? dl.find(s => s.stop === sp.stop) : undefined
       if (ls && ctx.opts?.deltaCarry) {
@@ -302,7 +313,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   // APCA legibility clearance (opt-in, default off → byte-identical): wcag lane only (enforceLc undefined),
   // under opts.apcaClearance — the second Lc bar the cta fill must also clear, alongside the 4.5 floor.
   const coLc = ctx.opts?.apcaClearance && enforceLc === undefined ? spec.ons.onFill.coEnforceLc : undefined
-  let cta: ResolvedRole, ctaHover: ResolvedRole, onFillIsWhite: boolean
+  let cta: ResolvedRole, ctaHover: ResolvedRole, ctaPressed: ResolvedRole, onFillIsWhite: boolean
   if (mode === 'light') {
     // on-fill judged PRE-enforcement at fill9 (:271–273); the enforce re-solve feeds FROM it (:354–358)
     onFillIsWhite = onFillIsWhiteLight(ctx, enforceLc !== undefined ? false : onFillEnforce)
@@ -364,9 +375,10 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     }
     cta = emitRole('cta', light9L, ctaCFor(light9L) * ctaCMul, ctaH)
     ctaHover = emitRole('cta-hover', hoverL(light9L), ctx.cAt('light', hoverL(light9L), (hoverReq?.chromaMult ?? 1) * ctx.brandC) * ctaCMul, ctaH)
-    if (light9L !== ctx.scaleL) { cta.enforced = true; ctaHover.enforced = true }
+    ctaPressed = emitRole('cta-pressed', pressedL(light9L), ctx.cAt('light', pressedL(light9L), (pressedReq?.chromaMult ?? 1) * ctx.brandC) * ctaCMul, ctaH)
+    if (light9L !== ctx.scaleL) { cta.enforced = true; ctaHover.enforced = true; ctaPressed.enforced = true }
     if (repelled) {
-      cta.repelled = true; ctaHover.repelled = true
+      cta.repelled = true; ctaHover.repelled = true; ctaPressed.repelled = true
       // the shipped pole re-judged AT the exited fill (the pre-enforce judge ran at scaleL).
       // Under wcag the conformance floor rides the re-judge (owner 2026-07-10, "not darkening
       // the text at a wide enough range"): the moved fill sits where the enforce-darken can
@@ -395,6 +407,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     // from the cta (owner ruling; research: identity-hue dark ctas never fire the gate).
     cta = emitRole('cta', cta9L, ctx.cAt('dark', cta9L, d.darkC9), ctx.darkCtaH)
     ctaHover = emitRole('cta-hover', hoverL(cta9L), ctx.cAt('dark', hoverL(cta9L), d.darkC9), ctx.darkCtaH)
+    ctaPressed = emitRole('cta-pressed', pressedL(cta9L), ctx.cAt('dark', pressedL(cta9L), d.darkC9), ctx.darkCtaH)
     onFillIsWhite = onFillIsWhiteDarkAt(cta.L, cta.C, cta.H, enforceLc !== undefined ? false : onFillEnforce)
     const enforcedL = enforceLc !== undefined
       ? ctaDarkEnforcedLApca(ctx, cta, onFillIsWhite, onFillEnforce, enforceLc)
@@ -402,7 +415,8 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     if (enforcedL !== null) {
       cta = emitRole('cta', enforcedL, ctx.cAt('dark', enforcedL, d.darkC9), ctx.darkCtaH)
       ctaHover = emitRole('cta-hover', hoverL(enforcedL), ctx.cAt('dark', hoverL(enforcedL), d.darkC9), ctx.darkCtaH)
-      cta.enforced = true; ctaHover.enforced = true
+      ctaPressed = emitRole('cta-pressed', pressedL(enforcedL), ctx.cAt('dark', pressedL(enforcedL), d.darkC9), ctx.darkCtaH)
+      cta.enforced = true; ctaHover.enforced = true; ctaPressed.enforced = true
     }
     // C12 dark (owner 2026-07-11, "dark falls out like every cta"; supersedes the v6 "no dark
     // exit" note): the FINAL enforced dark cta runs the same solve on dark geometry, keyed on
@@ -416,8 +430,9 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       if (exitL !== null) {
         cta = emitRole('cta', exitL, darkCFor(exitL), ctx.darkCtaH)
         ctaHover = emitRole('cta-hover', hoverL(exitL), darkCFor(hoverL(exitL)), ctx.darkCtaH)
-        cta.enforced = true; ctaHover.enforced = true
-        cta.repelled = true; ctaHover.repelled = true
+        ctaPressed = emitRole('cta-pressed', pressedL(exitL), darkCFor(pressedL(exitL)), ctx.darkCtaH)
+        cta.enforced = true; ctaHover.enforced = true; ctaPressed.enforced = true
+        cta.repelled = true; ctaHover.repelled = true; ctaPressed.repelled = true
         // the pole re-judged AT the exited fill (mirrors the light repelled re-judge: wcag
         // rides the 4.5 conformance floor; apca's move delivered a passing pole in-travel)
         onFillIsWhite = onFillIsWhiteDarkAt(cta.L, cta.C, cta.H,
@@ -426,6 +441,47 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       }
     }
   }
+
+  // ---- the CTA-INK trio (owner respec 2026-07-16): the family's 4.5 text-register cta —
+  // the link-color escape. cta-ink MATCHES the resolved stop 10 exactly (same L/C/H — the
+  // family's text stop IS its 4.5 rendition); states derive via hoverL/pressedL with hue
+  // held constant (the cta state convention) and chroma re-evaluated at the state L through
+  // the SAME ink register the stop used. The stop-10 contrast require rides the states as a
+  // FLOOR: light states darken into more contrast (never fires); dark states darken toward
+  // the paper, so a state that would read under the bar is pulled back toward ink-10's L
+  // (worst case the states collapse onto it — honest; the audit reports collapse rates).
+  const ink10 = stops.find(s => s.stop === 10)
+  if (!ink10) throw new Error('spec has no ink stop 10 — the cta-ink roles anchor at it')
+  const sp10 = spec.stops.find(s => s.stop === 10)!
+  const inkCFor: (L: number) => number = mode === 'light'
+    ? (L) => ctx.cAt('light', L, Math.min((sp10.chromaMult ?? 1) * ctx.brandC, sp10.inkMaxC ?? Infinity))
+    : darkInk10ChromaAt ?? ((_L) => ink10.C)
+  const inkStateL = (L0: number): number => {
+    const req = sp10.require
+    if (!req || req.metric === 'min-separation') return L0
+    const isApca = req.metric === 'apca'
+    const refY = isApca ? refApcaYOf(2, 10) : refYOf(2, 10)
+    const measure = (L: number): number => {
+      const C = clampChromaToGamut(L, inkCFor(L), ink10.H)
+      return isApca ? Math.abs(apcaLc(apcaYAt(L, C, ink10.H), refY)) : legalRatio(L, C, ink10.H, refY)
+    }
+    const target = isApca ? req.targetLc : req.target
+    if (measure(L0) >= target - (isApca ? APCA_TOL_LC : 1e-5)) return L0
+    // failing state: bisect back toward ink-10's own L (which passes by construction),
+    // landing just past the bar on the passing side — the house floor idiom
+    const solveTo = target + (isApca ? APCA_SOLVE_MARGIN_LC : 0.05)
+    let fail = L0, pass = ink10.L
+    for (let i = 0; i < 24; i++) {
+      const m = (fail + pass) / 2
+      measure(m) >= solveTo ? (pass = m) : (fail = m)
+    }
+    return pass
+  }
+  const ctaInk = emitRole('cta-ink', ink10.L, ink10.C, ink10.H)
+  const hL = inkStateL(hoverL(ink10.L))
+  const pL = inkStateL(pressedL(ink10.L))
+  const ctaInkHover = emitRole('cta-ink-hover', hL, inkCFor(hL), ink10.H)
+  const ctaInkPressed = emitRole('cta-ink-pressed', pL, inkCFor(pL), ink10.H)
 
   // on-highlight: judged at the emitted highlight-9 — never feeds back into the fill. The
   // declared ratioFloor (wcag profile) flips the pole when the preferred one fails 4.5.
@@ -438,5 +494,5 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   // (The former PAIR law — the shared on-highlight pole passing on both hl-9 and its hover hl-10 — died with
   // stop 10 (owner 2026-07-09): with one highlight fill, on-highlight is judged at hl-9 alone, above.)
 
-  return { mode, seed, stops, roles: { cta, ctaHover }, ons }
+  return { mode, seed, stops, roles: { cta, ctaHover, ctaPressed, ctaInk, ctaInkHover, ctaInkPressed }, ons }
 }

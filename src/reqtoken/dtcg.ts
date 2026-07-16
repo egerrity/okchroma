@@ -47,8 +47,12 @@ export function emitDtcgRamp(hex: string, mode: 'light' | 'dark', groupName: str
     const st = ramp.stops.find(s => s.stop === sp.stop)!
     group[String(sp.stop)] = { $type: 'color', $value: hexToValue(st.hex), $extensions: { [EXT_KEY]: { resolver: RESOLVER_ID, seed: seedRef, mode, ...sp } } }
   }
+  const roleVal = {
+    'cta': ramp.roles.cta, 'cta-hover': ramp.roles.ctaHover, 'cta-pressed': ramp.roles.ctaPressed,
+    'cta-ink': ramp.roles.ctaInk, 'cta-ink-hover': ramp.roles.ctaInkHover, 'cta-ink-pressed': ramp.roles.ctaInkPressed,
+  } as const
   for (const rr of spec.roles) {
-    const rv = rr.role === 'cta' ? ramp.roles.cta : ramp.roles.ctaHover
+    const rv = roleVal[rr.role]
     group[rr.role] = { $type: 'color', $value: hexToValue(rv.hex), $extensions: { [EXT_KEY]: { resolver: RESOLVER_ID, seed: seedRef, mode, ...rr } } }
   }
   return group

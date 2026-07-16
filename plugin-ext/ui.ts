@@ -184,19 +184,24 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     }
     const s8 = hx(st(8))
     if (row.outline) {
-      // outline's re-expressed pair: transparent fill + ring + ink-10 label; hover = the
-      // STABLE highlight-8 at 9% (the same stop the ring uses)
+      // outline's re-expressed fill trio: transparent + ring + ink-10 label; hover/pressed =
+      // the STABLE highlight-8 at 9%/18% (the same stop the ring uses; pressed doubles hover)
       const ink10 = hx(st(10))
       const c8 = st(8)
       const rgb = `${Math.round(c8.r * 255)},${Math.round(c8.g * 255)},${Math.round(c8.b * 255)}`
-      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink10}" title="cta-1 (outline)">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink10};background:rgba(${rgb},0.09)" title="cta-2 (outline hover)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink10}" title="cta (outline)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink10};background:rgba(${rgb},0.09)" title="cta-hover (outline)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink10};background:rgba(${rgb},0.18)" title="cta-pressed (outline)">Aa</div>`)
     } else {
       // filled cta cells carry NO stroke (filled is filled); only outline shows its ring
       const on = pole(row.scale.onFillTextIsWhite)
-      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.cta)};color:${on}" title="cta-1">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaHover)};color:${on}" title="cta-2">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.cta)};color:${on}" title="cta">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaHover)};color:${on}" title="cta-hover">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaPressed)};color:${on}" title="cta-pressed">Aa</div>`)
     }
+    // cta-ink trio: the family's 4.5 text-register link escape — rendered as text like the inks
+    for (const [name, c] of [['cta-ink', row.scale.ctaInk], ['cta-ink-hover', row.scale.ctaInkHover], ['cta-ink-pressed', row.scale.ctaInkPressed]] as const)
+      cells.push(`<div class="mx-aa" style="color:${hx(c)};font-size:15px;font-weight:800;text-decoration:underline" title="${name}">Aa</div>`)
     return cells.join('')
   }
 

@@ -90,7 +90,9 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
     // 4. validity: every emitted stop is a real color. clampChromaToGamut tolerates ±1e-4 in
     //    LINEAR rgb ≈ ±1.3e-3 gamma-encoded (the space ColorStop carries) — true of ALL production
     //    scales; every emitter clamps at emit. Gate tolerance = 2e-3 encoded.
-    for (const st of [...sec.scale.light, ...sec.scale.dark, sec.scale.cta, sec.scale.ctaDark])
+    for (const st of [...sec.scale.light, ...sec.scale.dark,
+      sec.scale.cta, sec.scale.ctaPressed, sec.scale.ctaDark, sec.scale.ctaPressedDark,
+      sec.scale.ctaInk, sec.scale.ctaInkPressed, sec.scale.ctaInkDark, sec.scale.ctaInkPressedDark])
       if (![st.r, st.g, st.b].every(v => v >= -2e-3 && v <= 1 + 2e-3 && Number.isFinite(v)))
         fails.push({ theme: id, check: 'rgb', detail: `secondary stop ${st.stop} out of range` })
   }

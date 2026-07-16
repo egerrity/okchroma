@@ -52,12 +52,25 @@ export type StopReq = {
   require?: Require
 }
 
-// off-scale roles — the brand fill. Anchor = the seed's OWN lightness floored at floorL (product intent:
-// dark fills must not sink; light has no floor). Hue constant (the cta carries brand identity, no torsion).
-export type RoleName = 'cta' | 'cta-hover'
+// off-scale roles — the SIX-token cta family (owner respec 2026-07-16). The FILL trio
+// (cta / cta-hover / cta-pressed): anchor = the seed's OWN lightness floored at floorL
+// (product intent: dark fills must not sink; light has no floor); hue constant (the cta
+// carries brand identity, no torsion); hover = hoverL() of the resolved cta, pressed =
+// pressedL() (hover's direction, doubled). The INK trio (cta-ink / -hover / -pressed):
+// the family's 4.5 TEXT-register cta — the link-color escape. cta-ink MATCHES the
+// resolved ink-10 exactly (owner rule); its states derive via the same hoverL/pressedL
+// machinery with the stop-10 contrast require held as a FLOOR (a state may never read
+// worse than the declared text bar; a violating state is pulled back toward ink-10's L).
+export type RoleName = 'cta' | 'cta-hover' | 'cta-pressed' | 'cta-ink' | 'cta-ink-hover' | 'cta-ink-pressed'
 export type RoleReq = {
   role: RoleName
-  produce: { hue: 'constant'; L: 'anchor' | 'hover'; chroma: 'brand' }  // hover = hoverL() of the resolved cta
+  // hue 'ink' / chroma 'ink' / L 'ink-*' = the role rides the resolved stop-10 placement
+  // (its hue and the ink chroma register), not the seed anchor
+  produce: {
+    hue: 'constant' | 'ink'
+    L: 'anchor' | 'hover' | 'pressed' | 'ink-anchor' | 'ink-hover' | 'ink-pressed'
+    chroma: 'brand' | 'ink'
+  }
   floorL: number
   chromaMult: number
 }
@@ -148,6 +161,10 @@ export const LIGHT: ModeSpec = {
   roles: [
     { role: 'cta', produce: { hue: 'constant', L: 'anchor', chroma: 'brand' }, floorL: 0, chromaMult: 1 },
     { role: 'cta-hover', produce: { hue: 'constant', L: 'hover', chroma: 'brand' }, floorL: 0, chromaMult: 1 },
+    { role: 'cta-pressed', produce: { hue: 'constant', L: 'pressed', chroma: 'brand' }, floorL: 0, chromaMult: 1 },
+    { role: 'cta-ink', produce: { hue: 'ink', L: 'ink-anchor', chroma: 'ink' }, floorL: 0, chromaMult: 1 },
+    { role: 'cta-ink-hover', produce: { hue: 'ink', L: 'ink-hover', chroma: 'ink' }, floorL: 0, chromaMult: 1 },
+    { role: 'cta-ink-pressed', produce: { hue: 'ink', L: 'ink-pressed', chroma: 'ink' }, floorL: 0, chromaMult: 1 },
   ],
   ons: ONS,
 }
@@ -177,6 +194,14 @@ export const DARK: ModeSpec = {
   roles: [
     { role: 'cta', produce: { hue: 'constant', L: 'anchor', chroma: 'brand' }, floorL: DARK_STOP_9_MIN_L, chromaMult: 1 },
     { role: 'cta-hover', produce: { hue: 'constant', L: 'hover', chroma: 'brand' }, floorL: DARK_STOP_9_MIN_L, chromaMult: 1 },
+    { role: 'cta-pressed', produce: { hue: 'constant', L: 'pressed', chroma: 'brand' }, floorL: DARK_STOP_9_MIN_L, chromaMult: 1 },
+    // the ink trio anchors at the resolved dark stop 10 (no fill floor — text is dark-native);
+    // the T10 require rides the states as a floor, so a darkened dark-mode hover that would
+    // read under the bar is pulled back up (the ink states may collapse toward ink-10 on
+    // low-headroom hues — honest, and the audit reports it)
+    { role: 'cta-ink', produce: { hue: 'ink', L: 'ink-anchor', chroma: 'ink' }, floorL: 0, chromaMult: 1 },
+    { role: 'cta-ink-hover', produce: { hue: 'ink', L: 'ink-hover', chroma: 'ink' }, floorL: 0, chromaMult: 1 },
+    { role: 'cta-ink-pressed', produce: { hue: 'ink', L: 'ink-pressed', chroma: 'ink' }, floorL: 0, chromaMult: 1 },
   ],
   ons: ONS,
 }

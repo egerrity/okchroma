@@ -19,6 +19,9 @@ const SEED_L = 0.62
 type Fail = { seed: string; mode: string; check: string; detail: string; sev: number }
 const fails: Fail[] = []
 let seedsChecked = 0
+// report-only (5d): rest-chosen on-cta pole read on the pressed fill
+let pressedPoleChecked = 0
+const pressedPoleUnder: string[] = []
 
 const PROFILES: ContrastProfile[] = ['wcag', 'apca']
 for (const profile of PROFILES)
@@ -99,7 +102,39 @@ for (const H of HUES) for (const C of CHROMAS) {
       }
     }
     if (Math.abs(cta.H - r.seed.H) > 1e-6) fails.push({ seed: id, mode, check: 'cta-hue', detail: `H${cta.H.toFixed(1)} vs seed ${r.seed.H.toFixed(1)}`, sev: 5 })
-    if (!/^#[0-9a-f]{6}$/.test(cta.hex) || !/^#[0-9a-f]{6}$/.test(ctaHover.hex)) fails.push({ seed: id, mode, check: 'role-rgb', detail: `${cta.hex}/${ctaHover.hex}`, sev: 20 })
+    const { ctaPressed, ctaInk, ctaInkHover, ctaInkPressed } = r.roles
+    for (const role of [cta, ctaHover, ctaPressed, ctaInk, ctaInkHover, ctaInkPressed])
+      if (!/^#[0-9a-f]{6}$/.test(role.hex)) fails.push({ seed: id, mode, check: 'role-rgb', detail: `${role.role} ${role.hex}`, sev: 20 })
+    // 5b. the cta family's states (owner respec 2026-07-16). Pressed = hover's direction
+    //    doubled — same side of the cta, monotonic travel.
+    const hoverUp = ctaHover.L > cta.L
+    if ((ctaPressed.L > cta.L) !== hoverUp || Math.abs(ctaPressed.L - cta.L) < Math.abs(ctaHover.L - cta.L) - 1e-9)
+      fails.push({ seed: id, mode, check: 'pressed-travel', detail: `cta L${cta.L.toFixed(3)} hover L${ctaHover.L.toFixed(3)} pressed L${ctaPressed.L.toFixed(3)}`, sev: 10 })
+    // 5c. the cta-ink trio: rest MATCHES the resolved stop 10 exactly; the states may never
+    //    read under the declared stop-10 bar (the state floor — dark states darken toward
+    //    the paper, so this is the constraint that keeps link states legal).
+    const i10 = byStop(10)!
+    if (Math.abs(ctaInk.L - i10.L) > 1e-9 || Math.abs(ctaInk.C - i10.C) > 1e-9 || Math.abs(ctaInk.H - i10.H) > 1e-9)
+      fails.push({ seed: id, mode, check: 'cta-ink-anchor', detail: `ink L${ctaInk.L.toFixed(4)} != stop10 L${i10.L.toFixed(4)}`, sev: 20 })
+    const t10req = spec.stops.find(x => x.stop === 10)!.require
+    for (const [nm, st] of [['cta-ink-hover', ctaInkHover], ['cta-ink-pressed', ctaInkPressed]] as const) {
+      if (t10req?.metric === 'wcag') {
+        const got = contrastRatio(wcagY(st.L, clampChromaToGamut(st.L, st.C, st.H), st.H), p2Y)
+        if (got < t10req.target - 1e-3) fails.push({ seed: id, mode, check: `${nm}-floor`, detail: `got ${got.toFixed(2)} < ${t10req.target}`, sev: 15 })
+      } else if (t10req?.metric === 'apca') {
+        const got = Math.abs(apcaLc(apcaYAt(st.L, clampChromaToGamut(st.L, st.C, st.H), st.H), p2ApcaY))
+        if (got < t10req.targetLc - APCA_TOL_LC) fails.push({ seed: id, mode, check: `${nm}-floor`, detail: `|Lc| ${got.toFixed(1)} < ${t10req.targetLc}`, sev: 15 })
+      }
+    }
+    // 5d. REPORT-ONLY — the on-cta pole chosen at rest, read on the PRESSED fill (pressed
+    //    travels 2× hover; hover has never re-judged the pole, so this measures the new
+    //    worst case rather than legislating one mid-round — owner reads the count).
+    {
+      const pY = wcagY(ctaPressed.L, clampChromaToGamut(ctaPressed.L, ctaPressed.C, ctaPressed.H), ctaPressed.H)
+      const got = r.ons.onFillIsWhite ? contrastRatio(1.0, pY) : contrastRatio(pY, 0)
+      pressedPoleChecked++
+      if (got < 4.5) pressedPoleUnder.push(`${id} ${mode} (${got.toFixed(2)})`)
+    }
     // 6. ons: the chosen pole must be the passing one — if enforce is declared and the chosen pole fails
     //    WCAG 4.5 while the OTHER pole passes it with |Lc| ≥ 45, the choice is wrong (true dead zone excepted)
     const onSpec = spec.ons.onFill
@@ -137,6 +172,11 @@ for (const mode of ['light', 'dark'] as const) {
   })
   console.log(`  ${mode}: appL spread [${stopNums.join(' ')}] = ${spreads.map(v => v.toFixed(1)).join(' ')}  max ${Math.max(...spreads).toFixed(1)}`)
 }
+
+// 5d report: pressed-fill pole coverage (report-only — see the check note)
+console.log(`\n=== on-cta pole on the PRESSED fill (wcag 4.5 read, report-only) ===`)
+console.log(`  ${pressedPoleChecked} checked · under 4.5: ${pressedPoleUnder.length}`)
+if (pressedPoleUnder.length) pressedPoleUnder.slice(0, 10).forEach(x => console.log(`    ${x}`))
 
 // report
 const byCheck: Record<string, number> = {}

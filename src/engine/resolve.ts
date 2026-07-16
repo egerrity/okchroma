@@ -19,7 +19,7 @@ import { pickSignalShift, signalSwapVariants } from './signalShift'
 import { hexToOklch, hueDelta, makeStop, maxChromaAt, RED_SOLVE, redSolveDist } from './colorMath'
 import { apparentL, grayApparentL, solveCForApparent, solveLForApparent } from './perceptualL'
 import { subtleSecondaryChromaCurve } from './neutralCurve'
-import { hoverL } from './archetypes'
+import { hoverL, pressedL } from './archetypes'
 import { p2Diff, P2_D, P2_D_UP } from './p2'
 import { buildContext, whiteTextLcAt, apcaYAt, onFillIsWhiteDarkAt } from '../reqtoken/producers'
 import { CTA_ONFILL_ENFORCE_LC } from '../reqtoken/profiles'
@@ -132,11 +132,14 @@ function redComplementVariant(
   const cta = makeStop(redCta.stop, pick.L, rctx.cAt('light', pick.L, rctx.brandC), pick.H)
   const hL = hoverL(pick.L)
   const ctaHover = makeStop(red.scale.ctaHover.stop, hL, rctx.cAt('light', hL, rctx.brandC), pick.H)
+  const pL = pressedL(pick.L)
+  const ctaPressed = makeStop(red.scale.ctaPressed.stop, pL, rctx.cAt('light', pL, rctx.brandC), pick.H)
   // pinned mints skip the producer's enforce-darken, so the wcag conformance floor rides
   // the pole judge (a light coral variant must flip to black text, not ship white sub-4.5)
   const onFillTextIsWhite = onFillIsWhiteDarkAt(cta.L, cta.C, cta.H, true, contrastProfile === 'apca' ? undefined : 4.5)
+  // cta-ink rides the canonical red ramp's ink-10 (the spread) — the variant moves only the fill trio
   return {
-    scale: { ...red.scale, cta, ctaHover, onFillTextIsWhite },
+    scale: { ...red.scale, cta, ctaHover, ctaPressed, onFillTextIsWhite },
     // naming candidates only — the identity name is the owner's call at bless. No hue suffix:
     // the plugin's note parser mints Figma variable paths from this string.
     note: `red → ${pick.L < redCta.L ? 'rich' : 'coral'} L${pick.L.toFixed(2)}`,
@@ -292,13 +295,13 @@ export type SecondaryLevel = 'standard' | 'subtle'
 
 // The secondary's per-field MODE (owner design 2026-07-04: modes decoupled per family — the
 // mockup's chip dropdown). muted/vibrant = the two subtle chroma models (both ride the locked
-// delta curve); outline = the muted ramp with the cta re-resolved (cta-1 transparent, cta-2 the
+// delta curve); outline = the muted ramp with the cta re-resolved (cta transparent, cta-hover the
 // cta color at OUTLINE_HOVER_ALPHA, on-cta ink-11, cta-border always highlight-8); exact = the
 // standard full ramp, advice-only.
 // the offering (owner 2026-07-12, striking the bespoke subtle models: "you either use the
 // derived or you use custom"): 'default' = the derived seed-transform (no hex supplied);
 // 'exact' = the CUSTOM path — your hex ships as a full standard ramp; 'outline' = the exact
-// ramp with the cta re-resolved at the emitters (cta-1 transparent, border = highlight-8).
+// ramp with the cta re-resolved at the emitters (cta transparent, border = highlight-8).
 export type SecondaryStyle = 'default' | 'outline' | 'exact'
 // legacy ids: the retired subtle models (tint/pastel and their muted/vibrant renames) map to
 // 'exact' — a supplied hex is honored as custom, never silently re-modeled.
@@ -349,6 +352,9 @@ export const SUBTLE_PASTEL_K = 0.35
 // ── the v2 SUBTLE MODELS (owner 2026-07-11, accepted on render/secondary-models.html:
 // "what we are trying to offer is one that is muted and one that is more vibrant") ──────────
 export const OUTLINE_HOVER_ALPHA = 0.09    // owner: "8–10% of the resolved cta color"
+// outline pressed = the hover treatment at doubled strength (the pressed-doubles-hover
+// convention carried to the alpha register) — C19, owner-approved 2026-07-16
+export const OUTLINE_PRESSED_ALPHA = 0.18
 
 export interface ResolvedSecondary {
   scale: GeneratedScale

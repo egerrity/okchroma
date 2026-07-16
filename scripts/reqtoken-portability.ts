@@ -27,17 +27,18 @@ for (const hex of SEEDS) for (const mode of ['light', 'dark'] as const) {
 
   // 1. round-trip fidelity: stops + roles + ons
   const rt = resolveDtcgRamp(parsed)
+  const ROLE_KEYS = ['cta', 'ctaHover', 'ctaPressed', 'ctaInk', 'ctaInkHover', 'ctaInkPressed'] as const
+  const ROLE_NAMES = ['cta', 'cta-hover', 'cta-pressed', 'cta-ink', 'cta-ink-hover', 'cta-ink-pressed'] as const
   const stopsOk = rt.stops.every((s, i) => s.hex === direct.stops[i].hex)
-  const rolesOk = rt.roles.cta.hex === direct.roles.cta.hex && rt.roles.ctaHover.hex === direct.roles.ctaHover.hex
+  const rolesOk = ROLE_KEYS.every(k => rt.roles[k].hex === direct.roles[k].hex)
   const onsOk = rt.ons.onFillIsWhite === direct.ons.onFillIsWhite && rt.ons.onHighlightIsWhite === direct.ons.onHighlightIsWhite
   check(`${label} round-trip bit-identical`, stopsOk && rolesOk && onsOk,
     stopsOk && rolesOk && onsOk ? '' : `stops:${stopsOk} roles:${rolesOk} ons:${onsOk}`)
 
-  // 2. $value fallback = resolved value at emit time (stops + roles)
+  // 2. $value fallback = resolved value at emit time (stops + roles — the full six-role family)
   const fallbacksOk =
     direct.stops.every(s => (parsed[String(s.stop)] as DtcgRequirementToken).$value.hex === s.hex) &&
-    (parsed['cta'] as DtcgRequirementToken).$value.hex === direct.roles.cta.hex &&
-    (parsed['cta-hover'] as DtcgRequirementToken).$value.hex === direct.roles.ctaHover.hex
+    ROLE_NAMES.every((n, i) => (parsed[n] as DtcgRequirementToken).$value.hex === direct.roles[ROLE_KEYS[i]].hex)
   check(`${label} $value fallbacks frozen-correct`, fallbacksOk)
 }
 

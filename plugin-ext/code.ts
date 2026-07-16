@@ -45,6 +45,10 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['magenta-e290f9', 'magenta-side-e290f9'],
   ['blue-7cb3f9', 'cyan-side-7cb3f9'],
   ['blue-7eb5fb', 'cyan-side-7eb5fb'],
+  // cta semantic rename (owner 2026-07-16: states, never options) — cta-1/cta-2 →
+  // cta/cta-hover in place; cta-pressed + the cta-ink trio are NEW tokens (no migration).
+  ['cta-1', 'cta'],
+  ['cta-2', 'cta-hover'],
 ]
 // Group renames (old prefix → new), same in-place idiom — info-color → blue (2026-07-13);
 // covers the primitive (system/<signal>/…) and theme (<signal>/…) collections.
