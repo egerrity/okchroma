@@ -110,12 +110,17 @@ for (const H of HUES) for (const C of CHROMAS) {
     const hoverUp = ctaHover.L > cta.L
     if ((ctaPressed.L > cta.L) !== hoverUp || Math.abs(ctaPressed.L - cta.L) < Math.abs(ctaHover.L - cta.L) - 1e-9)
       fails.push({ seed: id, mode, check: 'pressed-travel', detail: `cta L${cta.L.toFixed(3)} hover L${ctaHover.L.toFixed(3)} pressed L${ctaPressed.L.toFixed(3)}`, sev: 10 })
-    // 5c. the cta-ink trio: rest MATCHES the resolved stop 10 exactly; the states may never
-    //    read under the declared stop-10 bar (the state floor — dark states darken toward
-    //    the paper, so this is the constraint that keeps link states legal).
+    // 5c. the cta-ink trio: rest MATCHES the resolved stop 10 exactly; PRESSED MATCHES
+    //    stop 11 exactly (owner 2026-07-16 restrengthening — "too subtle when text only":
+    //    press lands on the family's 7:1 register); HOVER (the doubled step) may never
+    //    read under the declared stop-10 bar (the state floor — a dark hover darkening
+    //    toward the paper is the case that keeps link states legal).
     const i10 = byStop(10)!
     if (Math.abs(ctaInk.L - i10.L) > 1e-9 || Math.abs(ctaInk.C - i10.C) > 1e-9 || Math.abs(ctaInk.H - i10.H) > 1e-9)
       fails.push({ seed: id, mode, check: 'cta-ink-anchor', detail: `ink L${ctaInk.L.toFixed(4)} != stop10 L${i10.L.toFixed(4)}`, sev: 20 })
+    const i11 = byStop(11)!
+    if (Math.abs(ctaInkPressed.L - i11.L) > 1e-9 || Math.abs(ctaInkPressed.C - i11.C) > 1e-9 || Math.abs(ctaInkPressed.H - i11.H) > 1e-9)
+      fails.push({ seed: id, mode, check: 'cta-ink-pressed-anchor', detail: `pressed L${ctaInkPressed.L.toFixed(4)} != stop11 L${i11.L.toFixed(4)}`, sev: 20 })
     const t10req = spec.stops.find(x => x.stop === 10)!.require
     for (const [nm, st] of [['cta-ink-hover', ctaInkHover], ['cta-ink-pressed', ctaInkPressed]] as const) {
       if (t10req?.metric === 'wcag') {

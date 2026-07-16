@@ -974,10 +974,163 @@ writeRaw's cta-ink→sibling-ink-10 alias is value-guarded via the payload light
 **Verified:** figma-verify probes (default link ≡ brand cta-ink · custom #0B57D0 →
 #2a5cb4 wcag gamut-mapped · escape → cta-ink ≡ neutral ink-10, link follows, ramp
 untouched); full gate suite green; ext snapshot re-blessed (+system/link rows, audit
-carve-out); live demo end-to-end both toggles. Residuals: custom link carries no P3
-override (sRGB emit only — the on-colors precedent); link is not a DTCG-declared role
-(product token, not a ramp requirement); the phase-4 adversarial review pass was blocked
-by API overload — self-verified inline, re-run queued.
+carve-out); live demo end-to-end both toggles.
+
+**Adversarial review round (2026-07-16, 21 agents, 14 confirmed → all fixed).** The
+queued re-run landed; the confirmed classes and their fixes:
+- v1 `system/link*` aliased ONLY the applied brand's theme mode — every other pre-existing
+  mode held the create-default black. Fixed: first-appearance backfill loops the theme
+  modes and aliases each brand's own cta-ink family (ink-10 fallback for pre-C19 brands)
+  — the SYSTEM_GLOBALS/backfillSecondary idiom.
+- v1 custom-link prim was keyed by the resolved LIGHT hex: distinct seeds collided onto
+  one prim (the second brand rode the first's dark trio) and a states/dark-only retune
+  reused all six stale values. Fixed: SEED-hex key + the link group alone refreshes its
+  values every apply (same seed ⇒ same output, idempotent). Old light-hex prims orphan
+  harmlessly (scopes=[], the red-variant class).
+- ext: new base ROWS created on an existing base (the C20 link rows; C19 cta-ink was the
+  same latent class) seeded from the default seed and never triggered the backfill —
+  other extensions inherited #E93D82-register values silently. Fixed: pre-mutation
+  new-rows detection → reason-scoped confirm + recipe backfill + status note (the
+  missingCols posture, generalized to token-set growth).
+- Both plugins: a ticked custom link with an invalid/cleared hex silently applied (and in
+  ext, BAKED into the recipe) the default posture. Fixed: Apply blocks with a status
+  error (the primary-hex idiom); empty field flags invalid while ticked.
+- v1 shared groups (neutral/signals) lost the cta-ink→ink-10 live alias (the value guard
+  starved on a missing lightMap). Fixed: lightMap passed in the shared loop.
+- figma-verify's escape probe fed the VARIANT red under ctaEscape (the exact forbidden
+  state) and asserted nothing about it. Fixed: probe carries the real callers' filtered
+  signals and asserts the emitted red group ≡ canonical per leaf.
+- demo: the exact-mode red-register warning wasn't escape-gated (contradicted the
+  escape-active notice). Fixed: `!escapeOn` guard, matching its siblings.
+- custom link shipped no display-p3 rendition while the default posture picked up
+  cta-ink's through the alias chain (visibly duller on P3). Fixed: `--link*` P3 lines
+  emitted via p3Differs; no cascade-pop hazard (own property, never dropped).
+- Informational (no fix, by design): an escaped re-apply leaves the brand's old
+  red-variant prims in the mode collection (v1 has no deletion path; scopes=[],
+  unbindable; ext self-heals) — same class as the orphaned light-hex link prims above.
+
+Residuals: link is not a DTCG-declared role (product token, not a ramp requirement).
+Manual coverage: test plan section K (multi-brand backfill, upgrade confirm, invalid-hex
+block, seed-keyed prim).
 
 Relates: C19 (the cta family this rides on), C12 (the red machinery the escape
 supersedes when active).
+
+## C21 — the VIVIDNESS LEVER (`style:'full-chroma'`)
+
+**Status:** CLOSED (owner-picked semantics 2026-07-16 "This looks right!", phase 5 of the
+five-phase roadmap — the last lever).
+
+**What it releases (two dampeners, one toggle).** Brand ramps are dampened by default to
+separate from signals (the toggle's ⓘ copy, owner's words). `full-chroma`:
+1. **Light/dark RAMP — the ladder's vividness cap.** Stop chroma's ladder half is
+   `min(1, seedC/VIVID_C) × the declared per-stop base register` — every seed above
+   C 0.13 rides the SAME ramp chroma. The lever removes the `min(1,·)` cap
+   (producers.ts `vSubtle`): the declared shape is untouched, its amplitude scales
+   linearly with the seed's true chroma; gamut clamps still bound the emit; the blend
+   weights (envW, mutedness) keep the CAPPED v — amplitude releases, geometry doesn't.
+   Sub-threshold seeds are byte-stable. The dark ramp follows through the delta model.
+   NOT the release (owner-rejected on the exhibit): `envW → 1` — pure room-envelope
+   riding ~78–95% of the gamut ceiling and re-placing stops darker through the H-K solve.
+2. **Dark CTA — the trim register.** The brand's dark cta REASSIGNS from
+   `DARK_CTA_C.brand` (trimmed ×0.77–0.88, deepest at the blue/red-magenta lobes) to the
+   IDENTITY policy — the signals' declared register, no new numbers (register-audit
+   carries a blue-lobe probe for the reassignment). Measured caveat: at a SATURATED blue
+   the sRGB gamut ceiling binds tighter than the trim (both policies clamp to the same
+   ceiling — #487bff gains only +8%); the release lives where trim < ceiling (+31% at
+   the moderate #4f6eb7).
+
+**Scope.** The PRIMARY only: the derived secondary resolves under its own model, the
+neutral keeps its clamp, signals are exempt on both sides (goldBoost / identity policy).
+The LIGHT cta is identity chroma already — the lever never touches it (figma-verify
+asserts). Exhibit: `render/phase5-vividness-ab.html` (agnostic hue×chroma sweep through
+resolveBrand; 182/792 ramp cells move, max ΔE .124; dark cta +31% chroma at H265).
+
+**Wiring.** `resolveBrand`/`resolveTheme` `style:'full-chroma'` (plumbed since the C10
+era, first consumer); both plugins ship a "Full vividness" checkbox (default OFF; ext
+recipes carry the style so batch re-applies preserve each brand's posture); demo
+CustomTheme control. Default-off is byte-identical (hash-proven at landing; snapshot
+gates unchanged).
+
+Relates: C10 (the declared SCALE_C tables the cap lives in), C16 (the DARK_CTA_C
+register the reassignment reads), C7/C8 (the envelope-blend history the rejected
+candidate came from).
+
+## C22 — the dark p2 GREY BAND: split fire/release bars left near-red pairs neither fired nor clean
+
+**Status:** CLOSED (owner-caught 2026-07-16, two live sightings; one-constant fix,
+owner-verified live).
+
+**Symptom.** `solveDarkCtaExit` fired only when the brand↔red dark-cta pair sat CLOSER
+than `P2_D_UP` (0.11) but released at `P2_D` (0.12) — every pair landing in [0.11, 0.12)
+neither fired nor read clean. Two live cases, both owner-caught on the Collision-check
+page in dark: (1) wcag `#FF0000` shipped its pair at p2 0.113 (`#ff6553` vs `#d63e1e`,
+the confusable Primary-cta/Red-cta chips); (2) the apca `#ff4c4c`–`#ff5c5c` corridor sat
+as a HOLE between fired neighbors — sliding the picker jumped between separated and
+confusable ("the red stops deconflicting at that spot and both sides next to it don't").
+
+**Fix.** Membership keys on the CLEAN bar: fire when p2 < `P2_D` (producers.ts,
+solveDarkCtaExit). One bar gives continuity by construction — travel shrinks toward zero
+as a pair approaches the bar. Dark has no second rescue (the red complement is
+light-only; dark red ships canonical), so the exit must cover the whole under-bar range.
+
+**Measured blast radius** (near-red fine grid, 1 736 seeds × lane): wcag 0 → 58 fired,
+apca 155 → 281 — every new firer drawn exactly from the old grey band (membership is the
+only change; p2 ≥ 0.12 is untouched). ZERO roster/signal/neutral snapshot drift (all
+gates passed without re-bless — no shipped brand sat in the band). Owner's corridor now
+lands `#ff958c/#ff958c/#ff958e` (ΔL ≤ 0.001) across `#FF4242/#FF4747/#FF5757`.
+
+**Honest residual.** At the new boundary the cta APPEARANCE still steps (fired `#ff5c5c`
+lands L 0.78 while just-clean `#ff6060` ships L 0.68): the apca pole dead-zone blocks
+near travel, so a firing pair jumps through it. Same class and magnitude as the
+pre-existing enforce cliff (`#ff7474`→`#ff7878`, shipped build) — both sides of the step
+are p2-clean, so it is not a deconfliction hole. Smoothing enforce-class cliffs = its own
+round (the queued dark her-marks calibration).
+
+Relates: C12 (the dark solve this calibrates), C18 (the wcag clearance whose bright light
+exits made the wcag dark band visible).
+
+## C23 — APCA DECIDES, WCAG FLOORS: the red-collision machinery unifies on one geometry
+
+**Status:** CLOSED (owner ruling 2026-07-16: "In wcag mode, APCA should lead wherever it
+isn't a legal requirement, and it shouldn't be influencing the collision avoidance" —
+scope confirmed red-only; implemented + owner corridor pending eyeball).
+
+**Symptom.** wcag and apca deconflicted the same seed to visibly different distances
+(owner-annotated #FF4747: apca fired the exit → salmon at dist 0.463; wcag never fired —
+repel null, shipped `#e3252f` at the seed, dist 0.170). Three per-lane machineries
+compounded: (1) each lane judged membership against ITS OWN canonical red, and the lane
+reds sit at different L for legal reasons — borderline seeds straddled the two gates;
+(2) per-lane pole conditions changed travel distances, flipping the nearest-edge
+DIRECTION between lanes (#FF0000: wcag up-bright, apca down-deep); (3) the wcag
+complement had NO pole gate (`contrastProfile !== 'apca' ||` short-circuit), picking
+different variant zones for the same seed.
+
+**The model.** Collision decisions are PERCEPTUAL; the wcag ratios are LAW. So: the
+DECISION (membership, travel distances, direction, zone pick) runs on the apca geometry
+in BOTH lanes — the apca canonical red as the reference (`resolveBrand` solveOpt), the
+apca Lc bar as the exits' decision pole (`CTA_ONFILL_ENFORCE_LC` + the enforce margin),
+the same Lc gate on the complement's zones. The wcag legal composite (4.5 + the
+clearance Lc) rides as a LAW EXTENSION only: travel continues ALONG THE DECIDED
+DIRECTION until the law also passes; direction flips only if the law is unreachable
+in-range on the decided side (dark: keep the shipped floor). Landings now match across
+lanes except where the law forces extra travel.
+
+**Everything else already followed the principle** (audited at ruling time): ramp stop
+placements differ per lane only by the declared legal requires; on-text pole choices are
+perception-first with the 4.5 floor; type-1 swaps are lane-invariant (gated); the lane
+reds themselves stay per-lane (wcag red darkened FOR 4.5 — law). Red collision avoidance
+was the one gap.
+
+**Measured.** apca lane byte-identical (dump: 0 non-ink diffs across 4 672 apca tokens);
+wcag moved exactly 12 near-red cta trios + 1 on-cta re-judge in the 50-case dump; owner
+corridor `#FF4747` wcag ≡ apca (`#ff958c`, variant `#b50f12`, dist 0.463 both);
+collision-sweep lane divergence 47 → 28 (rest = law-driven); 4 near-red roster scales
+re-blessed (tokens 22/25 = the cta landings); ext snapshot re-blessed (`vs-red (warmer)`
+wcag now mints its red variant, +3 override rows — the complement aligning). Pole sweep:
+cta flips 0/48 both modes. Caveat: `opts.apcaClearance:false` (instrumentation) now also
+rides the apca decision pole — the old ungated poleOk is gone.
+
+Relates: C12 (the solve this re-lanes), C18 (the clearance, now cleanly law-only),
+C22 (the grey band closed the same day), contrast-profile split (the wcag = legal-mode
+charter this completes).

@@ -1,4 +1,4 @@
-import { resolveTheme, signalScalesFor, escapeCtaFamily, resolveLinkTrio, DEFAULT_LINK_HEX, type SecondaryStyle, type ResolvedTheme } from '../src/engine/resolve'
+import { resolveTheme, resolveBrand, signalScalesFor, escapeCtaFamily, resolveLinkTrio, DEFAULT_LINK_HEX, type SecondaryStyle, type ResolvedTheme } from '../src/engine/resolve'
 import { redGateDist, RED_GATE } from '../src/engine/collision'
 import { ARCHETYPES, type Archetype } from '../src/engine/archetypes'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
@@ -24,13 +24,18 @@ let contrastProfile: ContrastProfile = 'apca' // APCA = the shipped default; WCA
 // on every keystroke wiped the toggle through 3-digit intermediate parses like "#EA3",
 // review-caught 2026-07-16), and it can't ride an apply silently either.
 let ctaEscape = false
-let inRedRange = false
+let inRedRange = false        // EFFECTIVE gate: the CURRENT posture's red range
+let inRedRangeOffer = false   // OFFER gate: union of both clamp postures (row visibility)
 // the SYSTEM LINK (Phase 4, owner 2026-07-16): ONE link trio per theme — hyperlinks, not
 // per-family. Default aliases the primary's cta-ink (= ink-10, states built in; follows
 // the escape). Custom = the seed below through the ink register (#0B57D0 default when
 // toggled on — the red de-conflict for links).
 let linkCustom = false
-let linkHex = '#0B57D0'
+// the escape BUNDLE (owner 2026-07-16): ticking "Use neutral primary cta" auto-enables
+// the custom link (#0B57D0) — overridable; unticking reverts ONLY an untouched bundle
+let linkBundled = false
+// the VIVIDNESS LEVER (phase 5): default OFF = the shipped dampened registers
+let fullChroma = false
 let pendingName: string | null = null // brand armed for overwrite confirmation
 // The secondary is the demo's THREE-STATE field: none (default — just "+ Add secondary") →
 // derived (the input tracks the primary live; the engine derives the default secondary) →
@@ -67,9 +72,12 @@ const neutralSelect   = $<HTMLSelectElement>('neutral-select')
 const profileBtns     = document.querySelectorAll<HTMLButtonElement>('.seg-btn[data-profile]')
 const ctaEscapeRow    = $<HTMLElement>('cta-escape-row')
 const ctaEscapeBox    = $<HTMLInputElement>('cta-escape')
-const linkCustomBox   = $<HTMLInputElement>('link-custom')
+const fullChromaBox   = $<HTMLInputElement>('full-chroma')
 const linkHexInput    = $<HTMLInputElement>('link-hex')
 const linkSwatch      = $<HTMLElement>('link-swatch')
+const linkField       = $<HTMLElement>('link-field')
+const linkResetBtn    = $<HTMLButtonElement>('link-reset')
+const linkHint        = $<HTMLElement>('link-hint')
 const matrixEl        = $<HTMLElement>('matrix')
 const applyBtn        = $<HTMLButtonElement>('apply-btn')
 const statusEl        = $<HTMLElement>('status')
@@ -150,6 +158,10 @@ function themeInput(name: string) {
     deriveSecondary: secondaryMode === 'derived' || undefined,
     secondaryStyle: secondaryMode === 'custom' ? secondaryStyle : undefined,
     contrastProfile: cp,
+    // the VIVIDNESS LEVER (phase 5, owner copy: "Brand ramps are dampened by default to
+    // separate from signals. Turn off for full vividness.") — primary only; the derived
+    // secondary and the signals keep their own registers
+    style: fullChroma ? ('full-chroma' as const) : undefined,
   }
 }
 
@@ -246,16 +258,48 @@ function updatePreview() {
     // the brands the escape is for); the direct gate check catches exact-mode reds.
     // The toggle stays checked-but-inert outside the range (effective = && inRedRange).
     const redCta = signalScalesFor(cp).get('red')!.scale.cta
-    inRedRange = !!t.themed.redRepel || redGateDist(t.themed.scale.cta, redCta) <= RED_GATE.G
-    ctaEscapeRow.style.display = inRedRange ? '' : 'none'
+    // TWO GATES (owner-caught + review-hardened 2026-07-16): the OFFER (row visibility)
+    // is the union of BOTH clamp postures — membership is NOT monotone in the lever
+    // (probe the OPPOSITE posture; a one-way probe collapsed when the clamp was on), so
+    // the row never appears/disappears with the clamp. The EFFECTIVE flag stays the
+    // CURRENT posture only — the file/css can never carry an escape for a brand whose
+    // shipped posture isn't red-range (the original phase-3 contract).
+    const rangeOf = (rb: { redRepel: unknown; scale: { cta: { L: number; C: number; H: number } } }) =>
+      !!rb.redRepel || redGateDist(rb.scale.cta, redCta) <= RED_GATE.G
+    inRedRange = rangeOf(t.themed)
+    inRedRangeOffer = inRedRange || rangeOf(resolveBrand(primaryHex, 'range-probe', {
+      style: fullChroma ? undefined : 'full-chroma', contrastProfile: cp,
+      exact: primaryMode === 'exact' || undefined,
+      archetypeOverride: primaryMode !== 'recommended' && primaryMode !== 'exact' ? primaryMode : undefined,
+    }))
+    ctaEscapeRow.style.display = inRedRangeOffer ? '' : 'none'
+    // BUNDLE HYGIENE (review-caught): an untouched bundle auto-reverts the moment the
+    // escape stops being effective (range exit / posture flip) — the frozen default blue
+    // must not outlive the escape it was bundled with, nor ride an apply for a brand
+    // whose links were never meant to be custom.
+    if (linkBundled && !(ctaEscape && inRedRange)
+      && normalizeHex(linkHexInput.value)?.toLowerCase() === DEFAULT_LINK_HEX.toLowerCase()) {
+      linkCustom = false
+      linkBundled = false
+    }
 
-    // the link swatch previews the RESOLVED system link: custom seed through the ink
-    // register, else the primary's cta-ink (escaped when the escape is active)
-    linkHexInput.style.display = linkCustom ? '' : 'none'
+    // the link FIELD previews the RESOLVED system link: custom seed through the ink
+    // register, else the primary's cta-ink (escaped when the escape is active). The
+    // from-primary posture shows the resolved hex GREYED + read-only; clicking the hex
+    // takes it over (owner Advanced-menu spec 2026-07-16).
+    const fromPrimaryStop = ctaEscape && inRedRange ? escapeCtaFamily(nScale, 'light', cp).ctaInk : t.themed.scale.ctaInk
     const linkStop = linkCustom && normalizeHex(linkHexInput.value)
       ? resolveLinkTrio(normalizeHex(linkHexInput.value)!, cp).link
-      : (ctaEscape && inRedRange ? escapeCtaFamily(nScale, 'light', cp).ctaInk : t.themed.scale.ctaInk)
+      : fromPrimaryStop
     linkSwatch.style.background = toHex(linkStop.r, linkStop.g, linkStop.b)
+    linkHexInput.readOnly = !linkCustom
+    linkField.style.opacity = linkCustom ? '1' : '.6'
+    linkField.style.cursor = linkCustom ? '' : 'pointer'
+    linkResetBtn.style.display = linkCustom ? '' : 'none'
+    linkHint.textContent = linkCustom
+      ? 'Custom — ↩ returns to the from-primary link'
+      : 'From primary — click the hex to customize'
+    if (!linkCustom) linkHexInput.value = toHex(fromPrimaryStop.r, fromPrimaryStop.g, fromPrimaryStop.b).toUpperCase()
 
     renderMatrix(t, nScale)
 
@@ -325,6 +369,12 @@ function buildAndSend() {
   collectionInput.value = name // reflect the normalized name back to the field
   const norm = normalizeHex(primaryHexInput.value)
   if (!norm) { setStatus('Enter a valid hex color.', 'err'); return }
+  // a ticked custom link with an invalid hex must BLOCK, not silently ship the default
+  // posture while the checkbox reads custom (review-caught 2026-07-16 — the primary hex
+  // already blocks this way)
+  if (linkCustom && !normalizeHex(linkHexInput.value)) {
+    setStatus('Enter a valid custom link hex (or untick Custom link color).', 'err'); return
+  }
 
   applyBtn.disabled = true
   setStatus('Applying…')
@@ -387,13 +437,17 @@ function buildAndSend() {
         light: light[s.name],
         dark: dark[s.name],
       })),
-      // CUSTOM system link: one shared prim trio, keyed by the RESOLVED light link hex
-      // (the signal-variant idiom — value-keyed, so an engine retune mints a new prim
-      // instead of silently reusing a stale one). Default posture sends nothing: the
-      // plugin aliases the brand's own cta-ink family.
+      // CUSTOM system link: one shared prim trio, keyed by the SEED hex (review-caught
+      // 2026-07-16: the old resolved-LIGHT-hex key collided distinct seeds whose light
+      // solves matched but darks differed — the second brand silently rode the first's
+      // dark trio — and a states/dark-only engine retune reused the stale prim wholesale).
+      // Seed-keyed, the path is stable per input and the write path refreshes its values
+      // every apply (idempotent: same seed ⇒ same engine output). Old light-hex prims
+      // orphan harmlessly (scopes=[], unbindable — the red-variant class). Default
+      // posture sends nothing: the plugin aliases the brand's own cta-ink family.
       ...(customLink ? [{
         theme: 'link',
-        prim: `system/link/${((light.link as Record<string, { $value: { hex: string } }>)['link'].$value.hex).slice(1)}`,
+        prim: `system/link/${customLink.slice(1)}`,
         light: light.link, dark: dark.link,
       }] : []),
     ]
@@ -502,18 +556,49 @@ profileBtns.forEach(btn => {
 
 ctaEscapeBox.addEventListener('change', () => {
   ctaEscape = ctaEscapeBox.checked
+  // the BUNDLE (owner 2026-07-16): a neutralized cta family shouldn't leave links riding
+  // grey neutral ink — ticking the escape auto-enables the custom de-conflict blue.
+  // Overridable: edit the hex or ↩ back; unticking reverts ONLY an untouched bundle.
+  if (ctaEscape && !linkCustom) {
+    linkCustom = true
+    linkBundled = true
+    linkHexInput.value = DEFAULT_LINK_HEX
+  } else if (!ctaEscape && linkBundled
+    && normalizeHex(linkHexInput.value)?.toLowerCase() === DEFAULT_LINK_HEX.toLowerCase()) {
+    linkCustom = false
+    linkBundled = false
+  }
   updatePreview()
 })
 
-linkCustomBox.addEventListener('change', () => {
-  linkCustom = linkCustomBox.checked
-  if (linkCustom && !normalizeHex(linkHexInput.value)) linkHexInput.value = DEFAULT_LINK_HEX
+fullChromaBox.addEventListener('change', () => {
+  fullChroma = fullChromaBox.checked
+  updatePreview()
+})
+
+// FIELD TAKEOVER (owner Advanced-menu spec): clicking the from-primary hex makes the
+// link custom (prefilled with the default de-conflict blue); ↩ returns to from-primary
+linkField.addEventListener('click', () => {
+  if (linkCustom) return
+  linkCustom = true
+  linkBundled = false
+  linkHexInput.value = DEFAULT_LINK_HEX
+  updatePreview()
+  linkHexInput.focus()
+  linkHexInput.select()
+})
+linkResetBtn.addEventListener('click', e => {
+  e.stopPropagation()
+  linkCustom = false
+  linkBundled = false
+  linkHexInput.classList.remove('invalid')
   updatePreview()
 })
 linkHexInput.addEventListener('input', () => {
-  const norm = normalizeHex(linkHexInput.value)
-  if (norm) linkHex = norm
-  linkHexInput.classList.toggle('invalid', linkHexInput.value !== '' && !norm)
+  if (!linkCustom) return
+  linkBundled = false // a hand-edited bundle no longer auto-reverts with the escape
+  // an EMPTY field is invalid too while custom — apply blocks on it below
+  linkHexInput.classList.toggle('invalid', !normalizeHex(linkHexInput.value))
   updatePreview()
 })
 

@@ -22,7 +22,7 @@ import * as path from 'path'
 import { SCALE_C_LIGHT, SCALE_C_DARK, DARK_CTA_C } from '../src/engine/stopTable'
 import { MODE_SPECS } from '../src/reqtoken/spec'
 import { darkCtaTrim } from '../src/engine/darkChromaCurve'
-import { signalScalesFor } from '../src/engine/resolve'
+import { signalScalesFor, resolveBrand } from '../src/engine/resolve'
 
 let failures = 0
 const fail = (msg: string) => { failures++; console.error('  ✗ ' + msg) }
@@ -127,6 +127,23 @@ const ok = (msg: string) => console.log('  ✓ ' + msg)
     }
   }
   ok('signal identity invariant holds through the real pipeline (yellow/red, both lanes, <=1 8-bit step)')
+
+  // the VIVIDNESS LEVER (Phase 5, C21): style:'full-chroma' REASSIGNS the brand's dark
+  // cta to the identity policy — the signals' declared register, no new numbers. The
+  // gate: the full-chroma dark cta's chroma must be the UNtrimmed identity solve — i.e.
+  // strictly above the trimmed default wherever the trim bites (>1%), and never above
+  // what the identity policy yields. Probed through the real pipeline at the blue lobe
+  // center (deepest trim).
+  // Probe seed is a MODERATE blue: at a saturated blue seed the sRGB gamut ceiling binds
+  // tighter than the trim (both policies clamp to the same ceiling and the release is
+  // invisible) — the reassignment shows where trim < ceiling (+31% at this seed).
+  {
+    const plain = resolveBrand('#4f6eb7', 'trim-probe')      // H≈265 — the blue lobe
+    const full = resolveBrand('#4f6eb7', 'trim-probe', { style: 'full-chroma' })
+    if (!(full.scale.ctaDark.C > plain.scale.ctaDark.C * 1.2)) {
+      fail(`full-chroma dark cta must release the blue-lobe trim: ${full.scale.ctaDark.C} vs trimmed ${plain.scale.ctaDark.C}`)
+    } else ok('full-chroma reassigns the brand dark cta to the identity policy (blue-lobe probe, +31%)')
+  }
 }
 
 if (failures) { console.error(`register-audit: ${failures} failure(s)`); process.exit(1) }

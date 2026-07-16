@@ -2660,6 +2660,10 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
+    "red/cta",
+    "red/cta-hover",
+    "red/cta-pressed",
+    "red/on-cta",
     "system/link",
     "system/link-hover",
     "system/link-pressed"
@@ -11585,6 +11589,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
+    "red/cta",
+    "red/cta-hover",
+    "red/cta-pressed",
     "system/link",
     "system/link-hover",
     "system/link-pressed"

@@ -326,7 +326,9 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     // of the region) — the solve metric's L terms are hue-blind, so "darkening = toward red"
     // would otherwise fire wheel-wide (fleet-verified leak: teals and olives flipped). When
     // black already passes 4.5 at the undarkened fill, the pole flips and the fill stays.
-    // Signals and everything hue-distant keep the shipped darken.
+    // Signals and everything hue-distant keep the shipped darken. NOTE (C23): the guard's
+    // geometry reference (ctaSolve.red) is the APCA lane's canonical red in both lanes —
+    // "toward red" means toward the shared perceptual reference, not this lane's shipped red.
     if (enforceLc === undefined && ctx.opts?.ctaSolve && light9L < ctx.scaleL - 1e-6) {
       const at = (L: number) => ({ L, C: clampChromaToGamut(L, ctx.cAt('light', L, ctx.brandC), ctx.brandH), H: ctx.brandH })
       const orig = at(ctx.scaleL)
@@ -420,10 +422,11 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     }
     // C12 dark (owner 2026-07-11, "dark falls out like every cta"; supersedes the v6 "no dark
     // exit" note): the FINAL enforced dark cta runs the same solve on dark geometry, keyed on
-    // P2 — the P1 gate passes vibrating dark pairs (the known blindness). Member = p2 < bar
-    // beside the lane's red dark cta (opts.ctaSolve.redDark) → nearest release with a passing
-    // pole; red dark stays canonical. Measured movers = apca near-reds lifting ~0.70→0.77;
-    // wcag never fires. Null = byte-identical.
+    // P2 — the P1 gate passes vibrating dark pairs (the known blindness). Member = p2 < the
+    // ONE clean bar (C22) beside the APCA lane's red dark cta in BOTH lanes (C23:
+    // opts.ctaSolve.redDark = the apca canonical); decisions ride the apca Lc pole, the wcag
+    // 4.5 rides as a law extension. Both lanes fire now (post-C22/C23 measurement lives at
+    // solveDarkCtaExit's banner). Null = byte-identical.
     if (ctx.opts?.ctaSolve) {
       const darkCFor = (L: number) => ctx.cAt('dark', L, d.darkC9)
       const exitL = solveDarkCtaExit(cta, darkCFor, ctx.darkCtaH, ctx.opts.ctaSolve.redDark, enforceLc)
@@ -444,12 +447,14 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
 
   // ---- the CTA-INK trio (owner respec 2026-07-16): the family's 4.5 text-register cta —
   // the link-color escape. cta-ink MATCHES the resolved stop 10 exactly (same L/C/H — the
-  // family's text stop IS its 4.5 rendition); states derive via hoverL/pressedL with hue
-  // held constant (the cta state convention) and chroma re-evaluated at the state L through
-  // the SAME ink register the stop used. The stop-10 contrast require rides the states as a
-  // FLOOR: light states darken into more contrast (never fires); dark states darken toward
-  // the paper, so a state that would read under the bar is pulled back toward ink-10's L
-  // (worst case the states collapse onto it — honest; the audit reports collapse rates).
+  // family's text stop IS its 4.5 rendition). States RESTRENGTHENED (owner 2026-07-16,
+  // "too subtle to be noticeable when text only"): HOVER takes the doubled hoverL step
+  // (the former pressed derivation) with hue held constant and chroma re-evaluated at the
+  // state L through the SAME ink register; the stop-10 contrast require rides it as a
+  // FLOOR (light darkens into more contrast — never fires; a dark hover reading under the
+  // bar is pulled back toward ink-10's L). PRESSED mimics ink-11 EXACTLY — the family's
+  // stronger text register (the rest≡ink-10 idiom extended: press lands on the 7:1 stop;
+  // its floor rides along by construction; monotonic darker in light, brighter in dark).
   const ink10 = stops.find(s => s.stop === 10)
   if (!ink10) throw new Error('spec has no ink stop 10 — the cta-ink roles anchor at it')
   const sp10 = spec.stops.find(s => s.stop === 10)!
@@ -478,10 +483,16 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     return pass
   }
   const ctaInk = emitRole('cta-ink', ink10.L, ink10.C, ink10.H)
-  const hL = inkStateL(hoverL(ink10.L))
-  const pL = inkStateL(pressedL(ink10.L))
+  const ink11 = stops.find(s => s.stop === 11)
+  if (!ink11) throw new Error('spec has no ink stop 11 — cta-ink-pressed anchors at it')
+  // hover = the doubled step TOWARD ink-11 (the state axis rest→press). In light that is
+  // exactly pressedL's darken; in DARK ink-11 sits BRIGHTER than ink-10 and the naive
+  // darkening step fell into the stop-10 floor and collapsed onto rest — the maximally
+  // subtle state this respec exists to kill. Toward ink-11, the floor never fires (both
+  // directions gain contrast against paper-2).
+  const hL = inkStateL(ink10.L + Math.sign(ink11.L - ink10.L) * (0.06 / (ink10.L + 0.1)))
   const ctaInkHover = emitRole('cta-ink-hover', hL, inkCFor(hL), ink10.H)
-  const ctaInkPressed = emitRole('cta-ink-pressed', pL, inkCFor(pL), ink10.H)
+  const ctaInkPressed = emitRole('cta-ink-pressed', ink11.L, ink11.C, ink11.H)
 
   // on-highlight: judged at the emitted highlight-9 — never feeds back into the fill. The
   // declared ratioFloor (wcag profile) flips the pole when the preferred one fails 4.5.

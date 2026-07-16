@@ -1,4 +1,4 @@
-import { resolveTheme, signalScalesFor, escapeCtaFamily, resolveLinkTrio, DEFAULT_LINK_HEX, type SecondaryStyle, type ResolvedTheme } from '../src/engine/resolve'
+import { resolveTheme, resolveBrand, signalScalesFor, escapeCtaFamily, resolveLinkTrio, DEFAULT_LINK_HEX, type SecondaryStyle, type ResolvedTheme } from '../src/engine/resolve'
 import { redGateDist, RED_GATE } from '../src/engine/collision'
 import { ARCHETYPES, type Archetype } from '../src/engine/archetypes'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
@@ -32,11 +32,17 @@ let includeApca = false
 // on every keystroke wiped the toggle through 3-digit intermediate parses like "#EA3",
 // review-caught 2026-07-16), and it can't ride an apply or recipe silently either.
 let ctaEscape = false
-let inRedRange = false
+let inRedRange = false        // EFFECTIVE gate: the CURRENT posture's red range
+let inRedRangeOffer = false   // OFFER gate: union of both clamp postures (row visibility)
 // the SYSTEM LINK (Phase 4, owner 2026-07-16): ONE link trio per theme — hyperlinks, not
 // per-family. Default = the primary's cta-ink values (extensions carry their own; follows
 // the escape). Custom = the seed through the ink register (#0B57D0 default when toggled).
 let linkCustom = false
+// the escape BUNDLE (owner 2026-07-16): ticking "Use neutral primary cta" auto-enables
+// the custom link (#0B57D0) — overridable; unticking reverts ONLY an untouched bundle
+let linkBundled = false
+// the VIVIDNESS LEVER (phase 5): default OFF = the shipped dampened registers
+let fullChroma = false
 // brand + the exact confirm TOKEN it was armed with (reason-scoped — the plugin only
 // honors a confirm whose reasons haven't changed since it was shown; changing the
 // toggle or fields between the two Applies re-confirms)
@@ -77,8 +83,11 @@ const profileBtns     = document.querySelectorAll<HTMLButtonElement>('.seg-btn[d
 const includeApcaBox  = $<HTMLInputElement>('include-apca')
 const ctaEscapeRow    = $<HTMLElement>('cta-escape-row')
 const ctaEscapeBox    = $<HTMLInputElement>('cta-escape')
-const linkCustomBox   = $<HTMLInputElement>('link-custom')
 const linkHexInput    = $<HTMLInputElement>('link-hex')
+const linkField       = $<HTMLElement>('link-field')
+const linkResetBtn    = $<HTMLButtonElement>('link-reset')
+const linkHint        = $<HTMLElement>('link-hint')
+const fullChromaBox   = $<HTMLInputElement>('full-chroma')
 const linkSwatch      = $<HTMLElement>('link-swatch')
 const matrixEl        = $<HTMLElement>('matrix')
 const applyBtn        = $<HTMLButtonElement>('apply-btn')
@@ -171,6 +180,10 @@ function themeInput(name: string) {
     // can't ride a recipe replay
     ctaEscape: (ctaEscape && inRedRange) || undefined,
     linkHex: (linkCustom && normalizeHex(linkHexInput.value)) || undefined,
+    // the VIVIDNESS LEVER (phase 5, owner copy: "Brand ramps are dampened by default to
+    // separate from signals. Turn off for full vividness.") — primary only; rides the
+    // recipe so "Re-apply all brands" preserves each brand's posture
+    style: fullChroma ? ('full-chroma' as const) : undefined,
   }
 }
 
@@ -266,16 +279,48 @@ function updatePreview() {
     // the brands the escape is for); the direct gate check catches exact-mode reds.
     // The toggle stays checked-but-inert outside the range (effective = && inRedRange).
     const redCta = signalScalesFor(cp).get('red')!.scale.cta
-    inRedRange = !!t.themed.redRepel || redGateDist(t.themed.scale.cta, redCta) <= RED_GATE.G
-    ctaEscapeRow.style.display = inRedRange ? '' : 'none'
+    // TWO GATES (owner-caught + review-hardened 2026-07-16): the OFFER (row visibility)
+    // is the union of BOTH clamp postures — membership is NOT monotone in the lever
+    // (probe the OPPOSITE posture; a one-way probe collapsed when the clamp was on), so
+    // the row never appears/disappears with the clamp. The EFFECTIVE flag stays the
+    // CURRENT posture only — the file/recipe can never carry an escape for a brand whose
+    // shipped posture isn't red-range (the original phase-3 contract).
+    const rangeOf = (rb: { redRepel: unknown; scale: { cta: { L: number; C: number; H: number } } }) =>
+      !!rb.redRepel || redGateDist(rb.scale.cta, redCta) <= RED_GATE.G
+    inRedRange = rangeOf(t.themed)
+    inRedRangeOffer = inRedRange || rangeOf(resolveBrand(primaryHex, 'range-probe', {
+      style: fullChroma ? undefined : 'full-chroma', contrastProfile: cp,
+      exact: primaryMode === 'exact' || undefined,
+      archetypeOverride: primaryMode !== 'recommended' && primaryMode !== 'exact' ? primaryMode : undefined,
+    }))
+    ctaEscapeRow.style.display = inRedRangeOffer ? '' : 'none'
+    // BUNDLE HYGIENE (review-caught): an untouched bundle auto-reverts the moment the
+    // escape stops being effective — the frozen default blue must not outlive the escape
+    // it was bundled with, nor BAKE INTO THE RECIPE for a non-red brand (batch re-applies
+    // would replay it forever).
+    if (linkBundled && !(ctaEscape && inRedRange)
+      && normalizeHex(linkHexInput.value)?.toLowerCase() === DEFAULT_LINK_HEX.toLowerCase()) {
+      linkCustom = false
+      linkBundled = false
+    }
 
-    // the link swatch previews the RESOLVED system link: custom seed through the ink
-    // register, else the primary's cta-ink (escaped when the escape is active)
-    linkHexInput.style.display = linkCustom ? '' : 'none'
+    // the link FIELD previews the RESOLVED system link: custom seed through the ink
+    // register, else the primary's cta-ink (escaped when the escape is active). The
+    // from-primary posture shows the resolved hex GREYED + read-only; clicking the hex
+    // takes it over (owner Advanced-menu spec 2026-07-16).
+    const fromPrimaryStop = ctaEscape && inRedRange ? escapeCtaFamily(nScale, 'light', cp).ctaInk : t.themed.scale.ctaInk
     const linkStop = linkCustom && normalizeHex(linkHexInput.value)
       ? resolveLinkTrio(normalizeHex(linkHexInput.value)!, cp).link
-      : (ctaEscape && inRedRange ? escapeCtaFamily(nScale, 'light', cp).ctaInk : t.themed.scale.ctaInk)
+      : fromPrimaryStop
     linkSwatch.style.background = toHex(linkStop.r, linkStop.g, linkStop.b)
+    linkHexInput.readOnly = !linkCustom
+    linkField.style.opacity = linkCustom ? '1' : '.6'
+    linkField.style.cursor = linkCustom ? '' : 'pointer'
+    linkResetBtn.style.display = linkCustom ? '' : 'none'
+    linkHint.textContent = linkCustom
+      ? 'Custom — ↩ returns to the from-primary link'
+      : 'From primary — click the hex to customize'
+    if (!linkCustom) linkHexInput.value = toHex(fromPrimaryStop.r, fromPrimaryStop.g, fromPrimaryStop.b).toUpperCase()
 
     renderMatrix(t, nScale)
 
@@ -331,6 +376,11 @@ function buildAndSend() {
   collectionInput.value = name // reflect the trimmed name back to the field
   const norm = normalizeHex(primaryHexInput.value)
   if (!norm) { setStatus('Enter a valid hex color.', 'err'); return }
+  // a ticked custom link with an invalid hex must BLOCK, not silently apply (and bake)
+  // the default posture into the recipe (review-caught 2026-07-16)
+  if (linkCustom && !normalizeHex(linkHexInput.value)) {
+    setStatus('Enter a valid custom link hex (or untick Custom link color).', 'err'); return
+  }
 
   applyBtn.disabled = true
   setStatus('Applying…')
@@ -457,16 +507,49 @@ profileBtns.forEach(btn => {
 // and clears a pending single-apply confirm (its token no longer matches anyway).
 ctaEscapeBox.addEventListener('change', () => {
   ctaEscape = ctaEscapeBox.checked
+  // the BUNDLE (owner 2026-07-16): a neutralized cta family shouldn't leave links riding
+  // grey neutral ink — ticking the escape auto-enables the custom de-conflict blue.
+  // Overridable: edit the hex or ↩ back; unticking reverts ONLY an untouched bundle.
+  if (ctaEscape && !linkCustom) {
+    linkCustom = true
+    linkBundled = true
+    linkHexInput.value = DEFAULT_LINK_HEX
+  } else if (!ctaEscape && linkBundled
+    && normalizeHex(linkHexInput.value)?.toLowerCase() === DEFAULT_LINK_HEX.toLowerCase()) {
+    linkCustom = false
+    linkBundled = false
+  }
   updatePreview()
 })
 
-linkCustomBox.addEventListener('change', () => {
-  linkCustom = linkCustomBox.checked
-  if (linkCustom && !normalizeHex(linkHexInput.value)) linkHexInput.value = DEFAULT_LINK_HEX
+fullChromaBox.addEventListener('change', () => {
+  fullChroma = fullChromaBox.checked
+  updatePreview()
+})
+
+// FIELD TAKEOVER (owner Advanced-menu spec): clicking the from-primary hex makes the
+// link custom (prefilled with the default de-conflict blue); ↩ returns to from-primary
+linkField.addEventListener('click', () => {
+  if (linkCustom) return
+  linkCustom = true
+  linkBundled = false
+  linkHexInput.value = DEFAULT_LINK_HEX
+  updatePreview()
+  linkHexInput.focus()
+  linkHexInput.select()
+})
+linkResetBtn.addEventListener('click', e => {
+  e.stopPropagation()
+  linkCustom = false
+  linkBundled = false
+  linkHexInput.classList.remove('invalid')
   updatePreview()
 })
 linkHexInput.addEventListener('input', () => {
-  linkHexInput.classList.toggle('invalid', linkHexInput.value !== '' && !normalizeHex(linkHexInput.value))
+  if (!linkCustom) return
+  linkBundled = false // a hand-edited bundle no longer auto-reverts with the escape
+  // an EMPTY field is invalid too while custom — apply blocks on it
+  linkHexInput.classList.toggle('invalid', !normalizeHex(linkHexInput.value))
   updatePreview()
 })
 
@@ -488,7 +571,7 @@ window.addEventListener('message', e => {
     pluginMessage?: {
       type: string; message?: string; brand?: string; token?: string; secondary?: string
       set?: number; removed?: number; inherited?: number; createdVars?: number; baseCreated?: boolean
-      secondaryAdded?: boolean; addedCols?: string[]; orphaned?: number
+      secondaryAdded?: boolean; addedCols?: string[]; rowsAdded?: boolean; orphaned?: number
       backfill?: unknown[]; unstamped?: string[]; specs?: unknown[]
       lines?: string[]
     }
@@ -508,7 +591,7 @@ window.addEventListener('message', e => {
       qTotals.orphaned = Math.max(qTotals.orphaned, msg.orphaned ?? 0)
       // a posture flip mid-batch (secondary group or solve columns added): append the
       // other extensions' recipes to this queue
-      if (msg.secondaryAdded || msg.addedCols?.length) enqueueBackfill(msg.backfill ?? [], msg.unstamped)
+      if (msg.secondaryAdded || msg.addedCols?.length || msg.rowsAdded) enqueueBackfill(msg.backfill ?? [], msg.unstamped)
       if (qi + 1 < queue.length) { qi++; sendQueueItem(); return }
       const label = qLabel, n = queue.length, un = qUnstamped
       queue = null
@@ -534,15 +617,18 @@ window.addEventListener('message', e => {
     if (msg.removed) parts.push(`${msg.removed} reverted to base`)
     const grew = msg.baseCreated ? ' · base created' : (msg.createdVars ? ` · ${msg.createdVars} base tokens added` : '')
     const acc = msg.secondary === 'derived' ? ' · secondary derived' : ''
-    const colsNote = msg.addedCols?.length
-      ? `${msg.addedCols.join('+')} column(s) added${msg.orphaned ? ` (${msg.orphaned} stale variable(s) kept default values there — not in the current token set)` : ''}`
-      : ''
+    const colsNote = [
+      msg.addedCols?.length
+        ? `${msg.addedCols.join('+')} column(s) added${msg.orphaned ? ` (${msg.orphaned} stale variable(s) kept default values there — not in the current token set)` : ''}`
+        : '',
+      msg.rowsAdded ? 'new base tokens added (other brands backfilled)' : '',
+    ].filter(Boolean).join(' · ')
     setStatus(`✓ ${msg.brand}: ${parts.join(' · ')}${grew}${acc}${colsNote ? ` · ${colsNote}` : ''}`, 'ok')
     // a posture flip from a single apply (secondary group or solve columns): run the
     // collection-wide backfill now. The backfill queue's final summary must re-report the
     // added columns + orphan count (this status line is overwritten by 'backfill 1/n'
     // moments later), so they're carried into the fresh queue's totals.
-    if (msg.secondaryAdded || msg.addedCols?.length) {
+    if (msg.secondaryAdded || msg.addedCols?.length || msg.rowsAdded) {
       enqueueBackfill(msg.backfill ?? [], msg.unstamped, colsNote || undefined)
       if (queue) {
         for (const c of msg.addedCols ?? []) if (!qTotals.addedCols.includes(c)) qTotals.addedCols.push(c)

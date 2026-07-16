@@ -311,6 +311,18 @@ export function brandCss(
       `  --link-hover: var(--brand-cta-ink-hover);`,
       `  --link-pressed: var(--brand-cta-ink-pressed);`,
     ]
+  // the custom trio's P3 renditions (review-caught 2026-07-16): the DEFAULT posture rides
+  // the cta-ink vars' own P3 overrides through the alias chain, but a custom trio ships
+  // raw hexes — without these lines an out-of-sRGB custom link renders visibly duller
+  // than the same-register cta-ink text button beside it. --link is its own property, so
+  // there is no cascade-pop hazard (the escape/outline drop classes don't apply).
+  const linkP3 = (mode: 'light' | 'dark'): string[] => {
+    if (!linkTrio) return []
+    const trio = mode === 'light'
+      ? [['link', linkTrio.link], ['link-hover', linkTrio.linkHover], ['link-pressed', linkTrio.linkPressed]] as const
+      : [['link', linkTrio.linkDark], ['link-hover', linkTrio.linkHoverDark], ['link-pressed', linkTrio.linkPressedDark]] as const
+    return trio.filter(([, s]) => p3Differs(s)).map(([n, s]) => `  --${n}: ${p3Value(s)};`)
+  }
 
   // neutral cta escape re-resolution: emitted AFTER the brand body so the cascade takes
   // these values (the outline idiom). Fill trio + on-cta only — cta-ink and the ramp stay
@@ -370,12 +382,14 @@ export function brandCss(
     ...(secondary ? dropOutlineCta(brandKindP3Body('secondary', secondary, 'light')) : []),
     ...brandKindP3Body('neutral', nScale, 'light'),
     ...effOverrides.flatMap(o => brandKindP3Body(o.name, o.scale, 'light')),
+    ...linkP3('light'),
   ]
   const p3Dark = [
     ...dropEscapeCta(brandKindP3Body('brand', scale, 'dark')),
     ...(secondary ? dropOutlineCta(brandKindP3Body('secondary', secondary, 'dark')) : []),
     ...brandKindP3Body('neutral', nScale, 'dark'),
     ...effOverrides.flatMap(o => brandKindP3Body(o.name, o.scale, 'dark')),
+    ...linkP3('dark'),
   ]
 
   return [

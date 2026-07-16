@@ -104,8 +104,11 @@ function redComplementVariant(
   const redCta = red.scale.cta
   const release = RED_GATE.G + RED_SOLVE.ring
   const at = (L: number, H: number) => ({ L, C: clampChromaToGamut(L, rctx.cAt('light', L, rctx.brandC), H), H })
+  // "APCA DECIDES, WCAG FLOORS" (C23): the zone pick's pole gate is the perceptual Lc bar
+  // in BOTH lanes (the old wcag short-circuit made the lanes pick different zones for the
+  // same seed); wcag legality rides the pinned mint's pole re-judge with the 4.5 floor.
   const poleOk = (c: { L: number; C: number; H: number }): boolean =>
-    contrastProfile !== 'apca' || whiteTextLcAt(c.L, c.C, c.H) >= CTA_ONFILL_ENFORCE_LC ||
+    whiteTextLcAt(c.L, c.C, c.H) >= CTA_ONFILL_ENFORCE_LC ||
     blackLcAt(c.L, c.C, c.H) >= CTA_ONFILL_ENFORCE_LC
   const clean = (c: { L: number; C: number; H: number }): boolean =>
     p2Diff(brandCta, c) >= (c.L < brandCta.L ? P2_D : P2_D_UP) &&
@@ -189,11 +192,17 @@ export function resolveBrand(
   const seedO = hexToOklch(hex)
   const collisions = !opts?.exact && !opts?.skipCollisionRules
   const solving = collisions && !opts?.archetypeOverride
+  // "APCA DECIDES, WCAG FLOORS" (owner ruling 2026-07-16, C23): the collision GEOMETRY
+  // references the APCA lane's canonical red in BOTH lanes. Each lane judging against
+  // its own red made membership flip for borderline seeds (#FF4747 fired in apca, never
+  // in wcag — the lane reds sit at different L for legal reasons). The wcag lane still
+  // SHIPS its own red beside the landing; only the decision geometry unifies.
+  const apcaRed = opts?.contrastProfile === 'apca' ? red : signalScalesFor('apca').get('red')!.scale
   const solveOpt = solving ? {
     ctaSolve: {
       seed: seedO,
-      red: { L: red.cta.L, C: red.cta.C, H: red.cta.H },
-      redDark: { L: red.ctaDark.L, C: red.ctaDark.C, H: red.ctaDark.H },
+      red: { L: apcaRed.cta.L, C: apcaRed.cta.C, H: apcaRed.cta.H },
+      redDark: { L: apcaRed.ctaDark.L, C: apcaRed.ctaDark.C, H: apcaRed.ctaDark.H },
     },
   } : {}
 

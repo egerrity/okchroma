@@ -20,7 +20,8 @@ right of the table shows the solve columns; hover a variable for its description
      **no** apca clause.
    - ☐ The cta family is SEMANTIC six: `brand-primary/cta`, `cta-hover`, `cta-pressed`,
      `cta-ink`, `cta-ink-hover`, `cta-ink-pressed` (no `cta-1`/`cta-2` anywhere).
-   - ☐ `cta-ink` value equals `ink-10` value in every column.
+   - ☐ `cta-ink` value equals `ink-10` value in every column; `cta-ink-pressed` equals
+     `ink-11` (press lands on the family's stronger text register).
 3. Apply a second brand `test-b`. ☐ Still two modes; second extension appears.
 
 ## B. Turning APCA on over an existing file (the posture flip)
@@ -90,10 +91,15 @@ right of the table shows the solve columns; hover a variable for its description
 
 ## I. Neutral cta escape (Phase 3 — red-range brands)
 
-17. plugin-ext (or v1), enter a red primary, e.g. `#EA3E3E`, Recommended mode.
-    - ☐ A "**Neutral CTA (red-collision escape)**" checkbox appears under the primary
-      field (it hides for a blue hex — retype `#0B5FFF` to confirm, then back to red;
-      re-entering red should show it again, still remembering its checked state).
+17. plugin-ext (or v1), enter a red primary, e.g. `#EA3E3E`, Recommended mode. Open the
+    **Advanced** disclosure (collapsed by default — it holds Link color, the escape, and
+    the vividness lever).
+    - ☐ A "**Use neutral primary cta**" checkbox appears in Advanced (it hides for a blue
+      hex — retype `#0B5FFF` to confirm, then back to red; re-entering red should show it
+      again, still remembering its checked state).
+    - ☐ BUNDLE: ticking it also flips the Link color field to the custom blue (#0B57D0,
+      field un-greys). Unticking reverts the link to from-primary — but ONLY if you never
+      touched the hex; an edited link survives the untick.
 18. Tick it. In the preview matrix, the primary row's three FILL cells go near-black
     (light preview) — the cta-ink text cells and the ramp stay the brand's red.
 19. Apply the brand.
@@ -113,19 +119,40 @@ right of the table shows the solve columns; hover a variable for its description
 
 ## J. System link (one per theme)
 
-22. Any brand: a "**Link color**" field with a swatch + "Custom link color" checkbox sits
-    in the controls (always visible — link is system-level, never per-family).
-    - ☐ Unchecked: the swatch shows the primary's text-action color (its ink-10); apply →
+22. Any brand: the "**Link color**" field lives in **Advanced** — a GREYED, read-only hex
+    showing the primary's resolved text-action color with a "from primary" hint (link is
+    system-level, never per-family).
+    - ☐ Untouched: the field shows the primary's ink-10 hex greyed; apply →
       theme `system/link` / `link-hover` / `link-pressed` exist. **[v1]** they are ALIASES
       to `brand/<name>/primary/cta-ink*`; **[ext]** they carry the primary's cta-ink
       values and each brand extension overrides them with its own.
-23. Tick Custom link color (prefills `#0B57D0`) and apply.
+23. Click the link hex (takes it over — prefills `#0B57D0`, un-greys, an ↩ appears) and
+    apply. ☐ The ↩ returns the field to the greyed from-primary state.
     - ☐ `system/link` ≈ `#2a5cb4` in the light/wcag column (the seed through the ink
       register), a dark-native blue in the dark column. **[v1]** the theme link aliases a
       shared `system/link/<hex>` primitive.
 24. Red brand + escape ON + custom link OFF: ☐ the link follows the ESCAPED neutral text
     color. Escape ON + custom link ON: ☐ links are the custom blue while the cta family
     stays neutral.
+
+## K. Link on multi-brand files + upgrade posture (post-review fixes 2026-07-16)
+
+25. **[v1]** File with TWO brands applied by this build (say `alpha`, `bravo`), then delete
+    the theme `system/link*` vars by hand and re-apply only `alpha`.
+    - ☐ `system/link` is recreated and `bravo`'s MODE also resolves — switch the theme
+      collection's mode to `bravo`: links show bravo's own text-action color, never black.
+26. plugin-ext: on a file whose base predates the link tokens (or hand-delete the three
+    `system/link*` base rows), apply any one brand.
+    - ☐ FIRST Apply warns: *add 3 new base token(s) (system/link, …) and regenerate all
+      N existing brand extension(s)*.
+    - ☐ SECOND Apply runs and a backfill batch re-applies the other brands; afterwards
+      each extension's `system/link` shows its OWN brand's color (never the default
+      seed's pink).
+27. Take over the link hex (click it), then clear the field (or type `#0B57`) and Apply.
+    - ☐ Apply BLOCKS with "Enter a valid custom link hex…" — it must never silently ship
+      the default link posture while the field reads custom (both plugins).
+28. **[v1]** Apply a custom link, note the primitive path: it is keyed by the SEED hex
+    (`system/link/0b57d0`), not the resolved color; re-applying refreshes its values.
 
 Anything that reads differently than a checkbox above: screenshot + which step — that's a
 bug, not your setup.

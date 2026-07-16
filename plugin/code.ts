@@ -337,15 +337,19 @@ figma.ui.onmessage = async (msg) => {
             v.setValueForMode(pLight, figma.variables.createVariableAlias(transparent))
             v.setValueForMode(pDark, figma.variables.createVariableAlias(transparent))
           }
-        } else if (t.path === 'cta-ink'
-          && leafEq(t, lightMap?.get('ink-10')) && leafEq(dk, darkMap.get('ink-10'))) {
-          // cta-ink MATCHES the family's ink-10 by construction (the 4.5 text-register
-          // cta, owner 2026-07-16) — alias the sibling so the relationship stays live in
-          // Figma (the on-cta→ink-10 idiom); the hover/pressed states are distinct values
-          // and ride the generic raw branch. VALUE-GUARDED (owner amendment: the neutral
-          // escape swaps cta-ink to the NEUTRAL's register — a payload whose cta-ink no
-          // longer equals its own ink-10 must ship raw, never alias back to the red ink).
-          const siblingInk = primByName.get(path.replace(/cta-ink$/, 'ink-10'))
+        } else if ((t.path === 'cta-ink'
+            && leafEq(t, lightMap?.get('ink-10')) && leafEq(dk, darkMap.get('ink-10')))
+          || (t.path === 'cta-ink-pressed'
+            && leafEq(t, lightMap?.get('ink-11')) && leafEq(dk, darkMap.get('ink-11')))) {
+          // cta-ink MATCHES the family's ink-10 and cta-ink-pressed MATCHES ink-11 by
+          // construction (the text-register cta + the 2026-07-16 restrengthening: press
+          // lands on the 7:1 register) — alias the sibling so the relationship stays live
+          // in Figma (the on-cta→ink-10 idiom); hover is a distinct derived value and
+          // rides the generic raw branch. VALUE-GUARDED (owner amendment: the neutral
+          // escape swaps the trio to the NEUTRAL's register — a payload whose leaf no
+          // longer equals its own sibling must ship raw, never alias back to the red ink).
+          const sibLeaf = t.path === 'cta-ink' ? 'ink-10' : 'ink-11'
+          const siblingInk = primByName.get(path.replace(/cta-ink(?:-pressed)?$/, sibLeaf))
           if (siblingInk) {
             v.setValueForMode(pLight, figma.variables.createVariableAlias(siblingInk))
             v.setValueForMode(pDark, figma.variables.createVariableAlias(siblingInk))
@@ -385,12 +389,19 @@ figma.ui.onmessage = async (msg) => {
       }
       if (primaryRamp) writeRamp('primary', primaryRamp)
       if (secondaryMode === 'real' && secondaryRamp) writeRamp('secondary', secondaryRamp)
-      // shared neutral + signals → grown on demand, recorded as alias targets
+      // shared neutral + signals → grown on demand, recorded as alias targets.
+      // lightMap rides along (review-caught 2026-07-16): the cta-ink→ink-10 alias branch
+      // is value-guarded against BOTH maps — starving it here shipped shared cta-inks raw.
+      // The LINK prim alone refreshes (review-caught 2026-07-16): it is seed-keyed, so the
+      // path survives an engine retune while its six values move — a stale reuse would
+      // serve old hover/pressed/dark values under every theme alias. Same seed ⇒ same
+      // engine output, so the refresh is idempotent across brands sharing the prim.
       for (const grp of shared) {
         const darkMap = new Map(flatten(grp.dark).map(t => [t.path, t]))
+        const lightMap = new Map(flatten(grp.light).map(t => [t.path, t]))
         for (const t of flatten(grp.light)) {
           const path = `${grp.prim}/${t.path}`
-          const { v, created } = writeRaw(path, t, darkMap, false)
+          const { v, created } = writeRaw(path, t, darkMap, grp.theme === 'link', lightMap)
           if (created) createdShared++
           primVar.set(path, v)
         }
@@ -418,8 +429,9 @@ figma.ui.onmessage = async (msg) => {
         const neutralPrim = shared.find(g => g.theme === 'neutral')?.prim
         // the whole escape family aliases the neutral's own registers (owner amendment:
         // the escape covers cta AND cta-ink): fill rest → neutral ink-11; text rest →
-        // neutral ink-10. States stay raw derived values.
-        const pairs: Array<[string, string]> = [['cta', 'ink-11'], ['cta-ink', 'ink-10']]
+        // neutral ink-10; text pressed → neutral ink-11 (the 2026-07-16 restrengthening).
+        // Hover stays a raw derived value.
+        const pairs: Array<[string, string]> = [['cta', 'ink-11'], ['cta-ink', 'ink-10'], ['cta-ink-pressed', 'ink-11']]
         for (const [leaf, neutralLeaf] of pairs) {
           const target = neutralPrim ? (primVar.get(`${neutralPrim}/${neutralLeaf}`) ?? primByName.get(`${neutralPrim}/${neutralLeaf}`)) : undefined
           const v = primByName.get(`brand/${brand}/primary/${leaf}`)
@@ -527,8 +539,47 @@ figma.ui.onmessage = async (msg) => {
       // link payload group, dedup'd by seed hex like signal variants) aliases the shared
       // link primitive instead.
       const linkGrp = shared.find(g => g.theme === 'link')
-      for (const [themeLeaf, brandLeaf] of [['link', 'cta-ink'], ['link-hover', 'cta-ink-hover'], ['link-pressed', 'cta-ink-pressed']] as const) {
+      const LINK_LEAVES = [['link', 'cta-ink'], ['link-hover', 'cta-ink-hover'], ['link-pressed', 'cta-ink-pressed']] as const
+      // ANY missing leaf triggers the backfill (review-caught: a hand-deleted
+      // link-hover/link-pressed pair used to recreate black in other modes unbackfilled)
+      const linkIsNew = LINK_LEAVES.some(([themeLeaf]) => !themeByName.has(`system/${themeLeaf}`))
+      for (const [themeLeaf, brandLeaf] of LINK_LEAVES) {
         aliasInto(`system/${themeLeaf}`, linkGrp ? `${linkGrp.prim}/${themeLeaf}` : `brand/${brand}/primary/${brandLeaf}`)
+      }
+      // BACKFILL on first appearance (review-caught 2026-07-16): freshly created theme
+      // vars hold the create-default (black) in every OTHER brand mode — the
+      // backfillSecondary idiom. Each pre-existing mode gets its own brand's DEFAULT
+      // posture (its cta-ink family; the custom seed belongs to the applying brand only,
+      // matching the ext model where each extension overrides with its own). Brands
+      // applied pre-C19 lack cta-ink prims → their ink-10 carries the rest until a
+      // re-apply mints the family (states ride the same fallback: better a static link
+      // than black). Later brand applies set their own mode and win over this.
+      if (linkIsNew) {
+        // resolve prims READ-ONLY through the rename history: an untouched brand's prims
+        // still carry pre-renumber leaf names (in-place migration only runs for families
+        // the CURRENT apply writes) — a raw lookup missed them and silently left the
+        // create-default black in that mode (review-caught 2026-07-16). getOrMigrate is
+        // avoided on purpose: renaming another brand's prim here would be a write
+        // side-effect on a family this apply doesn't own.
+        const findPrim = (path: string): figma.Variable | undefined => {
+          const direct = primVar.get(path) ?? primByName.get(path)
+          if (direct) return direct
+          for (const lp of legacyCandidates(path)) { const v = primByName.get(lp); if (v) return v }
+          return undefined
+        }
+        for (const m of th.coll.modes) {
+          if (m.name === brand) continue
+          const primary = `brand/${m.name}/primary/`
+          for (const [themeLeaf, brandLeaf] of LINK_LEAVES) {
+            // never clobber a mode that already holds an ALIAS (a custom link or a prior
+            // backfill) — only the raw create-default is fair game
+            const themeVar = themeByName.get(`system/${themeLeaf}`)
+            const cur = themeVar?.valuesByMode[m.modeId]
+            if (cur && typeof cur === 'object' && 'type' in cur) continue
+            const target = findPrim(primary + brandLeaf) ?? findPrim(primary + 'ink-10')
+            if (target) aliasInto(`system/${themeLeaf}`, target.name, m.modeId)
+          }
+        }
       }
 
       // Elevation anchors — mode-DIVERGENT aliases: each mode points at a different

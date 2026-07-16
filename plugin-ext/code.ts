@@ -162,6 +162,21 @@ figma.ui.onmessage = async (msg) => {
       const existingExt = extsOfBase.find(e => norm(e.getPluginData(BRAND_KEY)) === norm(brand))
         ?? extsOfBase.find(e => norm(e.name) === norm(brand))
 
+      // New base ROWS this apply would create on an EXISTING base — the token-set-growth
+      // posture (review-caught 2026-07-16: the C20 system/link rows appeared silently,
+      // seeded from the DEFAULT SEED, and every other extension inherited those values
+      // until manually re-applied; the C19 cta-ink rows were the same latent class).
+      // Same discipline as missingCols: confirm first, then the recipe backfill
+      // regenerates every extension so each brand overrides the new rows with its own.
+      // brand-secondary/* is excluded (the secondary posture has its own reason +
+      // trigger); a legacy name counts as EXISTING (ensure() migrates it in place).
+      const newRows: string[] = baseMatch
+        ? baseTokens[activeCols[0]]
+            .map((t: FlatTok) => t.path)
+            .filter((p: string) => !p.startsWith('brand-secondary/'))
+            .filter((p: string) => !baseVars.has(p) && !legacyCandidates(p).some(lp => baseVars.has(lp)))
+        : []
+
       // Nudge before surprising changes (v1's idiom — each needs a second Apply):
       // overwriting a brand, ADDING the file's secondary, or CREATING solve columns on an
       // existing base (the apca posture flip / restoring a hand-deleted half). The confirm
@@ -177,6 +192,8 @@ figma.ui.onmessage = async (msg) => {
         'add a brand-secondary group to the base and update every existing brand with its derived secondary')
       if (missingCols.length) reasons.push(
         `add the ${missingCols.join(' + ')} column(s) to the base and regenerate ${extsOfBase.length ? `all ${extsOfBase.length} existing brand extension(s)` : 'the file'} to fill them (existing column values stay untouched)`)
+      if (newRows.length) reasons.push(
+        `add ${newRows.length} new base token(s) (${newRows.slice(0, 3).join(', ')}${newRows.length > 3 ? ', …' : ''}) and regenerate ${extsOfBase.length ? `all ${extsOfBase.length} existing brand extension(s)` : 'the file'} so each brand carries its own values there`)
       const confirmToken = reasons.join(' | ')
       const authorized = confirmed === true || (typeof confirmedToken === 'string' && confirmedToken === confirmToken)
       if (!authorized && reasons.length) {
@@ -367,9 +384,10 @@ figma.ui.onmessage = async (msg) => {
       // filling its apca overrides). Recipes are stamped per apply; extensions without
       // one are reported for a one-time manual re-apply.
       const secondaryAdded = hasSecondary && !baseHasSecondary && !created
+      const rowsAdded = newRows.length > 0 && !created
       const backfill: unknown[] = []
       const unstamped: string[] = []
-      if (secondaryAdded || addedCols.length) {
+      if (secondaryAdded || addedCols.length || rowsAdded) {
         for (const e of extsOfBase) {
           if (e.id === ext.id) continue
           const raw = e.getPluginData(SPEC_KEY)
@@ -378,7 +396,7 @@ figma.ui.onmessage = async (msg) => {
         }
       }
 
-      figma.ui.postMessage({ type: 'done', brand, set, removed, inherited, createdVars, baseCreated: created, secondary: secondaryMode, secondaryAdded, addedCols, orphaned, backfill, unstamped })
+      figma.ui.postMessage({ type: 'done', brand, set, removed, inherited, createdVars, baseCreated: created, secondary: secondaryMode, secondaryAdded, addedCols, rowsAdded, orphaned, backfill, unstamped })
     } catch (err) {
       figma.ui.postMessage({ type: 'error', message: String(err) })
     }

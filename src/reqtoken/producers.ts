@@ -18,6 +18,7 @@ import {
 } from '../engine/colorMath'
 import { p2Diff, P2_D, P2_D_UP } from '../engine/p2'
 import { DARK_STOP_9_MIN_L, DARK_CTA_C } from '../engine/stopTable'
+import { CTA_ONFILL_ENFORCE_LC } from './profiles'
 import { darkCtaTrim } from '../engine/darkChromaCurve'
 import type { GenerateOptions } from '../engine/colorEngine'   // type-only: erased at runtime, no cycle
 
@@ -44,7 +45,14 @@ export function buildContext(hex: string, opts?: ResolveOpts) {
 
   const hueIsNoise = brandC < HUE_NOISE_C
   const v = Math.min(1, brandC / VIVID_C)
-  const vSubtle = Math.min(1, subtleC / VIVID_C)
+  // the VIVIDNESS LEVER (phase 5, style:'full-chroma'): the ramp dampener is the min(1,·)
+  // cap — every seed above VIVID_C rides the SAME ladder chroma, which is what separates
+  // brand ramps from their own identity. OFF = the ladder scales linearly with the seed's
+  // true chroma (shape preserved; gamut clamps still bound the emit). Blend weights (envW,
+  // mutedness) keep the CAPPED v — the lever releases amplitude, not the blend geometry.
+  const vSubtle = opts?.style === 'full-chroma'
+    ? subtleC / VIVID_C
+    : Math.min(1, subtleC / VIVID_C)
   const S = hueIsNoise ? 0 : sigmoid(hueDelta(brandH, RED_TORSION_CENTER_H) / RED_TORSION_SOFTNESS)
   const redShift = hueIsNoise || opts?.suppressRedCool ? 0 : redRepelShiftDeg(brandH)
   const mutednessRaw = Math.min(1, (1 - v) / MUTED_BLEND_DENOM)
@@ -273,8 +281,11 @@ export function onHighlightIsWhiteAt(L: number, C: number, H: number, ratioFloor
 export function buildDarkContext(ctx: Ctx, specFloorL: number = DARK_STOP_9_MIN_L) {
   const opts = ctx.opts
   const dark9L = Math.max(ctx.scaleL, opts?.darkFillMinL ?? specFloorL)
-  // dark cta chroma by the DECLARED register (DARK_CTA_C, C16): brand = trimmed, signal = identity
+  // dark cta chroma by the DECLARED register (DARK_CTA_C, C16): brand = trimmed, signal =
+  // identity. The vividness lever (style:'full-chroma') reassigns the brand to the identity
+  // policy — the signal register, no new numbers — releasing the trim + loudness lobes.
   const darkC9 = opts?.darkChromaCurve && DARK_CTA_C[opts?.darkCtaC ?? 'brand'].policy === 'trimmed'
+      && opts?.style !== 'full-chroma'
     ? ctx.brandC * darkCtaTrim(ctx.darkH) : ctx.brandC
   const darkHueAtL = (L: number) => torsionedHue(ctx.darkH, L, dark9L, ctx.gOffPath)
   return { dark9L, darkC9, darkHueAtL }
@@ -509,14 +520,19 @@ export function solveBrandExit(
   const at = (L: number) => ({ L, C: clampChromaToGamut(L, cFor(L), brandH), H: brandH })
   const blackLc = (L: number, C: number, H: number) =>
     Math.abs(apcaLc(apcaYAt(0, 0, 0), apcaYAt(L, clampChromaToGamut(L, C, H), H)))
-  const poleOk = (L: number, C: number, H: number): boolean => {
-    // landings honor the same fire margin as the enforcers — a release point chosen at
-    // exactly Lc 60.0 is the same external-checker razor the margin exists to kill
-    if (enforceLc !== undefined) {
-      const bar = enforceLc + APCA_ENFORCE_MARGIN_LC
-      return whiteTextLcAt(L, C, H) >= bar || blackLc(L, C, H) >= bar
-    }
-    if (coLc === undefined) return true
+  // "APCA DECIDES, WCAG FLOORS" (owner ruling 2026-07-16, C23): the DECISION gate —
+  // travel distances and thus direction — is the PERCEPTUAL pole condition (the apca Lc
+  // bar) in BOTH lanes; the wcag lane's legal composite (4.5 + the clearance Lc — the
+  // old poleOk's coLc branch) no longer picks the landing. It rides as a LAW EXTENSION:
+  // travel continues along the decided direction until the law also passes. Landings now
+  // match across lanes except where the law forces extra travel. The margin idiom stays —
+  // a release point at exactly Lc 60.0 is the external-checker razor.
+  const decisionBar = (enforceLc ?? CTA_ONFILL_ENFORCE_LC) + APCA_ENFORCE_MARGIN_LC
+  const apcaOk = (L: number, C: number, H: number): boolean =>
+    whiteTextLcAt(L, C, H) >= decisionBar || blackLc(L, C, H) >= decisionBar
+  const lawOk = (L: number, C: number, H: number): boolean => {
+    if (enforceLc !== undefined) return true             // apca lane: decision IS the law
+    if (coLc === undefined) return legalRatio(L, C, H, 1.0) >= 4.5 || legalRatio(L, C, H, 0) >= 4.5
     const bar = coLc + APCA_ENFORCE_MARGIN_LC
     return (legalRatio(L, C, H, 1.0) >= 4.5 && whiteTextLcAt(L, C, H) >= bar)
         || (legalRatio(L, C, H, 0) >= 4.5 && blackLc(L, C, H) >= bar)
@@ -527,10 +543,10 @@ export function solveBrandExit(
     (inBrickBand(seed.L, anchor.C, brandH) && dh > RED_SOLVE.magentaDh)
   if (!member) return null
   const release = RED_GATE.G + RED_SOLVE.ring
-  const travel = (dir: 1 | -1): number | null => {
+  const travel = (dir: 1 | -1, withLaw = false): number | null => {
     for (let L = seed.L; L >= 0.28 && L <= 0.92; L += dir * 0.002) {
       const c = at(L)
-      if (redSolveDist(c, red) >= release && poleOk(L, c.C, c.H)) return Math.abs(L - seed.L)
+      if (redSolveDist(c, red) >= release && apcaOk(L, c.C, c.H) && (!withLaw || lawOk(L, c.C, c.H))) return Math.abs(L - seed.L)
     }
     return null
   }
@@ -552,13 +568,24 @@ export function solveBrandExit(
   // nearest edge is up, and it is not already vivid-dark) keeps the bright landing ONLY when
   // the up-exit reads intentionally light — else it takes the dark throw. Below the cut the
   // shipped "brand bright salmon + red deep" reads like the exact-mode safety pattern, not a
-  // brand that chose to go light. Per-lane by construction (wcag up-exits dim, apca bright).
+  // brand that chose to go light. LANE-INVARIANT since C23: the decision distances are
+  // apca-gated in both lanes, so the direction pick no longer flips with the profile.
   const trueRedDim = onHue && !magentaUp && !goldBright && !vividDown && !nearDark &&
     up !== null && dn !== null && seed.L + up < RED_SOLVE.trueRedBrightCut
   const dir = magentaUp || goldBright ? 1 : vividDown || trueRedDim ? -1 : nearDark ? -1 : 1
-  const t = dir === -1 ? dn! : up!
-  let landing: BrandExitLanding = { L: seed.L + dir * t, H: brandH, cMul: 1, up: dir === 1 }
-  if (dir === -1) {
+  // the LAW EXTENSION (C23): the decided direction holds; the wcag composite only pushes
+  // the landing further along it. If the law is unreachable in-range on the decided side,
+  // the other side's law point ships — a legal requirement is the one thing allowed to
+  // overrule the perceptual pick.
+  let landDir: 1 | -1 = dir
+  let t = travel(dir, true)
+  if (t === null) {
+    landDir = dir === 1 ? -1 : 1
+    t = travel(landDir, true)
+    if (t === null) return { L: 0.03, H: brandH, cMul: 1, up: false }
+  }
+  let landing: BrandExitLanding = { L: seed.L + landDir * t, H: brandH, cMul: 1, up: landDir === 1 }
+  if (landDir === -1) {
     const l = at(landing.L)
     if (inBrickBand(l.L, l.C, l.H)) {
       landing = {
@@ -575,12 +602,14 @@ export function solveBrandExit(
 // out like every cta"; direction accepted on render/c12-dark-solve.html) =====================
 // The dark cta rides the shipped prominence floor UNLESS it P2-vibrates beside the red dark
 // cta — the P1 gate passes every vibrating dark pair (redGateDist 0.11-0.20; the known dark
-// blindness), so membership + release key on P2: member = p2 < P2_D_UP, travel the nearest
-// direction to p2 ≥ P2_D with a passing pole. Red dark stays canonical/static. Measured on
-// the near-red population (70 pairs, both lanes): 0 below bar (shipped: 12, worst 0.086);
-// every mover = the apca lane lifting UP ~0.70→0.77 (brighter = MORE prominent — no dead
-// buttons); wcag already separates (red dark 0.585 vs floor 0.70) and never fires. Full-wheel
-// over-fire: 3/576, all within dh −4…+6 of red. Returns null = not a member — byte-identical.
+// blindness), so membership + release key on P2: member AND release = the ONE clean bar
+// P2_D (C22 — the old split bars left [P2_D_UP, P2_D) pairs neither fired nor clean), travel
+// the nearest direction with a passing pole. Red dark stays canonical/static; the reference
+// redDark is the APCA lane's in BOTH lanes and the decision pole is the apca Lc bar (C23);
+// the wcag 4.5 rides as a law extension. Post-C22/C23 near-red fine grid (1 736 seeds/lane):
+// wcag fires 58, apca 281 — the pre-C22 "wcag never fires" era is RETIRED; calibration
+// numbers for the queued dark-marks round must be re-measured, not read from history.
+// Returns null = not a member — byte-identical.
 export function solveDarkCtaExit(
   cur: { L: number; C: number; H: number },
   cFor: (L: number) => number, darkH: number,
@@ -588,21 +617,35 @@ export function solveDarkCtaExit(
   enforceLc?: number,
 ): number | null {
   const at = (L: number) => ({ L, C: clampChromaToGamut(L, cFor(L), darkH), H: darkH })
-  if (p2Diff(cur, redDark) >= P2_D_UP) return null
-  // landings honor the enforce fire margin (see solveBrandExit's poleOk) — no Lc-60.0 razors
-  const poleOk = (L: number, C: number, H: number): boolean => enforceLc !== undefined
-    ? (whiteTextLcAt(L, C, H) >= enforceLc + APCA_ENFORCE_MARGIN_LC ||
-       blackTextLcAt(L, C, H) >= enforceLc + APCA_ENFORCE_MARGIN_LC)
+  // MEMBERSHIP = the CLEAN bar (owner-caught 2026-07-16, two live holes): the old split
+  // bars (fire under P2_D_UP 0.11, release at P2_D 0.12) left every pair landing in
+  // [0.11, 0.12) neither fired nor clean — wcag #FF0000 shipped there, and the apca
+  // #ff4c4c–#ff5c5c corridor sat as a confusable hole between fired neighbors. One bar
+  // gives CONTINUITY by construction: travel shrinks to zero as a pair approaches the
+  // bar, so sliding a seed never jumps between separated and confusable.
+  if (p2Diff(cur, redDark) >= P2_D) return null
+  // "APCA DECIDES, WCAG FLOORS" (C23, mirrors solveBrandExit): the decision gate is the
+  // apca Lc bar in both lanes (with the enforce fire margin — no Lc-60.0 razors); the
+  // wcag 4.5 rides as the LAW EXTENSION along the decided direction only.
+  const decisionBar = (enforceLc ?? CTA_ONFILL_ENFORCE_LC) + APCA_ENFORCE_MARGIN_LC
+  const apcaOk = (L: number, C: number, H: number): boolean =>
+    whiteTextLcAt(L, C, H) >= decisionBar || blackTextLcAt(L, C, H) >= decisionBar
+  const lawOk = (L: number, C: number, H: number): boolean => enforceLc !== undefined
+    ? true
     : (legalRatio(L, C, H, 1.0) >= 4.5 || legalRatio(L, C, H, 0) >= 4.5)
-  const travel = (dir: 1 | -1): number | null => {
+  const travel = (dir: 1 | -1, withLaw = false): number | null => {
     for (let L = cur.L; L >= 0.28 && L <= 0.92; L += dir * 0.002) {
       const c = at(L)
-      if (p2Diff(c, redDark) >= P2_D && poleOk(L, c.C, c.H)) return Math.abs(L - cur.L)
+      if (p2Diff(c, redDark) >= P2_D && apcaOk(L, c.C, c.H) && (!withLaw || lawOk(L, c.C, c.H))) return Math.abs(L - cur.L)
     }
     return null
   }
   const dn = travel(-1), up = travel(1)
   if (dn === null && up === null) return null // trapped: keep the shipped floor (unreachable on measured geometry)
   const dir = dn !== null && (up === null || dn <= up) ? -1 : 1
-  return cur.L + dir * (dir === -1 ? dn! : up!)
+  let landDir: 1 | -1 = dir
+  let t = travel(dir, true)
+  if (t === null) { landDir = dir === 1 ? -1 : 1; t = travel(landDir, true) }
+  if (t === null) return null // the law is unreachable in-range either way: keep the shipped floor
+  return cur.L + landDir * t
 }
