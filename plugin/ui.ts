@@ -1,4 +1,5 @@
-import { resolveTheme, signalScalesFor, type SecondaryStyle, type ResolvedTheme } from '../src/engine/resolve'
+import { resolveTheme, signalScalesFor, escapeCtaFamily, type SecondaryStyle, type ResolvedTheme } from '../src/engine/resolve'
+import { redGateDist, RED_GATE } from '../src/engine/collision'
 import { ARCHETYPES, type Archetype } from '../src/engine/archetypes'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
 import { themeToFigma } from '../src/engine/figmaRender'
@@ -16,6 +17,14 @@ let neutralLevel: NeutralLevel = 'default'
 let primaryMode: 'recommended' | 'exact' | Archetype = 'recommended'
 let secondaryStyle: SecondaryStyle = 'default'
 let contrastProfile: ContrastProfile = 'apca' // APCA = the shipped default; WCAG = the opt-in legal mode
+// the NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): red-range brands can swap the cta
+// fill trio to the brand-neutral's ink register (near-black light / near-white dark).
+// The toggle is VISIBLE only in red range, and the EFFECTIVE flag is ctaEscape &&
+// inRedRange — outside the range the checkbox is inert, never force-cleared (clearing
+// on every keystroke wiped the toggle through 3-digit intermediate parses like "#EA3",
+// review-caught 2026-07-16), and it can't ride an apply silently either.
+let ctaEscape = false
+let inRedRange = false
 let pendingName: string | null = null // brand armed for overwrite confirmation
 // The secondary is the demo's THREE-STATE field: none (default — just "+ Add secondary") →
 // derived (the input tracks the primary live; the engine derives the default secondary) →
@@ -50,6 +59,8 @@ const neutralInfo        = $<HTMLElement>('neutral-info')
 const neutralSwatch   = $<HTMLElement>('neutral-swatch')
 const neutralSelect   = $<HTMLSelectElement>('neutral-select')
 const profileBtns     = document.querySelectorAll<HTMLButtonElement>('.seg-btn[data-profile]')
+const ctaEscapeRow    = $<HTMLElement>('cta-escape-row')
+const ctaEscapeBox    = $<HTMLInputElement>('cta-escape')
 const matrixEl        = $<HTMLElement>('matrix')
 const applyBtn        = $<HTMLButtonElement>('apply-btn')
 const statusEl        = $<HTMLElement>('status')
@@ -143,9 +154,9 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
   const effective = (n: typeof SIGNALS[number]['name']) =>
     t.themed.signalOverrides.find(o => o.name === n)?.scale ?? sigScales.get(n)!.scale
 
-  type Row = { label: string; scale: GeneratedScale; idHex?: string; outline?: boolean }
+  type Row = { label: string; scale: GeneratedScale; idHex?: string; outline?: boolean; escape?: boolean }
   const rows: Row[] = [
-    { label: 'primary', scale: t.themed.scale, idHex: t.themed.scale.identityHex },
+    { label: 'primary', scale: t.themed.scale, idHex: t.themed.scale.identityHex, escape: ctaEscape && inRedRange },
     ...(t.secondary ? [{ label: 'secondary', scale: t.secondary.scale, idHex: t.secondary.scale.identityHex, outline: t.secondary.style === 'outline' }] : []),
     { label: 'neutral', scale: nScale },
     ...SIGNALS.map(s => ({ label: s.name, scale: effective(s.name) })),
@@ -183,6 +194,14 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
       cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink10}" title="cta (outline)">Aa</div>`)
       cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink10};background:rgba(${rgb},0.09)" title="cta-hover (outline)">Aa</div>`)
       cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink10};background:rgba(${rgb},0.18)" title="cta-pressed (outline)">Aa</div>`)
+    } else if (row.escape) {
+      // the neutral cta escape: the fill trio previews the brand-neutral's ink register
+      const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
+      const esc = escapeCtaFamily(nScale, 'light', cp)
+      const on = pole(esc.onFillIsWhite)
+      cells.push(`<div class="mx-aa" style="background:${hx(esc.cta)};color:${on}" title="cta (neutral escape)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(esc.ctaHover)};color:${on}" title="cta-hover (neutral escape)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(esc.ctaPressed)};color:${on}" title="cta-pressed (neutral escape)">Aa</div>`)
     } else {
       // filled cta cells carry NO stroke (filled is filled); only outline shows its ring
       const on = pole(row.scale.onFillTextIsWhite)
@@ -204,6 +223,15 @@ function updatePreview() {
     const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
     const t = resolveTheme(themeInput('x'))
     const nScale = generateNeutralScale(t.themed.scale.brandH, neutralLevel, cp)
+
+    // red-range detection: the repel FIRING means the given hex was in the red region
+    // (recommended mode exits the register, so the resolved cta alone would miss exactly
+    // the brands the escape is for); the direct gate check catches exact-mode reds.
+    // The toggle stays checked-but-inert outside the range (effective = && inRedRange).
+    const redCta = signalScalesFor(cp).get('red')!.scale.cta
+    inRedRange = !!t.themed.redRepel || redGateDist(t.themed.scale.cta, redCta) <= RED_GATE.G
+    ctaEscapeRow.style.display = inRedRange ? '' : 'none'
+
     renderMatrix(t, nScale)
 
     // the bar's live swatches: neutral shows its highlight-9; a derived secondary shows the
@@ -308,7 +336,7 @@ function buildAndSend() {
       return { name: s.name, scale: ov?.scale ?? sigScales.get(s.name)!.scale, variant }
     })
 
-    const { light, dark } = themeToFigma(r, { secondary, secondaryStyle: t.secondary?.style, neutralLevel, signals, contrastProfile: cp })
+    const { light, dark } = themeToFigma(r, { secondary, secondaryStyle: t.secondary?.style, neutralLevel, signals, contrastProfile: cp, ctaEscape: ctaEscape && inRedRange })
 
     // The engine now names signals by identity (red / yellow / green /
     // blue), so both the primitive path (system/<identity>/<variant>) and
@@ -333,7 +361,7 @@ function buildAndSend() {
 
     // confirmed only when this exact name was just flagged as an overwrite.
     const confirmed = pendingName === name
-    parent.postMessage({ pluginMessage: { type: 'apply', brand: name, brandRaw, shared, confirmed, secondary: secondaryMode !== 'off', contrastProfile } }, '*')
+    parent.postMessage({ pluginMessage: { type: 'apply', brand: name, brandRaw, shared, confirmed, secondary: secondaryMode !== 'off', contrastProfile, ctaEscape: ctaEscape && inRedRange } }, '*')
   } catch (err) {
     applyBtn.disabled = false
     setStatus(String(err), 'err')
@@ -431,6 +459,11 @@ profileBtns.forEach(btn => {
     contrastProfile = btn.dataset.profile as ContrastProfile
     updatePreview()
   })
+})
+
+ctaEscapeBox.addEventListener('change', () => {
+  ctaEscape = ctaEscapeBox.checked
+  updatePreview()
 })
 
 applyBtn.addEventListener('click', buildAndSend)

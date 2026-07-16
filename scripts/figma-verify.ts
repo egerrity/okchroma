@@ -67,5 +67,28 @@ ok((figma.dark as any).brand['cta'].$value.hex === '#869cda', `brand/cta dark he
 // Identical token names across modes
 ok(JSON.stringify(Object.keys((figma.light as any).brand)) === JSON.stringify(Object.keys((figma.dark as any).brand)), 'brand keys differ across modes')
 
+// NEUTRAL CTA ESCAPE (Phase 3): with the flag on, the brand's fill trio re-resolves from
+// the brand-neutral's ink register (cta anchors at neutral ink-11 exactly; near-black
+// light / near-white dark; on-cta flips accordingly); cta-ink and the ramp stay the
+// brand's own; flag OFF (the run above) is the unchanged path.
+{
+  const red = resolveBrand('#EA3E3E', 'escape-probe')
+  const redSignals = SIGNALS.map(s => {
+    const o = red.signalOverrides.find(x => x.name === s.name)
+    return { name: s.name, scale: o?.scale ?? SIGNAL_SCALES.get(s.name)!.scale }
+  })
+  const esc = themeToFigma(red, { secondary: null, neutralLevel: 'default', signals: redSignals, ctaEscape: true })
+  const plain = themeToFigma(red, { secondary: null, neutralLevel: 'default', signals: redSignals })
+  for (const mode of ['light', 'dark'] as const) {
+    const b = (esc[mode] as any).brand, n = (esc[mode] as any).neutral, p = (plain[mode] as any).brand
+    ok(b['cta'].$value.hex === n['ink-11'].$value.hex, `${mode} escape cta ${b['cta'].$value.hex} != neutral ink-11 ${n['ink-11'].$value.hex}`)
+    ok(b['cta'].$value.hex !== p['cta'].$value.hex, `${mode} escape cta did not move off the brand cta`)
+    ok(b['cta-ink'].$value.hex === p['cta-ink'].$value.hex, `${mode} escape touched cta-ink (must stay the brand's own)`)
+    ok(b['paper-1'].$value.hex === p['paper-1'].$value.hex, `${mode} escape touched the ramp`)
+  }
+  ok((esc.light as any).brand['on-cta'].$value.hex === '#ffffff', `escape light on-cta should be white on the near-black fill (got ${(esc.light as any).brand['on-cta'].$value.hex})`)
+  ok((esc.dark as any).brand['on-cta'].$value.hex === '#000000', `escape dark on-cta should be black on the near-white fill (got ${(esc.dark as any).brand['on-cta'].$value.hex})`)
+}
+
 if (fails.length) { console.error('FAIL:\n' + fails.map(f => '  - ' + f).join('\n')); process.exit(1) }
 console.log('PASS — themeToFigma: brand/secondary/neutral + 4 signals, light+dark, srgb-components shape, spot hexes match, keys aligned across modes.')

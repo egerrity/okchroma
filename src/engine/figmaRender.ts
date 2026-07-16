@@ -4,7 +4,7 @@ import { toHex } from './cssRender'
 import { srgbEmitChannels } from './colorMath'
 import { stopTokenName, onFillTokenName, tokenOrder, type RampKind } from './tokenNames'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
-import { OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, type ResolvedBrand, type SecondaryStyle } from './resolve'
+import { OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, escapeCtaFamily, type ResolvedBrand, type SecondaryStyle } from './resolve'
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v))
 
@@ -94,6 +94,12 @@ export interface ThemeInput {
   // profile the theme was resolved under: the neutral generated HERE must match the caller's
   // brand/secondary/signal scales (which already carry it). Default wcag.
   contrastProfile?: ContrastProfile
+
+  // the NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): the brand's cta FILL trio +
+  // on-cta re-resolve from the brand-neutral's ink register (near-black light /
+  // near-white dark) — the red-collision de-conflict. Same tokens, different values
+  // (the outline idiom); default off = byte-identical. cta-ink untouched.
+  ctaEscape?: boolean
 }
 
 export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: FigmaGroup; dark: FigmaGroup } {
@@ -151,8 +157,23 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
       // on-cta = the family's ink-10, NOT a pole — the plugin aliases non-pole on-cta to the sibling ink-10
       if (s10) secondaryGroup[onFillTokenName('brand')] = colorFromStop(s10)
     }
+    const brandGroup = rampGroup(scale[mode], mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark, 'brand', brandExtra(scale, mode))
+    // neutral cta escape re-expression (mirrors the outline block above): the brand's
+    // FILL trio + on-cta swap to the brand-neutral's ink register; cta-ink + the ramp
+    // stay the brand's own. With NO real secondary the secondary group MIRRORS the brand
+    // (secondary = scale above), so the escape applies there too — the un-escaped raw
+    // trio must not survive in the mirror (review-caught latent divergence).
+    if (input.ctaEscape) {
+      const esc = escapeCtaFamily(nScale, mode, input.contrastProfile)
+      for (const g of input.secondary ? [brandGroup] : [brandGroup, secondaryGroup]) {
+        g['cta'] = colorFromStop(esc.cta)
+        g['cta-hover'] = colorFromStop(esc.ctaHover)
+        g['cta-pressed'] = colorFromStop(esc.ctaPressed)
+        g[onFillTokenName('brand')] = colorFromHex(esc.onFillIsWhite)
+      }
+    }
     const g: FigmaGroup = {
-      brand: rampGroup(scale[mode], mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark, 'brand', brandExtra(scale, mode)),
+      brand: brandGroup,
       secondary: secondaryGroup,
       neutral: neutralGroup,
     }

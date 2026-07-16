@@ -1,4 +1,5 @@
-import { resolveTheme, signalScalesFor, type SecondaryStyle, type ResolvedTheme } from '../src/engine/resolve'
+import { resolveTheme, signalScalesFor, escapeCtaFamily, type SecondaryStyle, type ResolvedTheme } from '../src/engine/resolve'
+import { redGateDist, RED_GATE } from '../src/engine/collision'
 import { ARCHETYPES, type Archetype } from '../src/engine/archetypes'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
 import { SIGNALS } from '../src/engine/signals'
@@ -24,6 +25,14 @@ let contrastProfile: ContrastProfile = 'wcag'
 // regardless (delete the columns to drop the lane; with this off they stay deleted —
 // no regeneration). Turning it on over an existing base = a confirm + full backfill.
 let includeApca = false
+// the NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): red-range brands can swap the cta
+// fill trio to the brand-neutral's ink register (near-black light / near-white dark).
+// The toggle is VISIBLE only in red range, and the EFFECTIVE flag is ctaEscape &&
+// inRedRange — outside the range the checkbox is inert, never force-cleared (clearing
+// on every keystroke wiped the toggle through 3-digit intermediate parses like "#EA3",
+// review-caught 2026-07-16), and it can't ride an apply or recipe silently either.
+let ctaEscape = false
+let inRedRange = false
 // brand + the exact confirm TOKEN it was armed with (reason-scoped — the plugin only
 // honors a confirm whose reasons haven't changed since it was shown; changing the
 // toggle or fields between the two Applies re-confirms)
@@ -62,6 +71,8 @@ const neutralSwatch   = $<HTMLElement>('neutral-swatch')
 const neutralSelect   = $<HTMLSelectElement>('neutral-select')
 const profileBtns     = document.querySelectorAll<HTMLButtonElement>('.seg-btn[data-profile]')
 const includeApcaBox  = $<HTMLInputElement>('include-apca')
+const ctaEscapeRow    = $<HTMLElement>('cta-escape-row')
+const ctaEscapeBox    = $<HTMLInputElement>('cta-escape')
 const matrixEl        = $<HTMLElement>('matrix')
 const applyBtn        = $<HTMLButtonElement>('apply-btn')
 const statusEl        = $<HTMLElement>('status')
@@ -148,6 +159,10 @@ function themeInput(name: string) {
     deriveSecondary: secondaryMode === 'derived' || undefined,
     secondaryStyle: secondaryMode === 'custom' ? secondaryStyle : undefined,
     contrastProfile: cp,
+    // emit-layer flag (the neutral cta escape) — resolveTheme ignores it; the payload
+    // builder hands it to themeToFigma and the recipe stores the EFFECTIVE value
+    // (checked AND in red range), so a stale checkbox can't ride a recipe replay
+    ctaEscape: (ctaEscape && inRedRange) || undefined,
   }
 }
 
@@ -161,9 +176,9 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
   const effective = (n: typeof SIGNALS[number]['name']) =>
     t.themed.signalOverrides.find(o => o.name === n)?.scale ?? sigScales.get(n)!.scale
 
-  type Row = { label: string; scale: GeneratedScale; idHex?: string; outline?: boolean }
+  type Row = { label: string; scale: GeneratedScale; idHex?: string; outline?: boolean; escape?: boolean }
   const rows: Row[] = [
-    { label: 'primary', scale: t.themed.scale, idHex: t.themed.scale.identityHex },
+    { label: 'primary', scale: t.themed.scale, idHex: t.themed.scale.identityHex, escape: ctaEscape && inRedRange },
     ...(t.secondary ? [{ label: 'secondary', scale: t.secondary.scale, idHex: t.secondary.scale.identityHex, outline: t.secondary.style === 'outline' }] : []),
     { label: 'neutral', scale: nScale },
     ...SIGNALS.map(s => ({ label: s.name, scale: effective(s.name) })),
@@ -201,6 +216,13 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
       cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink10}" title="cta (outline)">Aa</div>`)
       cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink10};background:rgba(${rgb},0.09)" title="cta-hover (outline)">Aa</div>`)
       cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink10};background:rgba(${rgb},0.18)" title="cta-pressed (outline)">Aa</div>`)
+    } else if (row.escape) {
+      // the neutral cta escape: the fill trio previews the brand-neutral's ink register
+      const esc = escapeCtaFamily(nScale, 'light', cp)
+      const on = pole(esc.onFillIsWhite)
+      cells.push(`<div class="mx-aa" style="background:${hx(esc.cta)};color:${on}" title="cta (neutral escape)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(esc.ctaHover)};color:${on}" title="cta-hover (neutral escape)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(esc.ctaPressed)};color:${on}" title="cta-pressed (neutral escape)">Aa</div>`)
     } else {
       // filled cta cells carry NO stroke (filled is filled); only outline shows its ring
       const on = pole(row.scale.onFillTextIsWhite)
@@ -222,6 +244,15 @@ function updatePreview() {
     const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
     const t = resolveTheme(themeInput('x'))
     const nScale = generateNeutralScale(t.themed.scale.brandH, neutralLevel, cp)
+
+    // red-range detection: the repel FIRING means the given hex was in the red region
+    // (recommended mode exits the register, so the resolved cta alone would miss exactly
+    // the brands the escape is for); the direct gate check catches exact-mode reds.
+    // The toggle stays checked-but-inert outside the range (effective = && inRedRange).
+    const redCta = signalScalesFor(cp).get('red')!.scale.cta
+    inRedRange = !!t.themed.redRepel || redGateDist(t.themed.scale.cta, redCta) <= RED_GATE.G
+    ctaEscapeRow.style.display = inRedRange ? '' : 'none'
+
     renderMatrix(t, nScale)
 
     // the bar's live swatches: neutral shows its highlight-9; a derived secondary shows the
@@ -400,6 +431,11 @@ profileBtns.forEach(btn => {
 // the confirm + collection-wide backfill — is announced before Apply is ever pressed.
 // Changing the toggle DISARMS any armed batch (the arm copy described the old posture)
 // and clears a pending single-apply confirm (its token no longer matches anyway).
+ctaEscapeBox.addEventListener('change', () => {
+  ctaEscape = ctaEscapeBox.checked
+  updatePreview()
+})
+
 includeApcaBox.addEventListener('change', () => {
   includeApca = includeApcaBox.checked
   rosterArmed = false

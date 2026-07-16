@@ -4,7 +4,7 @@ import { generateIllustrationScale, generateNeutralScale, type GeneratedScale, t
 import { srgbEmitChannels, masterEmitChannels } from './colorMath'
 import { clampChromaToGamut } from './constraints'
 import { stopTokenName, onFillTokenName, tokenOrder } from './tokenNames'
-import { signalScalesFor, OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, type ResolvedBrand, type SecondaryStyle } from './resolve'
+import { signalScalesFor, OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, escapeCtaFamily, type ResolvedBrand, type SecondaryStyle } from './resolve'
 import { SIGNALS } from './signals'
 
 export function toHex(r: number, g: number, b: number): string {
@@ -208,7 +208,11 @@ export function brandCss(
   // the secondary's mode chip: 'outline' re-resolves the fill trio — cta transparent, cta-hover the
   // cta color at OUTLINE_HOVER_ALPHA (the tinted hover), on-cta ink-10, cta-border ALWAYS the
   // gated highlight-8. Same tokens, different resolution — no component changes needed.
-  secondaryStyle?: SecondaryStyle
+  secondaryStyle?: SecondaryStyle,
+  // the NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): the brand's cta FILL trio + on-cta
+  // re-resolve from the brand-neutral's ink register (near-black light / near-white dark) —
+  // the red-collision de-conflict. Same outline idiom; default off = byte-identical.
+  ctaEscape?: boolean
 ): string {
   const { scale } = r
   const note = annotationNote(r) + noteSuffix
@@ -283,6 +287,20 @@ export function brandCss(
   // cta-hover = highlight-8 at OUTLINE_HOVER_ALPHA (pressed doubles it) — the STABLE contrast-gated stop, the same one
   // the ring aliases (owner: 9% of the generated subtle cta was imperceptible — it's a very
   // light/dark color; the hover must reference a stable value).
+  // neutral cta escape re-resolution: emitted AFTER the brand body so the cascade takes
+  // these values (the outline idiom). Fill trio + on-cta only — cta-ink and the ramp stay
+  // the brand's own.
+  const escape = (mode: 'light' | 'dark'): string[] => {
+    if (!ctaEscape) return []
+    const esc = escapeCtaFamily(nScale, mode, contrastProfile)
+    return [
+      `  --brand-cta: ${stopHex(esc.cta)};`,
+      `  --brand-cta-hover: ${stopHex(esc.ctaHover)};`,
+      `  --brand-cta-pressed: ${stopHex(esc.ctaPressed)};`,
+      `  --brand-${onFillTokenName('brand')}: ${onColor(esc.onFillIsWhite)};`,
+    ]
+  }
+
   const outline = (mode: 'light' | 'dark'): string[] => {
     if (secondaryStyle !== 'outline' || !secondary) return []
     const s8 = (mode === 'light' ? secondary.light : secondary.dark).find(s => s.stop === 8)
@@ -310,14 +328,21 @@ export function brandCss(
     secondaryStyle === 'outline'
       ? lines.filter(l => !l.startsWith('  --secondary-cta:') && !l.startsWith('  --secondary-cta-hover:') && !l.startsWith('  --secondary-cta-pressed:'))
       : lines
+  // same P3-pop class for the ESCAPE (the owner-caught outline lesson, 2026-07-11): the
+  // escaped fill trio ships the neutral's whisper chroma — an out-of-sRGB BRAND cta's P3
+  // override sitting last in the cascade would pop the brand fill back in over it.
+  const dropEscapeCta = (lines: string[]): string[] =>
+    ctaEscape
+      ? lines.filter(l => !l.startsWith('  --brand-cta:') && !l.startsWith('  --brand-cta-hover:') && !l.startsWith('  --brand-cta-pressed:'))
+      : lines
   const p3Light = [
-    ...brandKindP3Body('brand', scale, 'light'),
+    ...dropEscapeCta(brandKindP3Body('brand', scale, 'light')),
     ...(secondary ? dropOutlineCta(brandKindP3Body('secondary', secondary, 'light')) : []),
     ...brandKindP3Body('neutral', nScale, 'light'),
     ...r.signalOverrides.flatMap(o => brandKindP3Body(o.name, o.scale, 'light')),
   ]
   const p3Dark = [
-    ...brandKindP3Body('brand', scale, 'dark'),
+    ...dropEscapeCta(brandKindP3Body('brand', scale, 'dark')),
     ...(secondary ? dropOutlineCta(brandKindP3Body('secondary', secondary, 'dark')) : []),
     ...brandKindP3Body('neutral', nScale, 'dark'),
     ...r.signalOverrides.flatMap(o => brandKindP3Body(o.name, o.scale, 'dark')),
@@ -328,6 +353,7 @@ export function brandCss(
     `[data-brand="${slug}"] {`,
     ...lightAnchors,
     ...brandKindBody('brand', scale, 'light'),
+    ...escape('light'),
     brandIdentity,
     ...illusVars,
     ...secondaryLight,
@@ -339,6 +365,7 @@ export function brandCss(
     `[data-brand="${slug}"][data-theme="dark"] {`,
     ...darkAnchors,
     ...brandKindBody('brand', scale, 'dark'),
+    ...escape('dark'),
     ...secondaryDark,
     ...outline('dark'),
     ...brandKindBody('neutral', nScale, 'dark'),

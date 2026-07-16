@@ -131,6 +131,13 @@ body {
 }
 .add:hover { color: #1a1a1a; border-color: #7c6fcd; background: #7c6fcd0d; }
 
+/* the red-range escape checkbox line (under the primary field) */
+.check-line {
+  display: flex; align-items: center; gap: 6px; margin-top: 8px;
+  font-size: 12px; font-weight: 600; color: #1a1a1a; cursor: pointer; user-select: none;
+}
+.check-line input[type="checkbox"] { accent-color: #7c6fcd; width: 14px; height: 14px; cursor: pointer; }
+
 /* ── Segmented control ── */
 .seg {
   display: flex; background: #f2f2f2; border-radius: 8px; padding: 3px; gap: 2px; height: 34px;
@@ -220,6 +227,10 @@ body {
       </span>
     </div>
     <div class="info-line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span id="primary-info">Engine adjusts for optimal legibility</span></div>
+    <label class="check-line" id="cta-escape-row" for="cta-escape" style="display:none" title="This color sits in the red signal's range — swap the action buttons to the brand's neutral (near-black in light, near-white in dark) so they can't read as destructive">
+      <input type="checkbox" id="cta-escape" />
+      <span>Neutral CTA (red-collision escape)</span>
+    </label>
   </div>
 
   <div class="bar-field" style="position:relative" id="secondary-slot">

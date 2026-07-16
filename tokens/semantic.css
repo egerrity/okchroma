@@ -47,15 +47,16 @@
   --brand-bg-faint:              var(--brand-paper-2);
   --brand-bg-subtle:             var(--brand-wash-5);
   --brand-bg-subtle-hover:       var(--brand-wash-6);
-  --brand-bg-emphasis:           var(--brand-cta-1);
-  --brand-bg-emphasis-hover:     var(--brand-cta-2);
+  --brand-bg-emphasis:           var(--brand-cta);
+  --brand-bg-emphasis-hover:     var(--brand-cta-hover);
+  --brand-bg-emphasis-pressed:   var(--brand-cta-pressed);
 
   --brand-border-subtle:         var(--brand-wash-4);
   --brand-border-subtle-hover:   var(--brand-wash-5);
   --brand-border-default:            var(--brand-wash-6);
   --brand-border-default-hover:      var(--brand-highlight-8);
-  --brand-border-emphasis:       var(--brand-cta-1);
-  --brand-border-emphasis-hover: var(--brand-cta-2);
+  --brand-border-emphasis:       var(--brand-cta);
+  --brand-border-emphasis-hover: var(--brand-cta-hover);
 }
 
 /* ─── role.secondary (the brand's secondary ramp; mirrors brand when none) ──── */
@@ -70,15 +71,16 @@
   --secondary-bg-faint:              var(--secondary-paper-2);
   --secondary-bg-subtle:             var(--secondary-wash-5);
   --secondary-bg-subtle-hover:       var(--secondary-wash-6);
-  --secondary-bg-emphasis:           var(--secondary-cta-1);
-  --secondary-bg-emphasis-hover:     var(--secondary-cta-2);
+  --secondary-bg-emphasis:           var(--secondary-cta);
+  --secondary-bg-emphasis-hover:     var(--secondary-cta-hover);
+  --secondary-bg-emphasis-pressed:   var(--secondary-cta-pressed);
 
   --secondary-border-subtle:         var(--secondary-wash-4);
   --secondary-border-subtle-hover:   var(--secondary-wash-5);
   --secondary-border-default:           var(--secondary-wash-6);
   --secondary-border-default-hover:     var(--secondary-highlight-8);
-  --secondary-border-emphasis:       var(--secondary-cta-1);
-  --secondary-border-emphasis-hover: var(--secondary-cta-2);
+  --secondary-border-emphasis:       var(--secondary-cta);
+  --secondary-border-emphasis-hover: var(--secondary-cta-hover);
 }
 
 /* ─── role.illustration ──────────────────────────────────────────────────────

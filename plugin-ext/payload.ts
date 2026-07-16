@@ -26,8 +26,10 @@ export const COLUMNS: Column[] = ['wcag', 'wcag-dark', 'apca', 'apca-dark']
 export type TokenColumns = Record<Column, FlatTok[]>
 
 // resolveTheme's input, minus the profile — the payload always solves BOTH lanes
-// (owner: "always both, no picker").
-export type ThemeSpec = Omit<Parameters<typeof resolveTheme>[0], 'contrastProfile'>
+// (owner: "always both, no picker"). ctaEscape rides ALONGSIDE (an emit-layer flag, not a
+// solve input — the neutral cta escape, Phase 3): stored in the recipe, so backfills and
+// re-applies preserve a brand's escape posture.
+export type ThemeSpec = Omit<Parameters<typeof resolveTheme>[0], 'contrastProfile'> & { ctaEscape?: boolean }
 
 // The base collection's documented default seed (owner decision: fixed engine default —
 // symmetric, every real brand is an extension). Secondary seed = the derived pastel;
@@ -91,6 +93,7 @@ function lane(
     neutralLevel,
     signals,
     contrastProfile: profile,
+    ctaEscape: input.ctaEscape,
   })
   const inc = includeSecondary === true || !!t.secondary
   return { light: toFlat(light, 'light', inc), dark: toFlat(dark, 'dark', inc), theme: t }

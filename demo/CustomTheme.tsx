@@ -3,7 +3,8 @@ import {
   AlertCircle, Check, CheckCircle, TriangleAlert, Sparkles, ArrowRight, ChevronDown, ChevronUp,
   LayoutDashboard, FolderKanban, ListTodo, BarChart3, Users, Settings, Search, Download, Plus, Info,
 } from 'lucide-react'
-import { resolveBrand, resolveTheme, type SecondaryStyle } from '../src/engine/resolve'
+import { resolveBrand, resolveTheme, signalScalesFor, type SecondaryStyle } from '../src/engine/resolve'
+import { redGateDist, RED_GATE } from '../src/engine/collision'
 import { ARCHETYPES, type Archetype } from '../src/engine/archetypes'
 import { brandCss, signalsCss, stopHex } from '../src/engine/cssRender'
 import { type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
@@ -112,6 +113,10 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   // Neutral tint level (the neutral is always generated from the brand hue now).
   const [neutralLevel, setNeutralLevel] = useState<NeutralLevel>('default')
   const [view, setView] = useState<View>('palette')
+  // the NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): red-range brands can swap the
+  // cta fill trio to the brand-neutral's ink register — shown only in red range;
+  // leaving the range clears it (a stale hidden escape must never apply silently)
+  const [ctaEscape, setCtaEscape] = useState(false)
   const derived = secState === 'derived'
 
   // Suggestions and the theme always derive from the last VALID hex, so a
@@ -145,10 +150,19 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
     })
     // signals ALWAYS re-emit under the selected profile: the static signals.css now carries the
     // SHIPPED default (apca), so the wcag toggle needs its own override block just like apca did
-    const css = brandCss('custom', 'Custom brand', t.themed, t.secondary?.scale ?? null, '', neutralLevel, cp, t.secondary?.style)
+    // red-range detection gates the escape toggle: the repel FIRING means the given hex
+    // was in the red region (recommended mode exits the register, so the resolved cta
+    // alone would miss exactly the brands the escape is for); the direct gate check
+    // catches exact-mode reds whose cta never moved. The EFFECTIVE flag is checked AND
+    // in-range — the checkbox stays inert outside the range (never force-cleared:
+    // clearing flapped through 3-digit intermediate hex parses, review-caught), and the
+    // css can never carry a stale escape for a non-red brand.
+    const redCta = signalScalesFor(cp).get('red')!.scale.cta
+    const inRedRange = !!t.themed.redRepel || redGateDist(t.themed.scale.cta, redCta) <= RED_GATE.G
+    const css = brandCss('custom', 'Custom brand', t.themed, t.secondary?.scale ?? null, '', neutralLevel, cp, t.secondary?.style, ctaEscape && inRedRange)
       + '\n' + signalsCss(cp)
-    return { t, r: t.themed, accent: t.secondary?.scale ?? null, css }
-  }, [primary, secondary, derived, primaryMode, secondaryStyle, neutralLevel, profile])
+    return { t, r: t.themed, accent: t.secondary?.scale ?? null, css, inRedRange }
+  }, [primary, secondary, derived, primaryMode, secondaryStyle, neutralLevel, profile, ctaEscape])
 
   // The RECOMMENDED resolution, always — exact mode skips the rules, so the
   // checklist and toasts need to know what WOULD have fired to flag it red.
@@ -233,6 +247,15 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
           </ChipSelect>
         </div>
         <InfoLine text={primaryInfo} />
+        {computed.inRedRange && (
+          <label
+            title="This color sits in the red signal's range — swap the action buttons to the brand's neutral (near-black in light, near-white in dark) so they can't read as destructive"
+            style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', userSelect: 'none', color: 'var(--fg-default)' }}
+          >
+            <input type="checkbox" checked={ctaEscape} onChange={e => setCtaEscape(e.target.checked)} style={{ accentColor: 'var(--brand-cta)', width: 14, height: 14, cursor: 'pointer' }} />
+            <span>Neutral CTA (red-collision escape)</span>
+          </label>
+        )}
       </div>
 
       <div className="ct-bar-field" style={{ position: 'relative' }}>

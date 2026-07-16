@@ -150,9 +150,9 @@ async function varsByName(collectionId: string): Promise<Map<string, figma.Varia
 
 figma.ui.onmessage = async (msg) => {
   if (msg.type === 'apply') {
-    const { brand, brandRaw, shared, confirmed, secondary, contrastProfile } = msg as {
+    const { brand, brandRaw, shared, confirmed, secondary, contrastProfile, ctaEscape } = msg as {
       type: 'apply'; brand: string; brandRaw: BrandRamp[]; shared: SharedRamp[]
-      confirmed?: boolean; secondary?: boolean; contrastProfile?: Profile
+      confirmed?: boolean; secondary?: boolean; contrastProfile?: Profile; ctaEscape?: boolean
     }
     const secondaryOn = secondary !== false // global secondary switch (default on)
     const profile: Profile = contrastProfile === 'apca' ? 'apca' : 'wcag'
@@ -385,6 +385,36 @@ figma.ui.onmessage = async (msg) => {
           const { v, created } = writeRaw(path, t, darkMap, false)
           if (created) createdShared++
           primVar.set(path, v)
+        }
+      }
+
+      // NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): the escaped cta REST anchors at
+      // the brand-neutral's ink-11 by construction, so the primitive ALIASES the neutral's
+      // own ink-11 (the on-cta→ink-10 idiom — the relationship stays live in Figma; one
+      // mode-invariant alias resolves per mode through the neutral prim's Light/Dark).
+      // Runs AFTER the shared groups so the target exists. hover/pressed are derived
+      // values and stay raw. Escape OFF on a later re-apply: writeRamp's refresh write
+      // replaces the alias with the brand's raw cta again — fully reversible.
+      // GUARD (review-caught 2026-07-16): shared prims dedup with refresh=false, so an
+      // ink-11 written by an OLDER engine build keeps its stale value — aliasing the rest
+      // onto it while hover/pressed derive from TODAY's solve would mismatch the trio.
+      // Alias only when the target's live values equal the freshly written escape cta
+      // (both modes); otherwise the raw write already carries the correct values.
+      if (ctaEscape) {
+        const neutralPrim = shared.find(g => g.theme === 'neutral')?.prim
+        const target = neutralPrim ? (primVar.get(`${neutralPrim}/ink-11`) ?? primByName.get(`${neutralPrim}/ink-11`)) : undefined
+        const v = primByName.get(`brand/${brand}/primary/cta`)
+        if (v && target) {
+          const eq = (a: unknown, b: unknown): boolean => {
+            const ca = a as figma.RGBA | undefined, cb = b as figma.RGBA | undefined
+            if (!ca || !cb || typeof ca !== 'object' || typeof cb !== 'object' || 'type' in ca || 'type' in cb) return false
+            const E = 1 / 1024
+            return Math.abs(ca.r - cb.r) < E && Math.abs(ca.g - cb.g) < E && Math.abs(ca.b - cb.b) < E
+          }
+          if (eq(target.valuesByMode[pLight], v.valuesByMode[pLight]) && eq(target.valuesByMode[pDark], v.valuesByMode[pDark])) {
+            v.setValueForMode(pLight, figma.variables.createVariableAlias(target))
+            v.setValueForMode(pDark, figma.variables.createVariableAlias(target))
+          }
         }
       }
 

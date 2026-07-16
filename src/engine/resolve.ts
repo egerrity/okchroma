@@ -1,6 +1,6 @@
 
 
-import { generateScale, generateSubtleSecondary, type GeneratedScale, type ContrastProfile } from './colorEngine'
+import { generateScale, generateSubtleSecondary, type GeneratedScale, type ContrastProfile, type ColorStop } from './colorEngine'
 import { darkChromaCurve } from './darkChromaCurve'
 import type { Archetype } from './archetypes'
 import { SIGNALS, type SignalDef } from './signals'
@@ -16,7 +16,7 @@ import {
 } from './collision'
 import { apcaY, apcaLc, encodedChannels, clampChromaToGamut, oklchToLinearRgb } from './constraints'
 import { pickSignalShift, signalSwapVariants } from './signalShift'
-import { hexToOklch, hueDelta, makeStop, maxChromaAt, RED_SOLVE, redSolveDist } from './colorMath'
+import { hexToOklch, hueDelta, makeStop, maxChromaAt, onTextIsWhite, RED_SOLVE, redSolveDist } from './colorMath'
 import { apparentL, grayApparentL, solveCForApparent, solveLForApparent } from './perceptualL'
 import { subtleSecondaryChromaCurve } from './neutralCurve'
 import { hoverL, pressedL } from './archetypes'
@@ -355,6 +355,40 @@ export const OUTLINE_HOVER_ALPHA = 0.09    // owner: "8–10% of the resolved ct
 // outline pressed = the hover treatment at doubled strength (the pressed-doubles-hover
 // convention carried to the alpha register) — C19, owner-approved 2026-07-16
 export const OUTLINE_PRESSED_ALPHA = 0.18
+
+// ── the NEUTRAL CTA ESCAPE (Phase 3, owner spec 2026-07-16: stakeholders want a
+// neutral cta escape for red collisions): the brand's cta FILL trio swaps to the brand's
+// OWN generated neutral's ink register — near-BLACK in light, near-WHITE in dark. An
+// emitter-level re-resolution exactly like the outline style (same tokens, different
+// values; the solve pipeline is untouched and the flag default-off is byte-identical).
+// Construction (owner-decided at planning): cta ANCHORS at the neutral's resolved ink-11
+// (light root L≈0.30 / dark ≈0.94 — the "paper12/1" register); cta-hover/cta-pressed
+// derive via the same hoverL/pressedL machinery every cta uses, chroma carried from the
+// anchor (the neutral's ink chroma is a whisper — re-evaluating the curve across a
+// 0.03–0.09 L move is imperceptible and the curve closure is gone post-generation), hue
+// constant. on-cta re-judges at the escaped fill under the same law as the neutral's own
+// quiet cta (judgment-only — the anchor is pinned): wcag = mixing flip + the 4.5
+// conformance floor; apca = pure apca-pole. The cta-ink trio is NOT touched — link
+// de-confliction is the phase-4 custom link color's job. UI gates the toggle to brands
+// whose cta sits in red's register (redGateDist ≤ RED_GATE.G — the exact-mode advice
+// check above), but the emitters honor the flag for any brand: the gate is guidance,
+// not law, and a stakeholder override must not silently no-op.
+export function escapeCtaFamily(
+  nScale: GeneratedScale,
+  mode: 'light' | 'dark',
+  contrastProfile?: ContrastProfile,
+): { cta: ColorStop; ctaHover: ColorStop; ctaPressed: ColorStop; onFillIsWhite: boolean } {
+  const ink11 = (mode === 'light' ? nScale.light : nScale.dark).find(s => s.stop === 11)
+  if (!ink11) throw new Error('escapeCtaFamily: the neutral scale has no ink-11 stop')
+  const mk = (stop: number, L: number) => makeStop(stop, L, ink11.C, ink11.H)
+  const cta = mk(9, ink11.L)
+  const ctaHover = mk(10, hoverL(ink11.L))
+  const ctaPressed = mk(11, pressedL(ink11.L))
+  const onEnforce = contrastProfile !== 'apca'
+  const onFloor = contrastProfile === 'apca' ? undefined : 4.5
+  const onFillIsWhite = onTextIsWhite(apcaY(cta.r, cta.g, cta.b), cta.L, cta.C, cta.H, onEnforce, onFloor)
+  return { cta, ctaHover, ctaPressed, onFillIsWhite }
+}
 
 export interface ResolvedSecondary {
   scale: GeneratedScale
