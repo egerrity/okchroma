@@ -3,7 +3,7 @@ import {
   AlertCircle, Check, CheckCircle, TriangleAlert, Sparkles, ArrowRight, ChevronDown, ChevronUp,
   LayoutDashboard, FolderKanban, ListTodo, BarChart3, Users, Settings, Search, Download, Plus, Info,
 } from 'lucide-react'
-import { resolveBrand, resolveTheme, signalScalesFor, type SecondaryStyle } from '../src/engine/resolve'
+import { resolveBrand, resolveTheme, signalScalesFor, DEFAULT_LINK_HEX, type SecondaryStyle } from '../src/engine/resolve'
 import { redGateDist, RED_GATE } from '../src/engine/collision'
 import { ARCHETYPES, type Archetype } from '../src/engine/archetypes'
 import { brandCss, signalsCss, stopHex } from '../src/engine/cssRender'
@@ -117,6 +117,10 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   // cta fill trio to the brand-neutral's ink register — shown only in red range;
   // leaving the range clears it (a stale hidden escape must never apply silently)
   const [ctaEscape, setCtaEscape] = useState(false)
+  // the SYSTEM LINK (Phase 4): ONE link trio per theme — default follows the primary's
+  // cta-ink; custom = the seed through the ink register (#0B57D0 prefill)
+  const [linkCustom, setLinkCustom] = useState(false)
+  const [linkInput, setLinkInput] = useState(DEFAULT_LINK_HEX)
   const derived = secState === 'derived'
 
   // Suggestions and the theme always derive from the last VALID hex, so a
@@ -159,10 +163,11 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
     // css can never carry a stale escape for a non-red brand.
     const redCta = signalScalesFor(cp).get('red')!.scale.cta
     const inRedRange = !!t.themed.redRepel || redGateDist(t.themed.scale.cta, redCta) <= RED_GATE.G
-    const css = brandCss('custom', 'Custom brand', t.themed, t.secondary?.scale ?? null, '', neutralLevel, cp, t.secondary?.style, ctaEscape && inRedRange)
+    const linkHex = (linkCustom && normalizeHex(linkInput)) || null
+    const css = brandCss('custom', 'Custom brand', t.themed, t.secondary?.scale ?? null, '', neutralLevel, cp, t.secondary?.style, ctaEscape && inRedRange, linkHex)
       + '\n' + signalsCss(cp)
-    return { t, r: t.themed, accent: t.secondary?.scale ?? null, css, inRedRange }
-  }, [primary, secondary, derived, primaryMode, secondaryStyle, neutralLevel, profile, ctaEscape])
+    return { t, r: t.themed, accent: t.secondary?.scale ?? null, css, inRedRange, escapeOn: ctaEscape && inRedRange }
+  }, [primary, secondary, derived, primaryMode, secondaryStyle, neutralLevel, profile, ctaEscape, linkCustom, linkInput])
 
   // The RECOMMENDED resolution, always — exact mode skips the rules, so the
   // checklist and toasts need to know what WOULD have fired to flag it red.
@@ -249,12 +254,29 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
         <InfoLine text={primaryInfo} />
         {computed.inRedRange && (
           <label
-            title="This color sits in the red signal's range — swap the action buttons to the brand's neutral (near-black in light, near-white in dark) so they can't read as destructive"
+            title="This color sits in the red signal's range — swap ALL the action colors (fills + text actions) to the brand's neutral so they can't read as destructive; the red signal returns to canonical"
             style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', userSelect: 'none', color: 'var(--fg-default)' }}
           >
             <input type="checkbox" checked={ctaEscape} onChange={e => setCtaEscape(e.target.checked)} style={{ accentColor: 'var(--brand-cta)', width: 14, height: 14, cursor: 'pointer' }} />
             <span>Neutral CTA (red-collision escape)</span>
           </label>
+        )}
+      </div>
+
+      <div className="ct-bar-field">
+        <div className="ct-label">Link color</div>
+        <label
+          title="Hyperlinks — ONE color per theme. Default follows the primary's text-action register (ink-10); customize to de-conflict links"
+          style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', userSelect: 'none', color: 'var(--fg-default)' }}
+        >
+          <span style={{ width: 14, height: 14, borderRadius: 4, background: 'var(--link)', border: '1px solid var(--border-subtle)' }} />
+          <input type="checkbox" checked={linkCustom} onChange={e => setLinkCustom(e.target.checked)} style={{ accentColor: 'var(--brand-cta)', width: 14, height: 14, cursor: 'pointer' }} />
+          <span>Custom link color</span>
+        </label>
+        {linkCustom && (
+          <div className="ct-field" style={{ marginTop: 6, width: 130 }}>
+            <input value={linkInput} onChange={e => setLinkInput(e.target.value)} spellCheck={false} placeholder={DEFAULT_LINK_HEX} />
+          </div>
         )}
       </div>
 
@@ -336,7 +358,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
       <div className="ct-label" style={{ marginBottom: 8 }}>{label}</div>
       <TokenCards prefix={prefix} kind={kind} outlineCta={prefix === 'secondary' && computed.t.secondary?.style === 'outline'} />
       {extras}
-      {r && <EngineChecklist rRec={r} rung={rung} primaryHex={hex} />}
+      {r && <EngineChecklist rRec={r} rung={rung} primaryHex={hex} escapeOn={prefix === 'brand' && computed.escapeOn} />}
     </div>
   )
 
@@ -347,7 +369,8 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
   // Each signal gets its OWN card block (like brand/neutral) — titled by its real
   // token name. "shifted · …" shows when this brand pushed the signal off-canonical.
   const signalBlocks = () => SIGNAL_NAMES.map(name => {
-    const override = computed.r.signalOverrides.find(o => o.name === name)
+    // the escape resets red to canonical — no stale "shifted" tag on a signal the css ships canonical
+    const override = computed.escapeOn && name === 'red' ? undefined : computed.r.signalOverrides.find(o => o.name === name)
     return (
       <div className="ct-colorblock" key={name} style={{ background: `var(--${name}-paper-1)` }}>
         <div className="ct-label" style={{ marginBottom: 8, display: 'flex', alignItems: 'baseline', gap: 8 }}>
@@ -381,9 +404,10 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
     // renders AS a stroke: a ring of the color, not a fill.
     if (stop === 'highlight-8') return <div style={{ height: 36, borderRadius: 6, boxSizing: 'border-box', border: `2px solid ${cv(stop)}` }} />
     if (stop.startsWith('highlight')) return <div style={{ ...aa, background: cv(stop), color: cv('on-highlight') }}>Aa</div>
-    // cta-ink trio renders as TEXT (the 4.5 text-register link escape) — checked before
-    // the fill branch so the 'cta' prefix doesn't swallow it
-    if (stop.startsWith('cta-ink')) return <div style={{ ...aa, fontSize: 18, fontWeight: 900, textDecoration: 'underline', color: cv(stop) }}>Aa</div>
+    // cta-ink trio renders as TEXT (the text-STYLE cta — a text button, never a
+    // hyperlink, so no underline) — checked before the fill branch so the 'cta' prefix
+    // doesn't swallow it
+    if (stop.startsWith('cta-ink')) return <div style={{ ...aa, fontSize: 18, fontWeight: 900, color: cv(stop) }}>Aa</div>
     // filled cta cells carry NO stroke (filled is filled — same call as the buttons);
     // only the OUTLINE secondary shows its ring, where the boundary IS the component
     if (stop.startsWith('cta')) {
@@ -440,7 +464,16 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
           </span>
         </div>
       )}
-      {rung === 'recommended' && rRec.redRepel && (
+      {computed.escapeOn && (
+        <div className="ct-alert-text">
+          <TriangleAlert size={13} style={{ flexShrink: 0, marginTop: 1 }} />
+          <span>
+            Neutral CTA escape active: every action color (fills, text actions, links) rides the
+            brand neutral, and the error signal ships canonical — no per-brand variant.
+          </span>
+        </div>
+      )}
+      {!computed.escapeOn && rung === 'recommended' && rRec.redRepel && (
         <div className="ct-alert-text">
           <TriangleAlert size={13} style={{ flexShrink: 0, marginTop: 1 }} />
           <span>
@@ -449,7 +482,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
           </span>
         </div>
       )}
-      {rung === 'recommended' && !rRec.redRepel && rRec.signalOverrides.some(o => o.name === 'red') && (
+      {!computed.escapeOn && rung === 'recommended' && !rRec.redRepel && rRec.signalOverrides.some(o => o.name === 'red') && (
         <div className="ct-alert-text">
           <TriangleAlert size={13} style={{ flexShrink: 0, marginTop: 1 }} />
           <span>
@@ -492,7 +525,8 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
                 colliding pair is visible in one glance */}
             <div className="ct-colorblock">
               <div className="ct-label" style={{ marginBottom: 8 }}>All ctas — deconfliction row</div>
-              <CtaRow hasSecondary={!!secondary || derived} shifted={computed.r.signalOverrides.map(o => o.name)} />
+              <CtaRow hasSecondary={!!secondary || derived}
+                shifted={computed.r.signalOverrides.filter(o => !(computed.escapeOn && o.name === 'red')).map(o => o.name)} />
             </div>
             {colorBlock('Primary scale', 'brand', 'brand', rRec, primary, primaryExtras)}
             {(secondary || derived) && colorBlock(derived ? 'Secondary scale — derived from primary' : 'Secondary scale', 'secondary', 'brand', null, secondary ?? primary, (
@@ -538,14 +572,18 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
 type CheckTone = 'pass' | 'adjusted' | 'standard' | 'fail'
 interface CheckRow { key: string; tone: CheckTone; label: string; detail: string }
 
-function checklistRows(rRec: ResolvedBrand, rung: RungMode, primaryHex: string): CheckRow[] {
+function checklistRows(rRec: ResolvedBrand, rung: RungMode, primaryHex: string, escapeOn?: boolean): CheckRow[] {
   const origArch = classifyArchetype(rRec.scale.brandL)
   const rec = rung === 'recommended'
   const rows: CheckRow[] = []
   const shipsHex = stopHex(rRec.scale.cta).toUpperCase()
 
   const redMove = rRec.signalOverrides.find(o => o.name === 'red')
-  if (rRec.redRepel) {
+  // the escape SUPERSEDES the red machinery (owner 2026-07-16): the checklist narrates
+  // the shipped outcome, not the resolution the escape replaced
+  if (escapeOn) {
+    rows.push({ key: 'hue', tone: 'adjusted', label: 'conflict with error red resolved — neutral cta escape', detail: 'Every action color (fills, text actions, links) rides the brand neutral — near-black in light, near-white in dark — so nothing can read as destructive. The error signal ships canonical, no per-brand variant.' })
+  } else if (rRec.redRepel) {
     rows.push(rec
       ? { key: 'hue', tone: 'adjusted', label: `conflict with error red resolved — ${primaryHex.toUpperCase()} → ${shipsHex}`, detail: 'This primary sits in the error signal\'s register. The action color exits by its nearest edge — deep and vivid reds go deeper (into burgundy when needed), pinks lighten, vivid oranges brighten — until it reads clearly apart from red.' }
       : { key: 'hue', tone: 'fail', label: 'color conflicts with error red — separation not applied', detail: 'Exact mode ships the hex untouched, so the error-signal conflict is not resolved at the color level. Destructive buttons render as outlines everywhere as a backstop.' })
@@ -609,9 +647,9 @@ const TONE_META: Record<CheckTone, { Icon: typeof Check; color: string }> = {
 // Collapsible (default COLLAPSED — there will be one per color and the
 // card must not scroll on input). Header shows the aggregate state; rows
 // are compact, divider-free, with the why in a hover tooltip.
-function EngineChecklist({ rRec, rung, primaryHex }: { rRec: ResolvedBrand; rung: RungMode; primaryHex: string }) {
+function EngineChecklist({ rRec, rung, primaryHex, escapeOn }: { rRec: ResolvedBrand; rung: RungMode; primaryHex: string; escapeOn?: boolean }) {
   const [open, setOpen] = useState(false)
-  const rows = checklistRows(rRec, rung, primaryHex)
+  const rows = checklistRows(rRec, rung, primaryHex, escapeOn)
   const aggregate: CheckTone = rows.some(r => r.tone === 'fail') ? 'fail'
     : rows.some(r => r.tone === 'adjusted') ? 'adjusted' : 'pass'
   const Agg = TONE_META[aggregate].Icon

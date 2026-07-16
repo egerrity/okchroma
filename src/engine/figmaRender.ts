@@ -4,7 +4,7 @@ import { toHex } from './cssRender'
 import { srgbEmitChannels } from './colorMath'
 import { stopTokenName, onFillTokenName, tokenOrder, type RampKind } from './tokenNames'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
-import { OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, escapeCtaFamily, type ResolvedBrand, type SecondaryStyle } from './resolve'
+import { OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, escapeCtaFamily, resolveLinkTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v))
 
@@ -100,6 +100,11 @@ export interface ThemeInput {
   // near-white dark) — the red-collision de-conflict. Same tokens, different values
   // (the outline idiom); default off = byte-identical. cta-ink untouched.
   ctaEscape?: boolean
+
+  // the SYSTEM LINK (Phase 4, owner 2026-07-16): a custom link seed — when set, the
+  // emitted link group carries ITS ink-register resolution (the red de-conflict);
+  // absent = the link group carries the primary's cta-ink trio (the plugins alias it).
+  linkHex?: string | null
 }
 
 export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: FigmaGroup; dark: FigmaGroup } {
@@ -120,6 +125,8 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
   })
 
   const nScale = generateNeutralScale(scale.brandH, input.neutralLevel ?? 'default', input.contrastProfile)
+  // custom link seed resolved ONCE (both modes read it)
+  const lt = input.linkHex ? resolveLinkTrio(input.linkHex, input.contrastProfile) : null
   const neutralExtra = (mode: 'light' | 'dark') => ({
     onHighlightWhite: mode === 'light' ? nScale.onHighlightIsWhite : nScale.onHighlightIsWhiteDark,
     ...ctaFamily(nScale, mode),
@@ -163,19 +170,37 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     // stay the brand's own. With NO real secondary the secondary group MIRRORS the brand
     // (secondary = scale above), so the escape applies there too — the un-escaped raw
     // trio must not survive in the mirror (review-caught latent divergence).
-    if (input.ctaEscape) {
-      const esc = escapeCtaFamily(nScale, mode, input.contrastProfile)
+    const esc = input.ctaEscape ? escapeCtaFamily(nScale, mode, input.contrastProfile) : null
+    if (esc) {
       for (const g of input.secondary ? [brandGroup] : [brandGroup, secondaryGroup]) {
         g['cta'] = colorFromStop(esc.cta)
         g['cta-hover'] = colorFromStop(esc.ctaHover)
         g['cta-pressed'] = colorFromStop(esc.ctaPressed)
+        // ALL the ctas (owner amendment): the text-style cta trio de-reds too
+        g['cta-ink'] = colorFromStop(esc.ctaInk)
+        g['cta-ink-hover'] = colorFromStop(esc.ctaInkHover)
+        g['cta-ink-pressed'] = colorFromStop(esc.ctaInkPressed)
         g[onFillTokenName('brand')] = colorFromHex(esc.onFillIsWhite)
       }
     }
+    // the SYSTEM LINK trio (Phase 4): ONE per theme. Custom seed → its ink-register
+    // resolution; default → the primary's cta-ink trio verbatim (value-equal to what the
+    // plugins alias, so the emitted structure never lies about the shipped color) — and
+    // under the ESCAPE the default follows the escaped cta-ink (the alias chain would)
+    const linkGroup: FigmaGroup = lt
+      ? (mode === 'light'
+        ? { 'link': colorFromStop(lt.link), 'link-hover': colorFromStop(lt.linkHover), 'link-pressed': colorFromStop(lt.linkPressed) }
+        : { 'link': colorFromStop(lt.linkDark), 'link-hover': colorFromStop(lt.linkHoverDark), 'link-pressed': colorFromStop(lt.linkPressedDark) })
+      : esc
+      ? { 'link': colorFromStop(esc.ctaInk), 'link-hover': colorFromStop(esc.ctaInkHover), 'link-pressed': colorFromStop(esc.ctaInkPressed) }
+      : (mode === 'light'
+        ? { 'link': colorFromStop(scale.ctaInk), 'link-hover': colorFromStop(scale.ctaInkHover), 'link-pressed': colorFromStop(scale.ctaInkPressed) }
+        : { 'link': colorFromStop(scale.ctaInkDark), 'link-hover': colorFromStop(scale.ctaInkHoverDark), 'link-pressed': colorFromStop(scale.ctaInkPressedDark) })
     const g: FigmaGroup = {
       brand: brandGroup,
       secondary: secondaryGroup,
       neutral: neutralGroup,
+      link: linkGroup,
     }
     for (const sig of input.signals) {
 

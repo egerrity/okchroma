@@ -337,7 +337,11 @@ figma.ui.onmessage = async (msg) => {
         activeCols.map(c => [c, new Map(brandTokens[c].map(t => [t.path, t]))]))
       const work: string[] = []
       for (const t of brandTokens[activeCols[0]]) {
-        if (t.path.startsWith('system/')) continue
+        // system/* is contract-invariant and skipped — EXCEPT the system link trio
+        // (Phase 4, owner: "link is a system level color. It can still be extended"):
+        // each brand's extension overrides system/link* with its own resolved values
+        // (its primary's cta-ink, or its custom link seed's register)
+        if (t.path.startsWith('system/') && !t.path.startsWith('system/link')) continue
         if (secondaryMode === 'none' && t.path.startsWith('brand-secondary/')) continue
         work.push(t.path)
       }

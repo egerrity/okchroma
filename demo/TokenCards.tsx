@@ -125,42 +125,41 @@ export function TokenCards({ prefix, kind, outlineCta }: { prefix: string; kind:
       <div style={{ fontSize: 24, fontWeight: 700, color: v('ink-11'), lineHeight: 1.15, marginBottom: 8 }}>Aa Heading</div>
       <p style={{ fontSize: 15, lineHeight: 1.5, color: v('ink-11'), margin: '0 0 16px' }}>
         The <span style={{ color: v('ink-10') }}>ink family</span> is designed to contrast with the paper and wash stops and is perfect for text. It can also be used as an inverted fill.
-        {/* cta-ink in context — the 4.5 text-register link trio (rest matches ink-10;
-            hover/press walk the states) */}
-        {' '}Links ride the{' '}
-        <a
-          href="#"
-          onClick={e => e.preventDefault()}
-          onMouseEnter={() => setLinkState('hover')}
-          onMouseLeave={() => setLinkState('rest')}
-          onMouseDown={() => setLinkState('pressed')}
-          onMouseUp={() => setLinkState('hover')}
-          title={`--${prefix}-cta-ink${linkState === 'rest' ? '' : `-${linkState}`}`}
-          style={{
-            color: linkState === 'pressed' ? v('cta-ink-pressed') : linkState === 'hover' ? v('cta-ink-hover') : v('cta-ink'),
-            textDecoration: 'underline', textUnderlineOffset: 2,
-          }}
-        >cta-ink register</a>.
       </p>
 
       {/* cta in context — the pill (hidden on signals, where cta lives in the alert).
-          Hover swaps cta → cta-hover; holding the button shows cta-pressed. */}
+          Hover swaps cta → cta-hover; holding the button shows cta-pressed. Beside it,
+          the TEXT-STYLE cta (cta-ink — the action color's 4.5 text rendition, a text
+          button; never underlined, never a hyperlink — links are the SYSTEM --link). */}
       {!isSignal && (
-        <button
-          onMouseEnter={() => setCtaHover(true)}
-          onMouseLeave={() => { setCtaHover(false); setCtaPressed(false) }}
-          onMouseDown={() => setCtaPressed(true)}
-          onMouseUp={() => setCtaPressed(false)}
-          style={{
-            alignSelf: 'flex-start', width: 184, boxSizing: 'border-box', textAlign: 'center',
-            background: ctaPressed ? v('cta-pressed') : ctaHover ? v('cta-hover') : v('cta'), color: v('on-cta'),
-            // filled buttons carry NO stroke (the label identifies the button — WCAG 1.4.11
-            // doesn't require a boundary); only the OUTLINE style keeps its ring, where the
-            // boundary IS the component. Transparent border keeps layout identical.
-            border: `1.5px solid ${outlineCta ? v('cta-border') : 'transparent'}`,
-            borderRadius: 999, padding: '12px 28px', fontSize: 15, fontWeight: 600, fontFamily: 'inherit',
-            cursor: 'pointer', marginBottom: 18,
-          }}>{ctaPressed ? 'cta-pressed held' : ctaHover ? 'cta-hover' : 'cta button'}</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
+          <button
+            onMouseEnter={() => setCtaHover(true)}
+            onMouseLeave={() => { setCtaHover(false); setCtaPressed(false) }}
+            onMouseDown={() => setCtaPressed(true)}
+            onMouseUp={() => setCtaPressed(false)}
+            style={{
+              width: 184, boxSizing: 'border-box', textAlign: 'center',
+              background: ctaPressed ? v('cta-pressed') : ctaHover ? v('cta-hover') : v('cta'), color: v('on-cta'),
+              // filled buttons carry NO stroke (the label identifies the button — WCAG 1.4.11
+              // doesn't require a boundary); only the OUTLINE style keeps its ring, where the
+              // boundary IS the component. Transparent border keeps layout identical.
+              border: `1.5px solid ${outlineCta ? v('cta-border') : 'transparent'}`,
+              borderRadius: 999, padding: '12px 28px', fontSize: 15, fontWeight: 600, fontFamily: 'inherit',
+              cursor: 'pointer',
+            }}>{ctaPressed ? 'cta-pressed held' : ctaHover ? 'cta-hover' : 'cta button'}</button>
+          <button
+            onMouseEnter={() => setLinkState('hover')}
+            onMouseLeave={() => setLinkState('rest')}
+            onMouseDown={() => setLinkState('pressed')}
+            onMouseUp={() => setLinkState('hover')}
+            title={`--${prefix}-cta-ink${linkState === 'rest' ? '' : `-${linkState}`}`}
+            style={{
+              background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+              fontSize: 15, fontWeight: 600, padding: '12px 10px',
+              color: linkState === 'pressed' ? v('cta-ink-pressed') : linkState === 'hover' ? v('cta-ink-hover') : v('cta-ink'),
+            }}>Text action</button>
+        </div>
       )}
 
       {/* in context — the wash inset, plus the highlight inset OR the signal alert */}

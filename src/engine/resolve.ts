@@ -373,11 +373,39 @@ export const OUTLINE_PRESSED_ALPHA = 0.18
 // whose cta sits in red's register (redGateDist ≤ RED_GATE.G — the exact-mode advice
 // check above), but the emitters honor the flag for any brand: the gate is guidance,
 // not law, and a stakeholder override must not silently no-op.
+// ── the SYSTEM LINK token (Phase 4, owner spec 2026-07-16: "link is a system level
+// color… a primitive that internally aliases the primary ink 10 unless it's being
+// deconflicted from red"). ONE link trio per theme — link / link-hover / link-pressed:
+//   DEFAULT (no custom color): aliases the primary's cta-ink trio (which matches ink-10
+//   by construction, C19 — states ride the alias).
+//   CUSTOM (the de-conflict): the user's hex runs through the SAME ink register — it is
+//   the SEED of a throwaway resolve and the shipped trio is that resolve's cta-ink family
+//   (hue kept, L floor-solved per lane and mode by the stop-10 law, dark solved
+//   dark-native, states + floors free — owner-picked treatment). Default seed when the
+//   toggle turns on: #0B57D0, the conventional link blue (owner-picked; ships light
+//   ≈#375bae / dark ≈#90b2f9 through the wcag register).
+export const DEFAULT_LINK_HEX = '#0B57D0'
+export function resolveLinkTrio(
+  linkHex: string,
+  contrastProfile?: ContrastProfile,
+): { link: ColorStop; linkHover: ColorStop; linkPressed: ColorStop; linkDark: ColorStop; linkHoverDark: ColorStop; linkPressedDark: ColorStop } {
+  // skipCollisionRules: the link seed is not a brand — no signal machinery, no repel;
+  // just the ramp solve that produces its cta-ink family
+  const s = resolveBrand(linkHex, 'link', { skipCollisionRules: true, contrastProfile }).scale
+  return {
+    link: s.ctaInk, linkHover: s.ctaInkHover, linkPressed: s.ctaInkPressed,
+    linkDark: s.ctaInkDark, linkHoverDark: s.ctaInkHoverDark, linkPressedDark: s.ctaInkPressedDark,
+  }
+}
+
 export function escapeCtaFamily(
   nScale: GeneratedScale,
   mode: 'light' | 'dark',
   contrastProfile?: ContrastProfile,
-): { cta: ColorStop; ctaHover: ColorStop; ctaPressed: ColorStop; onFillIsWhite: boolean } {
+): {
+  cta: ColorStop; ctaHover: ColorStop; ctaPressed: ColorStop; onFillIsWhite: boolean
+  ctaInk: ColorStop; ctaInkHover: ColorStop; ctaInkPressed: ColorStop
+} {
   const ink11 = (mode === 'light' ? nScale.light : nScale.dark).find(s => s.stop === 11)
   if (!ink11) throw new Error('escapeCtaFamily: the neutral scale has no ink-11 stop')
   const mk = (stop: number, L: number) => makeStop(stop, L, ink11.C, ink11.H)
@@ -387,7 +415,15 @@ export function escapeCtaFamily(
   const onEnforce = contrastProfile !== 'apca'
   const onFloor = contrastProfile === 'apca' ? undefined : 4.5
   const onFillIsWhite = onTextIsWhite(apcaY(cta.r, cta.g, cta.b), cta.L, cta.C, cta.H, onEnforce, onFloor)
-  return { cta, ctaHover, ctaPressed, onFillIsWhite }
+  // the escape covers ALL the ctas (owner amendment 2026-07-16: "it applies to cta and
+  // cta ink") — the text-style CTA trio swaps to the NEUTRAL's own cta-ink family (its
+  // ink-10 register + floored states, resolver-minted on the neutral scale), so a red
+  // brand's text actions de-red with its fills. The system link, which aliases the
+  // primary's cta-ink by default, follows automatically unless a custom link is set.
+  const [ctaInk, ctaInkHover, ctaInkPressed] = mode === 'light'
+    ? [nScale.ctaInk, nScale.ctaInkHover, nScale.ctaInkPressed]
+    : [nScale.ctaInkDark, nScale.ctaInkHoverDark, nScale.ctaInkPressedDark]
+  return { cta, ctaHover, ctaPressed, onFillIsWhite, ctaInk, ctaInkHover, ctaInkPressed }
 }
 
 export interface ResolvedSecondary {

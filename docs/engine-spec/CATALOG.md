@@ -943,3 +943,41 @@ color) converts the v1 cta-ink alias to raw values when it lands.
 Relates: C16 (DARK_CTA_C register — pressed inherits the cta's policy), C12 (red
 complement mints the pressed stop pinned), the 2026-07-12 secondary offering (outline
 re-expression extended).
+
+## C20 — the SYSTEM LINK + the escape covers ALL the ctas
+
+**Status:** CLOSED (owner rulings 2026-07-16, phase 4 of the five-phase roadmap).
+
+**System link.** Link is a SYSTEM-level color — ONE `link`/`link-hover`/`link-pressed`
+trio per theme, never per-family (owner: "link is a system level color… a primitive that
+internally aliases the primary ink 10 unless it's being deconflicted from red").
+DEFAULT: the primary's cta-ink trio (= ink-10 by construction, C19 — states ride;
+plugin v1 aliases `system/link*` → the brand's cta-ink prims; plugin-ext carries values
+with a `system/link` carve-out from the invariant skip so extensions override per brand;
+CSS `--link*` aliases `var(--brand-cta-ink*)`; `--fg-link` in semantic.css rides
+`--link` and is accent-flip-invariant — the old `var(--brand-ink-10)` pair removed).
+CUSTOM (the de-conflict): a seed (`DEFAULT_LINK_HEX` #0B57D0 on toggle) through
+`resolveLinkTrio` = the seed's own ink-register resolution (stop-10 law per lane/mode,
+states + floors free); v1 dedups a shared `system/link/<resolved-hex>` prim (value-keyed,
+retune-proof). cta-ink is NOT the link: it is the TEXT-STYLE cta (text buttons — never
+underlined; demo/plugin presentation corrected).
+
+**Escape amendment.** The neutral cta escape (C19-era phase 3) now swaps ALL the ctas —
+the fill trio AND the cta-ink trio (from the neutral's own cta-ink family) — and RESETS
+the red collision to default: canonical red ships, no per-brand variant (reset applied at
+every surface: brandCss effOverrides + note, v1 apply signals + both matrices, ext
+payload lane, demo CtaRow/signal tags/alerts/checklist). The default link follows the
+escaped cta-ink through its alias chain; a custom link overrides independently. v1's
+escape post-pass aliases cta→neutral ink-11 AND cta-ink→neutral ink-10 (value-guarded);
+writeRaw's cta-ink→sibling-ink-10 alias is value-guarded via the payload lightMap.
+
+**Verified:** figma-verify probes (default link ≡ brand cta-ink · custom #0B57D0 →
+#2a5cb4 wcag gamut-mapped · escape → cta-ink ≡ neutral ink-10, link follows, ramp
+untouched); full gate suite green; ext snapshot re-blessed (+system/link rows, audit
+carve-out); live demo end-to-end both toggles. Residuals: custom link carries no P3
+override (sRGB emit only — the on-colors precedent); link is not a DTCG-declared role
+(product token, not a ramp requirement); the phase-4 adversarial review pass was blocked
+by API overload — self-verified inline, re-run queued.
+
+Relates: C19 (the cta family this rides on), C12 (the red machinery the escape
+supersedes when active).

@@ -38,7 +38,10 @@ function overridesFor(brand: TokenColumns, base: TokenColumns, label: string): R
     const ov: string[] = []
     for (const t of brand[col]) {
       const b = baseMap.get(t.path)
-      if (t.path.startsWith('system/')) {
+      // system/* is contract-invariant — EXCEPT the system link trio (Phase 4, owner:
+      // "link is a system level color. It can still be extended"): each brand's
+      // extension overrides system/link* with its own resolved values
+      if (t.path.startsWith('system/') && !t.path.startsWith('system/link')) {
         if (!b || !eq(t, b)) fails.push(`${label} ${col}: system token diverges from base — ${t.path}`)
         continue
       }

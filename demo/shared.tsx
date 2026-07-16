@@ -48,11 +48,8 @@ function accentModeCss(mode: AccentMode, primary: Family, subtle: Family): strin
     lines.push(`  --brand-${suffix}: var(--${prim(subtle)}-${tok});`)
     lines.push(`  --accent-${suffix}: var(--${prim(other(subtle))}-${tok});`)
   }
-  // links ride the cta-ink trio now (the 4.5 text-register link escape — matches
-  // ink-10 by default, so the visual is unchanged until a custom link color exists)
-  lines.push(`  --fg-link: var(--${prim(primary)}-cta-ink);`)
-  lines.push(`  --fg-link-hover: var(--${prim(primary)}-cta-ink-hover);`)
-  lines.push(`  --fg-link-pressed: var(--${prim(primary)}-cta-ink-pressed);`)
+  // links are SYSTEM-level (owner 2026-07-16: one link per theme — the accent flip must
+  // not re-point them): --fg-link rides --link from semantic.css, no per-mode override
   lines.push(`}`)
   if (subtle !== primary) {
     lines.push(`[data-accent-mode="${mode}"] .u-btn-subtle { color: var(--${prim(subtle)}-ink-11); }`)

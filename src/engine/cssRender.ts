@@ -4,7 +4,7 @@ import { generateIllustrationScale, generateNeutralScale, type GeneratedScale, t
 import { srgbEmitChannels, masterEmitChannels } from './colorMath'
 import { clampChromaToGamut } from './constraints'
 import { stopTokenName, onFillTokenName, tokenOrder } from './tokenNames'
-import { signalScalesFor, OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, escapeCtaFamily, type ResolvedBrand, type SecondaryStyle } from './resolve'
+import { signalScalesFor, OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, escapeCtaFamily, resolveLinkTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
 import { SIGNALS } from './signals'
 
 export function toHex(r: number, g: number, b: number): string {
@@ -212,10 +212,22 @@ export function brandCss(
   // the NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): the brand's cta FILL trio + on-cta
   // re-resolve from the brand-neutral's ink register (near-black light / near-white dark) —
   // the red-collision de-conflict. Same outline idiom; default off = byte-identical.
-  ctaEscape?: boolean
+  ctaEscape?: boolean,
+  // the SYSTEM LINK (Phase 4, owner 2026-07-16): one link trio per theme. Absent =
+  // --link aliases the primary's cta-ink trio; a custom seed = its ink-register
+  // resolution ships raw (the red de-conflict for links).
+  linkHex?: string | null
 ): string {
   const { scale } = r
-  const note = annotationNote(r) + noteSuffix
+  // the escape RESETS the red collision to default (owner 2026-07-16): with the brand's
+  // ctas swapped to the neutral register nothing collides with red, so the per-brand red
+  // complement variant is dropped and canonical red ships. The annotation reflects the
+  // escape instead of narrating a resolution that no longer applies.
+  const effOverrides = ctaEscape ? r.signalOverrides.filter(o => o.name !== 'red') : r.signalOverrides
+  const rEff: ResolvedBrand = ctaEscape ? { ...r, redRepel: null, signalOverrides: effOverrides } : r
+  const note = annotationNote(rEff)
+    + (ctaEscape ? ' · neutral cta escape active — the action colors ride the brand neutral; the red signal ships canonical' : '')
+    + noteSuffix
 
   // Illustration palette (PoC 2026-06-11): FOUR fixed-L slots per color —
   // primary 1–4 from the brand, alt 1–4 from the secondary (falls back to
@@ -287,16 +299,34 @@ export function brandCss(
   // cta-hover = highlight-8 at OUTLINE_HOVER_ALPHA (pressed doubles it) — the STABLE contrast-gated stop, the same one
   // the ring aliases (owner: 9% of the generated subtle cta was imperceptible — it's a very
   // light/dark color; the hover must reference a stable value).
+  // the SYSTEM LINK trio: default aliases the primary's cta-ink (mode-blind — the var
+  // chain resolves per block); a custom seed ships its ink-register resolution raw
+  const linkTrio = linkHex ? resolveLinkTrio(linkHex, contrastProfile) : null
+  const link = (mode: 'light' | 'dark'): string[] => linkTrio
+    ? (mode === 'light'
+      ? [`  --link: ${stopHex(linkTrio.link)};`, `  --link-hover: ${stopHex(linkTrio.linkHover)};`, `  --link-pressed: ${stopHex(linkTrio.linkPressed)};`]
+      : [`  --link: ${stopHex(linkTrio.linkDark)};`, `  --link-hover: ${stopHex(linkTrio.linkHoverDark)};`, `  --link-pressed: ${stopHex(linkTrio.linkPressedDark)};`])
+    : [
+      `  --link: var(--brand-cta-ink);`,
+      `  --link-hover: var(--brand-cta-ink-hover);`,
+      `  --link-pressed: var(--brand-cta-ink-pressed);`,
+    ]
+
   // neutral cta escape re-resolution: emitted AFTER the brand body so the cascade takes
   // these values (the outline idiom). Fill trio + on-cta only — cta-ink and the ramp stay
   // the brand's own.
   const escape = (mode: 'light' | 'dark'): string[] => {
     if (!ctaEscape) return []
     const esc = escapeCtaFamily(nScale, mode, contrastProfile)
+    // ALL the ctas (owner amendment 2026-07-16): the text-style cta trio de-reds with
+    // the fills; --link's default alias follows through the cascade automatically
     return [
       `  --brand-cta: ${stopHex(esc.cta)};`,
       `  --brand-cta-hover: ${stopHex(esc.ctaHover)};`,
       `  --brand-cta-pressed: ${stopHex(esc.ctaPressed)};`,
+      `  --brand-cta-ink: ${stopHex(esc.ctaInk)};`,
+      `  --brand-cta-ink-hover: ${stopHex(esc.ctaInkHover)};`,
+      `  --brand-cta-ink-pressed: ${stopHex(esc.ctaInkPressed)};`,
       `  --brand-${onFillTokenName('brand')}: ${onColor(esc.onFillIsWhite)};`,
     ]
   }
@@ -333,19 +363,19 @@ export function brandCss(
   // override sitting last in the cascade would pop the brand fill back in over it.
   const dropEscapeCta = (lines: string[]): string[] =>
     ctaEscape
-      ? lines.filter(l => !l.startsWith('  --brand-cta:') && !l.startsWith('  --brand-cta-hover:') && !l.startsWith('  --brand-cta-pressed:'))
+      ? lines.filter(l => !/^  --brand-cta(-hover|-pressed|-ink|-ink-hover|-ink-pressed)?:/.test(l))
       : lines
   const p3Light = [
     ...dropEscapeCta(brandKindP3Body('brand', scale, 'light')),
     ...(secondary ? dropOutlineCta(brandKindP3Body('secondary', secondary, 'light')) : []),
     ...brandKindP3Body('neutral', nScale, 'light'),
-    ...r.signalOverrides.flatMap(o => brandKindP3Body(o.name, o.scale, 'light')),
+    ...effOverrides.flatMap(o => brandKindP3Body(o.name, o.scale, 'light')),
   ]
   const p3Dark = [
     ...dropEscapeCta(brandKindP3Body('brand', scale, 'dark')),
     ...(secondary ? dropOutlineCta(brandKindP3Body('secondary', secondary, 'dark')) : []),
     ...brandKindP3Body('neutral', nScale, 'dark'),
-    ...r.signalOverrides.flatMap(o => brandKindP3Body(o.name, o.scale, 'dark')),
+    ...effOverrides.flatMap(o => brandKindP3Body(o.name, o.scale, 'dark')),
   ]
 
   return [
@@ -354,22 +384,24 @@ export function brandCss(
     ...lightAnchors,
     ...brandKindBody('brand', scale, 'light'),
     ...escape('light'),
+    ...link('light'),
     brandIdentity,
     ...illusVars,
     ...secondaryLight,
     ...outline('light'),
     secondaryIdentity,
     ...brandKindBody('neutral', nScale, 'light'),
-    ...r.signalOverrides.flatMap(o => brandKindBody(o.name, o.scale, 'light')),
+    ...effOverrides.flatMap(o => brandKindBody(o.name, o.scale, 'light')),
     `}`,
     `[data-brand="${slug}"][data-theme="dark"] {`,
     ...darkAnchors,
     ...brandKindBody('brand', scale, 'dark'),
     ...escape('dark'),
+    ...link('dark'),
     ...secondaryDark,
     ...outline('dark'),
     ...brandKindBody('neutral', nScale, 'dark'),
-    ...r.signalOverrides.flatMap(o => brandKindBody(o.name, o.scale, 'dark')),
+    ...effOverrides.flatMap(o => brandKindBody(o.name, o.scale, 'dark')),
     `}`,
     ...(p3Light.length || p3Dark.length ? [
       `${P3_SUPPORTS} {`,

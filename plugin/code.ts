@@ -298,11 +298,15 @@ figma.ui.onmessage = async (msg) => {
       // family's own highlight-8 when it doesn't (alpha 0 in the payload = transparent);
       // every other leaf is a raw color, written on create or when `refresh` is set
       // (per-brand ramps).
+      // payload-space value equality (8-bit tolerance) — used to decide alias-vs-raw
+      const leafEq = (a?: { r: number; g: number; b: number }, b?: { r: number; g: number; b: number }): boolean =>
+        !!a && !!b && Math.abs(a.r - b.r) < 1 / 255 && Math.abs(a.g - b.g) < 1 / 255 && Math.abs(a.b - b.b) < 1 / 255
       const writeRaw = (
         path: string,
         t: { path: string; r: number; g: number; b: number; a?: number },
         darkMap: Map<string, { r: number; g: number; b: number; a?: number }>,
-        refresh: boolean
+        refresh: boolean,
+        lightMap?: Map<string, { r: number; g: number; b: number; a?: number }>
       ): { v: figma.Variable; created: boolean } => {
         let v = getOrMigrate(primByName, path)
         const created = !v
@@ -333,11 +337,14 @@ figma.ui.onmessage = async (msg) => {
             v.setValueForMode(pLight, figma.variables.createVariableAlias(transparent))
             v.setValueForMode(pDark, figma.variables.createVariableAlias(transparent))
           }
-        } else if (t.path === 'cta-ink') {
+        } else if (t.path === 'cta-ink'
+          && leafEq(t, lightMap?.get('ink-10')) && leafEq(dk, darkMap.get('ink-10'))) {
           // cta-ink MATCHES the family's ink-10 by construction (the 4.5 text-register
           // cta, owner 2026-07-16) — alias the sibling so the relationship stays live in
           // Figma (the on-cta→ink-10 idiom); the hover/pressed states are distinct values
-          // and ride the generic raw branch. Phase-4's custom link color converts to raw.
+          // and ride the generic raw branch. VALUE-GUARDED (owner amendment: the neutral
+          // escape swaps cta-ink to the NEUTRAL's register — a payload whose cta-ink no
+          // longer equals its own ink-10 must ship raw, never alias back to the red ink).
           const siblingInk = primByName.get(path.replace(/cta-ink$/, 'ink-10'))
           if (siblingInk) {
             v.setValueForMode(pLight, figma.variables.createVariableAlias(siblingInk))
@@ -371,8 +378,9 @@ figma.ui.onmessage = async (msg) => {
       const secondaryRamp = brandRaw.find(r => r.role === 'secondary')
       const writeRamp = (role: string, ramp: BrandRamp) => {
         const darkMap = new Map(flatten(ramp.dark).map(t => [t.path, t]))
+        const lightMap = new Map(flatten(ramp.light).map(t => [t.path, t]))
         for (const t of flatten(ramp.light)) {
-          writeRaw(`brand/${brand}/${role}/${t.path}`, t, darkMap, true)
+          writeRaw(`brand/${brand}/${role}/${t.path}`, t, darkMap, true, lightMap)
         }
       }
       if (primaryRamp) writeRamp('primary', primaryRamp)
@@ -401,17 +409,23 @@ figma.ui.onmessage = async (msg) => {
       // Alias only when the target's live values equal the freshly written escape cta
       // (both modes); otherwise the raw write already carries the correct values.
       if (ctaEscape) {
+        const eq = (a: unknown, b: unknown): boolean => {
+          const ca = a as figma.RGBA | undefined, cb = b as figma.RGBA | undefined
+          if (!ca || !cb || typeof ca !== 'object' || typeof cb !== 'object' || 'type' in ca || 'type' in cb) return false
+          const E = 1 / 1024
+          return Math.abs(ca.r - cb.r) < E && Math.abs(ca.g - cb.g) < E && Math.abs(ca.b - cb.b) < E
+        }
         const neutralPrim = shared.find(g => g.theme === 'neutral')?.prim
-        const target = neutralPrim ? (primVar.get(`${neutralPrim}/ink-11`) ?? primByName.get(`${neutralPrim}/ink-11`)) : undefined
-        const v = primByName.get(`brand/${brand}/primary/cta`)
-        if (v && target) {
-          const eq = (a: unknown, b: unknown): boolean => {
-            const ca = a as figma.RGBA | undefined, cb = b as figma.RGBA | undefined
-            if (!ca || !cb || typeof ca !== 'object' || typeof cb !== 'object' || 'type' in ca || 'type' in cb) return false
-            const E = 1 / 1024
-            return Math.abs(ca.r - cb.r) < E && Math.abs(ca.g - cb.g) < E && Math.abs(ca.b - cb.b) < E
-          }
-          if (eq(target.valuesByMode[pLight], v.valuesByMode[pLight]) && eq(target.valuesByMode[pDark], v.valuesByMode[pDark])) {
+        // the whole escape family aliases the neutral's own registers (owner amendment:
+        // the escape covers cta AND cta-ink): fill rest → neutral ink-11; text rest →
+        // neutral ink-10. States stay raw derived values.
+        const pairs: Array<[string, string]> = [['cta', 'ink-11'], ['cta-ink', 'ink-10']]
+        for (const [leaf, neutralLeaf] of pairs) {
+          const target = neutralPrim ? (primVar.get(`${neutralPrim}/${neutralLeaf}`) ?? primByName.get(`${neutralPrim}/${neutralLeaf}`)) : undefined
+          const v = primByName.get(`brand/${brand}/primary/${leaf}`)
+          if (v && target
+            && eq(target.valuesByMode[pLight], v.valuesByMode[pLight])
+            && eq(target.valuesByMode[pDark], v.valuesByMode[pDark])) {
             v.setValueForMode(pLight, figma.variables.createVariableAlias(target))
             v.setValueForMode(pDark, figma.variables.createVariableAlias(target))
           }
@@ -499,10 +513,22 @@ figma.ui.onmessage = async (msg) => {
       }
       // ④ signals → their shared primitive paths (engine order: red, yellow, green, info-color)
       for (const grp of shared) {
-        if (grp === neutralGrp) continue
+        if (grp === neutralGrp || grp.theme === 'link') continue
         for (const t of flatten(grp.light)) {
           aliasInto(`${grp.theme}/${t.path}`, `${grp.prim}/${t.path}`)
         }
+      }
+
+      // ⑤ the SYSTEM LINK trio (Phase 4, owner 2026-07-16: "link is a system level color…
+      // a primitive that internally aliases the primary ink 10 unless it's being
+      // deconflicted"). ONE trio per theme, per brand mode: DEFAULT aliases this brand's
+      // cta-ink family (which is ink-10 by construction — states ride along, and the
+      // neutral escape re-points it automatically through the same chain); CUSTOM (the
+      // link payload group, dedup'd by seed hex like signal variants) aliases the shared
+      // link primitive instead.
+      const linkGrp = shared.find(g => g.theme === 'link')
+      for (const [themeLeaf, brandLeaf] of [['link', 'cta-ink'], ['link-hover', 'cta-ink-hover'], ['link-pressed', 'cta-ink-pressed']] as const) {
+        aliasInto(`system/${themeLeaf}`, linkGrp ? `${linkGrp.prim}/${themeLeaf}` : `brand/${brand}/primary/${brandLeaf}`)
       }
 
       // Elevation anchors — mode-DIVERGENT aliases: each mode points at a different

@@ -100,13 +100,32 @@ right of the table shows the solve columns; hover a variable for its description
     - ☐ `brand-primary/cta` value = the `neutral/ink-11` value exactly (near-black in the
       light column, near-white in the dark column); `cta-hover`/`cta-pressed` step away
       from it; `on-cta` = white in light, black in dark.
-    - ☐ `cta-ink` still matches the brand's own `ink-10` (links keep the brand color).
-    - ☐ **[v1]** the mode collection's `brand/<name>/primary/cta` shows as an ALIAS to
-      `system/neutral/<key>/ink-11`.
-20. Untick and re-apply. ☐ The cta family returns to the brand's red trio (v1: the alias
-    is replaced by raw values again).
+    - ☐ ALL the ctas de-red: `cta-ink` = the `neutral/ink-10` value (the text-style cta
+      swaps with the fills); the RAMP (washes/inks) stays the brand's red.
+    - ☐ The red signal resets to CANONICAL — no per-brand red variant is written
+      (`system/red/base`, not a `rich`/`coral` variant path).
+    - ☐ **[v1]** `brand/<name>/primary/cta` is an ALIAS to `system/neutral/<key>/ink-11`;
+      `…/cta-ink` an alias to `…/ink-10`.
+20. Untick and re-apply. ☐ The cta family returns to the brand's red trio (v1: aliases
+    replaced by raw values); the red variant returns if the brand had one.
 21. plugin-ext only: with the escape applied, run *Re-apply all brands*.
     - ☐ The escaped brand keeps its escape after the batch (the recipe carries it).
+
+## J. System link (one per theme)
+
+22. Any brand: a "**Link color**" field with a swatch + "Custom link color" checkbox sits
+    in the controls (always visible — link is system-level, never per-family).
+    - ☐ Unchecked: the swatch shows the primary's text-action color (its ink-10); apply →
+      theme `system/link` / `link-hover` / `link-pressed` exist. **[v1]** they are ALIASES
+      to `brand/<name>/primary/cta-ink*`; **[ext]** they carry the primary's cta-ink
+      values and each brand extension overrides them with its own.
+23. Tick Custom link color (prefills `#0B57D0`) and apply.
+    - ☐ `system/link` ≈ `#2a5cb4` in the light/wcag column (the seed through the ink
+      register), a dark-native blue in the dark column. **[v1]** the theme link aliases a
+      shared `system/link/<hex>` primitive.
+24. Red brand + escape ON + custom link OFF: ☐ the link follows the ESCAPED neutral text
+    color. Escape ON + custom link ON: ☐ links are the custom blue while the cta family
+    stays neutral.
 
 Anything that reads differently than a checkbox above: screenshot + which step — that's a
 bug, not your setup.

@@ -305,6 +305,17 @@ body {
     </label>
     <div class="info-line" id="include-apca-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span id="include-apca-copy">Off: new files get wcag only; delete both apca columns and they stay deleted</span></div>
   </div>
+
+  <div class="bar-field">
+    <div class="label">Link color</div>
+    <label class="check-line" for="link-custom" style="margin-top:0"
+      title="Hyperlinks — ONE color per theme. Default follows the primary's text-action register (ink-10); customize to de-conflict links (e.g. a red brand's links reading destructive)">
+      <span class="swatch" id="link-swatch" style="background:#888;cursor:default;width:14px;height:14px;border-radius:4px"></span>
+      <input type="checkbox" id="link-custom" />
+      <span>Custom link color</span>
+    </label>
+    <input class="input" id="link-hex" value="#0B57D0" spellcheck="false" placeholder="#0B57D0" style="display:none;margin-top:6px;width:120px;height:28px" />
+  </div>
 </div>
 
 <div class="divider"></div>

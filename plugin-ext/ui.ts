@@ -1,4 +1,4 @@
-import { resolveTheme, signalScalesFor, escapeCtaFamily, type SecondaryStyle, type ResolvedTheme } from '../src/engine/resolve'
+import { resolveTheme, signalScalesFor, escapeCtaFamily, resolveLinkTrio, DEFAULT_LINK_HEX, type SecondaryStyle, type ResolvedTheme } from '../src/engine/resolve'
 import { redGateDist, RED_GATE } from '../src/engine/collision'
 import { ARCHETYPES, type Archetype } from '../src/engine/archetypes'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
@@ -33,6 +33,10 @@ let includeApca = false
 // review-caught 2026-07-16), and it can't ride an apply or recipe silently either.
 let ctaEscape = false
 let inRedRange = false
+// the SYSTEM LINK (Phase 4, owner 2026-07-16): ONE link trio per theme — hyperlinks, not
+// per-family. Default = the primary's cta-ink values (extensions carry their own; follows
+// the escape). Custom = the seed through the ink register (#0B57D0 default when toggled).
+let linkCustom = false
 // brand + the exact confirm TOKEN it was armed with (reason-scoped — the plugin only
 // honors a confirm whose reasons haven't changed since it was shown; changing the
 // toggle or fields between the two Applies re-confirms)
@@ -73,6 +77,9 @@ const profileBtns     = document.querySelectorAll<HTMLButtonElement>('.seg-btn[d
 const includeApcaBox  = $<HTMLInputElement>('include-apca')
 const ctaEscapeRow    = $<HTMLElement>('cta-escape-row')
 const ctaEscapeBox    = $<HTMLInputElement>('cta-escape')
+const linkCustomBox   = $<HTMLInputElement>('link-custom')
+const linkHexInput    = $<HTMLInputElement>('link-hex')
+const linkSwatch      = $<HTMLElement>('link-swatch')
 const matrixEl        = $<HTMLElement>('matrix')
 const applyBtn        = $<HTMLButtonElement>('apply-btn')
 const statusEl        = $<HTMLElement>('status')
@@ -159,10 +166,11 @@ function themeInput(name: string) {
     deriveSecondary: secondaryMode === 'derived' || undefined,
     secondaryStyle: secondaryMode === 'custom' ? secondaryStyle : undefined,
     contrastProfile: cp,
-    // emit-layer flag (the neutral cta escape) — resolveTheme ignores it; the payload
-    // builder hands it to themeToFigma and the recipe stores the EFFECTIVE value
-    // (checked AND in red range), so a stale checkbox can't ride a recipe replay
+    // emit-layer flags — resolveTheme ignores them; the payload builder hands them to
+    // themeToFigma and the recipe stores the EFFECTIVE values, so a stale checkbox
+    // can't ride a recipe replay
     ctaEscape: (ctaEscape && inRedRange) || undefined,
+    linkHex: (linkCustom && normalizeHex(linkHexInput.value)) || undefined,
   }
 }
 
@@ -173,8 +181,11 @@ function themeInput(name: string) {
 function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
   const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
   const sigScales = signalScalesFor(cp)
+  // the escape resets red to canonical (owner 2026-07-16) — the preview mirrors the apply
   const effective = (n: typeof SIGNALS[number]['name']) =>
-    t.themed.signalOverrides.find(o => o.name === n)?.scale ?? sigScales.get(n)!.scale
+    (ctaEscape && inRedRange && n === 'red')
+      ? sigScales.get('red')!.scale
+      : t.themed.signalOverrides.find(o => o.name === n)?.scale ?? sigScales.get(n)!.scale
 
   type Row = { label: string; scale: GeneratedScale; idHex?: string; outline?: boolean; escape?: boolean }
   const rows: Row[] = [
@@ -230,9 +241,14 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
       cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaHover)};color:${on}" title="cta-hover">Aa</div>`)
       cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaPressed)};color:${on}" title="cta-pressed">Aa</div>`)
     }
-    // cta-ink trio: the family's 4.5 text-register link escape — rendered as text like the inks
-    for (const [name, c] of [['cta-ink', row.scale.ctaInk], ['cta-ink-hover', row.scale.ctaInkHover], ['cta-ink-pressed', row.scale.ctaInkPressed]] as const)
-      cells.push(`<div class="mx-aa" style="color:${hx(c)};font-size:15px;font-weight:800;text-decoration:underline" title="${name}">Aa</div>`)
+    // cta-ink trio: the TEXT-STYLE cta (the action color's 4.5 text rendition — owner:
+    // a text button, never a hyperlink, so no underline). Under the escape it swaps to
+    // the neutral's register with the fills.
+    const inkTrio = row.escape
+      ? (() => { const e = escapeCtaFamily(nScale, 'light', cp); return [['cta-ink', e.ctaInk], ['cta-ink-hover', e.ctaInkHover], ['cta-ink-pressed', e.ctaInkPressed]] as const })()
+      : ([['cta-ink', row.scale.ctaInk], ['cta-ink-hover', row.scale.ctaInkHover], ['cta-ink-pressed', row.scale.ctaInkPressed]] as const)
+    for (const [name, c] of inkTrio)
+      cells.push(`<div class="mx-aa" style="color:${hx(c)};font-size:15px;font-weight:800" title="${name}">Aa</div>`)
     return cells.join('')
   }
 
@@ -252,6 +268,14 @@ function updatePreview() {
     const redCta = signalScalesFor(cp).get('red')!.scale.cta
     inRedRange = !!t.themed.redRepel || redGateDist(t.themed.scale.cta, redCta) <= RED_GATE.G
     ctaEscapeRow.style.display = inRedRange ? '' : 'none'
+
+    // the link swatch previews the RESOLVED system link: custom seed through the ink
+    // register, else the primary's cta-ink (escaped when the escape is active)
+    linkHexInput.style.display = linkCustom ? '' : 'none'
+    const linkStop = linkCustom && normalizeHex(linkHexInput.value)
+      ? resolveLinkTrio(normalizeHex(linkHexInput.value)!, cp).link
+      : (ctaEscape && inRedRange ? escapeCtaFamily(nScale, 'light', cp).ctaInk : t.themed.scale.ctaInk)
+    linkSwatch.style.background = toHex(linkStop.r, linkStop.g, linkStop.b)
 
     renderMatrix(t, nScale)
 
@@ -433,6 +457,16 @@ profileBtns.forEach(btn => {
 // and clears a pending single-apply confirm (its token no longer matches anyway).
 ctaEscapeBox.addEventListener('change', () => {
   ctaEscape = ctaEscapeBox.checked
+  updatePreview()
+})
+
+linkCustomBox.addEventListener('change', () => {
+  linkCustom = linkCustomBox.checked
+  if (linkCustom && !normalizeHex(linkHexInput.value)) linkHexInput.value = DEFAULT_LINK_HEX
+  updatePreview()
+})
+linkHexInput.addEventListener('input', () => {
+  linkHexInput.classList.toggle('invalid', linkHexInput.value !== '' && !normalizeHex(linkHexInput.value))
   updatePreview()
 })
 

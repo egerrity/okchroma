@@ -18,8 +18,8 @@
 
   --fg-default:           var(--neutral-ink-11);
   --fg-subtle:            var(--neutral-ink-10);
-  --fg-link:              var(--brand-ink-10);
-  --fg-link-hover:        var(--brand-ink-11);
+  /* --fg-link moved to the SYSTEM LINK trio below (owner 2026-07-16: one link per
+     theme, riding --link — no longer the brand's raw ink pair) */
 
   --border-default:       var(--neutral-highlight-9);
   --border-subtle:        var(--neutral-wash-5);
@@ -57,6 +57,12 @@
   --brand-border-default-hover:      var(--brand-highlight-8);
   --brand-border-emphasis:       var(--brand-cta);
   --brand-border-emphasis-hover: var(--brand-cta-hover);
+
+  /* the SYSTEM LINK (one trio per theme — aliases the primary's cta-ink unless a custom
+     link color de-conflicts it; --link/-hover/-pressed are emitted per brand) */
+  --fg-link:         var(--link);
+  --fg-link-hover:   var(--link-hover);
+  --fg-link-pressed: var(--link-pressed);
 }
 
 /* ─── role.secondary (the brand's secondary ramp; mirrors brand when none) ──── */

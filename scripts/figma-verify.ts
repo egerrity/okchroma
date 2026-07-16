@@ -67,10 +67,11 @@ ok((figma.dark as any).brand['cta'].$value.hex === '#869cda', `brand/cta dark he
 // Identical token names across modes
 ok(JSON.stringify(Object.keys((figma.light as any).brand)) === JSON.stringify(Object.keys((figma.dark as any).brand)), 'brand keys differ across modes')
 
-// NEUTRAL CTA ESCAPE (Phase 3): with the flag on, the brand's fill trio re-resolves from
-// the brand-neutral's ink register (cta anchors at neutral ink-11 exactly; near-black
-// light / near-white dark; on-cta flips accordingly); cta-ink and the ramp stay the
-// brand's own; flag OFF (the run above) is the unchanged path.
+// NEUTRAL CTA ESCAPE (Phase 3 + the ALL-ctas amendment): with the flag on, the brand's
+// fill trio re-resolves from the brand-neutral's ink register (cta anchors at neutral
+// ink-11 exactly; near-black light / near-white dark; on-cta flips) AND the text-style
+// cta trio swaps to the NEUTRAL's cta-ink (its ink-10 register); the ramp stays the
+// brand's own; the default link follows the escaped cta-ink; flag OFF is unchanged.
 {
   const red = resolveBrand('#EA3E3E', 'escape-probe')
   const redSignals = SIGNALS.map(s => {
@@ -83,11 +84,29 @@ ok(JSON.stringify(Object.keys((figma.light as any).brand)) === JSON.stringify(Ob
     const b = (esc[mode] as any).brand, n = (esc[mode] as any).neutral, p = (plain[mode] as any).brand
     ok(b['cta'].$value.hex === n['ink-11'].$value.hex, `${mode} escape cta ${b['cta'].$value.hex} != neutral ink-11 ${n['ink-11'].$value.hex}`)
     ok(b['cta'].$value.hex !== p['cta'].$value.hex, `${mode} escape cta did not move off the brand cta`)
-    ok(b['cta-ink'].$value.hex === p['cta-ink'].$value.hex, `${mode} escape touched cta-ink (must stay the brand's own)`)
+    ok(b['cta-ink'].$value.hex === n['ink-10'].$value.hex, `${mode} escape cta-ink ${b['cta-ink'].$value.hex} != neutral ink-10 ${n['ink-10'].$value.hex} (ALL the ctas de-red)`)
     ok(b['paper-1'].$value.hex === p['paper-1'].$value.hex, `${mode} escape touched the ramp`)
+    ok((esc[mode] as any).link['link'].$value.hex === b['cta-ink'].$value.hex, `${mode} default link does not follow the escaped cta-ink`)
   }
   ok((esc.light as any).brand['on-cta'].$value.hex === '#ffffff', `escape light on-cta should be white on the near-black fill (got ${(esc.light as any).brand['on-cta'].$value.hex})`)
   ok((esc.dark as any).brand['on-cta'].$value.hex === '#000000', `escape dark on-cta should be black on the near-white fill (got ${(esc.dark as any).brand['on-cta'].$value.hex})`)
+}
+
+// SYSTEM LINK (Phase 4): one trio per theme. Default = the primary's cta-ink verbatim;
+// a custom seed = its ink-register resolution (differs from the brand's own ink).
+{
+  for (const mode of ['light', 'dark'] as const) {
+    const l = (figma[mode] as any).link, b = (figma[mode] as any).brand
+    for (const leaf of ['link', 'link-hover', 'link-pressed'])
+      ok(!!l?.[leaf], `${mode}.link.${leaf} missing`)
+    ok(l['link'].$value.hex === b['cta-ink'].$value.hex, `${mode} default link ${l['link'].$value.hex} != brand cta-ink ${b['cta-ink'].$value.hex}`)
+  }
+  const custom = themeToFigma(r, { secondary, neutralLevel: 'default', signals, linkHex: '#0B57D0' })
+  for (const mode of ['light', 'dark'] as const) {
+    const l = (custom[mode] as any).link, b = (custom[mode] as any).brand
+    ok(l['link'].$value.hex !== b['cta-ink'].$value.hex, `${mode} custom link should differ from the brand's cta-ink`)
+  }
+  ok((custom.light as any).link['link'].$value.hex === '#2a5cb4', `custom link light hex ${(custom.light as any).link['link'].$value.hex} != #2a5cb4 (the #0B57D0 seed through the wcag register, gamut-mapped emit)`)
 }
 
 if (fails.length) { console.error('FAIL:\n' + fails.map(f => '  - ' + f).join('\n')); process.exit(1) }

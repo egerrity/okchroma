@@ -1,4 +1,4 @@
-import { resolveTheme, signalScalesFor, escapeCtaFamily, type SecondaryStyle, type ResolvedTheme } from '../src/engine/resolve'
+import { resolveTheme, signalScalesFor, escapeCtaFamily, resolveLinkTrio, DEFAULT_LINK_HEX, type SecondaryStyle, type ResolvedTheme } from '../src/engine/resolve'
 import { redGateDist, RED_GATE } from '../src/engine/collision'
 import { ARCHETYPES, type Archetype } from '../src/engine/archetypes'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
@@ -25,6 +25,12 @@ let contrastProfile: ContrastProfile = 'apca' // APCA = the shipped default; WCA
 // review-caught 2026-07-16), and it can't ride an apply silently either.
 let ctaEscape = false
 let inRedRange = false
+// the SYSTEM LINK (Phase 4, owner 2026-07-16): ONE link trio per theme — hyperlinks, not
+// per-family. Default aliases the primary's cta-ink (= ink-10, states built in; follows
+// the escape). Custom = the seed below through the ink register (#0B57D0 default when
+// toggled on — the red de-conflict for links).
+let linkCustom = false
+let linkHex = '#0B57D0'
 let pendingName: string | null = null // brand armed for overwrite confirmation
 // The secondary is the demo's THREE-STATE field: none (default — just "+ Add secondary") →
 // derived (the input tracks the primary live; the engine derives the default secondary) →
@@ -61,6 +67,9 @@ const neutralSelect   = $<HTMLSelectElement>('neutral-select')
 const profileBtns     = document.querySelectorAll<HTMLButtonElement>('.seg-btn[data-profile]')
 const ctaEscapeRow    = $<HTMLElement>('cta-escape-row')
 const ctaEscapeBox    = $<HTMLInputElement>('cta-escape')
+const linkCustomBox   = $<HTMLInputElement>('link-custom')
+const linkHexInput    = $<HTMLInputElement>('link-hex')
+const linkSwatch      = $<HTMLElement>('link-swatch')
 const matrixEl        = $<HTMLElement>('matrix')
 const applyBtn        = $<HTMLButtonElement>('apply-btn')
 const statusEl        = $<HTMLElement>('status')
@@ -151,8 +160,11 @@ function themeInput(name: string) {
 function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
   const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
   const sigScales = signalScalesFor(cp)
+  // the escape resets red to canonical (owner 2026-07-16) — the preview mirrors the apply
   const effective = (n: typeof SIGNALS[number]['name']) =>
-    t.themed.signalOverrides.find(o => o.name === n)?.scale ?? sigScales.get(n)!.scale
+    (ctaEscape && inRedRange && n === 'red')
+      ? sigScales.get('red')!.scale
+      : t.themed.signalOverrides.find(o => o.name === n)?.scale ?? sigScales.get(n)!.scale
 
   type Row = { label: string; scale: GeneratedScale; idHex?: string; outline?: boolean; escape?: boolean }
   const rows: Row[] = [
@@ -209,9 +221,14 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
       cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaHover)};color:${on}" title="cta-hover">Aa</div>`)
       cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaPressed)};color:${on}" title="cta-pressed">Aa</div>`)
     }
-    // cta-ink trio: the family's 4.5 text-register link escape — rendered as text like the inks
-    for (const [name, c] of [['cta-ink', row.scale.ctaInk], ['cta-ink-hover', row.scale.ctaInkHover], ['cta-ink-pressed', row.scale.ctaInkPressed]] as const)
-      cells.push(`<div class="mx-aa" style="color:${hx(c)};font-size:15px;font-weight:800;text-decoration:underline" title="${name}">Aa</div>`)
+    // cta-ink trio: the TEXT-STYLE cta (the action color's 4.5 text rendition — owner:
+    // a text button, never a hyperlink, so no underline). Under the escape it swaps to
+    // the neutral's register with the fills.
+    const inkTrio = row.escape
+      ? (() => { const e = escapeCtaFamily(nScale, 'light', contrastProfile === 'apca' ? 'apca' : undefined); return [['cta-ink', e.ctaInk], ['cta-ink-hover', e.ctaInkHover], ['cta-ink-pressed', e.ctaInkPressed]] as const })()
+      : ([['cta-ink', row.scale.ctaInk], ['cta-ink-hover', row.scale.ctaInkHover], ['cta-ink-pressed', row.scale.ctaInkPressed]] as const)
+    for (const [name, c] of inkTrio)
+      cells.push(`<div class="mx-aa" style="color:${hx(c)};font-size:15px;font-weight:800" title="${name}">Aa</div>`)
     return cells.join('')
   }
 
@@ -231,6 +248,14 @@ function updatePreview() {
     const redCta = signalScalesFor(cp).get('red')!.scale.cta
     inRedRange = !!t.themed.redRepel || redGateDist(t.themed.scale.cta, redCta) <= RED_GATE.G
     ctaEscapeRow.style.display = inRedRange ? '' : 'none'
+
+    // the link swatch previews the RESOLVED system link: custom seed through the ink
+    // register, else the primary's cta-ink (escaped when the escape is active)
+    linkHexInput.style.display = linkCustom ? '' : 'none'
+    const linkStop = linkCustom && normalizeHex(linkHexInput.value)
+      ? resolveLinkTrio(normalizeHex(linkHexInput.value)!, cp).link
+      : (ctaEscape && inRedRange ? escapeCtaFamily(nScale, 'light', cp).ctaInk : t.themed.scale.ctaInk)
+    linkSwatch.style.background = toHex(linkStop.r, linkStop.g, linkStop.b)
 
     renderMatrix(t, nScale)
 
@@ -330,13 +355,18 @@ function buildAndSend() {
     // No override → the canonical ramp, keyed 'base'.
     const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
     const sigScales = signalScalesFor(cp)
+    // the escape RESETS the red collision to default (owner 2026-07-16): the brand's
+    // ctas ride the neutral register, nothing collides — canonical red ships, no
+    // per-brand variant primitive is minted
+    const escapeOn = ctaEscape && inRedRange
     const signals = SIGNALS.map(s => {
-      const ov = r.signalOverrides.find(o => o.name === s.name)
+      const ov = escapeOn && s.name === 'red' ? undefined : r.signalOverrides.find(o => o.name === s.name)
       const variant = ov ? variantKey(ov) : 'base'
       return { name: s.name, scale: ov?.scale ?? sigScales.get(s.name)!.scale, variant }
     })
 
-    const { light, dark } = themeToFigma(r, { secondary, secondaryStyle: t.secondary?.style, neutralLevel, signals, contrastProfile: cp, ctaEscape: ctaEscape && inRedRange })
+    const customLink = linkCustom ? normalizeHex(linkHexInput.value) : null
+    const { light, dark } = themeToFigma(r, { secondary, secondaryStyle: t.secondary?.style, neutralLevel, signals, contrastProfile: cp, ctaEscape: ctaEscape && inRedRange, linkHex: customLink })
 
     // The engine now names signals by identity (red / yellow / green /
     // blue), so both the primitive path (system/<identity>/<variant>) and
@@ -357,6 +387,15 @@ function buildAndSend() {
         light: light[s.name],
         dark: dark[s.name],
       })),
+      // CUSTOM system link: one shared prim trio, keyed by the RESOLVED light link hex
+      // (the signal-variant idiom — value-keyed, so an engine retune mints a new prim
+      // instead of silently reusing a stale one). Default posture sends nothing: the
+      // plugin aliases the brand's own cta-ink family.
+      ...(customLink ? [{
+        theme: 'link',
+        prim: `system/link/${((light.link as Record<string, { $value: { hex: string } }>)['link'].$value.hex).slice(1)}`,
+        light: light.link, dark: dark.link,
+      }] : []),
     ]
 
     // confirmed only when this exact name was just flagged as an overwrite.
@@ -463,6 +502,18 @@ profileBtns.forEach(btn => {
 
 ctaEscapeBox.addEventListener('change', () => {
   ctaEscape = ctaEscapeBox.checked
+  updatePreview()
+})
+
+linkCustomBox.addEventListener('change', () => {
+  linkCustom = linkCustomBox.checked
+  if (linkCustom && !normalizeHex(linkHexInput.value)) linkHexInput.value = DEFAULT_LINK_HEX
+  updatePreview()
+})
+linkHexInput.addEventListener('input', () => {
+  const norm = normalizeHex(linkHexInput.value)
+  if (norm) linkHex = norm
+  linkHexInput.classList.toggle('invalid', linkHexInput.value !== '' && !norm)
   updatePreview()
 })
 

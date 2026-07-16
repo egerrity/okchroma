@@ -29,7 +29,12 @@ export type TokenColumns = Record<Column, FlatTok[]>
 // (owner: "always both, no picker"). ctaEscape rides ALONGSIDE (an emit-layer flag, not a
 // solve input — the neutral cta escape, Phase 3): stored in the recipe, so backfills and
 // re-applies preserve a brand's escape posture.
-export type ThemeSpec = Omit<Parameters<typeof resolveTheme>[0], 'contrastProfile'> & { ctaEscape?: boolean }
+export type ThemeSpec = Omit<Parameters<typeof resolveTheme>[0], 'contrastProfile'> & {
+  ctaEscape?: boolean
+  // the SYSTEM LINK's custom seed (Phase 4) — one link per theme; absent = the link rows
+  // carry the primary's cta-ink values (extensions override them per brand)
+  linkHex?: string | null
+}
 
 // The base collection's documented default seed (owner decision: fixed engine default —
 // symmetric, every real brand is an extension). Secondary seed = the derived pastel;
@@ -71,6 +76,10 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
   flatten(g.brand as FigmaGroup, 'brand-primary', out)
   if (includeSecondary) flatten(g.secondary as FigmaGroup, 'brand-secondary', out)
   for (const s of SIGNALS) flatten(g[s.name] as FigmaGroup, s.name, out)
+  // the SYSTEM LINK trio (Phase 4): system-pathed but BRAND-OVERRIDABLE (unlike the
+  // contract-invariant system/* poles — code.ts carves it out of the override skip);
+  // rows carry the resolved values (primary's cta-ink, or the custom seed's register)
+  flatten(g.link as FigmaGroup, 'system', out)
   return out
 }
 
@@ -84,7 +93,10 @@ function lane(
   const t = resolveTheme({ ...input, contrastProfile: profile })
   const sigScales = signalScalesFor(profile)
   const signals = SIGNALS.map(s => {
-    const ov = canonicalSignals ? undefined : t.themed.signalOverrides.find(o => o.name === s.name)
+    // the escape resets red to canonical (owner 2026-07-16): with the brand's ctas on
+    // the neutral register nothing collides — the per-brand red variant is dropped
+    const ov = canonicalSignals || (input.ctaEscape && s.name === 'red')
+      ? undefined : t.themed.signalOverrides.find(o => o.name === s.name)
     return { name: s.name, scale: ov?.scale ?? sigScales.get(s.name)!.scale }
   })
   const { light, dark } = themeToFigma(t.themed, {
@@ -94,6 +106,7 @@ function lane(
     signals,
     contrastProfile: profile,
     ctaEscape: input.ctaEscape,
+    linkHex: input.linkHex,
   })
   const inc = includeSecondary === true || !!t.secondary
   return { light: toFlat(light, 'light', inc), dark: toFlat(dark, 'dark', inc), theme: t }
