@@ -16,6 +16,7 @@ import {
   type RungMode,
 } from './shared'
 import { CtaRow, TokenCards, type RampKind } from './TokenCards'
+import { OkchromaLogo } from './okchroma-logo'
 import { classifyArchetype } from '../src/engine/archetypes'
 import type { ResolvedBrand } from '../src/engine/resolve'
 
@@ -90,7 +91,7 @@ function NeutralSelect({ value, onChange }: {
 
 type View = 'palette' | 'preview'
 
-export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onToggleDark: () => void }) {
+export default function CustomTheme({ dark }: { dark: boolean }) {
   const [primaryInput, setPrimaryInput] = useState('#E93D82')
   // The secondary is a three-state field (owner UX): none — just an "Add secondary"
   // button; derived — the field tracks the primary live (the engine derives the subtle
@@ -231,6 +232,21 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
     })
     return list
   }, [primary, rung, rRec, secondary, computed])
+
+  // Toasts self-dismiss after 6s (the ✕ still works sooner). One timer per
+  // toast key, started when the toast first appears — re-renders must not
+  // restart the clock, so live timers are tracked in a ref.
+  const toastTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>())
+  useEffect(() => {
+    for (const t of toasts) {
+      if (toastTimers.current.has(t.key)) continue
+      toastTimers.current.set(t.key, setTimeout(() => {
+        toastTimers.current.delete(t.key)
+        setDismissed(s => new Set(s).add(t.key))
+      }, 6000))
+    }
+  }, [toasts])
+  useEffect(() => () => { for (const h of toastTimers.current.values()) clearTimeout(h) }, [])
 
   // brandCss already includes the per-brand neutral, so the injected CSS is the
   // whole theme — no separate neutral block.
@@ -561,8 +577,7 @@ export default function CustomTheme({ dark, onToggleDark }: { dark: boolean; onT
       {/* ── App nav: product navbar, themed by the palette. Palette/Preview
           tabs only — the Figma export now lives in the plugin, not here. ── */}
       <div className="ct-appnav">
-        <span className="ct-logo-mark">◈</span>
-        <span className="ct-brandname">yourBrand</span>
+        <span className="ct-applogo"><OkchromaLogo height={15} /></span>
         <span style={{ flex: 1 }} />
         {([['palette', 'Palette'], ['preview', 'Preview']] as Array<[View, string]>).map(([v, label]) => (
           <button key={v} className={`ct-apptab${view === v ? ' active' : ''}`} onClick={() => setView(v)}>{label}</button>
@@ -697,7 +712,9 @@ function checklistRows(rRec: ResolvedBrand, rung: RungMode, primaryHex: string, 
 
 const TONE_META: Record<CheckTone, { Icon: typeof Check; color: string }> = {
   pass: { Icon: Check, color: 'var(--positive-fg)' },
-  adjusted: { Icon: Sparkles, color: 'var(--fg-link)' },
+  // info register, NOT --fg-link: these icons/headers are never links, and the
+  // link token is reserved for real anchors (owner ruling: link = one system color)
+  adjusted: { Icon: Sparkles, color: 'var(--info-fg)' },
   standard: { Icon: ArrowRight, color: 'var(--fg-subtle)' },
   fail: { Icon: TriangleAlert, color: 'var(--alert-med-fg)' },
 }
@@ -1081,7 +1098,7 @@ const PAGE_CSS = `
   display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px;
   font-size: 13px; color: var(--fg-default); text-decoration: none;
 }
-.dash-navitem:hover { background: var(--surface-sunken); }
+.dash-navitem:hover { background: var(--surface-raised); }
 .dash-navitem.active { background: var(--brand-bg-subtle); color: var(--brand-fg); font-weight: 600; }
 .dash-user { display: flex; align-items: center; gap: 10px; padding-top: 14px; border-top: 1px solid var(--border-subtle); }
 .dash-avatar {
@@ -1143,12 +1160,9 @@ const PAGE_CSS = `
   --brand-bg-subtle-hover: var(--brand-wash-6);
 }
 .ct-download { margin-left: 4px; }
-.ct-logo-mark {
-  width: 26px; height: 26px; border-radius: 7px; display: inline-flex; align-items: center;
-  justify-content: center; background: var(--brand-bg-emphasis); color: var(--brand-fg-on-emphasis);
-  font-size: 14px; flex-shrink: 0;
-}
-.ct-brandname { font-weight: 700; font-size: 14px; margin-left: -10px; color: var(--brand-fg-alt); }
+/* okchroma wordmark (fill=currentColor) — inherits the nav's brand ink, so it
+   re-themes with every generated palette */
+.ct-applogo { display: inline-flex; align-items: center; color: var(--brand-fg-alt); flex-shrink: 0; }
 .ct-apptab {
   border: none; cursor: pointer; font-family: inherit; font-size: 13px;
   padding: 6px 12px; border-radius: 999px; background: transparent;

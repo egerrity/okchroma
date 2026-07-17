@@ -39,7 +39,7 @@ export default function App() {
       <style>{NAV_CSS}</style>
 
       <div style={{ flex: 1, minHeight: 0 }}>
-        {view === 'custom' && <CustomTheme dark={dark} onToggleDark={() => setDark(d => !d)} />}
+        {view === 'custom' && <CustomTheme dark={dark} />}
         {view === 'gallery' && <PaletteGallery dark={dark} onToggleDark={() => setDark(d => !d)} />}
         {view === 'docs' && <DocsSite dark={dark} />}
       </div>
