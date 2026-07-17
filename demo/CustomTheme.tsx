@@ -10,13 +10,13 @@ import { brandCss, signalsCss, stopHex } from '../src/engine/cssRender'
 import { generateNeutralScale, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
 import { wcagY, contrastRatio } from '../src/engine/constraints'
 import { HERO_ILLO } from './heroIllo'
+import { BRAND_LOGO } from './brandLogo'
 import {
   Segmented,
   normalizeHex,
   type RungMode,
 } from './shared'
 import { CtaRow, TokenCards, type RampKind } from './TokenCards'
-import { OkchromaLogo } from './okchroma-logo'
 import { classifyArchetype } from '../src/engine/archetypes'
 import type { ResolvedBrand } from '../src/engine/resolve'
 
@@ -91,7 +91,7 @@ function NeutralSelect({ value, onChange }: {
 
 type View = 'palette' | 'preview'
 
-export default function CustomTheme({ dark }: { dark: boolean }) {
+export default function CustomTheme({ dark, view }: { dark: boolean; view: View }) {
   const [primaryInput, setPrimaryInput] = useState('#E93D82')
   // The secondary is a three-state field (owner UX): none — just an "Add secondary"
   // button; derived — the field tracks the primary live (the engine derives the subtle
@@ -110,10 +110,10 @@ export default function CustomTheme({ dark }: { dark: boolean }) {
   // APCA is the DEFAULT (owner 2026-07-04, the true split): the perceptually-solved look ships;
   // WCAG is the opt-in legal mode — every on-text pole ratio-passing, highlights flip to black
   // where white fails 4.5.
-  const [profile, setProfile] = useState<ContrastProfile>('apca')
+  const [profile, setProfile] = useState<ContrastProfile>('wcag')
   // Neutral tint level (the neutral is always generated from the brand hue now).
   const [neutralLevel, setNeutralLevel] = useState<NeutralLevel>('default')
-  const [view, setView] = useState<View>('palette')
+  const [controlsMin, setControlsMin] = useState(false)  // collapse the workshop controls bar
   // the NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): red-range brands can swap the
   // cta fill trio to the brand-neutral's ink register — shown only in red range;
   // leaving the range clears it (a stale hidden escape must never apply silently)
@@ -280,7 +280,12 @@ export default function CustomTheme({ dark }: { dark: boolean }) {
     : 'Neutrals are pure grey'
 
   const controlsBar = (
-    <div className="ct-bar">
+    <div className={`ct-bar${controlsMin ? ' min' : ''}`}>
+      <button className="ct-bar-toggle" onClick={() => setControlsMin(m => !m)}
+        title={controlsMin ? 'Show controls' : 'Minimize controls'} aria-label={controlsMin ? 'Show controls' : 'Minimize controls'}>
+        {controlsMin ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
+      </button>
+      <div className="ct-bar-min-label"><span className="ct-swatch" style={{ background: primary }} /> Controls</div>
       <div className="ct-bar-field">
         <div className="ct-label">Primary color</div>
         <div className={`ct-field ct-field-color${primaryInvalid ? ' err' : ''}`}>
@@ -426,9 +431,7 @@ export default function CustomTheme({ dark }: { dark: boolean }) {
   // A color's scale + its collapsed engine decisions. Signals surface as
   // rows INSIDE each checklist (error/warning collisions), never as cards.
   const colorBlock = (label: string, prefix: string, kind: RampKind, r: ResolvedBrand | null, hex: string, extras?: React.ReactNode) => (
-    // the card serves the ramp's OWN paper-1 (owner 2026-07-09): tokens sit on their own paper in both modes,
-    // so light↔dark compare on equal ground (the neutral surface-raised bg gave dark a different contrast)
-    <div className="ct-colorblock" style={{ background: `var(--${prefix}-paper-1)` }}>
+    <div className="ct-colorblock">
       <div className="ct-label" style={{ marginBottom: 8 }}>{label}</div>
       <TokenCards prefix={prefix} kind={kind} outlineCta={prefix === 'secondary' && computed.t.secondary?.style === 'outline'} />
       {extras}
@@ -446,7 +449,7 @@ export default function CustomTheme({ dark }: { dark: boolean }) {
     // the escape resets red to canonical — no stale "shifted" tag on a signal the css ships canonical
     const override = computed.escapeOn && name === 'red' ? undefined : computed.r.signalOverrides.find(o => o.name === name)
     return (
-      <div className="ct-colorblock" key={name} style={{ background: `var(--${name}-paper-1)` }}>
+      <div className="ct-colorblock" key={name}>
         <div className="ct-label" style={{ marginBottom: 8, display: 'flex', alignItems: 'baseline', gap: 8 }}>
           <span>{name}</span>
           {override && <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--info-fg)' }}>shifted · {override.note}</span>}
@@ -456,13 +459,13 @@ export default function CustomTheme({ dark }: { dark: boolean }) {
     )
   })
 
-  // TEMP — flat compare grid of every generated color (all ramps × all stops), for
-  // eyeballing the scale. The cta family sits at the END so the 1–12 ladder reads
-  // unbroken. Each cell shows the token representatively: surfaces as plain swatches,
-  // highlight/cta as "Aa" on their on-color, ink + cta-ink as "Aa" text, identity as
-  // an "ID" chip (blank-but-spaced when a ramp has none, so columns stay justified).
-  // Themes with the page toggle.
-  const SWATCH_STOPS = ['paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'wash-6', 'wash-7', 'highlight-8', 'highlight-9', 'ink-10', 'ink-11', 'cta', 'cta-hover', 'cta-pressed', 'cta-ink', 'cta-ink-hover', 'cta-ink-pressed']
+  // Flat compare grid of the generated SCALE (all ramps × the 1–11 stops), for
+  // eyeballing the ladder. cta / cta-ink live in the deconfliction card below, not
+  // here (owner 2026-07-17: keep the top card to the 0–12 scale, reserve the second
+  // card for cta + cta-ink). Each cell shows the token representatively: surfaces as
+  // plain swatches, highlight-8 as a ring (its role IS a stroke), ink as "Aa" text,
+  // identity as an "ID" chip. Themes with the page toggle.
+  const SWATCH_STOPS = ['paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'wash-6', 'wash-7', 'highlight-8', 'highlight-9', 'ink-10', 'ink-11']
   const swatchRamps: Array<[string, string, boolean]> = [
     ['brand', 'primary', true],
     ...((secondary || derived) ? [['secondary', 'secondary', true] as [string, string, boolean]] : []),
@@ -489,7 +492,7 @@ export default function CustomTheme({ dark }: { dark: boolean }) {
       return <div style={{ ...aa, boxSizing: 'border-box', background: cv(stop), color: cv('on-cta'), border: ring ? `1.5px solid ${cv('cta-border')}` : undefined }}>Aa</div>
     }
     if (stop.startsWith('ink')) return <div style={{ ...aa, fontSize: 18, fontWeight: 900, color: cv(stop) }}>Aa</div>
-    return <div style={{ height: 36, borderRadius: 6, background: cv(stop), border: '1px solid var(--border-subtle)' }} />
+    return <div style={{ height: 36, borderRadius: 6, background: cv(stop) }} />
   }
   // "ID" label legible on the identity swatch (which can be light, e.g. a yellow
   // brand): pick black/white by the identity's perceived luminance, not fixed white.
@@ -574,17 +577,8 @@ export default function CustomTheme({ dark }: { dark: boolean }) {
       <style>{overrideCss}</style>
       <style>{PAGE_CSS}</style>
 
-      {/* ── App nav: product navbar, themed by the palette. Palette/Preview
-          tabs only — the Figma export now lives in the plugin, not here. ── */}
-      <div className="ct-appnav">
-        <span className="ct-applogo"><OkchromaLogo height={15} /></span>
-        <span style={{ flex: 1 }} />
-        {([['palette', 'Palette'], ['preview', 'Preview']] as Array<[View, string]>).map(([v, label]) => (
-          <button key={v} className={`ct-apptab${view === v ? ' active' : ''}`} onClick={() => setView(v)}>{label}</button>
-        ))}
-      </div>
-
-      {/* ── Persistent controls bar — present on both views ── */}
+      {/* ── Persistent controls bar. The Palette/Preview switch + light/dark
+          toggle live in the app bottom bar now (App.tsx). ── */}
       {controlsBar}
 
       {/* ── Palette: workshop. Left = scales + collapsed decisions; right =
@@ -712,9 +706,10 @@ function checklistRows(rRec: ResolvedBrand, rung: RungMode, primaryHex: string, 
 
 const TONE_META: Record<CheckTone, { Icon: typeof Check; color: string }> = {
   pass: { Icon: Check, color: 'var(--positive-fg)' },
-  // info register, NOT --fg-link: these icons/headers are never links, and the
-  // link token is reserved for real anchors (owner ruling: link = one system color)
-  adjusted: { Icon: Sparkles, color: 'var(--info-fg)' },
+  // BRAND register (brand-ink-10, i.e. brand-fg-alt): an engine decision reads as
+  // "on-brand", never as a link (--link is reserved for real anchors) and never as
+  // the info-blue it used to borrow (owner 2026-07-17).
+  adjusted: { Icon: Sparkles, color: 'var(--brand-ink-10)' },
   standard: { Icon: ArrowRight, color: 'var(--fg-subtle)' },
   fail: { Icon: TriangleAlert, color: 'var(--alert-med-fg)' },
 }
@@ -759,8 +754,8 @@ function EngineChecklist({ rRec, rung, primaryHex, escapeOn }: { rRec: ResolvedB
 // neutral (surfaces, text), the signals (status), and the live illustration. ─
 
 const dashCard: React.CSSProperties = {
-  background: 'var(--surface-raised)', border: '1px solid var(--border-subtle)',
-  borderRadius: 14, padding: 18,
+  background: 'var(--surface-raised)', boxShadow: 'var(--elev-card)',
+  borderRadius: 16, padding: 18,
 }
 
 function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
@@ -775,7 +770,7 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
   return (
     <div className="dash">
       <aside className="dash-side">
-        <div className="dash-logo"><span className="dash-logo-mark">◈</span> yourBrand</div>
+        <div className="dash-logo" dangerouslySetInnerHTML={{ __html: BRAND_LOGO }} />
         <nav className="dash-nav">
           {nav.map(({ Icon, label, goto }) => (
             <a key={label} href="#" className={`dash-navitem${goto === page ? ' active' : ''}`}
@@ -799,9 +794,10 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
           <div style={{ fontSize: 18, fontWeight: 700 }}>Dashboard</div>
           <div className="dash-search"><Search size={14} aria-hidden /> Search…</div>
           <span style={{ flex: 1 }} />
-          <button className="u-btn u-btn-subtle" style={{ padding: '6px 12px', fontSize: 13 }} title="Placeholder — export coming"><Download size={14} /> Export</button>
-          {/* the secondary CTA (--secondary-cta/-hover) beside the brand cta — only when a
-              secondary exists (the vars mirror brand otherwise, a duplicate button) */}
+          {/* the three cta tiers in context: neutral (Export) · secondary (Share,
+              inserted only once a secondary exists) · primary (New project). No wash
+              fills — the ramps carry every button (owner 2026-07-17). */}
+          <button className="u-btn u-btn-neutral" style={{ padding: '6px 12px', fontSize: 13 }} title="Placeholder — export coming"><Download size={14} /> Export</button>
           {hasSecondary && <button className="u-btn u-btn-secondary" style={{ padding: '6px 14px', fontSize: 13 }}>Share</button>}
           <button className="u-btn u-btn-primary" style={{ padding: '6px 14px', fontSize: 13 }}><Plus size={14} /> New project</button>
         </div>
@@ -835,9 +831,10 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
             <div style={{ fontSize: 12, color: 'var(--fg-subtle)', textAlign: 'center', marginBottom: 12 }}>
               Invite your team and spin up your first project.
             </div>
-            {/* the secondary-showcase slot: NEUTRAL (quiet cta) until a secondary exists,
-                then the secondary's subtle register (owner: never brand-again) */}
-            <button className={`u-btn ${hasSecondary ? 'u-btn-subtle' : 'u-btn-neutral'}`} style={{ width: '100%', justifyContent: 'center' }}>Create project</button>
+            {/* neutral cta — the quiet action. The secondary is showcased in the
+                topbar tier (Share), so this stays neutral in every state (owner
+                2026-07-17: no wash-fill buttons). */}
+            <button className="u-btn u-btn-neutral" style={{ width: '100%', justifyContent: 'center' }}>Create project</button>
           </section>
 
           <section style={{ ...dashCard, gridColumn: 'span 2' }}>
@@ -862,7 +859,9 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
 }
 
 // ─── Collision check — 2×2 grid, one form card per signal ───────────────────
-// Owner spec (2026-07-09): four form cards on paper-0, one per signal
+// Owner spec (2026-07-09): four form cards, one per signal — on the raised plane
+// as of the 2026-07-17 redesign (was literal paper-0; surface-raised === paper-0 in
+// light and lifts correctly in dark, instead of collapsing to the darkest plane)
 // (red / yellow / green / blue — by identity), each combining:
 //   ink-10 title + brand chip + the card signal's chip
 //   ink-11 short body
@@ -892,10 +891,10 @@ function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typ
   const fieldLabel: React.CSSProperties = { fontSize: 11, fontWeight: 600, color: 'var(--fg-subtle)', marginBottom: 4 }
   // the focused state, held statically (mirror of .ct-field:focus-within) so all
   // four cards can show it at once
-  const focusRing: React.CSSProperties = { borderColor: 'var(--brand-highlight-8)', boxShadow: '0 0 0 3px var(--brand-bg-subtle)' }
+  const focusRing: React.CSSProperties = { borderColor: 'var(--brand-highlight-8)', boxShadow: '0 0 0 3px var(--brand-wash-5)' }
   const btn: React.CSSProperties = { padding: '8px 16px', borderRadius: 999, border: '1.5px solid transparent', cursor: 'pointer', fontSize: 13, fontWeight: 500, fontFamily: 'inherit' }
   return (
-    <section style={{ background: 'var(--paper-0)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: 18 }}>
+    <section style={{ background: 'var(--surface-raised)', boxShadow: 'var(--elev-card)', borderRadius: 16, padding: 18 }}>
       {/* title row shows the ink-10 RANGE: signal ink vs neutral ink vs brand ink;
           the subtitle (only when a secondary exists) adds secondary ink-10 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
@@ -977,7 +976,7 @@ function SettingsStress({ hasSecondary }: { hasSecondary: boolean }) {
         <div style={{ fontSize: 18, fontWeight: 700 }}>Collision check</div>
         <span style={{ flex: 1 }} />
         <span style={{ fontSize: 11.5, color: 'var(--fg-subtle)' }}>
-          one card per signal on paper-0 — try a red, gold, green, or blue seed above
+          one card per signal on a raised card — try a red, gold, green, or blue seed above
         </span>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 14 }}>
@@ -988,8 +987,10 @@ function SettingsStress({ hasSecondary }: { hasSecondary: boolean }) {
 }
 
 function Metric({ label, value, delta, tone }: { label: string; value: string; delta: string; tone: string }) {
+  // Neutralized tile (owner 2026-07-17): plain raised plane, no per-tone fill/border.
+  // The signal reads through the delta text alone — colour where it matters.
   return (
-    <div style={{ ...dashCard, padding: 16, background: `var(--${tone}-bg-faint)`, borderColor: `var(--${tone}-border-subtle)` }}>
+    <div style={{ ...dashCard, padding: 16 }}>
       <div style={{ fontSize: 12, color: 'var(--fg-subtle)' }}>{label}</div>
       <div style={{ fontSize: 26, fontWeight: 700, margin: '4px 0 4px' }}>{value}</div>
       <span style={{ fontSize: 11, fontWeight: 600, color: `var(--${tone}-fg)` }}>{delta}</span>
@@ -1028,13 +1029,13 @@ function CustomersTable({ hasSecondary }: { hasSecondary: boolean }) {
           const [label, tone] = CUST_STATUS[c.status]
           const premium = c.plan !== 'Starter'
           // Premium plans carry the accent when a secondary exists, else the brand.
-          const planBg = premium ? (hasSecondary ? 'var(--secondary-wash-3)' : 'var(--brand-bg-subtle)') : 'var(--surface-sunken)'
-          const planFg = premium ? (hasSecondary ? 'var(--secondary-ink-10)' : 'var(--brand-fg)') : 'var(--fg-subtle)'
+          const planBg = premium ? (hasSecondary ? 'var(--secondary-wash-3)' : 'var(--brand-wash-5)') : 'var(--surface-sunken)'
+          const planFg = premium ? (hasSecondary ? 'var(--secondary-ink-10)' : 'var(--brand-ink-11)') : 'var(--fg-subtle)'
           return (
             <tr key={c.name}>
               <td>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span className="dash-avatar" style={{ width: 28, height: 28, fontSize: 11, background: 'var(--surface-sunken)', color: 'var(--fg-default)', border: '1px solid var(--border-subtle)' }}>{c.name[0]}</span>
+                  <span className="dash-avatar" style={{ width: 28, height: 28, fontSize: 11, background: 'var(--surface-sunken)', color: 'var(--fg-default)', border: '1px solid var(--neutral-wash-5)' }}>{c.name[0]}</span>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500 }}>{c.name}</div>
                     <div style={{ fontSize: 11, color: 'var(--fg-subtle)' }}>{c.email}</div>
@@ -1060,8 +1061,8 @@ const TASK_STATUS: Record<string, [string, string]> = {
 function Task({ name, who, status }: { name: string; who: string; status: string }) {
   const [label, tone] = TASK_STATUS[status]
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderTop: '1px solid var(--border-subtle)' }}>
-      <span style={{ width: 26, height: 26, borderRadius: 999, background: 'var(--brand-bg-subtle)', color: 'var(--brand-fg)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, flexShrink: 0 }}>{who[0]}</span>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderTop: '1px solid var(--neutral-wash-5)' }}>
+      <span style={{ width: 26, height: 26, borderRadius: 999, background: 'var(--brand-wash-5)', color: 'var(--brand-ink-11)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, flexShrink: 0 }}>{who[0]}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 13, fontWeight: 500 }}>{name}</div>
         <div style={{ fontSize: 11, color: 'var(--fg-subtle)' }}>{who}</div>
@@ -1073,7 +1074,7 @@ function Task({ name, who, status }: { name: string; who: string; status: string
 
 function Feed({ who, what, when, tone }: { who: string; what: string; when: string; tone: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid var(--border-subtle)' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid var(--neutral-wash-5)' }}>
       <span style={{ width: 8, height: 8, borderRadius: 999, flexShrink: 0, background: `var(--${tone}-bg-emphasis)` }} />
       <div style={{ flex: 1, fontSize: 12 }}><span style={{ fontWeight: 600 }}>{who}</span> {what}</div>
       <span style={{ fontSize: 11, color: 'var(--fg-subtle)', flexShrink: 0 }}>{when}</span>
@@ -1085,37 +1086,43 @@ function Feed({ who, what, when, tone }: { who: string; what: string; when: stri
 const PAGE_CSS = `
 .dash { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: calc(100vh - 165px); background: var(--surface-base); }
 .dash-side {
-  background: var(--surface-sunken); border-right: 1px solid var(--border-subtle);
+  background: var(--surface-sunken);
   padding: 18px 14px; display: flex; flex-direction: column; gap: 18px;
 }
-.dash-logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; color: var(--brand-fg-alt); }
-.dash-logo-mark {
-  width: 26px; height: 26px; border-radius: 7px; display: inline-flex; align-items: center; justify-content: center;
-  background: var(--brand-bg-emphasis); color: var(--brand-fg-on-emphasis); font-size: 14px; flex-shrink: 0;
-}
+/* wordmark (logoipsum placeholder) — the two svg groups' fills wire to the live
+   palette: the mark to brand-highlight-9 (darkest highlight stop — keeps the mark
+   COLOURED yet legible on the light neutral sidebar; ~2.9:1 worst-case for a bright
+   yellow brand, and a logo mark is WCAG-exempt so 3:1 isn't required. cta/highlight-8
+   wash out for bright brands here), the wordmark to brand-ink-10. A fully-robust
+   colour-AND-contrast mark would need an engine-emitted contrast-clamped stop. */
+.dash-logo { display: flex; align-items: center; }
+.dash-logo svg { height: 22px; width: auto; display: block; }
+.dash-logo .bl-mark path { fill: var(--brand-highlight-9); }
+.dash-logo .bl-type path { fill: var(--brand-ink-10); }
 .dash-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
 .dash-navitem {
-  display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px;
+  display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px;
   font-size: 13px; color: var(--fg-default); text-decoration: none;
 }
 .dash-navitem:hover { background: var(--surface-raised); }
-.dash-navitem.active { background: var(--brand-bg-subtle); color: var(--brand-fg); font-weight: 600; }
-.dash-user { display: flex; align-items: center; gap: 10px; padding-top: 14px; border-top: 1px solid var(--border-subtle); }
+.dash-navitem.active { background: var(--brand-wash-5); color: var(--brand-ink-11); font-weight: 600; }
+.dash-user { display: flex; align-items: center; gap: 10px; padding-top: 14px; border-top: 1px solid var(--neutral-wash-5); }
 .dash-avatar {
   width: 30px; height: 30px; border-radius: 999px; flex-shrink: 0;
-  background: var(--brand-bg-emphasis); color: var(--brand-fg-on-emphasis);
+  background: var(--brand-cta); color: var(--brand-on-cta);
   display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600;
 }
 .dash-main { padding: 20px 24px 40px; min-width: 0; }
 .dash-topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
 .dash-search {
   display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--fg-subtle);
-  background: var(--surface-sunken); border: 1px solid var(--border-subtle); border-radius: 999px; padding: 7px 14px; min-width: 200px;
+  background: var(--surface-sunken); border: 1px solid var(--neutral-wash-5); border-radius: 999px; padding: 7px 14px; min-width: 200px;
 }
+/* trial banner — a filled tinted chip; the fill carries it, no stroke needed. */
 .dash-info {
   display: flex; gap: 8px; align-items: center; margin-bottom: 16px;
-  background: var(--info-bg-subtle); color: var(--info-fg); border: 1px solid var(--info-border-subtle);
-  border-radius: 10px; padding: 9px 14px; font-size: 12px;
+  background: var(--info-bg-subtle); color: var(--info-fg);
+  border-radius: 12px; padding: 10px 14px; font-size: 12px;
 }
 .dash-info a { color: inherit; font-weight: 600; margin-left: auto; }
 .dash-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 16px; }
@@ -1123,11 +1130,12 @@ const PAGE_CSS = `
 .dash-pill { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
 .dash-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .dash-table thead tr { background: var(--surface-sunken); }
+/* dense table keeps hairline row dividers — small/functional, legibility earns them */
 .dash-table th {
   text-align: left; font-size: 11px; font-weight: 600; color: var(--fg-subtle);
-  padding: 8px 18px; border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); white-space: nowrap;
+  padding: 8px 18px; border-bottom: 1px solid var(--neutral-wash-5); white-space: nowrap;
 }
-.dash-table td { padding: 10px 18px; border-bottom: 1px solid var(--border-subtle); }
+.dash-table td { padding: 10px 18px; border-bottom: 1px solid var(--neutral-wash-5); }
 .dash-table tbody tr:last-child td { border-bottom: none; }
 .dash-table tbody tr:hover { background: var(--surface-sunken); }
 .dash-table th:nth-child(n+4), .dash-table td:nth-child(n+4) { text-align: right; }
@@ -1141,48 +1149,19 @@ const PAGE_CSS = `
   .dash-nav { flex-direction: row; flex-wrap: wrap; flex: 1 1 100%; }
   .dash-metrics, .dash-grid { grid-template-columns: 1fr; }
 }
-.ct-appnav {
-  position: sticky; top: 0; z-index: 40;
-  display: flex; align-items: center; gap: 20px; padding: 0 24px; height: 52px;
-  background: var(--brand-paper-2); color: var(--brand-fg-alt);
-  border-bottom: 1px solid var(--border-subtle);
-  /* The product nav always shows the PRIMARY brand — ignore the accent-preview
-     flip. accentModeCss remaps the --brand-* semantic tokens at the root; re-pin
-     the ones the chips use to the primary brand primitives (the named scale +
-     fill roles, post token-rename). */
-  --brand-bg-emphasis: var(--brand-cta);
-  --brand-bg-emphasis-hover: var(--brand-cta-hover);
-  --brand-bg-emphasis-pressed: var(--brand-cta-pressed);
-  --brand-fg-on-emphasis: var(--brand-on-cta);
-  --brand-fg: var(--brand-ink-11);
-  --brand-fg-alt: var(--brand-ink-10);
-  --brand-bg-subtle: var(--brand-wash-5);
-  --brand-bg-subtle-hover: var(--brand-wash-6);
-}
-.ct-download { margin-left: 4px; }
-/* okchroma wordmark (fill=currentColor) — inherits the nav's brand ink, so it
-   re-themes with every generated palette */
-.ct-applogo { display: inline-flex; align-items: center; color: var(--brand-fg-alt); flex-shrink: 0; }
-.ct-apptab {
-  border: none; cursor: pointer; font-family: inherit; font-size: 13px;
-  padding: 6px 12px; border-radius: 999px; background: transparent;
-  color: var(--brand-fg-alt); opacity: 0.75;
-}
-.ct-apptab:hover { opacity: 1; background: var(--brand-bg-subtle); }
-.ct-apptab.active { background: var(--brand-bg-subtle); color: var(--brand-fg); opacity: 1; }
 .ct-iconbtn {
   display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
-  width: 26px; height: 26px; border-radius: 6px; border: none; cursor: pointer;
+  width: 26px; height: 26px; border-radius: 8px; border: none; cursor: pointer;
   background: var(--surface-sunken); color: var(--fg-subtle); font-size: 13px;
   position: relative; overflow: hidden; font-family: inherit;
 }
-.ct-iconbtn:hover { background: var(--brand-bg-faint); color: var(--fg-default); }
+.ct-iconbtn:hover { background: var(--brand-paper-2); color: var(--fg-default); }
 .ct-iconbtn input[type="color"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .ct-swatch-btn { position: relative; display: inline-flex; flex-shrink: 0; cursor: pointer; }
 .ct-swatch-btn input[type="color"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
 .ct-alert-warn {
   display: flex; gap: 8px; align-items: flex-start; margin-top: 8px;
-  padding: 8px 10px; border-radius: 8px; font-size: 12px; line-height: 1.45;
+  padding: 8px 10px; border-radius: 10px; font-size: 12px; line-height: 1.45;
   background: var(--yellow-wash-4); border: 1px solid var(--yellow-highlight-8); color: var(--yellow-ink-11);
 }
 .ct-alert-warn a { color: inherit; font-weight: 600; }
@@ -1197,9 +1176,21 @@ const PAGE_CSS = `
 .ct-bar {
   position: sticky; top: 52px; z-index: 35;
   display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 18px;
-  padding: 12px 24px; background: var(--surface-raised);
-  border-bottom: 1px solid var(--border-subtle);
+  padding: 12px 56px 12px 24px; background: var(--surface-raised);
+  box-shadow: 0 1px 2px rgba(17,18,22,0.06);
 }
+/* Minimize toggle — collapses the workshop controls to a slim strip. */
+.ct-bar-toggle {
+  position: absolute; top: 10px; right: 20px; z-index: 2;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 8px; border: none; cursor: pointer;
+  background: var(--surface-sunken); color: var(--fg-subtle); font-family: inherit;
+}
+.ct-bar-toggle:hover { color: var(--fg-default); background: var(--brand-paper-2); }
+.ct-bar-min-label { display: none; align-items: center; gap: 8px; height: 26px; font-size: 13px; font-weight: 600; color: var(--fg-default); }
+.ct-bar.min { padding-top: 10px; padding-bottom: 10px; }
+.ct-bar.min > *:not(.ct-bar-min-label):not(.ct-bar-toggle) { display: none !important; }
+.ct-bar.min .ct-bar-min-label { display: inline-flex; }
 .ct-bar-field { display: flex; flex-direction: column; gap: 5px; }
 /* Size fields to content so the bar fits one row — a hex needs far less than
    the old fixed 240px. The neutral select keeps a comfortable min-width. */
@@ -1214,21 +1205,29 @@ const PAGE_CSS = `
   display: inline-flex; align-items: center; gap: 6px; box-sizing: border-box; height: 40px;
   padding: 0 14px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600;
   color: var(--fg-subtle); background: transparent;
-  border: 1.5px dashed var(--border-default); border-radius: 10px;
+  border: 1.5px dashed var(--neutral-highlight-9); border-radius: 12px;
 }
-.ct-add:hover { color: var(--fg-default); border-color: var(--brand-highlight-8); background: var(--brand-bg-faint); }
+.ct-add:hover { color: var(--fg-default); border-color: var(--brand-highlight-8); background: var(--brand-paper-2); }
 .ct-pane {
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.5fr);
   gap: 24px; padding: 24px; align-items: start;
 }
 .ct-pane-main { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+/* A hairline ring on the card in BOTH themes (owner: strokes on the cards in both
+   or neither) — a dark hairline in light, a light hairline in dark, since near-black
+   planes barely separate by lightness. Scoped to the Palette workshop; the
+   dashboard's dark elevation is being reworked separately. */
 .ct-colorblock {
-  background: var(--surface-raised); border: 1px solid var(--border-subtle);
-  border-radius: 14px; padding: 18px 20px;
+  background: var(--surface-raised); box-shadow: 0 0 0 1px rgba(17,18,22,0.05), var(--elev-card);
+  border-radius: 16px; padding: 18px 20px;
 }
+[data-theme="dark"] .ct-colorblock { box-shadow: 0 0 0 1px rgba(255,255,255,0.07), 0 2px 6px -1px rgba(0,0,0,0.5); }
+/* Fills the column and stays put — sticky + viewport-tall so it doesn't scroll,
+   holding a fixed margin below the nav/controls (top) and above the bottom bar. */
 .ct-illus {
   position: sticky; top: 140px; background: var(--brand-paper-2); border-radius: 16px;
-  min-height: 380px; display: flex; align-items: center; justify-content: center; padding: 32px;
+  height: calc(100vh - 210px); min-height: 320px;
+  display: flex; align-items: center; justify-content: center; padding: 32px;
 }
 @media (max-width: 980px) {
   .ct-pane { grid-template-columns: 1fr; }
@@ -1247,17 +1246,17 @@ const PAGE_CSS = `
   border: none; background: none; cursor: pointer; font-family: inherit;
   font-size: 12px; padding: 5px 2px; color: var(--fg-default);
 }
-.ct-check-header:hover { background: var(--surface-sunken); border-radius: 6px; }
+.ct-check-header:hover { background: var(--surface-sunken); border-radius: 8px; }
 .ct-check {
   position: relative; display: flex; align-items: center; gap: 8px;
   font-size: 12px; padding: 3px 2px 3px 8px; cursor: default;
 }
-.ct-check:hover { background: var(--surface-sunken); border-radius: 6px; }
+.ct-check:hover { background: var(--surface-sunken); border-radius: 8px; }
 .ct-tip {
   display: none; position: absolute; left: 0; bottom: calc(100% + 6px); z-index: 70;
   width: 290px; background: var(--neutral-ink-11); color: var(--neutral-paper-1);
   border-radius: 8px; padding: 9px 11px; font-size: 11px; line-height: 1.5;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.25); pointer-events: none;
+  box-shadow: var(--elev-float); pointer-events: none;
 }
 .ct-check:hover .ct-tip { display: block; }
 .ct-toasts {
@@ -1266,8 +1265,8 @@ const PAGE_CSS = `
 }
 .ct-toast {
   display: flex; gap: 10px; align-items: flex-start;
-  border: 1px solid; border-radius: 10px; padding: 12px 14px;
-  font-size: 12px; line-height: 1.5; box-shadow: 0 8px 24px rgba(0,0,0,0.16);
+  border: 1px solid; border-radius: 12px; padding: 12px 14px;
+  font-size: 12px; line-height: 1.5; box-shadow: var(--elev-float);
 }
 .ct-toast button {
   border: none; background: none; cursor: pointer; color: inherit;
@@ -1277,10 +1276,10 @@ const PAGE_CSS = `
 .ct-label { font-size: 12px; font-weight: 600; color: var(--fg-default); margin-bottom: 5px; }
 .ct-field {
   display: flex; align-items: center; gap: 8px; box-sizing: border-box; width: 100%;
-  background: var(--surface-raised); border: 1px solid var(--border-default); border-radius: 10px;
+  background: var(--surface-raised); border: 1px solid var(--neutral-highlight-9); border-radius: 12px;
   padding: 9px 12px;
 }
-.ct-field:focus-within { border-color: var(--brand-highlight-8); box-shadow: 0 0 0 3px var(--brand-bg-subtle); }
+.ct-field:focus-within { border-color: var(--brand-highlight-8); box-shadow: 0 0 0 3px var(--brand-wash-5); }
 .ct-field input, .ct-field select {
   border: none; outline: none; background: transparent; color: var(--fg-default);
   font-family: inherit; font-size: 14px; flex: 1; min-width: 0;
@@ -1289,23 +1288,23 @@ const PAGE_CSS = `
 .ct-field.err { border-color: var(--alert-high-border-emphasis); background: var(--alert-high-bg-faint); }
 .ct-field.err:focus-within { border-color: var(--alert-high-border-emphasis); box-shadow: 0 0 0 3px var(--alert-high-bg-subtle); }
 .ct-err-note { font-size: 11px; color: var(--alert-high-fg-alt); margin-top: 5px; }
-.ct-swatch { width: 20px; height: 20px; border-radius: 5px; flex-shrink: 0; border: 1px solid var(--border-subtle); }
+.ct-swatch { width: 20px; height: 20px; border-radius: 5px; flex-shrink: 0; border: 1px solid var(--neutral-wash-5); }
 .ct-swatch.sm { width: 13px; height: 13px; }
 .ct-popover {
   position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; width: 230px;
-  background: var(--surface-raised); border: 1.5px solid var(--brand-border-emphasis); border-radius: 12px;
-  padding: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  background: var(--surface-raised); border: 1.5px solid var(--brand-cta); border-radius: 12px;
+  padding: 12px; box-shadow: var(--elev-float);
   display: flex; flex-direction: column; gap: 8px; align-items: flex-start;
 }
 .ct-suggest {
   display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-family: inherit;
-  background: var(--surface-sunken); border: 1px solid var(--border-subtle); border-radius: 8px;
+  background: var(--surface-sunken); border: 1px solid var(--neutral-wash-5); border-radius: 10px;
   padding: 4px 10px; font-size: 12px; color: var(--fg-default);
 }
-.ct-suggest:hover { background: var(--brand-bg-faint); }
+.ct-suggest:hover { background: var(--brand-paper-2); }
 .ct-remove {
   display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-family: inherit;
-  background: var(--surface-raised); border: 1px solid var(--alert-high-border-default); border-radius: 8px;
+  background: var(--surface-raised); border: 1px solid var(--alert-high-border-default); border-radius: 10px;
   padding: 4px 10px; font-size: 12px; font-weight: 600; color: var(--alert-high-fg-alt);
 }
 .ct-remove:hover { background: var(--alert-high-bg-subtle); color: var(--alert-high-fg); border-color: var(--alert-high-border-default-hover); }

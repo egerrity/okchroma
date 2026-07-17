@@ -30,7 +30,8 @@ const SIGNAL_ICON: Record<string, typeof AlertCircle> = {
 // single glance: the brand cta pair, the secondary cta pair (when one exists),
 // the quiet neutral cta, and all four signal ctas (red / yellow / green /
 // blue). Each family renders its cta | cta-hover | cta-pressed trio as one seamed
-// pill in on-cta text. Reads the live vars, so the per-brand signal overrides the
+// pill in on-cta text, with the cta-ink (text-style cta) rest/hover/pressed right
+// beneath it. Reads the live vars, so the per-brand signal overrides the
 // resolved theme carries show up here automatically; names the theme shifted
 // off-canonical get a "shifted" tag. The cta-border border is unconditional —
 // it's transparent everywhere except the outline secondary, where the ring IS
@@ -54,6 +55,13 @@ export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; 
       border: `1.5px solid var(--${prefix}-cta-border)`,
     }}>Aa</div>
   )
+  // the TEXT-style cta (cta-ink — the action color's 4.5 text rendition) rendered on
+  // the card, so its rest / hover / pressed sit right under the fill cta trio
+  const inkCell = (prefix: string, tok: 'cta-ink' | 'cta-ink-hover' | 'cta-ink-pressed') => (
+    <div title={`--${prefix}-${tok}`} style={{
+      flex: 1, textAlign: 'center', fontSize: 15, fontWeight: 800, color: `var(--${prefix}-${tok})`,
+    }}>Aa</div>
+  )
   return (
     <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
       {families.map(f => (
@@ -63,7 +71,12 @@ export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; 
             {cell(f.prefix, 'cta-hover')}
             {cell(f.prefix, 'cta-pressed')}
           </div>
-          <div style={{ marginTop: 5, fontSize: 11, textAlign: 'center', color: 'var(--fg-default)', fontWeight: 600 }}>
+          <div style={{ display: 'flex', marginTop: 7 }}>
+            {inkCell(f.prefix, 'cta-ink')}
+            {inkCell(f.prefix, 'cta-ink-hover')}
+            {inkCell(f.prefix, 'cta-ink-pressed')}
+          </div>
+          <div style={{ marginTop: 6, fontSize: 11, textAlign: 'center', color: 'var(--fg-default)', fontWeight: 600 }}>
             {f.label}
             {shifted.includes(f.prefix) && <span style={{ fontWeight: 400, color: 'var(--info-fg)' }}> · shifted</span>}
           </div>
@@ -116,7 +129,7 @@ export function TokenCards({ prefix, kind, outlineCta }: { prefix: string; kind:
       {/* identity — the exact input hex, preserved (brand & secondary only) */}
       {hasIdentity && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 14 }}>
-          <span style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0, background: v('identity'), border: '1px solid var(--border-subtle)' }} />
+          <span style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0, background: v('identity') }} />
           <span style={{ fontSize: 13, fontWeight: 600, color: v('ink-10') }}>identity</span>
         </div>
       )}
@@ -194,7 +207,6 @@ export function TokenCards({ prefix, kind, outlineCta }: { prefix: string; kind:
           <div key={s.n} title={s.tok} style={{
             flex: 1, height: 34, borderRadius: 6, background: v(s.tok), color: s.fg,
             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600,
-            boxShadow: 'inset 0 0 0 1px rgba(128,128,128,0.15)',
           }}>{s.n}</div>
         ))}
       </div>

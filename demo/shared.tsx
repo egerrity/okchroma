@@ -124,6 +124,18 @@ export const COMPONENT_CSS = `
 [data-brand="chrome"] {
   --brand-highlight-8: var(--neutral-highlight-8);
 }
+/* Elevation — demo-layer shadows (NOT engine output: the engine owns color, the
+   demo owns depth). Big surfaces lift by plane + this shadow instead of a border.
+   Subtle and dark per shadows-never-halos; in dark the plane-lightness steps do
+   most of the lifting, so the shadow is only a faint depth cue. */
+[data-brand] {
+  --elev-card: 0 1px 2px rgba(17,18,22,0.05), 0 5px 14px -4px rgba(17,18,22,0.07);
+  --elev-float: 0 6px 16px -5px rgba(17,18,22,0.10), 0 16px 44px -8px rgba(17,18,22,0.16);
+}
+[data-brand][data-theme="dark"] {
+  --elev-card: 0 1px 2px rgba(0,0,0,0.32), 0 5px 14px -4px rgba(0,0,0,0.42);
+  --elev-float: 0 6px 16px -5px rgba(0,0,0,0.48), 0 16px 44px -8px rgba(0,0,0,0.58);
+}
 ${ACCENT_MODE_CSS}
 `
 

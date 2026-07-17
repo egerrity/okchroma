@@ -17,52 +17,65 @@ type View = 'custom' | 'gallery' | 'docs'
 // revert). Docs is the new sidebar docs site (demo/docs/DocsSite.tsx) — the old
 // stale Docs component was removed.
 const VIEWS: Array<[View, string]> = [
-  ['custom', 'Custom theme'],
+  ['custom', 'Home'],
   // ['gallery', 'Example palettes'],
   ['docs', 'Documentation'],
 ]
 
-// Shell: ONE header row — the tab bar collapsed into a view dropdown next
-// to the wordmark, and the calibration rigs were removed from the demo
-// nav (engine work is done; the components live in git history).
+// Shell: neutral tool chrome top + bottom, themed content between.
+//   TOP bar = secondary actions (Home · Documentation · Figma plugin · GitHub).
+//   BOTTOM bar = "look at the demo" controls (Palette | Preview + light/dark).
+// The Palette/Preview switch used to live inside CustomTheme's own navbar; it's
+// lifted here so it can share the bottom bar with the dark toggle.
 export default function App() {
   const [view, setView] = useState<View>('custom')
   const [dark, setDark] = useState(false)
+  const [paletteView, setPaletteView] = useState<'palette' | 'preview'>('palette')
 
   return (
     <div data-brand="chrome" data-theme={dark ? 'dark' : 'light'} style={{ fontFamily: FONT_STACK, minHeight: '100vh', background: 'var(--surface-base)', display: 'flex', flexDirection: 'column' }}>
       {/* The neutral is no longer a global :root block — it's per-brand now. The
-          demo's own chrome (footer, nav) isn't a brand, so give it a plain
+          demo's own chrome (top/bottom bars) isn't a brand, so give it a plain
           generated neutral (pure gray) as its base. */}
       <style>{neutralCss('[data-brand="chrome"]', 0, 'pure')}</style>
       <style>{COMPONENT_CSS}</style>
       <style>{NAV_CSS}</style>
 
+      <header className="app-topbar">
+        <span className="app-topbar-logo"><OkchromaLogo height={17} /></span>
+        <nav className="app-topbar-nav">
+          {VIEWS.map(([v, label]) => (
+            <button key={v} className={`app-navlink${view === v ? ' active' : ''}`} onClick={() => setView(v)}>
+              {label}
+            </button>
+          ))}
+          {/* the manual-install page (a standalone page beside the demo, rebuilt
+              with the plugin zip on every deploy) */}
+          <a className="app-navlink" href="https://egerrity.github.io/okchroma/install.html" target="_blank" rel="noreferrer">
+            <FigmaMark /> Figma plugin
+          </a>
+          <a className="app-navlink" href="https://github.com/egerrity/okchroma" target="_blank" rel="noreferrer" aria-label="View OKChroma on GitHub">
+            <GithubMark /> GitHub
+          </a>
+        </nav>
+      </header>
+
       <div style={{ flex: 1, minHeight: 0 }}>
-        {view === 'custom' && <CustomTheme dark={dark} />}
+        {view === 'custom' && <CustomTheme dark={dark} view={paletteView} />}
         {view === 'gallery' && <PaletteGallery dark={dark} onToggleDark={() => setDark(d => !d)} />}
         {view === 'docs' && <DocsSite dark={dark} />}
       </div>
 
-      {/* Global tool chrome — moved out of the top header into a pinned footer so
-          the views start with product chrome only. */}
-      <footer className="app-footer">
-        <span className="app-footer-logo"><OkchromaLogo height={17} /></span>
-        <nav className="app-footer-views">
-          {VIEWS.map(([v, label]) => (
-            <button key={v} className={`app-footer-link${view === v ? ' active' : ''}`} onClick={() => setView(v)}>
-              {label}
-            </button>
-          ))}
-          {/* third option: the manual-install page (a standalone page beside the demo,
-              rebuilt with the plugin zip on every deploy) */}
-          <a className="app-footer-link" href="https://egerrity.github.io/okchroma/install.html" target="_blank" rel="noreferrer">
-            <FigmaMark /> Figma plugin
-          </a>
-        </nav>
-        <a className="nav-pill" href="https://github.com/egerrity/okchroma" target="_blank" rel="noreferrer" aria-label="View OKChroma on GitHub">
-          <GithubMark /> GitHub
-        </a>
+      <footer className="app-bottombar">
+        {view === 'custom' && (
+          <span className="app-viewswitch">
+            {(['palette', 'preview'] as const).map(v => (
+              <button key={v} className={`app-viewtab${paletteView === v ? ' active' : ''}`} onClick={() => setPaletteView(v)}>
+                {v === 'palette' ? 'Palette' : 'Preview'}
+              </button>
+            ))}
+          </span>
+        )}
         <button className="nav-pill" onClick={() => setDark(d => !d)}>{dark ? '☀ Light' : '☾ Dark'}</button>
       </footer>
     </div>
@@ -205,29 +218,47 @@ function GithubMark() {
 }
 
 const NAV_CSS = `
+/* Tool chrome — neutral top + bottom bars (no strokes; a whisper of directional
+   shadow separates them from the scrolling content). */
+.app-topbar {
+  position: sticky; top: 0; z-index: 40;
+  display: flex; align-items: center; gap: 20px;
+  height: 52px; padding: 0 24px; background: var(--surface-raised);
+  box-shadow: 0 1px 2px rgba(17,18,22,0.06);
+}
+.app-topbar-logo { color: var(--fg-default); display: inline-flex; flex-shrink: 0; }
+.app-topbar-nav { display: flex; align-items: center; gap: 4px; }
+.app-navlink {
+  border: none; background: none; cursor: pointer; font-family: inherit;
+  font-size: 13px; font-weight: 500; color: var(--fg-subtle);
+  padding: 7px 12px; border-radius: 999px; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.app-navlink:hover { background: var(--surface-sunken); color: var(--fg-default); }
+.app-navlink.active { background: var(--neutral-wash-4); color: var(--fg-default); font-weight: 600; }
+.app-bottombar {
+  position: sticky; bottom: 0; z-index: 40;
+  display: flex; align-items: center; justify-content: center; gap: 16px;
+  padding: 10px 24px; background: var(--surface-raised);
+  box-shadow: 0 -1px 2px rgba(17,18,22,0.06);
+}
+.app-viewswitch {
+  display: inline-flex; gap: 2px; padding: 3px;
+  background: var(--surface-sunken); border-radius: 999px;
+}
+.app-viewtab {
+  border: none; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500;
+  padding: 6px 18px; border-radius: 999px; background: transparent; color: var(--fg-subtle);
+}
+.app-viewtab:hover { color: var(--fg-default); }
+.app-viewtab.active { background: var(--surface-raised); color: var(--fg-default); font-weight: 600; box-shadow: var(--elev-card); }
 .nav-pill {
-  display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 16px;
-  border-radius: 999px; border: 1px solid transparent; cursor: pointer; font-family: inherit;
+  display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 16px;
+  border-radius: 999px; border: none; cursor: pointer; font-family: inherit;
   font-size: 12px; font-weight: 600; letter-spacing: 0.005em; text-decoration: none;
   background: var(--surface-sunken); color: var(--fg-default);
 }
 .nav-pill:hover { background: var(--neutral-wash-4); }
-.app-footer {
-  position: sticky; bottom: 0; z-index: 40;
-  display: flex; align-items: center; gap: 16px;
-  padding: 10px 24px; background: var(--surface-raised);
-  border-top: 1px solid var(--border-subtle);
-}
-.app-footer-logo { color: var(--fg-default); display: inline-flex; }
-.app-footer-views {
-  margin: 0 auto; display: flex; gap: 4px;
-}
-.app-footer-link {
-  border: none; background: none; cursor: pointer; font-family: inherit;
-  font-size: 13px; font-weight: 500; color: var(--fg-subtle);
-  padding: 6px 12px; border-radius: 8px;
-  display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
-}
-.app-footer-link:hover { background: var(--surface-sunken); color: var(--fg-default); }
-.app-footer-link.active { color: var(--fg-default); }
+[data-theme="dark"] .app-topbar { box-shadow: 0 1px 3px rgba(0,0,0,0.42); }
+[data-theme="dark"] .app-bottombar { box-shadow: 0 -1px 3px rgba(0,0,0,0.42); }
 `
