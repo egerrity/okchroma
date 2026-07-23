@@ -8,9 +8,9 @@
 // cta is NOT a scale stop: it is an OFF-SCALE ROLE (cta / cta-hover), exactly
 // like GeneratedScale.cta/ctaHover. The old prototype's "stop 9 = cta" pairing is dead.
 //
-// STAGE NOTE: this declaration is currently PARITY-SHAPED (mirrors okchroma today): light declares the
-// stop-8 3:1 + text 4.5/7 requires; dark declares NO contrast requires (stop 8 + highlight are hand-placed).
-// Stage 5 of the migration flips the dark requires ON (the behavior change the owner approved).
+// STAGE NOTE: the Stage-5 flip is DONE — dark declares the same requires as light (stop-8 3:1 + ink
+// T10/T11 vs paper-2; owner-approved). Only highlight-9 stays hand-placed in dark (APCA body-text
+// dead zone — solving it is worse than placing it).
 import {
   LIGHT_L, DARK_NEUTRAL_L, SCALE_C_LIGHT, SCALE_C_DARK,
   STOP_8_NONTEXT_CONTRAST,

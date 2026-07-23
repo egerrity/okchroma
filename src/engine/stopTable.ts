@@ -6,9 +6,13 @@ export interface StopSpec {
 // Stops 1–8 (paper→highlight-8) are a GEOMETRIC ladder — gaps grow ~1.25× per step — so every adjacent
 // stop is distinct by construction and paper-2 falls onto its ID curve with no clamp (owner 2026-07-09,
 // distribution "B"; separation is a shape property, not a delta — see spec.ts). Indices 8–11 = highlight-9
-// + ink scaffolds (index 9 = the retired stop-10 rootL, kept so the ink indices don't shift), unchanged.
+// + ink scaffolds (index 9 = the retired stop-10 rootL, kept so the ink indices don't shift).
+// Dark ink scaffolds (indices 10/11) dimmed 0.800/0.940 → 0.767/0.919 (owner midpoint pick, 2026-07-20):
+// the shipped dark inks ran ~1.9× their light twins' WCAG contrast (ink-10 #bfbdbd 9.9:1 vs light 5.1:1)
+// and the 10/11 hierarchy flattened. Neutral midpoint = #b3b3b3 / #e4e4e4; every family re-solves off the
+// scaffold through the perceptual placement, with the declared T10/T11 requires (spec.ts) as the floor.
 export const LIGHT_L = [0.987, 0.970, 0.950, 0.924, 0.892, 0.852, 0.801, 0.738, 0.600, 0.560, 0.530, 0.300]
-export const DARK_L  = [0.178, 0.213, 0.252, 0.285, 0.313, 0.348, 0.420, 0.550, 0.600, 0.640, 0.800, 0.940]
+export const DARK_L  = [0.178, 0.213, 0.252, 0.285, 0.313, 0.348, 0.420, 0.550, 0.600, 0.640, 0.767, 0.919]
 
 // ─── THE SCALE CHROMA TABLE ───────────────────────────────────────────────────
 // The single declared source of per-stop chroma parameters, one table per mode
