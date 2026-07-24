@@ -32,7 +32,7 @@ const LEVEL: Record<NeutralLevel, number> = { pure: 0, default: 1, branded: 1.75
 // The neutral is a grey carrying a touch of the brand's hue. Two owner laws set its shape,
 // and the shape it used to borrow from SHAPE broke both:
 //   1. "add a bit more chroma to help differentiate" — the elevation planes (paper-1 …
-//      wash-3) must separate from each other, so the tint LIFTS across them.
+//      paper-3) must separate from each other, so the tint LIFTS across them.
 //   2. "the hue has to drop off as you get higher" — so it TAPERS through the highlight
 //      and ink band, landing text ~neutral.
 // The borrowed shape did the exact opposite: it rose monotonically to highlight-9 and was
@@ -53,7 +53,7 @@ const NEUTRAL_TINT_PEAK = 0.0095
 const NEUTRAL_SHAPE = [
   0.474, // paper-1  ─┐
   0.684, // paper-2   │ the differentiation lift: tint grows with elevation
-  0.895, // wash-3   ─┘
+  0.895, // paper-3   ─┘
   1.000, // wash-4   ─┐ peak: the mid-wash band, the neutral's most-branded moment
   1.000, // wash-5   ─┘
   0.842, // wash-6   ─┐

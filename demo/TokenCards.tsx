@@ -103,7 +103,7 @@ export function TokenCards({ prefix, kind, outlineCta }: { prefix: string; kind:
   const scale: Array<{ n: number; tok: string; fg: string }> = [
     { n: 1, tok: 'paper-1', fg: v('ink-11') },
     { n: 2, tok: 'paper-2', fg: v('ink-11') },
-    { n: 3, tok: 'wash-3', fg: v('ink-11') },
+    { n: 3, tok: 'paper-3', fg: v('ink-11') },
     { n: 4, tok: 'wash-4', fg: v('ink-11') },
     { n: 5, tok: 'wash-5', fg: v('ink-11') },
     { n: 6, tok: 'wash-6', fg: v('ink-11') },

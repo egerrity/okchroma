@@ -83,6 +83,9 @@ export const HUE_COLLISION_WASH_DEG = 15
 export const HUE_COLLISION_MIN_V = 0.5            // vividness qualifier (provisional — owner eye-check)
 export const SECONDARY_NOTE_MIN_V = HUE_NOISE_C / VIVID_C   // annotations: any real hue qualifies
 
+// DO NOT drop stop 3 for the paper-3 rename (owner 2026-07-24): it is publicly named
+// paper-3 now but is the same color it always was — the collision gate must keep
+// measuring it, or wash-band proximity silently loses its lowest rung.
 const WASH_STOPS = [3, 4, 5, 6, 7]
 
 export interface HueCollisionCheck {

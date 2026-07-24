@@ -5,7 +5,11 @@ export type RampKind = 'brand' | 'neutral'
 const SHARED_NAMES: Record<number, string> = {
   1: 'paper-1',
   2: 'paper-2',
-  3: 'wash-3',
+  // stop 3 renamed wash-3 → paper-3 (owner 2026-07-24, elevation round): it is a
+  // PLANE in both themes (light sink / dark pop), so it belongs to the surface band.
+  // NAME ONLY — generation is index-keyed and unchanged; the internal wash machinery
+  // (reqtoken groupOf, collision WASH_STOPS) deliberately still spans stops 3–7.
+  3: 'paper-3',
   4: 'wash-4',
   5: 'wash-5',
   6: 'wash-6',
@@ -34,7 +38,7 @@ export function onFillTokenName(kind: RampKind): string {
 }
 
 // Canonical emit order, uniform across every ramp (the white-label remap shape,
-// an explicit requirement of the original concept). Paper (1–2) / wash (3–7) then
+// an explicit requirement of the original concept). Paper (1–3) / wash (4–7) then
 // the highlight group (highlight-8/9 — stop 8 is clamped to WCAG 1.4.11 3:1
 // non-text contrast vs paper-2 — + on-highlight) read as one contiguous ladder,
 // then the text stops (ink-10/11), then the pulled-out off-scale cta family +
@@ -44,7 +48,7 @@ export function onFillTokenName(kind: RampKind): string {
 // cta-1/cta-2 renamed in place to cta/cta-hover via both plugins' RENAMED_LEAVES;
 // pressed + the cta-ink trio, the 4.5 text-register link escape, added with it).
 const TOKEN_ORDER = [
-  'paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'wash-6', 'wash-7',
+  'paper-1', 'paper-2', 'paper-3', 'wash-4', 'wash-5', 'wash-6', 'wash-7',
   'highlight-8', 'highlight-9', 'on-highlight',
   'ink-10', 'ink-11',
   'cta', 'cta-hover', 'cta-pressed',

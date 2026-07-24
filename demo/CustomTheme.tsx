@@ -465,7 +465,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   // card for cta + cta-ink). Each cell shows the token representatively: surfaces as
   // plain swatches, highlight-8 as a ring (its role IS a stroke), ink as "Aa" text,
   // identity as an "ID" chip. Themes with the page toggle.
-  const SWATCH_STOPS = ['paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'wash-6', 'wash-7', 'highlight-8', 'highlight-9', 'ink-10', 'ink-11']
+  const SWATCH_STOPS = ['paper-1', 'paper-2', 'paper-3', 'wash-4', 'wash-5', 'wash-6', 'wash-7', 'highlight-8', 'highlight-9', 'ink-10', 'ink-11']
   const swatchRamps: Array<[string, string, boolean]> = [
     ['brand', 'primary', true],
     ...((secondary || derived) ? [['secondary', 'secondary', true] as [string, string, boolean]] : []),
@@ -593,9 +593,9 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
             <div className="ct-colorblock">
               <div className="ct-label" style={{ marginBottom: 8 }}>Elevation planes — sink · base · lift · pop</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-                {([['sink', 'wash-3', 'paper-0'], ['base', 'paper-2', 'paper-1'], ['lift', 'paper-1', 'paper-2'], ['pop', 'paper-0', 'wash-3']] as const).map(([role, lightStop, darkStop]) => (
+                {([['sink', 'paper-3', 'paper-0'], ['base', 'paper-2', 'paper-1'], ['lift', 'paper-1', 'paper-2'], ['pop', 'paper-0', 'paper-3']] as const).map(([role, lightStop, darkStop]) => (
                   <div key={role}>
-                    <div style={{ background: `var(--surface-${role})`, height: 54, borderRadius: 12, border: '1px solid var(--neutral-wash-3)', boxShadow: 'var(--elev-card)' }} />
+                    <div style={{ background: `var(--surface-${role})`, height: 54, borderRadius: 12, border: '1px solid var(--neutral-paper-3)', boxShadow: 'var(--elev-card)' }} />
                     <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-default)', marginTop: 6 }}>{role}</div>
                     <div style={{ fontSize: 11.5, color: 'var(--fg-subtle)' }}>neutral {dark ? darkStop : lightStop}</div>
                   </div>
@@ -604,7 +604,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
               <div style={{ fontSize: 11.5, color: 'var(--fg-subtle)', marginTop: 10, lineHeight: 1.5 }}>
                 Surfaces don&rsquo;t simply invert with the theme — both themes draw on the same four
                 neutral stops, in reversed order. Elevation always climbs toward paper-0&rsquo;s end of
-                the ramp: light runs wash-3 &rarr; white, dark runs black &rarr; wash-3.
+                the ramp: light runs paper-3 &rarr; white, dark runs black &rarr; paper-3.
               </div>
             </div>
             {/* every cta together — brand pair, secondary pair, neutral, and the four
@@ -1049,7 +1049,7 @@ function CustomersTable({ hasSecondary }: { hasSecondary: boolean }) {
           const [label, tone] = CUST_STATUS[c.status]
           const premium = c.plan !== 'Starter'
           // Premium plans carry the accent when a secondary exists, else the brand.
-          const planBg = premium ? (hasSecondary ? 'var(--secondary-wash-3)' : 'var(--brand-wash-5)') : 'var(--surface-sink)'
+          const planBg = premium ? (hasSecondary ? 'var(--secondary-paper-3)' : 'var(--brand-wash-5)') : 'var(--surface-sink)'
           const planFg = premium ? (hasSecondary ? 'var(--secondary-ink-10)' : 'var(--brand-ink-11)') : 'var(--fg-subtle)'
           return (
             <tr key={c.name}>
@@ -1245,7 +1245,7 @@ const PAGE_CSS = `
 /* Fills the column and stays put — sticky + viewport-tall so it doesn't scroll,
    holding a fixed margin below the nav/controls (top) and above the bottom bar. */
 .ct-illus {
-  position: sticky; top: 140px; background: var(--brand-wash-3); border-radius: 16px;
+  position: sticky; top: 140px; background: var(--brand-paper-3); border-radius: 16px;
   height: calc(100vh - 210px); min-height: 320px;
   display: flex; align-items: center; justify-content: center; padding: 32px;
 }

@@ -9,10 +9,10 @@
   /* Elevation planes sink → base → lift → pop (owner spec + naming, 2026-07-24 Figma
      elevation study): both themes use the SAME four stops, in reversed order —
      elevation always moves toward paper-0's side of the ramp. Light descends the ramp
-     as elevation rises (sink wash-3 → pop paper-0 white); dark ascends it (sink
-     paper-0 black → pop wash-3). paper-0 flips white→black with the mode, so it is
+     as elevation rises (sink paper-3 → pop paper-0 white); dark ascends it (sink
+     paper-0 black → pop paper-3). paper-0 flips white→black with the mode, so it is
      always the extreme pole: the pop in light, the sink in dark. */
-  --surface-sink:        var(--neutral-wash-3);
+  --surface-sink:        var(--neutral-paper-3);
   --surface-base:         var(--neutral-paper-2);
   --surface-lift:       var(--neutral-paper-1);
   --surface-pop:        var(--paper-0, #ffffff);
@@ -28,12 +28,12 @@
 
 [data-brand][data-theme="dark"] {
   /* Dark runs the same four stops upward: sink paper-0 (black) → base paper-1 →
-     lift paper-2 → pop wash-3. Base needs its own override here because the
+     lift paper-2 → pop paper-3. Base needs its own override here because the
      shared block's base is paper-2 (the light value). */
   --surface-sink:        var(--paper-0, #000000);
   --surface-base:         var(--neutral-paper-1);
   --surface-lift:       var(--neutral-paper-2);
-  --surface-pop:        var(--neutral-wash-3);
+  --surface-pop:        var(--neutral-paper-3);
 }
 
 /* ─── role.brand ────────────────────────────────────────────────────────────── */

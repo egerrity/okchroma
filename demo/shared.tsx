@@ -428,7 +428,7 @@ export function Readout({ r }: { r: ResolvedBrand }) {
 // contiguous 1–11; the engine emits no numeric --{prefix}-N vars). Kept in
 // emit order; cta stays off-scale and out of the strip.
 export const SCALE_STOP_NAMES = [
-  'paper-1', 'paper-2', 'wash-3', 'wash-4', 'wash-5', 'wash-6', 'wash-7',
+  'paper-1', 'paper-2', 'paper-3', 'wash-4', 'wash-5', 'wash-6', 'wash-7',
   'highlight-8', 'highlight-9', 'ink-10', 'ink-11',
 ] as const
 

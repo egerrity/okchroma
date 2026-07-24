@@ -180,7 +180,7 @@ The same modules as a table — each piece, where it lives, what it does. Groupe
 |---|---|---|
 | CSS emitter | `cssRender.ts` | `brandCss`/`neutralCss`/`signalsCss` — custom properties per family and mode, on-cta/on-highlight poles, P3 `@supports` override blocks, the outline secondary's cta shape. |
 | Figma emitter | `figmaRender.ts` | `themeToFigma` — the same theme as Figma variable collections (both plugins consume it). |
-| Token vocabulary | `tokenNames.ts` | The shared naming — paper-1/2, wash-3–7, highlight-8/9, ink-10/11, cta-1/2, ons — one vocabulary across CSS and Figma. |
+| Token vocabulary | `tokenNames.ts` | The shared naming — paper-1/2/3, wash-4–7, highlight-8/9, ink-10/11, cta-1/2, ons — one vocabulary across CSS and Figma. |
 | Public API | `index.ts` | The dependency-free entry point: `resolveBrand`/`resolveTheme`. |
 
 **Product data & pipelines (`src/`)**
@@ -245,7 +245,8 @@ ResolvedBrand  = { scale, shearDeg, redRepel: {light,dark}|null,
 | Stops | Token names | Role |
 |---|---|---|
 | 1–2 | `paper-1`, `paper-2` | surfaces / backgrounds |
-| 3–7 | `wash-3` … `wash-7` | low-hierarchy fills, borders, decorative |
+| 3 | `paper-3` | surface plane (light sink / dark pop) — renamed from wash-3, owner 2026-07-24 |
+| 4–7 | `wash-4` … `wash-7` | low-hierarchy fills, borders, decorative |
 | 8 | `highlight-8` | WCAG 1.4.11 **3:1** non-text step (borders, UI elements) |
 | 9 | `highlight-9` | emphasis fill — a **scale stop**, same machinery as the rest (stop 10 deleted 2026-07-09) |
 | 10–11 | `ink-10`, `ink-11` | text (4.5:1 / 7:1) |

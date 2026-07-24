@@ -65,6 +65,10 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // cta/cta-hover in place; cta-pressed + the cta-ink trio are NEW tokens (no migration).
   ['cta-1', 'cta'],
   ['cta-2', 'cta-hover'],
+  // stop-3 rename (owner 2026-07-24, elevation round): wash-3 → paper-3 — it is a
+  // surface plane in both themes. Pure relabel, same color; no numbering shift, so
+  // no ordering hazard (no pre-existing paper-3 to collide with).
+  ['wash-3', 'paper-3'],
 ]
 // Group renames (old path prefix → new), migrated in place like the leaves — the
 // info-color signal was renamed by identity to blue (2026-07-13); both the primitive

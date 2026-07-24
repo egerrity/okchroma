@@ -100,6 +100,9 @@ export type ModeSpec = {
   ons: { onFill: OnReq; onHighlight: OnReq }
 }
 
+// DO NOT align to the paper-3 rename (owner 2026-07-24): stop 3 is PUBLICLY named
+// paper-3 but stays in the internal 'wash' group — this boundary feeds the requirement
+// solver, and moving it to `stop <= 3 ? 'paper'` would CHANGE generation. Name only.
 const groupOf = (stop: number): Group => (stop <= 2 ? 'paper' : stop <= 7 ? 'wash' : stop <= 9 ? 'highlight' : 'ink')
 
 // paper-0 — the ladder extreme BEYOND paper-1, now a resolved stop instead of a hard-coded absolute
@@ -132,7 +135,7 @@ const ONS = { onFill: { metric: 'apca-pole', enforce: true, coEnforceLc: 60 } as
 // (~1.25×/step), so paper-2 stands ~0.017 ΔE off paper-1 and every wash seam holds BY CONSTRUCTION —
 // paper-2 falls onto its ID curve with nothing clamped. This REPLACES the old min-separation deltas: the
 // former 0.028 target was unreachable near white (the gamut can't earn it via chroma), so it was enforced by
-// darkening / chroma-spend — which pushed paper-2's chroma off-curve and past wash-3 on wide-gamut hues (the
+// darkening / chroma-spend — which pushed paper-2's chroma off-curve and past paper-3 on wide-gamut hues (the
 // shipped e87f760 bug). stop-8's 3:1 stays: it is a real contrast requirement, not a separation delta.
 // (The resolver still SUPPORTS a min-separation require for portable specs; our spec just no longer declares
 // one. Light-only; dark already reads right.)

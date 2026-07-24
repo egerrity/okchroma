@@ -20,8 +20,8 @@ accessibility category it carries.
 |---|---:|---:|---|---|
 | `paper-1`      | 0.993  | 0.178 | — | app background, inverted text |
 | `paper-2`      | 0.982¹ | 0.213 | ΔE ≥ 0.028 off `paper-1` (light) | raised background, inverted text |
-| `wash-3`       | 0.945  | 0.252 | ΔE ≥ 0.012 off `paper-2` (light) | low-hierarchy fill, interaction |
-| `wash-4`       | 0.9225 | 0.285 | ΔE ≥ 0.012 off `wash-3` (light) | low-hierarchy fill, interaction, decorative |
+| `paper-3`      | 0.945  | 0.252 | ΔE ≥ 0.012 off `paper-2` (light) | surface plane (light sink / dark pop) |
+| `wash-4`       | 0.9225 | 0.285 | ΔE ≥ 0.012 off `paper-3` (light) | low-hierarchy fill, interaction, decorative |
 | `wash-5`       | 0.891  | 0.313 | ΔE ≥ 0.012 off `wash-4` (light) | low-hierarchy fill, interaction, decorative |
 | `wash-6`       | 0.8495 | 0.348 | ΔE ≥ 0.012 off `wash-5` (light) | decorative |
 | `wash-7`       | 0.797  | 0.420 | ΔE ≥ 0.012 off `wash-6` (light) | decorative |
