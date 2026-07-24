@@ -587,6 +587,26 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
         <div className="ct-pane">
           <div className="ct-pane-main">
             {swatchMatrix()}
+            {/* Elevation planes — the semantic surface output (owner spec 2026-07-24):
+                same four neutral stops in both themes, order reversed. Chips render the
+                LIVE planes; the stop caption tracks the active theme. */}
+            <div className="ct-colorblock">
+              <div className="ct-label" style={{ marginBottom: 8 }}>Elevation planes — sink · base · lift · pop</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+                {([['sink', 'wash-3', 'paper-0'], ['base', 'paper-2', 'paper-1'], ['lift', 'paper-1', 'paper-2'], ['pop', 'paper-0', 'wash-3']] as const).map(([role, lightStop, darkStop]) => (
+                  <div key={role}>
+                    <div style={{ background: `var(--surface-${role})`, height: 54, borderRadius: 12, border: '1px solid var(--neutral-wash-3)', boxShadow: 'var(--elev-card)' }} />
+                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-default)', marginTop: 6 }}>{role}</div>
+                    <div style={{ fontSize: 11.5, color: 'var(--fg-subtle)' }}>neutral {dark ? darkStop : lightStop}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ fontSize: 11.5, color: 'var(--fg-subtle)', marginTop: 10, lineHeight: 1.5 }}>
+                Surfaces don&rsquo;t simply invert with the theme — both themes draw on the same four
+                neutral stops, in reversed order. Elevation always climbs toward paper-0&rsquo;s end of
+                the ramp: light runs wash-3 &rarr; white, dark runs black &rarr; wash-3.
+              </div>
+            </div>
             {/* every cta together — brand pair, secondary pair, neutral, and the four
                 signals (red/yellow/green/blue, with this brand's overrides) so a
                 colliding pair is visible in one glance */}
