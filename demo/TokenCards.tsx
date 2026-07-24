@@ -114,7 +114,7 @@ export function TokenCards({ prefix, kind, outlineCta }: { prefix: string; kind:
     { n: 11, tok: 'ink-11', fg: v('paper-1') },
   ]
   const groups = [
-    { label: 'paper', span: 2 }, { label: 'wash', span: 5 },
+    { label: 'paper', span: 3 }, { label: 'wash', span: 4 },
     { label: 'highlight', span: 2 }, { label: 'ink', span: 2 },
   ]
 

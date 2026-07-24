@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
   AlertCircle, Check, CheckCircle, TriangleAlert, Sparkles, ArrowRight, ChevronDown, ChevronUp,
   LayoutDashboard, FolderKanban, ListTodo, BarChart3, Users, Settings, Search, Download, Plus, Info,
+  Menu, X,
 } from 'lucide-react'
 import { resolveBrand, resolveTheme, signalScalesFor, escapeCtaFamily, DEFAULT_LINK_HEX, type SecondaryStyle } from '../src/engine/resolve'
 import { redGateDist, RED_GATE } from '../src/engine/collision'
@@ -114,6 +115,20 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   // Neutral tint level (the neutral is always generated from the brand hue now).
   const [neutralLevel, setNeutralLevel] = useState<NeutralLevel>('default')
   const [controlsMin, setControlsMin] = useState(false)  // collapse the workshop controls bar
+  // Palette page tabs (owner 2026-07-24): overview = the frame (matrix, elevation,
+  // ctas + identity/illustration); each family tab shows JUST that family's card.
+  const [paletteTab, setPaletteTab] = useState<'overview' | 'brand' | 'secondary' | 'neutral' | 'red' | 'yellow' | 'green' | 'blue'>('overview')
+  // Narrow viewport (matches the palette's 980px breakpoint): the matrix drops to
+  // plain swatches and the tab strip becomes a dropdown. Deliberately shallow —
+  // this demo is not a mobile product, the bar is "readable", not "optimized".
+  const [narrow, setNarrow] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 980px)')
+    const on = () => setNarrow(mq.matches)
+    on()
+    mq.addEventListener('change', on)
+    return () => mq.removeEventListener('change', on)
+  }, [])
   // the NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): red-range brands can swap the
   // cta fill trio to the brand-neutral's ink register — shown only in red range;
   // leaving the range clears it (a stale hidden escape must never apply silently)
@@ -247,6 +262,27 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     }
   }, [toasts])
   useEffect(() => () => { for (const h of toastTimers.current.values()) clearTimeout(h) }, [])
+
+  // Palette frame (owner 2026-07-24): the page is a STATIC frame — nav, controls,
+  // tab strip, side column and bottom bar never move; only the left content region
+  // scrolls. The workshop controls bar's height varies (minimize / Advanced), so we
+  // measure its bottom edge live and publish it as --ct-dock; the pane fills the
+  // viewport from that line down to the bottom bar.
+  const frameRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const root = frameRef.current
+    // the WORKSHOP controls bar (.ct-bar, sticky under the 52px app bar) — its
+    // height varies with minimize/Advanced, hence the live measurement
+    const header = root?.querySelector('.ct-bar')
+    if (!header || !root) return
+    const set = () => root.style.setProperty('--ct-dock', `${Math.round(header.getBoundingClientRect().bottom)}px`)
+    set()
+    const ro = new ResizeObserver(set)
+    ro.observe(header)
+    window.addEventListener('resize', set)
+    window.addEventListener('scroll', set, { passive: true })
+    return () => { ro.disconnect(); window.removeEventListener('resize', set); window.removeEventListener('scroll', set) }
+  }, [])
 
   // brandCss already includes the per-brand neutral, so the injected CSS is the
   // whole theme — no separate neutral block.
@@ -445,7 +481,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   const SIGNAL_NAMES = ['red', 'yellow', 'green', 'blue'] as const
   // Each signal gets its OWN card block (like brand/neutral) — titled by its real
   // token name. "shifted · …" shows when this brand pushed the signal off-canonical.
-  const signalBlocks = () => SIGNAL_NAMES.map(name => {
+  const signalBlock = (name: (typeof SIGNAL_NAMES)[number]) => {
     // the escape resets red to canonical — no stale "shifted" tag on a signal the css ships canonical
     const override = computed.escapeOn && name === 'red' ? undefined : computed.r.signalOverrides.find(o => o.name === name)
     return (
@@ -457,7 +493,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
         <TokenCards prefix={name} kind="signal" />
       </div>
     )
-  })
+  }
 
   // Flat compare grid of the generated SCALE (all ramps × the 1–11 stops), for
   // eyeballing the ladder. cta / cta-ink live in the deconfliction card below, not
@@ -466,11 +502,13 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   // plain swatches, highlight-8 as a ring (its role IS a stroke), ink as "Aa" text,
   // identity as an "ID" chip. Themes with the page toggle.
   const SWATCH_STOPS = ['paper-1', 'paper-2', 'paper-3', 'wash-4', 'wash-5', 'wash-6', 'wash-7', 'highlight-8', 'highlight-9', 'ink-10', 'ink-11']
-  const swatchRamps: Array<[string, string, boolean]> = [
-    ['brand', 'primary', true],
-    ...((secondary || derived) ? [['secondary', 'secondary', true] as [string, string, boolean]] : []),
-    ['neutral', 'neutral', false],
-    ['red', 'red', false], ['yellow', 'yellow', false], ['green', 'green', false], ['blue', 'blue', false],
+  // neutral rides on top — it carries the stop numbering + the global 0/12 anchors
+  // for the whole matrix (owner 2026-07-24)
+  const swatchRamps: Array<[string, string]> = [
+    ['neutral', 'neutral'],
+    ['brand', 'primary'],
+    ...((secondary || derived) ? [['secondary', 'secondary'] as [string, string]] : []),
+    ['red', 'red'], ['yellow', 'yellow'], ['green', 'green'], ['blue', 'blue'],
   ]
   const swatchCell = (prefix: string, stop: string) => {
     const cv = (t: string) => `var(--${prefix}-${t})`
@@ -479,7 +517,14 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     const aa: React.CSSProperties = { height: 36, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600 }
     // highlight-8 is the 3:1 NON-TEXT stop (boundaries/strokes) — it carries no on-text, so it
     // renders AS a stroke: a ring of the color, not a fill.
-    if (stop === 'highlight-8') return <div style={{ height: 36, borderRadius: 6, boxSizing: 'border-box', border: `2px solid ${cv(stop)}` }} />
+    // …and it's icon-grade at the same 3:1 (owner 2026-07-24): the ring carries a
+    // plus glyph painted IN highlight-8 — non-text contrast serves icons, unlike the
+    // ink text stops.
+    if (stop === 'highlight-8') return (
+      <div style={{ height: 36, borderRadius: 6, boxSizing: 'border-box', border: `2px solid ${cv(stop)}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Plus size={18} strokeWidth={2.5} color={cv(stop)} />
+      </div>
+    )
     if (stop.startsWith('highlight')) return <div style={{ ...aa, background: cv(stop), color: cv('on-highlight') }}>Aa</div>
     // cta-ink trio renders as TEXT (the text-STYLE cta — a text button, never a
     // hyperlink, so no underline) — checked before the fill branch so the 'cta' prefix
@@ -491,7 +536,9 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
       const ring = prefix === 'secondary' && computed.t.secondary?.style === 'outline'
       return <div style={{ ...aa, boxSizing: 'border-box', background: cv(stop), color: cv('on-cta'), border: ring ? `1.5px solid ${cv('cta-border')}` : undefined }}>Aa</div>
     }
-    if (stop.startsWith('ink')) return <div style={{ ...aa, fontSize: 18, fontWeight: 900, color: cv(stop) }}>Aa</div>
+    // ink cells get the family's paper-3 stroke (owner 2026-07-24: the "non-visible"
+    // cells — no fill of their own — read as cells, matching the paper-0/ink-12 anchors)
+    if (stop.startsWith('ink')) return <div style={{ ...aa, fontSize: 18, fontWeight: 900, color: cv(stop), boxSizing: 'border-box', border: `1px solid ${cv('paper-3')}` }}>Aa</div>
     return <div style={{ height: 36, borderRadius: 6, background: cv(stop) }} />
   }
   // "ID" label legible on the identity swatch (which can be light, e.g. a yellow
@@ -502,21 +549,94 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     const [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16))
     return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6 ? '#000' : '#fff'
   }
-  const swatchMatrix = () => (
-    <div className="ct-colorblock">
-      <div style={{ display: 'grid', gridTemplateColumns: `64px repeat(${SWATCH_STOPS.length + 1}, 1fr)`, gap: 5, alignItems: 'center' }}>
-        {swatchRamps.flatMap(([prefix, label, hasId]) => [
-          <div key={`${prefix}-l`} style={{ fontSize: 11, fontWeight: 700, color: 'var(--fg-default)', whiteSpace: 'nowrap' }}>{label}</div>,
-          <div key={`${prefix}-id`} title={hasId ? `--${prefix}-identity` : undefined}>
-            {hasId
-              ? <div style={{ height: 36, borderRadius: 6, background: `var(--${prefix}-identity)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: idTextOn(prefix === 'brand' ? computed.r.scale.identityHex : computed.accent?.identityHex) }}>ID</div>
-              : <div style={{ height: 36 }} />}
-          </div>,
-          ...SWATCH_STOPS.map(s => (
-            <div key={`${prefix}-${s}`} title={`--${prefix}-${s}`}>{swatchCell(prefix, s)}</div>
-          )),
-        ])}
-      </div>
+  // The 0/12 end caps are the two GLOBAL anchors (--paper-0 / --ink-12, unprefixed —
+  // resolved off the neutral, one per theme). They render on the neutral row only;
+  // other rows carry spacers so the 1–11 stops stay column-aligned. The identity
+  // chip moved to its own card in the side column (owner 2026-07-24).
+  // The matrix rides the POP plane (owner 2026-07-24) so the extremes have a surface
+  // to stand off of. paper-0 / ink-12 render as plain swatches with a neutral paper-3
+  // stroke — one value for ALL families (unprefixed anchors), unlike the per-family 1–11.
+  // Secondary tab falls back to overview if the secondary is removed while selected.
+  const paletteTabSafe = paletteTab === 'secondary' && !(secondary || derived) ? 'overview' : paletteTab
+  const paletteTabOptions: Array<[typeof paletteTab, string]> = [
+    ['overview', 'overview'],
+    ['brand', 'brand primary'],
+    ...((secondary || derived) ? [['secondary', 'brand secondary'] as [typeof paletteTab, string]] : []),
+    ['neutral', 'neutral'],
+    ['red', 'red'], ['yellow', 'yellow'], ['green', 'green'], ['blue', 'blue'],
+  ]
+  const anchorStroke = '1px solid var(--neutral-paper-3)'
+  // corner stop numbers — NEUTRAL row only (it indexes the whole matrix); the 0/12
+  // anchors carry a * pointing at the "0, 12 = global" footnote on the label line
+  const numBadge = (color: string): React.CSSProperties => ({
+    position: 'absolute', top: 3, right: 6, fontSize: 9, fontWeight: 600, color, pointerEvents: 'none',
+  })
+  const numColor = (stop: string) =>
+    stop === 'highlight-9' ? 'var(--neutral-on-highlight)' : 'var(--neutral-ink-10)'
+  // Row layout per the owner's Figma spec (node 72:38, 2026-07-24): the anchor/ID
+  // mini-swatch (24px) and the family label SHARE the first column — label
+  // right-aligned beneath — so no separate label line pads the rows. The footnote
+  // rides under the 12 anchor. Family labels are tinted with the family's ink-10.
+  const miniSwatch = (bg: string, badge: string, badgeColor: string, stroked: boolean) => (
+    <div style={{ position: 'relative' }}>
+      <div style={{ height: 24, borderRadius: 6, boxSizing: 'border-box', background: bg, border: stroked ? anchorStroke : undefined }} />
+      <span style={numBadge(badgeColor)}>{badge}</span>
+    </div>
+  )
+  // Narrow: plain fill swatches only (no glyphs/icons/badges — they don't fit),
+  // family label under each row. Same 13 columns so rows stay aligned.
+  const swatchMatrix = () => narrow ? (
+    <div className="ct-colorblock" style={{ background: 'var(--surface-pop)' }}>
+      {swatchRamps.map(([prefix, label], ri) => (
+        <div key={prefix} style={{ marginTop: ri === 0 ? 0 : 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${SWATCH_STOPS.length + 2}, minmax(0, 1fr))`, gap: 4 }}>
+            <div title={prefix === 'neutral' ? '--paper-0' : undefined}>
+              {prefix === 'neutral' && <div style={{ height: 22, borderRadius: 5, boxSizing: 'border-box', background: 'var(--paper-0)', border: anchorStroke }} />}
+              {(prefix === 'brand' || prefix === 'secondary') && <div style={{ height: 22, borderRadius: 5, background: `var(--${prefix}-identity)` }} />}
+            </div>
+            {SWATCH_STOPS.map(s => (
+              <div key={s} style={{ height: 22, borderRadius: 5, background: `var(--${prefix}-${s})` }} title={`--${prefix}-${s}`} />
+            ))}
+            <div title={prefix === 'neutral' ? '--ink-12' : undefined}>
+              {prefix === 'neutral' && <div style={{ height: 22, borderRadius: 5, background: 'var(--ink-12)' }} />}
+            </div>
+          </div>
+          <div style={{ fontSize: 11, fontWeight: 700, lineHeight: 1, color: `var(--${prefix}-ink-10)`, marginTop: 4 }}>{label}</div>
+        </div>
+      ))}
+    </div>
+  ) : (
+    <div className="ct-colorblock" style={{ background: 'var(--surface-pop)' }}>
+      {swatchRamps.map(([prefix, label], ri) => (
+        <div key={prefix} style={{ display: 'grid', gridTemplateColumns: `repeat(${SWATCH_STOPS.length + 2}, minmax(0, 1fr))`, gap: 6, alignItems: 'start', marginTop: ri === 0 ? 0 : 8 }}>
+          {/* first column matches the row height exactly: mini-swatch pinned top,
+              label pinned to the row's bottom edge (owner 2026-07-24 alignment fix) */}
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: 36 }}
+            title={prefix === 'neutral' ? '--paper-0' : (prefix === 'brand' || prefix === 'secondary') ? `--${prefix}-identity` : undefined}>
+            {prefix === 'neutral' ? miniSwatch('var(--paper-0)', '0*', 'var(--neutral-ink-10)', true)
+              : (prefix === 'brand' || prefix === 'secondary') ? miniSwatch(`var(--${prefix}-identity)`, 'ID',
+                  idTextOn(prefix === 'brand' ? computed.r.scale.identityHex : computed.accent?.identityHex), false)
+              : <span />}
+            <div style={{ fontSize: 11, lineHeight: 1, fontWeight: 700, color: `var(--${prefix}-ink-10)`, textAlign: 'right' }}>{label}</div>
+          </div>
+          {SWATCH_STOPS.map(s => (
+            <div key={s} style={{ position: 'relative' }} title={`--${prefix}-${s}`}>
+              {swatchCell(prefix, s)}
+              {prefix === 'neutral' && <span style={numBadge(numColor(s))}>{s.split('-')[1]}</span>}
+            </div>
+          ))}
+          <div style={{ position: 'relative' }} title={prefix === 'neutral' ? '--ink-12' : undefined}>
+            {prefix === 'neutral' && (
+              <>
+                <div style={{ height: 36, borderRadius: 6, boxSizing: 'border-box', background: 'var(--ink-12)', border: anchorStroke }} />
+                <span style={numBadge('var(--neutral-paper-1)')}>12*</span>
+              </>
+            )}
+          </div>
+        </div>
+      ))}
+      {/* the global disclaimer rides the card's bottom-right corner (owner 2026-07-24) */}
+      <div style={{ textAlign: 'right', fontSize: 9.5, color: 'var(--fg-subtle)', marginTop: 8 }}>*0, 12 = global</div>
     </div>
   )
 
@@ -573,7 +693,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   )
 
   return (
-    <div data-brand="custom" data-theme={dark ? 'dark' : 'light'} data-accent-mode={(secondary || derived) ? 'accented' : 'default'} style={{ background: 'var(--surface-base)', color: 'var(--fg-default)', minHeight: '100%', position: 'relative' }}>
+    <div ref={frameRef} data-brand="custom" data-theme={dark ? 'dark' : 'light'} data-accent-mode={(secondary || derived) ? 'accented' : 'default'} style={{ background: 'var(--surface-base)', color: 'var(--fg-default)', minHeight: '100%', position: 'relative' }}>
       <style>{overrideCss}</style>
       <style>{PAGE_CSS}</style>
 
@@ -585,7 +705,20 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
           live illustration (hidden under 980px). ── */}
       {view === 'palette' && (
         <div className="ct-pane">
+          {/* left half = the content switcher; the side column (identity + illustration)
+              is PERMANENT across tabs and pinned — no scroll (owner 2026-07-24) */}
           <div className="ct-pane-main">
+            <div className="ct-tabs">
+              {narrow
+                ? <select className="ct-tab-select" value={paletteTabSafe} aria-label="Palette section"
+                    onChange={e => setPaletteTab(e.target.value as typeof paletteTab)}>
+                    {paletteTabOptions.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                  </select>
+                : <Segmented value={paletteTabSafe} onChange={setPaletteTab} options={paletteTabOptions} />}
+            </div>
+            {/* the ONLY scrolling region on the page */}
+            <div className="ct-scroll">
+            {paletteTabSafe === 'overview' && <>
             {swatchMatrix()}
             {/* Elevation planes — the semantic surface output (owner spec 2026-07-24):
                 same four neutral stops in both themes, order reversed. Chips render the
@@ -601,11 +734,6 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
                   </div>
                 ))}
               </div>
-              <div style={{ fontSize: 11.5, color: 'var(--fg-subtle)', marginTop: 10, lineHeight: 1.5 }}>
-                Surfaces don&rsquo;t simply invert with the theme — both themes draw on the same four
-                neutral stops, in reversed order. Elevation always climbs toward paper-0&rsquo;s end of
-                the ramp: light runs paper-3 &rarr; white, dark runs black &rarr; paper-3.
-              </div>
             </div>
             {/* every cta together — brand pair, secondary pair, neutral, and the four
                 signals (red/yellow/green/blue, with this brand's overrides) so a
@@ -615,8 +743,9 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
               <CtaRow hasSecondary={!!secondary || derived}
                 shifted={computed.r.signalOverrides.filter(o => !(computed.escapeOn && o.name === 'red')).map(o => o.name)} />
             </div>
-            {colorBlock('Primary scale', 'brand', 'brand', rRec, primary, primaryExtras)}
-            {(secondary || derived) && colorBlock(derived ? 'Secondary scale — derived from primary' : 'Secondary scale', 'secondary', 'brand', null, secondary ?? primary, (
+            </>}
+            {paletteTabSafe === 'brand' && colorBlock('Primary scale', 'brand', 'brand', rRec, primary, primaryExtras)}
+            {paletteTabSafe === 'secondary' && colorBlock(derived ? 'Secondary scale — derived from primary' : 'Secondary scale', 'secondary', 'brand', null, secondary ?? primary, (
               computed.t.secondary && (
                 <div style={{ fontSize: 11.5, color: 'var(--fg-subtle)', marginTop: 8, lineHeight: 1.45 }}>
                   Resolved <b>{computed.t.secondary.level}</b>{computed.t.secondary.demoted ? ' (auto)' : ''}
@@ -624,11 +753,31 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
                 </div>
               )
             ))}
-            {colorBlock(`Neutral scale — ${neutralLevel} tint`, 'neutral', 'neutral', null, primary)}
-            {signalBlocks()}
+            {paletteTabSafe === 'neutral' && colorBlock(`Neutral scale — ${neutralLevel} tint`, 'neutral', 'neutral', null, primary)}
+            {(paletteTabSafe === 'red' || paletteTabSafe === 'yellow' || paletteTabSafe === 'green' || paletteTabSafe === 'blue') && signalBlock(paletteTabSafe)}
+            </div>
           </div>
-          <div className="ct-illus">
-            <div style={{ width: 'min(440px, 92%)' }} dangerouslySetInnerHTML={{ __html: HERO_ILLO }} />
+          <div className="ct-pane-side">
+            {/* identity — the exact input hex(es), preserved verbatim (brand + secondary
+                only; neutral and signals are generated and carry none) */}
+            <div className="ct-colorblock">
+              <div className="ct-label" style={{ marginBottom: 8 }}>Identity</div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ flex: 1 }} title="--brand-identity">
+                  <div style={{ height: 54, borderRadius: 12, background: 'var(--brand-identity)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: idTextOn(computed.r.scale.identityHex) }}>ID</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-default)', marginTop: 6 }}>brand-primary</div>
+                </div>
+                {(secondary || derived) && (
+                  <div style={{ flex: 1 }} title="--secondary-identity">
+                    <div style={{ height: 54, borderRadius: 12, background: 'var(--secondary-identity)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: idTextOn(computed.accent?.identityHex) }}>ID</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-default)', marginTop: 6 }}>brand-secondary</div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="ct-illus">
+              <div style={{ width: 'min(440px, 92%)' }} dangerouslySetInnerHTML={{ __html: HERO_ILLO }} />
+            </div>
           </div>
         </div>
       )}
@@ -787,14 +936,24 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
     { Icon: ListTodo, label: 'Tasks' }, { Icon: BarChart3, label: 'Analytics' }, { Icon: Users, label: 'Team' },
     { Icon: Settings, label: 'Collision check', goto: 'settings' },
   ]
+  // Collapsed mobile menu (owner 2026-07-24): under the 760px breakpoint the
+  // sidebar becomes logo + hamburger; the nav drops down when opened. Desktop is
+  // untouched — the burger is display:none there and this state is inert.
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   return (
     <div className="dash">
-      <aside className="dash-side">
-        <div className="dash-logo" dangerouslySetInnerHTML={{ __html: BRAND_LOGO }} />
+      <aside className={`dash-side${mobileNavOpen ? ' nav-open' : ''}`}>
+        <div className="dash-side-top">
+          <div className="dash-logo" dangerouslySetInnerHTML={{ __html: BRAND_LOGO }} />
+          <button className="dash-burger" onClick={() => setMobileNavOpen(o => !o)}
+            aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'} aria-expanded={mobileNavOpen}>
+            {mobileNavOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
+        </div>
         <nav className="dash-nav">
           {nav.map(({ Icon, label, goto }) => (
             <a key={label} href="#" className={`dash-navitem${goto === page ? ' active' : ''}`}
-              onClick={e => { e.preventDefault(); if (goto) setPage(goto) }}
+              onClick={e => { e.preventDefault(); if (goto) setPage(goto); setMobileNavOpen(false) }}
               title={goto ? undefined : 'For demo purposes only'}>
               <Icon size={16} aria-hidden /> {label}
             </a>
@@ -841,7 +1000,7 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
             <CustomersTable hasSecondary={hasSecondary} />
           </section>
 
-          <section style={dashCard}>
+          <section className="dash-card" style={dashCard}>
             <Head title="Get started" />
             <div style={{ background: 'var(--surface-sink)', borderRadius: 12, padding: '16px 0', marginBottom: 12 }}>
               <div data-illustration={hasSecondary ? 'two-color' : undefined}
@@ -857,7 +1016,7 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
             <button className="u-btn u-btn-neutral" style={{ width: '100%', justifyContent: 'center' }}>Create project</button>
           </section>
 
-          <section style={{ ...dashCard, gridColumn: 'span 2' }}>
+          <section className="dash-card" style={{ ...dashCard, gridColumn: 'span 2' }}>
             <Head title="Recent tasks" sub="Across all projects" />
             <Task name="Design system audit" who="Priya N." status="done" />
             <Task name="Onboarding flow copy" who="Marco L." status="active" />
@@ -865,7 +1024,7 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
             <Task name="Migrate auth provider" who="Dana K." status="blocked" />
           </section>
 
-          <section style={dashCard}>
+          <section className="dash-card" style={dashCard}>
             <Head title="Activity" />
             <Feed who="Priya" what="closed 3 tasks" when="2m" tone="positive" />
             <Feed who="Marco" what="commented on Onboarding" when="1h" tone="info" />
@@ -914,10 +1073,11 @@ function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typ
   const focusRing: React.CSSProperties = { borderColor: 'var(--brand-highlight-8)', boxShadow: '0 0 0 3px var(--brand-wash-5)' }
   const btn: React.CSSProperties = { padding: '8px 16px', borderRadius: 999, border: '1.5px solid transparent', cursor: 'pointer', fontSize: 13, fontWeight: 500, fontFamily: 'inherit' }
   return (
-    <section style={{ background: 'var(--surface-lift)', boxShadow: 'var(--elev-card)', borderRadius: 16, padding: 18 }}>
+    <section className="dash-card" style={{ background: 'var(--surface-lift)', boxShadow: 'var(--elev-card)', borderRadius: 16, padding: 18 }}>
       {/* title row shows the ink-10 RANGE: signal ink vs neutral ink vs brand ink;
-          the subtitle (only when a secondary exists) adds secondary ink-10 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+          the subtitle (only when a secondary exists) adds secondary ink-10. Wraps so
+          the chips drop below the title on narrow cards instead of clipping. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
         <div style={{ fontSize: 15, fontWeight: 700, marginRight: 'auto' }}>
           <span style={{ color: v('ink-10') }}>{sig}</span>
           <span style={{ color: 'var(--neutral-ink-10)', fontWeight: 500 }}> vs </span>
@@ -999,7 +1159,7 @@ function SettingsStress({ hasSecondary }: { hasSecondary: boolean }) {
           one card per signal on a raised card — try a red, gold, green, or blue seed above
         </span>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 14 }}>
+      <div className="dash-stress-grid">
         {SIGNAL_CARDS.map(c => <SignalCard key={c.sig} {...c} hasSecondary={hasSecondary} />)}
       </div>
     </main>
@@ -1010,9 +1170,9 @@ function Metric({ label, value, delta, tone }: { label: string; value: string; d
   // Neutralized tile (owner 2026-07-17): plain raised plane, no per-tone fill/border.
   // The signal reads through the delta text alone — colour where it matters.
   return (
-    <div style={{ ...dashCard, padding: 16 }}>
+    <div className="dash-card dash-metric" style={{ ...dashCard, padding: 16 }}>
       <div style={{ fontSize: 12, color: 'var(--fg-subtle)' }}>{label}</div>
-      <div style={{ fontSize: 26, fontWeight: 700, margin: '4px 0 4px' }}>{value}</div>
+      <div className="dash-metric-value" style={{ fontSize: 26, fontWeight: 700, margin: '4px 0 4px' }}>{value}</div>
       <span style={{ fontSize: 11, fontWeight: 600, color: `var(--${tone}-fg)` }}>{delta}</span>
     </div>
   )
@@ -1104,7 +1264,10 @@ function Feed({ who, what, when, tone }: { who: string; what: string; when: stri
 
 
 const PAGE_CSS = `
-.dash { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: calc(100vh - 165px); background: var(--surface-base); }
+/* Same static frame as the palette (owner 2026-07-24): the dashboard fills the
+   viewport below the measured controls bar; the MENU is full height and pinned,
+   only .dash-main scrolls. */
+.dash { display: grid; grid-template-columns: 220px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); height: calc(100vh - var(--ct-dock, 160px) - 54px); overflow: hidden; background: var(--surface-base);}
 .dash-side {
   background: var(--surface-sink);
   padding: 18px 14px; display: flex; flex-direction: column; gap: 18px;
@@ -1132,7 +1295,7 @@ const PAGE_CSS = `
   background: var(--brand-cta); color: var(--brand-on-cta);
   display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600;
 }
-.dash-main { padding: 20px 24px 40px; min-width: 0; }
+.dash-main { padding: 20px 24px 40px; min-width: 0; min-height: 0; overflow-y: auto; scrollbar-width: none;}
 .dash-topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
 .dash-search {
   display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--fg-subtle);
@@ -1163,11 +1326,33 @@ const PAGE_CSS = `
   .dash-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dash-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+.dash-main::-webkit-scrollbar { display: none; }
+.dash-stress-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.dash-side-top { display: flex; align-items: center; justify-content: space-between; }
+.dash-burger {
+  display: none; border: none; background: none; cursor: pointer; padding: 6px;
+  border-radius: 8px; color: var(--fg-default); font-family: inherit; line-height: 0;
+}
+.dash-burger:hover { background: var(--surface-base); }
 @media (max-width: 760px) {
-  .dash { grid-template-columns: 1fr; }
-  .dash-side { flex-direction: row; align-items: center; flex-wrap: wrap; gap: 12px; }
-  .dash-nav { flex-direction: row; flex-wrap: wrap; flex: 1 1 100%; }
-  .dash-metrics, .dash-grid { grid-template-columns: 1fr; }
+  .dash { grid-template-columns: 1fr; height: auto; overflow: visible; }
+  .dash-main { overflow: visible; }
+  /* collapsed mobile menu: logo + hamburger; nav + user drop down when open */
+  .dash-side { gap: 12px; }
+  .dash-burger { display: inline-flex; }
+  .dash-side .dash-nav, .dash-side .dash-user { display: none; }
+  .dash-side.nav-open .dash-nav { display: flex; flex-direction: column; }
+  .dash-side.nav-open .dash-user { display: flex; }
+  /* compact cards (owner 2026-07-24): metrics stay 2-up and shrink instead of
+     stacking as giant full-width slabs; collision cards drop to one column; card
+     paddings tighten. !important because the cards carry inline dashCard styles. */
+  .dash-main { padding: 14px 14px 28px; }
+  .dash-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .dash-grid { grid-template-columns: 1fr; gap: 12px; }
+  .dash-grid > section { grid-column: auto !important; } /* span-2 cards fit the single column */
+  .dash-stress-grid { grid-template-columns: 1fr; }
+  .dash-card { padding: 12px !important; border-radius: 12px !important; }
+  .dash-metric-value { font-size: 20px !important; margin: 2px 0 !important; }
 }
 .ct-iconbtn {
   display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
@@ -1228,11 +1413,38 @@ const PAGE_CSS = `
   border: 1.5px dashed var(--neutral-highlight-9); border-radius: 12px;
 }
 .ct-add:hover { color: var(--fg-default); border-color: var(--brand-highlight-8); background: var(--brand-paper-2); }
+/* STATIC FRAME (owner 2026-07-24): the palette page never scrolls as a page. The
+   pane fills the viewport from the measured controls-bar bottom (--ct-dock, set by
+   a ResizeObserver — the bar's height varies) down to the bottom bar (54px). The
+   tab strip and side column sit in the frame; .ct-scroll is the ONLY scroller. */
 .ct-pane {
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.5fr);
-  gap: 24px; padding: 24px; align-items: start;
+  grid-template-rows: minmax(0, 1fr); /* clamp the row so columns get a definite height */
+  gap: 24px; padding: 24px; align-items: stretch;
+  height: calc(100vh - var(--ct-dock, 160px) - 54px); box-sizing: border-box; overflow: hidden;
 }
-.ct-pane-main { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.ct-tabs { flex: none; }
+.ct-tab-select {
+  width: 100%; padding: 8px 12px; border-radius: 8px; font-size: 13px;
+  font-family: inherit; color: var(--fg-default);
+  background: var(--surface-lift); border: 1px solid var(--border-subtle);
+}
+.ct-scroll {
+  flex: 1; min-height: 0; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 20px;
+  /* shadow gutter: cards sit 14px in from the clip edge (the card shadow's max
+     reach), the negative margin gives the room back so layout width is unchanged */
+  padding: 14px; margin: -14px;
+  scrollbar-width: none; /* Firefox */
+}
+.ct-scroll::-webkit-scrollbar { display: none; } /* WebKit/Blink */
+.ct-pane-main { display: flex; flex-direction: column; gap: 20px; min-width: 0; height: 100%; }
+/* Permanent side column: identity + illustration, rendered once, part of the static
+   frame — the illustration takes the remaining height and centers its content. */
+.ct-pane-side {
+  display: flex; flex-direction: column; gap: 20px; min-width: 0;
+  height: 100%;
+}
 /* A hairline ring on the card in BOTH themes (owner: strokes on the cards in both
    or neither) — a dark hairline in light, a light hairline in dark, since near-black
    planes barely separate by lightness. Scoped to the Palette workshop; the
@@ -1245,12 +1457,15 @@ const PAGE_CSS = `
 /* Fills the column and stays put — sticky + viewport-tall so it doesn't scroll,
    holding a fixed margin below the nav/controls (top) and above the bottom bar. */
 .ct-illus {
-  position: sticky; top: 140px; background: var(--brand-paper-3); border-radius: 16px;
-  height: calc(100vh - 210px); min-height: 320px;
+  background: var(--brand-paper-3); border-radius: 16px;
+  flex: 1; min-height: 0;
   display: flex; align-items: center; justify-content: center; padding: 32px;
 }
 @media (max-width: 980px) {
-  .ct-pane { grid-template-columns: 1fr; }
+  .ct-pane { grid-template-columns: 1fr; height: auto; overflow: visible; }
+  .ct-pane-main { overflow: visible; height: auto; }
+  .ct-scroll { overflow: visible; }
+  .ct-pane-side { height: auto; overflow: visible; }
   .ct-illus { display: none; }
 }
 .ct-info {
