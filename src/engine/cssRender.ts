@@ -102,7 +102,7 @@ export function neutralCss(selector: string, brandH: number, level: NeutralLevel
   const s = generateNeutralScale(brandH, level, contrastProfile)
   // The universal paper-0/ink-12 anchors ride along: any scope that carries the
   // ladder must also carry its mode-flipping extremes (semantic aliases like
-  // --surface-raised resolve through them). paper-0 = the neutral's resolved
+  // --surface-pop resolve through them). paper-0 = the neutral's resolved
   // stop 0 (white in light; one seam below paper-1 in dark, never absolute black).
   const p0 = (st: ColorStop | undefined, fallback: string) => (st ? stopHex(st) : fallback)
   const p3Light = brandKindP3Body('neutral', s, 'light')

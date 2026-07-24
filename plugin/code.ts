@@ -69,6 +69,12 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // surface plane in both themes. Pure relabel, same color; no numbering shift, so
   // no ordering hazard (no pre-existing paper-3 to collide with).
   ['wash-3', 'paper-3'],
+  // elevation planes go 2 → 4 (owner spec + sink/base/lift/pop naming, 2026-07-24):
+  // the old pair migrates to its closest role IN PLACE (bindings survive; their light
+  // stop shifts one rung per the new ladder — raised p0→p1, sunken p2→p3); base and
+  // pop are NEW vars, nothing to migrate.
+  ['paper-raised', 'lift'],
+  ['paper-sunken', 'sink'],
 ]
 // Group renames (old path prefix → new), migrated in place like the leaves — the
 // info-color signal was renamed by identity to blue (2026-07-13); both the primitive
@@ -258,13 +264,17 @@ figma.ui.onmessage = async (msg) => {
       const W = { r: 1, g: 1, b: 1 }
       const K = { r: 0, g: 0, b: 0 }
       // The list order IS the display order in Figma (variables list in creation
-      // order). paper-raised / paper-sunken are mode-divergent aliases set later —
-      // once the theme's neutral/paper-0 and neutral/paper-2 exist. `elevation` =
-      // "create now for ordering, alias below". (Role names, not ladder numbers —
-      // they alias different ladder positions per mode, so a number would lie.)
+      // order). The four elevation planes sink/base/lift/pop (owner naming + spec,
+      // 2026-07-24) are mode-divergent aliases set later — once the theme's neutral
+      // papers exist. `elevation` = "create now for ordering, alias below". (Role
+      // names, not ladder numbers — each plane aliases a DIFFERENT ladder position
+      // per mode: elevation climbs paper-3→paper-0 in light, paper-0→paper-3 in
+      // dark, so a number would lie.)
       const STATIC_UTILS: Array<{ path: string; light?: figma.RGBA; dark?: figma.RGBA; elevation?: boolean }> = [
-        { path: 'system/paper-raised', elevation: true },
-        { path: 'system/paper-sunken', elevation: true },
+        { path: 'system/sink', elevation: true },
+        { path: 'system/base', elevation: true },
+        { path: 'system/lift', elevation: true },
+        { path: 'system/pop', elevation: true },
         { path: 'system/ink-12', light: K, dark: W },
         { path: 'system/abs-black', light: K, dark: K },
         { path: 'system/abs-white', light: W, dark: W },
@@ -488,7 +498,7 @@ figma.ui.onmessage = async (msg) => {
 
       // ① system globals (brand-independent: every theme mode aliases the same seed;
       // idempotent — backfills pre-existing brand modes the moment the globals appear)
-      const SYSTEM_GLOBALS = ['system/paper-raised', 'system/paper-sunken',
+      const SYSTEM_GLOBALS = ['system/sink', 'system/base', 'system/lift', 'system/pop',
         'system/abs-black', 'system/abs-white', 'system/transparent', 'system/scrim']
       for (const path of SYSTEM_GLOBALS) {
         for (const m of th.coll.modes) aliasInto(path, path, m.modeId)
@@ -586,27 +596,33 @@ figma.ui.onmessage = async (msg) => {
         }
       }
 
-      // Elevation anchors — mode-DIVERGENT aliases: each mode points at a different
-      // target, so card elevation holds its meaning as the ladder inverts. Both ends
-      // are the brand-aware THEME neutral now (paper-0 is the engine's RESOLVED
-      // anchor — white in light, one seam below paper-1 in dark, never absolute black):
-      //   paper-raised → neutral/paper-0 (white) in light · neutral/paper-2 in dark
-      //   paper-sunken → neutral/paper-2 in light · neutral/paper-0 (deep) in dark
-      // (paper-1 needs no variant — it's the base, same role both modes.) The vars
-      // were CREATED in order above; aliases are set HERE because the theme's
-      // neutral vars only exist after the alias loop ("the wait"). This mirrors the
-      // CSS semantic layer's surface-raised/surface-sunken exactly.
+      // Elevation planes — mode-DIVERGENT aliases (owner spec 2026-07-24): both
+      // themes use the SAME four neutral stops in REVERSED order, so each plane
+      // points at a different stop per mode. Every end is the brand-aware THEME
+      // neutral (paper-0 is the engine's RESOLVED anchor — white in light, one seam
+      // below paper-1 in dark, never absolute black):
+      //   sink → neutral/paper-3 in light · neutral/paper-0 (deep) in dark
+      //   base → neutral/paper-2 in light · neutral/paper-1 in dark
+      //   lift → neutral/paper-1 in light · neutral/paper-2 in dark
+      //   pop  → neutral/paper-0 (white) in light · neutral/paper-3 in dark
+      // The vars were CREATED in order above; aliases are set HERE because the
+      // theme's neutral vars only exist after the alias loop ("the wait"). This
+      // mirrors the CSS semantic layer's surface-sink/base/lift/pop exactly.
       const themeNeutralP0 = themeByName.get('neutral/paper-0')
+      const themeNeutralP1 = themeByName.get('neutral/paper-1')
       const themeNeutralP2 = themeByName.get('neutral/paper-2')
-      if (themeNeutralP0 && themeNeutralP2) {
+      const themeNeutralP3 = themeByName.get('neutral/paper-3')
+      if (themeNeutralP0 && themeNeutralP1 && themeNeutralP2 && themeNeutralP3) {
         const aliasElev = (path: string, light: figma.Variable, dark: figma.Variable) => {
           const v = primByName.get(path) // pre-created in STATIC_UTILS for ordering
           if (!v) return
           v.setValueForMode(pLight, figma.variables.createVariableAlias(light))
           v.setValueForMode(pDark, figma.variables.createVariableAlias(dark))
         }
-        aliasElev('system/paper-raised', themeNeutralP0, themeNeutralP2)
-        aliasElev('system/paper-sunken', themeNeutralP2, themeNeutralP0)
+        aliasElev('system/sink', themeNeutralP3, themeNeutralP0)
+        aliasElev('system/base', themeNeutralP2, themeNeutralP1)
+        aliasElev('system/lift', themeNeutralP1, themeNeutralP2)
+        aliasElev('system/pop', themeNeutralP0, themeNeutralP3)
       }
 
       figma.ui.postMessage({ type: 'done', brand, aliases: aliasCount, createdShared, secondary: secondaryMode })

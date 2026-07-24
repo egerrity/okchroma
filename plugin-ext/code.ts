@@ -55,6 +55,12 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // surface plane in both themes. Pure relabel, same color; no numbering shift, so
   // no ordering hazard (no pre-existing paper-3 to collide with).
   ['wash-3', 'paper-3'],
+  // elevation planes go 2 → 4 (owner spec + sink/base/lift/pop naming, 2026-07-24):
+  // the old pair migrates to its closest role IN PLACE (bindings survive; their light
+  // stop shifts one rung per the new ladder — raised p0→p1, sunken p2→p3); base and
+  // pop are NEW vars, nothing to migrate.
+  ['paper-raised', 'lift'],
+  ['paper-sunken', 'sink'],
 ]
 // Group renames (old prefix → new), same in-place idiom — info-color → blue (2026-07-13);
 // covers the primitive (system/<signal>/…) and theme (<signal>/…) collections.
@@ -258,10 +264,14 @@ figma.ui.onmessage = async (msg) => {
         v.scopes = ['ALL_SCOPES']
         return v
       }
-      // The elevation pair leads the panel (v1's order); values are aliased below once
-      // the neutral exists.
-      ensure('system/paper-raised')
-      ensure('system/paper-sunken')
+      // The elevation planes lead the panel (v1's order); values are aliased below
+      // once the neutral exists. Four planes sink/base/lift/pop (owner spec + naming
+      // 2026-07-24) — ensure() migrates the old paper-raised/paper-sunken pair in
+      // place via RENAMED_LEAVES; base/pop are new.
+      ensure('system/sink')
+      ensure('system/base')
+      ensure('system/lift')
+      ensure('system/pop')
       for (const t of baseTokens[activeCols[0]]) { // all columns share the path set
         if (!withSecondary && t.path.startsWith('brand-secondary/')) continue
         const before = createdVars
@@ -294,7 +304,7 @@ figma.ui.onmessage = async (msg) => {
       let orphaned = 0
       if (addedCols.length) {
         const known = new Set(baseTokens[activeCols[0]].map(t => t.path))
-        known.add('system/paper-raised'); known.add('system/paper-sunken')
+        known.add('system/sink'); known.add('system/base'); known.add('system/lift'); known.add('system/pop')
         for (const p of baseVars.keys()) if (!known.has(p)) orphaned++
         for (const c of addedCols) {
           const idx = activeCols.indexOf(c)
@@ -304,21 +314,30 @@ figma.ui.onmessage = async (msg) => {
           }
         }
       }
-      // Elevation anchors — scheme-DIVERGENT aliases, base-only and never overridden: the
-      // alias points at the semantic neutral VARIABLE, so under any brand extension it
-      // resolves through that brand's paper-0/paper-2 overrides automatically.
-      //   paper-raised → neutral/paper-0 in the light columns · neutral/paper-2 in the dark
-      //   paper-sunken → the inverse
+      // Elevation planes — scheme-DIVERGENT aliases, base-only and never overridden:
+      // each alias points at the semantic neutral VARIABLE, so under any brand
+      // extension it resolves through that brand's paper overrides automatically.
+      // Owner spec 2026-07-24 — same four stops both schemes, order reversed:
+      //   sink → neutral/paper-3 light · neutral/paper-0 dark
+      //   base → neutral/paper-2 light · neutral/paper-1 dark
+      //   lift → neutral/paper-1 light · neutral/paper-2 dark
+      //   pop  → neutral/paper-0 light · neutral/paper-3 dark
       const p0 = baseVars.get('neutral/paper-0')
+      const p1 = baseVars.get('neutral/paper-1')
       const p2 = baseVars.get('neutral/paper-2')
-      if (p0 && p2) {
-        const raised = baseVars.get('system/paper-raised')!
-        const sunken = baseVars.get('system/paper-sunken')!
-        activeCols.forEach((c, i) => {
-          const dark = DARK_COLUMNS.has(c)
-          raised.setValueForMode(colIds[i], figma.variables.createVariableAlias(dark ? p2 : p0))
-          sunken.setValueForMode(colIds[i], figma.variables.createVariableAlias(dark ? p0 : p2))
-        })
+      const p3 = baseVars.get('neutral/paper-3')
+      if (p0 && p1 && p2 && p3) {
+        const planes: Array<[string, figma.Variable, figma.Variable]> = [
+          ['system/sink', p3, p0], ['system/base', p2, p1],
+          ['system/lift', p1, p2], ['system/pop', p0, p3],
+        ]
+        for (const [path, light, darkVar] of planes) {
+          const v = baseVars.get(path)!
+          activeCols.forEach((c, i) => {
+            const dark = DARK_COLUMNS.has(c)
+            v.setValueForMode(colIds[i], figma.variables.createVariableAlias(dark ? darkVar : light))
+          })
+        }
       }
 
       // ── the brand's extension (ONE per brand — the picker stays flat and clean) ──
@@ -349,8 +368,8 @@ figma.ui.onmessage = async (msg) => {
       // ── overrides: diff every brand token against the LIVE base value, per column ──
       // Equal → ensure NO override (inherit; the blue-highlight story stays honest).
       // Different → setValueForMode routed by the extension's modeId for that column.
-      // system/* is contract-invariant and skipped outright (paper-raised/-sunken are
-      // aliases; the rest are poles every brand shares). The payload always CARRIES a
+      // system/* is contract-invariant and skipped outright (the sink/base/lift/pop
+      // planes are aliases; the rest are poles every brand shares). The payload always CARRIES a
       // brand-secondary (real or derived from the primary); it is WRITTEN only when the
       // file's posture is on — secondary stays opt-in, and once on, every brand derives.
       const secondaryMode: 'real' | 'derived' | 'none' = hasSecondary ? 'real' : (withSecondary ? 'derived' : 'none')

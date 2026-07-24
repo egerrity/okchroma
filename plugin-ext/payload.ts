@@ -55,7 +55,7 @@ function flatten(node: FigmaGroup, prefix: string, out: FlatTok[]): void {
 }
 
 // Panel order = creation order (v1's rule): system → neutral → brand-primary →
-// brand-secondary → signals. system/paper-raised + paper-sunken are NOT here — they are
+// brand-secondary → signals. The system/sink|base|lift|pop planes are NOT here — they are
 // mode-divergent aliases the plugin creates first and wires after the neutral exists.
 // neutral/ink-12 (the anchor) is injected right after ink-11 (ladder order), a scheme-flipping pole.
 function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boolean): FlatTok[] {
