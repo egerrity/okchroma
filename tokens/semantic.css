@@ -6,15 +6,16 @@
 /* ─── Global surface / fg / border ─────────────────────────────────────────── */
 
 [data-brand] {
-  /* Elevation MIRRORS across modes around the paper-1 page (owner spec, 2026-07-02):
-     raised moves toward the paper-0 anchor's side in light (white) and toward paper-2
-     in dark (lighter); sunken is the reverse — paper-2 in light, the paper-0 anchor
-     (black) in dark. paper-0 flips white→black with the mode, so "0" is always the
-     extreme beyond paper-1. */
-  --surface-base:         var(--neutral-paper-1);
-  --surface-sunken:       var(--neutral-paper-2);
-  --surface-raised:       var(--paper-0, #ffffff);
-  --surface-card-overlay: var(--paper-0, #ffffff);
+  /* Elevation planes sink → base → lift → pop (owner spec + naming, 2026-07-24 Figma
+     elevation study): both themes use the SAME four stops, in reversed order —
+     elevation always moves toward paper-0's side of the ramp. Light descends the ramp
+     as elevation rises (sink wash-3 → pop paper-0 white); dark ascends it (sink
+     paper-0 black → pop wash-3). paper-0 flips white→black with the mode, so it is
+     always the extreme pole: the pop in light, the sink in dark. */
+  --surface-sink:        var(--neutral-wash-3);
+  --surface-base:         var(--neutral-paper-2);
+  --surface-lift:       var(--neutral-paper-1);
+  --surface-pop:        var(--paper-0, #ffffff);
 
   --fg-default:           var(--neutral-ink-11);
   --fg-subtle:            var(--neutral-ink-10);
@@ -26,13 +27,13 @@
 }
 
 [data-brand][data-theme="dark"] {
-  /* Dark mirrors the elevation order: raised LIGHTENS to paper-2, sunken DEEPENS past
-     the page to the paper-0 anchor (black in dark) — so a recessed area actually
-     recedes instead of sitting at the page's own level. Overlays go one step lighter
-     than raised (wash). */
-  --surface-sunken:       var(--paper-0, #000000);
-  --surface-raised:       var(--neutral-paper-2);
-  --surface-card-overlay: var(--neutral-wash-3);
+  /* Dark runs the same four stops upward: sink paper-0 (black) → base paper-1 →
+     lift paper-2 → pop wash-3. Base needs its own override here because the
+     shared block's base is paper-2 (the light value). */
+  --surface-sink:        var(--paper-0, #000000);
+  --surface-base:         var(--neutral-paper-1);
+  --surface-lift:       var(--neutral-paper-2);
+  --surface-pop:        var(--neutral-wash-3);
 }
 
 /* ─── role.brand ────────────────────────────────────────────────────────────── */

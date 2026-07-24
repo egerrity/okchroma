@@ -264,7 +264,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     brand: { background: 'var(--brand-wash-4)', color: 'var(--brand-ink-11)' },
     secondary: { background: 'var(--secondary-wash-6)', color: 'var(--secondary-ink-11)' },
     outline: { background: 'transparent', color: 'var(--secondary-ink-10)', border: '1px solid var(--secondary-highlight-8)' },
-    grey: { background: 'var(--surface-sunken)', color: 'var(--fg-subtle)' },
+    grey: { background: 'var(--surface-sink)', color: 'var(--fg-subtle)' },
   }
   const styleLabel: Record<SecondaryStyle, string> = { default: 'Custom', outline: 'Outline', exact: 'Exact' }
   // the ⓘ copy per selection (Figma spec) — the always-visible tooltip replacement
@@ -754,7 +754,7 @@ function EngineChecklist({ rRec, rung, primaryHex, escapeOn }: { rRec: ResolvedB
 // neutral (surfaces, text), the signals (status), and the live illustration. ─
 
 const dashCard: React.CSSProperties = {
-  background: 'var(--surface-raised)', boxShadow: 'var(--elev-card)',
+  background: 'var(--surface-lift)', boxShadow: 'var(--elev-card)',
   borderRadius: 16, padding: 18,
 }
 
@@ -823,7 +823,7 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
 
           <section style={dashCard}>
             <Head title="Get started" />
-            <div style={{ background: 'var(--surface-sunken)', borderRadius: 12, padding: '16px 0', marginBottom: 12 }}>
+            <div style={{ background: 'var(--surface-sink)', borderRadius: 12, padding: '16px 0', marginBottom: 12 }}>
               <div data-illustration={hasSecondary ? 'two-color' : undefined}
                 style={{ width: '78%', margin: '0 auto' }}
                 dangerouslySetInnerHTML={{ __html: HERO_ILLO }} />
@@ -860,8 +860,8 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
 
 // ─── Collision check — 2×2 grid, one form card per signal ───────────────────
 // Owner spec (2026-07-09): four form cards, one per signal — on the raised plane
-// as of the 2026-07-17 redesign (was literal paper-0; surface-raised === paper-0 in
-// light and lifts correctly in dark, instead of collapsing to the darkest plane)
+// as of the 2026-07-17 redesign (was literal paper-0, which collapses to the darkest
+// plane in dark; the raised plane lifts correctly in both modes)
 // (red / yellow / green / blue — by identity), each combining:
 //   ink-10 title + brand chip + the card signal's chip
 //   ink-11 short body
@@ -894,7 +894,7 @@ function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typ
   const focusRing: React.CSSProperties = { borderColor: 'var(--brand-highlight-8)', boxShadow: '0 0 0 3px var(--brand-wash-5)' }
   const btn: React.CSSProperties = { padding: '8px 16px', borderRadius: 999, border: '1.5px solid transparent', cursor: 'pointer', fontSize: 13, fontWeight: 500, fontFamily: 'inherit' }
   return (
-    <section style={{ background: 'var(--surface-raised)', boxShadow: 'var(--elev-card)', borderRadius: 16, padding: 18 }}>
+    <section style={{ background: 'var(--surface-lift)', boxShadow: 'var(--elev-card)', borderRadius: 16, padding: 18 }}>
       {/* title row shows the ink-10 RANGE: signal ink vs neutral ink vs brand ink;
           the subtitle (only when a secondary exists) adds secondary ink-10 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
@@ -1029,13 +1029,13 @@ function CustomersTable({ hasSecondary }: { hasSecondary: boolean }) {
           const [label, tone] = CUST_STATUS[c.status]
           const premium = c.plan !== 'Starter'
           // Premium plans carry the accent when a secondary exists, else the brand.
-          const planBg = premium ? (hasSecondary ? 'var(--secondary-wash-3)' : 'var(--brand-wash-5)') : 'var(--surface-sunken)'
+          const planBg = premium ? (hasSecondary ? 'var(--secondary-wash-3)' : 'var(--brand-wash-5)') : 'var(--surface-sink)'
           const planFg = premium ? (hasSecondary ? 'var(--secondary-ink-10)' : 'var(--brand-ink-11)') : 'var(--fg-subtle)'
           return (
             <tr key={c.name}>
               <td>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span className="dash-avatar" style={{ width: 28, height: 28, fontSize: 11, background: 'var(--surface-sunken)', color: 'var(--fg-default)', border: '1px solid var(--neutral-wash-5)' }}>{c.name[0]}</span>
+                  <span className="dash-avatar" style={{ width: 28, height: 28, fontSize: 11, background: 'var(--surface-sink)', color: 'var(--fg-default)', border: '1px solid var(--neutral-wash-5)' }}>{c.name[0]}</span>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500 }}>{c.name}</div>
                     <div style={{ fontSize: 11, color: 'var(--fg-subtle)' }}>{c.email}</div>
@@ -1086,7 +1086,7 @@ function Feed({ who, what, when, tone }: { who: string; what: string; when: stri
 const PAGE_CSS = `
 .dash { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: calc(100vh - 165px); background: var(--surface-base); }
 .dash-side {
-  background: var(--surface-sunken);
+  background: var(--surface-sink);
   padding: 18px 14px; display: flex; flex-direction: column; gap: 18px;
 }
 /* wordmark (logoipsum placeholder) — the two svg groups' fills wire to the live
@@ -1104,7 +1104,7 @@ const PAGE_CSS = `
   display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px;
   font-size: 13px; color: var(--fg-default); text-decoration: none;
 }
-.dash-navitem:hover { background: var(--surface-raised); }
+.dash-navitem:hover { background: var(--surface-lift); }
 .dash-navitem.active { background: var(--brand-wash-5); color: var(--brand-ink-11); font-weight: 600; }
 .dash-user { display: flex; align-items: center; gap: 10px; padding-top: 14px; border-top: 1px solid var(--neutral-wash-5); }
 .dash-avatar {
@@ -1116,7 +1116,7 @@ const PAGE_CSS = `
 .dash-topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
 .dash-search {
   display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--fg-subtle);
-  background: var(--surface-sunken); border: 1px solid var(--neutral-wash-5); border-radius: 999px; padding: 7px 14px; min-width: 200px;
+  background: var(--surface-sink); border: 1px solid var(--neutral-wash-5); border-radius: 999px; padding: 7px 14px; min-width: 200px;
 }
 /* trial banner — a filled tinted chip; the fill carries it, no stroke needed. */
 .dash-info {
@@ -1129,7 +1129,7 @@ const PAGE_CSS = `
 .dash-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .dash-pill { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
 .dash-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.dash-table thead tr { background: var(--surface-sunken); }
+.dash-table thead tr { background: var(--surface-sink); }
 /* dense table keeps hairline row dividers — small/functional, legibility earns them */
 .dash-table th {
   text-align: left; font-size: 11px; font-weight: 600; color: var(--fg-subtle);
@@ -1137,7 +1137,7 @@ const PAGE_CSS = `
 }
 .dash-table td { padding: 10px 18px; border-bottom: 1px solid var(--neutral-wash-5); }
 .dash-table tbody tr:last-child td { border-bottom: none; }
-.dash-table tbody tr:hover { background: var(--surface-sunken); }
+.dash-table tbody tr:hover { background: var(--surface-sink); }
 .dash-table th:nth-child(n+4), .dash-table td:nth-child(n+4) { text-align: right; }
 @media (max-width: 1100px) {
   .dash-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1152,7 +1152,7 @@ const PAGE_CSS = `
 .ct-iconbtn {
   display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
   width: 26px; height: 26px; border-radius: 8px; border: none; cursor: pointer;
-  background: var(--surface-sunken); color: var(--fg-subtle); font-size: 13px;
+  background: var(--surface-sink); color: var(--fg-subtle); font-size: 13px;
   position: relative; overflow: hidden; font-family: inherit;
 }
 .ct-iconbtn:hover { background: var(--brand-paper-2); color: var(--fg-default); }
@@ -1176,7 +1176,7 @@ const PAGE_CSS = `
 .ct-bar {
   position: sticky; top: 52px; z-index: 35;
   display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 18px;
-  padding: 12px 56px 12px 24px; background: var(--surface-raised);
+  padding: 12px 56px 12px 24px; background: var(--surface-lift);
   box-shadow: 0 1px 2px rgba(17,18,22,0.06);
 }
 /* Minimize toggle — collapses the workshop controls to a slim strip. */
@@ -1184,7 +1184,7 @@ const PAGE_CSS = `
   position: absolute; top: 10px; right: 20px; z-index: 2;
   display: inline-flex; align-items: center; justify-content: center;
   width: 26px; height: 26px; border-radius: 8px; border: none; cursor: pointer;
-  background: var(--surface-sunken); color: var(--fg-subtle); font-family: inherit;
+  background: var(--surface-sink); color: var(--fg-subtle); font-family: inherit;
 }
 .ct-bar-toggle:hover { color: var(--fg-default); background: var(--brand-paper-2); }
 .ct-bar-min-label { display: none; align-items: center; gap: 8px; height: 26px; font-size: 13px; font-weight: 600; color: var(--fg-default); }
@@ -1218,14 +1218,14 @@ const PAGE_CSS = `
    planes barely separate by lightness. Scoped to the Palette workshop; the
    dashboard's dark elevation is being reworked separately. */
 .ct-colorblock {
-  background: var(--surface-raised); box-shadow: 0 0 0 1px rgba(17,18,22,0.05), var(--elev-card);
+  background: var(--surface-lift); box-shadow: 0 0 0 1px rgba(17,18,22,0.05), var(--elev-card);
   border-radius: 16px; padding: 18px 20px;
 }
 [data-theme="dark"] .ct-colorblock { box-shadow: 0 0 0 1px rgba(255,255,255,0.07), 0 2px 6px -1px rgba(0,0,0,0.5); }
 /* Fills the column and stays put — sticky + viewport-tall so it doesn't scroll,
    holding a fixed margin below the nav/controls (top) and above the bottom bar. */
 .ct-illus {
-  position: sticky; top: 140px; background: var(--brand-paper-2); border-radius: 16px;
+  position: sticky; top: 140px; background: var(--brand-wash-3); border-radius: 16px;
   height: calc(100vh - 210px); min-height: 320px;
   display: flex; align-items: center; justify-content: center; padding: 32px;
 }
@@ -1238,7 +1238,7 @@ const PAGE_CSS = `
   width: 20px; height: 20px; border-radius: 999px; cursor: default;
   color: var(--fg-subtle); font-size: 13px;
 }
-.ct-info:hover { color: var(--fg-default); background: var(--surface-sunken); }
+.ct-info:hover { color: var(--fg-default); background: var(--surface-sink); }
 .ct-info .ct-tip { width: 300px; }
 .ct-info:hover .ct-tip { display: block; }
 .ct-check-header {
@@ -1246,12 +1246,12 @@ const PAGE_CSS = `
   border: none; background: none; cursor: pointer; font-family: inherit;
   font-size: 12px; padding: 5px 2px; color: var(--fg-default);
 }
-.ct-check-header:hover { background: var(--surface-sunken); border-radius: 8px; }
+.ct-check-header:hover { background: var(--surface-sink); border-radius: 8px; }
 .ct-check {
   position: relative; display: flex; align-items: center; gap: 8px;
   font-size: 12px; padding: 3px 2px 3px 8px; cursor: default;
 }
-.ct-check:hover { background: var(--surface-sunken); border-radius: 8px; }
+.ct-check:hover { background: var(--surface-sink); border-radius: 8px; }
 .ct-tip {
   display: none; position: absolute; left: 0; bottom: calc(100% + 6px); z-index: 70;
   width: 290px; background: var(--neutral-ink-11); color: var(--neutral-paper-1);
@@ -1276,7 +1276,7 @@ const PAGE_CSS = `
 .ct-label { font-size: 12px; font-weight: 600; color: var(--fg-default); margin-bottom: 5px; }
 .ct-field {
   display: flex; align-items: center; gap: 8px; box-sizing: border-box; width: 100%;
-  background: var(--surface-raised); border: 1px solid var(--neutral-highlight-9); border-radius: 12px;
+  background: var(--surface-lift); border: 1px solid var(--neutral-highlight-9); border-radius: 12px;
   padding: 9px 12px;
 }
 .ct-field:focus-within { border-color: var(--brand-highlight-8); box-shadow: 0 0 0 3px var(--brand-wash-5); }
@@ -1292,19 +1292,19 @@ const PAGE_CSS = `
 .ct-swatch.sm { width: 13px; height: 13px; }
 .ct-popover {
   position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; width: 230px;
-  background: var(--surface-raised); border: 1.5px solid var(--brand-cta); border-radius: 12px;
+  background: var(--surface-lift); border: 1.5px solid var(--brand-cta); border-radius: 12px;
   padding: 12px; box-shadow: var(--elev-float);
   display: flex; flex-direction: column; gap: 8px; align-items: flex-start;
 }
 .ct-suggest {
   display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-family: inherit;
-  background: var(--surface-sunken); border: 1px solid var(--neutral-wash-5); border-radius: 10px;
+  background: var(--surface-sink); border: 1px solid var(--neutral-wash-5); border-radius: 10px;
   padding: 4px 10px; font-size: 12px; color: var(--fg-default);
 }
 .ct-suggest:hover { background: var(--brand-paper-2); }
 .ct-remove {
   display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-family: inherit;
-  background: var(--surface-raised); border: 1px solid var(--alert-high-border-default); border-radius: 10px;
+  background: var(--surface-lift); border: 1px solid var(--alert-high-border-default); border-radius: 10px;
   padding: 4px 10px; font-size: 12px; font-weight: 600; color: var(--alert-high-fg-alt);
 }
 .ct-remove:hover { background: var(--alert-high-bg-subtle); color: var(--alert-high-fg); border-color: var(--alert-high-border-default-hover); }

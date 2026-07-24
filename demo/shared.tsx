@@ -98,7 +98,7 @@ export const COMPONENT_CSS = `
    degrades to the same treatment instead of a solid fill. */
 .u-btn-destructive,
 .u-btn-destructive-outline {
-  background: var(--surface-raised);
+  background: var(--surface-lift);
   color: var(--alert-high-fg-alt);
   border-color: var(--alert-high-border-default);
 }
@@ -149,7 +149,7 @@ export function Segmented<T extends string>({ value, onChange, options }: {
       {options.map(([v, label]) => (
         <button key={v} onClick={() => onChange(v)} style={{
           padding: '5px 10px', fontSize: 12, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-          background: value === v ? 'var(--brand-bg-subtle)' : 'var(--surface-raised)',
+          background: value === v ? 'var(--brand-bg-subtle)' : 'var(--surface-lift)',
           color: 'var(--fg-default)', fontWeight: value === v ? 600 : 400,
         }}>{label}</button>
       ))}
@@ -244,7 +244,7 @@ export function Showcase(props: {
 
       {!props.bare && <>
         {/* single toolbar row: palette picker + locked fields + controls */}
-        <header style={{ position: 'sticky', top: 0, zIndex: 35, background: 'var(--surface-raised)', borderBottom: '1px solid var(--border-subtle)', padding: '12px 24px', display: 'flex', alignItems: 'flex-end', gap: '12px 18px', flexWrap: 'wrap' }}>
+        <header style={{ position: 'sticky', top: 0, zIndex: 35, background: 'var(--surface-lift)', borderBottom: '1px solid var(--border-subtle)', padding: '12px 24px', display: 'flex', alignItems: 'flex-end', gap: '12px 18px', flexWrap: 'wrap' }}>
           {props.header}
           {props.controls}
         </header>
@@ -448,7 +448,7 @@ export function ScaleStrip({ label, prefix }: { label: string; prefix: string })
 
 export const ctxCard: React.CSSProperties = {
   padding: 20, borderRadius: 10,
-  background: 'var(--surface-raised)',
+  background: 'var(--surface-lift)',
   border: '1px solid var(--border-subtle)',
 }
 export const ctxCardTitle: React.CSSProperties = { fontSize: 15, fontWeight: 600 }
@@ -578,7 +578,7 @@ export function Card({ title, value, sub, accent }: { title: string; value: stri
   return (
     <div style={{
       padding: 20, borderRadius: 10,
-      background: 'var(--surface-raised)',
+      background: 'var(--surface-lift)',
       border: '1px solid var(--border-subtle)',
       display: 'flex', flexDirection: 'column', gap: 4,
     }}>

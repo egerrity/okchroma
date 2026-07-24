@@ -474,7 +474,7 @@ export default function DocsSite({ dark: _dark }: { dark: boolean }) {
 const DOCS2_CSS = `
 .d2 { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: calc(100vh - 165px); color: var(--fg-default); }
 .d2-side {
-  border-right: 1px solid var(--border-subtle); background: var(--surface-sunken);
+  border-right: 1px solid var(--border-subtle); background: var(--surface-sink);
   padding: 28px 16px; position: sticky; top: 0; align-self: start; height: 100%;
 }
 .d2-side-group { margin-bottom: 20px; }
@@ -483,7 +483,7 @@ const DOCS2_CSS = `
   display: block; width: 100%; text-align: left; border: none; background: none; cursor: pointer;
   font-family: inherit; font-size: 13.5px; color: var(--fg-subtle); padding: 6px 10px; border-radius: 7px;
 }
-.d2-side-link:hover { background: var(--surface-raised); color: var(--fg-default); }
+.d2-side-link:hover { background: var(--surface-lift); color: var(--fg-default); }
 .d2-side-link.active { background: var(--brand-bg-subtle); color: var(--fg-default); font-weight: 600; }
 .d2-main { padding: 40px 0; min-width: 0; }
 .d2-article { max-width: 720px; margin: 0 auto; padding: 0 32px; }
@@ -494,13 +494,13 @@ const DOCS2_CSS = `
 .d2-p { font-size: 15px; line-height: 1.7; margin: 0 0 14px; }
 .d2-ul { font-size: 15px; line-height: 1.7; margin: 0 0 14px; padding-left: 22px; }
 .d2-ul li { margin-bottom: 8px; }
-.d2-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.88em; background: var(--surface-sunken); border: 1px solid var(--border-subtle); border-radius: 5px; padding: 1px 5px; }
+.d2-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.88em; background: var(--surface-sink); border: 1px solid var(--border-subtle); border-radius: 5px; padding: 1px 5px; }
 .d2-pre {
-  background: var(--surface-sunken); border: 1px solid var(--border-subtle); border-radius: 10px;
+  background: var(--surface-sink); border: 1px solid var(--border-subtle); border-radius: 10px;
   padding: 16px 18px; overflow-x: auto; margin: 0 0 18px;
 }
 .d2-pre code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; line-height: 1.6; color: var(--fg-default); white-space: pre; }
-.d2-note { font-size: 13.5px; line-height: 1.6; color: var(--fg-subtle); background: var(--surface-sunken); border: 1px solid var(--border-subtle); border-left: 3px solid var(--brand-highlight-9); border-radius: 8px; padding: 12px 14px; margin: 18px 0; }
+.d2-note { font-size: 13.5px; line-height: 1.6; color: var(--fg-subtle); background: var(--surface-sink); border: 1px solid var(--border-subtle); border-left: 3px solid var(--brand-highlight-9); border-radius: 8px; padding: 12px 14px; margin: 18px 0; }
 .d2-ramp { margin: 22px 0 26px; }
 .d2-ramp-row { display: flex; gap: 4px; }
 .d2-ramp-cell { flex: 1; height: 46px; border-radius: 6px; border: 1px solid var(--border-subtle); }

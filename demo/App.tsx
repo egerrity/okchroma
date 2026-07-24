@@ -89,7 +89,7 @@ export default function App() {
 const GX_LABEL: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: 'var(--fg-default)', marginBottom: 5 }
 const GX_FIELD: React.CSSProperties = {
   display: 'flex', alignItems: 'center', gap: 8, height: 38, boxSizing: 'border-box',
-  background: 'var(--surface-raised)', border: '1px solid var(--border-default)', borderRadius: 8,
+  background: 'var(--surface-lift)', border: '1px solid var(--border-default)', borderRadius: 8,
   padding: '0 12px', fontSize: 13, color: 'var(--fg-default)',
 }
 // The palette picker is the one editable control here — same field metrics as
@@ -97,7 +97,7 @@ const GX_FIELD: React.CSSProperties = {
 // that matches the rest of the UI.
 const GX_SELECT: React.CSSProperties = {
   height: 38, boxSizing: 'border-box', padding: '0 32px 0 12px', width: '100%',
-  background: 'var(--surface-raised)', border: '1px solid var(--border-default)', borderRadius: 8,
+  background: 'var(--surface-lift)', border: '1px solid var(--border-default)', borderRadius: 8,
   fontSize: 13, color: 'var(--fg-default)', fontFamily: 'inherit', cursor: 'pointer',
   appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none',
 }
@@ -223,7 +223,7 @@ const NAV_CSS = `
 .app-topbar {
   position: sticky; top: 0; z-index: 40;
   display: flex; align-items: center; gap: 20px;
-  height: 52px; padding: 0 24px; background: var(--surface-raised);
+  height: 52px; padding: 0 24px; background: var(--surface-lift);
   box-shadow: 0 1px 2px rgba(17,18,22,0.06);
 }
 .app-topbar-logo { color: var(--fg-default); display: inline-flex; flex-shrink: 0; }
@@ -234,29 +234,29 @@ const NAV_CSS = `
   padding: 7px 12px; border-radius: 999px; text-decoration: none;
   display: inline-flex; align-items: center; gap: 6px;
 }
-.app-navlink:hover { background: var(--surface-sunken); color: var(--fg-default); }
+.app-navlink:hover { background: var(--surface-sink); color: var(--fg-default); }
 .app-navlink.active { background: var(--neutral-wash-4); color: var(--fg-default); font-weight: 600; }
 .app-bottombar {
   position: sticky; bottom: 0; z-index: 40;
   display: flex; align-items: center; justify-content: center; gap: 16px;
-  padding: 10px 24px; background: var(--surface-raised);
+  padding: 10px 24px; background: var(--surface-lift);
   box-shadow: 0 -1px 2px rgba(17,18,22,0.06);
 }
 .app-viewswitch {
   display: inline-flex; gap: 2px; padding: 3px;
-  background: var(--surface-sunken); border-radius: 999px;
+  background: var(--surface-sink); border-radius: 999px;
 }
 .app-viewtab {
   border: none; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500;
   padding: 6px 18px; border-radius: 999px; background: transparent; color: var(--fg-subtle);
 }
 .app-viewtab:hover { color: var(--fg-default); }
-.app-viewtab.active { background: var(--surface-raised); color: var(--fg-default); font-weight: 600; box-shadow: var(--elev-card); }
+.app-viewtab.active { background: var(--surface-lift); color: var(--fg-default); font-weight: 600; box-shadow: var(--elev-card); }
 .nav-pill {
   display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 16px;
   border-radius: 999px; border: none; cursor: pointer; font-family: inherit;
   font-size: 12px; font-weight: 600; letter-spacing: 0.005em; text-decoration: none;
-  background: var(--surface-sunken); color: var(--fg-default);
+  background: var(--surface-sink); color: var(--fg-default);
 }
 .nav-pill:hover { background: var(--neutral-wash-4); }
 [data-theme="dark"] .app-topbar { box-shadow: 0 1px 3px rgba(0,0,0,0.42); }
