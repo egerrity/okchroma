@@ -147,15 +147,21 @@ export const STYLE_CSS = /* css */ `
     radial-gradient(120% 90% at 18% -10%, color-mix(in srgb, var(--brand-cta) 7%, transparent), transparent 55%),
     radial-gradient(90% 70% at 100% 100%, color-mix(in srgb, var(--brand-cta) 4%, transparent), transparent 60%);
 }
+/* DARK (owner principle 2026-07-24: treatment amounts adjust to the CONTRAST
+   AROUND them — lights MUCH more subtle, darks stronger. Near black, shade has
+   no headroom and broad white glows become the dominant signal = halos; so in
+   dark, form is carried by thin LIT RIMS + tight concentrated darks + the plane
+   ladder, never by glow. Fills untouched, as always.) */
 [data-style="bubble"] [data-theme="dark"] .dash {
-  --nm-lt: rgba(255,255,255,.05);
-  --nm-lt2: rgba(255,255,255,.07);
-  --nm-dk: rgba(0,0,0,.5);
-  --nm-dks: rgba(0,0,0,.38);
-  --elev-card: -4px -4px 10px var(--nm-lt), 5px 6px 12px var(--nm-dks), 0 0 6px rgba(0,0,0,.35);
+  --nm-lt: rgba(255,255,255,.03);
+  --nm-lt2: rgba(255,255,255,.05);
+  --nm-dk: rgba(0,0,0,.65);
+  --nm-dks: rgba(0,0,0,.5);
+  /* plateau, lights-off: whisper light, tight dark ambient — no 10px+ white blur */
+  --elev-card: -1px -1px 3px var(--nm-lt), 4px 5px 9px var(--nm-dk), 0 0 4px rgba(0,0,0,.5);
   background-image:
-    radial-gradient(120% 90% at 18% -10%, color-mix(in srgb, var(--brand-cta) 5%, transparent), transparent 55%),
-    radial-gradient(90% 70% at 100% 100%, color-mix(in srgb, var(--brand-cta) 3%, transparent), transparent 60%);
+    radial-gradient(120% 90% at 18% -10%, color-mix(in srgb, var(--brand-cta) 3%, transparent), transparent 55%),
+    radial-gradient(90% 70% at 100% 100%, color-mix(in srgb, var(--brand-cta) 2%, transparent), transparent 60%);
 }
 /* CONVEX EDGES (owner: raised surfaces feel rounded on top, like the cta): every
    lifted card carries the button's edge physics — inset top highlight, dark
@@ -180,11 +186,11 @@ export const STYLE_CSS = /* css */ `
   --recess-sm: inset 0 1px 3px rgba(0,0,0,.08), inset 0 0 3px rgba(0,0,0,.04), 0 1px 0 rgba(255,255,255,.6);
 }
 [data-style="bubble"] [data-theme="dark"] .dash {
-  --edge-hi: inset 0 1px 0 rgba(255,255,255,.07), inset 0 -1px 0 rgba(255,255,255,.06), inset 0 -2px 2px rgba(0,0,0,.3);
-  --edge-hi-strong: inset 0 1.5px 0 rgba(255,255,255,.09), inset 0 -1px 0 rgba(255,255,255,.08), inset 0 -2.5px 2px rgba(0,0,0,.4);
-  --edge-soft: inset 1px 1.5px 3px rgba(255,255,255,.06);
-  --recess: inset 0 2px 6px rgba(0,0,0,.5), inset 0 0 7px rgba(0,0,0,.3), 0 1px 0 rgba(255,255,255,.06);
-  --recess-sm: inset 0 1px 3px rgba(0,0,0,.45), inset 0 0 4px rgba(0,0,0,.25), 0 1px 0 rgba(255,255,255,.05);
+  --edge-hi: inset 0 1px 0 rgba(255,255,255,.06), inset 0 -1px 0 rgba(255,255,255,.03), inset 0 -2px 2px rgba(0,0,0,.45);
+  --edge-hi-strong: inset 0 1px 0 rgba(255,255,255,.10), inset 0 -1px 0 rgba(255,255,255,.04), inset 0 -2.5px 2px rgba(0,0,0,.55);
+  --edge-soft: inset 0 1px 0 rgba(255,255,255,.06);
+  --recess: inset 0 2px 6px rgba(0,0,0,.6), inset 0 0 7px rgba(0,0,0,.4), 0 1px 0 rgba(255,255,255,.04);
+  --recess-sm: inset 0 1px 3px rgba(0,0,0,.55), inset 0 0 4px rgba(0,0,0,.3), 0 1px 0 rgba(255,255,255,.03);
 }
 /* L3 default: pillowed cards — gentle dual shadow + soft convex edge + a faint
    brand glaze drawn INTO the surface (owner: more of the gradient color) */
@@ -200,7 +206,7 @@ export const STYLE_CSS = /* css */ `
 }
 [data-style="bubble"] [data-theme="dark"] .dash .dash-card,
 [data-style="bubble"] [data-theme="dark"] .dash .dash-card-customers {
-  background-image: radial-gradient(80% 90% at 92% 114%, color-mix(in srgb, var(--brand-cta) 3%, transparent), transparent 58%) !important;
+  background-image: radial-gradient(80% 90% at 92% 114%, color-mix(in srgb, var(--brand-cta) 2%, transparent), transparent 58%) !important;
 }
 /* L1 hero = Customers ONLY (owner: Get started is ATTACHED — it falls to the
    plateau default above): the deep pillow + a detached ambient drop BEHIND it */
@@ -212,11 +218,13 @@ export const STYLE_CSS = /* css */ `
     10px 26px 40px -22px rgba(0,0,0,.22),
     var(--edge-hi-strong) !important;
 }
+/* pop, lights-off: separation = concentrated darkness + the strongest lit rim,
+   not a key-light glow */
 [data-style="bubble"] [data-theme="dark"] .dash .dash-card-customers {
   box-shadow:
-    -12px -12px 26px var(--nm-lt2),
-    10px 14px 30px var(--nm-dk),
-    10px 26px 40px -22px rgba(0,0,0,.55),
+    -2px -2px 6px var(--nm-lt2),
+    6px 8px 16px rgba(0,0,0,.55),
+    6px 14px 22px -12px rgba(0,0,0,.65),
     var(--edge-hi-strong) !important;
 }
 /* the hero's crown sheen rides ON TOP of its glaze */
@@ -227,8 +235,8 @@ export const STYLE_CSS = /* css */ `
 }
 [data-style="bubble"] [data-theme="dark"] .dash .dash-card-customers {
   background-image:
-    linear-gradient(180deg, rgba(255,255,255,.05), transparent 26%),
-    radial-gradient(80% 90% at 92% 114%, color-mix(in srgb, var(--brand-cta) 3%, transparent), transparent 58%) !important;
+    linear-gradient(180deg, rgba(255,255,255,.02), transparent 18%),
+    radial-gradient(80% 90% at 92% 114%, color-mix(in srgb, var(--brand-cta) 2%, transparent), transparent 58%) !important;
 }
 /* L4: metric tiles recede — SUNKEN coins (inset, no lift); the SIGNAL rises into
    each coin as a radial glaze from its bottom corner (--mtone is published by the
@@ -240,7 +248,7 @@ export const STYLE_CSS = /* css */ `
   background-image: radial-gradient(70% 85% at 4% -16%, color-mix(in srgb, var(--mtone, transparent) 10%, transparent), transparent 58%) !important;
 }
 [data-style="bubble"] [data-theme="dark"] .dash .dash-metric {
-  background-image: radial-gradient(70% 85% at 4% -16%, color-mix(in srgb, var(--mtone, transparent) 7%, transparent), transparent 58%) !important;
+  background-image: radial-gradient(70% 85% at 4% -16%, color-mix(in srgb, var(--mtone, transparent) 4%, transparent), transparent 58%) !important;
 }
 [data-style="bubble"] .dash .dash-metrics { gap: 16px; margin-bottom: 16px; }
 /* rounder corners want more air (owner): generous card padding + grid gaps —
@@ -257,7 +265,7 @@ export const STYLE_CSS = /* css */ `
 }
 [data-style="bubble"] [data-theme="dark"] .dash .dash-side {
   background-image:
-    radial-gradient(130% 55% at 85% 108%, color-mix(in srgb, var(--brand-cta) 4%, transparent), transparent 60%);
+    radial-gradient(130% 55% at 85% 108%, color-mix(in srgb, var(--brand-cta) 2%, transparent), transparent 60%);
 }
 /* selection physics (owner): the SELECTED item pops UP (pillow, keeps its own
    color); HOVER presses IN — colorless, inset only */
@@ -343,5 +351,49 @@ export const STYLE_CSS = /* css */ `
     inset 0 1px 1px rgba(255,255,255,.55),
     inset 0 -1px 1px rgba(0,0,0,.18),
     0 1px 2px rgba(0,0,0,.25);
+}
+/* DARK per-element rebalance (owner: fixed alphas turned buttons to chrome —
+   lights way down, darks up, tight) */
+[data-style="bubble"] [data-theme="dark"] .dash .u-btn-neutral {
+  box-shadow:
+    0 2px 5px -2px rgba(0,0,0,.5),
+    inset 0 1px 0 rgba(255,255,255,.10),
+    inset 0 -1px 0 rgba(255,255,255,.05),
+    inset 0 -1.5px 1.5px rgba(0,0,0,.25);
+}
+[data-style="bubble"] [data-theme="dark"] .dash .u-btn-secondary {
+  box-shadow:
+    0 3px 8px -2px rgba(0,0,0,.6),
+    inset 0 1px 0 rgba(255,255,255,.12),
+    inset 0 -1px 0 rgba(255,255,255,.06),
+    inset 0 -2px 2px rgba(0,0,0,.3);
+}
+[data-style="bubble"] [data-theme="dark"] .dash .u-btn-primary {
+  box-shadow:
+    0 5px 12px -2px rgba(0,0,0,.7),
+    inset 0 1px 0 rgba(255,255,255,.14),
+    inset 0 -1px 0 rgba(255,255,255,.07),
+    inset 0 -2px 2px rgba(0,0,0,.35);
+}
+[data-style="bubble"] [data-theme="dark"] .dash .u-btn-primary:active,
+[data-style="bubble"] [data-theme="dark"] .dash .u-btn-secondary:active,
+[data-style="bubble"] [data-theme="dark"] .dash .u-btn-neutral:active {
+  box-shadow: inset 0 3px 8px rgba(0,0,0,.55), inset 0 0 6px rgba(0,0,0,.3), 0 1px 0 rgba(255,255,255,.05);
+}
+[data-style="bubble"] [data-theme="dark"] .dash .dash-info {
+  box-shadow:
+    0 3px 8px -2px rgba(0,0,0,.6),
+    inset 0 1px 0 rgba(255,255,255,.12),
+    inset 0 -1px 0 rgba(255,255,255,.06),
+    inset 0 -2px 2px rgba(0,0,0,.3);
+}
+[data-style="bubble"] [data-theme="dark"] .dash .dash-avatar {
+  box-shadow: -1px -1px 3px var(--nm-lt), 2px 2px 4px var(--nm-dks), inset 0 1px 0 rgba(255,255,255,.07), inset 0 -1px 0 rgba(255,255,255,.04) !important;
+}
+[data-style="bubble"] [data-theme="dark"] .dash .dash-dot {
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.15),
+    inset 0 -1px 1px rgba(0,0,0,.35),
+    0 1px 2px rgba(0,0,0,.5);
 }
 `

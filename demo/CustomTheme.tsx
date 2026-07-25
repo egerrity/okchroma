@@ -123,11 +123,19 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   // this demo is not a mobile product, the bar is "readable", not "optimized".
   const [narrow, setNarrow] = useState(false)
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 980px)')
-    const on = () => setNarrow(mq.matches)
+    // HYSTERESIS (freeze guard): flipping state at exactly the layout breakpoint can
+    // oscillate when the swap adds/removes a scrollbar (innerWidth crosses back) —
+    // an infinite re-render loop. A dead zone between the two thresholds breaks it.
+    const mqNarrow = window.matchMedia('(max-width: 968px)')
+    const mqWide = window.matchMedia('(min-width: 993px)')
+    const on = () => {
+      if (mqNarrow.matches) setNarrow(true)
+      else if (mqWide.matches) setNarrow(false)
+    }
     on()
-    mq.addEventListener('change', on)
-    return () => mq.removeEventListener('change', on)
+    mqNarrow.addEventListener('change', on)
+    mqWide.addEventListener('change', on)
+    return () => { mqNarrow.removeEventListener('change', on); mqWide.removeEventListener('change', on) }
   }, [])
   // the NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): red-range brands can swap the
   // cta fill trio to the brand-neutral's ink register — shown only in red range;
@@ -275,7 +283,12 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     // height varies with minimize/Advanced, hence the live measurement
     const header = root?.querySelector('.ct-bar')
     if (!header || !root) return
-    const set = () => root.style.setProperty('--ct-dock', `${Math.round(header.getBoundingClientRect().bottom)}px`)
+    const set = () => {
+      const v = `${Math.round(header.getBoundingClientRect().bottom)}px`
+      // write only on change — an unconditional root-var write on every observer
+      // fire invalidates the whole tree and can feed a resize loop
+      if (root.style.getPropertyValue('--ct-dock') !== v) root.style.setProperty('--ct-dock', v)
+    }
     set()
     const ro = new ResizeObserver(set)
     ro.observe(header)
