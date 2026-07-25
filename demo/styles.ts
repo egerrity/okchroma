@@ -8,9 +8,9 @@
 // Clean = the shipped default, zero overrides. Every selector is rooted inside
 // .dash so nothing outside the preview is reachable.
 
-export type DemoStyle = 'clean' | 'retro' | 'skeuo'
+export type DemoStyle = 'clean' | 'retro' | 'bubble'
 export const STYLE_OPTIONS: Array<[DemoStyle, string]> = [
-  ['clean', 'Clean'], ['retro', 'Retro'], ['skeuo', 'Skeuo'],
+  ['clean', 'Clean'], ['retro', 'Retro'], ['bubble', 'Bubble'],
 ]
 
 export const STYLE_CSS = /* css */ `
@@ -124,37 +124,224 @@ export const STYLE_CSS = /* css */ `
 [data-style="retro"] .dash :focus-visible { outline: 2px dotted var(--rt-line); outline-offset: 2px; }
 [data-style="retro"] .dash .dash-grid { gap: 10px; }
 
-/* ═══ SKEUO — soft & round, elevation is ALL shadow (owner 4.1). Same colors:
+/* ═══ BUBBLE (soft-UI/neumorphic; was "skeuo", owner rename 2026-07-24) — soft & round, elevation is ALL shadow (owner 4.1). Same colors:
    surfaces keep their Clean planes; only the shadow SHAPE changes (dual soft,
    achromatic — light above, dark below; element shadows subtler than the card's).
-   No borders, everything pillowed. */
-[data-style="skeuo"] .dash {
+   No borders, everything pillowed. EMPHASIS LADDER carried over from retro —
+   the table is the hero (deepest pillow), metrics recede as sunken coins.
+   COLOR comes from OVERLAYS (owner latitude): whisper-alpha glazes of the
+   brand's own cta over unchanged grounds — light on top, never a recolor. */
+[data-style="bubble"] .dash {
   font-family: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, sans-serif;
   --nm-lt: rgba(255,255,255,.8);
+  --nm-lt2: rgba(255,255,255,.95); /* the pop tier's stronger key light */
   --nm-dk: rgba(0,0,0,.14);
   --nm-dks: rgba(0,0,0,.09);
-  --elev-card: -10px -10px 24px var(--nm-lt), 12px 14px 30px var(--nm-dk);
+  /* TWO DISTINCT TREATMENTS (owner): PLATEAU = attached — tight hugging dual +
+     a faint ambient ring so every edge reads (incl. top-right). POP (hero rule
+     below) = separated — key light, tight directional shade, detached drop. */
+  --elev-card: -4px -4px 10px var(--nm-lt), 5px 6px 12px var(--nm-dks), 0 0 6px rgba(0,0,0,.05);
   --elev-float: -12px -12px 28px var(--nm-lt), 14px 18px 38px var(--nm-dk);
+  /* the brand glaze: ambient colored light over the SAME ground */
+  background-image:
+    radial-gradient(120% 90% at 18% -10%, color-mix(in srgb, var(--brand-cta) 7%, transparent), transparent 55%),
+    radial-gradient(90% 70% at 100% 100%, color-mix(in srgb, var(--brand-cta) 4%, transparent), transparent 60%);
 }
-[data-style="skeuo"] [data-theme="dark"] .dash {
+[data-style="bubble"] [data-theme="dark"] .dash {
   --nm-lt: rgba(255,255,255,.05);
+  --nm-lt2: rgba(255,255,255,.07);
   --nm-dk: rgba(0,0,0,.5);
   --nm-dks: rgba(0,0,0,.38);
+  --elev-card: -4px -4px 10px var(--nm-lt), 5px 6px 12px var(--nm-dks), 0 0 6px rgba(0,0,0,.35);
+  background-image:
+    radial-gradient(120% 90% at 18% -10%, color-mix(in srgb, var(--brand-cta) 5%, transparent), transparent 55%),
+    radial-gradient(90% 70% at 100% 100%, color-mix(in srgb, var(--brand-cta) 3%, transparent), transparent 60%);
 }
-/* pillowed cards — same plane, rounder body, softer light (the customers card
-   carries its own class, not dash-card — see CustomTheme) */
-[data-style="skeuo"] .dash .dash-card,
-[data-style="skeuo"] .dash .dash-card-customers {
-  border: 0 !important; border-radius: 28px !important;
-  box-shadow: var(--elev-card) !important;
+/* CONVEX EDGES (owner: raised surfaces feel rounded on top, like the cta): every
+   lifted card carries the button's edge physics — inset top highlight, dark
+   under-curve, AND a thin bottom RIM LIGHT below the curve so both edges read as
+   the same thin curved lip (owner-caught: without it the bottom looks wider).
+   ELEVATION → TREATMENT MAP (owner spell-out, the skeuo physics ladder):
+     pop   → OFF the page, separated        (float shadow — toasts/menus)
+     lift  → plateauing out of the ground   (cards: dual shadow + convex edge)
+     inset-recede → pressed coin, still lit (metric tiles)
+     sink  → receding well                  (search, wells)  */
+/* under-curve kept THIN — the bottom lip reads the same depth as the top
+   (owner-caught: a wide bottom curve made the edge look thicker) */
+[data-style="bubble"] .dash {
+  --edge-hi: inset 0 1.5px 0 rgba(255,255,255,.45), inset 0 -1px 0 rgba(255,255,255,.4), inset 0 -2px 2px rgba(0,0,0,.05);
+  --edge-hi-strong: inset 0 2px 0 rgba(255,255,255,.55), inset 0 -1px 0 rgba(255,255,255,.5), inset 0 -2.5px 2px rgba(0,0,0,.07);
+  /* ATTACHED surfaces have NO crisp lip (owner's neumorphic refs): just a diffuse
+     inner light along the lit side — the edge is all soft gradient */
+  --edge-soft: inset 1px 1.5px 3px rgba(255,255,255,.5);
+  /* recessed physics: shadow INSIDE all around, light on the OUTER edge (a lit rim
+     around the depression) — never light inside a hole */
+  --recess: inset 0 2px 5px rgba(0,0,0,.09), inset 0 0 6px rgba(0,0,0,.05), 0 1px 0 rgba(255,255,255,.7);
+  --recess-sm: inset 0 1px 3px rgba(0,0,0,.08), inset 0 0 3px rgba(0,0,0,.04), 0 1px 0 rgba(255,255,255,.6);
 }
-[data-style="skeuo"] .dash .dash-side {
-  box-shadow: inset -2px 0 6px var(--nm-dks);
+[data-style="bubble"] [data-theme="dark"] .dash {
+  --edge-hi: inset 0 1px 0 rgba(255,255,255,.07), inset 0 -1px 0 rgba(255,255,255,.06), inset 0 -2px 2px rgba(0,0,0,.3);
+  --edge-hi-strong: inset 0 1.5px 0 rgba(255,255,255,.09), inset 0 -1px 0 rgba(255,255,255,.08), inset 0 -2.5px 2px rgba(0,0,0,.4);
+  --edge-soft: inset 1px 1.5px 3px rgba(255,255,255,.06);
+  --recess: inset 0 2px 6px rgba(0,0,0,.5), inset 0 0 7px rgba(0,0,0,.3), 0 1px 0 rgba(255,255,255,.06);
+  --recess-sm: inset 0 1px 3px rgba(0,0,0,.45), inset 0 0 4px rgba(0,0,0,.25), 0 1px 0 rgba(255,255,255,.05);
+}
+/* L3 default: pillowed cards — gentle dual shadow + soft convex edge + a faint
+   brand glaze drawn INTO the surface (owner: more of the gradient color) */
+/* LIGHT LOGIC (owner): light comes from the TOP-LEFT — so colored glaze (bounced
+   ambience) sits in the shadowed BOTTOM-RIGHT of raised objects, and in the
+   TOP-LEFT of recesses (where the near wall shades the hole). White sheens stay
+   top — they ARE the light. */
+[data-style="bubble"] .dash .dash-card,
+[data-style="bubble"] .dash .dash-card-customers {
+  border: 0 !important; border-radius: 24px !important;
+  box-shadow: var(--elev-card), var(--edge-soft) !important;
+  background-image: radial-gradient(80% 90% at 92% 114%, color-mix(in srgb, var(--brand-cta) 5%, transparent), transparent 58%) !important;
+}
+[data-style="bubble"] [data-theme="dark"] .dash .dash-card,
+[data-style="bubble"] [data-theme="dark"] .dash .dash-card-customers {
+  background-image: radial-gradient(80% 90% at 92% 114%, color-mix(in srgb, var(--brand-cta) 3%, transparent), transparent 58%) !important;
+}
+/* L1 hero = Customers ONLY (owner: Get started is ATTACHED — it falls to the
+   plateau default above): the deep pillow + a detached ambient drop BEHIND it */
+[data-style="bubble"] .dash .dash-card-customers {
+  border-radius: 28px !important;
+  box-shadow:
+    -12px -12px 26px var(--nm-lt2),
+    10px 14px 30px var(--nm-dk),
+    10px 26px 40px -22px rgba(0,0,0,.22),
+    var(--edge-hi-strong) !important;
+}
+[data-style="bubble"] [data-theme="dark"] .dash .dash-card-customers {
+  box-shadow:
+    -12px -12px 26px var(--nm-lt2),
+    10px 14px 30px var(--nm-dk),
+    10px 26px 40px -22px rgba(0,0,0,.55),
+    var(--edge-hi-strong) !important;
+}
+/* the hero's crown sheen rides ON TOP of its glaze */
+[data-style="bubble"] .dash .dash-card-customers {
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,.35), transparent 26%),
+    radial-gradient(80% 90% at 92% 114%, color-mix(in srgb, var(--brand-cta) 6%, transparent), transparent 58%) !important;
+}
+[data-style="bubble"] [data-theme="dark"] .dash .dash-card-customers {
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,.05), transparent 26%),
+    radial-gradient(80% 90% at 92% 114%, color-mix(in srgb, var(--brand-cta) 3%, transparent), transparent 58%) !important;
+}
+/* L4: metric tiles recede — SUNKEN coins (inset, no lift); the SIGNAL rises into
+   each coin as a radial glaze from its bottom corner (--mtone is published by the
+   tile — its own tone's emphasis token, overlay only) */
+[data-style="bubble"] .dash .dash-metric {
+  border: 0 !important;
+  box-shadow: var(--recess) !important;
+  padding: 16px 18px !important;
+  background-image: radial-gradient(70% 85% at 4% -16%, color-mix(in srgb, var(--mtone, transparent) 10%, transparent), transparent 58%) !important;
+}
+[data-style="bubble"] [data-theme="dark"] .dash .dash-metric {
+  background-image: radial-gradient(70% 85% at 4% -16%, color-mix(in srgb, var(--mtone, transparent) 7%, transparent), transparent 58%) !important;
+}
+[data-style="bubble"] .dash .dash-metrics { gap: 16px; margin-bottom: 16px; }
+/* rounder corners want more air (owner): generous card padding + grid gaps —
+   the hero keeps its full-bleed table (it isn't .dash-card) */
+[data-style="bubble"] .dash .dash-card { padding: 24px !important; }
+[data-style="bubble"] .dash .dash-grid { gap: 18px; }
+/* the side menu FLOATS (owner): a lifted container off the ground — margins,
+   big radius, the card pillow + convex edge, and a doubled brand glaze */
+[data-style="bubble"] .dash .dash-side {
+  margin: 16px 0 16px 16px; border-radius: 24px;
+  box-shadow: var(--elev-card), var(--edge-soft);
+  background-image:
+    radial-gradient(130% 55% at 85% 108%, color-mix(in srgb, var(--brand-cta) 7%, transparent), transparent 60%);
+}
+[data-style="bubble"] [data-theme="dark"] .dash .dash-side {
+  background-image:
+    radial-gradient(130% 55% at 85% 108%, color-mix(in srgb, var(--brand-cta) 4%, transparent), transparent 60%);
+}
+/* selection physics (owner): the SELECTED item pops UP (pillow, keeps its own
+   color); HOVER presses IN — colorless, inset only */
+[data-style="bubble"] .dash .dash-navitem { border-radius: 999px; }
+[data-style="bubble"] .dash .dash-navitem.active {
+  box-shadow: -2px -2px 5px var(--nm-lt), 3px 4px 8px var(--nm-dks);
+}
+[data-style="bubble"] .dash .dash-navitem:hover:not(.active) {
+  background: transparent !important;
+  box-shadow: var(--recess-sm);
 }
 /* sunken wells: dual inset — same sink color, deeper treatment */
-[data-style="skeuo"] .dash .dash-search {
+[data-style="bubble"] .dash .dash-search {
   border: 0 !important; border-radius: 999px;
-  box-shadow: inset 2px 2px 4px var(--nm-dk), inset -2px -2px 3px var(--nm-lt);
+  box-shadow: var(--recess);
 }
-[data-style="skeuo"] .dash .dash-navitem { border-radius: 999px; }
+/* the pillow buttons, GRADED BY TIER (owner: neutral least → secondary mid →
+   primary heaviest) — same sheen/under-curve/drop physics, scaled; press sinks
+   into the surface (shade stays dark, never a halo) */
+[data-style="bubble"] .dash .u-btn-neutral {
+  border: 0 !important;
+  box-shadow:
+    0 2px 6px -2px rgba(0,0,0,.18),
+    inset 0 1px 0 rgba(255,255,255,.35),
+    inset 0 -1px 0 rgba(255,255,255,.22),
+    inset 0 -1.5px 1.5px rgba(0,0,0,.05);
+  transition: box-shadow .15s ease;
+}
+[data-style="bubble"] .dash .u-btn-secondary {
+  border: 0 !important;
+  box-shadow:
+    0 4px 9px -2px rgba(0,0,0,.26),
+    inset 0 1px 0 rgba(255,255,255,.3),
+    inset 0 -1px 0 rgba(255,255,255,.2),
+    inset 0 -2px 2px rgba(0,0,0,.09);
+  transition: box-shadow .15s ease;
+}
+[data-style="bubble"] .dash .u-btn-primary {
+  border: 0 !important;
+  box-shadow:
+    0 6px 14px -2px rgba(0,0,0,.4),
+    inset 0 1.5px 0 rgba(255,255,255,.32),
+    inset 0 -1px 0 rgba(255,255,255,.22),
+    inset 0 -2px 2px rgba(0,0,0,.14);
+  transition: box-shadow .15s ease;
+}
+[data-style="bubble"] .dash .u-btn-primary:active,
+[data-style="bubble"] .dash .u-btn-secondary:active,
+[data-style="bubble"] .dash .u-btn-neutral:active {
+  box-shadow: inset 0 3px 8px rgba(0,0,0,.28), inset 0 0 6px rgba(0,0,0,.14), 0 1px 0 rgba(255,255,255,.4);
+}
+/* the alert callout rides the same physics (it IS a cta register) — mid tier */
+[data-style="bubble"] .dash .dash-info {
+  border-radius: 18px;
+  box-shadow:
+    0 4px 10px -2px rgba(0,0,0,.28),
+    inset 0 1px 0 rgba(255,255,255,.3),
+    inset 0 -1px 0 rgba(255,255,255,.2),
+    inset 0 -3px 3px rgba(0,0,0,.09);
+}
+/* soft-embossed status tags + pillowed avatars (their own colors) — !important
+   because table avatars carry inline borders/styles that otherwise win */
+[data-style="bubble"] .dash .dash-pill {
+  box-shadow: var(--recess-sm) !important;
+}
+[data-style="bubble"] .dash .dash-avatar {
+  border: 0 !important;
+  box-shadow: -1px -1px 3px var(--nm-lt), 2px 2px 4px var(--nm-dks), inset 0 1px 0 rgba(255,255,255,.25), inset 0 -1px 0 rgba(255,255,255,.15) !important;
+}
+/* the illustration sits in a true recessed well, and the vector itself gets a
+   soft cast shadow so it lives IN the scene (owner: apply the treatment) */
+[data-style="bubble"] .dash .dash-illo {
+  box-shadow: var(--recess);
+  border-radius: 18px !important;
+}
+[data-style="bubble"] .dash .dash-illo svg {
+  filter: drop-shadow(2px 3px 3px rgba(0,0,0,.16));
+}
+/* status dots become tiny convex BALLS (owner: they were flat) — a speck of top
+   light and an under-shadow, same fill token */
+[data-style="bubble"] .dash .dash-dot {
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.55),
+    inset 0 -1px 1px rgba(0,0,0,.18),
+    0 1px 2px rgba(0,0,0,.25);
+}
 `

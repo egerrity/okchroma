@@ -1004,7 +1004,7 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
 
           <section className="dash-card dash-card-getstarted" style={dashCard}>
             <Head title="Get started" />
-            <div style={{ background: 'var(--surface-sink)', borderRadius: 12, padding: '16px 0', marginBottom: 12 }}>
+            <div className="dash-illo" style={{ background: 'var(--surface-sink)', borderRadius: 12, padding: '16px 0', marginBottom: 12 }}>
               <div data-illustration={hasSecondary ? 'two-color' : undefined}
                 style={{ width: '78%', margin: '0 auto' }}
                 dangerouslySetInnerHTML={{ __html: HERO_ILLO }} />
@@ -1172,9 +1172,11 @@ function Metric({ label, value, delta, tone }: { label: string; value: string; d
   // Neutralized tile (owner 2026-07-17): plain raised plane, no per-tone fill/border.
   // The signal reads through the delta text alone — colour where it matters.
   return (
-    <div className="dash-card dash-metric" style={{ ...dashCard, padding: 16 }}>
+    <div className="dash-card dash-metric" style={{ ...dashCard, padding: 16, ['--mtone' as string]: `var(--${tone}-bg-emphasis)` } as React.CSSProperties}>
       <div style={{ fontSize: 12, color: 'var(--fg-subtle)' }}>{label}</div>
-      <div className="dash-metric-value" style={{ fontSize: 26, fontWeight: 700, margin: '4px 0 4px' }}>{value}</div>
+      {/* the value carries its signal's ink-10 (owner 2026-07-24, revising the
+          2026-07-17 neutralization: the number holds the signal, not just the delta) */}
+      <div className="dash-metric-value" style={{ fontSize: 26, fontWeight: 700, margin: '4px 0 4px', color: `var(--${tone}-fg-alt)` }}>{value}</div>
       <span style={{ fontSize: 11, fontWeight: 600, color: `var(--${tone}-fg)` }}>{delta}</span>
     </div>
   )
@@ -1244,12 +1246,12 @@ function Task({ name, who, status }: { name: string; who: string; status: string
   const [label, tone] = TASK_STATUS[status]
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderTop: '1px solid var(--neutral-wash-5)' }}>
-      <span style={{ width: 26, height: 26, borderRadius: 999, background: 'var(--brand-wash-5)', color: 'var(--brand-ink-11)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, flexShrink: 0 }}>{who[0]}</span>
+      <span className="dash-avatar" style={{ width: 26, height: 26, borderRadius: 999, background: 'var(--brand-wash-5)', color: 'var(--brand-ink-11)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, flexShrink: 0 }}>{who[0]}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 13, fontWeight: 500 }}>{name}</div>
         <div style={{ fontSize: 11, color: 'var(--fg-subtle)' }}>{who}</div>
       </div>
-      <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 999, background: `var(--${tone}-bg-subtle)`, color: `var(--${tone}-fg)` }}>{label}</span>
+      <span className="dash-pill" style={{ fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 999, background: `var(--${tone}-bg-subtle)`, color: `var(--${tone}-fg)` }}>{label}</span>
     </div>
   )
 }
@@ -1257,7 +1259,7 @@ function Task({ name, who, status }: { name: string; who: string; status: string
 function Feed({ who, what, when, tone }: { who: string; what: string; when: string; tone: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid var(--neutral-wash-5)' }}>
-      <span style={{ width: 8, height: 8, borderRadius: 999, flexShrink: 0, background: `var(--${tone}-bg-emphasis)` }} />
+      <span className="dash-dot" style={{ width: 8, height: 8, borderRadius: 999, flexShrink: 0, background: `var(--${tone}-bg-emphasis)` }} />
       <div style={{ flex: 1, fontSize: 12 }}><span style={{ fontWeight: 600 }}>{who}</span> {what}</div>
       <span style={{ fontSize: 11, color: 'var(--fg-subtle)', flexShrink: 0 }}>{when}</span>
     </div>

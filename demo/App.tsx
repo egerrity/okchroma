@@ -33,7 +33,7 @@ export default function App() {
   const [dark, setDark] = useState(false)
   const [paletteView, setPaletteView] = useState<'palette' | 'preview'>('palette')
   // the STYLE LEVER (initiative goal): one token set, restyled by dressing only.
-  // Clean = the shipped default (zero overrides); Retro/Skeuo layer over it.
+  // Clean = the shipped default (zero overrides); Retro/Bubble layer over it.
   const [style, setStyle] = useState<DemoStyle>('clean')
   const [styleMenuOpen, setStyleMenuOpen] = useState(false)
 
