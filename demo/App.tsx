@@ -4,6 +4,7 @@ import { DEMO_BRANDS } from '../src/brands'
 import { SECONDARIES } from '../src/secondaries'
 import { resolveBrand } from '../src/engine/resolve'
 import { brandCss, neutralCss } from '../src/engine/cssRender'
+import { STYLE_CSS, STYLE_OPTIONS, type DemoStyle } from './styles'
 import {
   ALL_BRANDS, COMPONENT_CSS, FONT_STACK, Showcase, Segmented, rungDescription,
   type RungMode, type AccentMode,
@@ -31,15 +32,20 @@ export default function App() {
   const [view, setView] = useState<View>('custom')
   const [dark, setDark] = useState(false)
   const [paletteView, setPaletteView] = useState<'palette' | 'preview'>('palette')
+  // the STYLE LEVER (initiative goal): one token set, restyled by dressing only.
+  // Clean = the shipped default (zero overrides); Retro/Skeuo layer over it.
+  const [style, setStyle] = useState<DemoStyle>('clean')
+  const [styleMenuOpen, setStyleMenuOpen] = useState(false)
 
   return (
-    <div data-brand="chrome" data-theme={dark ? 'dark' : 'light'} style={{ fontFamily: FONT_STACK, minHeight: '100vh', background: 'var(--surface-base)', display: 'flex', flexDirection: 'column' }}>
+    <div data-brand="chrome" data-theme={dark ? 'dark' : 'light'} data-style={style} style={{ fontFamily: FONT_STACK, minHeight: '100vh', background: 'var(--surface-base)', display: 'flex', flexDirection: 'column' }}>
       {/* The neutral is no longer a global :root block — it's per-brand now. The
           demo's own chrome (top/bottom bars) isn't a brand, so give it a plain
           generated neutral (pure gray) as its base. */}
       <style>{neutralCss('[data-brand="chrome"]', 0, 'pure')}</style>
       <style>{COMPONENT_CSS}</style>
       <style>{NAV_CSS}</style>
+      <style>{STYLE_CSS}</style>
 
       <header className="app-topbar">
         <span className="app-topbar-logo"><OkchromaLogo height={17} /></span>
@@ -74,6 +80,29 @@ export default function App() {
                 {v === 'palette' ? 'Palette' : 'Preview'}
               </button>
             ))}
+          </span>
+        )}
+        {view === 'custom' && paletteView === 'preview' && (
+          <span style={{ position: 'relative', display: 'inline-flex' }}>
+            <button className="nav-pill" onClick={() => setStyleMenuOpen(o => !o)} aria-expanded={styleMenuOpen}
+              title="Style — same tokens, different dressing (preview only)">
+              ✦ {STYLE_OPTIONS.find(([s]) => s === style)![1]}
+            </button>
+            {styleMenuOpen && (
+              <>
+                {/* click-away backdrop */}
+                <div style={{ position: 'fixed', inset: 0, zIndex: 48 }} onClick={() => setStyleMenuOpen(false)} />
+                {/* the drop-up rides the POP plane + float shadow — the overlay tokens in the flesh */}
+                <div style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, zIndex: 49, minWidth: 148, background: 'var(--surface-pop)', boxShadow: 'var(--elev-float)', borderRadius: 12, padding: 5, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {STYLE_OPTIONS.map(([s, label]) => (
+                    <button key={s} onClick={() => { setStyle(s); setStyleMenuOpen(false) }}
+                      style={{ border: 'none', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', fontSize: 12.5, fontWeight: style === s ? 600 : 400, padding: '7px 11px', borderRadius: 8, background: style === s ? 'var(--brand-bg-subtle)' : 'transparent', color: 'var(--fg-default)' }}>
+                      {label}{style === s ? ' ✓' : ''}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </span>
         )}
         <button className="nav-pill" onClick={() => setDark(d => !d)}>{dark ? '☀ Light' : '☾ Dark'}</button>

@@ -995,12 +995,14 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
         </div>
 
         <div className="dash-grid">
-          <section style={{ ...dashCard, gridColumn: 'span 2', padding: 0, overflow: 'hidden' }}>
-            <div style={{ padding: '18px 18px 4px' }}><Head title="Customers" sub="Latest sign-ups and account health" /></div>
+          {/* dash-card-customers (NOT dash-card: the mobile compact-padding rule would
+              break this card's full-bleed table) — the style lever's hero hook */}
+          <section className="dash-card-customers" style={{ ...dashCard, gridColumn: 'span 2', padding: 0, overflow: 'hidden' }}>
+            <div className="dash-hero-head" style={{ padding: '18px 18px 4px' }}><Head title="Customers" sub="Latest sign-ups and account health" /></div>
             <CustomersTable hasSecondary={hasSecondary} />
           </section>
 
-          <section className="dash-card" style={dashCard}>
+          <section className="dash-card dash-card-getstarted" style={dashCard}>
             <Head title="Get started" />
             <div style={{ background: 'var(--surface-sink)', borderRadius: 12, padding: '16px 0', marginBottom: 12 }}>
               <div data-illustration={hasSecondary ? 'two-color' : undefined}
@@ -1016,7 +1018,7 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
             <button className="u-btn u-btn-neutral" style={{ width: '100%', justifyContent: 'center' }}>Create project</button>
           </section>
 
-          <section className="dash-card" style={{ ...dashCard, gridColumn: 'span 2' }}>
+          <section className="dash-card dash-card-tasks" style={{ ...dashCard, gridColumn: 'span 2' }}>
             <Head title="Recent tasks" sub="Across all projects" />
             <Task name="Design system audit" who="Priya N." status="done" />
             <Task name="Onboarding flow copy" who="Marco L." status="active" />
@@ -1024,7 +1026,7 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
             <Task name="Migrate auth provider" who="Dana K." status="blocked" />
           </section>
 
-          <section className="dash-card" style={dashCard}>
+          <section className="dash-card dash-card-activity" style={dashCard}>
             <Head title="Activity" />
             <Feed who="Priya" what="closed 3 tasks" when="2m" tone="positive" />
             <Feed who="Marco" what="commented on Onboarding" when="1h" tone="info" />
@@ -1304,7 +1306,9 @@ const PAGE_CSS = `
 /* trial banner — a filled tinted chip; the fill carries it, no stroke needed. */
 .dash-info {
   display: flex; gap: 8px; align-items: center; margin-bottom: 16px;
-  background: var(--info-bg-subtle); color: var(--info-fg);
+  /* the trial banner is an alert CALLOUT — it rides its signal's CTA register
+     (alerts use cta in signals), not the wash (owner-caught 2026-07-24) */
+  background: var(--blue-cta); color: var(--blue-on-cta);
   border-radius: 12px; padding: 10px 14px; font-size: 12px;
 }
 .dash-info a { color: inherit; font-weight: 600; margin-left: auto; }
