@@ -20,6 +20,10 @@ const BRAND_KEY = 'okchroma-ext-brand'
 // Each apply stamps its input recipe here (JSON) — what powers the automatic
 // collection-wide secondary check and the manual "Re-apply all brands" action.
 const SPEC_KEY = 'okchroma-ext-spec'
+// The base's solve-column → modeId map (JSON), stamped every apply — the modes'
+// rename-proofing (owner 2026-07-27): display names are the user's to change,
+// the stored ids are the contract (the collections' tag idiom, extended to modes).
+const COLS_KEY = 'okchroma-ext-cols'
 // Mirrors payload.COLUMNS (type-only import keeps the engine out of the sandbox bundle).
 // Column order IS the mode-dropdown order: the default lane leads, pairs group by prefix.
 const COLUMNS: Column[] = ['wcag', 'wcag-dark', 'apca', 'apca-dark']
@@ -196,25 +200,49 @@ figma.ui.onmessage = async (msg) => {
         }
       }
 
+      // Mode COLUMNS resolve RENAME-PROOF (owner 2026-07-27: an org may require
+      // the columns be named "light"/"dark"): each resolved column's modeId is
+      // stamped in plugin data and later applies resolve by STORED ID first —
+      // Figma keeps a modeId across renames — then by canonical name (legacy /
+      // unstamped files, today's behavior). The plugin only NAMES modes it
+      // CREATES; a user rename is respected, never reverted. A hand-DELETED mode
+      // dangles its stored id → falls to the name check → treated as missing
+      // (the delete-to-drop contract survives).
+      const storedCols: Partial<Record<Column, string>> = (() => {
+        if (!baseMatch) return {}
+        try { return JSON.parse(baseMatch.getPluginData(COLS_KEY) || '{}') } catch { return {} }
+      })()
+      const baseModeIds = new Set(baseMatch ? baseMatch.modes.map(m => m.modeId) : [])
+      // ids VALIDLY claimed by some column's stored entry — the name fallback must
+      // never capture one of these for a DIFFERENT column (review-caught: renaming
+      // the wcag-dark column's display name to "apca-dark" would otherwise merge
+      // two lanes onto one mode and clobber writes)
+      const claimedByStored = new Set(
+        Object.values(storedCols).filter((id): id is string => !!id && baseModeIds.has(id)))
+      const resolveCol = (c: Column): string | undefined => {
+        const stored = storedCols[c]
+        if (stored && baseModeIds.has(stored)) return stored
+        return baseMatch?.modes.find(m => m.name === c && !claimedByStored.has(m.modeId))?.modeId
+      }
       // The file's APCA posture (owner ask 2026-07-16: "turn off APCA so it doesn't
-      // regenerate if I delete it"). Detection is LIVE from the base's mode names, so a
-      // hand-deleted apca PAIR self-heals to OFF. The toggle governs whether the apca
-      // columns should EXIST: any apca column present → the lane keeps being written
-      // regardless of the toggle (no data holes; delete BOTH columns to drop the lane,
-      // and with the toggle off no future apply recreates them). Toggle ON over a base
-      // without them = the posture flip; a missing HALF of a surviving pair is restored —
-      // both behind the confirm gate below, both seeded + backfilled.
-      // exact-name detection (matches the colIds/missingCols resolution — a stray user
-      // mode named "apca…" must not resurrect a deliberately deleted pair)
-      const baseHasApca = !!baseMatch && baseMatch.modes.some(m => m.name === 'apca' || m.name === 'apca-dark')
+      // regenerate if I delete it"). Detection is LIVE from the base's modes (stored
+      // id or canonical name — same resolution as colIds/missingCols, so a stray
+      // user mode named "apca…" still can't resurrect a deliberately deleted pair,
+      // and a RENAMED pair still counts as present). The toggle governs whether the
+      // apca columns should EXIST: any apca column present → the lane keeps being
+      // written regardless of the toggle (no data holes; delete BOTH columns to
+      // drop the lane, and with the toggle off no future apply recreates them).
+      // Toggle ON over a base without them = the posture flip; a missing HALF of a
+      // surviving pair is restored — both behind the confirm gate below.
+      const baseHasApca = !!baseMatch && (!!resolveCol('apca') || !!resolveCol('apca-dark'))
       const apcaOn = !!includeApca || baseHasApca
       const activeCols: Column[] = apcaOn ? COLUMNS : COLUMNS.slice(0, 2)
-      // Columns this apply would have to CREATE on an existing base — resolved BY NAME
-      // (adversarial review 2026-07-16: positional slot-reuse hijacked hand-deleted halves
-      // and user-added modes). The first column adopts the default mode by design (every
-      // prior apply named it wcag); the rest must match by name or be created.
+      // Columns this apply would have to CREATE on an existing base (adversarial
+      // review 2026-07-16: positional slot-reuse hijacked hand-deleted halves and
+      // user-added modes). The first column adopts the default mode by design on a
+      // FRESH collection; the rest must resolve (id or name) or be created.
       const missingCols: Column[] = baseMatch
-        ? activeCols.filter(c => !baseMatch!.modes.some(m => m.name === c))
+        ? activeCols.filter(c => !resolveCol(c))
         : []
 
       // Live-detect the file's posture BEFORE any mutation (the confirm gate fires first).
@@ -303,24 +331,30 @@ figma.ui.onmessage = async (msg) => {
         return
       }
 
-      // ── one mode per ACTIVE solve column, resolved BY NAME (adversarial review
-      // 2026-07-16: the old positional slot-reuse relabeled hand-deleted halves into the
-      // wrong lane and hijacked user-added modes — a mode is adopted ONLY on exact name
-      // match; anything else is left untouched and the missing column is CREATED, behind
-      // the missingCols confirm above). Exactly one exception: a FRESH collection's
-      // unnamed default mode is adopted for the first column (it carries the values).
+      // ── one mode per ACTIVE solve column, resolved by STORED ID then canonical
+      // name (rename-proof, owner 2026-07-27; the 2026-07-16 review killed the old
+      // positional slot-reuse — anything unresolvable is left untouched and the
+      // missing column is CREATED, behind the missingCols confirm above). Exactly
+      // one exception: a FRESH collection's unnamed default mode is adopted for
+      // the first column (it carries the values). The full mapping re-stamps
+      // after resolution so future renames stay free.
       const colIds: string[] = []
+      const usedCols = new Set<string>() // distinctness guard: a corrupt stamp mapping two columns to one mode must not merge lanes
       for (let i = 0; i < activeCols.length; i++) {
         const name = activeCols[i]
-        const m = base.modes.find(x => x.name === name)
-        if (m) { colIds.push(m.modeId); continue }
+        const resolved = resolveCol(name)
+        if (resolved && !usedCols.has(resolved)) { colIds.push(resolved); usedCols.add(resolved); continue }
         if (i === 0 && created) {
           base.renameMode(base.modes[0].modeId, name)
           colIds.push(base.modes[0].modeId)
+          usedCols.add(base.modes[0].modeId)
           continue
         }
-        colIds.push(base.addMode(name))
+        const added = base.addMode(name)
+        colIds.push(added)
+        usedCols.add(added)
       }
+      base.setPluginData(COLS_KEY, JSON.stringify(Object.fromEntries(activeCols.map((c, i) => [c, colIds[i]]))))
 
       // ── populate the base: CREATE-ONCE from the default seed ─────────────────
       // Existing base values are never rewritten (extensions diff against them); every

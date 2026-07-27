@@ -34,6 +34,10 @@ const OWNER_KEY = 'okchroma'
 // lowercase full word ("theme-apca") is slug-safe and a one-line Style
 // Dictionary strip (`replace(/-(apca|wcag)$/,'')`) if a consumer wants it gone.
 const PROFILE_KEY = 'okchroma-profile'
+// The mode collection's Light/Dark modeIds (JSON), stamped every apply — the
+// modes' rename-proofing (owner 2026-07-27): display names are the user's to
+// change, the stored ids are the contract (the collections' tag idiom).
+const MODE_IDS_KEY = 'okchroma-mode-ids'
 type Profile = 'wcag' | 'apca'
 const profileOf = (c: figma.VariableCollection): Profile => (c.getPluginData(PROFILE_KEY) === 'apca' ? 'apca' : 'wcag')
 const pairName = (role: string, profile: Profile) => `${role}-${profile}`
@@ -308,12 +312,31 @@ figma.ui.onmessage = async (msg) => {
       }
 
       // ── primitive collection: raw values, modes Light / Dark ───────────────
+      // Resolved RENAME-PROOF (owner 2026-07-27): stored modeIds first (Figma
+      // keeps a modeId across renames), then the canonical names, then POSITION
+      // (the historical rule — first adoption of an unstamped file). The plugin
+      // only NAMES modes it creates; a user rename ("light"/"dark", "day"/
+      // "night") is respected and never reverted (the old code force-renamed
+      // both modes every apply).
       const p = resolveOwned(collections, MODE_NAME, profile, suffixed)
       const stamp = profileStamp(profile)
-      const pLight = p.coll.modes[0].modeId
-      p.coll.renameMode(pLight, 'Light')
-      const pDark = p.coll.modes.length < 2 ? p.coll.addMode('Dark') : p.coll.modes[1].modeId
-      p.coll.renameMode(pDark, 'Dark')
+      let storedModes: { light?: string; dark?: string } = {}
+      try { storedModes = JSON.parse(p.coll.getPluginData(MODE_IDS_KEY) || '{}') } catch { /* unstamped */ }
+      const modeIds = new Set(p.coll.modes.map(m => m.modeId))
+      // a mode VALIDLY stored as dark is never claimable by the light fallbacks
+      // (review-caught: with Light hand-deleted, the positional fallback would
+      // claim the dark survivor and write light values into it)
+      const validDark = (storedModes.dark && modeIds.has(storedModes.dark)) ? storedModes.dark : undefined
+      const pLight = (storedModes.light && modeIds.has(storedModes.light) && storedModes.light !== validDark) ? storedModes.light
+        : (p.coll.modes.find(m => m.name === 'Light' && m.modeId !== validDark)?.modeId
+          ?? p.coll.modes.find(m => m.modeId !== validDark)?.modeId
+          ?? p.coll.addMode('Light'))
+      if (p.created) p.coll.renameMode(pLight, 'Light')
+      const pDark = (validDark && validDark !== pLight) ? validDark
+        : (p.coll.modes.find(m => m.name === 'Dark' && m.modeId !== pLight)?.modeId
+          ?? p.coll.modes.find(m => m.modeId !== pLight)?.modeId
+          ?? p.coll.addMode('Dark'))
+      p.coll.setPluginData(MODE_IDS_KEY, JSON.stringify({ light: pLight, dark: pDark }))
 
       const primByName = await varsByName(p.coll.id)
       const primVar = new Map<string, figma.Variable>() // full path → Variable (alias targets)
