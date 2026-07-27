@@ -223,22 +223,22 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
       const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
       const esc = escapeCtaFamily(nScale, 'light', cp)
       const on = pole(esc.onFillIsWhite)
-      cells.push(`<div class="mx-aa" style="background:${hx(esc.cta)};color:${on}" title="cta (neutral escape)">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="background:${hx(esc.ctaHover)};color:${on}" title="cta-hover (neutral escape)">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="background:${hx(esc.ctaPressed)};color:${on}" title="cta-pressed (neutral escape)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(esc.cta)};color:${on}" title="cta/enabled (neutral escape)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(esc.ctaHover)};color:${on}" title="cta/hover (neutral escape)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(esc.ctaPressed)};color:${on}" title="cta/pressed (neutral escape)">Aa</div>`)
     } else {
       // filled cta cells carry NO stroke (filled is filled); only outline shows its ring
       const on = pole(row.scale.onFillTextIsWhite)
-      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.cta)};color:${on}" title="cta">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaHover)};color:${on}" title="cta-hover">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaPressed)};color:${on}" title="cta-pressed">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.cta)};color:${on}" title="cta/enabled">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaHover)};color:${on}" title="cta/hover">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaPressed)};color:${on}" title="cta/pressed">Aa</div>`)
     }
     // cta-ink trio: the TEXT-STYLE cta (the action color's 4.5 text rendition — owner:
     // a text button, never a hyperlink, so no underline). Under the escape it swaps to
     // the neutral's register with the fills.
     const inkTrio = row.escape
-      ? (() => { const e = escapeCtaFamily(nScale, 'light', contrastProfile === 'apca' ? 'apca' : undefined); return [['cta-ink', e.ctaInk], ['cta-ink-hover', e.ctaInkHover], ['cta-ink-pressed', e.ctaInkPressed]] as const })()
-      : ([['cta-ink', row.scale.ctaInk], ['cta-ink-hover', row.scale.ctaInkHover], ['cta-ink-pressed', row.scale.ctaInkPressed]] as const)
+      ? (() => { const e = escapeCtaFamily(nScale, 'light', contrastProfile === 'apca' ? 'apca' : undefined); return [['cta-ink/enabled', e.ctaInk], ['cta-ink/hover', e.ctaInkHover], ['cta-ink/pressed', e.ctaInkPressed]] as const })()
+      : ([['cta-ink/enabled', row.scale.ctaInk], ['cta-ink/hover', row.scale.ctaInkHover], ['cta-ink/pressed', row.scale.ctaInkPressed]] as const)
     for (const [name, c] of inkTrio)
       cells.push(`<div class="mx-aa" style="color:${hx(c)};font-size:15px;font-weight:800" title="${name}">Aa</div>`)
     return cells.join('')

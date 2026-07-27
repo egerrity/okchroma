@@ -58,8 +58,8 @@ function flatten(node: FigmaGroup, prefix: string, out: FlatTok[]): void {
 // system root, then surface/, then alpha/): system → neutral → brand-primary →
 // brand-secondary → signals. The system/surface/sink|base|lift|pop planes are NOT here —
 // they are scheme-divergent aliases the plugin creates after the abs rows (ordering) and
-// wires once the neutral exists. neutral/ink-12 (the anchor) is injected right after
-// ink-11 (ladder order), a scheme-flipping pole. The alpha/shadow ladder (owner
+// wires once the neutral exists. neutral/ink/12 (the anchor) is injected right after
+// ink/11 (ladder order), a scheme-flipping pole. The alpha/shadow ladder (owner
 // 2026-07-27) is pure black at 4/8/12% light; dark is heavier by necessity — near black
 // a light-mode alpha vanishes — at 32/48/64%.
 function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boolean): FlatTok[] {
@@ -79,10 +79,19 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
   flatten(g.neutral as FigmaGroup, 'neutral', neutral)
   for (const t of neutral) {
     out.push(t)
-    if (t.path === 'neutral/ink-11') out.push({ path: 'neutral/ink-12', ...(scheme === 'light' ? K : W) })
+    if (t.path === 'neutral/ink/11') out.push({ path: 'neutral/ink/12', ...(scheme === 'light' ? K : W) })
   }
-  flatten(g.brand as FigmaGroup, 'brand-primary', out)
-  if (includeSecondary) flatten(g.secondary as FigmaGroup, 'brand-secondary', out)
+  // identity rows re-home to the system ABSOLUTES (owner 2026-07-27: the
+  // unprocessed inputs sit with the poles — abs-primary/abs-secondary; the
+  // family groups stay pure solve output). Brand-overridable like system/link.
+  const IDENTITY_HOME: Record<string, string> = {
+    'brand-primary/identity': 'system/abs-primary',
+    'brand-secondary/identity': 'system/abs-secondary',
+  }
+  const brandRows: FlatTok[] = []
+  flatten(g.brand as FigmaGroup, 'brand-primary', brandRows)
+  if (includeSecondary) flatten(g.secondary as FigmaGroup, 'brand-secondary', brandRows)
+  for (const t of brandRows) out.push(IDENTITY_HOME[t.path] ? { ...t, path: IDENTITY_HOME[t.path] } : t)
   // signal rows carry the ROLE prefix (critical/warning/positive/info — owner
   // 2026-07-27: the re-pointable in-between tier); g stays keyed by identity
   for (const s of SIGNALS) flatten(g[s.name] as FigmaGroup, s.emitName, out)

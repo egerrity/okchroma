@@ -38,10 +38,13 @@ function overridesFor(brand: TokenColumns, base: TokenColumns, label: string): R
     const ov: string[] = []
     for (const t of brand[col]) {
       const b = baseMap.get(t.path)
-      // system/* is contract-invariant — EXCEPT the system link trio (Phase 4, owner:
-      // "link is a system level color. It can still be extended"): each brand's
-      // extension overrides system/link* with its own resolved values
-      if (t.path.startsWith('system/') && !t.path.startsWith('system/link')) {
+      // system/* is contract-invariant — EXCEPT the brand-VARYING rows: the system
+      // link trio (Phase 4, owner: "link is a system level color. It can still be
+      // extended") and the identity absolutes (owner 2026-07-27, abs-primary /
+      // abs-secondary). Mirrors plugin-ext/code.ts OVERRIDABLE_SYSTEM.
+      if (t.path.startsWith('system/')
+        && !t.path.startsWith('system/link')
+        && t.path !== 'system/abs-primary' && t.path !== 'system/abs-secondary') {
         if (!b || !eq(t, b)) fails.push(`${label} ${col}: system token diverges from base — ${t.path}`)
         continue
       }

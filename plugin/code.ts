@@ -51,24 +51,64 @@ const profileStamp = (profile: Profile) =>
 // up, so the direct map.get never wrongly hits a stale same-name variable. Any future
 // renumber must keep that ascending order.
 const RENAMED_LEAVES: Array<[string, string]> = [
-  ['cta-stroke', 'cta-border'],
-  ['ink-11', 'ink-10'],
-  ['ink-12', 'ink-11'],
-  ['ink-13', 'ink-12'],
+  // ── BAND GROUPING (owner 2026-07-27): every family nests into paper/ wash/
+  // highlight/ ink/ (bare-number leaves) + cta/ cta-ink/ (state leaves, the
+  // system/link idiom) with the on-colors riding their carrier (cta/on,
+  // highlight/on). These CURRENT-name entries MUST precede the historical
+  // retargets below: legacyCandidates tries entries in table order, and a
+  // current file holds BOTH ink-11 (scale) and ink-12 (anchor) — resolving
+  // ink/11 must consume ink-11 before the pre-renumber ['ink-12','ink/11']
+  // entry can capture the anchor. Ascending processing + self-deleting
+  // consumed keys keep the chains sound, exactly as the renumber round.
+  ['paper-0', 'paper/0'],
+  ['paper-1', 'paper/1'],
+  ['paper-2', 'paper/2'],
+  ['paper-3', 'paper/3'],
+  ['wash-4', 'wash/4'],
+  ['wash-5', 'wash/5'],
+  ['wash-6', 'wash/6'],
+  ['wash-7', 'wash/7'],
+  ['highlight-8', 'highlight/8'],
+  ['highlight-9', 'highlight/9'],
+  ['ink-10', 'ink/10'],
+  ['ink-11', 'ink/11'],
+  ['ink-12', 'ink/12'],
+  ['cta', 'cta/enabled'],
+  ['cta-hover', 'cta/hover'],
+  ['cta-pressed', 'cta/pressed'],
+  ['cta-border', 'cta/border'],
+  ['on-cta', 'cta/on'],
+  ['on-highlight', 'highlight/on'],
+  ['cta-ink', 'cta-ink/enabled'],
+  ['cta-ink-hover', 'cta-ink/hover'],
+  ['cta-ink-pressed', 'cta-ink/pressed'],
+  // ── historical retargets, pointed STRAIGHT at the final banded homes (the
+  // one-hop rule — legacyCandidates never chains). The ink renumber entries
+  // shift names DOWN; safe because tokens process in ladder (ascending) order
+  // and each migration self-deletes its consumed key — new ink/10 eats old
+  // ink-11 BEFORE ink/11 is looked up.
+  ['cta-stroke', 'cta/border'],
+  ['ink-11', 'ink/10'],
+  ['ink-12', 'ink/11'],
+  ['ink-13', 'ink/12'],
   // blue-signal variant relabels (2026-07-13, info-color → blue): the variant leaf is
   // label + resolved light-cta hex (variantKey), so the relabel needs per-lane entries.
   ['magenta-de8df6', 'magenta-side-de8df6'],
   ['magenta-e290f9', 'magenta-side-e290f9'],
   ['blue-7cb3f9', 'cyan-side-7cb3f9'],
   ['blue-7eb5fb', 'cyan-side-7eb5fb'],
-  // cta semantic rename (owner 2026-07-16: states, never options) — cta-1/cta-2 →
-  // cta/cta-hover in place; cta-pressed + the cta-ink trio are NEW tokens (no migration).
-  ['cta-1', 'cta'],
-  ['cta-2', 'cta-hover'],
-  // stop-3 rename (owner 2026-07-24, elevation round): wash-3 → paper-3 — it is a
-  // surface plane in both themes. Pure relabel, same color; no numbering shift, so
-  // no ordering hazard (no pre-existing paper-3 to collide with).
-  ['wash-3', 'paper-3'],
+  // cta semantic rename (owner 2026-07-16: states, never options), retargeted to
+  // the banded state homes; cta/pressed + the cta-ink trio are newer tokens.
+  ['cta-1', 'cta/enabled'],
+  ['cta-2', 'cta/hover'],
+  // stop-3 rename (owner 2026-07-24, elevation round) retargeted to paper/3 — it
+  // is a surface plane in both themes. Pure relabel, same color.
+  ['wash-3', 'paper/3'],
+  // the PRIM anchor keeps its FLAT home (system/ink-12 lives at the system root,
+  // not in a band) — a pre-renumber file's system/ink-13 prim still needs its
+  // rescue entry, or STATIC_UTILS orphans it (review-caught 2026-07-27). newLeaf
+  // 'ink-12' collides with nothing: every banded target ends in ink/12.
+  ['ink-13', 'ink-12'],
   // elevation planes go 2 → 4 (owner spec + sink/base/lift/pop naming, 2026-07-24):
   // the old pair migrates to its closest role IN PLACE (bindings survive; their light
   // stop shifts one rung per the new ladder — raised p0→p1, sunken p2→p3). These
@@ -210,8 +250,12 @@ figma.ui.onmessage = async (msg) => {
       // manual edits self-heal — there's no stored flag to go stale.
       const existingTheme = themeMatch
       const existingThemeVars = existingTheme ? await varsByName(existingTheme.id) : new Map<string, figma.Variable>()
-      const fileHasSecondary = existingThemeVars.has('brand/secondary/paper-1')
-      const brandsExist = existingThemeVars.has('brand/primary/paper-1')
+      // posture detection reads through the rename history — a pre-banding file
+      // still spells the probe paper-1 (read-only .some, no getOrMigrate writes)
+      const hasThemePath = (path: string) =>
+        existingThemeVars.has(path) || legacyCandidates(path).some(p => existingThemeVars.has(p))
+      const fileHasSecondary = hasThemePath('brand/secondary/paper/1')
+      const brandsExist = hasThemePath('brand/primary/paper/1')
 
       // Nudge before surprising changes: overwriting an existing brand, flipping
       // the pair's secondary posture, or forking the file's contrast profile.
@@ -364,8 +408,8 @@ figma.ui.onmessage = async (msg) => {
           const sum = c.r + c.g + c.b
           return sum > 2.97 || sum < 0.03
         }
-        if (t.path === 'on-cta' || t.path === 'on-highlight') {
-          const sibling10 = primByName.get(path.replace(/on-(?:cta|highlight)$/, 'ink-10'))
+        if (t.path === 'cta/on' || t.path === 'highlight/on') {
+          const sibling10 = primByName.get(path.replace(/(?:cta\/on|highlight\/on)$/, 'ink/10'))
           const target = (leaf: { r: number; g: number; b: number }) =>
             isPole(leaf) ? absPole(isWhite(leaf)) : (sibling10 ?? absPole(isWhite(leaf)))
           const lightTarget = target(t)
@@ -381,19 +425,20 @@ figma.ui.onmessage = async (msg) => {
             v.setValueForMode(pLight, figma.variables.createVariableAlias(transparent))
             v.setValueForMode(pDark, figma.variables.createVariableAlias(transparent))
           }
-        } else if ((t.path === 'cta-ink'
-            && leafEq(t, lightMap?.get('ink-10')) && leafEq(dk, darkMap.get('ink-10')))
-          || (t.path === 'cta-ink-pressed'
-            && leafEq(t, lightMap?.get('ink-11')) && leafEq(dk, darkMap.get('ink-11')))) {
-          // cta-ink MATCHES the family's ink-10 and cta-ink-pressed MATCHES ink-11 by
-          // construction (the text-register cta + the 2026-07-16 restrengthening: press
-          // lands on the 7:1 register) — alias the sibling so the relationship stays live
-          // in Figma (the on-cta→ink-10 idiom); hover is a distinct derived value and
-          // rides the generic raw branch. VALUE-GUARDED (owner amendment: the neutral
-          // escape swaps the trio to the NEUTRAL's register — a payload whose leaf no
-          // longer equals its own sibling must ship raw, never alias back to the red ink).
-          const sibLeaf = t.path === 'cta-ink' ? 'ink-10' : 'ink-11'
-          const siblingInk = primByName.get(path.replace(/cta-ink(?:-pressed)?$/, sibLeaf))
+        } else if ((t.path === 'cta-ink/enabled'
+            && leafEq(t, lightMap?.get('ink/10')) && leafEq(dk, darkMap.get('ink/10')))
+          || (t.path === 'cta-ink/pressed'
+            && leafEq(t, lightMap?.get('ink/11')) && leafEq(dk, darkMap.get('ink/11')))) {
+          // cta-ink/enabled MATCHES the family's ink/10 and cta-ink/pressed MATCHES
+          // ink/11 by construction (the text-register cta + the 2026-07-16
+          // restrengthening: press lands on the 7:1 register) — alias the sibling so
+          // the relationship stays live in Figma (the cta/on→ink/10 idiom); hover is a
+          // distinct derived value and rides the generic raw branch. VALUE-GUARDED
+          // (owner amendment: the neutral escape swaps the trio to the NEUTRAL's
+          // register — a payload whose leaf no longer equals its own sibling must ship
+          // raw, never alias back to the red ink).
+          const sibLeaf = t.path === 'cta-ink/enabled' ? 'ink/10' : 'ink/11'
+          const siblingInk = primByName.get(path.replace(/cta-ink\/(?:enabled|pressed)$/, sibLeaf))
           if (siblingInk) {
             v.setValueForMode(pLight, figma.variables.createVariableAlias(siblingInk))
             v.setValueForMode(pDark, figma.variables.createVariableAlias(siblingInk))
@@ -401,8 +446,8 @@ figma.ui.onmessage = async (msg) => {
             v.setValueForMode(pLight, { r: t.r, g: t.g, b: t.b })
             if (dk) v.setValueForMode(pDark, { r: dk.r, g: dk.g, b: dk.b })
           }
-        } else if (t.path === 'cta-border') {
-          const sibling8 = primByName.get(path.replace(/cta-border$/, 'highlight-8'))
+        } else if (t.path === 'cta/border') {
+          const sibling8 = primByName.get(path.replace(/cta\/border$/, 'highlight/8'))
           const transparent = primByName.get('system/alpha/transparent')
           const target = (leaf?: { a?: number }) =>
             leaf?.a === 0 ? transparent : (sibling8 ?? transparent)
@@ -475,7 +520,7 @@ figma.ui.onmessage = async (msg) => {
         // the escape covers cta AND cta-ink): fill rest → neutral ink-11; text rest →
         // neutral ink-10; text pressed → neutral ink-11 (the 2026-07-16 restrengthening).
         // Hover stays a raw derived value.
-        const pairs: Array<[string, string]> = [['cta', 'ink-11'], ['cta-ink', 'ink-10'], ['cta-ink-pressed', 'ink-11']]
+        const pairs: Array<[string, string]> = [['cta/enabled', 'ink/11'], ['cta-ink/enabled', 'ink/10'], ['cta-ink/pressed', 'ink/11']]
         for (const [leaf, neutralLeaf] of pairs) {
           const target = neutralPrim ? (primVar.get(`${neutralPrim}/${neutralLeaf}`) ?? primByName.get(`${neutralPrim}/${neutralLeaf}`)) : undefined
           const v = primByName.get(`brand/${brand}/primary/${leaf}`)
@@ -542,15 +587,17 @@ figma.ui.onmessage = async (msg) => {
       if (neutralGrp) {
         for (const t of flatten(neutralGrp.light)) {
           aliasInto(`neutral/${t.path}`, `${neutralGrp.prim}/${t.path}`)
-          if (t.path === 'ink-11') {
-            // the anchor slots DIRECTLY after ink-11 — ladder order, before the cta/on tokens
-            for (const m of th.coll.modes) aliasInto('neutral/ink-12', 'system/ink-12', m.modeId)
+          if (t.path === 'ink/11') {
+            // the anchor slots DIRECTLY after ink/11 — ladder order, before the cta tokens
+            for (const m of th.coll.modes) aliasInto('neutral/ink/12', 'system/ink-12', m.modeId)
           }
         }
       }
 
       // ③ brand/primary always; brand/secondary depends on the secondary mode.
-      const stops = primaryRamp ? flatten(primaryRamp.light) : []
+      // identity is SKIPPED at the theme layer — its bind surface moved to the
+      // system absolutes (③b below); the prim keeps brand/<brand>/<role>/identity.
+      const stops = primaryRamp ? flatten(primaryRamp.light).filter(t => t.path !== 'identity') : []
       for (const t of stops) {
         aliasInto(`brand/primary/${t.path}`, `brand/${brand}/primary/${t.path}`)
         if (secondaryMode === 'real') {
@@ -566,6 +613,51 @@ figma.ui.onmessage = async (msg) => {
           if (m.name === brand) continue
           for (const t of stops) {
             aliasInto(`brand/secondary/${t.path}`, `brand/${m.name}/primary/${t.path}`, m.modeId)
+          }
+        }
+      }
+
+      // ③b the system ABSOLUTES (owner 2026-07-27): identity moves out of the
+      // family groups to sit with the poles — system/abs-primary / abs-secondary
+      // (the absolutes = the unprocessed inputs; the family groups stay pure
+      // solve output). These are brand-VARYING system rows, the link idiom:
+      // aliased per brand mode to that brand's identity prim, backfilled across
+      // pre-existing modes. In-place migration first — bespoke, because a leaf
+      // entry can't express two divergent homes for the same 'identity' leaf
+      // (the staleInk idiom); the migrated var keeps every mode's alias.
+      for (const [oldPath, newPath] of [
+        ['brand/primary/identity', 'system/abs-primary'],
+        ['brand/secondary/identity', 'system/abs-secondary'],
+      ] as const) {
+        const v = themeByName.get(oldPath)
+        if (v && !themeByName.has(newPath)) {
+          v.name = newPath
+          themeByName.set(newPath, v)
+          themeByName.delete(oldPath)
+        }
+      }
+      aliasInto('system/abs-primary', `brand/${brand}/primary/identity`)
+      if (secondaryMode === 'real') aliasInto('system/abs-secondary', `brand/${brand}/secondary/identity`)
+      else if (secondaryMode === 'mirror') aliasInto('system/abs-secondary', `brand/${brand}/primary/identity`)
+      // Backfill runs EVERY apply (review-caught 2026-07-27: gating on absIsNew
+      // left a migrated file's inherited create-default black modes standing):
+      // any mode still holding a raw value gets its own brand's identity prim
+      // (secondary prim when that brand carries one, else its primary — the
+      // mirror posture). Never clobbers a mode that already holds an alias, so
+      // it is idempotent; a brand applied before identity prims existed stays
+      // raw until its own re-apply mints one (the link-idiom posture).
+      {
+        for (const m of th.coll.modes) {
+          if (m.name === brand) continue
+          for (const absPath of ['system/abs-primary', 'system/abs-secondary'] as const) {
+            const themeVar = themeByName.get(absPath)
+            if (!themeVar) continue
+            const cur = themeVar.valuesByMode[m.modeId]
+            if (cur && typeof cur === 'object' && 'type' in cur) continue
+            const target = absPath === 'system/abs-secondary'
+              ? (primByName.get(`brand/${m.name}/secondary/identity`) ?? primByName.get(`brand/${m.name}/primary/identity`))
+              : primByName.get(`brand/${m.name}/primary/identity`)
+            if (target) aliasInto(absPath, target.name, m.modeId)
           }
         }
       }
@@ -590,9 +682,9 @@ figma.ui.onmessage = async (msg) => {
       // link-pressed leaves (third column) — prims are hidden and unbound, renaming
       // them buys nothing.
       const LINK_LEAVES = [
-        ['link/enabled', 'cta-ink', 'link'],
-        ['link/hover', 'cta-ink-hover', 'link-hover'],
-        ['link/pressed', 'cta-ink-pressed', 'link-pressed'],
+        ['link/enabled', 'cta-ink/enabled', 'link'],
+        ['link/hover', 'cta-ink/hover', 'link-hover'],
+        ['link/pressed', 'cta-ink/pressed', 'link-pressed'],
       ] as const
       // ANY missing leaf triggers the backfill (review-caught: a hand-deleted
       // link-hover/link-pressed pair used to recreate black in other modes unbackfilled)
@@ -630,7 +722,7 @@ figma.ui.onmessage = async (msg) => {
             const themeVar = themeByName.get(`system/${themeLeaf}`)
             const cur = themeVar?.valuesByMode[m.modeId]
             if (cur && typeof cur === 'object' && 'type' in cur) continue
-            const target = findPrim(primary + brandLeaf) ?? findPrim(primary + 'ink-10')
+            const target = findPrim(primary + brandLeaf) ?? findPrim(primary + 'ink/10')
             if (target) aliasInto(`system/${themeLeaf}`, target.name, m.modeId)
           }
         }
@@ -648,10 +740,10 @@ figma.ui.onmessage = async (msg) => {
       // The vars were CREATED in order above; aliases are set HERE because the
       // theme's neutral vars only exist after the alias loop ("the wait"). This
       // mirrors the CSS semantic layer's surface-sink/base/lift/pop exactly.
-      const themeNeutralP0 = themeByName.get('neutral/paper-0')
-      const themeNeutralP1 = themeByName.get('neutral/paper-1')
-      const themeNeutralP2 = themeByName.get('neutral/paper-2')
-      const themeNeutralP3 = themeByName.get('neutral/paper-3')
+      const themeNeutralP0 = themeByName.get('neutral/paper/0')
+      const themeNeutralP1 = themeByName.get('neutral/paper/1')
+      const themeNeutralP2 = themeByName.get('neutral/paper/2')
+      const themeNeutralP3 = themeByName.get('neutral/paper/3')
       if (themeNeutralP0 && themeNeutralP1 && themeNeutralP2 && themeNeutralP3) {
         const aliasElev = (path: string, light: figma.Variable, dark: figma.Variable) => {
           const v = primByName.get(path) // pre-created in STATIC_UTILS for ordering

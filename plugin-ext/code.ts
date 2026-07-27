@@ -37,24 +37,55 @@ const stampFor = (apcaOn: boolean) =>
 // its consumed key — new ink-10 eats old ink-11 BEFORE new ink-11 is looked up. Any future
 // renumber must keep that ascending order.
 const RENAMED_LEAVES: Array<[string, string]> = [
-  ['cta-stroke', 'cta-border'],
-  ['ink-11', 'ink-10'],
-  ['ink-12', 'ink-11'],
-  ['ink-13', 'ink-12'],
+  // ── BAND GROUPING (owner 2026-07-27): families nest into paper/ wash/
+  // highlight/ ink/ (bare-number leaves) + cta/ cta-ink/ (state leaves, the
+  // system/link idiom); on-colors ride their carrier (cta/on, highlight/on).
+  // CURRENT-name entries MUST precede the historical retargets: candidates are
+  // tried in table order, and a current base holds BOTH ink-11 (scale) and
+  // ink-12 (anchor) — resolving ink/11 must consume ink-11 before the
+  // pre-renumber ['ink-12','ink/11'] entry can capture the anchor. Ascending
+  // processing + self-deleting consumed keys keep the chains sound.
+  ['paper-0', 'paper/0'],
+  ['paper-1', 'paper/1'],
+  ['paper-2', 'paper/2'],
+  ['paper-3', 'paper/3'],
+  ['wash-4', 'wash/4'],
+  ['wash-5', 'wash/5'],
+  ['wash-6', 'wash/6'],
+  ['wash-7', 'wash/7'],
+  ['highlight-8', 'highlight/8'],
+  ['highlight-9', 'highlight/9'],
+  ['ink-10', 'ink/10'],
+  ['ink-11', 'ink/11'],
+  ['ink-12', 'ink/12'],
+  ['cta', 'cta/enabled'],
+  ['cta-hover', 'cta/hover'],
+  ['cta-pressed', 'cta/pressed'],
+  ['cta-border', 'cta/border'],
+  ['on-cta', 'cta/on'],
+  ['on-highlight', 'highlight/on'],
+  ['cta-ink', 'cta-ink/enabled'],
+  ['cta-ink-hover', 'cta-ink/hover'],
+  ['cta-ink-pressed', 'cta-ink/pressed'],
+  // ── historical retargets, pointed STRAIGHT at the final banded homes (the
+  // one-hop rule). Renumber entries shift names DOWN; safe in ascending order
+  // with self-deleting consumed keys — new ink/10 eats old ink-11 first.
+  ['cta-stroke', 'cta/border'],
+  ['ink-11', 'ink/10'],
+  ['ink-12', 'ink/11'],
+  ['ink-13', 'ink/12'],
   // blue-signal variant relabels (2026-07-13, info-color → blue): variant leaf =
   // label + resolved light-cta hex (variantKey), so the relabel needs per-lane entries.
   ['magenta-de8df6', 'magenta-side-de8df6'],
   ['magenta-e290f9', 'magenta-side-e290f9'],
   ['blue-7cb3f9', 'cyan-side-7cb3f9'],
   ['blue-7eb5fb', 'cyan-side-7eb5fb'],
-  // cta semantic rename (owner 2026-07-16: states, never options) — cta-1/cta-2 →
-  // cta/cta-hover in place; cta-pressed + the cta-ink trio are NEW tokens (no migration).
-  ['cta-1', 'cta'],
-  ['cta-2', 'cta-hover'],
-  // stop-3 rename (owner 2026-07-24, elevation round): wash-3 → paper-3 — it is a
-  // surface plane in both themes. Pure relabel, same color; no numbering shift, so
-  // no ordering hazard (no pre-existing paper-3 to collide with).
-  ['wash-3', 'paper-3'],
+  // cta semantic rename (owner 2026-07-16: states, never options), retargeted to
+  // the banded state homes; cta/pressed + the cta-ink trio are newer tokens.
+  ['cta-1', 'cta/enabled'],
+  ['cta-2', 'cta/hover'],
+  // stop-3 rename (owner 2026-07-24) retargeted to paper/3. Pure relabel, same color.
+  ['wash-3', 'paper/3'],
   // elevation planes go 2 → 4 (owner spec + sink/base/lift/pop naming, 2026-07-24):
   // the old pair migrates to its closest role IN PLACE (bindings survive; their light
   // stop shifts one rung per the new ladder — raised p0→p1, sunken p2→p3). These
@@ -188,7 +219,10 @@ figma.ui.onmessage = async (msg) => {
 
       // Live-detect the file's posture BEFORE any mutation (the confirm gate fires first).
       const baseVars = baseMatch ? await varsByName(baseMatch.id) : new Map<string, figma.Variable>()
-      const baseHasSecondary = baseVars.has('brand-secondary/paper-1')
+      // posture probe reads through the rename history (a pre-banding base still
+      // spells it brand-secondary/paper-1; read-only, no renames here)
+      const baseHasSecondary = baseVars.has('brand-secondary/paper/1')
+        || legacyCandidates('brand-secondary/paper/1').some(p => baseVars.has(p))
       const extsOfBase = baseMatch ? extensions.filter(e => e.rootVariableCollectionId === baseMatch!.id) : []
       // case-insensitive identity: "l1-near-black" typed by hand must overwrite
       // L1-near-black, never create a sibling that differs only by case
@@ -204,8 +238,12 @@ figma.ui.onmessage = async (msg) => {
       // regenerates every extension so each brand overrides the new rows with its own.
       // brand-secondary/* is excluded (the secondary posture has its own reason +
       // trigger); a legacy name counts as EXISTING (ensure() migrates it in place).
+      // Brand-VARYING system rows — the link trio and the identity absolutes
+      // (owner 2026-07-27) — are the only system/ paths extensions may override.
+      const OVERRIDABLE_SYSTEM = (p: string) =>
+        p.startsWith('system/link') || p === 'system/abs-primary' || p === 'system/abs-secondary'
       // Contract-invariant system rows (everything under system/ except the
-      // brand-overridable link trio) are excluded: extensions can never override
+      // brand-overridable rows above) are excluded: extensions can never override
       // them (the work loop skips them), so their appearance seeds silently —
       // a confirm promising "each brand carries its own values" would be false
       // and the backfill regeneration pointless (review-caught 2026-07-27, the
@@ -214,7 +252,15 @@ figma.ui.onmessage = async (msg) => {
         ? baseTokens[activeCols[0]]
             .map((t: FlatTok) => t.path)
             .filter((p: string) => !p.startsWith('brand-secondary/'))
-            .filter((p: string) => !p.startsWith('system/') || p.startsWith('system/link'))
+            .filter((p: string) => !p.startsWith('system/') || OVERRIDABLE_SYSTEM(p))
+            // the identity absolutes migrate via the BESPOKE pre-pass, invisible to
+            // legacyCandidates — a base still holding the old identity rows must not
+            // count them as new; and abs-secondary follows the SECONDARY POSTURE
+            // (the ensure loop skips it when off — counting it would fire a confirm
+            // + extension backfill on every apply, forever). Review-caught 2026-07-27.
+            .filter((p: string) => !(p === 'system/abs-primary' && baseVars.has('brand-primary/identity')))
+            .filter((p: string) => !(p === 'system/abs-secondary'
+              && (baseVars.has('brand-secondary/identity') || !(baseHasSecondary || hasSecondary))))
             .filter((p: string) => !baseVars.has(p) && !legacyCandidates(p).some(lp => baseVars.has(lp)))
         : []
 
@@ -302,7 +348,7 @@ figma.ui.onmessage = async (msg) => {
       // its ink-10) falls back to a raw write, so the alias never constrains the
       // solve — the engine still picks the pole per family × column.
       const POLE_LEAVES = (path: string) =>
-        path.endsWith('/on-cta') || path.endsWith('/on-highlight') || path === 'neutral/ink-12'
+        path.endsWith('/cta/on') || path.endsWith('/highlight/on') || path === 'neutral/ink/12'
       // EXACT poles only (per-channel EPS): the engine emits true 0/1 poles, so a
       // loose band buys nothing — and the conversion pass below must never snap a
       // hand-edited near-pole value (#FFFFF8) onto the abs row (review-caught
@@ -338,8 +384,18 @@ figma.ui.onmessage = async (msg) => {
       ensure('system/surface/base')
       ensure('system/surface/lift')
       ensure('system/surface/pop')
+      // identity re-homes to the system absolutes — bespoke in-place migration
+      // (a leaf entry can't express two divergent homes for the same 'identity'
+      // leaf); the renamed var keeps its id, bindings and overrides survive.
+      for (const [oldPath, newPath] of [
+        ['brand-primary/identity', 'system/abs-primary'],
+        ['brand-secondary/identity', 'system/abs-secondary'],
+      ] as const) {
+        const v = baseVars.get(oldPath)
+        if (v && !baseVars.has(newPath)) { v.name = newPath; baseVars.set(newPath, v); baseVars.delete(oldPath) }
+      }
       for (const t of baseTokens[activeCols[0]]) { // all columns share the path set
-        if (!withSecondary && t.path.startsWith('brand-secondary/')) continue
+        if (!withSecondary && (t.path.startsWith('brand-secondary/') || t.path === 'system/abs-secondary')) continue
         const before = createdVars
         const v = ensure(t.path)
         if (createdVars > before) seedFresh(v, t.path) // fresh variable → seed every active column
@@ -396,10 +452,10 @@ figma.ui.onmessage = async (msg) => {
       //   base → neutral/paper-2 light · neutral/paper-1 dark
       //   lift → neutral/paper-1 light · neutral/paper-2 dark
       //   pop  → neutral/paper-0 light · neutral/paper-3 dark
-      const p0 = baseVars.get('neutral/paper-0')
-      const p1 = baseVars.get('neutral/paper-1')
-      const p2 = baseVars.get('neutral/paper-2')
-      const p3 = baseVars.get('neutral/paper-3')
+      const p0 = baseVars.get('neutral/paper/0')
+      const p1 = baseVars.get('neutral/paper/1')
+      const p2 = baseVars.get('neutral/paper/2')
+      const p3 = baseVars.get('neutral/paper/3')
       if (p0 && p1 && p2 && p3) {
         const planes: Array<[string, figma.Variable, figma.Variable]> = [
           ['system/surface/sink', p3, p0], ['system/surface/base', p2, p1],
@@ -455,8 +511,8 @@ figma.ui.onmessage = async (msg) => {
         // (Phase 4, owner: "link is a system level color. It can still be extended"):
         // each brand's extension overrides system/link* with its own resolved values
         // (its primary's cta-ink, or its custom link seed's register)
-        if (t.path.startsWith('system/') && !t.path.startsWith('system/link')) continue
-        if (secondaryMode === 'none' && t.path.startsWith('brand-secondary/')) continue
+        if (t.path.startsWith('system/') && !OVERRIDABLE_SYSTEM(t.path)) continue
+        if (secondaryMode === 'none' && (t.path.startsWith('brand-secondary/') || t.path === 'system/abs-secondary')) continue
         work.push(t.path)
       }
       // The pole aliases resolve through ONE hop (they point at the raw abs rows) —
