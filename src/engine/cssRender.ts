@@ -5,7 +5,7 @@ import { srgbEmitChannels, masterEmitChannels } from './colorMath'
 import { clampChromaToGamut } from './constraints'
 import { stopTokenName, onFillTokenName, tokenOrder } from './tokenNames'
 import { signalScalesFor, OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, escapeCtaFamily, resolveLinkTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
-import { SIGNALS } from './signals'
+import { SIGNALS, SIGNAL_EMIT_NAME } from './signals'
 
 export function toHex(r: number, g: number, b: number): string {
   const ch = (v: number) => Math.round(Math.min(1, Math.max(0, v)) * 255).toString(16).padStart(2, '0')
@@ -152,10 +152,13 @@ export function signalsCss(contrastProfile?: ContrastProfile): string {
     const { scale } = sigScales.get(sig.name)!
     // F1: signals are brand-kind now — a real loud cta (stop 9) AND a distinct
     // highlight rung (13/14), plus computed on-cta + on-highlight. No more alias.
-    lightBlocks.push(...brandKindBody(sig.name, scale, 'light'))
-    darkBlocks.push(...brandKindBody(sig.name, scale, 'dark'))
-    p3LightBlocks.push(...brandKindP3Body(sig.name, scale, 'light'))
-    p3DarkBlocks.push(...brandKindP3Body(sig.name, scale, 'dark'))
+    // Emitted prefix = the ROLE name (critical/warning/positive/info, owner
+    // 2026-07-27) — the signals are the re-pointable in-between tier; the
+    // identity name stays engine-internal.
+    lightBlocks.push(...brandKindBody(sig.emitName, scale, 'light'))
+    darkBlocks.push(...brandKindBody(sig.emitName, scale, 'dark'))
+    p3LightBlocks.push(...brandKindP3Body(sig.emitName, scale, 'light'))
+    p3DarkBlocks.push(...brandKindP3Body(sig.emitName, scale, 'dark'))
   }
 
   return [
@@ -381,14 +384,14 @@ export function brandCss(
     ...dropEscapeCta(brandKindP3Body('brand', scale, 'light')),
     ...(secondary ? dropOutlineCta(brandKindP3Body('secondary', secondary, 'light')) : []),
     ...brandKindP3Body('neutral', nScale, 'light'),
-    ...effOverrides.flatMap(o => brandKindP3Body(o.name, o.scale, 'light')),
+    ...effOverrides.flatMap(o => brandKindP3Body(SIGNAL_EMIT_NAME[o.name], o.scale, 'light')),
     ...linkP3('light'),
   ]
   const p3Dark = [
     ...dropEscapeCta(brandKindP3Body('brand', scale, 'dark')),
     ...(secondary ? dropOutlineCta(brandKindP3Body('secondary', secondary, 'dark')) : []),
     ...brandKindP3Body('neutral', nScale, 'dark'),
-    ...effOverrides.flatMap(o => brandKindP3Body(o.name, o.scale, 'dark')),
+    ...effOverrides.flatMap(o => brandKindP3Body(SIGNAL_EMIT_NAME[o.name], o.scale, 'dark')),
     ...linkP3('dark'),
   ]
 
@@ -405,7 +408,7 @@ export function brandCss(
     ...outline('light'),
     secondaryIdentity,
     ...brandKindBody('neutral', nScale, 'light'),
-    ...effOverrides.flatMap(o => brandKindBody(o.name, o.scale, 'light')),
+    ...effOverrides.flatMap(o => brandKindBody(SIGNAL_EMIT_NAME[o.name], o.scale, 'light')),
     `}`,
     `[data-brand="${slug}"][data-theme="dark"] {`,
     ...darkAnchors,
@@ -415,7 +418,7 @@ export function brandCss(
     ...secondaryDark,
     ...outline('dark'),
     ...brandKindBody('neutral', nScale, 'dark'),
-    ...effOverrides.flatMap(o => brandKindBody(o.name, o.scale, 'dark')),
+    ...effOverrides.flatMap(o => brandKindBody(SIGNAL_EMIT_NAME[o.name], o.scale, 'dark')),
     `}`,
     ...(p3Light.length || p3Dark.length ? [
       `${P3_SUPPORTS} {`,

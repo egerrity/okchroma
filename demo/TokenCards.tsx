@@ -19,17 +19,17 @@ export type RampKind = 'brand' | 'neutral' | 'signal'
 
 // Alert icon per signal, chosen by what the signal MEANS (its color identity).
 const SIGNAL_ICON: Record<string, typeof AlertCircle> = {
-  red: AlertCircle,
-  yellow: AlertTriangle,
-  green: CheckCircle,
-  'blue': Info,
+  critical: AlertCircle,
+  warning: AlertTriangle,
+  positive: CheckCircle,
+  info: Info,
 }
 
 // ─── CTA deconfliction row ────────────────────────────────────────────────────
 // Every cta side by side — the one spot where a colliding pair is visible in a
 // single glance: the brand cta pair, the secondary cta pair (when one exists),
-// the quiet neutral cta, and all four signal ctas (red / yellow / green /
-// blue). Each family renders its cta | cta-hover | cta-pressed trio as one seamed
+// the quiet neutral cta, and all four signal ctas (critical / warning /
+// positive / info). Each family renders its cta | cta-hover | cta-pressed trio as one seamed
 // pill in on-cta text, with the cta-ink (text-style cta) rest/hover/pressed right
 // beneath it. Reads the live vars, so the per-brand signal overrides the
 // resolved theme carries show up here automatically; names the theme shifted
@@ -41,10 +41,10 @@ export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; 
     { prefix: 'brand', label: 'brand' },
     ...(hasSecondary ? [{ prefix: 'secondary', label: 'secondary' }] : []),
     { prefix: 'neutral', label: 'neutral' },
-    { prefix: 'red', label: 'red' },
-    { prefix: 'yellow', label: 'yellow' },
-    { prefix: 'green', label: 'green' },
-    { prefix: 'blue', label: 'blue' },
+    { prefix: 'critical', label: 'critical' },
+    { prefix: 'warning', label: 'warning' },
+    { prefix: 'positive', label: 'positive' },
+    { prefix: 'info', label: 'info' },
   ]
   const cell = (prefix: string, tok: 'cta' | 'cta-hover' | 'cta-pressed') => (
     <div title={`--${prefix}-${tok}`} style={{

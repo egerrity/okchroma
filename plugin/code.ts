@@ -90,12 +90,22 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['link-hover', 'link/hover'],
   ['link-pressed', 'link/pressed'],
 ]
-// Group renames (old path prefix → new), migrated in place like the leaves — the
-// info-color signal was renamed by identity to blue (2026-07-13); both the primitive
-// collection (system/<signal>/…) and the theme collection (<signal>/…) carry the group.
+// Group renames (old path prefix → new), migrated in place like the leaves.
+// History: info-color → blue by identity (2026-07-13); then the signal ROLE
+// round (owner 2026-07-27) moved the THEME groups to role names — signals are
+// the re-pointable in-between tier, so identity names would lie under a future
+// info-from-secondary option. The PRIMITIVE lanes keep identity paths
+// (system/red/… — machinery, hidden), so the system/info-color entry still
+// points at system/blue. Theme-side entries point STRAIGHT at the final role
+// homes (legacyCandidates expands one group hop only — a chained
+// info-color→blue→info table would strand pre-C17 files on the middle name).
 const RENAMED_GROUPS: Array<[string, string]> = [
   ['system/info-color/', 'system/blue/'],
-  ['info-color/', 'blue/'],
+  ['info-color/', 'info/'],
+  ['red/', 'critical/'],
+  ['yellow/', 'warning/'],
+  ['green/', 'positive/'],
+  ['blue/', 'info/'],
 ]
 // Every legacy spelling of `path` under the rename tables: old leaf, old group, and
 // old group + old leaf together (a file untouched since before BOTH renames needs the

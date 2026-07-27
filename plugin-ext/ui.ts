@@ -205,7 +205,7 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     { label: 'primary', scale: t.themed.scale, idHex: t.themed.scale.identityHex, escape: ctaEscape && inRedRange },
     ...(t.secondary ? [{ label: 'secondary', scale: t.secondary.scale, idHex: t.secondary.scale.identityHex, outline: t.secondary.style === 'outline' }] : []),
     { label: 'neutral', scale: nScale },
-    ...SIGNALS.map(s => ({ label: s.name, scale: effective(s.name) })),
+    ...SIGNALS.map(s => ({ label: s.emitName, scale: effective(s.name) })),
   ]
 
   const hx = (s: ColorStop) => toHex(s.r, s.g, s.b)

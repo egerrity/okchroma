@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { resolveBrand, resolveTheme, signalScalesFor, escapeCtaFamily, DEFAULT_LINK_HEX, type SecondaryStyle } from '../src/engine/resolve'
 import { redGateDist, RED_GATE } from '../src/engine/collision'
+import { SIGNAL_EMIT_NAME } from '../src/engine/signals'
 import { ARCHETYPES, type Archetype } from '../src/engine/archetypes'
 import { brandCss, signalsCss, stopHex } from '../src/engine/cssRender'
 import { generateNeutralScale, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
@@ -117,7 +118,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   const [controlsMin, setControlsMin] = useState(false)  // collapse the workshop controls bar
   // Palette page tabs (owner 2026-07-24): overview = the frame (matrix, elevation,
   // ctas + identity/illustration); each family tab shows JUST that family's card.
-  const [paletteTab, setPaletteTab] = useState<'overview' | 'brand' | 'secondary' | 'neutral' | 'red' | 'yellow' | 'green' | 'blue'>('overview')
+  const [paletteTab, setPaletteTab] = useState<'overview' | 'brand' | 'secondary' | 'neutral' | 'critical' | 'warning' | 'positive' | 'info'>('overview')
   // Narrow viewport (matches the palette's 980px breakpoint): the matrix drops to
   // plain swatches and the tab strip becomes a dropdown. Deliberately shallow —
   // this demo is not a mobile product, the bar is "readable", not "optimized".
@@ -488,22 +489,29 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     </div>
   )
 
-  // Signal ramps, so the per-brand signal shifts (yellow/green/blue) are
-  // visually checkable in-app. Override note shown when this brand shifted a
-  // signal away for extra distance. red is never shifted (engine owns red).
-  const SIGNAL_NAMES = ['red', 'yellow', 'green', 'blue'] as const
+  // Signal ramps, so the per-brand signal shifts are visually checkable in-app.
+  // Tokens emit by ROLE (critical/warning/positive/info — owner 2026-07-27, the
+  // re-pointable in-between tier); the ENGINE keeps identity names (red/yellow/
+  // green/blue) for its hue machinery, so lookups map role → identity here.
+  // Override note shown when this brand shifted a signal away for extra
+  // distance. red is never shifted (engine owns red).
+  const SIGNAL_ROLES = ['critical', 'warning', 'positive', 'info'] as const
+  const ROLE_TO_SIGNAL: Record<(typeof SIGNAL_ROLES)[number], 'red' | 'yellow' | 'green' | 'blue'> = {
+    critical: 'red', warning: 'yellow', positive: 'green', info: 'blue',
+  }
   // Each signal gets its OWN card block (like brand/neutral) — titled by its real
   // token name. "shifted · …" shows when this brand pushed the signal off-canonical.
-  const signalBlock = (name: (typeof SIGNAL_NAMES)[number]) => {
+  const signalBlock = (role: (typeof SIGNAL_ROLES)[number]) => {
+    const name = ROLE_TO_SIGNAL[role]
     // the escape resets red to canonical — no stale "shifted" tag on a signal the css ships canonical
     const override = computed.escapeOn && name === 'red' ? undefined : computed.r.signalOverrides.find(o => o.name === name)
     return (
-      <div className="ct-colorblock" key={name}>
+      <div className="ct-colorblock" key={role}>
         <div className="ct-label" style={{ marginBottom: 8, display: 'flex', alignItems: 'baseline', gap: 8 }}>
-          <span>{name}</span>
+          <span>{role}</span>
           {override && <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--info-fg)' }}>shifted · {override.note}</span>}
         </div>
-        <TokenCards prefix={name} kind="signal" />
+        <TokenCards prefix={role} kind="signal" />
       </div>
     )
   }
@@ -521,7 +529,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     ['neutral', 'neutral'],
     ['brand', 'primary'],
     ...((secondary || derived) ? [['secondary', 'secondary'] as [string, string]] : []),
-    ['red', 'red'], ['yellow', 'yellow'], ['green', 'green'], ['blue', 'blue'],
+    ['critical', 'critical'], ['warning', 'warning'], ['positive', 'positive'], ['info', 'info'],
   ]
   const swatchCell = (prefix: string, stop: string) => {
     const cv = (t: string) => `var(--${prefix}-${t})`
@@ -576,7 +584,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     ['brand', 'brand primary'],
     ...((secondary || derived) ? [['secondary', 'brand secondary'] as [typeof paletteTab, string]] : []),
     ['neutral', 'neutral'],
-    ['red', 'red'], ['yellow', 'yellow'], ['green', 'green'], ['blue', 'blue'],
+    ['critical', 'critical'], ['warning', 'warning'], ['positive', 'positive'], ['info', 'info'],
   ]
   const anchorStroke = '1px solid var(--neutral-paper-3)'
   // corner stop numbers — NEUTRAL row only (it indexes the whole matrix); the 0/12
@@ -749,12 +757,12 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
               </div>
             </div>
             {/* every cta together — brand pair, secondary pair, neutral, and the four
-                signals (red/yellow/green/blue, with this brand's overrides) so a
-                colliding pair is visible in one glance */}
+                signals (critical/warning/positive/info, with this brand's overrides)
+                so a colliding pair is visible in one glance */}
             <div className="ct-colorblock">
               <div className="ct-label" style={{ marginBottom: 8 }}>All ctas — deconfliction row</div>
               <CtaRow hasSecondary={!!secondary || derived}
-                shifted={computed.r.signalOverrides.filter(o => !(computed.escapeOn && o.name === 'red')).map(o => o.name)} />
+                shifted={computed.r.signalOverrides.filter(o => !(computed.escapeOn && o.name === 'red')).map(o => SIGNAL_EMIT_NAME[o.name])} />
             </div>
             </>}
             {paletteTabSafe === 'brand' && colorBlock('Primary scale', 'brand', 'brand', rRec, primary, primaryExtras)}
@@ -767,7 +775,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
               )
             ))}
             {paletteTabSafe === 'neutral' && colorBlock(`Neutral scale — ${neutralLevel} tint`, 'neutral', 'neutral', null, primary)}
-            {(paletteTabSafe === 'red' || paletteTabSafe === 'yellow' || paletteTabSafe === 'green' || paletteTabSafe === 'blue') && signalBlock(paletteTabSafe)}
+            {(paletteTabSafe === 'critical' || paletteTabSafe === 'warning' || paletteTabSafe === 'positive' || paletteTabSafe === 'info') && signalBlock(paletteTabSafe)}
             </div>
           </div>
           <div className="ct-pane-side">
@@ -803,7 +811,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
       <div className="ct-toasts">
         {toasts.filter(t => !dismissed.has(t.key)).map(t => (
           <div key={t.key} className="ct-toast" style={t.kind === 'warn'
-            ? { background: 'var(--alert-med-bg-subtle)', borderColor: 'var(--alert-med-border-subtle)', color: 'var(--alert-med-fg)' }
+            ? { background: 'var(--warning-bg-subtle)', borderColor: 'var(--warning-border-subtle)', color: 'var(--warning-fg)' }
             : { background: 'var(--info-bg-subtle)', borderColor: 'var(--info-border-subtle)', color: 'var(--info-fg)' }}>
             <span style={{ flex: 1 }}>{t.kind === 'warn' ? '⚠ ' : 'ⓘ '}{t.text}</span>
             <button onClick={() => setDismissed(s => new Set(s).add(t.key))} title="Dismiss">✕</button>
@@ -893,7 +901,7 @@ const TONE_META: Record<CheckTone, { Icon: typeof Check; color: string }> = {
   // the info-blue it used to borrow (owner 2026-07-17).
   adjusted: { Icon: Sparkles, color: 'var(--brand-ink-10)' },
   standard: { Icon: ArrowRight, color: 'var(--fg-subtle)' },
-  fail: { Icon: TriangleAlert, color: 'var(--alert-med-fg)' },
+  fail: { Icon: TriangleAlert, color: 'var(--warning-fg)' },
 }
 
 // Collapsible (default COLLAPSED — there will be one per color and the
@@ -1011,7 +1019,7 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
           <Metric label="Active projects" value="24" delta="+3 this week" tone="brand" />
           <Metric label="Tasks completed" value="182" delta="+18%" tone="positive" />
           <Metric label="In review" value="9" delta="2 new" tone="info" />
-          <Metric label="Open issues" value="7" delta="−4" tone="alert-high" />
+          <Metric label="Open issues" value="7" delta="−4" tone="critical" />
         </div>
 
         <div className="dash-grid">
@@ -1046,7 +1054,7 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
             <Head title="Activity" />
             <Feed who="Priya" what="closed 3 tasks" when="2m" tone="positive" />
             <Feed who="Marco" what="commented on Onboarding" when="1h" tone="info" />
-            <Feed who="Dana" what="opened an issue" when="3h" tone="alert-high" />
+            <Feed who="Dana" what="opened an issue" when="3h" tone="critical" />
             <Feed who="Sam" what="shipped v2.1" when="1d" tone="brand" />
           </section>
         </div>
@@ -1059,7 +1067,7 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
 // Owner spec (2026-07-09): four form cards, one per signal — on the raised plane
 // as of the 2026-07-17 redesign (was literal paper-0, which collapses to the darkest
 // plane in dark; the raised plane lifts correctly in both modes)
-// (red / yellow / green / blue — by identity), each combining:
+// (critical / warning / positive / info — role names), each combining:
 //   ink-10 title + brand chip + the card signal's chip
 //   ink-11 short body
 //   focused input + resting input
@@ -1069,10 +1077,10 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
 //   button row: secondary wash-5 · secondary cta · neutral cta
 // All live vars — re-solves with the pickers, profile, and mode.
 const SIGNAL_CARDS: Array<{ sig: string; Icon: typeof Info; alert: string }> = [
-  { sig: 'red', Icon: AlertCircle, alert: 'We couldn\'t process the request. Try again.' },
-  { sig: 'yellow', Icon: TriangleAlert, alert: 'Usage is approaching the plan limit.' },
-  { sig: 'green', Icon: CheckCircle, alert: 'Changes saved. Everything is up to date.' },
-  { sig: 'blue', Icon: Info, alert: 'A new version is available.' },
+  { sig: 'critical', Icon: AlertCircle, alert: 'We couldn\'t process the request. Try again.' },
+  { sig: 'warning', Icon: TriangleAlert, alert: 'Usage is approaching the plan limit.' },
+  { sig: 'positive', Icon: CheckCircle, alert: 'Changes saved. Everything is up to date.' },
+  { sig: 'info', Icon: Info, alert: 'A new version is available.' },
 ]
 
 function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typeof Info; alert: string; hasSecondary: boolean }) {
@@ -1154,7 +1162,7 @@ function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typ
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
         <button style={{ ...btn, background: 'var(--brand-wash-5)', color: 'var(--brand-ink-11)' }}>Wash 5</button>
         <button style={{ ...btn, background: 'var(--brand-cta)', color: 'var(--brand-on-cta)' }}>Primary cta</button>
-        <button style={{ ...btn, background: 'var(--red-cta)', color: 'var(--red-on-cta)' }}>Red cta</button>
+        <button style={{ ...btn, background: 'var(--critical-cta)', color: 'var(--critical-on-cta)' }}>Critical cta</button>
       </div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {hasSecondary && <>
@@ -1218,7 +1226,7 @@ const CUSTOMERS: Array<{ name: string; email: string; plan: string; status: stri
 ]
 const CUST_STATUS: Record<string, [string, string]> = {
   active: ['Active', 'positive'], trial: ['Trialing', 'info'],
-  pastdue: ['Past due', 'alert-high'], churned: ['Churned', 'alert-med'],
+  pastdue: ['Past due', 'critical'], churned: ['Churned', 'warning'],
 }
 function CustomersTable({ hasSecondary }: { hasSecondary: boolean }) {
   return (
@@ -1310,7 +1318,7 @@ const PAGE_CSS = `
   display: flex; gap: 8px; align-items: center; margin-bottom: 16px;
   /* the trial banner is an alert CALLOUT — it rides its signal's CTA register
      (alerts use cta in signals), not the wash (owner-caught 2026-07-24) */
-  background: var(--blue-cta); color: var(--blue-on-cta);
+  background: var(--info-cta); color: var(--info-on-cta);
   border-radius: 12px; padding: 10px 14px; font-size: 12px;
 }
 .dash-info a { color: inherit; font-weight: 600; margin-left: auto; }
@@ -1373,12 +1381,12 @@ const PAGE_CSS = `
 .ct-alert-warn {
   display: flex; gap: 8px; align-items: flex-start; margin-top: 8px;
   padding: 8px 10px; border-radius: 10px; font-size: 12px; line-height: 1.45;
-  background: var(--yellow-wash-4); border: 1px solid var(--yellow-highlight-8); color: var(--yellow-ink-11);
+  background: var(--warning-wash-4); border: 1px solid var(--warning-highlight-8); color: var(--warning-ink-11);
 }
 .ct-alert-warn a { color: inherit; font-weight: 600; }
 .ct-alert-text {
   display: flex; gap: 7px; align-items: flex-start; margin-top: 8px;
-  font-size: 12px; line-height: 1.45; color: var(--alert-med-fg);
+  font-size: 12px; line-height: 1.45; color: var(--warning-fg);
 }
 .ct-ships-as {
   display: flex; gap: 6px; align-items: center; margin-top: 8px;
@@ -1526,9 +1534,9 @@ const PAGE_CSS = `
   font-family: inherit; font-size: 14px; flex: 1; min-width: 0;
 }
 .ct-field input:focus-visible, .ct-field select:focus-visible { outline: none; }
-.ct-field.err { border-color: var(--alert-high-border-emphasis); background: var(--alert-high-bg-faint); }
-.ct-field.err:focus-within { border-color: var(--alert-high-border-emphasis); box-shadow: 0 0 0 3px var(--alert-high-bg-subtle); }
-.ct-err-note { font-size: 11px; color: var(--alert-high-fg-alt); margin-top: 5px; }
+.ct-field.err { border-color: var(--critical-border-emphasis); background: var(--critical-bg-faint); }
+.ct-field.err:focus-within { border-color: var(--critical-border-emphasis); box-shadow: 0 0 0 3px var(--critical-bg-subtle); }
+.ct-err-note { font-size: 11px; color: var(--critical-fg-alt); margin-top: 5px; }
 .ct-swatch { width: 20px; height: 20px; border-radius: 5px; flex-shrink: 0; border: 1px solid var(--neutral-wash-5); }
 .ct-swatch.sm { width: 13px; height: 13px; }
 .ct-popover {
@@ -1545,8 +1553,8 @@ const PAGE_CSS = `
 .ct-suggest:hover { background: var(--brand-paper-2); }
 .ct-remove {
   display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-family: inherit;
-  background: var(--surface-lift); border: 1px solid var(--alert-high-border-default); border-radius: 10px;
-  padding: 4px 10px; font-size: 12px; font-weight: 600; color: var(--alert-high-fg-alt);
+  background: var(--surface-lift); border: 1px solid var(--critical-border-default); border-radius: 10px;
+  padding: 4px 10px; font-size: 12px; font-weight: 600; color: var(--critical-fg-alt);
 }
-.ct-remove:hover { background: var(--alert-high-bg-subtle); color: var(--alert-high-fg); border-color: var(--alert-high-border-default-hover); }
+.ct-remove:hover { background: var(--critical-bg-subtle); color: var(--critical-fg); border-color: var(--critical-border-default-hover); }
 `

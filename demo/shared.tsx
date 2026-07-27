@@ -92,21 +92,21 @@ export const COMPONENT_CSS = `
 .u-btn-ghost:hover { background: var(--brand-bg-subtle); }
 /* Universal destructive rule (designer decision): destructive BUTTONS never
    encode intent via solid error fill alone — outline treatment + required
-   icon, for every brand, every mode. Solid error fill (--alert-high-bg-emphasis)
+   icon, for every brand, every mode. Solid error fill (--critical-bg-emphasis)
    stays reserved for system-voiced non-button surfaces: error states, badges,
    toasts, alerts. .u-btn-destructive is kept as an alias so any legacy markup
    degrades to the same treatment instead of a solid fill. */
 .u-btn-destructive,
 .u-btn-destructive-outline {
   background: var(--surface-lift);
-  color: var(--alert-high-fg-alt);
-  border-color: var(--alert-high-border-default);
+  color: var(--critical-fg-alt);
+  border-color: var(--critical-border-default);
 }
 .u-btn-destructive:hover,
 .u-btn-destructive-outline:hover {
-  background: var(--alert-high-bg-subtle);
-  color: var(--alert-high-fg);
-  border-color: var(--alert-high-border-default-hover);
+  background: var(--critical-bg-subtle);
+  color: var(--critical-fg);
+  border-color: var(--critical-border-default-hover);
 }
 .u-link { color: var(--fg-link); text-decoration: underline; }
 .u-link:hover { color: var(--fg-link-hover); }
@@ -324,8 +324,8 @@ export function Showcase(props: {
           <SectionLabel>Badges</SectionLabel>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             <Badge role="positive">Positive</Badge>
-            <Badge role="alert-high">Alert</Badge>
-            <Badge role="alert-med">Warning</Badge>
+            <Badge role="critical">Alert</Badge>
+            <Badge role="warning">Warning</Badge>
             <Badge role="info">Info</Badge>
             <div style={{ width: 1, height: 22, background: 'var(--border-default)', margin: '0 8px' }} />
             <Badge role="brand">Brand</Badge>
@@ -339,16 +339,16 @@ export function Showcase(props: {
           <SectionLabel>Alerts — subtle</SectionLabel>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <Alert role="positive" label="Success">Your changes have been saved successfully.</Alert>
-            <Alert role="alert-high" label="Error">We were unable to process your request. Please try again.</Alert>
-            <Alert role="alert-med" label="Warning">Your usage is approaching the plan limit.</Alert>
+            <Alert role="critical" label="Error">We were unable to process your request. Please try again.</Alert>
+            <Alert role="warning" label="Warning">Your usage is approaching the plan limit.</Alert>
             <Alert role="info" label="Info">New features are available. See what's changed.</Alert>
           </div>
           <div style={{ height: 20 }} />
           <SectionLabel>Alerts — high priority (stop 9)</SectionLabel>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <Alert solid role="positive" label="Success">Your changes have been saved successfully.</Alert>
-            <Alert solid role="alert-high" label="Error">We were unable to process your request. Please try again.</Alert>
-            <Alert solid role="alert-med" label="Warning">Your usage is approaching the plan limit.</Alert>
+            <Alert solid role="critical" label="Error">We were unable to process your request. Please try again.</Alert>
+            <Alert solid role="warning" label="Warning">Your usage is approaching the plan limit.</Alert>
             <Alert solid role="info" label="Info">New features are available. See what's changed.</Alert>
           </div>
           <div style={{ borderTop: '1px solid var(--border-default)', margin: '20px 0 8px' }} />
@@ -386,7 +386,7 @@ export function Showcase(props: {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
             <Card title="Active Projects" value="24" sub="3 due this week" accent="brand" />
             <Card title="Completed" value="148" sub="Last 30 days" accent="positive" />
-            <Card title="Needs Review" value="7" sub="Action required" accent="alert-med" />
+            <Card title="Needs Review" value="7" sub="Action required" accent="warning" />
           </div>
         </section>
 

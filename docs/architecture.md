@@ -255,8 +255,8 @@ ResolvedBrand  = { scale, shearDeg, redRepel: {light,dark}|null,
 | literal | `identity` | the exact input hex (brand / secondary only) |
 
 `tokens/semantic.css` is a **static, hand-authored alias layer** (never generated): it maps
-human role names (`--surface-*`, `--fg-*`, `--border-*`, `--alert-high-*` → red,
-`--alert-med-*` → yellow, `--positive-*` → green, `--info-*` → info-color, `--illus-*`)
+human role names (`--surface-*`, `--fg-*`, `--border-*`, `--critical-*` → the red
+signal, `--warning-*` → yellow, `--positive-*` → green, `--info-*` → blue, `--illus-*`)
 onto the emitted primitives. Only the primitives change per brand.
 
 ### 2b. The requirement schema

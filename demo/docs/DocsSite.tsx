@@ -329,8 +329,8 @@ const collisions: Article = {
       <Table
         head={['Signal', 'Split', 'Brand below split', 'Brand at/above']}
         rows={[
-          [<Code>yellow</Code>, '96°', 'shift to lemon', 'keep amber'],
-          [<Code>green</Code>, '147°', 'teal-side', 'yellow-side'],
+          [<Code>warning</Code>, '96°', 'shift to lemon', 'keep amber'],
+          [<Code>positive</Code>, '147°', 'teal-side', 'yellow-side'],
           [<Code>info</Code>, '273°', 'magenta', 'blue'],
         ]}
       />

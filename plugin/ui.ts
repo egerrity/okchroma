@@ -183,7 +183,7 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     { label: 'primary', scale: t.themed.scale, idHex: t.themed.scale.identityHex, escape: ctaEscape && inRedRange },
     ...(t.secondary ? [{ label: 'secondary', scale: t.secondary.scale, idHex: t.secondary.scale.identityHex, outline: t.secondary.style === 'outline' }] : []),
     { label: 'neutral', scale: nScale },
-    ...SIGNALS.map(s => ({ label: s.name, scale: effective(s.name) })),
+    ...SIGNALS.map(s => ({ label: s.emitName, scale: effective(s.name) })),
   ]
 
   const hx = (s: ColorStop) => toHex(s.r, s.g, s.b)
@@ -412,15 +412,16 @@ function buildAndSend() {
     const signals = SIGNALS.map(s => {
       const ov = escapeOn && s.name === 'red' ? undefined : r.signalOverrides.find(o => o.name === s.name)
       const variant = ov ? variantKey(ov) : 'base'
-      return { name: s.name, scale: ov?.scale ?? sigScales.get(s.name)!.scale, variant }
+      return { name: s.name, emitName: s.emitName, scale: ov?.scale ?? sigScales.get(s.name)!.scale, variant }
     })
 
     const customLink = linkCustom ? normalizeHex(linkHexInput.value) : null
     const { light, dark } = themeToFigma(r, { secondary, secondaryStyle: t.secondary?.style, neutralLevel, signals, contrastProfile: cp, ctaEscape: ctaEscape && inRedRange, linkHex: customLink })
 
-    // The engine now names signals by identity (red / yellow / green /
-    // blue), so both the primitive path (system/<identity>/<variant>) and
-    // the theme-collection group name are just s.name — no role→identity remap.
+    // Signals are the re-pointable in-between tier (owner 2026-07-27): the
+    // THEME group carries the ROLE name (critical/warning/positive/info) while
+    // the primitive lane keeps the identity path (system/<identity>/<variant>)
+    // — the same role→identity split as brand/primary → brand/<brand>.
 
     // brand + secondary: unique per brand → raw values under brand/<brand>/<role>.
     const brandRaw = [
@@ -432,7 +433,7 @@ function buildAndSend() {
     const shared = [
       { theme: 'neutral', prim: `system/neutral/${neutralKey}`, light: light.neutral, dark: dark.neutral },
       ...signals.map(s => ({
-        theme: s.name,
+        theme: s.emitName,
         prim: `system/${s.name}/${s.variant}`,
         light: light[s.name],
         dark: dark[s.name],

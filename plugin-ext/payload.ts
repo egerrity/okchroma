@@ -83,7 +83,9 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
   }
   flatten(g.brand as FigmaGroup, 'brand-primary', out)
   if (includeSecondary) flatten(g.secondary as FigmaGroup, 'brand-secondary', out)
-  for (const s of SIGNALS) flatten(g[s.name] as FigmaGroup, s.name, out)
+  // signal rows carry the ROLE prefix (critical/warning/positive/info — owner
+  // 2026-07-27: the re-pointable in-between tier); g stays keyed by identity
+  for (const s of SIGNALS) flatten(g[s.name] as FigmaGroup, s.emitName, out)
   // the SYSTEM LINK trio (Phase 4): system-pathed but BRAND-OVERRIDABLE (unlike the
   // contract-invariant system/* poles — code.ts carves it out of the override skip);
   // rows carry the resolved values (primary's cta-ink, or the custom seed's register).

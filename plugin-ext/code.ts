@@ -76,11 +76,21 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['link-hover', 'link/hover'],
   ['link-pressed', 'link/pressed'],
 ]
-// Group renames (old prefix → new), same in-place idiom — info-color → blue (2026-07-13);
-// covers the primitive (system/<signal>/…) and theme (<signal>/…) collections.
+// Group renames (old prefix → new), same in-place idiom. History: info-color →
+// blue by identity (2026-07-13); then the signal ROLE round (owner 2026-07-27)
+// moved the bind-surface rows to role names (critical/warning/positive/info) —
+// the re-pointable in-between tier. Theme-side entries point STRAIGHT at the
+// final role homes (legacyCandidates expands one group hop only — a chained
+// info-color→blue→info table would strand pre-C17 files on the middle name).
+// system/info-color stays → system/blue: v1 primitive-lane spelling, kept for
+// cross-plugin path parity in legacyCandidates.
 const RENAMED_GROUPS: Array<[string, string]> = [
   ['system/info-color/', 'system/blue/'],
-  ['info-color/', 'blue/'],
+  ['info-color/', 'info/'],
+  ['red/', 'critical/'],
+  ['yellow/', 'warning/'],
+  ['green/', 'positive/'],
+  ['blue/', 'info/'],
 ]
 // Every legacy spelling of `path`: old leaf, old group, and old group + old leaf composed
 // (a file untouched since before BOTH renames needs e.g. system/info-color/ink-11 → system/blue/ink-10).
