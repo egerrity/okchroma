@@ -4,11 +4,12 @@ import {
   legalRatio,
   findLForY,
   findLForContrast,
+  findLForContrastUp,
   apcaY,
 } from './constraints'
 import {
   ILLUS_STOPS,
-  REFERENCE_H, type DarkCtaKind } from './stopTable'
+  REFERENCE_H, NEUTRAL_CTA_DARK_POP_CLEARANCE, type DarkCtaKind } from './stopTable'
 import { neutralChromaCurve, subtleSecondaryChromaCurve, type NeutralLevel } from './neutralCurve'
 
 export type { NeutralLevel } from './neutralCurve'
@@ -290,6 +291,24 @@ export function generateNeutralScale(
   scale.ctaDark = asCta(9, scale.dark[3])
   scale.ctaHoverDark = asCta(10, scale.dark[4])
   scale.ctaPressedDark = asCta(11, scale.dark[5])
+  // DARK POP CLEARANCE (owner 2026-07-27): the fed dark washes pack near black, so
+  // the quiet trio sat ~1.07 vs the POP plane (dark paper-3) — invisible on the very
+  // cards its buttons ride, while "clearing" ~1.3 against absolute black, a surface
+  // nothing renders on. The clearance reads against pop: lift the WHOLE trio
+  // uniformly (state steps preserved) until the cta clears the bar vs the resolved
+  // dark paper-3 — the dark mirror of light's fed cta, which already reads ~1.25
+  // against its own white pop. Solved on the wcag ratio (a perceptual separation
+  // bar, profile-agnostic; the dual-rendition legality solver is reused); chroma
+  // re-clamps at the lifted L via makeStop; on-text is re-judged below.
+  const popDark = scale.dark[2] // paper-3 — the POP plane in dark
+  const popDarkY = wcagY(popDark.L, popDark.C, popDark.H)
+  const clearedL = findLForContrastUp(scale.ctaDark.L, scale.ctaDark.C, scale.ctaDark.H, popDarkY, NEUTRAL_CTA_DARK_POP_CLEARANCE)
+  const popLift = clearedL - scale.ctaDark.L
+  if (popLift > 1e-6) {
+    scale.ctaDark = makeStop(9, scale.dark[3].L + popLift, scale.dark[3].C, scale.dark[3].H)
+    scale.ctaHoverDark = makeStop(10, scale.dark[4].L + popLift, scale.dark[4].C, scale.dark[4].H)
+    scale.ctaPressedDark = makeStop(11, scale.dark[5].L + popLift, scale.dark[5].C, scale.dark[5].H)
+  }
   // cta-ink trio stays resolver-minted (the neutral's own ink-10 + floored states) — the
   // quiet-fill override above touches only the fill trio.
   // the scale-fed neutral cta can't move, so on-text is judgment only: apca profile = pure

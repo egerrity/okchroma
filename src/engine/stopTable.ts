@@ -123,6 +123,15 @@ export const DARK_STOP_9_MIN_L = 0.63
 
 export const DARK_BRAND_FILL_MIN_L = 0.70
 
+// The neutral QUIET cta's dark clearance reads against the POP plane (dark
+// paper-3 — the lightest dark surface its buttons sit on), never against black
+// (owner 2026-07-27: the fed trio "cleared" ~1.3 on absolute black, a surface
+// nothing renders on, while sitting an invisible ~1.07 off pop). The scale-fed
+// trio lifts uniformly until the cta clears this WCAG ratio vs the resolved
+// dark paper-3; light needs no lift — its fed cta already reads ~1.25 against
+// its own white pop.
+export const NEUTRAL_CTA_DARK_POP_CLEARANCE = 1.2
+
 
 export const GOLD_SPINE: Array<[number, number]> = [
   [0.30, 47], [0.57, 50], [0.74, 71], [0.80, 88], [0.87, 103], [0.97, 110],
