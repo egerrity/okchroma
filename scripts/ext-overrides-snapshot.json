@@ -11220,7 +11220,7 @@
     "system/link/pressed"
    ]
   },
-  "vs-red (cooler)": {
+  "vs-red (shifts light)": {
    "wcag": [
     "brand-primary/cta",
     "brand-primary/cta-hover",
@@ -11461,7 +11461,7 @@
     "system/link/pressed"
    ]
   },
-  "vs-red (warmer)": {
+  "vs-red (shifts dark)": {
    "wcag": [
     "brand-primary/cta",
     "brand-primary/cta-hover",
@@ -11474,8 +11474,6 @@
     "brand-primary/identity",
     "brand-primary/ink-10",
     "brand-primary/ink-11",
-    "brand-primary/on-cta",
-    "brand-primary/on-highlight",
     "brand-primary/paper-1",
     "brand-primary/paper-2",
     "brand-primary/paper-3",
@@ -11519,6 +11517,7 @@
     "red/cta",
     "red/cta-hover",
     "red/cta-pressed",
+    "red/on-cta",
     "system/link/enabled",
     "system/link/hover",
     "system/link/pressed"
@@ -11535,7 +11534,6 @@
     "brand-primary/identity",
     "brand-primary/ink-10",
     "brand-primary/ink-11",
-    "brand-primary/on-highlight",
     "brand-primary/paper-1",
     "brand-primary/paper-2",
     "brand-primary/paper-3",
@@ -11595,7 +11593,6 @@
     "brand-primary/identity",
     "brand-primary/ink-10",
     "brand-primary/ink-11",
-    "brand-primary/on-cta",
     "brand-primary/paper-1",
     "brand-primary/paper-2",
     "brand-primary/paper-3",
@@ -11636,9 +11633,6 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "red/cta",
-    "red/cta-hover",
-    "red/cta-pressed",
     "system/link/enabled",
     "system/link/hover",
     "system/link/pressed"

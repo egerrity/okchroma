@@ -9,11 +9,19 @@
 //   monochrome                   achromatic primary + true-grey neutral
 //   teal                         standalone real-theme tester (H229 — collides with nothing)
 //   vs-*                         the colliders, named for the signal they stress (identity
-//                                names). vs-red pair = the BRAND moves (red-band design);
-//                                vs-yellow/green/blue = the SIGNAL moves. Pairs cover
-//                                both escape directions; vs-green (shifts teal) is the
-//                                wcag-lane-only exemplar; vs-red (warmer) #EA603E is the
-//                                standing regression hex for the red-orange cool fix.
+//                                names). vs-red pair = the BRAND moves (red-band design;
+//                                since the C12/C18 value-exit rounds the escape is a
+//                                LIGHTNESS move, so the pair is named by exit direction —
+//                                owner reseed 2026-07-27, retiring the stale cooler/warmer
+//                                hue-shift names; pipeline-verified: #EA3E3E cta exits
+//                                light L .62→.78, #E60000 exits dark L .58→.43, both
+//                                lanes). vs-yellow/green/blue = the SIGNAL moves. Pairs
+//                                cover both escape directions; vs-green (shifts teal) is
+//                                the wcag-lane-only exemplar. The retired warmer hex
+//                                #EA603E (the red-orange cool-fix eyeball case) leaves
+//                                the roster; red-band coverage stays in the demo set
+//                                (Chili Mocha #EE3123, src/brands.ts) and the engine
+//                                audits' red-fidelity gates.
 //
 // Every hex verified through the real pipeline; the roster is snapshot-gated alongside
 // the demo set in scripts/ext-override-audit.ts (which also asserts the seed-canary
@@ -53,8 +61,8 @@ export const ROSTER: RosterEntry[] = [
   { name: 'vs-green (shifts teal)', hex: '#65C466', note: 'green → teal-side, wcag lane only' },
   { name: 'vs-blue (shifts cyan)', hex: '#4F46E5', note: 'blue → cyan-side, both lanes' },
   { name: 'vs-blue (no shift)', hex: '#044BAF', note: 'no collision since the seed lift — the magenta side is unreachable (accepted, C17)' },
-  { name: 'vs-red (cooler)', hex: '#EE3123', note: 'cool of the red signal — separates healthily (cta #680000)' },
-  { name: 'vs-red (warmer)', hex: '#EA603E', note: 'warm of the red signal — the dead-zone regression hex for the cool fix' },
+  { name: 'vs-red (shifts light)', hex: '#EA3E3E', note: 'red collider — cta exits LIGHT (L .62→.78, #ff9084 both lanes); the C18 owner-verified seed' },
+  { name: 'vs-red (shifts dark)', hex: '#E60000', note: 'red collider — cta exits DARK (L .58→.43, #900012 both lanes)' },
   { name: 'vs-yellow', hex: '#F5B301', note: 'yellow → lemon' },
 ]
 

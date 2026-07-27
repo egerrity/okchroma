@@ -111,7 +111,7 @@ function normalizeHex(s: string): string | null {
 
 // v2 brand names are free-form (they are ONLY a collection name + a tag — never a
 // variable path segment, unlike v1): trim and collapse whitespace, keep everything else
-// verbatim. The roster's own names (L1-near-black, "vs-red (cooler)") set the precedent —
+// verbatim. The roster's own names (L1-near-black, "vs-red (shifts light)") set the precedent —
 // spinal-casing here made manual re-writes of them impossible (owner-caught 2026-07-07).
 function cleanName(s: string): string {
   return s.trim().replace(/\s+/g, ' ')
