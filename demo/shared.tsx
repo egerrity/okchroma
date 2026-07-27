@@ -124,16 +124,20 @@ export const COMPONENT_CSS = `
 [data-brand="chrome"] {
   --brand-highlight-8: var(--neutral-highlight-8);
 }
-/* Elevation — demo-layer shadows (NOT engine output: the engine owns color, the
-   demo owns depth). Big surfaces lift by plane + this shadow instead of a border.
-   Subtle and dark per shadows-never-halos; in dark the plane-lightness steps do
-   most of the lifting, so the shadow is only a faint depth cue. */
+/* Elevation — demo-layer shadow recipes composing the --shadow-* transparencies
+   (tokens/semantic.css; mirrors the plugin's system/alpha/shadow rows). The
+   engine owns color, the demo owns depth. Ladder = the owner's 2026-07-27 Figma
+   card-hierarchy set: −1 sink (stroke, no shadow — see the metric tiles) ·
+   +1 lift (--elev-card) · +2 pop (--elev-pop, the hero) · +3 float
+   (--elev-float — geometry pending its own styling round, still literal).
+   Dark falls out of the tokens: --shadow-* carries the heavier dark alphas, so
+   there is no dark override for card/pop. */
 [data-brand] {
-  --elev-card: 0 1px 2px rgba(17,18,22,0.05), 0 5px 14px -4px rgba(17,18,22,0.07);
+  --elev-card: 0 4px 8px var(--shadow-04), 0 0 1px var(--shadow-04);
+  --elev-pop: 0 4px 10px -2px var(--shadow-08), 0 20px 25px -2px var(--shadow-04);
   --elev-float: 0 6px 16px -5px rgba(17,18,22,0.10), 0 16px 44px -8px rgba(17,18,22,0.16);
 }
 [data-brand][data-theme="dark"] {
-  --elev-card: 0 1px 2px rgba(0,0,0,0.32), 0 5px 14px -4px rgba(0,0,0,0.42);
   --elev-float: 0 6px 16px -5px rgba(0,0,0,0.48), 0 16px 44px -8px rgba(0,0,0,0.58);
 }
 ${ACCENT_MODE_CSS}

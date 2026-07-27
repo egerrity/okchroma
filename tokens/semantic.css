@@ -24,6 +24,15 @@
 
   --border-default:       var(--neutral-highlight-9);
   --border-subtle:        var(--neutral-wash-5);
+
+  /* Shadow transparencies (owner 2026-07-27) — pure black, mirrors the plugin's
+     system/alpha/shadow-04|08|12 rows 1:1. Dark is heavier by necessity: near
+     black a light-mode alpha vanishes, so the dark values carry the same roles
+     at 32/48/64%. Elevation recipes (--elev-*) compose these, so dark shadows
+     fall out of the token swap with nothing bespoke per style. */
+  --shadow-04: rgba(0, 0, 0, 0.04);
+  --shadow-08: rgba(0, 0, 0, 0.08);
+  --shadow-12: rgba(0, 0, 0, 0.12);
 }
 
 [data-brand][data-theme="dark"] {
@@ -34,6 +43,10 @@
   --surface-base:         var(--neutral-paper-1);
   --surface-lift:       var(--neutral-paper-2);
   --surface-pop:        var(--neutral-paper-3);
+
+  --shadow-04: rgba(0, 0, 0, 0.32);
+  --shadow-08: rgba(0, 0, 0, 0.48);
+  --shadow-12: rgba(0, 0, 0, 0.64);
 }
 
 /* ─── role.brand ────────────────────────────────────────────────────────────── */

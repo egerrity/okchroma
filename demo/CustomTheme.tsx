@@ -935,9 +935,16 @@ function EngineChecklist({ rRec, rung, primaryHex, escapeOn }: { rRec: ResolvedB
 // every family — brand (nav, primary), accent (secondary highlight when set),
 // neutral (surfaces, text), the signals (status), and the live illustration. ─
 
+// The +1 (lift) card — the owner's 2026-07-27 hierarchy: hero rides +2 (pop
+// plane + --elev-pop), metric tiles recede to −1 (sink plane + hairline, no
+// shadow, dashMetric below), everything else sits here.
 const dashCard: React.CSSProperties = {
   background: 'var(--surface-lift)', boxShadow: 'var(--elev-card)',
-  borderRadius: 16, padding: 18,
+  borderRadius: 12, padding: 18,
+}
+const dashMetric: React.CSSProperties = {
+  background: 'var(--surface-sink)', border: '1px solid var(--neutral-wash-4)',
+  borderRadius: 12, padding: 16,
 }
 
 function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
@@ -1008,9 +1015,13 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
         </div>
 
         <div className="dash-grid">
-          {/* dash-card-customers (NOT dash-card: the mobile compact-padding rule would
-              break this card's full-bleed table) — the style lever's hero hook */}
-          <section className="dash-card-customers" style={{ ...dashCard, gridColumn: 'span 2', padding: 0, overflow: 'hidden' }}>
+          {/* Owner's 2026-07-27 layout: the hero table holds the LEFT two columns
+              across both rows; Get started + Activity stack in the right column
+              (the Recent-tasks card left the overview in her reorganization).
+              dash-card-customers (NOT dash-card: the mobile compact-padding rule
+              would break this card's full-bleed table) — the style lever's hero
+              hook, and the +2 (pop) level of the hierarchy. */}
+          <section className="dash-card-customers" style={{ ...dashCard, background: 'var(--surface-pop)', boxShadow: 'var(--elev-pop)', gridColumn: 'span 2', gridRow: 'span 2', padding: 0, overflow: 'hidden' }}>
             <div className="dash-hero-head" style={{ padding: '18px 18px 4px' }}><Head title="Customers" sub="Latest sign-ups and account health" /></div>
             <CustomersTable hasSecondary={hasSecondary} />
           </section>
@@ -1029,14 +1040,6 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
                 topbar tier (Share), so this stays neutral in every state (owner
                 2026-07-17: no wash-fill buttons). */}
             <button className="u-btn u-btn-neutral" style={{ width: '100%', justifyContent: 'center' }}>Create project</button>
-          </section>
-
-          <section className="dash-card dash-card-tasks" style={{ ...dashCard, gridColumn: 'span 2' }}>
-            <Head title="Recent tasks" sub="Across all projects" />
-            <Task name="Design system audit" who="Priya N." status="done" />
-            <Task name="Onboarding flow copy" who="Marco L." status="active" />
-            <Task name="Checkout edge cases" who="Sam R." status="review" />
-            <Task name="Migrate auth provider" who="Dana K." status="blocked" />
           </section>
 
           <section className="dash-card dash-card-activity" style={dashCard}>
@@ -1088,7 +1091,7 @@ function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typ
   const focusRing: React.CSSProperties = { borderColor: 'var(--brand-highlight-8)', boxShadow: '0 0 0 3px var(--brand-wash-5)' }
   const btn: React.CSSProperties = { padding: '8px 16px', borderRadius: 999, border: '1.5px solid transparent', cursor: 'pointer', fontSize: 13, fontWeight: 500, fontFamily: 'inherit' }
   return (
-    <section className="dash-card" style={{ background: 'var(--surface-lift)', boxShadow: 'var(--elev-card)', borderRadius: 16, padding: 18 }}>
+    <section className="dash-card" style={{ background: 'var(--surface-lift)', boxShadow: 'var(--elev-card)', borderRadius: 12, padding: 18 }}>
       {/* title row shows the ink-10 RANGE: signal ink vs neutral ink vs brand ink;
           the subtitle (only when a secondary exists) adds secondary ink-10. Wraps so
           the chips drop below the title on narrow cards instead of clipping. */}
@@ -1182,10 +1185,12 @@ function SettingsStress({ hasSecondary }: { hasSecondary: boolean }) {
 }
 
 function Metric({ label, value, delta, tone }: { label: string; value: string; delta: string; tone: string }) {
-  // Neutralized tile (owner 2026-07-17): plain raised plane, no per-tone fill/border.
-  // The signal reads through the delta text alone — colour where it matters.
+  // RECESSED tile — the −1 level of the owner's 2026-07-27 hierarchy (sink plane
+  // + wash-4 hairline, no shadow): the metrics settle INTO the page while the
+  // content cards lift off it. Fill stays neutral; the signal reads through the
+  // value + delta text alone. --mtone still publishes the tone for style layers.
   return (
-    <div className="dash-card dash-metric" style={{ ...dashCard, padding: 16, ['--mtone' as string]: `var(--${tone}-bg-emphasis)` } as React.CSSProperties}>
+    <div className="dash-card dash-metric" style={{ ...dashMetric, ['--mtone' as string]: `var(--${tone}-bg-emphasis)` } as React.CSSProperties}>
       <div style={{ fontSize: 12, color: 'var(--fg-subtle)' }}>{label}</div>
       {/* the value carries its signal's ink-10 (owner 2026-07-24, revising the
           2026-07-17 neutralization: the number holds the signal, not just the delta) */}
@@ -1248,24 +1253,6 @@ function CustomersTable({ hasSecondary }: { hasSecondary: boolean }) {
         })}
       </tbody>
     </table>
-  )
-}
-
-const TASK_STATUS: Record<string, [string, string]> = {
-  done: ['Done', 'positive'], active: ['In progress', 'info'],
-  review: ['In review', 'alert-med'], blocked: ['Blocked', 'alert-high'],
-}
-function Task({ name, who, status }: { name: string; who: string; status: string }) {
-  const [label, tone] = TASK_STATUS[status]
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderTop: '1px solid var(--neutral-wash-5)' }}>
-      <span className="dash-avatar" style={{ width: 26, height: 26, borderRadius: 999, background: 'var(--brand-wash-5)', color: 'var(--brand-ink-11)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, flexShrink: 0 }}>{who[0]}</span>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 500 }}>{name}</div>
-        <div style={{ fontSize: 11, color: 'var(--fg-subtle)' }}>{who}</div>
-      </div>
-      <span className="dash-pill" style={{ fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 999, background: `var(--${tone}-bg-subtle)`, color: `var(--${tone}-fg)` }}>{label}</span>
-    </div>
   )
 }
 
@@ -1368,7 +1355,7 @@ const PAGE_CSS = `
   .dash-main { padding: 14px 14px 28px; }
   .dash-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .dash-grid { grid-template-columns: 1fr; gap: 12px; }
-  .dash-grid > section { grid-column: auto !important; } /* span-2 cards fit the single column */
+  .dash-grid > section { grid-column: auto !important; grid-row: auto !important; } /* spanning cards fit the single column */
   .dash-stress-grid { grid-template-columns: 1fr; }
   .dash-card { padding: 12px !important; border-radius: 12px !important; }
   .dash-metric-value { font-size: 20px !important; margin: 2px 0 !important; }
