@@ -57,10 +57,24 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['wash-3', 'paper-3'],
   // elevation planes go 2 → 4 (owner spec + sink/base/lift/pop naming, 2026-07-24):
   // the old pair migrates to its closest role IN PLACE (bindings survive; their light
-  // stop shifts one rung per the new ladder — raised p0→p1, sunken p2→p3); base and
-  // pop are NEW vars, nothing to migrate.
-  ['paper-raised', 'lift'],
-  ['paper-sunken', 'sink'],
+  // stop shifts one rung per the new ladder — raised p0→p1, sunken p2→p3). These
+  // entries point STRAIGHT at the final surface/ homes (owner regroup 2026-07-27):
+  // legacyCandidates expands one hop only, so a chained old→mid→new table would
+  // strand pre-elevation files on the middle name.
+  ['paper-raised', 'surface/lift'],
+  ['paper-sunken', 'surface/sink'],
+  // system regroup (owner 2026-07-27): planes → system/surface/*, alpha-carrying
+  // utilities → system/alpha/*, link trio → system/link/* with state leaves.
+  // abs-black/abs-white stay at the system root. Same-value moves, no ladder shift.
+  ['sink', 'surface/sink'],
+  ['base', 'surface/base'],
+  ['lift', 'surface/lift'],
+  ['pop', 'surface/pop'],
+  ['transparent', 'alpha/transparent'],
+  ['scrim', 'alpha/scrim'],
+  ['link', 'link/enabled'],
+  ['link-hover', 'link/hover'],
+  ['link-pressed', 'link/pressed'],
 ]
 // Group renames (old prefix → new), same in-place idiom — info-color → blue (2026-07-13);
 // covers the primitive (system/<signal>/…) and theme (<signal>/…) collections.
@@ -180,10 +194,17 @@ figma.ui.onmessage = async (msg) => {
       // regenerates every extension so each brand overrides the new rows with its own.
       // brand-secondary/* is excluded (the secondary posture has its own reason +
       // trigger); a legacy name counts as EXISTING (ensure() migrates it in place).
+      // Contract-invariant system rows (everything under system/ except the
+      // brand-overridable link trio) are excluded: extensions can never override
+      // them (the work loop skips them), so their appearance seeds silently —
+      // a confirm promising "each brand carries its own values" would be false
+      // and the backfill regeneration pointless (review-caught 2026-07-27, the
+      // alpha/shadow rows).
       const newRows: string[] = baseMatch
         ? baseTokens[activeCols[0]]
             .map((t: FlatTok) => t.path)
             .filter((p: string) => !p.startsWith('brand-secondary/'))
+            .filter((p: string) => !p.startsWith('system/') || p.startsWith('system/link'))
             .filter((p: string) => !baseVars.has(p) && !legacyCandidates(p).some(lp => baseVars.has(lp)))
         : []
 
@@ -264,23 +285,65 @@ figma.ui.onmessage = async (msg) => {
         v.scopes = ['ALL_SCOPES']
         return v
       }
-      // The elevation planes lead the panel (v1's order); values are aliased below
-      // once the neutral exists. Four planes sink/base/lift/pop (owner spec + naming
-      // 2026-07-24) — ensure() migrates the old paper-raised/paper-sunken pair in
-      // place via RENAMED_LEAVES; base/pop are new.
-      ensure('system/sink')
-      ensure('system/base')
-      ensure('system/lift')
-      ensure('system/pop')
+      // Pole-aliasing (owner 2026-07-27): the on-fill leaves and the neutral anchor
+      // are exact poles by construction — alias them to the system/abs-* rows so the
+      // chip READS as the pole and the poles stay single-source. Emit-layer
+      // representation only: a non-pole value (an outline secondary's on-cta rides
+      // its ink-10) falls back to a raw write, so the alias never constrains the
+      // solve — the engine still picks the pole per family × column.
+      const POLE_LEAVES = (path: string) =>
+        path.endsWith('/on-cta') || path.endsWith('/on-highlight') || path === 'neutral/ink-12'
+      // EXACT poles only (per-channel EPS): the engine emits true 0/1 poles, so a
+      // loose band buys nothing — and the conversion pass below must never snap a
+      // hand-edited near-pole value (#FFFFF8) onto the abs row (review-caught
+      // 2026-07-27; a sum-tolerance gate did exactly that).
+      const isPole = (t: { r: number; g: number; b: number; a?: number }) => {
+        if (t.a !== undefined && t.a !== 1) return false
+        const w = Math.abs(t.r - 1) < EPS && Math.abs(t.g - 1) < EPS && Math.abs(t.b - 1) < EPS
+        const k = t.r < EPS && t.g < EPS && t.b < EPS
+        return w || k
+      }
+      const absFor = (t: { r: number; g: number; b: number }) =>
+        baseVars.get(t.r + t.g + t.b > 1.5 ? 'system/abs-white' : 'system/abs-black')
+      const seedValue = (v: figma.Variable, colId: string, t: FlatTok) => {
+        const target = POLE_LEAVES(t.path) && isPole(t) ? absFor(t) : undefined
+        v.setValueForMode(colId, target ? figma.variables.createVariableAlias(target) : toRGBA(t))
+      }
+      const seedFresh = (v: figma.Variable, path: string) => {
+        for (let i = 0; i < activeCols.length; i++) {
+          const seed = seedByCol.get(activeCols[i])!.get(path)
+          if (seed) seedValue(v, colIds[i], seed)
+        }
+      }
+      // The abs poles are created FIRST (they are alias targets and the owner's panel
+      // layout leads with them), then the elevation planes (aliased below once the
+      // neutral exists — ensure() migrates legacy sink/base/lift/pop names in place
+      // via RENAMED_LEAVES), then everything else in payload order.
+      for (const path of ['system/abs-black', 'system/abs-white']) {
+        const before = createdVars
+        const v = ensure(path)
+        if (createdVars > before) seedFresh(v, path)
+      }
+      ensure('system/surface/sink')
+      ensure('system/surface/base')
+      ensure('system/surface/lift')
+      ensure('system/surface/pop')
       for (const t of baseTokens[activeCols[0]]) { // all columns share the path set
         if (!withSecondary && t.path.startsWith('brand-secondary/')) continue
         const before = createdVars
         const v = ensure(t.path)
-        if (createdVars > before) { // fresh variable → seed every active column
-          for (let i = 0; i < activeCols.length; i++) {
-            const seed = seedByCol.get(activeCols[i])!.get(t.path)
-            if (seed) v.setValueForMode(colIds[i], toRGBA(seed))
-          }
+        if (createdVars > before) seedFresh(v, t.path) // fresh variable → seed every active column
+      }
+      // Existing bases predate the pole-aliasing: convert a RAW value that is exactly
+      // a pole to the alias (resolution-identical, so the create-once contract is
+      // preserved); user-edited (non-pole) values are never touched.
+      for (const [path, v] of baseVars) {
+        if (!POLE_LEAVES(path)) continue
+        for (let i = 0; i < activeCols.length; i++) {
+          const cur = v.valuesByMode[colIds[i]]
+          if (!cur || isAlias(cur) || !isPole(cur)) continue
+          const target = absFor(cur)
+          if (target && target.id !== v.id) v.setValueForMode(colIds[i], figma.variables.createVariableAlias(target))
         }
       }
       // Columns CREATED on an existing base (the apca posture flip, or a hand-deleted
@@ -304,13 +367,14 @@ figma.ui.onmessage = async (msg) => {
       let orphaned = 0
       if (addedCols.length) {
         const known = new Set(baseTokens[activeCols[0]].map(t => t.path))
-        known.add('system/sink'); known.add('system/base'); known.add('system/lift'); known.add('system/pop')
+        known.add('system/surface/sink'); known.add('system/surface/base')
+        known.add('system/surface/lift'); known.add('system/surface/pop')
         for (const p of baseVars.keys()) if (!known.has(p)) orphaned++
         for (const c of addedCols) {
           const idx = activeCols.indexOf(c)
           for (const t of baseTokens[c]) {
             const v = baseVars.get(t.path)
-            if (v) v.setValueForMode(colIds[idx], toRGBA(t))
+            if (v) seedValue(v, colIds[idx], t)
           }
         }
       }
@@ -328,8 +392,8 @@ figma.ui.onmessage = async (msg) => {
       const p3 = baseVars.get('neutral/paper-3')
       if (p0 && p1 && p2 && p3) {
         const planes: Array<[string, figma.Variable, figma.Variable]> = [
-          ['system/sink', p3, p0], ['system/base', p2, p1],
-          ['system/lift', p1, p2], ['system/pop', p0, p3],
+          ['system/surface/sink', p3, p0], ['system/surface/base', p2, p1],
+          ['system/surface/lift', p1, p2], ['system/surface/pop', p0, p3],
         ]
         for (const [path, light, darkVar] of planes) {
           const v = baseVars.get(path)!
@@ -385,6 +449,19 @@ figma.ui.onmessage = async (msg) => {
         if (secondaryMode === 'none' && t.path.startsWith('brand-secondary/')) continue
         work.push(t.path)
       }
+      // The pole aliases resolve through ONE hop (they point at the raw abs rows) —
+      // the diff must compare the brand token against the RESOLVED base color, or
+      // every aliased on-fill would read "different" and grow a pointless override.
+      const varById = new Map<string, figma.Variable>()
+      for (const v of baseVars.values()) varById.set(v.id, v)
+      const resolvedBase = (v: figma.Variable, colId: string): figma.RGBA | figma.VariableAlias | undefined => {
+        const cur = v.valuesByMode[colId]
+        if (isAlias(cur)) {
+          const inner = varById.get(cur.id)?.valuesByMode[colId]
+          if (inner && !isAlias(inner)) return inner
+        }
+        return cur
+      }
       const overrides = ext.variableOverrides
       let set = 0, removed = 0, inherited = 0
       for (const path of work) {
@@ -394,10 +471,16 @@ figma.ui.onmessage = async (msg) => {
         for (let i = 0; i < activeCols.length; i++) {
           const tok = brandByCol.get(activeCols[i])!.get(path)
           if (!tok) continue
-          if (valEq(v.valuesByMode[colIds[i]], tok)) {
+          if (valEq(resolvedBase(v, colIds[i]), tok)) {
             if (cur && cur[extColIds[i]] !== undefined) { v.removeOverrideForMode(extColIds[i]); removed++ }
             else inherited++
-          } else { v.setValueForMode(extColIds[i], toRGBA(tok)); set++ }
+          } else {
+            // a differing pole override rides the same alias idiom (a flipped on-cta
+            // reads "abs-white" in the extension, not an anonymous hex)
+            const target = POLE_LEAVES(path) && isPole(tok) ? absFor(tok) : undefined
+            v.setValueForMode(extColIds[i], target ? figma.variables.createVariableAlias(target) : toRGBA(tok))
+            set++
+          }
         }
       }
 

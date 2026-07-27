@@ -54,18 +54,26 @@ function flatten(node: FigmaGroup, prefix: string, out: FlatTok[]): void {
   }
 }
 
-// Panel order = creation order (v1's rule): system → neutral → brand-primary →
-// brand-secondary → signals. The system/sink|base|lift|pop planes are NOT here — they are
-// mode-divergent aliases the plugin creates first and wires after the neutral exists.
-// neutral/ink-12 (the anchor) is injected right after ink-11 (ladder order), a scheme-flipping pole.
+// Panel order = creation order (v1's rule; owner layout 2026-07-27: abs poles at the
+// system root, then surface/, then alpha/): system → neutral → brand-primary →
+// brand-secondary → signals. The system/surface/sink|base|lift|pop planes are NOT here —
+// they are scheme-divergent aliases the plugin creates after the abs rows (ordering) and
+// wires once the neutral exists. neutral/ink-12 (the anchor) is injected right after
+// ink-11 (ladder order), a scheme-flipping pole. The alpha/shadow ladder (owner
+// 2026-07-27) is pure black at 4/8/12% light; dark is heavier by necessity — near black
+// a light-mode alpha vanishes — at 32/48/64%.
 function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boolean): FlatTok[] {
   const W = { r: 1, g: 1, b: 1 }
   const K = { r: 0, g: 0, b: 0 }
+  const dark = scheme === 'dark'
   const out: FlatTok[] = [
     { path: 'system/abs-black', ...K },
     { path: 'system/abs-white', ...W },
-    { path: 'system/transparent', ...W, a: 0 },
-    { path: 'system/scrim', ...K, a: 0.6 },
+    { path: 'system/alpha/transparent', ...W, a: 0 },
+    { path: 'system/alpha/scrim', ...K, a: 0.6 },
+    { path: 'system/alpha/shadow-04', ...K, a: dark ? 0.32 : 0.04 },
+    { path: 'system/alpha/shadow-08', ...K, a: dark ? 0.48 : 0.08 },
+    { path: 'system/alpha/shadow-12', ...K, a: dark ? 0.64 : 0.12 },
   ]
   const neutral: FlatTok[] = []
   flatten(g.neutral as FigmaGroup, 'neutral', neutral)
@@ -78,8 +86,17 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
   for (const s of SIGNALS) flatten(g[s.name] as FigmaGroup, s.name, out)
   // the SYSTEM LINK trio (Phase 4): system-pathed but BRAND-OVERRIDABLE (unlike the
   // contract-invariant system/* poles — code.ts carves it out of the override skip);
-  // rows carry the resolved values (primary's cta-ink, or the custom seed's register)
-  flatten(g.link as FigmaGroup, 'system', out)
+  // rows carry the resolved values (primary's cta-ink, or the custom seed's register).
+  // The engine group's link/link-hover/link-pressed leaves are remapped to the
+  // system/link/* STATE names (owner regroup 2026-07-27).
+  const linkRows: FlatTok[] = []
+  flatten(g.link as FigmaGroup, 'system', linkRows)
+  const LINK_STATE: Record<string, string> = {
+    'system/link': 'system/link/enabled',
+    'system/link-hover': 'system/link/hover',
+    'system/link-pressed': 'system/link/pressed',
+  }
+  for (const t of linkRows) out.push({ ...t, path: LINK_STATE[t.path] ?? t.path })
   return out
 }
 

@@ -71,10 +71,24 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['wash-3', 'paper-3'],
   // elevation planes go 2 → 4 (owner spec + sink/base/lift/pop naming, 2026-07-24):
   // the old pair migrates to its closest role IN PLACE (bindings survive; their light
-  // stop shifts one rung per the new ladder — raised p0→p1, sunken p2→p3); base and
-  // pop are NEW vars, nothing to migrate.
-  ['paper-raised', 'lift'],
-  ['paper-sunken', 'sink'],
+  // stop shifts one rung per the new ladder — raised p0→p1, sunken p2→p3). These
+  // entries point STRAIGHT at the final surface/ homes (owner regroup 2026-07-27):
+  // legacyCandidates expands one hop only, so a chained old→mid→new table would
+  // strand pre-elevation files on the middle name.
+  ['paper-raised', 'surface/lift'],
+  ['paper-sunken', 'surface/sink'],
+  // system regroup (owner 2026-07-27): planes → system/surface/*, alpha-carrying
+  // utilities → system/alpha/*, link trio → system/link/* with state leaves.
+  // abs-black/abs-white stay at the system root. Same-value moves, no ladder shift.
+  ['sink', 'surface/sink'],
+  ['base', 'surface/base'],
+  ['lift', 'surface/lift'],
+  ['pop', 'surface/pop'],
+  ['transparent', 'alpha/transparent'],
+  ['scrim', 'alpha/scrim'],
+  ['link', 'link/enabled'],
+  ['link-hover', 'link/hover'],
+  ['link-pressed', 'link/pressed'],
 ]
 // Group renames (old path prefix → new), migrated in place like the leaves — the
 // info-color signal was renamed by identity to blue (2026-07-13); both the primitive
@@ -264,22 +278,28 @@ figma.ui.onmessage = async (msg) => {
       const W = { r: 1, g: 1, b: 1 }
       const K = { r: 0, g: 0, b: 0 }
       // The list order IS the display order in Figma (variables list in creation
-      // order). The four elevation planes sink/base/lift/pop (owner naming + spec,
-      // 2026-07-24) are mode-divergent aliases set later — once the theme's neutral
-      // papers exist. `elevation` = "create now for ordering, alias below". (Role
-      // names, not ladder numbers — each plane aliases a DIFFERENT ladder position
-      // per mode: elevation climbs paper-3→paper-0 in light, paper-0→paper-3 in
-      // dark, so a number would lie.)
+      // order; owner's panel layout 2026-07-27: abs poles at the system root, then
+      // surface/, then alpha/). The four elevation planes surface/sink|base|lift|pop
+      // are mode-divergent aliases set later — once the theme's neutral papers exist.
+      // `elevation` = "create now for ordering, alias below". (Role names, not ladder
+      // numbers — each plane aliases a DIFFERENT ladder position per mode: elevation
+      // climbs paper-3→paper-0 in light, paper-0→paper-3 in dark, so a number would
+      // lie.) The alpha/shadow ladder (owner 2026-07-27) is pure black at 4/8/12%
+      // light; dark is heavier by necessity — near black a light-mode alpha vanishes —
+      // at 32/48/64%.
       const STATIC_UTILS: Array<{ path: string; light?: figma.RGBA; dark?: figma.RGBA; elevation?: boolean }> = [
-        { path: 'system/sink', elevation: true },
-        { path: 'system/base', elevation: true },
-        { path: 'system/lift', elevation: true },
-        { path: 'system/pop', elevation: true },
-        { path: 'system/ink-12', light: K, dark: W },
         { path: 'system/abs-black', light: K, dark: K },
         { path: 'system/abs-white', light: W, dark: W },
-        { path: 'system/transparent', light: { r: 1, g: 1, b: 1, a: 0 }, dark: { r: 1, g: 1, b: 1, a: 0 } },
-        { path: 'system/scrim', light: { r: 0, g: 0, b: 0, a: 0.6 }, dark: { r: 0, g: 0, b: 0, a: 0.6 } },
+        { path: 'system/ink-12', light: K, dark: W },
+        { path: 'system/surface/sink', elevation: true },
+        { path: 'system/surface/base', elevation: true },
+        { path: 'system/surface/lift', elevation: true },
+        { path: 'system/surface/pop', elevation: true },
+        { path: 'system/alpha/transparent', light: { r: 1, g: 1, b: 1, a: 0 }, dark: { r: 1, g: 1, b: 1, a: 0 } },
+        { path: 'system/alpha/scrim', light: { r: 0, g: 0, b: 0, a: 0.6 }, dark: { r: 0, g: 0, b: 0, a: 0.6 } },
+        { path: 'system/alpha/shadow-04', light: { r: 0, g: 0, b: 0, a: 0.04 }, dark: { r: 0, g: 0, b: 0, a: 0.32 } },
+        { path: 'system/alpha/shadow-08', light: { r: 0, g: 0, b: 0, a: 0.08 }, dark: { r: 0, g: 0, b: 0, a: 0.48 } },
+        { path: 'system/alpha/shadow-12', light: { r: 0, g: 0, b: 0, a: 0.12 }, dark: { r: 0, g: 0, b: 0, a: 0.64 } },
       ]
       for (const u of STATIC_UTILS) {
         // getOrMigrate (not .get): the anchor was renamed ink-13→ink-12 — existing
@@ -308,7 +328,7 @@ figma.ui.onmessage = async (msg) => {
 
       // Write a primitive. on-fill leaves ALIAS a shared invariant (always, so
       // pre-existing raw on-fills get converted on re-apply); cta-border leaves ALIAS
-      // per mode — system/transparent when the fill passes the boundary gate, the
+      // per mode — system/alpha/transparent when the fill passes the boundary gate, the
       // family's own highlight-8 when it doesn't (alpha 0 in the payload = transparent);
       // every other leaf is a raw color, written on create or when `refresh` is set
       // (per-brand ramps).
@@ -345,8 +365,8 @@ figma.ui.onmessage = async (msg) => {
             v.setValueForMode(pDark, figma.variables.createVariableAlias(darkTarget))
           }
         } else if (t.a === 0 && (dk === undefined || dk.a === 0)) {
-          // fully-transparent leaf (an outline secondary's cta-1) → alias system/transparent
-          const transparent = primByName.get('system/transparent')
+          // fully-transparent leaf (an outline secondary's cta-1) → alias system/alpha/transparent
+          const transparent = primByName.get('system/alpha/transparent')
           if (transparent) {
             v.setValueForMode(pLight, figma.variables.createVariableAlias(transparent))
             v.setValueForMode(pDark, figma.variables.createVariableAlias(transparent))
@@ -373,7 +393,7 @@ figma.ui.onmessage = async (msg) => {
           }
         } else if (t.path === 'cta-border') {
           const sibling8 = primByName.get(path.replace(/cta-border$/, 'highlight-8'))
-          const transparent = primByName.get('system/transparent')
+          const transparent = primByName.get('system/alpha/transparent')
           const target = (leaf?: { a?: number }) =>
             leaf?.a === 0 ? transparent : (sibling8 ?? transparent)
           const lightTarget = target(t)
@@ -498,8 +518,10 @@ figma.ui.onmessage = async (msg) => {
 
       // ① system globals (brand-independent: every theme mode aliases the same seed;
       // idempotent — backfills pre-existing brand modes the moment the globals appear)
-      const SYSTEM_GLOBALS = ['system/sink', 'system/base', 'system/lift', 'system/pop',
-        'system/abs-black', 'system/abs-white', 'system/transparent', 'system/scrim']
+      const SYSTEM_GLOBALS = ['system/abs-black', 'system/abs-white',
+        'system/surface/sink', 'system/surface/base', 'system/surface/lift', 'system/surface/pop',
+        'system/alpha/transparent', 'system/alpha/scrim',
+        'system/alpha/shadow-04', 'system/alpha/shadow-08', 'system/alpha/shadow-12']
       for (const path of SYSTEM_GLOBALS) {
         for (const m of th.coll.modes) aliasInto(path, path, m.modeId)
       }
@@ -553,12 +575,20 @@ figma.ui.onmessage = async (msg) => {
       // link payload group, dedup'd by seed hex like signal variants) aliases the shared
       // link primitive instead.
       const linkGrp = shared.find(g => g.theme === 'link')
-      const LINK_LEAVES = [['link', 'cta-ink'], ['link-hover', 'cta-ink-hover'], ['link-pressed', 'cta-ink-pressed']] as const
+      // theme leaves live under system/link/* with STATE names (owner regroup
+      // 2026-07-27); the shared link PRIM keeps its historical link/link-hover/
+      // link-pressed leaves (third column) — prims are hidden and unbound, renaming
+      // them buys nothing.
+      const LINK_LEAVES = [
+        ['link/enabled', 'cta-ink', 'link'],
+        ['link/hover', 'cta-ink-hover', 'link-hover'],
+        ['link/pressed', 'cta-ink-pressed', 'link-pressed'],
+      ] as const
       // ANY missing leaf triggers the backfill (review-caught: a hand-deleted
       // link-hover/link-pressed pair used to recreate black in other modes unbackfilled)
       const linkIsNew = LINK_LEAVES.some(([themeLeaf]) => !themeByName.has(`system/${themeLeaf}`))
-      for (const [themeLeaf, brandLeaf] of LINK_LEAVES) {
-        aliasInto(`system/${themeLeaf}`, linkGrp ? `${linkGrp.prim}/${themeLeaf}` : `brand/${brand}/primary/${brandLeaf}`)
+      for (const [themeLeaf, brandLeaf, primLeaf] of LINK_LEAVES) {
+        aliasInto(`system/${themeLeaf}`, linkGrp ? `${linkGrp.prim}/${primLeaf}` : `brand/${brand}/primary/${brandLeaf}`)
       }
       // BACKFILL on first appearance (review-caught 2026-07-16): freshly created theme
       // vars hold the create-default (black) in every OTHER brand mode — the
@@ -619,10 +649,10 @@ figma.ui.onmessage = async (msg) => {
           v.setValueForMode(pLight, figma.variables.createVariableAlias(light))
           v.setValueForMode(pDark, figma.variables.createVariableAlias(dark))
         }
-        aliasElev('system/sink', themeNeutralP3, themeNeutralP0)
-        aliasElev('system/base', themeNeutralP2, themeNeutralP1)
-        aliasElev('system/lift', themeNeutralP1, themeNeutralP2)
-        aliasElev('system/pop', themeNeutralP0, themeNeutralP3)
+        aliasElev('system/surface/sink', themeNeutralP3, themeNeutralP0)
+        aliasElev('system/surface/base', themeNeutralP2, themeNeutralP1)
+        aliasElev('system/surface/lift', themeNeutralP1, themeNeutralP2)
+        aliasElev('system/surface/pop', themeNeutralP0, themeNeutralP3)
       }
 
       figma.ui.postMessage({ type: 'done', brand, aliases: aliasCount, createdShared, secondary: secondaryMode })

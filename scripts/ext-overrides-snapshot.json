@@ -1,9 +1,9 @@
 {
  "base": {
-  "wcag": 151,
-  "wcag-dark": 151,
-  "apca": 151,
-  "apca-dark": 151
+  "wcag": 154,
+  "wcag-dark": 154,
+  "apca": 154,
+  "apca-dark": 154
  },
  "brands": {
   "dark-roast": {
@@ -61,9 +61,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -121,9 +121,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -179,9 +179,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -239,9 +239,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "turkish-coffee": {
@@ -299,9 +299,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -359,9 +359,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -417,9 +417,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -477,9 +477,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "black-currant": {
@@ -556,9 +556,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "blue/cta",
@@ -633,9 +633,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "blue/cta",
@@ -709,9 +709,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "blue/cta",
@@ -785,9 +785,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "espresso": {
@@ -847,9 +847,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -907,9 +907,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -966,9 +966,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -1025,9 +1025,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "cold-brew": {
@@ -1087,9 +1087,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -1146,9 +1146,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -1205,9 +1205,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -1264,9 +1264,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "butterfly-pea": {
@@ -1343,9 +1343,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "blue/cta",
@@ -1420,9 +1420,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "blue/cta",
@@ -1496,9 +1496,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "blue/cta",
@@ -1572,9 +1572,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "rooibos": {
@@ -1630,9 +1630,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -1690,9 +1690,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -1746,9 +1746,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -1806,9 +1806,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "pu-erh": {
@@ -1865,9 +1865,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -1925,9 +1925,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -1981,9 +1981,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -2041,9 +2041,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "peppermint": {
@@ -2120,9 +2120,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -2197,9 +2197,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -2273,9 +2273,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -2349,9 +2349,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "blueberry": {
@@ -2409,9 +2409,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -2469,9 +2469,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -2527,9 +2527,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -2587,9 +2587,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "hibiscus": {
@@ -2651,9 +2651,9 @@
     "red/cta-hover",
     "red/cta-pressed",
     "red/on-cta",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -2711,9 +2711,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -2768,9 +2768,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -2828,9 +2828,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "cranberry": {
@@ -2888,9 +2888,9 @@
     "red/cta-hover",
     "red/cta-pressed",
     "red/on-cta",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -2945,9 +2945,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -3000,9 +3000,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -3057,9 +3057,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "rose-hip": {
@@ -3099,9 +3099,9 @@
     "brand-secondary/wash-5",
     "brand-secondary/wash-6",
     "brand-secondary/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -3140,9 +3140,9 @@
     "brand-secondary/wash-5",
     "brand-secondary/wash-6",
     "brand-secondary/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -3180,9 +3180,9 @@
     "brand-secondary/wash-5",
     "brand-secondary/wash-6",
     "brand-secondary/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -3221,9 +3221,9 @@
     "brand-secondary/wash-5",
     "brand-secondary/wash-6",
     "brand-secondary/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "taro-latte": {
@@ -3282,9 +3282,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -3342,9 +3342,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -3401,9 +3401,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -3460,9 +3460,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "lavender-latte": {
@@ -3521,9 +3521,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -3581,9 +3581,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -3639,9 +3639,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -3699,9 +3699,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "hojicha": {
@@ -3759,9 +3759,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -3820,9 +3820,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -3877,9 +3877,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -3936,9 +3936,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "ube-latte": {
@@ -4015,9 +4015,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "blue/cta",
@@ -4092,9 +4092,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "blue/cta",
@@ -4168,9 +4168,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "blue/cta",
@@ -4244,9 +4244,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "chili-mocha": {
@@ -4308,9 +4308,9 @@
     "red/cta",
     "red/cta-hover",
     "red/cta-pressed",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -4368,9 +4368,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -4429,9 +4429,9 @@
     "red/cta",
     "red/cta-hover",
     "red/cta-pressed",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -4489,9 +4489,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "turmeric-latte": {
@@ -4553,9 +4553,9 @@
     "red/cta",
     "red/cta-hover",
     "red/cta-pressed",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -4614,9 +4614,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -4675,9 +4675,9 @@
     "red/cta",
     "red/cta-hover",
     "red/cta-pressed",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -4735,9 +4735,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "matcha": {
@@ -4814,9 +4814,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -4891,9 +4891,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -4967,9 +4967,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -5044,9 +5044,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "dragonfruit": {
@@ -5089,9 +5089,9 @@
     "brand-secondary/wash-5",
     "brand-secondary/wash-6",
     "brand-secondary/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -5130,9 +5130,9 @@
     "brand-secondary/wash-5",
     "brand-secondary/wash-6",
     "brand-secondary/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -5172,9 +5172,9 @@
     "brand-secondary/wash-5",
     "brand-secondary/wash-6",
     "brand-secondary/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -5212,9 +5212,9 @@
     "brand-secondary/wash-5",
     "brand-secondary/wash-6",
     "brand-secondary/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "chai": {
@@ -5275,9 +5275,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -5336,9 +5336,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -5395,9 +5395,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -5454,9 +5454,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "sencha": {
@@ -5534,9 +5534,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -5611,9 +5611,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -5687,9 +5687,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -5764,9 +5764,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "mint-julep": {
@@ -5827,9 +5827,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -5887,9 +5887,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -5947,9 +5947,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -6007,9 +6007,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "blue-lagoon": {
@@ -6071,9 +6071,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -6132,9 +6132,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -6192,9 +6192,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -6252,9 +6252,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "earl-grey": {
@@ -6314,9 +6314,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -6375,9 +6375,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -6434,9 +6434,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -6495,9 +6495,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "golden-milk": {
@@ -6558,9 +6558,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed",
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed",
     "yellow/cta",
     "yellow/cta-hover",
     "yellow/cta-ink",
@@ -6636,9 +6636,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed",
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed",
     "yellow/cta",
     "yellow/cta-hover",
     "yellow/cta-ink",
@@ -6713,9 +6713,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed",
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed",
     "yellow/cta",
     "yellow/cta-hover",
     "yellow/cta-ink",
@@ -6790,9 +6790,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed",
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed",
     "yellow/cta",
     "yellow/cta-hover",
     "yellow/cta-ink",
@@ -6854,9 +6854,9 @@
     "brand-secondary/wash-5",
     "brand-secondary/wash-6",
     "brand-secondary/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -6896,9 +6896,9 @@
     "brand-secondary/wash-5",
     "brand-secondary/wash-6",
     "brand-secondary/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -6939,9 +6939,9 @@
     "brand-secondary/wash-5",
     "brand-secondary/wash-6",
     "brand-secondary/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -6981,9 +6981,9 @@
     "brand-secondary/wash-5",
     "brand-secondary/wash-6",
     "brand-secondary/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "oat-milk": {
@@ -7044,9 +7044,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -7104,9 +7104,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -7164,9 +7164,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -7224,9 +7224,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "chamomile": {
@@ -7287,9 +7287,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed",
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed",
     "yellow/cta",
     "yellow/cta-hover",
     "yellow/cta-ink",
@@ -7365,9 +7365,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed",
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed",
     "yellow/cta",
     "yellow/cta-hover",
     "yellow/cta-ink",
@@ -7442,9 +7442,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed",
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed",
     "yellow/cta",
     "yellow/cta-hover",
     "yellow/cta-ink",
@@ -7519,9 +7519,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed",
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed",
     "yellow/cta",
     "yellow/cta-hover",
     "yellow/cta-ink",
@@ -7599,9 +7599,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed",
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed",
     "yellow/cta",
     "yellow/cta-hover",
     "yellow/cta-ink",
@@ -7676,9 +7676,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed",
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed",
     "yellow/cta",
     "yellow/cta-hover",
     "yellow/cta-ink",
@@ -7753,9 +7753,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed",
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed",
     "yellow/cta",
     "yellow/cta-hover",
     "yellow/cta-ink",
@@ -7830,9 +7830,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed",
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed",
     "yellow/cta",
     "yellow/cta-hover",
     "yellow/cta-ink",
@@ -7909,9 +7909,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -7968,9 +7968,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -8026,9 +8026,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -8085,9 +8085,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "L1-near-black": {
@@ -8145,9 +8145,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -8205,9 +8205,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -8263,9 +8263,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -8322,9 +8322,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "L2-dark": {
@@ -8383,9 +8383,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -8444,9 +8444,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -8502,9 +8502,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -8561,9 +8561,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "L3-rich": {
@@ -8621,9 +8621,9 @@
     "red/cta-hover",
     "red/cta-pressed",
     "red/on-cta",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -8677,9 +8677,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -8732,9 +8732,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -8788,9 +8788,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "L4-vivid": {
@@ -8851,9 +8851,9 @@
     "red/cta",
     "red/cta-hover",
     "red/cta-pressed",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -8911,9 +8911,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -8972,9 +8972,9 @@
     "red/cta",
     "red/cta-hover",
     "red/cta-pressed",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -9032,9 +9032,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "L5-bright": {
@@ -9094,9 +9094,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -9154,9 +9154,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -9213,9 +9213,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -9273,9 +9273,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "L6-light": {
@@ -9335,9 +9335,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed",
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed",
     "yellow/cta",
     "yellow/cta-hover",
     "yellow/cta-ink",
@@ -9412,9 +9412,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed",
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed",
     "yellow/cta",
     "yellow/cta-hover",
     "yellow/cta-ink",
@@ -9488,9 +9488,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed",
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed",
     "yellow/cta",
     "yellow/cta-hover",
     "yellow/cta-ink",
@@ -9565,9 +9565,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed",
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed",
     "yellow/cta",
     "yellow/cta-hover",
     "yellow/cta-ink",
@@ -9643,9 +9643,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -9703,9 +9703,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -9761,9 +9761,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -9820,9 +9820,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "teal": {
@@ -9881,9 +9881,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -9941,9 +9941,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -9999,9 +9999,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -10058,9 +10058,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "vs-green (shifts lime)": {
@@ -10137,9 +10137,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -10214,9 +10214,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -10289,9 +10289,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -10366,9 +10366,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "vs-green (shifts teal)": {
@@ -10445,9 +10445,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -10522,9 +10522,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -10598,9 +10598,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -10675,9 +10675,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "vs-blue (shifts cyan)": {
@@ -10752,9 +10752,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "blue/cta",
@@ -10828,9 +10828,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "blue/cta",
@@ -10903,9 +10903,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "blue/cta",
@@ -10979,9 +10979,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "vs-blue (no shift)": {
@@ -11039,9 +11039,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -11098,9 +11098,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -11156,9 +11156,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -11215,9 +11215,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "vs-red (cooler)": {
@@ -11277,9 +11277,9 @@
     "red/cta",
     "red/cta-hover",
     "red/cta-pressed",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -11336,9 +11336,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -11396,9 +11396,9 @@
     "red/cta",
     "red/cta-hover",
     "red/cta-pressed",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -11456,9 +11456,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "vs-red (warmer)": {
@@ -11519,9 +11519,9 @@
     "red/cta",
     "red/cta-hover",
     "red/cta-pressed",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "wcag-dark": [
     "brand-primary/cta",
@@ -11579,9 +11579,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca": [
     "brand-primary/cta",
@@ -11639,9 +11639,9 @@
     "red/cta",
     "red/cta-hover",
     "red/cta-pressed",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ],
    "apca-dark": [
     "brand-primary/cta",
@@ -11699,9 +11699,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed"
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed"
    ]
   },
   "vs-yellow": {
@@ -11761,9 +11761,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed",
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed",
     "yellow/cta",
     "yellow/cta-hover",
     "yellow/cta-ink",
@@ -11838,9 +11838,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed",
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed",
     "yellow/cta",
     "yellow/cta-hover",
     "yellow/cta-ink",
@@ -11914,9 +11914,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed",
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed",
     "yellow/cta",
     "yellow/cta-hover",
     "yellow/cta-ink",
@@ -11991,9 +11991,9 @@
     "neutral/wash-5",
     "neutral/wash-6",
     "neutral/wash-7",
-    "system/link",
-    "system/link-hover",
-    "system/link-pressed",
+    "system/link/enabled",
+    "system/link/hover",
+    "system/link/pressed",
     "yellow/cta",
     "yellow/cta-hover",
     "yellow/cta-ink",
