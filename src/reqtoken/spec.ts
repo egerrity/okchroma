@@ -122,6 +122,11 @@ const P_TEXT: Producer = { hue: 'warm-torsion', L: 'perceptual', chroma: 'brand'
 
 // light stop-8 carries the WCAG 1.4.11 non-text 3:1 vs paper-2 (the scale's own resolved stop 2)
 const S8: Require = { metric: 'wcag', against: 'paper-2', target: STOP_8_NONTEXT_CONTRAST, level: 'AA' }
+// INK ANCHOR NOTE (owner 2026-07-28): in the WCAG lane the resolver anchors ink
+// requires (stops 10-11 + the cta-ink state floor) at paper-3 — the nearest paper —
+// so "ink-10 is usable on every paper" is a law, not a hope (resolve.ts
+// wcagInkAnchorStop). The apca lane keeps paper-2 (clears paper-3 with margin,
+// byte-identical). `against` below records the apca-lane/legacy anchor.
 const T10: Require = { metric: 'wcag', against: 'paper-2', target: STOP_10_CONTRAST, level: 'AA' }
 const T11: Require = { metric: 'wcag', against: 'paper-2', target: STOP_11_CONTRAST_FLOOR, level: 'AAA' }
 

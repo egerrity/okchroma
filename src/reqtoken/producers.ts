@@ -337,6 +337,7 @@ export function placeDark(dctx: DarkCtx, rootL: number, chromaAt: (L: number) =>
 // clamped to the ground so nothing sinks below the page.
 const DELTA_DARK_GROUND_APP = grayApparentL(0.178)        // the dark page's apparent lightness
 const DELTA_LIGHT_GROUND_APP = grayApparentL(1.0)         // white's (≈ 100)
+const DELTA_DARK_GROUND_LSTAR = lstarFromY(wcagY(0.178, 0, 0)) // the same ground, photometric (C27)
 // `lift` (C24 dark band lift, owner-calibrated): scales the apparent depth — the virtual
 // twin sits lift× the light twin's distance below white. Default 1 = the plain mirror.
 export function deltaDarkTargetL(
@@ -384,19 +385,49 @@ export function cuspDarknessW(H: number): number {
 // C24 combined dark placement for the lifted band: depth blends apparent → plain-luminance
 // parity by τ = tStop·w(hue), then the lift scales it and the chroma table samples the
 // EFFECTIVE depth. Returns the placed L and C (H = the twin's, caller-side).
+// C27 PAPER PARITY (owner 2026-07-28, "papers are backgrounds — one level"): at the
+// FULL-parity stops (T=1, the papers) the parity is hue-blind AND photometric — every
+// family anchors to the ACHROMATIC light scaffold's luminance depth (grayLightL) and
+// lands at the same Y, tinted by its own C/H. The τ·w blend below keeps serving the
+// washes, where the H-K credit is real (w was calibrated on her wash marks); composed
+// onto the papers it scattered them per hue (blue got parity, yellow didn't), and the
+// credited-apparent depth carry scattered them further — her "the pop looks lighter
+// than all the other paper-3s" catch. Chroma still samples the τ-blend effective depth
+// (the tint register the approved exhibit carried).
 export function deltaDarkPlace(
   lightStops: Array<{ stop: number; L: number; C: number; H: number }>,
   lightTwin: { L: number; C: number; H: number },
-  lift: number, tStop: number,
+  lift: number, _tStop: number, grayLightL?: number,
 ): { L: number; C: number } {
-  const tau = tStop * cuspDarknessW(lightTwin.H)
+  // C28 ONE DIALECT (owner 2026-07-28, superseding C24's τ·w blend and C27's
+  // papers-only branch): the WHOLE surface band lands on the ACHROMATIC scaffold's
+  // photometric ladder (lift-scaled), tinted by its own C/H. Luminance is therefore
+  // identical across families at every rung — no hue can sit physically darker than
+  // its neighbours, which is what made blue/violet sink and the 3→4 seam wobble — and
+  // the H-K shine rides ON TOP as visible shine instead of being paid for in
+  // luminance. Steps come out monotone-growing for every family because the gray
+  // ladder is smooth and every family now shares it. Retires DARK_SHINE_PARITY_T +
+  // cuspDarknessW from the band (kept only for their record in CATALOG C24).
   const cl = clampChromaToGamut(lightTwin.L, lightTwin.C, lightTwin.H)
   const dApp = DELTA_LIGHT_GROUND_APP - apparentL(lightTwin.L, cl, lightTwin.H)
+  // CHROMA is unchanged from C24/C27: the light ladder sampled at the twin's OWN
+  // lift-scaled photometric depth. (Sampling at the raw lift, or at the gray's depth,
+  // both dip the emitted chroma for warm hues whose gamut ceiling moves fast with L —
+  // caught by smoothness `wobble`, a chroma-monotonicity detector.)
   const dLum = 100 - lstarFromY(wcagY(lightTwin.L, cl, lightTwin.H))
-  const depth = (1 - tau) * dApp + tau * dLum
-  const C = deltaLiftChroma(lightStops, lightTwin, (lift * depth) / Math.max(1e-6, dApp))
+  const C = deltaLiftChroma(lightStops, lightTwin, (lift * dLum) / Math.max(1e-6, dApp))
+  if (grayLightL !== undefined) {
+    const dLumGray = 100 - lstarFromY(wcagY(grayLightL, 0, 0))
+    const targetLstar = DELTA_DARK_GROUND_LSTAR + lift * dLumGray
+    let lo = 0.05, hi = 0.98
+    for (let i = 0; i < 40; i++) {
+      const m = (lo + hi) / 2
+      lstarFromY(wcagY(m, clampChromaToGamut(m, C, lightTwin.H), lightTwin.H)) < targetLstar ? (lo = m) : (hi = m)
+    }
+    return { L: (lo + hi) / 2, C }
+  }
   const target = Math.min(DELTA_LIGHT_GROUND_APP - 0.5,
-    Math.max(DELTA_DARK_GROUND_APP + 0.5, DELTA_DARK_GROUND_APP + lift * depth))
+    Math.max(DELTA_DARK_GROUND_APP + 0.5, DELTA_DARK_GROUND_APP + lift * dApp))
   return { L: solveLForApparent(target, C, lightTwin.H), C }
 }
 

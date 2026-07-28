@@ -159,7 +159,7 @@ for (const { h, s } of neutralByHue) {
   ok(Math.abs((ctaL.L - s.ctaPressed.L) - stateStepL(ctaL.L, 'light', 2)) < 1e-6, `neutral h${h} light pressed step off the law (${f(ctaL.L - s.ctaPressed.L)})`)
   // DARK: fed + uniform pop-clearance lift — clears the bar, never sinks below
   // its fed stop, minimal (no over-lift), and the state STEPS stay the stops'.
-  const p3D = s.dark[2]
+  const p3D = s.dark[2] // paper-3 — the POP plane (generated-pop candidate retired, owner 2026-07-28)
   const popRatio = contrastRatio(wcagY(ctaD.L, ctaD.C, ctaD.H), wcagY(p3D.L, p3D.C, p3D.H))
   ok(popRatio >= NEUTRAL_CTA_DARK_POP_CLEARANCE - 0.005, `neutral h${h} cta dark below pop clearance (${popRatio.toFixed(3)} vs ${NEUTRAL_CTA_DARK_POP_CLEARANCE})`)
   ok(ctaD.L >= s.dark[3].L - 1e-6, `neutral h${h} cta dark sank below its fed stop4`)

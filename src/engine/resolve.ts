@@ -30,7 +30,7 @@ const buildSignalScales = (contrastProfile?: ContrastProfile): SignalScales =>
     SIGNALS.map(def => [
       def.name,
 
-      { def, scale: generateScale(def.hex, def.name, undefined, { highlight: true, darkChromaCurve, darkCtaC: 'signal', darkFillMinL: def.darkFillMinL, enforceOnFillContrast: true, suppressRedCool: true, goldBoost: true, contrastProfile }) },
+      { def, scale: generateScale(def.hex, def.name, undefined, { highlight: true, darkChromaCurve, darkCtaC: 'signal', darkFillMinL: def.darkFillMinL, enforceOnFillContrast: true, suppressRedCool: true, goldBoost: true, signalWarmDrift: true, contrastProfile }) },
     ])
   )
 
@@ -99,7 +99,7 @@ function redComplementVariant(
 ): { scale: GeneratedScale; note: string } | null {
   const rctx = buildContext(red.def.hex, {
     highlight: true, darkChromaCurve, darkCtaC: 'signal', darkFillMinL: red.def.darkFillMinL,
-    enforceOnFillContrast: true, suppressRedCool: true, goldBoost: true, contrastProfile,
+    enforceOnFillContrast: true, suppressRedCool: true, goldBoost: true, signalWarmDrift: true, contrastProfile,
   } as any)
   const redCta = red.scale.cta
   const release = RED_GATE.G + RED_SOLVE.ring

@@ -106,6 +106,9 @@ export interface GenerateOptions {
   // shine. Brands ride their own identity chroma; the brand-side fine-tune (ID-relative
   // ramp + amplitude) is parked behind the P3 gamut work (CATALOG C7, owner 2026-07-07).
   goldBoost?: boolean
+  // C28: this scale re-derives the warm-spine drift at its own DARK L (signals only —
+  // brands keep a mode-stable identity hue). Set by the signal builders.
+  signalWarmDrift?: boolean
 
   style?: 'default' | 'deeper' | 'full-chroma'
 
@@ -290,14 +293,16 @@ export function generateNeutralScale(
   scale.cta = asCta(9, scale.light[3])
   scale.ctaDark = asCta(9, scale.dark[3])
   // DARK POP CLEARANCE (owner 2026-07-27): the fed dark washes pack near black, so
-  // the quiet fill sat ~1.07 vs the POP plane (dark paper-3) — invisible on the very
-  // cards its buttons ride, while "clearing" ~1.3 against absolute black, a surface
-  // nothing renders on. The clearance reads against pop: lift the rest fill until it
-  // clears the bar vs the resolved dark paper-3 — the dark mirror of light's fed cta,
-  // which already reads ~1.25 against its own white pop. Solved on the wcag ratio
-  // (a perceptual separation bar, profile-agnostic; the dual-rendition legality
-  // solver is reused); chroma re-clamps at the lifted L via makeStop; on-text is
-  // re-judged below.
+  // the quiet fill sat ~1.07 vs the POP plane (dark paper-3 — post-C27 the one-level
+  // highest background; a generated pop candidate was tried and RETIRED, owner
+  // 2026-07-28: once the papers share a photometric level, pop = paper-3 is the
+  // design) — invisible on the very cards its buttons ride, while "clearing" ~1.3
+  // against absolute black, a surface nothing renders on. The clearance reads
+  // against pop: lift the rest fill until it clears the bar vs the resolved dark
+  // paper-3 — the dark mirror of light's fed cta, which already reads ~1.25 against
+  // its own white pop. Solved on the wcag ratio (a perceptual separation bar,
+  // profile-agnostic; the dual-rendition legality solver is reused); chroma
+  // re-clamps at the lifted L via makeStop; on-text is re-judged below.
   const popDark = scale.dark[2] // paper-3 — the POP plane in dark
   const popDarkY = wcagY(popDark.L, popDark.C, popDark.H)
   const clearedL = findLForContrastUp(scale.ctaDark.L, scale.ctaDark.C, scale.ctaDark.H, popDarkY, NEUTRAL_CTA_DARK_POP_CLEARANCE)

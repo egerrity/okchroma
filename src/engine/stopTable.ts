@@ -108,8 +108,15 @@ export const STOP_8_NONTEXT_CONTRAST = 3.0
 // chroma samples the light ladder's own chroma-at-depth relationship at the scaled depth
 // (deltaLiftChroma; per seed, per hue — the cross-hue perceptualDarkC equalizer was tried
 // for this and vetoed: it dusted strong-H-K hues ~30%).
+// C28 RE-MARK (owner 2026-07-28, "half the lift looks right"): the values below are her
+// original 2026-07-27 ramp at HALF strength — 1 + (old−1)/2. The ramp SHAPE is hers,
+// unchanged; only the amount moved, because C28 changed what the number multiplies. The
+// old ×1.25→1.75 was calibrated against APPARENT depth; the photometric ladder now
+// supplies most of that loudness itself, so the same numbers over-applied and pushed
+// wash-7 into the highlight band (7→8 seam collapse + a chroma peak at stop 7 — caught
+// by dark-audit §A and smoothness `wobble`). Her exhibit compared full/half/quarter.
 export const DARK_BAND_LIFT: Record<number, number> = {
-  2: 1.25, 3: 1.35, 4: 1.45, 5: 1.55, 6: 1.65, 7: 1.75,
+  2: 1.125, 3: 1.175, 4: 1.225, 5: 1.275, 6: 1.325, 7: 1.375,
 }
 
 // ── DARK SHINE PARITY (owner-calibrated 2026-07-27, per-element marks + cusp confirm) ──
@@ -161,6 +168,19 @@ export const DARK_BRAND_FILL_MIN_L = 0.70
 // trio lifts uniformly until the cta clears this WCAG ratio vs the resolved
 // dark paper-3; light needs no lift — its fed cta already reads ~1.25 against
 // its own white pop.
+// C28 SIGNAL WARM DRIFT (owner 2026-07-28, "warning is supposed to be rotating warm"):
+// the warm/gold spine drift is an L-DEPENDENT correction, but the delta model carries
+// hue verbatim from the light twin — so a dark stop sat at yellow-for-a-LIGHT-stop and
+// warning read olive (and chroma-starved: it was at 100% of the ceiling AT THE WRONG
+// HUE). Dark SIGNAL stops re-derive the same light drift law at their own dark L, at
+// this fraction — owner picked the conservative ⅓ from the four-way exhibit.
+// SIGNALS ONLY (owner ruling: "the brands shouldn't rotate") — a brand's identity hue
+// is mode-stable by design; a signal's job is to read correctly at its own lightness.
+// The lemon variant self-excludes: C8's cool-edge taper (WARM_TORSION / LIGHT_DRIFT_
+// COOL_HI) zeroes the drift past H104, so lemon holds its identity hue — verified
+// byte-identical. Reuse ctx.lightHueAt (the law WITH its tapers), never the raw spine.
+export const DARK_SIGNAL_WARM_DRIFT = 1 / 3
+
 export const NEUTRAL_CTA_DARK_POP_CLEARANCE = 1.2
 
 

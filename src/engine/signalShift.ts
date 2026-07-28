@@ -53,7 +53,7 @@ function swapScale(baseHex: string, def: SignalDef, contrastProfile?: ContrastPr
     darkFillMinL: def.darkFillMinL,
     enforceOnFillContrast: true,
     suppressRedCool: true,
-    goldBoost: true,
+    goldBoost: true, signalWarmDrift: true,
     contrastProfile,
   })
 }
@@ -67,7 +67,7 @@ function lemonScale(def: SignalDef, contrastProfile?: ContrastProfile): Generate
     darkCtaC: 'signal',
     enforceOnFillContrast: true,
     suppressRedCool: true,
-    goldBoost: true,
+    goldBoost: true, signalWarmDrift: true,
     contrastProfile,
   })
 }

@@ -11,7 +11,7 @@ import { apparentL, perceptualRungL, perceptualDarkC, solveLForApparent } from '
 import { clampChromaToGamut, wcagY, contrastRatio, legalRatio, findMaxLForContrast, apcaLc } from '../engine/constraints'
 import { hexToOklch, srgbEmitChannels, redSolveDist, RED_GATE, RED_SOLVE } from '../engine/colorMath'
 import { hoverL, pressedL, stateFillL } from '../engine/archetypes'
-import { DARK_BAND_LIFT, DARK_SHINE_PARITY_T } from '../engine/stopTable'
+import { DARK_BAND_LIFT, DARK_SHINE_PARITY_T, LIGHT_L, DARK_SIGNAL_WARM_DRIFT } from '../engine/stopTable'
 import { MODE_SPECS, type ModeSpec, type StopReq, type RoleReq, type Require } from './spec'
 import {
   buildContext, buildDarkContext, type Ctx, type DarkCtx, type ResolveOpts,
@@ -91,13 +91,20 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     const ref = refOf(stopNum, forWhom)
     return apcaYAt(ref.L, ref.C, ref.H)
   }
+  // THE INK ANCHOR (owner rule 2026-07-28: "ink-10 can only be used on papers" — and it
+  // must PASS on all of them): in the WCAG lane the ink requires (stops 10-11 + the
+  // cta-ink state floor) anchor at paper-3, the NEAREST paper (light's darkest, dark's
+  // lightest), so clearing the bar there clears every paper. The apca lane keeps its
+  // paper-2 anchor — its Lc solve already clears paper-3 with margin everywhere
+  // (agnostic sweep worst 5.28 wcag-ratio, 0/216 under 4.5) and stays byte-identical.
+  const wcagInkAnchorStop = (stop: number) => (stop >= 10 ? 3 : 2)
   // the light contrast solves are metric-blind: the resolver hands the producer a maxLFor closure built
   // from the declared require. wcag closures call findMaxLForContrast with the exact old arguments
   // (float-identical — the wcag profile stays byte-for-byte); apca closures swap in the Lc bisection.
   // `withMargin` mirrors the wcag idiom: the scale solve carries the emit margin, the ink solve doesn't.
   const maxLForOf = (req: Require, forWhom: number, withMargin: boolean): ((C: number, H: number) => number) => {
     if (req.metric === 'wcag') {
-      const refY = refYOf(2, forWhom)
+      const refY = refYOf(wcagInkAnchorStop(forWhom), forWhom)
       const t = withMargin ? req.target + 0.05 : req.target
       return (C, H) => findMaxLForContrast(C, H, refY, t)
     }
@@ -167,6 +174,8 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       // ~0.3 L lands in a different hue family (gold→orange). The C9/C11 dark text register + the T11/T12
       // requires own the inks, on the seed-keyed path below.
       if (sp.group === 'ink' && sp.stop === 10 && chromaAt) darkInk10ChromaAt = chromaAt
+      // C28 SIGNAL WARM DRIFT: the re-derived hue for this stop (signals only), else null
+      let spineH: number | null = null
       const dl = ctx.opts?.deltaLightStops
       const ls = dl && sp.stop >= 1 && sp.stop <= 9 ? dl.find(s => s.stop === sp.stop) : undefined
       if (ls && ctx.opts?.deltaCarry) {
@@ -191,9 +200,23 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         let L: number
         if (sp.require && sp.require.metric !== 'min-separation') L = 0.05
         else if (lift !== 1 || tShine > 0) {
-          const p = deltaDarkPlace(dl!, ls, lift, tShine)
+          // C27: full-parity stops (the papers) also get the achromatic scaffold
+          // anchor — one photometric level across families (owner 2026-07-28)
+          const p = deltaDarkPlace(dl!, ls, lift, tShine, LIGHT_L[sp.stop - 1])
           L = p.L; C = p.C
         } else L = deltaDarkTargetL(ls, C, ls.H)
+        // C28: the warm-spine drift is L-DEPENDENT, but the carry copies the light twin's
+        // hue — leaving a dark stop at yellow-for-a-light-stop (warning read olive). Signals
+        // re-derive the SAME light drift law (ctx.lightHueAt — WITH its C8 cool-edge taper,
+        // so lemon holds its identity hue) at this stop's own dark L, at the owner's
+        // conservative fraction. Brands keep a mode-stable identity hue by design.
+        if (ctx.opts?.signalWarmDrift) {
+          const h = ls.H + DARK_SIGNAL_WARM_DRIFT * (ctx.lightHueAt(L) - ls.H)
+          if (Math.abs(h - ls.H) > 1e-9) {
+            spineH = h
+            C = Math.min(C, clampChromaToGamut(L, C, h))
+          }
+        }
         // BAND ORDER (owner 2026-07-09): the highlight fill (9) sits ABOVE its 3:1 rung (8). Light gets this
         // free from near-white geometry; in dark the rung's luminance law reads hue-dependently in apparent
         // terms and lands above parity-9 (inverted 108/108 under apca). Floor 9 at the rung's apparent plus
@@ -233,7 +256,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         if (ctx.opts.deltaHKPlace) L = perceptualRungL(sp.rootL, ls.C, ls.H)                                       // old apparent-L placement
         if (ctx.opts.deltaLiftFloor) L = Math.max(L, sp.rootL)                                                     // old lift/recede floor
         if (ctx.opts.deltaChromaEq && sp.group !== 'ink') C = ctx.cAt('dark', L, perceptualDarkC(L, ls.H, ctx.brandC))  // old H-K chroma equalizer
-        placed = { L, C, H: ls.H }
+        placed = { L, C, H: spineH ?? ls.H }
       } else if (sp.stop === 9) {
         const hlC = darkHighlightChromaAt(ctx, d, sp.baseC ?? 0, sp.satFraction ?? 1)
         if (ls) {
@@ -261,14 +284,14 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         // defines dark C/H as light's; recomputing them here was the last impurity, delta-purity.ts). The
         // seed-keyed path keeps the old recompute byte-identically.
         const carryReq = !!(ls && ctx.opts?.deltaCarry)
-        const hAtL = (L: number) => (carryReq ? ls!.H : d.darkHueAtL(L))
+        const hAtL = (L: number) => (carryReq ? (spineH ?? ls!.H) : d.darkHueAtL(L))
         const cAtL = (L: number) => carryReq
           ? ls!.C
           : sp.stop === 9
             ? darkHighlightChromaAt(ctx, d, sp.baseC ?? 0, sp.satFraction ?? 1)(L, hAtL(L))
             : chromaAt!(L)
         const isApca = req.metric === 'apca'
-        const refMeasY = isApca ? refApcaYOf(2, sp.stop) : refYOf(2, sp.stop)
+        const refMeasY = isApca ? refApcaYOf(2, sp.stop) : refYOf(wcagInkAnchorStop(sp.stop), sp.stop)
         // wcag floors are D1 legality: both renditions of the fill must clear the target
         const measure = (L: number, C: number, H: number): number =>
           isApca ? Math.abs(apcaLc(apcaYAt(L, C, H), refMeasY)) : legalRatio(L, C, H, refMeasY)
@@ -313,7 +336,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
 
     // verify any declared require against the emitted (gamut-clamped) values — total, fail loud
     if (sp.require?.metric === 'wcag') {
-      const refY = refYOf(2, sp.stop)
+      const refY = refYOf(wcagInkAnchorStop(sp.stop), sp.stop)
       const got = legalRatio(placed.L, clampChromaToGamut(placed.L, placed.C, placed.H), placed.H, refY)
       if (got < sp.require.target - 1e-3) unresolvable = `stop ${sp.stop}: contrast ${got.toFixed(2)} < required ${sp.require.target}`
     } else if (sp.require?.metric === 'apca') {
@@ -506,7 +529,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     const req = sp10.require
     if (!req || req.metric === 'min-separation') return L0
     const isApca = req.metric === 'apca'
-    const refY = isApca ? refApcaYOf(2, 10) : refYOf(2, 10)
+    const refY = isApca ? refApcaYOf(2, 10) : refYOf(wcagInkAnchorStop(10), 10)
     const measure = (L: number): number => {
       const C = clampChromaToGamut(L, inkCFor(L), ink10.H)
       return isApca ? Math.abs(apcaLc(apcaYAt(L, C, ink10.H), refY)) : legalRatio(L, C, ink10.H, refY)

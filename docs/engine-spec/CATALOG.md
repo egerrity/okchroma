@@ -1283,3 +1283,125 @@ all re-derive under the mirror. Re-blessed: highlight, divergence (trio tokens),
 ext override sets (+neutral state overrides on exotic-neutral themes). Dark-audit
 and smoothness untouched (stops-only instruments). highlight-audit §3 now asserts
 the law against stateStepL itself instead of stop-5/6 aliasing.
+
+## C26 — the GENERATED POP PLANE + the INK ANCHOR: chips get their register back
+
+Two owner rounds, one arc (2026-07-28): the canonical chip recipe (paper-3 fill ·
+wash-6 stroke · ink-10 text, family the only variable — the unify-compare exhibit
+recipe, now THE demo-wide chip) exposed two structural debts.
+
+INK ANCHOR (owner rule: "ink-10 can only be used on papers" — so it must PASS on
+all of them): ink requires anchored at paper-2, and the WCAG lane solves exactly
+at the bar — so ink-10 on paper-3 dipped to 4.26:1 for 78/216 agnostic seeds
+(teal/high-C worst). Fix: in the WCAG lane the ink requires (stops 10-11 + the
+cta-ink state floor) anchor at paper-3 — the NEAREST paper (light's darkest,
+dark's lightest) — so clearing there clears every paper (resolve.ts
+wcagInkAnchorStop). The apca lane keeps paper-2, byte-identical: its Lc solve
+already clears paper-3 everywhere (worst 5.28, 0/216). Post-fix wcag worst =
+4.50-at-bar; ink-11 untouched (ceiling never binds, worst 10.84); dark inks
+untouched (over-clear at 7.13+). Divergence re-blessed (wcag ink-10 tokens);
+smoothness baseline regenerated (improvements only).
+
+POP PLANE — RESOLVED: pop = paper-3 STANDS (generated-pop candidate RETIRED,
+owner 2026-07-28). The recede that opened this fork was never pop's identity —
+it was the paper band's per-hue luminance scatter (C27's subject): dark pop
+(neutral paper-3) floated ~30% brighter than the chromatic paper-3 chip fills.
+A generated pop (its own value above the lift plane) was built and exhibited as
+a candidate alongside "lower all paper-3s"; owner reasserted the band semantics
+("paper-3 IS the highest background" — never call it a content tint) and C27's
+one-level parity dissolved the problem: with every family's paper-3 on one
+photometric level, chips sit flush on pop BY CONSTRUCTION and the height is one
+knob for the whole band. The candidate machinery (popDark mint,
+DARK_POP_LIFT_APP, --neutral-paper-pop emit, clearance re-anchor) was fully
+reverted; --surface-pop dark = neutral-paper-3 as before; the quiet-cta POP
+clearance anchors paper-3 again (divergence re-blessed for the round-trip). The
+paper-3→wash-3 rename question dissolves with it. Lesson kept: the pop fork was
+a MEASURE bug wearing a plane-architecture costume.
+
+## C27 — PAPER PARITY: one photometric level for the highest backgrounds
+
+FOUND (owner, 2026-07-28, judging the pop exhibit): "the pop looks lighter than
+all of the other paper-3s" — measured real: neutral dark paper-3 Y .0145 vs the
+chromatic families' .0104-.0120 (~30% spread). Cause = H-K contamination in two
+places, NOT a skipped neutral (light twins agree, app 94.5-96): (1) the carried
+depth reads CREDITED apparent, so tinted light papers measure shallower than the
+chroma-free neutral and the C24 lift amplifies the gap ×1.4; (2) C24's parity
+blend τ = T·w(hue) let the cusp weight dilute the papers' declared photometric
+parity — blue (w .99) got it, yellow (w .15) didn't. The w shaping was calibrated
+on WASH marks; composed onto papers it scattered them.
+
+RULE (owner: "papers are backgrounds — one level"; the ladder speaks two dialects,
+declared per band, applied identically to every family): at FULL-parity stops
+(T=1, the papers) placement is hue-blind AND photometric — every family anchors
+to the ACHROMATIC light scaffold's luminance depth (LIGHT_L gray at the stop) and
+lands at the SAME Y, tinted by its own C/H. deltaDarkPlace gains the grayLightL
+anchor (C27 branch); chroma still samples the τ-blend effective depth (the
+approved tint register). Washes 4-7 keep τ = T·w untouched — the credit is real
+there. Result: every family, both lanes — dark paper-2 Y .0106, paper-3 Y .0155
+exactly. A rejected intermediate (τ hue-blind but per-family light-luminance
+depths) preserved the spread (Y .0111-.0173) — the light papers are
+apparent-equalized, so one-level REQUIRES the gray-scaffold anchor.
+
+RIDER — the yellow 3→4 seam (open, owner's call): parity raised yellow's paper-3
+most while its washes stay apparent-placed low (w .15), pinching dark 3→4 to
+ΔE .007 (dark-audit §A reports it; light twin .026). Options: accept the soft
+seam, or a 4-vs-3 band-order floor in the C24 8-vs-7 idiom. Re-blessed: dark (51
+scales, stops 2-3 band), divergence, smoothness baseline. The pop fork (C26)
+re-rendered on the corrected band: A pop=paper-3 (chips flush BY CONSTRUCTION
+now) vs B generated-below (chips float); the old "lower all paper-3s" candidate
+collapsed into A's height knob.
+
+## C28 — ONE DIALECT: the dark band on the photometric ladder, + the signal warm drift
+
+Two owner rounds landing together, both born from her reading the dark ramp as a
+graph: "the graph in dark wobbles up and down, it should just be an arc shape",
+and "warning is supposed to be rotating warm".
+
+THE WOBBLE, diagnosed: C27 put the papers on a photometric level while the washes
+stayed apparent-placed, so the whole measure-change landed in the 3→4 seam (steps
+went 5.2 / 1.1 / 5.4 where they had grown smoothly). Deeper cause: the H-K credit
+RAMPS with chroma along the band (red .2 → 11.7 across stops 1–7; yellow and the
+neutral, whose credit stays flat, were already smooth in both measures), so any
+rule that evens ONE measure automatically un-evens the other.
+
+RULE — ONE DIALECT (supersedes C24's τ·w blend and C27's papers-only branch): the
+WHOLE surface band lands on the ACHROMATIC scaffold's photometric ladder, tinted
+by its own C/H. Luminance is identical across families at every rung — no hue can
+sit physically darker than its neighbours (which was blue/violet sinking) — and
+the H-K shine rides ON TOP as visible shine instead of being paid for in
+luminance. Steps come out monotone-growing for every family. DARK_SHINE_PARITY_T
+and cuspDarknessW leave the band (their record stays in C24). Chroma sampling is
+unchanged: the light ladder at the twin's own lift-scaled photometric depth.
+
+THE LIFT RE-MARK (owner, same round): C28 changes what DARK_BAND_LIFT multiplies,
+so her 2026-07-27 ×1.25→1.75 — calibrated against APPARENT depth — over-applied
+and pushed wash-7 into the highlight band (7→8 seam collapse + a chroma peak at
+stop 7). Her ramp SHAPE is unchanged; the amount is halved: ×1.125→1.375 ("half
+the lift looks right", chosen from a full/half/quarter exhibit).
+
+THE SIGNAL WARM DRIFT: the warm/gold spine drift is L-DEPENDENT, but the delta
+model carries hue verbatim from the light twin — so a dark stop sat at
+yellow-for-a-LIGHT-stop and warning read olive, and was chroma-starved at 100% of
+the P3 ceiling AT THE WRONG HUE (the spine hue offers ~30% more). Dark SIGNAL
+stops now re-derive the same light drift law at their own dark L, at
+DARK_SIGNAL_WARM_DRIFT = 1/3 (owner's conservative pick from a four-way exhibit).
+SIGNALS ONLY — a brand's identity hue is mode-stable by design (owner: "the brands
+shouldn't rotate"); the new `signalWarmDrift` opt is set by the four signal
+builders. The LEMON variant self-excludes and is byte-identical: C8's cool-edge
+taper zeroes the drift past H104, and the re-derive reuses ctx.lightHueAt (the law
+WITH its tapers) rather than the raw spine — which is the reason to go through the
+producer. Warning lands at H≈79 (amber, was 88 olive); red/green/blue ~0.
+
+NOT TOUCHED (owner, no time): critical's dark hue. It never rotates today (H 33–34
+both modes) because the carry path makes every dark hue correction inert. Cooling
+it was measured (−4°/−8°) and the collision math proved SAFE — redGateDist takes
+red as a parameter and engine/resolve hands it `apcaRed.cta`/`ctaDark`, which are
+off-scale and never rotate — but cooling the washes while the cta holds splits the
+family internally (7.5° at −8°), so it wants the whole family moved together, in
+its own round. Warning↔critical separation is NOT gated (the sweep is brand-vs-
+signal); at the landed settings it sits at .071/.122 (wash-5/wash-7).
+
+RESIDUAL: 28 of 1800 grid cells (bright magenta, H 324–336 at L .85) still peak in
+chroma at wash-7 before stop 8's declared register (.189 → .165; not gamut-bound,
+ceiling is .243/.301) — light peaks later, at 8. Reported, not patched. Re-blessed:
+dark, divergence, highlight, ext, smoothness.
