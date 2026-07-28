@@ -93,9 +93,40 @@ export type DarkCtaKind = keyof typeof DARK_CTA_C
 // Stop 8 (highlight-8) carries the WCAG 1.4.11 non-text 3:1 guarantee against
 // paper-2 (the scale's own stop 2). The light ramp clamps its perceptual rung L
 // down to this ceiling — the same kind of contrast bound stops 10/11 already use
-// (findMaxLForContrast). Dark stop 8 clears 3:1 from DARK_L[7] directly, so the
-// clamp is light-only.
+// (findMaxLForContrast). Dark stop 8 solves the SAME law as a declared require
+// against the resolved dark paper-2 (reqtoken spec S8) — this clamp is the light half.
 export const STOP_8_NONTEXT_CONTRAST = 3.0
+
+// ── DARK BAND LIFT (owner-calibrated 2026-07-27; marks rounds 1–3, wcag-lane exhibits) ──
+// The dark-surround eye compresses contrast (Bartleson–Breneman): the delta model's
+// mirror-of-light separations read quieter in dark than the same separations read in
+// light. Her picks: the surface band's apparent depth scales by a RAMP — ×1.25 at stop 2
+// rising to ×1.75 at stop 7 (the "washes" candidate; flat ×2 was vetoed at the card/field
+// seams, and a ×2 top inverted the 7→8 seam). Stops 1 and 8–11 carry NO lift: stop 8's
+// 3:1 law re-solves against the lifted paper-2 on its own, stop 9 rides the band-order
+// floor, inks are dark-native. The lifted stop's VIRTUAL light twin moves with it — its
+// chroma samples the light ladder's own chroma-at-depth relationship at the scaled depth
+// (deltaLiftChroma; per seed, per hue — the cross-hue perceptualDarkC equalizer was tried
+// for this and vetoed: it dusted strong-H-K hues ~30%).
+export const DARK_BAND_LIFT: Record<number, number> = {
+  2: 1.25, 3: 1.35, 4: 1.45, 5: 1.55, 6: 1.65, 7: 1.75,
+}
+
+// ── DARK SHINE PARITY (owner-calibrated 2026-07-27, per-element marks + cusp confirm) ──
+// The apparent instrument CREDITS high-H-K hues with shine, so equal-apparent placement
+// leaves blues/purples physically darkest ("blues and purples need to brighten the most,
+// greens yellows oranges the least"). Per stop, the depth measure blends toward plain-
+// luminance parity: depth = (1−τ)·apparentDepth + τ·L*depth, τ = T[stop] · w(hue).
+// T = her per-element marks (wash-7 none · wash-6 .33 · wash-4 ~.75 · papers full — a
+// linear crossfade: the H-K credit is only as real as the chroma carrying it; near-page
+// stops are near-neutral seams judged photometrically, top-of-band washes genuinely
+// shine). w(hue) = the hue's INTRINSIC-register darkness from the gamut CUSP-LIGHTNESS
+// curve (owner: "red is in the middle of the curve at the baseline, blue range is low,
+// yellow range is high" — measured: blue .99 · purple .87 · red .63 · orange .46 ·
+// green .22 · yellow .15; cuspDarknessW, pure geometry, no hand table).
+export const DARK_SHINE_PARITY_T: Record<number, number> = {
+  2: 1, 3: 1, 4: 0.75, 5: 0.5, 6: 0.25, 7: 0,
+}
 
 // The yellow hue band (used by audits to scope yellow-specific checks). The old YELLOW_L_LIFT.max
 // lift value was never consumed anywhere and is deleted; only the band definition was live.

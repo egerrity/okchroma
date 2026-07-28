@@ -155,8 +155,9 @@ export interface GenerateOptions {
   apcaClearance?: boolean
 
   // DELTA-KEYED dark (THE dark model, owner 2026-07-09): the resolved LIGHT stops, injected into the DARK
-  // resolve — dark is a live function of light (carry chroma+hue for surfaces 1-9, re-reference lightness to
-  // the dark ground in apparent space; inks dark-native; cta prominence-floored). generateScale always sets
+  // resolve — dark is a live function of light (hue carried for surfaces 1-9; lightness re-referenced to
+  // the dark ground in apparent space at the band's DARK_BAND_LIFT factor, chroma resampled at the lifted
+  // depth — C24; inks dark-native; cta prominence-floored). generateScale always sets
   // these; direct resolveRamp callers opt in per call.
   deltaLightStops?: { stop: number; L: number; C: number; H: number }[]
   deltaCarry?: boolean
@@ -190,8 +191,9 @@ export function generateScale(
     )
   const lightRamp = resolveRamp(hex, 'light', compile(MODE_SPECS.light), rOpts)
   // DELTA-KEYED dark IS the dark model (un-gated, owner 2026-07-09): dark is a live function of the resolved
-  // light — carry each stop's chroma+hue verbatim, re-reference only lightness to the dark ground (0.178, by
-  // luminance); the declared requires floor L. Replaces the seed-keyed DARK_L scaffold as the default.
+  // light — hue carried per stop, lightness re-referenced to the dark ground (0.178) in APPARENT space at
+  // the band's C24 lift, chroma carried/resampled with it; the declared requires floor L. Replaces the
+  // seed-keyed DARK_L scaffold as the default.
   const darkRamp = resolveRamp(hex, 'dark', compile(MODE_SPECS.dark),
     { ...rOpts, deltaLightStops: lightRamp.stops, deltaCarry: true })
 

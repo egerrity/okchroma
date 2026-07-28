@@ -17,7 +17,7 @@ function oklchToXyz(L: number, C: number, H: number, gamut: Gamut): [number, num
   ]
 }
 const labF = (t: number) => (t > (6 / 29) ** 3 ? Math.cbrt(t) : t / (3 * (6 / 29) ** 2) + 4 / 29)
-const lstarFromY = (Y: number) => 116 * labF(Y / Yn) - 16
+export const lstarFromY = (Y: number) => 116 * labF(Y / Yn) - 16
 function xyzToUv(X: number, Y: number, Z: number): [number, number] {
   const d = X + 15 * Y + 3 * Z
   return d === 0 ? [0, 0] : [(4 * X) / d, (9 * Y) / d]

@@ -11,12 +11,13 @@ import { apparentL, perceptualRungL, perceptualDarkC, solveLForApparent } from '
 import { clampChromaToGamut, wcagY, contrastRatio, legalRatio, findMaxLForContrast, apcaLc } from '../engine/constraints'
 import { hexToOklch, srgbEmitChannels, redSolveDist, RED_GATE, RED_SOLVE } from '../engine/colorMath'
 import { hoverL, pressedL } from '../engine/archetypes'
+import { DARK_BAND_LIFT, DARK_SHINE_PARITY_T } from '../engine/stopTable'
 import { MODE_SPECS, type ModeSpec, type StopReq, type RoleReq, type Require } from './spec'
 import {
   buildContext, buildDarkContext, type Ctx, type DarkCtx, type ResolveOpts,
   lightScaleChromaAt, lightHighlightChromaAt, placeLightScale, placeLightText, placeLightHighlight,
   separationClampLight,
-  darkScaleChromaAt, darkInkChromaAt, darkHighlightChromaAt, placeDark, placeDarkDelta, deltaDarkTargetL, flatDarkCtaL,
+  darkScaleChromaAt, darkInkChromaAt, darkHighlightChromaAt, placeDark, placeDarkDelta, deltaDarkTargetL, deltaLiftChroma, deltaDarkPlace, flatDarkCtaL,
   onFillIsWhiteLight, onFillIsWhiteDarkAt, onHighlightIsWhiteAt, ctaLightL, ctaDarkEnforcedL,
   ctaLightLApca, ctaDarkEnforcedLApca, solveBrandExit, solveDarkCtaExit, ctaDualGateL,
   apcaYAt, findMaxLForApcaLc, APCA_SOLVE_MARGIN_LC, APCA_TOL_LC, APCA_ENFORCE_MARGIN_LC,
@@ -169,7 +170,8 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       const dl = ctx.opts?.deltaLightStops
       const ls = dl && sp.stop >= 1 && sp.stop <= 9 ? dl.find(s => s.stop === sp.stop) : undefined
       if (ls && ctx.opts?.deltaCarry) {
-        // THE CARRY: chroma + hue carried verbatim from the light twin — for EVERY ramp kind (OKLab C is
+        // THE CARRY: hue carried verbatim from the light twin; chroma verbatim at ×1 and resampled from
+        // the light ladder's chroma-at-depth under a C24 band lift — for EVERY ramp kind (OKLab C is
         // near-uniform in perceived chroma; a saturation/gamut-ratio floor was tried and REJECTED — sRGB
         // geometry made blue→red washes hyper-chromatic; evaluating a declared chromaCurve at the DARK L was
         // tried and REJECTED — the curves are keyed to the OLD dark's L geography, so the delta's paper L's
@@ -179,8 +181,19 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         // clamp, so dark re-solves that same law against the dark paper-2 exactly (the require block below
         // does the solve from the ground up). appL parity would land off-law and the floor's hue-dependent
         // correction was the residual sRGB-shaped wobble (fired 84/108; whole-band 6.90 vs 0.72 for 1–7).
-        let L = sp.require && sp.require.metric !== 'min-separation' ? 0.05 : deltaDarkTargetL(ls, ls.C, ls.H)
+        // C24 DARK BAND LIFT (owner marks 2026-07-27): stops 2–7's virtual twin sits
+        // DARK_BAND_LIFT[stop]× the apparent depth — L and C both read from that twin
+        // (deltaLiftChroma samples the light ladder's chroma-at-depth). Unlisted stops
+        // and require stops carry at ×1, byte-identical to the plain mirror.
+        const lift = DARK_BAND_LIFT[sp.stop] ?? 1
+        const tShine = DARK_SHINE_PARITY_T[sp.stop] ?? 0
         let C = ls.C
+        let L: number
+        if (sp.require && sp.require.metric !== 'min-separation') L = 0.05
+        else if (lift !== 1 || tShine > 0) {
+          const p = deltaDarkPlace(dl!, ls, lift, tShine)
+          L = p.L; C = p.C
+        } else L = deltaDarkTargetL(ls, C, ls.H)
         // BAND ORDER (owner 2026-07-09): the highlight fill (9) sits ABOVE its 3:1 rung (8). Light gets this
         // free from near-white geometry; in dark the rung's luminance law reads hue-dependently in apparent
         // terms and lands above parity-9 (inverted 108/108 under apca). Floor 9 at the rung's apparent plus
@@ -277,6 +290,23 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
           }
           placed = { L: hi, C: cAtL(hi), H: hAtL(hi) }
           clamped = true
+        }
+      }
+      // C24 BAND ORDER, the 8-vs-7 half (mirror of the stop-9 floor above): the lifted
+      // wash-7 can overshoot an achromatic ramp's low-riding 3:1 solve (the neutral
+      // inverted at ×1.75; brand ramps cleared). Floor stop 8 at wash-7's apparent plus
+      // light's own 7→8 apparent gap — the band's carried structure. Raising L only adds
+      // contrast against the dark paper-2, so the just-solved 3:1 law is preserved.
+      if (sp.stop === 8 && ls && ctx.opts?.deltaCarry) {
+        const d7 = stops.find(s => s.stop === 7)
+        const l7 = dl?.find(s => s.stop === 7)
+        if (d7 && l7) {
+          const appOf = (s: { L: number; C: number; H: number }) => apparentL(s.L, clampChromaToGamut(s.L, s.C, s.H), s.H)
+          const floorApp = appOf(d7) + Math.max(0, appOf(l7) - appOf(ls))
+          if (appOf(placed) < floorApp) {
+            placed = { ...placed, L: solveLForApparent(floorApp, placed.C, placed.H) }
+            clamped = true
+          }
         }
       }
     }

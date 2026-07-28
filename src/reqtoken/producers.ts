@@ -5,7 +5,7 @@
 // "simplify" an expression here without eye-check + re-bless.
 import { classifyArchetype, medianLForArchetype, type Archetype } from '../engine/archetypes'
 import { clampChromaToGamut, wcagY, contrastRatio, legalRatio, findMaxLForContrast, findLForContrast, findLForContrastUp, apcaY, apcaLc, encodedChannels } from '../engine/constraints'
-import { perceptualRungL, apparentL, grayApparentL, solveLForApparent } from '../engine/perceptualL'
+import { perceptualRungL, apparentL, grayApparentL, solveLForApparent, lstarFromY } from '../engine/perceptualL'
 import {
   hexToOklch, maxChromaAt, goldSpineHue, torsionedHue, gauss, sigmoid, hueDelta, oklabDist, redGateDist, RED_GATE,
   RED_SOLVE, redSolveDist, inBrickBand,
@@ -327,21 +327,108 @@ export function placeDark(dctx: DarkCtx, rootL: number, chromaAt: (L: number) =>
 
 // ===== DELTA-KEYED dark placement (the dark model, owner 2026-07-09) =====
 // Dark is a LIVE FUNCTION OF LIGHT: a light color sitting an APPARENT-lightness distance below the light
-// ground (white) becomes a dark color sitting the SAME apparent distance above the dark ground (~0.178, the
-// neutral dark page — NOT pure black). C/H carry from light; only lightness re-references. APPARENT (H-K)
+// ground (white) becomes a dark color sitting that distance × the band's DARK_BAND_LIFT factor above the
+// dark ground (~0.178, the neutral dark page — NOT pure black; ×1 outside the lifted band — C24, the
+// dark-surround loudness calibration). H carries from light; C carries at ×1 and resamples the light
+// ladder's chroma-at-depth under a lift (deltaLiftChroma). APPARENT (H-K)
 // space, not raw luminance (v2): light's stops are themselves placed in apparent-lightness (perceptualRungL),
 // so re-referencing raw luminance warped light's cadence into dark — the measured wobble (4.10 → 3.58
 // |Δ²appL|) — and stripped yellow's H-K shine. Solved by the engine's apparent solver (gamut-aware),
 // clamped to the ground so nothing sinks below the page.
 const DELTA_DARK_GROUND_APP = grayApparentL(0.178)        // the dark page's apparent lightness
 const DELTA_LIGHT_GROUND_APP = grayApparentL(1.0)         // white's (≈ 100)
+// `lift` (C24 dark band lift, owner-calibrated): scales the apparent depth — the virtual
+// twin sits lift× the light twin's distance below white. Default 1 = the plain mirror.
 export function deltaDarkTargetL(
-  lightColor: { L: number; C: number; H: number }, C: number, H: number,
+  lightColor: { L: number; C: number; H: number }, C: number, H: number, lift = 1,
 ): number {
   const lightApp = apparentL(lightColor.L, clampChromaToGamut(lightColor.L, lightColor.C, lightColor.H), lightColor.H)
   const target = Math.min(DELTA_LIGHT_GROUND_APP - 0.5,
-    Math.max(DELTA_DARK_GROUND_APP + 0.5, DELTA_DARK_GROUND_APP + (DELTA_LIGHT_GROUND_APP - lightApp)))
+    Math.max(DELTA_DARK_GROUND_APP + 0.5, DELTA_DARK_GROUND_APP + lift * (DELTA_LIGHT_GROUND_APP - lightApp)))
   return solveLForApparent(target, C, H)
+}
+
+// C24 dark band lift, the chroma half: the lifted stop's virtual light twin sits lift×
+// the twin's apparent depth below white — its chroma is the light ladder's own
+// chroma-at-depth relationship sampled there (piecewise between the surface stops'
+// carried values; ends clamp). Per seed, per hue: the only chroma source is this ramp's
+// own light curve, so hue character (tame greens, live blues) rides along by
+// construction — never a cross-hue normalization.
+// C24 SHINE PARITY: the hue's intrinsic-register darkness from the gamut cusp-lightness
+// curve — cuspL(H) = argmax_L maxChromaAt(L,H), w = normalized cusp darkness over the hue
+// circle. Pure geometry (no hand table); the owner's "blue low, red middle, yellow high"
+// curve measured: blue .99 · purple .87 · red .63 · orange .46 · green .22 · yellow .15.
+const cuspCache = new Map<number, number>()
+function cuspLOf(H: number): number {
+  const key = Math.round((((H % 360) + 360) % 360) * 2) / 2
+  const hit = cuspCache.get(key)
+  if (hit !== undefined) return hit
+  let best = 0.3, bestC = 0
+  for (let L = 0.3; L <= 0.97; L += 0.005) {
+    const c = maxChromaAt(L, key)
+    if (c > bestC) { bestC = c; best = L }
+  }
+  cuspCache.set(key, best)
+  return best
+}
+let cuspNorm: { min: number; max: number } | null = null
+export function cuspDarknessW(H: number): number {
+  if (!cuspNorm) {
+    let min = 1, max = 0
+    for (let h = 0; h < 360; h += 5) { const c = cuspLOf(h); min = Math.min(min, c); max = Math.max(max, c) }
+    cuspNorm = { min, max }
+  }
+  return Math.min(1, Math.max(0, (cuspNorm.max - cuspLOf(H)) / (cuspNorm.max - cuspNorm.min)))
+}
+
+// C24 combined dark placement for the lifted band: depth blends apparent → plain-luminance
+// parity by τ = tStop·w(hue), then the lift scales it and the chroma table samples the
+// EFFECTIVE depth. Returns the placed L and C (H = the twin's, caller-side).
+export function deltaDarkPlace(
+  lightStops: Array<{ stop: number; L: number; C: number; H: number }>,
+  lightTwin: { L: number; C: number; H: number },
+  lift: number, tStop: number,
+): { L: number; C: number } {
+  const tau = tStop * cuspDarknessW(lightTwin.H)
+  const cl = clampChromaToGamut(lightTwin.L, lightTwin.C, lightTwin.H)
+  const dApp = DELTA_LIGHT_GROUND_APP - apparentL(lightTwin.L, cl, lightTwin.H)
+  const dLum = 100 - lstarFromY(wcagY(lightTwin.L, cl, lightTwin.H))
+  const depth = (1 - tau) * dApp + tau * dLum
+  const C = deltaLiftChroma(lightStops, lightTwin, (lift * depth) / Math.max(1e-6, dApp))
+  const target = Math.min(DELTA_LIGHT_GROUND_APP - 0.5,
+    Math.max(DELTA_DARK_GROUND_APP + 0.5, DELTA_DARK_GROUND_APP + lift * depth))
+  return { L: solveLForApparent(target, C, lightTwin.H), C }
+}
+
+export function deltaLiftChroma(
+  lightStops: Array<{ stop: number; L: number; C: number; H: number }>,
+  lightTwin: { L: number; C: number; H: number },
+  lift: number,
+): number {
+  const appOf = (s: { L: number; C: number; H: number }) =>
+    apparentL(s.L, clampChromaToGamut(s.L, s.C, s.H), s.H)
+  // SURFACE band only (stops 1–7): the highlight stops 8/9 are LAWFULLY lane-dependent
+  // (3:1 vs Lc requires), and including them forked the lanes inside the washes where
+  // they were byte-identical by construction (owner-caught 2026-07-27 — apca wash-6 ran
+  // over-chromatic). Beyond stop 7's depth the band's own end slope extrapolates.
+  const pairs = lightStops
+    .filter(s => s.stop >= 1 && s.stop <= 7)
+    .map(s => ({ d: DELTA_LIGHT_GROUND_APP - appOf(s), C: s.C }))
+    .sort((a, b) => a.d - b.d)
+  if (!pairs.length) return lightTwin.C
+  const target = lift * (DELTA_LIGHT_GROUND_APP - appOf(lightTwin))
+  if (target <= pairs[0].d) return pairs[0].C
+  for (let k = 1; k < pairs.length; k++)
+    if (target <= pairs[k].d) {
+      const t = (target - pairs[k - 1].d) / (pairs[k].d - pairs[k - 1].d)
+      return pairs[k - 1].C + t * (pairs[k].C - pairs[k - 1].C)
+    }
+  const a = pairs[pairs.length - 2], b = pairs[pairs.length - 1]
+  if (!a || b.d - a.d < 1e-6) return b.C
+  // beyond the band: extrapolate RISING end slopes only (into richer chroma); a falling
+  // tail HOLDS the end value — extrapolating it greyed low-chroma wash-7s (bless-caught)
+  if (b.C <= a.C) return b.C
+  return b.C + ((target - b.d) / (b.d - a.d)) * (b.C - a.C)
 }
 export function placeDarkDelta(
   dctx: DarkCtx, rootL: number, chromaAt: (L: number) => number,

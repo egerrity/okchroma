@@ -332,7 +332,13 @@ export const normalizeSecondaryStyle = (s: LegacySecondaryStyle): SecondaryStyle
 //     (navy's own unconstrained register), flat across hues; consumed by the resolver as
 //     opts.darkCtaFlatApp (the prominence pin is a brand-identity rule — a derived pastel has
 //     none, so it flips instead of shipping the light pastel on the dark page).
-export const DEFAULT_SECONDARY = { rot: 12, kL: 0.65, kC: 0.5, kR: 0.4, lRoom: 0.97, minGapApp: 10, darkFlatGapApp: 23 } as const
+// darkFlatGapApp 23 → 40 (C24 dark band lift, owner "scale it with the ramp" 2026-07-27):
+// the owner's literal rule = 23 × the band-top lift 1.75 = 40.25, and the measured posture
+// agrees — the old flat cta sat ≈ level with the neutral's dark wash-7 delta (23 vs 23.1)
+// and the lifted neutral wash-7 delta is ≈ 40.3 (review-corrected: a first cut used a blue
+// probe brand's wash-7 as the anchor and landed 44, ~4 apparent-L* louder than the blessed
+// quiet register).
+export const DEFAULT_SECONDARY = { rot: 12, kL: 0.65, kC: 0.5, kR: 0.4, lRoom: 0.97, minGapApp: 10, darkFlatGapApp: 40 } as const
 const LIGHT_GROUND_APP = grayApparentL(1.0)
 export function defaultSecondarySeed(hex: string): string {
   const seed = hexToOklch(hex)

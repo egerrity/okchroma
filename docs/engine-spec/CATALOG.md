@@ -1134,3 +1134,87 @@ rides the apca decision pole — the old ungated poleOk is gone.
 Relates: C12 (the solve this re-lanes), C18 (the clearance, now cleanly law-only),
 C22 (the grey band closed the same day), contrast-profile split (the wcag = legal-mode
 charter this completes).
+
+## C24 — the DARK BAND LIFT: dark-surround loudness calibrated into the delta model
+
+**Status:** IMPLEMENTED (owner-calibrated 2026-07-27, marks rounds 1–3 on the
+dark-band exhibits; candidate "B · washes"), pending owner eyeball + snapshot re-bless.
+
+**Symptom.** Owner-caught on the Unify comparison chip rows: okchroma's dark tints read
+low-contrast beside Unify's hand-flipped dark ramps. Measured: the delta model is
+delta-PRESERVING (dark mirrors light's apparent separations exactly — fill-page 3.6/3.6,
+border-fill 9.2/9.4 on FIS) while the dark-surround eye compresses contrast
+(Bartleson–Breneman; the same physics as the blue-recede = contrast finding). Unify's
+hand picks encode ~2× border deltas in dark — too loud (owner), but directionally right.
+
+**The model.** One law extends the delta carry: a dark surface stop's VIRTUAL light twin
+sits `DARK_BAND_LIFT[stop]` × the apparent depth below white — L AND C both read from
+that twin (C = the light ladder's own chroma-at-depth, sampled by `deltaLiftChroma`; per
+seed, per hue — the cross-hue perceptualDarkC equalizer was tried and vetoed, it dusted
+strong-H-K hues ~30%). The shipped behavior is the f=1 special case. Calibrated ramp
+(owner marks): ×1.25 at stop 2 → ×1.75 at stop 7; stops 1, 8–11 carry no lift — stop 8's
+3:1 law re-solves against the lifted paper-2, stop 9 rides its band floor, inks are
+dark-native. Vetoed en route: flat ×2 (card·field seams over-separated; 7-over-8 seam
+inversion), lifting stop 9 (only 7–11 app of room under ink-10). Landed vs the marked
+exhibit: max ΔE 0.032 across the six exemplars.
+
+**Band order, the 8-vs-7 half.** The lifted wash-7 overshot the NEUTRAL's low-riding
+achromatic 3:1 solve (45.6 over 43.6 — brand ramps cleared). Stop 8 now carries the
+mirror of stop 9's band floor: wash-7's apparent + light's own 7→8 apparent gap
+(raising L only adds contrast vs paper-2, so the law is preserved). Neutral s8 → 64.
+
+**Riders.** `darkFlatGapApp` 23 → 44 (owner "scale it with the ramp"): the derived
+secondary's flat dark cta keeps its old posture (+3.7 app above wash-7). The dark
+neutral quiet-cta POP clearance (C-gate, d6830c3) self-recomputes against the lifted
+paper-3. Surface planes widen through the aliases (base pinned, lift/pop rise).
+
+**Measured.** collision-sweep PASS (zero holes; lane divergence 28, swaps lane-global) ·
+dark-audit HARD F 0 · register PASS · req:audit PASS (NOTE: its dark lane is seed-keyed —
+the delta path is invisible to it, and it sets no exit code; its pass is NOT coverage
+for this change) · figma:verify PASS. Awaiting owner eyeball then re-bless: divergence
+snapshot (84 scales), dark snapshot (66), highlight snapshot (6 — neutral fed-trio rows +
+hl9 tracking s8), ext override path-sets (a few dark `*/highlight/on` pole flips),
+smoothness baseline (dark drift 0.0077→0.0085).
+
+**Review round (adversarially verified).** darkFlatGapApp first landed at 44 off a
+cross-anchor arithmetic error (a blue probe brand's wash-7 as the "old d7") — corrected
+to 40 (= the neutral-anchored posture AND the owner's literal ×1.75 scaling, which agree
+at ~40.3); stale delta-model banners in producers/colorEngine/reqtoken-resolve updated.
+
+**Residuals (owner items, measured).** (1) INK-ON-WASH dark contrast thins with the
+lift and NO gate watches it (T10/T11 requires read vs paper-2 only): neutral ink-10 vs
+wash-7 4.9→2.6, ink-11 vs wash-7 8.1→4.3 (under the wcag 4.5), worst brand ink-11 vs
+highlight-8 2.2. Owner register ruling ("wash-7 is an illustration color, not a text
+holder") covers the top of the band; wash-4/5 text and TokenCards' ink-11-on-highlight-8
+pairing are the open surfaces — accept-and-declare vs a declared ink-vs-wash require is
+her call. (2) DARK s8==s9 CONVERGENCE for yellow-band seeds (18/180 byte-identical: s8's
+3:1 solve vs the lifted paper-2 rises ~17 app and yellow's s9 band floor equals it;
+highlight-audit deliberately does not assert 8/9 ordering) — direct evidence FOR the
+owner's open "collapse 8·9 into one 3:1 stop" idea; equality ships, inversion cannot.
+(3) The dtcg portability lane stays seed-keyed (pre-existing total bypass; the lift
+NARROWS its divergence from shipped — s7 ΔE 0.134→0.049 — it does not widen it).
+(4) ext-override audit: 32 wcag-dark path-set moves (on-highlight pole flips incl. the
+green signal in two brands) — eyeball the dark wcag signal chips at re-bless. (5) The
+queued dark her-marks round remains the safety valve for every apparent-space bar this
+round leaned on.
+
+Relates: C13 (the delta model this calibrates), C22/C23 (bars and law-extension
+patterns), the divergence-sweep DARK-L solve (the scaffold era this fully supersedes for
+stops 2–7).
+
+
+**C24 addendum — SHINE PARITY (same day).** The uniform lift is hue-flat in apparent
+space, and the apparent instrument credits high-H-K hues with shine — so equal-apparent
+left blues/purples physically darkest (owner: "blues and purples need to brighten the
+most, greens yellows oranges the least"). Landed: per stop, the depth measure blends
+toward plain-luminance parity — depth = (1−τ)·apparentDepth + τ·L*depth with
+τ = DARK_SHINE_PARITY_T[stop] · cuspDarknessW(hue). T = her per-element marks (papers 1 →
+wash-7 0; linear — the H-K credit is only as real as the chroma carrying it). w = the
+hue's intrinsic-register darkness from the gamut cusp-lightness curve (pure geometry:
+blue .99 · purple .87 · red .63 — her "red is in the middle" prediction exact — orange
+.46 · green .22 · yellow .15; the hue-blind shaped candidate over-lifted red via the
+Nayatani credit). Wash chroma samples the light ladder's chroma-at-depth at the
+EFFECTIVE depth; the table reads the lane-invariant surface band 1–7 only (owner-caught
+lane leak: stops 8/9 are lawfully lane-split and forked the washes). deltaDarkPlace owns
+the combined placement. Calibration exhibits: dark-chips/washes-shine + shaped-cusp
+(per-element groups; marks doctrine per the owner — no click-UI for small rounds).
