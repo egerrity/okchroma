@@ -10,7 +10,7 @@
 import { apparentL, perceptualRungL, perceptualDarkC, solveLForApparent } from '../engine/perceptualL'
 import { clampChromaToGamut, wcagY, contrastRatio, legalRatio, findMaxLForContrast, apcaLc } from '../engine/constraints'
 import { hexToOklch, srgbEmitChannels, redSolveDist, RED_GATE, RED_SOLVE } from '../engine/colorMath'
-import { hoverL, pressedL } from '../engine/archetypes'
+import { hoverL, pressedL, stateFillL } from '../engine/archetypes'
 import { DARK_BAND_LIFT, DARK_SHINE_PARITY_T } from '../engine/stopTable'
 import { MODE_SPECS, type ModeSpec, type StopReq, type RoleReq, type Require } from './spec'
 import {
@@ -406,8 +406,12 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       }
     }
     cta = emitRole('cta', light9L, ctaCFor(light9L) * ctaCMul, ctaH)
-    ctaHover = emitRole('cta-hover', hoverL(light9L), ctx.cAt('light', hoverL(light9L), (hoverReq?.chromaMult ?? 1) * ctx.brandC) * ctaCMul, ctaH)
-    ctaPressed = emitRole('cta-pressed', pressedL(light9L), ctx.cAt('light', pressedL(light9L), (pressedReq?.chromaMult ?? 1) * ctx.brandC) * ctaCMul, ctaH)
+    const hCFor = (L: number) => ctx.cAt('light', L, (hoverReq?.chromaMult ?? 1) * ctx.brandC) * ctaCMul
+    const pCFor = (L: number) => ctx.cAt('light', L, (pressedReq?.chromaMult ?? 1) * ctx.brandC) * ctaCMul
+    const hL = stateFillL(light9L, 'light', 1)
+    const pL = stateFillL(light9L, 'light', 2)
+    ctaHover = emitRole('cta-hover', hL, hCFor(hL), ctaH)
+    ctaPressed = emitRole('cta-pressed', pL, pCFor(pL), ctaH)
     if (light9L !== ctx.scaleL) { cta.enforced = true; ctaHover.enforced = true; ctaPressed.enforced = true }
     if (repelled) {
       cta.repelled = true; ctaHover.repelled = true; ctaPressed.repelled = true
@@ -437,17 +441,24 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       : d.dark9L
     // C12 v8: the dark cta rides IDENTITY hue (darkCtaH) — coolRedDark's shift is retired
     // from the cta (owner ruling; research: identity-hue dark ctas never fire the gate).
-    cta = emitRole('cta', cta9L, ctx.cAt('dark', cta9L, d.darkC9), ctx.darkCtaH)
-    ctaHover = emitRole('cta-hover', hoverL(cta9L), ctx.cAt('dark', hoverL(cta9L), d.darkC9), ctx.darkCtaH)
-    ctaPressed = emitRole('cta-pressed', pressedL(cta9L), ctx.cAt('dark', pressedL(cta9L), d.darkC9), ctx.darkCtaH)
+    const dCFor = (L: number) => ctx.cAt('dark', L, d.darkC9)
+    const dTrio = (baseL: number): [number, number] =>
+      [stateFillL(baseL, 'dark', 1), stateFillL(baseL, 'dark', 2)]
+    cta = emitRole('cta', cta9L, dCFor(cta9L), ctx.darkCtaH)
+    {
+      const [hL, pL] = dTrio(cta9L)
+      ctaHover = emitRole('cta-hover', hL, dCFor(hL), ctx.darkCtaH)
+      ctaPressed = emitRole('cta-pressed', pL, dCFor(pL), ctx.darkCtaH)
+    }
     onFillIsWhite = onFillIsWhiteDarkAt(cta.L, cta.C, cta.H, enforceLc !== undefined ? false : onFillEnforce)
     const enforcedL = enforceLc !== undefined
       ? ctaDarkEnforcedLApca(ctx, cta, onFillIsWhite, onFillEnforce, enforceLc)
       : ctaDarkEnforcedL(ctx, cta, onFillIsWhite, onFillEnforce)
     if (enforcedL !== null) {
-      cta = emitRole('cta', enforcedL, ctx.cAt('dark', enforcedL, d.darkC9), ctx.darkCtaH)
-      ctaHover = emitRole('cta-hover', hoverL(enforcedL), ctx.cAt('dark', hoverL(enforcedL), d.darkC9), ctx.darkCtaH)
-      ctaPressed = emitRole('cta-pressed', pressedL(enforcedL), ctx.cAt('dark', pressedL(enforcedL), d.darkC9), ctx.darkCtaH)
+      cta = emitRole('cta', enforcedL, dCFor(enforcedL), ctx.darkCtaH)
+      const [hL, pL] = dTrio(enforcedL)
+      ctaHover = emitRole('cta-hover', hL, dCFor(hL), ctx.darkCtaH)
+      ctaPressed = emitRole('cta-pressed', pL, dCFor(pL), ctx.darkCtaH)
       cta.enforced = true; ctaHover.enforced = true; ctaPressed.enforced = true
     }
     // C12 dark (owner 2026-07-11, "dark falls out like every cta"; supersedes the v6 "no dark
@@ -458,12 +469,12 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     // 4.5 rides as a law extension. Both lanes fire now (post-C22/C23 measurement lives at
     // solveDarkCtaExit's banner). Null = byte-identical.
     if (ctx.opts?.ctaSolve) {
-      const darkCFor = (L: number) => ctx.cAt('dark', L, d.darkC9)
-      const exitL = solveDarkCtaExit(cta, darkCFor, ctx.darkCtaH, ctx.opts.ctaSolve.redDark, enforceLc)
+      const exitL = solveDarkCtaExit(cta, dCFor, ctx.darkCtaH, ctx.opts.ctaSolve.redDark, enforceLc)
       if (exitL !== null) {
-        cta = emitRole('cta', exitL, darkCFor(exitL), ctx.darkCtaH)
-        ctaHover = emitRole('cta-hover', hoverL(exitL), darkCFor(hoverL(exitL)), ctx.darkCtaH)
-        ctaPressed = emitRole('cta-pressed', pressedL(exitL), darkCFor(pressedL(exitL)), ctx.darkCtaH)
+        cta = emitRole('cta', exitL, dCFor(exitL), ctx.darkCtaH)
+        const [hL, pL] = dTrio(exitL)
+        ctaHover = emitRole('cta-hover', hL, dCFor(hL), ctx.darkCtaH)
+        ctaPressed = emitRole('cta-pressed', pL, dCFor(pL), ctx.darkCtaH)
         cta.enforced = true; ctaHover.enforced = true; ctaPressed.enforced = true
         cta.repelled = true; ctaHover.repelled = true; ctaPressed.repelled = true
         // the pole re-judged AT the exited fill (mirrors the light repelled re-judge: wcag

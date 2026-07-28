@@ -1,4 +1,4 @@
-import { type Archetype, classifyArchetype, hoverL, pressedL } from './archetypes'
+import { type Archetype, classifyArchetype, stateFillL } from './archetypes'
 import {
   wcagY,
   legalRatio,
@@ -274,43 +274,49 @@ export function generateNeutralScale(
   const { r, g, b } = oklchToSrgbUnclamped(0.5, 0.006, h)
   const ch = (v: number) => Math.round(Math.min(1, Math.max(0, v)) * 255).toString(16).padStart(2, '0')
   const grayHex = `#${ch(r)}${ch(g)}${ch(b)}`
+  const curve = neutralChromaCurve(brandH, level)
   const scale = generateScale(grayHex, 'neutral', 'light', {
-    chromaCurve: neutralChromaCurve(brandH, level),
+    chromaCurve: curve,
     highlight: true,
     enforceOnFillContrast: true,
     contrastProfile,
   })
 
   // The neutral cta is LOW-HIERARCHY: unlike a brand/signal cta (a bold off-scale
-  // fill), it reads at the quiet wash level. A fed fill can't flip — it's mode-stable
-  // and floored in dark — so we set its L target to the scale's own stop 4 (cta) and
-  // stop 5 (hover), which DO flip via LIGHT_L/DARK_L (light ~0.936/0.903, dark
-  // ~0.285/0.313). on-cta is recomputed so the text stays legible in each mode.
+  // fill), it reads at the quiet wash level, so its REST fill stays fed from the
+  // scale's own stop 4 — which flips via LIGHT_L/DARK_L (light ~0.936, dark ~0.285).
+  // on-cta is recomputed so the text stays legible in each mode.
   const asCta = (stop: number, src: ColorStop) => makeStop(stop, src.L, src.C, src.H)
   scale.cta = asCta(9, scale.light[3])
-  scale.ctaHover = asCta(10, scale.light[4])
-  scale.ctaPressed = asCta(11, scale.light[5])   // pressed continues the scale-fed ladder: stop 6
   scale.ctaDark = asCta(9, scale.dark[3])
-  scale.ctaHoverDark = asCta(10, scale.dark[4])
-  scale.ctaPressedDark = asCta(11, scale.dark[5])
   // DARK POP CLEARANCE (owner 2026-07-27): the fed dark washes pack near black, so
-  // the quiet trio sat ~1.07 vs the POP plane (dark paper-3) — invisible on the very
+  // the quiet fill sat ~1.07 vs the POP plane (dark paper-3) — invisible on the very
   // cards its buttons ride, while "clearing" ~1.3 against absolute black, a surface
-  // nothing renders on. The clearance reads against pop: lift the WHOLE trio
-  // uniformly (state steps preserved) until the cta clears the bar vs the resolved
-  // dark paper-3 — the dark mirror of light's fed cta, which already reads ~1.25
-  // against its own white pop. Solved on the wcag ratio (a perceptual separation
-  // bar, profile-agnostic; the dual-rendition legality solver is reused); chroma
-  // re-clamps at the lifted L via makeStop; on-text is re-judged below.
+  // nothing renders on. The clearance reads against pop: lift the rest fill until it
+  // clears the bar vs the resolved dark paper-3 — the dark mirror of light's fed cta,
+  // which already reads ~1.25 against its own white pop. Solved on the wcag ratio
+  // (a perceptual separation bar, profile-agnostic; the dual-rendition legality
+  // solver is reused); chroma re-clamps at the lifted L via makeStop; on-text is
+  // re-judged below.
   const popDark = scale.dark[2] // paper-3 — the POP plane in dark
   const popDarkY = wcagY(popDark.L, popDark.C, popDark.H)
   const clearedL = findLForContrastUp(scale.ctaDark.L, scale.ctaDark.C, scale.ctaDark.H, popDarkY, NEUTRAL_CTA_DARK_POP_CLEARANCE)
   const popLift = clearedL - scale.ctaDark.L
   if (popLift > 1e-6) {
     scale.ctaDark = makeStop(9, scale.dark[3].L + popLift, scale.dark[3].C, scale.dark[3].H)
-    scale.ctaHoverDark = makeStop(10, scale.dark[4].L + popLift, scale.dark[4].C, scale.dark[4].H)
-    scale.ctaPressedDark = makeStop(11, scale.dark[5].L + popLift, scale.dark[5].C, scale.dark[5].H)
   }
+  // Hover/pressed ride the shared fill-state rule from the (lifted) rest — the same
+  // apparent step every family takes (owner 2026-07-28; the old stop-5/6 aliases gave
+  // the neutral ramp-sized steps no other family got).
+  const nState = (stop: number, mode: 'light' | 'dark', rest: ColorStop, k: 1 | 2) => {
+    // states carry the REST's own hue — the fed stop's torsioned H, not the raw brandH
+    const L = stateFillL(rest.L, mode, k)
+    return makeStop(stop, L, curve(L, mode), rest.H)
+  }
+  scale.ctaHover = nState(10, 'light', scale.cta, 1)
+  scale.ctaPressed = nState(11, 'light', scale.cta, 2)
+  scale.ctaHoverDark = nState(10, 'dark', scale.ctaDark, 1)
+  scale.ctaPressedDark = nState(11, 'dark', scale.ctaDark, 2)
   // cta-ink trio stays resolver-minted (the neutral's own ink-10 + floored states) — the
   // quiet-fill override above touches only the fill trio.
   // the scale-fed neutral cta can't move, so on-text is judgment only: apca profile = pure
@@ -364,22 +370,25 @@ export function generateSubtleSecondary(
     contrastProfile: opts?.contrastProfile,
   })
   const asCta = (stop: number, src: ColorStop) => makeStop(stop, src.L, src.C, src.H)
+  const mk = (stop: number, L: number, mode: 'light' | 'dark') => makeStop(stop, L, curve(L, mode), scale.brandH)
+  // states = the shared fill-state rule from the rest fill (owner 2026-07-28),
+  // whether the rest was pinned (opts.ctaL) or fed from the scale's stop 4 —
+  // and they carry the REST's own hue (a fed stop's H is torsioned off brandH)
+  const st = (stop: number, mode: 'light' | 'dark', rest: ColorStop, k: 1 | 2) => {
+    const L = stateFillL(rest.L, mode, k)
+    return makeStop(stop, L, curve(L, mode), rest.H)
+  }
   if (opts?.ctaL) {
-    const mk = (stop: number, L: number, mode: 'light' | 'dark') => makeStop(stop, L, curve(L, mode), scale.brandH)
     scale.cta = mk(9, opts.ctaL.light, 'light')
-    scale.ctaHover = mk(10, hoverL(opts.ctaL.light), 'light')
-    scale.ctaPressed = mk(11, pressedL(opts.ctaL.light), 'light')
     scale.ctaDark = mk(9, opts.ctaL.dark, 'dark')
-    scale.ctaHoverDark = mk(10, hoverL(opts.ctaL.dark), 'dark')
-    scale.ctaPressedDark = mk(11, pressedL(opts.ctaL.dark), 'dark')
   } else {
     scale.cta = asCta(9, scale.light[3])
-    scale.ctaHover = asCta(10, scale.light[4])
-    scale.ctaPressed = asCta(11, scale.light[5])
     scale.ctaDark = asCta(9, scale.dark[3])
-    scale.ctaHoverDark = asCta(10, scale.dark[4])
-    scale.ctaPressedDark = asCta(11, scale.dark[5])
   }
+  scale.ctaHover = st(10, 'light', scale.cta, 1)
+  scale.ctaPressed = st(11, 'light', scale.cta, 2)
+  scale.ctaHoverDark = st(10, 'dark', scale.ctaDark, 1)
+  scale.ctaPressedDark = st(11, 'dark', scale.ctaDark, 2)
   // quiet cta, judgment only (same law as the neutral's): wcag = mixing flip + the 4.5
   // conformance floor (pole flips when the preferred one fails); apca = pure apca-pole.
   const onEnforce = opts?.contrastProfile !== 'apca'

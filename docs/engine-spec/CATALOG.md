@@ -1218,3 +1218,68 @@ EFFECTIVE depth; the table reads the lane-invariant surface band 1–7 only (own
 lane leak: stops 8/9 are lawfully lane-split and forked the washes). deltaDarkPlace owns
 the combined placement. Calibration exhibits: dark-chips/washes-shine + shaped-cusp
 (per-element groups; marks doctrine per the owner — no click-UI for small rounds).
+
+## C25 — cta-fill STATES: one rule, one apparent step, mode-aware direction
+
+FOUND (owner, unify-compare dark eyeball 2026-07-28): in dark mode hover/pressed
+never inverted — every chromatic cta DARKENED into the dark page (receding), only
+the neutral lightened, and step sizes disagreed (neutral ±6.5/15.3 app vs signals
+~4/8, warning near-imperceptible). Two idioms had forked: loud ctas rode
+hoverL/pressedL (archetypes.ts) — direction keyed on the fill's OWN L (<0.40
+lighten, else darken) and magnitude 0.03/(L+0.1), a light-mode archetype rule
+applied verbatim to dark fills that all sit at the .63–.75 prominence floors —
+while the quiet neutral's states were FED (stop-5/6 aliases + uniform pop lift),
+inverting correctly only as a side effect of the dark ramp ascending. The cta-INK
+trio had been dark-cased long before (reqtoken resolve, "ink-11 sits BRIGHTER");
+the fill trio never was.
+
+RULE (owner spec: "they should all do the same thing and move the same amount of
+delta away from each other" — refined by two owner corrections on the landing):
+`stateFillL` (archetypes.ts). DIRECTION: away from the mode's ground (light
+darkens, dark lightens), with THE ARCHETYPE OVERRIDE (correction 1: the original
+hoverL 0.40 switch was a deliberate visibility rule, not an accident) — a fill
+already in its travel direction's TERMINAL band flips: light mode, L below the
+'rich' floor (0.40: FIS, deep seeds, the light escape) lightens; dark mode, L
+at/above the 'light' archetype floor (0.85: chamomile dark, the yellow signal at
+.854, the dark escape) darkens. Both bounds read from ARCHETYPES. Direction
+commits on the pressed budget (the pair can never split at a rail); the rail-fit
+backstop also flips dark fills just under the override line (~.79–.85), where the
+mirrored deltas outrun the headroom. MAGNITUDE (correction 2: a first cut solved
+a FIXED APPARENT-L step, exact on the meter and imperceptible on the near-black
+light cta — equal apparent ≠ equal visible; state-change visibility is
+crispening-compressed with distance from the page ground, and the original
+formula's SHAPE was that compensation): ΔL = k/(nearness-to-ground + 0.1),
+nearness = L in light / 1−L in dark, k = 0.03, pressed 2× (doubled, never crosses
+back) — the owner-tuned hoverL law, mode-mirrored, zero new constants. The light
+lane reproduces the register hoverL always shipped; dark finally gets the mirror
+(the "imperceptible warning" was the smallest step where the mirror demands the
+biggest). Steps are deliberately UNEQUAL in L and equal in visibility-weighted
+terms: small near the page (crispening amplifies), large toward the far pole.
+POLE CAP (correction 3, two owner catches on a pure-black cta): the raw law gave
+0 → .30 → .60 — pressed read as a DIFFERENT BUTTON; a first fix (flooring nearness
+at the near-black median) capped the STEP and killed the hover instead (L .133
+renders #080808 — OKLCH is cube-root-compressed near black; the divergence IS what
+visibility demands there). Final rule: the steps stay divergent, and for rests in
+the NEAR-BLACK archetype (< .25) the trio's ENDPOINT clamps at the override
+boundary (.40) — pressed caps there, and a hover that would reach the capped
+pressed compresses to the midpoint so the pair stays ordered. Pure black now
+0 → .30 (#2e2e2e) → .40 (#484848); rests above the band never travel that far
+(FIS .365 → .429/.494, the shipped hoverL register verbatim). Dark side uncapped —
+its overridden fills darken off near-white, where the compression works the
+other way (escape .926 → .75 → .58). Fleet impact: one family (a near-black rest's
+pressed trimmed .403 → .400).
+
+WIRED: every fill-trio mint — reqtoken/resolve.ts light + dark base/enforce/exit,
+colorEngine neutral (rest stays FED + pop-lifted; only the states switched) and
+subtle-secondary (fed + pinned ctaL paths), engine/resolve red-variant + the
+neutral escape. States carry the REST's hue (fed stops are torsioned off brandH —
+the raw-H first cut shifted neutral states ~5°). hoverL/pressedL remain for the
+cta-ink/link text-register trios only. Non-moves: rests, hl9, stop scales, all
+ink trios — verified per-token in the highlight-snapshot diffs (only the 4 state
+tokens per family moved at each landing). Net effect vs pre-C25: LIGHT trios are
+byte-equivalent to the original hoverL register everywhere except the neutral/
+subtle quiet ctas, whose states left the stop-5/6 ladder for the law; DARK trios
+all re-derive under the mirror. Re-blessed: highlight, divergence (trio tokens),
+ext override sets (+neutral state overrides on exotic-neutral themes). Dark-audit
+and smoothness untouched (stops-only instruments). highlight-audit §3 now asserts
+the law against stateStepL itself instead of stop-5/6 aliasing.

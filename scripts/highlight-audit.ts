@@ -12,11 +12,13 @@
 //      in L for luminous hues — they are not a border/fill pair — so their ordering is NOT asserted.)
 //   2b. non-text contrast — stop 8 (highlight-8) clears WCAG 1.4.11 3:1 vs paper-2 in
 //      BOTH modes, swept agnostically (worst-case hue×chroma×L is the bar).
-//   3. neutral cta is LOW-HIERARCHY — it tracks the scale's own stop 4 (cta) / stop 5
-//      (hover), so it FLIPS per mode (near-white wash in light, dark wash in dark) and
-//      on-cta stays legible. DARK additionally lifts the trio uniformly to clear
-//      NEUTRAL_CTA_DARK_POP_CLEARANCE vs the resolved dark paper-3 (the POP plane —
-//      owner 2026-07-27: clearance reads against pop, never black).
+//   3. neutral cta is LOW-HIERARCHY — its REST tracks the scale's own stop 4, so it
+//      FLIPS per mode (near-white wash in light, dark wash in dark) and on-cta stays
+//      legible. DARK additionally lifts the rest to clear NEUTRAL_CTA_DARK_POP_CLEARANCE
+//      vs the resolved dark paper-3 (the POP plane — owner 2026-07-27: clearance reads
+//      against pop, never black). Hover/pressed ride the shared fill-state law
+//      (owner 2026-07-28): ΔL = k/(nearness-to-ground+0.1) mode-mirrored, pressed 2×,
+//      light darkens / dark lightens with the archetype override at the terminal bands.
 //   4. signal cta legible + clean 12-stop scale.
 //   5. blessed-snapshot regression on the highlight rung + off-scale cta (L,C,H).
 
@@ -30,6 +32,7 @@ import { generateNeutralScale, generateScale, type GeneratedScale, type ColorSto
 import { darkChromaCurve } from '../src/engine/darkChromaCurve'
 import { CTA_ONFILL_ENFORCE_LC } from '../src/reqtoken/profiles'
 import { oklabDist } from '../src/engine/colorMath'
+import { stateStepL } from '../src/engine/archetypes'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -132,25 +135,28 @@ for (const { name, hex, scale } of items) {
   console.log(`  ${name.padEnd(22)} ${scale.brandH.toFixed(0).padStart(3)}   ${isYellow(scale) ? 'Y' : '·'}  | ${hx(l9)} L${f(l9.L)} w${whiteWcag(l9).toFixed(1)} | ${hx(d9)} L${f(d9.L)} w${whiteWcag(d9).toFixed(1)}`)
 }
 
-// ── 3. Neutral — low-hierarchy cta tracks stop 4 (cta) / stop 5 (hover), flips.
-// DARK POP CLEARANCE (owner 2026-07-27): the dark trio is stop-FED then lifted
-// UNIFORMLY until the cta clears NEUTRAL_CTA_DARK_POP_CLEARANCE vs the resolved
+// ── 3. Neutral — low-hierarchy cta REST tracks the scale's own stop 4, flips per
+// mode. DARK POP CLEARANCE (owner 2026-07-27): the dark rest is stop-FED then
+// lifted until the cta clears NEUTRAL_CTA_DARK_POP_CLEARANCE vs the resolved
 // dark paper-3 (the POP plane its buttons sit on — never black). Light stays
-// exactly stop-fed (already ~1.25 vs its white pop). The gate asserts: light
-// tracks the stops; dark preserves the stop STEPS (uniform lift) and clears
-// the pop bar with a minimal lift (never below its fed stop). ──
+// exactly stop-fed (already ~1.25 vs its white pop). STATES (owner 2026-07-28,
+// "same delta, every family" + the magnitude correction): hover/pressed ride the
+// shared stateFillL law — ΔL = k/(nearness-to-ground+0.1) mode-mirrored, pressed
+// 2×, from the (lifted) rest; light darkens, dark lightens. The gate asserts:
+// rest feeding + pop clearance (minimal, never below the fed stop) + the state
+// steps and directions against stateStepL itself. ──
 const NEUTRAL_HUES = [30, 90, 143, 210, 270, 320]
 // apca lane = the shipped default (structure + the Lc bar); wcag lane = the legal ratios
 const neutralByHue = NEUTRAL_HUES.map(h => ({ h, s: generateNeutralScale(h, 'default', SHIPPED_PROFILE) }))
 const neutralWcag = NEUTRAL_HUES.map(h => ({ h, s: generateNeutralScale(h, 'default') }))
-console.log(`\n=== neutral cta (tracks stop 4/5; dark lifts to clear ${NEUTRAL_CTA_DARK_POP_CLEARANCE} vs pop) + highlight on-text — ${NEUTRAL_HUES.length} hues × both profiles ===`)
+console.log(`\n=== neutral cta (rest = stop 4; states ride the mirrored k/(nearness+.1) law; dark lifts to clear ${NEUTRAL_CTA_DARK_POP_CLEARANCE} vs pop) + highlight on-text — ${NEUTRAL_HUES.length} hues × both profiles ===`)
 for (const { h, s } of neutralByHue) {
   const ctaL = s.cta, ctaD = s.ctaDark, hovL = s.ctaHover, hovD = s.ctaHoverDark
   const hlL = s.light[8], hlD = s.dark[8]
-  // LIGHT: cta == stop 4, hover == stop 5, pressed == stop 6 — exactly fed.
+  // LIGHT: rest == stop 4 (fed); states = the shared mirrored law (darken, k/(L+.1)).
   ok(Math.abs(ctaL.L - s.light[3].L) < 0.01, `neutral h${h} cta light != stop4 (${f(ctaL.L)} vs ${f(s.light[3].L)})`)
-  ok(Math.abs(hovL.L - s.light[4].L) < 0.01, `neutral h${h} ctaHover light != stop5 (${f(hovL.L)} vs ${f(s.light[4].L)})`)
-  ok(Math.abs(s.ctaPressed.L - s.light[5].L) < 0.01, `neutral h${h} ctaPressed light != stop6 (${f(s.ctaPressed.L)} vs ${f(s.light[5].L)})`)
+  ok(Math.abs((ctaL.L - hovL.L) - stateStepL(ctaL.L, 'light', 1)) < 1e-6, `neutral h${h} light hover step off the law (${f(ctaL.L - hovL.L)})`)
+  ok(Math.abs((ctaL.L - s.ctaPressed.L) - stateStepL(ctaL.L, 'light', 2)) < 1e-6, `neutral h${h} light pressed step off the law (${f(ctaL.L - s.ctaPressed.L)})`)
   // DARK: fed + uniform pop-clearance lift — clears the bar, never sinks below
   // its fed stop, minimal (no over-lift), and the state STEPS stay the stops'.
   const p3D = s.dark[2]
@@ -159,8 +165,8 @@ for (const { h, s } of neutralByHue) {
   ok(ctaD.L >= s.dark[3].L - 1e-6, `neutral h${h} cta dark sank below its fed stop4`)
   ok(popRatio <= NEUTRAL_CTA_DARK_POP_CLEARANCE + 0.05 || Math.abs(ctaD.L - s.dark[3].L) < 1e-6,
     `neutral h${h} cta dark over-lifted (${popRatio.toFixed(3)} — the solve must be minimal)`)
-  ok(Math.abs((hovD.L - ctaD.L) - (s.dark[4].L - s.dark[3].L)) < 0.01, `neutral h${h} dark hover step != stop5-stop4 step`)
-  ok(Math.abs((s.ctaPressedDark.L - ctaD.L) - (s.dark[5].L - s.dark[3].L)) < 0.01, `neutral h${h} dark pressed step != stop6-stop4 step`)
+  ok(Math.abs((hovD.L - ctaD.L) - stateStepL(ctaD.L, 'dark', 1)) < 1e-6, `neutral h${h} dark hover step off the law (${f(hovD.L - ctaD.L)})`)
+  ok(Math.abs((s.ctaPressedDark.L - ctaD.L) - stateStepL(ctaD.L, 'dark', 2)) < 1e-6, `neutral h${h} dark pressed step off the law (${f(s.ctaPressedDark.L - ctaD.L)})`)
   // apca lane: highlight on-text at the body-text Lc bar, both modes
   ok(onApcaLc(hlL, s.onHighlightIsWhite) >= HL_BODY, `neutral h${h} apca light: highlight on-text below body-text (Lc ${onApcaLc(hlL, s.onHighlightIsWhite).toFixed(1)})`)
   ok(onApcaLc(hlD, s.onHighlightIsWhiteDark) >= HL_BODY, `neutral h${h} apca dark: highlight on-text below body-text (Lc ${onApcaLc(hlD, s.onHighlightIsWhiteDark).toFixed(1)})`)
@@ -236,4 +242,4 @@ if (process.argv.includes('--bless')) {
 
 console.log()
 if (fails.length) { console.error(`FAIL: ${fails.length}\n` + fails.map(s => '  - ' + s).join('\n')); process.exit(1) }
-console.log('PASS — agnostic on-highlight legibility (apca lane Lc 60 · wcag lane 4.5 floor, hl9) · structure · neutral cta tracks stop 4/5 · signals (both lanes) · snapshot (shipped=apca).')
+console.log('PASS — agnostic on-highlight legibility (apca lane Lc 60 · wcag lane 4.5 floor, hl9) · structure · neutral cta rest=stop4 + state law · signals (both lanes) · snapshot (shipped=apca).')

@@ -19,7 +19,7 @@ import { pickSignalShift, signalSwapVariants } from './signalShift'
 import { hexToOklch, hueDelta, makeStop, maxChromaAt, onTextIsWhite, RED_SOLVE, redSolveDist } from './colorMath'
 import { apparentL, grayApparentL, solveCForApparent, solveLForApparent } from './perceptualL'
 import { subtleSecondaryChromaCurve } from './neutralCurve'
-import { hoverL, pressedL } from './archetypes'
+import { stateFillL } from './archetypes'
 import { p2Diff, P2_D, P2_D_UP } from './p2'
 import { buildContext, whiteTextLcAt, apcaYAt, onFillIsWhiteDarkAt } from '../reqtoken/producers'
 import { CTA_ONFILL_ENFORCE_LC } from '../reqtoken/profiles'
@@ -133,10 +133,11 @@ function redComplementVariant(
   }
   if (!pick) return null // no clean complement in her zones — canonical stands, sweeps flag the pair
   const cta = makeStop(redCta.stop, pick.L, rctx.cAt('light', pick.L, rctx.brandC), pick.H)
-  const hL = hoverL(pick.L)
-  const ctaHover = makeStop(red.scale.ctaHover.stop, hL, rctx.cAt('light', hL, rctx.brandC), pick.H)
-  const pL = pressedL(pick.L)
-  const ctaPressed = makeStop(red.scale.ctaPressed.stop, pL, rctx.cAt('light', pL, rctx.brandC), pick.H)
+  const vCFor = (L: number) => rctx.cAt('light', L, rctx.brandC)
+  const hL = stateFillL(pick.L, 'light', 1)
+  const ctaHover = makeStop(red.scale.ctaHover.stop, hL, vCFor(hL), pick.H)
+  const pL = stateFillL(pick.L, 'light', 2)
+  const ctaPressed = makeStop(red.scale.ctaPressed.stop, pL, vCFor(pL), pick.H)
   // pinned mints skip the producer's enforce-darken, so the wcag conformance floor rides
   // the pole judge (a light coral variant must flip to black text, not ship white sub-4.5)
   const onFillTextIsWhite = onFillIsWhiteDarkAt(cta.L, cta.C, cta.H, true, contrastProfile === 'apca' ? undefined : 4.5)
@@ -378,7 +379,7 @@ export const OUTLINE_PRESSED_ALPHA = 0.18
 // values; the solve pipeline is untouched and the flag default-off is byte-identical).
 // Construction (owner-decided at planning): cta ANCHORS at the neutral's resolved ink-11
 // (light root L≈0.30 / dark ≈0.94 — the "paper12/1" register); cta-hover/cta-pressed
-// derive via the same hoverL/pressedL machinery every cta uses, chroma carried from the
+// derive via the same stateFillL machinery every cta fill uses, chroma carried from the
 // anchor (the neutral's ink chroma is a whisper — re-evaluating the curve across a
 // 0.03–0.09 L move is imperceptible and the curve closure is gone post-generation), hue
 // constant. on-cta re-judges at the escaped fill under the same law as the neutral's own
@@ -425,8 +426,10 @@ export function escapeCtaFamily(
   if (!ink11) throw new Error('escapeCtaFamily: the neutral scale has no ink-11 stop')
   const mk = (stop: number, L: number) => makeStop(stop, L, ink11.C, ink11.H)
   const cta = mk(9, ink11.L)
-  const ctaHover = mk(10, hoverL(ink11.L))
-  const ctaPressed = mk(11, pressedL(ink11.L))
+  // states via the shared fill rule; the near-white dark register is the archetype
+  // override case — its dark states DARKEN (the mirror of everyone else's lighten)
+  const ctaHover = mk(10, stateFillL(ink11.L, mode, 1))
+  const ctaPressed = mk(11, stateFillL(ink11.L, mode, 2))
   const onEnforce = contrastProfile !== 'apca'
   const onFloor = contrastProfile === 'apca' ? undefined : 4.5
   const onFillIsWhite = onTextIsWhite(apcaY(cta.r, cta.g, cta.b), cta.L, cta.C, cta.H, onEnforce, onFloor)
