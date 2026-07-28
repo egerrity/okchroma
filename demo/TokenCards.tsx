@@ -86,7 +86,7 @@ export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; 
   )
 }
 
-export function TokenCards({ prefix, kind, outlineCta }: { prefix: string; kind: RampKind; outlineCta?: boolean }) {
+export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix: string; kind: RampKind; outlineCta?: boolean; insetControls?: boolean }) {
   const v = (t: string) => `var(--${prefix}-${t})`
   const isSignal = kind === 'signal'
   const [ctaHover, setCtaHover] = React.useState(false)     // cta → cta-hover on hover
@@ -175,7 +175,8 @@ export function TokenCards({ prefix, kind, outlineCta }: { prefix: string; kind:
         </div>
       )}
 
-      {/* in context — the wash inset, plus the highlight inset OR the signal alert */}
+      {/* in context — the wash inset, plus the signal alert (signals), the chip +
+          focus-ring controls box (insetControls), or the highlight inset (default) */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 18 }}>
         <div style={{ ...box, background: v('wash-4') }}>
           <div style={{ ...boxLabel, color: v('ink-10') }}>inset &middot; wash</div>
@@ -187,6 +188,26 @@ export function TokenCards({ prefix, kind, outlineCta }: { prefix: string; kind:
             <div>
               <div style={{ ...boxLabel, color: v('on-cta') }}>alert &middot; cta</div>
               <div style={{ ...boxBody, color: v('on-cta') }}>Loud message in on-cta text.</div>
+            </div>
+          </div>
+        ) : insetControls ? (
+          /* the controls box (owner 2026-07-28, unify-compare section 3): chip +
+             focused input, so the stops' JOBS read directly — chip = paper-3 fill ·
+             wash-6 border · ink-10 text; the ring is highlight-8 with a wash-5 halo
+             (the collision demo's held-focus idiom) */
+          <div style={{ ...box, background: v('paper-2') }}>
+            <div style={{ ...boxLabel, color: v('ink-10') }}>chip &middot; focus ring</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 6,
+                fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap',
+                background: v('paper-3'), color: v('ink-10'), border: `1px solid ${v('wash-6')}`,
+              }}>chip</span>
+              <input readOnly value="Focused input" style={{
+                flex: 1, minWidth: 0, boxSizing: 'border-box', padding: '7px 11px', borderRadius: 8,
+                fontSize: 13, fontFamily: 'inherit', background: v('paper-1'), color: v('ink-11'),
+                border: `1.5px solid ${v('highlight-8')}`, boxShadow: `0 0 0 3px ${v('wash-5')}`, outline: 'none',
+              }} />
             </div>
           </div>
         ) : (
