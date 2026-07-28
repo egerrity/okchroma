@@ -1085,11 +1085,12 @@ const SIGNAL_CARDS: Array<{ sig: string; Icon: typeof Info; alert: string }> = [
 
 function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typeof Info; alert: string; hasSecondary: boolean }) {
   const v = (t: string) => `var(--${sig}-${t})`
+  // the canonical chip recipe (owner 2026-07-28): paper-3 · wash-6 · ink-10
   const chip = (prefix: string, label: string) => (
     <span style={{
       display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 6,
       fontSize: 12, fontWeight: 500,
-      background: `var(--${prefix}-wash-4)`, color: `var(--${prefix}-ink-11)`,
+      background: `var(--${prefix}-paper-3)`, color: `var(--${prefix}-ink-10)`,
       border: `1px solid var(--${prefix}-wash-6)`,
     }}>{label}</span>
   )
@@ -1239,8 +1240,15 @@ function CustomersTable({ hasSecondary }: { hasSecondary: boolean }) {
           const [label, tone] = CUST_STATUS[c.status]
           const premium = c.plan !== 'Starter'
           // Premium plans carry the accent when a secondary exists, else the brand.
-          const planBg = premium ? (hasSecondary ? 'var(--secondary-paper-3)' : 'var(--brand-wash-5)') : 'var(--surface-sink)'
-          const planFg = premium ? (hasSecondary ? 'var(--secondary-ink-10)' : 'var(--brand-ink-11)') : 'var(--fg-subtle)'
+          // THE canonical chip recipe (owner 2026-07-28, matching the unify-compare
+          // exhibit): paper-3 fill · wash-6 stroke · ink-10 text, family = the only
+          // variable. Chips are color-family recipes, never surface planes. NOTE:
+          // dark chips on the POP plane (= paper-3) show the fill collision honestly —
+          // that's the context the pop-plane decision is being judged in.
+          const planFam = premium ? (hasSecondary ? 'secondary' : 'brand') : 'neutral'
+          const planBg = `var(--${planFam}-paper-3)`
+          const planFg = `var(--${planFam}-ink-10)`
+          const planBorder = `var(--${planFam}-wash-6)`
           return (
             <tr key={c.name}>
               <td>
@@ -1252,8 +1260,8 @@ function CustomersTable({ hasSecondary }: { hasSecondary: boolean }) {
                   </div>
                 </div>
               </td>
-              <td><span className="dash-pill" style={{ background: planBg, color: planFg }}>{c.plan}</span></td>
-              <td><span className="dash-pill" style={{ background: `var(--${tone}-bg-subtle)`, color: `var(--${tone}-fg)` }}>{label}</span></td>
+              <td><span className="dash-pill" style={{ background: planBg, color: planFg, border: `1px solid ${planBorder}` }}>{c.plan}</span></td>
+              <td><span className="dash-pill" style={{ background: `var(--${tone}-paper-3)`, color: `var(--${tone}-ink-10)`, border: `1px solid var(--${tone}-wash-6)` }}>{label}</span></td>
               <td style={{ fontWeight: 500 }}>{c.mrr}</td>
               <td style={{ color: 'var(--fg-subtle)' }}>{c.seen}</td>
             </tr>
@@ -1324,7 +1332,7 @@ const PAGE_CSS = `
 .dash-info a { color: inherit; font-weight: 600; margin-left: auto; }
 .dash-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 16px; }
 .dash-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-.dash-pill { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.dash-pill { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 6px; white-space: nowrap; }
 .dash-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .dash-table thead tr { background: var(--surface-sink); }
 /* dense table keeps hairline row dividers — small/functional, legibility earns them */

@@ -302,6 +302,8 @@ export const STYLE_CSS = /* css */ `
    because table avatars carry inline borders/styles that otherwise win */
 [data-style="bubble"] .dash .dash-pill {
   box-shadow: var(--recess-sm) !important;
+  border-radius: 999px; /* the base went round-rect for clean (owner 2026-07-28, the
+    unify chip shape); bubble keeps its pillow pills */
 }
 [data-style="bubble"] .dash .dash-avatar {
   border: 0 !important;
