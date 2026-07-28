@@ -1405,3 +1405,47 @@ RESIDUAL: 28 of 1800 grid cells (bright magenta, H 324–336 at L .85) still pea
 chroma at wash-7 before stop 8's declared register (.189 → .165; not gamut-bound,
 ceiling is .243/.301) — light peaks later, at 8. Reported, not patched. Re-blessed:
 dark, divergence, highlight, ext, smoothness.
+
+## C29 — THE FLAT DELTA: a state change is a glimmer, the same size on every button
+
+Owner, reading the dark deconfliction row: "the lighten steps are TOO MUCH … it is a
+glimmer, and you are moving it so heavily that it is going to be jarring. You are
+taking the brand color all the way to white for no reason."
+
+DIAGNOSED: C25's magnitude — ΔL = k/(nearness-to-ground + 0.1) — grows as a fill
+approaches the far pole, so the biggest steps landed exactly where the gamut is
+narrowest. Dark pressed states ran ΔL* 8.7–28.3 across the fleet and washed
+saturated fills out: hibiscus #FFEFED at 14% of its rest chroma, info #E9E8FF at
+26%. Its own hover was already ΔL* 11.8 — larger than a whole pressed step should
+be. The curve was added the same day as C25 against a real observation (equal
+APPARENT-L steps read unequal near black) but applied the remedy in the wrong
+currency: OKLCH L is already near-uniform perceptually, so a flat ΔL in L never had
+the defect the curve was correcting for.
+
+RULE — ΔL is a CONSTANT: k = 0.05 hover (her mark, over .03 and .04), pressed 2×,
+both modes. Restores her original C25 spec verbatim — "they should all do the same
+thing and move the same amount of delta away from each other" — now in L rather
+than apparent-L. Every family lands ΔL* 11.6–12.7 at pressed, and chroma survives:
+hibiscus 14 → 52%, info 26 → 61%.
+
+THE DARK ARCHETYPE OVERRIDE IS RETIRED. Its bound (the 'light' archetype floor,
+0.85) declared "no room to lighten" for fills that plainly had 0.11–0.19 L of room;
+warning was the casualty, resting at .854 only because yellow is the most luminous
+hue, so it flipped and darkened to olive (#A67B00). Under a flat delta the honest
+test is the RAIL alone — a fill flips only when its full pressed step would
+overshoot, i.e. above STATE_L_MAX − 2k = 0.88. Nothing in the fleet sits there (0
+of 66 ctas, both lanes), so dark fills all lighten. The threshold is now a
+consequence, not a constant. The light-mode override (near-black lightens, the
+original hoverL switch) is unchanged.
+
+The near-black ENDPOINT CAP is DELETED, not carried: it existed because the
+diverging Weber steps could push a near-black light pressed state past .40, out of
+dark-button territory. A flat 2k = 0.10 cannot — the near-black band tops out at
+.25, so pressed lands at .35 worst case. Provably inert.
+
+COST, accepted: warning now lightens rather than flipping, and lightening a gold
+runs into the gamut narrowing toward white — 38% chroma at pressed (#FFEECC). No
+longer olive, no longer a leap, but the palest pressed in the set; the decorative
+stroke for pale ctas is the open follow-up. Neutral moved the other way (ΔL* 8.7 →
+11.6). Re-blessed: highlight, divergence — drift confined to ctaHover/ctaHoverDark
+in both, with nothing drifting at a scale-stop or cta-rest index.
