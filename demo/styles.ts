@@ -221,8 +221,16 @@ export const STYLE_CSS = /* css */ `
 [data-style="bubble"] [data-theme="dark"] .dash .dash-side {
   box-shadow: -1px -1px 3px rgba(255,255,255,.03), 4px 5px 9px rgba(0,0,0,.65), 0 0 4px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06);
 }
+/* the recess DARK (owner correction 2026-07-28: invert the SURFACES, keep the
+   LIGHT — the raw wash tokens flip LIGHTER than the dark sink fill, which turned
+   the inner shadow into a glow-in-the-hole. The inners keep their wash tint but
+   mixed toward dark (shadows are always dark), so the well reads dark with the
+   light catching only the outer bottom lip). */
 [data-style="bubble"] [data-theme="dark"] .dash .dash-metric {
-  box-shadow: inset 0 0 10.6px -1px var(--neutral-wash-4), inset 0 2px 2px -2px var(--neutral-wash-6), 0 1px 0 rgba(255,255,255,.04) !important;
+  box-shadow:
+    inset 0 0 10.6px -1px color-mix(in srgb, var(--neutral-wash-4) 25%, rgba(0,0,0,.72)),
+    inset 0 2px 2px -2px color-mix(in srgb, var(--neutral-wash-6) 25%, rgba(0,0,0,.85)),
+    0 1px 0 rgba(255,255,255,.05) !important;
 }
 /* selection physics (owner): the SELECTED item pops UP (pillow, keeps its own
    color); HOVER presses IN — colorless, inset only */
@@ -273,6 +281,13 @@ export const STYLE_CSS = /* css */ `
 [data-style="bubble"] .dash .u-btn-secondary:active,
 [data-style="bubble"] .dash .u-btn-neutral:active {
   box-shadow: inset 0 3px 8px rgba(0,0,0,.28), inset 0 0 6px rgba(0,0,0,.14), 0 1px 0 rgba(255,255,255,.4);
+}
+/* press DARK: same physics, dark-calibrated amounts (darks strong, lights
+   whisper — the light .4 outer lip is a mini-halo on the near-black page) */
+[data-style="bubble"] [data-theme="dark"] .dash .u-btn-primary:active,
+[data-style="bubble"] [data-theme="dark"] .dash .u-btn-secondary:active,
+[data-style="bubble"] [data-theme="dark"] .dash .u-btn-neutral:active {
+  box-shadow: inset 0 3px 8px rgba(0,0,0,.55), inset 0 0 6px rgba(0,0,0,.3), 0 1px 0 rgba(255,255,255,.05);
 }
 /* the alert callout rides the same physics (it IS a cta register) — mid tier */
 [data-style="bubble"] .dash .dash-info {
