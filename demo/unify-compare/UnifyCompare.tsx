@@ -292,12 +292,19 @@ export default function UnifyCompare() {
   const themes = UNIFY_THEMES
   const labels = themes.map(shortName)
 
-  // Every Unify seed through the real pipeline, once. apca = the shipped lane.
+  // Every Unify seed through the real pipeline, once. WCAG — the lane this comparison is
+  // read in, and the one build.ts ships (SHIPPED_PROFILE flipped 'apca' → 'wcag' in C33).
+  // This page rendered APCA until 2026-07-29 under a comment claiming apca was the shipped
+  // lane. Papers and washes are byte-identical between the lanes, so the change is confined
+  // to the emphasis band — and that is the whole subject of the comparison: measured over
+  // the 7 Unify seeds, light highlight-8 differed on 7/7 (worst ΔE 0.128, #369c54 vs
+  // #62c47a) and dark ink-9 on 7/7 (worst 0.127). The published page was showing a focus
+  // ring visibly lighter than the one the WCAG lane actually ships.
   const resolved = useMemo(() => themes.map(t => ({
-    t, slug: slugOf(t), r: resolveBrand(t.primary.hex, shortName(t), { contrastProfile: 'apca' }),
+    t, slug: slugOf(t), r: resolveBrand(t.primary.hex, shortName(t), { contrastProfile: 'wcag' }),
   })), [themes])
   const allCss = useMemo(
-    () => resolved.map(({ slug, r, t }) => brandCss(slug, shortName(t), r, null, '', 'default', 'apca')).join('\n'),
+    () => resolved.map(({ slug, r, t }) => brandCss(slug, shortName(t), r, null, '', 'default', 'wcag')).join('\n'),
     [resolved])
 
   // ── section 1 data: role landings per theme, both modes ──
@@ -374,7 +381,7 @@ export default function UnifyCompare() {
   // every custom property the engine mints for this one seed (ramp × 2 modes,
   // ctas, inks, on-*, neutral, illustration, shifted signals)
   const focusVarCount = useMemo(() => {
-    const css = brandCss(focus.slug, shortName(focus.t), focus.r, null, '', 'default', 'apca')
+    const css = brandCss(focus.slug, shortName(focus.t), focus.r, null, '', 'default', 'wcag')
     return new Set(css.match(/--[a-z0-9-]+(?=:)/g)).size
   }, [focus])
   const semanticTotal = Object.values(UNIFY_SEMANTIC_CENSUS).reduce((a, b) => a + b, 0)
@@ -443,29 +450,32 @@ export default function UnifyCompare() {
             <div style={CARD}>
               <div style={CARD_TITLE}>OKChroma — the roles Brand Primary forks into, from the same seeds</div>
               <span style={MODE_TAG}>Light mode</span>
+              {/* C33's ink renumber renamed BOTH of these series to 'ink-9' — stop 10 is
+                  ink-10. React saw duplicate keys and dropped a line; the legend called two
+                  different stops by one name. Caught 2026-07-29 from a console warning.
+                  The cta series is deliberately NOT plotted (owner 2026-07-29): it varies by
+                  design, and the point of this chart is that the STRUCTURAL roles do not. */}
               <DotChart mode="light" xLabels={labels} series={[
-                { label: 'cta', dots: okRole(okCta, 'light') },
-                { label: 'ink-9', dots: okRole(okStop(10), 'light') },
+                { label: 'ink-10', dots: okRole(okStop(10), 'light') },
                 { label: 'ink-9', dots: okRole(okStop(9), 'light') },
                 { label: 'wash-6', dots: okRole(okStop(6), 'light') },
                 { label: 'paper-3', dots: okRole(okStop(3), 'light') },
               ]} />
               <span style={MODE_TAG}>Dark mode</span>
               <DotChart mode="dark" xLabels={labels} series={[
-                { label: 'cta', dots: okRole(okCta, 'dark') },
-                { label: 'ink-9', dots: okRole(okStop(10), 'dark') },
+                { label: 'ink-10', dots: okRole(okStop(10), 'dark') },
                 { label: 'ink-9', dots: okRole(okStop(9), 'dark') },
                 { label: 'wash-6', dots: okRole(okStop(6), 'dark') },
                 { label: 'paper-3', dots: okRole(okStop(3), 'dark') },
               ]} />
               <div style={STAT}>
                 Unify's one Primary is doing the button job, the text job, and the emphasis job at once — here it
-                forks: <b>cta</b> (the fill), <b>ink-9</b> (the text register,
+                forks: <b>ink-10</b> (the body text register,
                 spans {spread(okRole(okStop(10), 'light')).toFixed(0)} L* light), <b>ink-9</b> (the emphasis
-                fill, {spread(okRole(okStop(9), 'light')).toFixed(0)} L*), with the tint registers wash-6 / paper-3
-                (Unify's Highlight and Accent analogs) flat within ~<b>1 L*</b>. The cta is the one role that varies — it carries the brand's identity on
-                purpose, inside a gated register (the lifted Orange dot is the engine moving that cta out of the
-                red signal's register, not a hand-pick). The small wobble that remains in ink-9 is principled:
+                fill and first text stop, {spread(okRole(okStop(9), 'light')).toFixed(0)} L*), with the tint registers wash-6 / paper-3
+                (Unify's Highlight and Accent analogs) flat within ~<b>1 L*</b>. The fourth fork, the <b>cta</b>, is
+                left off the chart on purpose: it carries the brand's identity inside a gated register, so it is
+                supposed to vary and plotting it here only competes with the point. The small wobble that remains in ink-9 is principled:
                 the text register solves a contrast requirement, and contrast is pure luminance — equal contrast
                 across hues can't also be equal apparent lightness once chroma differs.
               </div>
