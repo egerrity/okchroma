@@ -1699,3 +1699,36 @@ it. The demo keeps its own WCAG/APCA toggle — removing APCA was scoped to the 
 Ten gates green. The docs-page ramp brackets were ALSO found stale by a hardcoded column
 count (spans 2/5/3/2 against a 12-column grid — a band layout two renames old); every
 bracket grid in the demo now derives its column count from its own scale and asserts it.
+
+## C34 — THE ROTATION IS FOR DERIVING, NOT FOR TRANSFORMING
+
+Owner-caught, 2026-07-29, immediately after C33: *"I can't add a lighter version of a brand
+color without it re-coloring."*
+
+`DEFAULT_SECONDARY.rot` is 12°, applied in `defaultSecondarySeed`. It exists so a secondary
+DERIVED FROM THE PRIMARY steps off its parent hue instead of reading as a paler copy of it.
+But the 2026-07-12 ruling deliberately unified the two seeds — *"'from brand' custom would
+just do the same thing as derived from brand"* — so `resolveDefaultModel` ran the identical
+transform whether the seed was the primary or a hex the user typed, and the rotation came
+along. Measured across the wheel it moved a supplied hue +9° to +13°: #F27DA8 → #eed2d5,
+#2C5FC9 → #b8c0dd, #2E9E3F → #9edeb7. For a colour the user had already chosen, that is not
+a derivation, it is re-colouring their pick.
+
+`defaultSecondarySeed(hex, rotate)` — derived passes true, a supplied seed passes false.
+One flag, not two paths: everything else about the model is genuinely shared.
+
+THE LIFT AND THE CHROMA DAMP STAY (owner ruling, asked explicitly). They move the supplied
+colour much further than the rotation did — #F7B0C8 (L .831, C .088) resolves at L .901,
+C .028, 32% of its chroma — but Custom is documented as "your color through the derived
+model, lifted", and `exact` is the hands-off path for anyone who wants their hex shipped
+untouched. Recorded here because the next person to read the numbers will notice the lift
+and should know it was seen and kept, not missed.
+
+Verified through `resolveTheme`, both postures, all three styles: from-primary still steps
++12.9°; custom/default holds hue to within the 8-bit round-trip (≤1.0°, and that residual is
+quantisation at C ≈ 0.03, not a rotation); exact and outline are 0.0° as before.
+
+Blast radius is the Custom chip alone. Every audit that builds a secondary either calls
+`resolveBrand` directly or lets `secStyle` fall through to `exact`, so ten gates pass with
+ZERO snapshot movement — no re-bless, which is itself the evidence that nothing else uses
+this path.

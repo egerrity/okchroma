@@ -340,11 +340,18 @@ export const normalizeSecondaryStyle = (s: LegacySecondaryStyle): SecondaryStyle
 // quiet register).
 export const DEFAULT_SECONDARY = { rot: 12, kL: 0.65, kC: 0.5, kR: 0.4, lRoom: 0.97, minGapApp: 10, darkFlatGapApp: 40 } as const
 const LIGHT_GROUND_APP = grayApparentL(1.0)
-export function defaultSecondarySeed(hex: string): string {
+// `rotate` — THE ROTATION IS FOR DERIVING, NOT FOR TRANSFORMING (owner 2026-07-29).
+// `rot` exists so a secondary DERIVED FROM THE PRIMARY steps off its parent hue instead of
+// reading as a paler copy of it. Applied to a hex the user typed it is just re-colouring
+// their pick: +9° to +13° across the wheel, which is why "a lighter version of a brand
+// colour" came back a different colour. Derived passes true; a supplied seed passes false.
+// The lift and the chroma damp still apply to both — Custom is documented as "your color
+// through the derived model, lifted" and the owner kept that; Exact is the hands-off path.
+export function defaultSecondarySeed(hex: string, rotate = true): string {
   const seed = hexToOklch(hex)
   const d = DEFAULT_SECONDARY
   let L2 = seed.L + d.kL * Math.max(0, d.lRoom - seed.L)
-  const H2 = (seed.H + d.rot + 360) % 360
+  const H2 = rotate ? (seed.H + d.rot + 360) % 360 : seed.H
   let C2 = Math.min(d.kC * seed.C, d.kR * maxChromaAt(L2, H2))
   // the light minimum gap (two passes settle the L↔C interaction)
   for (let i = 0; i < 2; i++) {
@@ -547,8 +554,12 @@ export function resolveTheme(input: {
   // them pick the color but do the same thing as derived from brand'): the derived posture
   // transforms the PRIMARY; the 'default' style on a supplied hex transforms the USER'S color
   // the same way — lift transform, engine-normal ramp, flat dark cta. One machinery.
-  const resolveDefaultModel = (seedHex: string) => {
-    const liftedHex = defaultSecondarySeed(seedHex)
+  // ONE EXCEPTION, and it is the hue (owner 2026-07-29): the +12° rotation is how a DERIVED
+  // secondary steps off the primary it was made from. A supplied seed was already chosen, so
+  // rotating it re-colours the user's pick — see defaultSecondarySeed. Everything else about
+  // the model is shared, so this stays one machinery with one flag, not two paths.
+  const resolveDefaultModel = (seedHex: string, rotate: boolean) => {
+    const liftedHex = defaultSecondarySeed(seedHex, rotate)
     return {
       liftedHex,
       scale: resolveBrand(liftedHex, 'secondary', {
@@ -564,7 +575,7 @@ export function resolveTheme(input: {
     // the DEFAULT model: transform the brand seed, resolve like a normal brand (secondary
     // convention: collisions are the theme's decisions). Everything — cta included — falls
     // out of the engine; the old quiet-register derived path is retired for the default.
-    const { liftedHex, scale } = resolveDefaultModel(input.primaryHex)
+    const { liftedHex, scale } = resolveDefaultModel(input.primaryHex, true)
     return {
       primary, themed: primary,
       secondary: {
@@ -586,7 +597,7 @@ export function resolveTheme(input: {
   // model as the derived posture. Their pick is the seed, not the shipped ramp — exact is the
   // hands-off path.
   if (secStyle === 'default') {
-    const { liftedHex, scale } = resolveDefaultModel(input.secondaryHex)
+    const { liftedHex, scale } = resolveDefaultModel(input.secondaryHex, false)
     const distinctness = ctaDistinctness(primary.scale, scale)
     if (distinctness.close)
       notes.push(`secondary reads close to the primary (ΔE ${Math.min(distinctness.light, distinctness.dark).toFixed(2)}) — consider a more distinct color`)
