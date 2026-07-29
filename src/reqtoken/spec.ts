@@ -14,7 +14,7 @@
 import {
   LIGHT_L, DARK_NEUTRAL_L, SCALE_C_LIGHT, SCALE_C_DARK,
   STOP_8_NONTEXT_CONTRAST,
-  STOP_10_CONTRAST, STOP_11_CONTRAST_FLOOR,
+  STOP_9_SURFACE_CONTRAST, STOP_10_CONTRAST, STOP_11_CONTRAST_FLOOR,
   HIGHLIGHT_LIGHT, HIGHLIGHT_DARK, DARK_STOP_9_MIN_L,
 } from '../engine/stopTable'
 
@@ -29,12 +29,15 @@ export type Producer = {
   L: 'perceptual' | 'perceptual-lift' | 'fixed'
   chroma: 'ladder' | 'brand'          // ladder = baseC/envelope blend (light) or mult ladder (dark); brand = chromaMult × brand C
 }
+// `against` names the ANCHOR STOP and is authoritative — the resolver reads it
+// (resolve.ts declaredAnchor). paper-3 joined the union when stop 8 became the focus
+// ring (owner 2026-07-28); the ink stops keep a lane-specific override in the resolver.
 export type Require =
-  | { metric: 'wcag'; against: 'paper-2'; target: number; level: 'AA' | 'AAA' }
+  | { metric: 'wcag'; against: 'paper-1' | 'paper-2' | 'paper-3'; target: number; level: 'AA' | 'AAA' }
   // APCA lightness-contrast requirement (the contrast-PROFILE alternative to wcag): the stop must read
-  // |Lc| ≥ targetLc against the resolved paper-2. Same floor semantics — a placement that already clears
+  // |Lc| ≥ targetLc against its declared anchor. Same floor semantics — a placement that already clears
   // does not move. Produced by withProfile() (profiles.ts), never hand-declared in the built-in specs.
-  | { metric: 'apca'; against: 'paper-2'; targetLc: number }
+  | { metric: 'apca'; against: 'paper-1' | 'paper-2' | 'paper-3'; targetLc: number }
   // minimum perceptual separation (OKLab ΔE, the house stopDeltaE metric) from another RESOLVED stop —
   // 'paper-1' anchors the paper-2 push; 'prev' = the stop's resolved predecessor (the wash seam floors:
   // every ladder seam guarantees distinctness, so no seed — low-chroma grays and muted warms included —
@@ -120,19 +123,45 @@ const P_LIFT: Producer = { hue: 'warm-torsion', L: 'perceptual-lift', chroma: 'l
 const P_FIXED: Producer = { hue: 'warm-torsion', L: 'fixed', chroma: 'ladder' }
 const P_TEXT: Producer = { hue: 'warm-torsion', L: 'perceptual', chroma: 'brand' }
 
-// light stop-8 carries the WCAG 1.4.11 non-text 3:1 vs paper-2 (the scale's own resolved stop 2)
-const S8: Require = { metric: 'wcag', against: 'paper-2', target: STOP_8_NONTEXT_CONTRAST, level: 'AA' }
+// STOP-8 IS THE FOCUS RING (owner 2026-07-28): it carries the WCAG 1.4.11 non-text 3:1
+// against PAPER-3 — the highest background a ring is actually drawn on, so clearing it
+// there clears every paper. Was paper-2, which left the ring at 2.84–2.89 against
+// paper-3 in five of six light families: conformant against the stop it was solved for,
+// short against the one it sits on. `against` is authoritative now (resolve.ts
+// declaredAnchor), so the apca lane picks this up through DEFAULT_APCA_LC_MAP — 3:1
+// translates to Lc 30, the same RULE in its own currency, never the wcag number.
+const S8: Require = { metric: 'wcag', against: 'paper-3', target: STOP_8_NONTEXT_CONTRAST, level: 'AA' }
+// DARK keeps the paper-2 anchor. In dark the ring already clears paper-3 by a wide
+// margin from its own scaffold (wcag 3.37–4.43), so re-anchoring buys nothing there —
+// and it costs: pushing hl-8 lighter to satisfy a bar it already meets drove it PAST
+// the hand-placed hl-9 (8/288 agnostic seeds, apca high-chroma) and degraded warm-band
+// hue smoothness (680 grid hueStep regressions). The gap the owner reported is a LIGHT
+// gap; the rule is anchored where the ring is actually short.
+const S8_DARK: Require = { metric: 'wcag', against: 'paper-2', target: STOP_8_NONTEXT_CONTRAST, level: 'AA' }
+// highlight-9 clears 4.5 against paper-3 — the fill separating from its own plane.
+// LIGHT only: dark already clears (4.48–7.44) from the hand-placed scaffold, and routing
+// it through the require solve would abandon that placement for a ≤0.02 shortfall.
+const S9: Require = { metric: 'wcag', against: 'paper-3', target: STOP_9_SURFACE_CONTRAST, level: 'AA' }
 // INK ANCHOR NOTE (owner 2026-07-28): in the WCAG lane the resolver anchors ink
 // requires (stops 10-11 + the cta-ink state floor) at paper-3 — the nearest paper —
 // so "ink-10 is usable on every paper" is a law, not a hope (resolve.ts
-// wcagInkAnchorStop). The apca lane keeps paper-2 (clears paper-3 with margin,
-// byte-identical). `against` below records the apca-lane/legacy anchor.
+// wcagAnchorStop). That override is LANE-SPECIFIC, so it stays in the resolver; the
+// apca lane keeps paper-2 (clears paper-3 with margin, byte-identical) and reads it
+// from the declaration below.
 const T10: Require = { metric: 'wcag', against: 'paper-2', target: STOP_10_CONTRAST, level: 'AA' }
 const T11: Require = { metric: 'wcag', against: 'paper-2', target: STOP_11_CONTRAST_FLOOR, level: 'AAA' }
 
 // onHighlight carries NO coEnforceLc (owner 2026-07-13: "highlight-9 can't take up this
 // treatment because we need it to stay uniform. I am abandoning that work") — the highlight
 // band stays placement-uniform; only the cta carries the clearance.
+//
+// `enforce` FLIPPED ON (owner 2026-07-28): hl-9 is the fill a primary-style button is made
+// of, so it must carry ITS OWN text pole — white in light, black in dark — at the declared
+// bar. The floor used to be satisfied by FLIPPING the pole to black instead of moving the
+// fill, which is why the ramp read conformant while white text was unusable: neutral 3.96,
+// warning 3.52, positive 3.53 against white in the wcag lane, all shipping black. Pinning
+// the pole per mode and moving the fill makes on-highlight a CONSTANT (white light / black
+// dark, every family) — the token stays emitted, but it stops being a solved value.
 const ONS = { onFill: { metric: 'apca-pole', enforce: true, coEnforceLc: 60 } as OnReq, onHighlight: { metric: 'apca-pole', enforce: false, ratioFloor: 4.5 } as OnReq }
 
 // paper/wash separation is a PROPERTY OF THE LIGHT_L SHAPE, not a runtime delta (owner 2026-07-09,
@@ -161,7 +190,7 @@ export const LIGHT: ModeSpec = {
     // was DELETED (owner 2026-07-09): no use case; two steps that close (weakest shipped ΔL 0.009) with one
     // shared on-highlight token forced the PAIR-law hover machinery — removing the stop is the shape-fix.
     // The ink stops were later renumbered down to close the gap (owner 2026-07-10), so stop 10 is now ink.
-    { stop: 9, rootL: HIGHLIGHT_LIGHT.rootL, group: 'highlight', produce: PL_LADDER, satFraction: SCALE_C_LIGHT[9].sat, baseC: SCALE_C_LIGHT[9].base },
+    { stop: 9, rootL: HIGHLIGHT_LIGHT.rootL, group: 'highlight', produce: PL_LADDER, satFraction: SCALE_C_LIGHT[9].sat, baseC: SCALE_C_LIGHT[9].base, require: S9 },
     // ink text: perceptual + contrast-required (rootLs still index LIGHT_L by array position — unchanged)
     { stop: 10, rootL: LIGHT_L[10], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[10].inkMult, inkMaxC: SCALE_C_LIGHT[10].inkMaxC, require: T10 },
     { stop: 11, rootL: LIGHT_L[11], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[11].inkMult, inkMaxC: SCALE_C_LIGHT[11].inkMaxC, require: T11 },
@@ -188,7 +217,7 @@ export const DARK: ModeSpec = {
     // the blue-recede failure is prevented BY RULE, not by patch.
     ...DARK_NEUTRAL_L.slice(0, 8).map((rootL, i): StopReq => ({
       stop: i + 1, rootL, group: groupOf(i + 1), produce: i === 7 ? P_FIXED : P_LIFT,
-      satFraction: SCALE_C_DARK[i + 1].sat, require: i === 7 ? S8 : undefined,
+      satFraction: SCALE_C_DARK[i + 1].sat, require: i === 7 ? S8_DARK : undefined,
     })),
     // highlight 9: FIXED at the hand-placed dark scaffold (solving = APCA body-text dead zone).
     // Chroma params declared in SCALE_C_DARK. Old stop 10 DELETED (owner 2026-07-09, see the light spec

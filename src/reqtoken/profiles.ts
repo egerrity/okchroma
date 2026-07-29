@@ -44,7 +44,16 @@ export function withProfile(spec: ModeSpec, profile: ContrastProfile, lcMap: LcM
   if (profile === 'wcag') return spec
   return {
     ...spec,
-    stops: spec.stops.map((s): StopReq => (s.require ? { ...s, require: toApca(s.require, lcMap) } : s)),
+    // STOP 9 IS WCAG-ONLY (owner 2026-07-28). Its surface require — highlight-9 clears 4.5
+    // against paper-3 — has no honest slot in this map: the map's bars are TEXT bars
+    // (3 → 30 non-text, 4.5 → 75 body, 7 → 90), and a fill separating from its own plane
+    // is a fourth kind. Translating it through the 4.5 slot lands Lc 75, where the wcag
+    // lane's own placement measures Lc 65–68 — ~10 Lc past the equivalent, dragging apca's
+    // hl-9 visibly darker than its wcag twin (warning #8E5100 vs #A56000). Rather than
+    // invent a calibrated slot, the apca lane keeps its own hl-9 placement and solves the
+    // ON-TEXT for whatever that placement gives (max-|Lc| against enforceLc 60 below).
+    stops: spec.stops.map((s): StopReq =>
+      s.require && s.stop !== 9 ? { ...s, require: toApca(s.require, lcMap) } : { ...s, require: s.stop === 9 ? undefined : s.require }),
     ons: {
       ...spec.ons,
       onFill: { ...spec.ons.onFill, enforceLc: CTA_ONFILL_ENFORCE_LC },

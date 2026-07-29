@@ -147,6 +147,13 @@ export const HIGHLIGHT_DARK = { rootL: DARK_L[8] }
 const DARK_CHROMA_ANCHORS_MID = [0.66, 0.72]
 export const DARK_NEUTRAL_L = [...DARK_L.slice(0, 8), ...DARK_CHROMA_ANCHORS_MID, DARK_L[10], DARK_L[11]]
 
+// HIGHLIGHT-9 vs its SURFACE (owner 2026-07-28): the highlight fill must clear this
+// against paper-3 — the plane it is drawn on, the same anchor stop 8's focus ring uses,
+// one band louder. Light-only; dark clears it from its own hand-placed scaffold.
+// Carries the pole for free: at this bar white text clears 4.5 on the fill everywhere
+// (agnostic worst 4.91), so on-highlight becomes a constant instead of a solved value.
+export const STOP_9_SURFACE_CONTRAST = 4.5
+
 export const STOP_10_CONTRAST = 4.5
 
 export const STOP_11_CONTRAST_FLOOR = 7.0

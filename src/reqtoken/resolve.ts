@@ -91,25 +91,33 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     const ref = refOf(stopNum, forWhom)
     return apcaYAt(ref.L, ref.C, ref.H)
   }
+  // THE DECLARED ANCHOR (owner 2026-07-28): `require.against` is now AUTHORITATIVE —
+  // it used to be documentation while the resolver hardcoded paper-2 here and in the
+  // apca path, so moving a require's anchor meant editing the engine rather than the
+  // declaration. spec.ts is the portable artifact; the anchor belongs in it.
+  const AGAINST_STOP: Record<string, number> = { 'paper-1': 1, 'paper-2': 2, 'paper-3': 3 }
+  const declaredAnchor = (req: Require): number =>
+    req.metric === 'min-separation' ? 1 : AGAINST_STOP[req.against] ?? 2
   // THE INK ANCHOR (owner rule 2026-07-28: "ink-10 can only be used on papers" — and it
   // must PASS on all of them): in the WCAG lane the ink requires (stops 10-11 + the
   // cta-ink state floor) anchor at paper-3, the NEAREST paper (light's darkest, dark's
   // lightest), so clearing the bar there clears every paper. The apca lane keeps its
   // paper-2 anchor — its Lc solve already clears paper-3 with margin everywhere
   // (agnostic sweep worst 5.28 wcag-ratio, 0/216 under 4.5) and stays byte-identical.
-  const wcagInkAnchorStop = (stop: number) => (stop >= 10 ? 3 : 2)
+  // Lane-specific, so it stays an override on top of the declaration rather than in it.
+  const wcagAnchorStop = (req: Require, stop: number) => (stop >= 10 ? 3 : declaredAnchor(req))
   // the light contrast solves are metric-blind: the resolver hands the producer a maxLFor closure built
   // from the declared require. wcag closures call findMaxLForContrast with the exact old arguments
   // (float-identical — the wcag profile stays byte-for-byte); apca closures swap in the Lc bisection.
   // `withMargin` mirrors the wcag idiom: the scale solve carries the emit margin, the ink solve doesn't.
   const maxLForOf = (req: Require, forWhom: number, withMargin: boolean): ((C: number, H: number) => number) => {
     if (req.metric === 'wcag') {
-      const refY = refYOf(wcagInkAnchorStop(forWhom), forWhom)
+      const refY = refYOf(wcagAnchorStop(req, forWhom), forWhom)
       const t = withMargin ? req.target + 0.05 : req.target
       return (C, H) => findMaxLForContrast(C, H, refY, t)
     }
     if (req.metric === 'apca') {
-      const refA = refApcaYOf(2, forWhom)
+      const refA = refApcaYOf(declaredAnchor(req), forWhom)
       const t = withMargin ? req.targetLc + APCA_SOLVE_MARGIN_LC : req.targetLc
       return (C, H) => findMaxLForApcaLc(C, H, refA, t)
     }
@@ -133,6 +141,42 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         clamped = true
       } else if (sp.stop === 9) {
         placed = placeLightHighlight(ctx, sp.rootL, lightHighlightChromaAt(ctx, sp.baseC ?? 0, sp.satFraction ?? 1))
+        // HIGHLIGHT-9 SEPARATES FROM ITS SURFACE (owner 2026-07-28): the highlight FILL
+        // must clear the declared bar against paper-3 — the plane it is drawn on — the
+        // same anchor stop 8's ring uses, one band louder. Light only: dark already
+        // clears from its own hand-placed scaffold (4.48–7.44), and routing dark hl-9
+        // through the require solve would abandon that placement for a ≤0.02 shortfall.
+        //
+        // The pole falls out of it. Forcing 4.5 against paper-3 lands hl-9 dark enough
+        // that WHITE text clears 4.5 for free (agnostic worst 4.91 over 1152 seed×mode
+        // cases; dark's own placement gives black 5.75), so on-highlight becomes a
+        // constant — white in light, black in dark — without a second rule to enforce
+        // it. Raising the bar buys nothing: hl-8/hl-9 separation stays 1.00 at every
+        // target tried, because their convergence for luminous hues is a placement
+        // property, not a contrast one (highlight-audit already declines to assert it).
+        //
+        // Floor semantics, lightness only — chroma and hue carry, re-clamped at the new L.
+        if (sp.require && sp.require.metric !== 'min-separation') {
+          const req = sp.require
+          const chromaAt = lightHighlightChromaAt(ctx, sp.baseC ?? 0, sp.satFraction ?? 1)
+          const at = (L: number) => { const H = ctx.lightHueAt(L); return { L, C: clampChromaToGamut(L, chromaAt(L, H), H), H } }
+          const isApca = req.metric === 'apca'
+          const refMeas = isApca
+            ? refApcaYOf(declaredAnchor(req), sp.stop)
+            : refYOf(declaredAnchor(req), sp.stop)
+          const measure = (L: number) => {
+            const s = at(L)
+            return isApca ? Math.abs(apcaLc(apcaYAt(s.L, s.C, s.H), refMeas)) : legalRatio(s.L, s.C, s.H, refMeas)
+          }
+          const target = isApca ? req.targetLc : req.target
+          const tol = isApca ? APCA_TOL_LC : 1e-5
+          if (measure(placed.L) < target - tol) {
+            let lo = 0.05, hi = placed.L   // darker raises contrast against a light paper
+            for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; measure(m) < target ? (hi = m) : (lo = m) }
+            placed = at(lo)
+            clamped = true
+          }
+        }
       } else if (sp.produce.L === 'fixed') {
         // fixed light stop (paper-0): sits exactly at its declared extreme
         const chromaAt = lightScaleChromaAt(ctx, sp.baseC ?? 0, sp.satFraction ?? 1)
@@ -300,7 +344,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
             ? darkHighlightChromaAt(ctx, d, sp.baseC ?? 0, sp.satFraction ?? 1)(L, hAtL(L))
             : chromaAt!(L)
         const isApca = req.metric === 'apca'
-        const refMeasY = isApca ? refApcaYOf(2, sp.stop) : refYOf(wcagInkAnchorStop(sp.stop), sp.stop)
+        const refMeasY = isApca ? refApcaYOf(declaredAnchor(req), sp.stop) : refYOf(wcagAnchorStop(req, sp.stop), sp.stop)
         // wcag floors are D1 legality: both renditions of the fill must clear the target
         const measure = (L: number, C: number, H: number): number =>
           isApca ? Math.abs(apcaLc(apcaYAt(L, C, H), refMeasY)) : legalRatio(L, C, H, refMeasY)
@@ -345,11 +389,11 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
 
     // verify any declared require against the emitted (gamut-clamped) values — total, fail loud
     if (sp.require?.metric === 'wcag') {
-      const refY = refYOf(wcagInkAnchorStop(sp.stop), sp.stop)
+      const refY = refYOf(wcagAnchorStop(sp.require, sp.stop), sp.stop)
       const got = legalRatio(placed.L, clampChromaToGamut(placed.L, placed.C, placed.H), placed.H, refY)
       if (got < sp.require.target - 1e-3) unresolvable = `stop ${sp.stop}: contrast ${got.toFixed(2)} < required ${sp.require.target}`
     } else if (sp.require?.metric === 'apca') {
-      const refA = refApcaYOf(2, sp.stop)
+      const refA = refApcaYOf(declaredAnchor(sp.require), sp.stop)
       const got = Math.abs(apcaLc(apcaYAt(placed.L, clampChromaToGamut(placed.L, placed.C, placed.H), placed.H), refA))
       if (got < sp.require.targetLc - APCA_TOL_LC) unresolvable = `stop ${sp.stop}: |Lc| ${got.toFixed(1)} < required ${sp.require.targetLc}`
     } else if (sp.require?.metric === 'min-separation') {
@@ -538,7 +582,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     const req = sp10.require
     if (!req || req.metric === 'min-separation') return L0
     const isApca = req.metric === 'apca'
-    const refY = isApca ? refApcaYOf(2, 10) : refYOf(wcagInkAnchorStop(10), 10)
+    const refY = isApca ? refApcaYOf(declaredAnchor(req), 10) : refYOf(wcagAnchorStop(req, 10), 10)
     const measure = (L: number): number => {
       const C = clampChromaToGamut(L, inkCFor(L), ink10.H)
       return isApca ? Math.abs(apcaLc(apcaYAt(L, C, ink10.H), refY)) : legalRatio(L, C, ink10.H, refY)
@@ -570,9 +614,19 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   // on-highlight: judged at the emitted highlight-9 — never feeds back into the fill. The
   // declared ratioFloor (wcag profile) flips the pole when the preferred one fails 4.5.
   const hl9 = stops.find(s => s.stop === 9)
+  // ON-HIGHLIGHT IS A CONSTANT (owner 2026-07-28) once hl-9 declares its surface require:
+  // clearing 4.5 against paper-3 lands the fill dark enough that white passes in light
+  // (agnostic worst 4.91) while dark's own scaffold gives black 5.75 — so the pole is
+  // pinned by mode rather than solved, and the token stops carrying a per-family value.
+  // A declaration WITHOUT that require (portable specs) keeps the old max-|Lc| pick and
+  // its ratioFloor pole-flip.
+  const hl9Declares = spec.stops.find(s => s.stop === 9)?.require?.metric === 'wcag'
+    || spec.stops.find(s => s.stop === 9)?.require?.metric === 'apca'
   const ons = {
     onFillIsWhite,
-    onHighlightIsWhite: hl9 ? onHighlightIsWhiteAt(hl9.L, hl9.C, hl9.H, spec.ons.onHighlight.ratioFloor) : true,
+    onHighlightIsWhite: hl9Declares
+      ? mode === 'light'
+      : hl9 ? onHighlightIsWhiteAt(hl9.L, hl9.C, hl9.H, spec.ons.onHighlight.ratioFloor) : true,
   }
 
   // (The former PAIR law — the shared on-highlight pole passing on both hl-9 and its hover hl-10 — died with

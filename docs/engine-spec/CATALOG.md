@@ -1481,3 +1481,57 @@ MEASURED SCOPE — 2 of 176 stops move, both warning's dark hl-9:
 174 byte-identical. Both snapshot gates independently reported the same single
 entry (dark-audit `signal:yellow stop 8 (dark)`, divergence `token 19` — the same
 dark array index 8). Re-blessed: dark, divergence.
+
+## C31 — THE HIGHLIGHT BAND GETS ITS OWN LAWS: the ring at 3:1, the fill at 4.5
+
+Owner, reading the plugin output: "I am seeing it output lower contrast levels … I was
+seeing high threes." Measured, wcag light, hl-9 against WHITE text: neutral 3.96,
+warning 3.52, positive 3.53. The floor never fired because `onHighlight.ratioFloor` was
+satisfied by FLIPPING THE POLE TO BLACK rather than moving the fill — the ramp read
+conformant while white text was unusable.
+
+RULE — hl-9 SEPARATES FROM ITS SURFACE: 4.5 against paper-3, the plane it is drawn on,
+the same anchor the ring uses one band louder. Owner's shape, chosen over "4.5 against
+its own text" because ONE requirement delivers three things. Forcing 4.5 vs paper-3
+lands the fill dark enough that WHITE clears 4.5 for free (agnostic worst 4.91 over 1152
+seed×mode cases; dark's own scaffold gives black 5.75), so ON-HIGHLIGHT BECOMES A
+CONSTANT — white in light, black in dark — with no second rule to enforce it. Raising
+the bar buys nothing: hl-8/hl-9 separation stays 1.00 at every target tried, because
+their convergence for luminous hues is a placement property, not a contrast one.
+LIGHT ONLY — dark already clears (4.48–7.44) from its hand-placed scaffold, and routing
+it through the require solve would abandon that placement for a ≤0.02 shortfall.
+
+RULE — hl-8 IS THE FOCUS RING: its WCAG 1.4.11 3:1 re-anchors from paper-2 to PAPER-3,
+the highest background a ring is actually drawn on. Was 2.84–2.89 against paper-3 in
+five of six light families — conformant against the stop it was solved for, short
+against the one it sits on. LIGHT ONLY: dark already clears by a wide margin (3.37–4.43),
+and re-anchoring there pushed hl-8 PAST the hand-placed hl-9 (8/288 agnostic seeds, apca
+high-chroma) and cost 680 grid hueStep regressions — a bad trade for a 0.3 Lc gap.
+
+`require.against` IS NOW AUTHORITATIVE (resolve.ts declaredAnchor). It was documentation
+while the resolver hardcoded paper-2 in four places; moving an anchor meant editing the
+engine rather than the declaration. Verified byte-identical as a standalone refactor
+before any declaration moved. The ink stops keep their lane-specific override (wcag
+paper-3 / apca paper-2) in the resolver, since that one IS lane-shaped.
+
+APCA IS SCOPED OUT OF THE hl-9 RULE (owner: "let's just not change it for APCA, but APCA
+will need to generate the right text for it"). The map's bars are TEXT bars (3 → 30
+non-text, 4.5 → 75 body, 7 → 90); a fill separating from its own plane is a fourth kind.
+Translating through the 4.5 slot lands Lc 75, where the wcag lane's own placement
+measures Lc 65–68 — ~10 Lc past the equivalent, dragging apca's hl-9 visibly darker than
+its wcag twin. Rather than invent a calibrated slot, apca keeps its own hl-9 placement
+and solves the ON-TEXT for it (max-|Lc| against enforceLc 60) — landing independently on
+the same white/black constant. hl-8's 3:1 DOES translate cleanly (Lc 30, the non-text
+slot) and applies in both lanes.
+
+SIDE EFFECT, OWNER-ACCEPTED ("commit as is"): moving light hl-9 changes its warm-spine
+drift hue, and the dark band carries hue from its light twin — so dark inherits a move
+made for light-mode text. 680 grid / 43 fleet `dark.hueStep`+`dark.drift` regressions,
+all in the warm band H69–87 (golden-milk .0373 → .0462). Values are small; the detector
+is the one that caught the last two mistakes in this area. OPEN: route the dark carry off
+the PRE-require light hue so the dark band stops inheriting it.
+
+BONUS, unasked-for: the light highlight band is now near-photometric. L* spread across
+families went hl-9 8.7 → 1.96 and hl-8 0.6 → 1.64, because a shared contrast law places
+them instead of the apparent-L solve. The washes still spread 10.71 at wash-7 — the
+apparent dialect, still parked. Re-blessed: dark, divergence, highlight, ext, smoothness.
