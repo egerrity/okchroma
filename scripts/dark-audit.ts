@@ -54,7 +54,7 @@ const findings: Record<string, Finding[]> = {
   'A adjacent-step collapse': [],
   'B subtle-bg invisibility': [],
   'C chroma washout': [],
-  'D 10/11 convergence': [],
+  'D ink 9/10 convergence': [],
   'E dark error collision': [],
   'F on-cta APCA legibility (Lc 60, shipped lane — HARD)': [],
 }
@@ -90,13 +90,14 @@ function audit(name: string, hex: string, scale: GeneratedScale, redRepelled = f
       detail: `dark keeps ${(retention * 100).toFixed(0)}% of light chroma (stops 1–8)`,
     })
   }
-  // D: 10/11 separation (find by STOP — contiguous stops 1..11 post-renumber)
-  const li10 = scale.light.find(s => s.stop === 10)!, li11 = scale.light.find(s => s.stop === 11)!
-  const da10 = scale.dark.find(s => s.stop === 10)!, da11 = scale.dark.find(s => s.stop === 11)!
+  // D: ink 9/10 separation (find by STOP — contiguous stops 1..10 after the
+  // 2026-07-29 highlight collapse renumbered the inks down from 10/11)
+  const li10 = scale.light.find(s => s.stop === 9)!, li11 = scale.light.find(s => s.stop === 10)!
+  const da10 = scale.dark.find(s => s.stop === 9)!, da11 = scale.dark.find(s => s.stop === 10)!
   const sepL = stopDeltaE(li10, li11)
   const sepD = stopDeltaE(da10, da11)
   if (sepD < sepL * TEXTSEP_RATIO) {
-    findings['D 10/11 convergence'].push({
+    findings['D ink 9/10 convergence'].push({
       name, hex, severity: sepL * TEXTSEP_RATIO - sepD,
       detail: `ΔE(11,12): dark ${sepD.toFixed(3)} vs light ${sepL.toFixed(3)}`,
     })

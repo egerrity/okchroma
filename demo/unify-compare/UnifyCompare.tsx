@@ -172,7 +172,7 @@ function Section({ n, title, lede, children }: { n: number; title: string; lede:
   return (
     <section style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
-        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.08em', color: 'var(--brand-ink-10, var(--fg-subtle))' }}>0{n}</div>
+        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.08em', color: 'var(--brand-ink-9, var(--fg-subtle))' }}>0{n}</div>
         <h2 style={{ margin: '2px 0 6px', fontSize: 22, fontWeight: 700, color: 'var(--fg-default)' }}>{title}</h2>
         <p style={{ margin: 0, maxWidth: 720, fontSize: 14, lineHeight: 1.55, color: 'var(--fg-subtle)' }}>{lede}</p>
       </div>
@@ -210,10 +210,15 @@ function UnifyMirrorCard({ t, dark }: { t: UnifyTheme; dark: boolean }) {
     { n: 10, fill: brand('primary'), branded: true },
     { n: 11, fill: g(900), branded: false },
   ]
+  // Unify's OWN eleven-stop shape — this side of the comparison is the frozen export
+  // and the 2026-07-29 collapse does not touch it. Spans asserted against the ladder
+  // so the brackets can never drift off the stops they label.
   const groups = [
     { label: 'paper', span: 3 }, { label: 'wash', span: 4 },
     { label: 'highlight', span: 2 }, { label: 'ink', span: 2 },
   ]
+  if (groups.reduce((a, g) => a + g.span, 0) !== ladder.length)
+    throw new Error(`UnifyCompare: group spans != ladder length (${ladder.length})`)
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 14 }}>
@@ -269,7 +274,7 @@ function UnifyMirrorCard({ t, dark }: { t: UnifyTheme; dark: boolean }) {
           }}>{s.n}</div>
         ))}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(11, 1fr)', gap: 5, marginTop: 6 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${ladder.length}, 1fr)`, gap: 5, marginTop: 6 }}>
         {groups.map(gr => (
           <div key={gr.label} style={{ gridColumn: `span ${gr.span}`, display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 0 }}>
             <div style={{ width: '100%', height: 6, borderLeft: '1px solid var(--border-default)', borderRight: '1px solid var(--border-default)', borderBottom: '1px solid var(--border-default)', borderRadius: '0 0 5px 5px' }} />
@@ -440,27 +445,27 @@ export default function UnifyCompare() {
               <span style={MODE_TAG}>Light mode</span>
               <DotChart mode="light" xLabels={labels} series={[
                 { label: 'cta', dots: okRole(okCta, 'light') },
-                { label: 'ink-10', dots: okRole(okStop(10), 'light') },
-                { label: 'highlight-9', dots: okRole(okStop(9), 'light') },
+                { label: 'ink-9', dots: okRole(okStop(10), 'light') },
+                { label: 'ink-9', dots: okRole(okStop(9), 'light') },
                 { label: 'wash-6', dots: okRole(okStop(6), 'light') },
                 { label: 'paper-3', dots: okRole(okStop(3), 'light') },
               ]} />
               <span style={MODE_TAG}>Dark mode</span>
               <DotChart mode="dark" xLabels={labels} series={[
                 { label: 'cta', dots: okRole(okCta, 'dark') },
-                { label: 'ink-10', dots: okRole(okStop(10), 'dark') },
-                { label: 'highlight-9', dots: okRole(okStop(9), 'dark') },
+                { label: 'ink-9', dots: okRole(okStop(10), 'dark') },
+                { label: 'ink-9', dots: okRole(okStop(9), 'dark') },
                 { label: 'wash-6', dots: okRole(okStop(6), 'dark') },
                 { label: 'paper-3', dots: okRole(okStop(3), 'dark') },
               ]} />
               <div style={STAT}>
                 Unify's one Primary is doing the button job, the text job, and the emphasis job at once — here it
-                forks: <b>cta</b> (the fill), <b>ink-10</b> (the text register,
-                spans {spread(okRole(okStop(10), 'light')).toFixed(0)} L* light), <b>highlight-9</b> (the emphasis
+                forks: <b>cta</b> (the fill), <b>ink-9</b> (the text register,
+                spans {spread(okRole(okStop(10), 'light')).toFixed(0)} L* light), <b>ink-9</b> (the emphasis
                 fill, {spread(okRole(okStop(9), 'light')).toFixed(0)} L*), with the tint registers wash-6 / paper-3
                 (Unify's Highlight and Accent analogs) flat within ~<b>1 L*</b>. The cta is the one role that varies — it carries the brand's identity on
                 purpose, inside a gated register (the lifted Orange dot is the engine moving that cta out of the
-                red signal's register, not a hand-pick). The small wobble that remains in ink-10 is principled:
+                red signal's register, not a hand-pick). The small wobble that remains in ink-9 is principled:
                 the text register solves a contrast requirement, and contrast is pure luminance — equal contrast
                 across hues can't also be equal apparent lightness once chroma differs.
               </div>
@@ -495,7 +500,7 @@ export default function UnifyCompare() {
 
         {/* ── 02 · CHIP ROWS ── */}
         <Section n={2} title="One chip recipe, seven themes"
-          lede={'Unify builds an indicator chip from the three brand aliases — Accent fill, Highlight border, Primary text — and each theme re-rolls all three. So the brand chip lands at a different weight in every theme while the signal chips beside it never move; where a brand is green or orange, its chip and a signal chip read as neighbors. OKChroma builds the same chip from structural stops — paper-3 fill, wash-6 border, ink-10 text — so the chip is the same component in every theme, and only its hue belongs to the brand.'}>
+          lede={'Unify builds an indicator chip from the three brand aliases — Accent fill, Highlight border, Primary text — and each theme re-rolls all three. So the brand chip lands at a different weight in every theme while the signal chips beside it never move; where a brand is green or orange, its chip and a signal chip read as neighbors. OKChroma builds the same chip from structural stops — paper-3 fill, wash-6 border, ink-9 text — so the chip is the same component in every theme, and only its hue belongs to the brand.'}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: 18 }}>
             <div style={CARD}>
               <div style={CARD_TITLE}>Unify — Accent · Highlight · Primary, re-aliased per theme</div>
@@ -517,7 +522,7 @@ export default function UnifyCompare() {
               </div>
             </div>
             <div style={CARD}>
-              <div style={CARD_TITLE}>OKChroma — paper-3 · wash-6 · ink-10, from the same seeds</div>
+              <div style={CARD_TITLE}>OKChroma — paper-3 · wash-6 · ink-9, from the same seeds</div>
               <div style={{
                 background: dark ? PANEL.dark.bg : PANEL.light.bg, borderRadius: 10, padding: '14px 16px',
                 display: 'flex', flexDirection: 'column', gap: 10,
@@ -526,7 +531,7 @@ export default function UnifyCompare() {
                   <div key={slug} data-brand={slug} data-theme={dark ? 'dark' : 'light'}
                     style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     {OK_CHIP_PREFIXES.map(p => (
-                      <Chip key={p} bg={`var(--${p}-paper-3)`} border={`var(--${p}-wash-6)`} fg={`var(--${p}-ink-10)`} />
+                      <Chip key={p} bg={`var(--${p}-paper-3)`} border={`var(--${p}-wash-6)`} fg={`var(--${p}-ink-9)`} />
                     ))}
                     <span style={{ marginLeft: 'auto', paddingLeft: 8, fontSize: 11, fontWeight: 600, color: dark ? PANEL.dark.ink : PANEL.light.ink }}>{shortName(t)}</span>
                   </div>

@@ -31,12 +31,19 @@ const Table = ({ head, rows }: { head: React.ReactNode[]; rows: React.ReactNode[
 )
 
 // ── Live example: a real generated ramp, computed by the engine ──────────────
+// The shipped bands: paper 1–3 · wash 4–7 · highlight 8 · ink 9–10. These spans were
+// 2/5/3/2 — a band layout two renames old — against a 12-column grid, so the brackets
+// had drifted off the stops they label well before the 2026-07-29 collapse. Both rows
+// derive their column count from the scale now (--cols below), and the spans are
+// asserted against it, so neither can rot again.
 const RAMP_GROUPS: Array<{ label: string; span: number }> = [
-  { label: 'paper', span: 2 }, { label: 'wash', span: 5 },
-  { label: 'highlight', span: 3 }, { label: 'ink', span: 2 },
+  { label: 'paper', span: 3 }, { label: 'wash', span: 4 },
+  { label: 'highlight', span: 1 }, { label: 'ink', span: 2 },
 ]
 function Ramp({ hex, caption }: { hex: string; caption?: React.ReactNode }) {
-  const scale = generateScale(hex, 'docs', undefined, { highlight: true })
+  const scale = generateScale(hex, 'docs', undefined, {})
+  if (RAMP_GROUPS.reduce((a, g) => a + g.span, 0) !== scale.light.length)
+    throw new Error(`DocsSite: RAMP_GROUPS spans != scale length (${scale.light.length})`)
   return (
     <figure className="d2-ramp">
       <div className="d2-ramp-row">
@@ -48,7 +55,7 @@ function Ramp({ hex, caption }: { hex: string; caption?: React.ReactNode }) {
       <div className="d2-ramp-row d2-ramp-nums">
         {scale.light.map(s => <span key={s.stop}>{s.stop}</span>)}
       </div>
-      <div className="d2-ramp-brackets">
+      <div className="d2-ramp-brackets" style={{ ['--cols' as string]: scale.light.length }}>
         {RAMP_GROUPS.map(g => (
           <div key={g.label} className="d2-ramp-grp" style={{ gridColumn: `span ${g.span}` }}>
             <div className="d2-ramp-brk" />
@@ -82,9 +89,9 @@ function HueGrid() {
     <figure className="d2-huegrid">
       <div className="d2-huegrid-rows">
         {OKLCH_DEMO_HUES.map(hex => {
-          const scale = generateScale(hex, 'docs', undefined, { highlight: true })
+          const scale = generateScale(hex, 'docs', undefined, {})
           return (
-            <div className="d2-huegrid-row" key={hex}>
+            <div className="d2-huegrid-row" key={hex} style={{ ['--cols' as string]: scale.light.length }}>
               {scale.light.map(s => (
                 <div key={s.stop} className="d2-huegrid-cell" title={`${hex} — stop ${s.stop} — ${stopHex(s)}`}
                   style={{ background: stopHex(s) }} />
@@ -500,13 +507,13 @@ const DOCS2_CSS = `
   padding: 16px 18px; overflow-x: auto; margin: 0 0 18px;
 }
 .d2-pre code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; line-height: 1.6; color: var(--fg-default); white-space: pre; }
-.d2-note { font-size: 13.5px; line-height: 1.6; color: var(--fg-subtle); background: var(--surface-sink); border: 1px solid var(--border-subtle); border-left: 3px solid var(--brand-highlight-9); border-radius: 8px; padding: 12px 14px; margin: 18px 0; }
+.d2-note { font-size: 13.5px; line-height: 1.6; color: var(--fg-subtle); background: var(--surface-sink); border: 1px solid var(--border-subtle); border-left: 3px solid var(--brand-ink-9); border-radius: 8px; padding: 12px 14px; margin: 18px 0; }
 .d2-ramp { margin: 22px 0 26px; }
 .d2-ramp-row { display: flex; gap: 4px; }
 .d2-ramp-cell { flex: 1; height: 46px; border-radius: 6px; border: 1px solid var(--border-subtle); }
 .d2-ramp-nums { margin-top: 5px; font-size: 10px; color: var(--fg-subtle); }
 .d2-ramp-nums span { flex: 1; text-align: center; }
-.d2-ramp-brackets { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; margin-top: 6px; }
+.d2-ramp-brackets { display: grid; grid-template-columns: repeat(var(--cols, 10), 1fr); gap: 4px; margin-top: 6px; }
 .d2-ramp-grp { display: flex; flex-direction: column; align-items: center; min-width: 0; }
 .d2-ramp-brk { width: 100%; height: 6px; border: 1px solid var(--border-default); border-top: none; border-radius: 0 0 5px 5px; }
 .d2-ramp-grp span { margin-top: 5px; font-size: 11px; font-weight: 600; color: var(--fg-subtle); }
@@ -516,7 +523,7 @@ const DOCS2_CSS = `
 .d2-table td { border-bottom: 1px solid var(--border-subtle); padding: 8px 10px; vertical-align: top; }
 .d2-huegrid { margin: 22px 0 26px; }
 .d2-huegrid-rows { display: flex; flex-direction: column; gap: 4px; }
-.d2-huegrid-row { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; }
+.d2-huegrid-row { display: grid; grid-template-columns: repeat(var(--cols, 10), 1fr); gap: 4px; }
 .d2-huegrid-cell { height: 32px; border-radius: 5px; border: 1px solid var(--border-subtle); }
 @media (max-width: 860px) {
   .d2 { grid-template-columns: 1fr; }

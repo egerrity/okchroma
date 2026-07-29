@@ -3,19 +3,20 @@
 // (resolve.ts) executes it by calling the real engine functions; producer names ('perceptual', 'warm-torsion')
 // are references to named resolver capabilities, not formulas.
 //
-// NUMBERING TRUTH (owner-flagged; matches the engine): the SCALE is stops 1–11 — paper 1–2, wash 3–7,
-// highlight 8–9, ink 10–11 (contiguous; old highlight-10 retired, ink renumbered down 2026-07-10). The
-// cta is NOT a scale stop: it is an OFF-SCALE ROLE (cta / cta-hover), exactly
+// NUMBERING TRUTH (owner-flagged; matches the engine): the SCALE is stops 1–10 — paper 1–2, wash 3–7,
+// highlight 8, ink 9–10 (contiguous). THE HIGHLIGHT BAND COLLAPSED 2026-07-29: highlight-9 is deleted
+// and the inks renumbered down onto it (old 10/11 → 9/10). highlight-9 and old ink-10 both solved 4.5
+// against paper-3 — the same bar against the same anchor — so they landed on top of each other (145 of
+// 360 agnostic seeds within 0.01). ink-9 now carries both jobs: the emphasis fill AND the first text
+// stop. The cta is NOT a scale stop: it is an OFF-SCALE ROLE (cta / cta-hover), exactly
 // like GeneratedScale.cta/ctaHover. The old prototype's "stop 9 = cta" pairing is dead.
 //
-// STAGE NOTE: the Stage-5 flip is DONE — dark declares the same requires as light (stop-8 3:1 + ink
-// T10/T11 vs paper-2; owner-approved). Only highlight-9 stays hand-placed in dark (APCA body-text
-// dead zone — solving it is worse than placing it).
+// STAGE NOTE: the Stage-5 flip is DONE — dark declares the same requires as light (stop-8 3:1 + the
+// ink requires vs paper-2; owner-approved). Nothing is hand-placed any more: the last P_FIXED stop
+// without a require was highlight-9, and it is gone.
 import {
   LIGHT_L, DARK_NEUTRAL_L, SCALE_C_LIGHT, SCALE_C_DARK,
-  STOP_8_NONTEXT_CONTRAST,
-  STOP_9_SURFACE_CONTRAST, STOP_10_CONTRAST, STOP_11_CONTRAST_FLOOR,
-  HIGHLIGHT_LIGHT, HIGHLIGHT_DARK, DARK_STOP_9_MIN_L,
+  STOP_8_NONTEXT_CONTRAST, INK_9_CONTRAST, INK_10_CONTRAST_FLOOR, DARK_CTA_MIN_L,
 } from '../engine/stopTable'
 
 export type Group = 'paper' | 'wash' | 'highlight' | 'ink'
@@ -44,7 +45,7 @@ export type Require =
   // can ever collapse a seam again, whatever the producers do).
   | { metric: 'min-separation'; against: 'paper-1' | 'prev'; target: number }
 export type StopReq = {
-  stop: number                        // 1..12 — scale stops ONLY (cta is a role, never a stop)
+  stop: number                        // 0..10 — scale stops ONLY (cta is a role, never a stop)
   rootL: number
   group: Group
   produce: Producer
@@ -52,6 +53,9 @@ export type StopReq = {
   baseC?: number                      // ladder param (light): absolute base chroma for the ladder/envelope blend
   chromaMult?: number                 // param for produce.chroma === 'brand'
   inkMaxC?: number                    // text-register ceiling: chroma = min(chromaMult × brandC, inkMaxC)
+  // dark ink chroma-FLOOR ladder position — a physical rung, DECLARED so it never
+  // follows a stop renumber (see SCALE_C_* in stopTable.ts). Ink stops only.
+  chromaFloorIndex?: number
   require?: Require
 }
 
@@ -61,13 +65,13 @@ export type StopReq = {
 // carries brand identity, no torsion); hover = hoverL() of the resolved cta, pressed =
 // pressedL() (hover's direction, doubled). The INK trio (cta-ink / -hover / -pressed):
 // the family's 4.5 TEXT-register cta — the link-color escape. cta-ink MATCHES the
-// resolved ink-10 exactly (owner rule); its states derive via the same hoverL/pressedL
-// machinery with the stop-10 contrast require held as a FLOOR (a state may never read
-// worse than the declared text bar; a violating state is pulled back toward ink-10's L).
+// resolved ink-9 exactly (owner rule); its states derive via the same hoverL/pressedL
+// machinery with the ink-9 contrast require held as a FLOOR (a state may never read
+// worse than the declared text bar; a violating state is pulled back toward ink-9's L).
 export type RoleName = 'cta' | 'cta-hover' | 'cta-pressed' | 'cta-ink' | 'cta-ink-hover' | 'cta-ink-pressed'
 export type RoleReq = {
   role: RoleName
-  // hue 'ink' / chroma 'ink' / L 'ink-*' = the role rides the resolved stop-10 placement
+  // hue 'ink' / chroma 'ink' / L 'ink-*' = the role rides the resolved ink-9 placement
   // (its hue and the ink chroma register), not the seed anchor
   produce: {
     hue: 'constant' | 'ink'
@@ -87,9 +91,10 @@ export type RoleReq = {
 // never feeds back into a scale stop.
 // `ratioFloor` (the TRUE wcag/apca split, owner 2026-07-04): under the wcag profile the CHOSEN pole must
 // PASS the 4.5 ratio — preference stays perceptual, the floor is the law. onFill's floor is the
-// ENFORCEMENT itself (the fill re-solves to 4.5-white); onHighlight fills are placed by design and never
-// move, so its floor is the pole FLIP (4.5 has no dead zone — the other pole always passes).
+// ENFORCEMENT itself (the fill re-solves to 4.5-white).
 // withProfile('apca') strips the ratio floor; the apca law is the Lc bar.
+// (The second on-color, `onHighlight`, is GONE — owner 2026-07-29. It solved the text pole for the
+// highlight-9 fill; that fill is now ink-9, whose on-color is a declared paper token, not a solve.)
 // `coEnforceLc` (the APCA legibility CLEARANCE, default-ON since C18): a SECOND on-fill contrast requirement
 // that rides ALONGSIDE the wcag lane's 4.5 floor — read only in the wcag lane (enforceLc undefined);
 // opts.apcaClearance=false opts out (instruments). Where wcag and APCA disagree on whether the chosen pole reads, the fill
@@ -100,13 +105,14 @@ export type OnReq = { metric: 'apca-pole'; enforce: boolean; enforceLc?: number;
 export type ModeSpec = {
   stops: StopReq[]
   roles: RoleReq[]
-  ons: { onFill: OnReq; onHighlight: OnReq }
+  ons: { onFill: OnReq }
 }
 
 // DO NOT align to the paper-3 rename (owner 2026-07-24): stop 3 is PUBLICLY named
 // paper-3 but stays in the internal 'wash' group — this boundary feeds the requirement
 // solver, and moving it to `stop <= 3 ? 'paper'` would CHANGE generation. Name only.
-const groupOf = (stop: number): Group => (stop <= 2 ? 'paper' : stop <= 7 ? 'wash' : stop <= 9 ? 'highlight' : 'ink')
+// The 'highlight' group is now a single stop (8, the focus ring); 9+ is ink.
+const groupOf = (stop: number): Group => (stop <= 2 ? 'paper' : stop <= 7 ? 'wash' : stop === 8 ? 'highlight' : 'ink')
 
 // paper-0 — the ladder extreme BEYOND paper-1, now a resolved stop instead of a hard-coded absolute
 // (it was the last literal value in the system: #ffffff/#000000 pasted into the emitters). Light really
@@ -138,31 +144,26 @@ const S8: Require = { metric: 'wcag', against: 'paper-3', target: STOP_8_NONTEXT
 // hue smoothness (680 grid hueStep regressions). The gap the owner reported is a LIGHT
 // gap; the rule is anchored where the ring is actually short.
 const S8_DARK: Require = { metric: 'wcag', against: 'paper-2', target: STOP_8_NONTEXT_CONTRAST, level: 'AA' }
-// highlight-9 clears 4.5 against paper-3 — the fill separating from its own plane.
-// LIGHT only: dark already clears (4.48–7.44) from the hand-placed scaffold, and routing
-// it through the require solve would abandon that placement for a ≤0.02 shortfall.
-const S9: Require = { metric: 'wcag', against: 'paper-3', target: STOP_9_SURFACE_CONTRAST, level: 'AA' }
 // INK ANCHOR NOTE (owner 2026-07-28): in the WCAG lane the resolver anchors ink
-// requires (stops 10-11 + the cta-ink state floor) at paper-3 — the nearest paper —
-// so "ink-10 is usable on every paper" is a law, not a hope (resolve.ts
+// requires (stops 9-10 + the cta-ink state floor) at paper-3 — the nearest paper —
+// so "ink-9 is usable on every paper" is a law, not a hope (resolve.ts
 // wcagAnchorStop). That override is LANE-SPECIFIC, so it stays in the resolver; the
 // apca lane keeps paper-2 (clears paper-3 with margin, byte-identical) and reads it
 // from the declaration below.
-const T10: Require = { metric: 'wcag', against: 'paper-2', target: STOP_10_CONTRAST, level: 'AA' }
-const T11: Require = { metric: 'wcag', against: 'paper-2', target: STOP_11_CONTRAST_FLOOR, level: 'AAA' }
+// T9 IS ALSO THE EMPHASIS-FILL BAR (owner 2026-07-29): the deleted highlight-9 declared
+// exactly this — 4.5 against paper-3 — which is why the two stops collided and why one
+// of them can carry both jobs. Nothing about the number changed; only the count of stops
+// asking for it.
+const T9: Require = { metric: 'wcag', against: 'paper-2', target: INK_9_CONTRAST, level: 'AA' }
+const T10: Require = { metric: 'wcag', against: 'paper-2', target: INK_10_CONTRAST_FLOOR, level: 'AAA' }
 
-// onHighlight carries NO coEnforceLc (owner 2026-07-13: "highlight-9 can't take up this
-// treatment because we need it to stay uniform. I am abandoning that work") — the highlight
-// band stays placement-uniform; only the cta carries the clearance.
-//
-// `enforce` FLIPPED ON (owner 2026-07-28): hl-9 is the fill a primary-style button is made
-// of, so it must carry ITS OWN text pole — white in light, black in dark — at the declared
-// bar. The floor used to be satisfied by FLIPPING the pole to black instead of moving the
-// fill, which is why the ramp read conformant while white text was unusable: neutral 3.96,
-// warning 3.52, positive 3.53 against white in the wcag lane, all shipping black. Pinning
-// the pole per mode and moving the fill makes on-highlight a CONSTANT (white light / black
-// dark, every family) — the token stays emitted, but it stops being a solved value.
-const ONS = { onFill: { metric: 'apca-pole', enforce: true, coEnforceLc: 60 } as OnReq, onHighlight: { metric: 'apca-pole', enforce: false, ratioFloor: 4.5 } as OnReq }
+// ONE on-color left (owner 2026-07-29). `onHighlight` is deleted with the band it named:
+// C31 had already reduced it to a constant (white in light, black in dark, every family)
+// by forcing hl-9 to clear 4.5 against paper-3, so it was an emitted token that no longer
+// carried a solved value. Its successor is a declaration in the semantic layer —
+// `-fg-on-emphasis` → --paper-0 — measured at worst 4.96 (light) / 8.04 (dark) against
+// ink-9 over the 360-seed agnostic sweep. Only the cta still solves its own text pole.
+const ONS = { onFill: { metric: 'apca-pole', enforce: true, coEnforceLc: 60 } as OnReq }
 
 // paper/wash separation is a PROPERTY OF THE LIGHT_L SHAPE, not a runtime delta (owner 2026-07-09,
 // render/paper2-distributions.html, distribution "B"). The near-white ladder's gaps grow geometrically
@@ -186,14 +187,13 @@ export const LIGHT: ModeSpec = {
       satFraction: SCALE_C_LIGHT[i + 1].sat, baseC: SCALE_C_LIGHT[i + 1].base,
       require: i === 7 ? S8 : undefined,
     })),
-    // highlight 9: perceptual ladder at the highlight scaffold. The second highlight step (old stop 10)
-    // was DELETED (owner 2026-07-09): no use case; two steps that close (weakest shipped ΔL 0.009) with one
-    // shared on-highlight token forced the PAIR-law hover machinery — removing the stop is the shape-fix.
-    // The ink stops were later renumbered down to close the gap (owner 2026-07-10), so stop 10 is now ink.
-    { stop: 9, rootL: HIGHLIGHT_LIGHT.rootL, group: 'highlight', produce: PL_LADDER, satFraction: SCALE_C_LIGHT[9].sat, baseC: SCALE_C_LIGHT[9].base, require: S9 },
-    // ink text: perceptual + contrast-required (rootLs still index LIGHT_L by array position — unchanged)
-    { stop: 10, rootL: LIGHT_L[10], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[10].inkMult, inkMaxC: SCALE_C_LIGHT[10].inkMaxC, require: T10 },
-    { stop: 11, rootL: LIGHT_L[11], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[11].inkMult, inkMaxC: SCALE_C_LIGHT[11].inkMaxC, require: T11 },
+    // ink text: perceptual + contrast-required. ink-9 is ALSO the emphasis fill (the
+    // highlight-9 collapse, owner 2026-07-29).
+    // ⚠️ rootLs index LIGHT_L by ARRAY POSITION, not by stop number — they stayed at 10/11
+    // when the stops moved to 9/10. Indices 8 and 9 are retired slots the array keeps for
+    // the neutral tint curve; see the banner in stopTable.ts.
+    { stop: 9, rootL: LIGHT_L[10], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[9].inkMult, inkMaxC: SCALE_C_LIGHT[9].inkMaxC, chromaFloorIndex: SCALE_C_LIGHT[9].chromaFloorIndex, require: T9 },
+    { stop: 10, rootL: LIGHT_L[11], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[10].inkMult, inkMaxC: SCALE_C_LIGHT[10].inkMaxC, chromaFloorIndex: SCALE_C_LIGHT[10].chromaFloorIndex, require: T10 },
   ],
   roles: [
     { role: 'cta', produce: { hue: 'constant', L: 'anchor', chroma: 'brand' }, floorL: 0, chromaMult: 1 },
@@ -219,22 +219,19 @@ export const DARK: ModeSpec = {
       stop: i + 1, rootL, group: groupOf(i + 1), produce: i === 7 ? P_FIXED : P_LIFT,
       satFraction: SCALE_C_DARK[i + 1].sat, require: i === 7 ? S8_DARK : undefined,
     })),
-    // highlight 9: FIXED at the hand-placed dark scaffold (solving = APCA body-text dead zone).
-    // Chroma params declared in SCALE_C_DARK. Old stop 10 DELETED (owner 2026-07-09, see the light spec
-    // note); ink renumbered down 2026-07-10.
-    { stop: 9, rootL: HIGHLIGHT_DARK.rootL, group: 'highlight', produce: P_FIXED, satFraction: SCALE_C_DARK[9].sat, baseC: SCALE_C_DARK[9].base },
     // ink text: perceptual + the contrast requires DECLARED in dark too (Stage-5 flip): the scaffold already
     // clears them for every hue (the gate proves it), so values don't move — but the guarantee is now a rule.
-    { stop: 10, rootL: DARK_NEUTRAL_L[10], group: 'ink', produce: P_TEXT, chromaMult: SCALE_C_DARK[10].inkMult, inkMaxC: SCALE_C_DARK[10].inkMaxC, require: T10 },
-    { stop: 11, rootL: DARK_NEUTRAL_L[11], group: 'ink', produce: P_TEXT, chromaMult: SCALE_C_DARK[11].inkMult, inkMaxC: SCALE_C_DARK[11].inkMaxC, require: T11 },
+    // Same array-position caveat as light: rootLs index DARK_NEUTRAL_L at 10/11.
+    { stop: 9, rootL: DARK_NEUTRAL_L[10], group: 'ink', produce: P_TEXT, chromaMult: SCALE_C_DARK[9].inkMult, inkMaxC: SCALE_C_DARK[9].inkMaxC, chromaFloorIndex: SCALE_C_DARK[9].chromaFloorIndex, require: T9 },
+    { stop: 10, rootL: DARK_NEUTRAL_L[11], group: 'ink', produce: P_TEXT, chromaMult: SCALE_C_DARK[10].inkMult, inkMaxC: SCALE_C_DARK[10].inkMaxC, chromaFloorIndex: SCALE_C_DARK[10].chromaFloorIndex, require: T10 },
   ],
   roles: [
-    { role: 'cta', produce: { hue: 'constant', L: 'anchor', chroma: 'brand' }, floorL: DARK_STOP_9_MIN_L, chromaMult: 1 },
-    { role: 'cta-hover', produce: { hue: 'constant', L: 'hover', chroma: 'brand' }, floorL: DARK_STOP_9_MIN_L, chromaMult: 1 },
-    { role: 'cta-pressed', produce: { hue: 'constant', L: 'pressed', chroma: 'brand' }, floorL: DARK_STOP_9_MIN_L, chromaMult: 1 },
-    // the ink trio anchors at the resolved dark stop 10 (no fill floor — text is dark-native);
-    // the T10 require rides the states as a floor, so a darkened dark-mode hover that would
-    // read under the bar is pulled back up (the ink states may collapse toward ink-10 on
+    { role: 'cta', produce: { hue: 'constant', L: 'anchor', chroma: 'brand' }, floorL: DARK_CTA_MIN_L, chromaMult: 1 },
+    { role: 'cta-hover', produce: { hue: 'constant', L: 'hover', chroma: 'brand' }, floorL: DARK_CTA_MIN_L, chromaMult: 1 },
+    { role: 'cta-pressed', produce: { hue: 'constant', L: 'pressed', chroma: 'brand' }, floorL: DARK_CTA_MIN_L, chromaMult: 1 },
+    // the ink trio anchors at the resolved dark ink-9 (no fill floor — text is dark-native);
+    // the T9 require rides the states as a floor, so a darkened dark-mode hover that would
+    // read under the bar is pulled back up (the ink states may collapse toward ink-9 on
     // low-headroom hues — honest, and the audit reports it)
     { role: 'cta-ink', produce: { hue: 'ink', L: 'ink-anchor', chroma: 'ink' }, floorL: 0, chromaMult: 1 },
     { role: 'cta-ink-hover', produce: { hue: 'ink', L: 'ink-hover', chroma: 'ink' }, floorL: 0, chromaMult: 1 },

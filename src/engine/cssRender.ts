@@ -3,7 +3,7 @@
 import { generateIllustrationScale, generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
 import { srgbEmitChannels, masterEmitChannels } from './colorMath'
 import { clampChromaToGamut } from './constraints'
-import { stopTokenName, onFillTokenName, tokenOrder } from './tokenNames'
+import { stopTokenName, tokenOrder } from './tokenNames'
 import { signalScalesFor, OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, escapeCtaFamily, resolveLinkTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
 import { SIGNALS, SIGNAL_EMIT_NAME } from './signals'
 
@@ -42,16 +42,16 @@ export function stopsToVars(stops: ColorStop[], prefix: string): string {
 
 const onColor = (white: boolean) => (white ? '#ffffff' : '#000000')
 
-// A ramp body for one mode: the scale + highlight + text stops (from the scale
-// array, sorted by token order), the off-scale cta family (cta/cta-hover/cta-pressed + the cta-ink trio), and the
-// on-cta / on-highlight text tokens. identity is mode-invariant — the caller emits
+// A ramp body for one mode: the scale + ring + text stops (from the scale array,
+// sorted by token order), the off-scale cta family (cta/cta-hover/cta-pressed + the cta-ink trio),
+// and the on-cta text token. identity is mode-invariant — the caller emits
 // it once (the neutral has none). Used for the brand, the (real) secondary, AND
 // the generated neutral — every family is emitted the same way.
+// (on-highlight dropped 2026-07-29 with the highlight band — one on-color per family now.)
 export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' | 'dark'): string[] {
   const stops = mode === 'light' ? s.light : s.dark
   const f = ctaFamilyOf(s, mode)
   const onCta = mode === 'light' ? s.onFillTextIsWhite : s.onFillTextIsWhiteDark
-  const onHl = mode === 'light' ? s.onHighlightIsWhite : s.onHighlightIsWhiteDark
   // cta-border: TRANSPARENT everywhere (owner 2026-07-04: the conditional 3:1 gate is gone —
   // filled is filled). The token stays in the vocabulary so components carry
   // `border: 1.5px solid var(...-cta-border)` unconditionally (layout never shifts) and a
@@ -59,7 +59,7 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
   // resolver today (→ its own highlight-8). Renamed from cta-stroke (owner 2026-07-09);
   // the Figma side renamed with it — plugins migrate existing variables in place.
   // cta family SEMANTIC-named (owner ruling 2026-07-16): cta/cta-hover/cta-pressed +
-  // the cta-ink trio (the 4.5 text-register link escape; rest matches ink-10).
+  // the cta-ink trio (the 4.5 text-register link escape; rest matches ink-9).
   return [
     stopsToVars(stops, prefix),
     `  --${prefix}-cta: ${stopHex(f.cta)};`,
@@ -69,8 +69,7 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
     `  --${prefix}-cta-ink-hover: ${stopHex(f.ctaInkHover)};`,
     `  --${prefix}-cta-ink-pressed: ${stopHex(f.ctaInkPressed)};`,
     `  --${prefix}-cta-border: transparent;`,
-    `  --${prefix}-${onFillTokenName('brand')}: ${onColor(onCta)};`,
-    `  --${prefix}-${onFillTokenName('neutral')}: ${onColor(onHl!)};`,
+    `  --${prefix}-on-cta: ${onColor(onCta)};`,
   ]
 }
 
@@ -100,7 +99,7 @@ export function brandKindP3Body(prefix: string, s: GeneratedScale, mode: 'light'
 // just scoped to an arbitrary selector.
 export function neutralCss(selector: string, brandH: number, level: NeutralLevel = 'default', contrastProfile?: ContrastProfile): string {
   const s = generateNeutralScale(brandH, level, contrastProfile)
-  // The universal paper-0/ink-12 anchors ride along: any scope that carries the
+  // The universal paper-0/ink-11 anchors ride along: any scope that carries the
   // ladder must also carry its mode-flipping extremes (semantic aliases like
   // --surface-pop resolve through them). paper-0 = the neutral's resolved
   // stop 0 (white in light; one seam below paper-1 in dark, never absolute black).
@@ -110,12 +109,12 @@ export function neutralCss(selector: string, brandH: number, level: NeutralLevel
   return [
     `${selector} {`,
     `  --paper-0: ${p0(s.paper0, '#ffffff')};`,
-    `  --ink-12: #000000;`,
+    `  --ink-11: #000000;`,
     ...brandKindBody('neutral', s, 'light'),
     `}`,
     `${selector}[data-theme="dark"] {`,
     `  --paper-0: ${p0(s.paper0Dark, '#000000')};`,
-    `  --ink-12: #ffffff;`,
+    `  --ink-11: #ffffff;`,
     ...brandKindBody('neutral', s, 'dark'),
     `}`,
     ...(p3Light.length || p3Dark.length ? [
@@ -150,8 +149,8 @@ export function signalsCss(contrastProfile?: ContrastProfile): string {
 
   for (const sig of SIGNALS) {
     const { scale } = sigScales.get(sig.name)!
-    // F1: signals are brand-kind now — a real loud cta (stop 9) AND a distinct
-    // highlight rung (13/14), plus computed on-cta + on-highlight. No more alias.
+    // F1: signals are brand-kind now — a real loud cta AND their own ramp, plus a
+    // computed on-cta. No more alias.
     // Emitted prefix = the ROLE name (critical/warning/positive/info, owner
     // 2026-07-27) — the signals are the re-pointable in-between tier; the
     // identity name stays engine-internal.
@@ -209,7 +208,7 @@ export function brandCss(
   // scales inside `r` were already resolved under it by resolveBrand)
   contrastProfile?: ContrastProfile,
   // the secondary's mode chip: 'outline' re-resolves the fill trio — cta transparent, cta-hover the
-  // cta color at OUTLINE_HOVER_ALPHA (the tinted hover), on-cta ink-10, cta-border ALWAYS the
+  // cta color at OUTLINE_HOVER_ALPHA (the tinted hover), on-cta ink-9, cta-border ALWAYS the
   // gated highlight-8. Same tokens, different resolution — no component changes needed.
   secondaryStyle?: SecondaryStyle,
   // the NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): the brand's cta FILL trio + on-cta
@@ -262,7 +261,7 @@ export function brandCss(
   const nScale = generateNeutralScale(scale.brandH, neutralLevel, contrastProfile)
 
   // When no secondary ramp is given, secondary mirrors brand var-for-var
-  // (scale stops, off-scale cta, and both on-text tokens).
+  // (scale stops, off-scale cta, and the on-text token).
   const mirrorBody = (prefix: string, mode: 'light' | 'dark'): string[] => {
     const stops = mode === 'light' ? scale.light : scale.dark
     const alias = (name: string) => `  --${prefix}-${name}: var(--brand-${name});`
@@ -275,8 +274,7 @@ export function brandCss(
       alias('cta-ink-hover'),
       alias('cta-ink-pressed'),
       alias('cta-border'),
-      alias(onFillTokenName('brand')),
-      alias(onFillTokenName('neutral')),
+      alias('on-cta'),
     ]
   }
 
@@ -289,14 +287,15 @@ export function brandCss(
     ? `  --secondary-identity: ${secondary.identityHex};`
     : `  --secondary-identity: var(--brand-identity);`
 
-  // Universal scale anchors — positions 0 and 13 that extend the paper→ink
+  // Universal scale anchors — the two off-scale ends that extend the paper→ink
   // ladder past its generated stops, flipping with the mode. paper-0 is now a
   // RESOLVED stop of the neutral ramp (white in light; one seam below paper-1
-  // in dark — never absolute black). ink-12 (the anchor) stays the literal ink extreme.
+  // in dark — never absolute black). ink-11 (the anchor) stays the literal ink
+  // extreme. Renumbered ink-12 → ink-11 with the 2026-07-29 collapse.
   // Emitted per mode block so each resolves to the right pole.
   const p0hex = (s: ColorStop | undefined, fallback: string) => (s ? stopHex(s) : fallback)
-  const lightAnchors = [`  --paper-0: ${p0hex(nScale.paper0, '#ffffff')};`, `  --ink-12: #000000;`]
-  const darkAnchors = [`  --paper-0: ${p0hex(nScale.paper0Dark, '#000000')};`, `  --ink-12: #ffffff;`]
+  const lightAnchors = [`  --paper-0: ${p0hex(nScale.paper0, '#ffffff')};`, `  --ink-11: #000000;`]
+  const darkAnchors = [`  --paper-0: ${p0hex(nScale.paper0Dark, '#000000')};`, `  --ink-11: #ffffff;`]
 
   // outline re-resolution: emitted AFTER the secondary body so the cascade takes these values.
   // cta-hover = highlight-8 at OUTLINE_HOVER_ALPHA (pressed doubles it) — the STABLE contrast-gated stop, the same one
@@ -342,7 +341,7 @@ export function brandCss(
       `  --brand-cta-ink: ${stopHex(esc.ctaInk)};`,
       `  --brand-cta-ink-hover: ${stopHex(esc.ctaInkHover)};`,
       `  --brand-cta-ink-pressed: ${stopHex(esc.ctaInkPressed)};`,
-      `  --brand-${onFillTokenName('brand')}: ${onColor(esc.onFillIsWhite)};`,
+      `  --brand-on-cta: ${onColor(esc.onFillIsWhite)};`,
     ]
   }
 
@@ -360,7 +359,7 @@ export function brandCss(
         `  --secondary-cta-pressed: rgba(${c(s8e.r)}, ${c(s8e.g)}, ${c(s8e.b)}, ${OUTLINE_PRESSED_ALPHA});`,
       ] : []),
       `  --secondary-cta-border: var(--secondary-highlight-8);`,
-      `  --secondary-${onFillTokenName('brand')}: var(--secondary-ink-10);`,
+      `  --secondary-on-cta: var(--secondary-ink-9);`,
     ]
   }
 

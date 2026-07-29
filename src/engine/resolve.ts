@@ -30,7 +30,7 @@ const buildSignalScales = (contrastProfile?: ContrastProfile): SignalScales =>
     SIGNALS.map(def => [
       def.name,
 
-      { def, scale: generateScale(def.hex, def.name, undefined, { highlight: true, darkChromaCurve, darkCtaC: 'signal', darkFillMinL: def.darkFillMinL, enforceOnFillContrast: true, suppressRedCool: true, goldBoost: true, signalWarmDrift: true, contrastProfile }) },
+      { def, scale: generateScale(def.hex, def.name, undefined, { darkChromaCurve, darkCtaC: 'signal', darkFillMinL: def.darkFillMinL, enforceOnFillContrast: true, suppressRedCool: true, goldBoost: true, signalWarmDrift: true, contrastProfile }) },
     ])
   )
 
@@ -98,7 +98,7 @@ function redComplementVariant(
   contrastProfile?: ContrastProfile,
 ): { scale: GeneratedScale; note: string } | null {
   const rctx = buildContext(red.def.hex, {
-    highlight: true, darkChromaCurve, darkCtaC: 'signal', darkFillMinL: red.def.darkFillMinL,
+    darkChromaCurve, darkCtaC: 'signal', darkFillMinL: red.def.darkFillMinL,
     enforceOnFillContrast: true, suppressRedCool: true, goldBoost: true, signalWarmDrift: true, contrastProfile,
   } as any)
   const redCta = red.scale.cta
@@ -141,7 +141,7 @@ function redComplementVariant(
   // pinned mints skip the producer's enforce-darken, so the wcag conformance floor rides
   // the pole judge (a light coral variant must flip to black text, not ship white sub-4.5)
   const onFillTextIsWhite = onFillIsWhiteDarkAt(cta.L, cta.C, cta.H, true, contrastProfile === 'apca' ? undefined : 4.5)
-  // cta-ink rides the canonical red ramp's ink-10 (the spread) — the variant moves only the fill trio
+  // cta-ink rides the canonical red ramp's ink-9 (the spread) — the variant moves only the fill trio
   return {
     scale: { ...red.scale, cta, ctaHover, ctaPressed, onFillTextIsWhite },
     // naming candidates only — the identity name is the owner's call at bless. No hue suffix:
@@ -217,7 +217,6 @@ export function resolveBrand(
     darkChromaCurve: opts?.exact ? undefined : darkChromaCurve,
     style: opts?.style,
 
-    highlight: true,
     contrastProfile: opts?.contrastProfile,
     // DEFAULT ON (owner 2026-07-13, the cta dead-zone ruling: "pick closest to id that
     // passes apca"): the wcag lane's chosen cta pole must also clear the APCA bar,
@@ -306,7 +305,7 @@ export type SecondaryLevel = 'standard' | 'subtle'
 // The secondary's per-field MODE (owner design 2026-07-04: modes decoupled per family — the
 // mockup's chip dropdown). muted/vibrant = the two subtle chroma models (both ride the locked
 // delta curve); outline = the muted ramp with the cta re-resolved (cta transparent, cta-hover the
-// cta color at OUTLINE_HOVER_ALPHA, on-cta ink-11, cta-border always highlight-8); exact = the
+// cta color at OUTLINE_HOVER_ALPHA, on-cta ink-10, cta-border always highlight-8); exact = the
 // standard full ramp, advice-only.
 // the offering (owner 2026-07-12, striking the bespoke subtle models: "you either use the
 // derived or you use custom"): 'default' = the derived seed-transform (no hex supplied);
@@ -377,7 +376,7 @@ export const OUTLINE_PRESSED_ALPHA = 0.18
 // OWN generated neutral's ink register — near-BLACK in light, near-WHITE in dark. An
 // emitter-level re-resolution exactly like the outline style (same tokens, different
 // values; the solve pipeline is untouched and the flag default-off is byte-identical).
-// Construction (owner-decided at planning): cta ANCHORS at the neutral's resolved ink-11
+// Construction (owner-decided at planning): cta ANCHORS at the neutral's resolved ink-10
 // (light root L≈0.30 / dark ≈0.94 — the "paper12/1" register); cta-hover/cta-pressed
 // derive via the same stateFillL machinery every cta fill uses, chroma carried from the
 // anchor (the neutral's ink chroma is a whisper — re-evaluating the curve across a
@@ -392,7 +391,7 @@ export const OUTLINE_PRESSED_ALPHA = 0.18
 // ── the SYSTEM LINK token (Phase 4, owner spec 2026-07-16: "link is a system level
 // color… a primitive that internally aliases the primary ink 10 unless it's being
 // deconflicted from red"). ONE link trio per theme — link / link-hover / link-pressed:
-//   DEFAULT (no custom color): aliases the primary's cta-ink trio (which matches ink-10
+//   DEFAULT (no custom color): aliases the primary's cta-ink trio (which matches ink-9
 //   by construction, C19 — states ride the alias).
 //   CUSTOM (the de-conflict): the user's hex runs through the SAME ink register — it is
 //   the SEED of a throwaway resolve and the shipped trio is that resolve's cta-ink family
@@ -422,20 +421,20 @@ export function escapeCtaFamily(
   cta: ColorStop; ctaHover: ColorStop; ctaPressed: ColorStop; onFillIsWhite: boolean
   ctaInk: ColorStop; ctaInkHover: ColorStop; ctaInkPressed: ColorStop
 } {
-  const ink11 = (mode === 'light' ? nScale.light : nScale.dark).find(s => s.stop === 11)
-  if (!ink11) throw new Error('escapeCtaFamily: the neutral scale has no ink-11 stop')
-  const mk = (stop: number, L: number) => makeStop(stop, L, ink11.C, ink11.H)
-  const cta = mk(9, ink11.L)
+  const ink10 = (mode === 'light' ? nScale.light : nScale.dark).find(s => s.stop === 10)
+  if (!ink10) throw new Error('escapeCtaFamily: the neutral scale has no ink-10 stop')
+  const mk = (stop: number, L: number) => makeStop(stop, L, ink10.C, ink10.H)
+  const cta = mk(9, ink10.L)
   // states via the shared fill rule; the near-white dark register is the archetype
   // override case — its dark states DARKEN (the mirror of everyone else's lighten)
-  const ctaHover = mk(10, stateFillL(ink11.L, mode, 1))
-  const ctaPressed = mk(11, stateFillL(ink11.L, mode, 2))
+  const ctaHover = mk(10, stateFillL(ink10.L, mode, 1))
+  const ctaPressed = mk(11, stateFillL(ink10.L, mode, 2))
   const onEnforce = contrastProfile !== 'apca'
   const onFloor = contrastProfile === 'apca' ? undefined : 4.5
   const onFillIsWhite = onTextIsWhite(apcaY(cta.r, cta.g, cta.b), cta.L, cta.C, cta.H, onEnforce, onFloor)
   // the escape covers ALL the ctas (owner amendment 2026-07-16: "it applies to cta and
   // cta ink") — the text-style CTA trio swaps to the NEUTRAL's own cta-ink family (its
-  // ink-10 register + floored states, resolver-minted on the neutral scale), so a red
+  // ink-9 register + floored states, resolver-minted on the neutral scale), so a red
   // brand's text actions de-red with its fills. The system link, which aliases the
   // primary's cta-ink by default, follows automatically unless a custom link is set.
   const [ctaInk, ctaInkHover, ctaInkPressed] = mode === 'light'

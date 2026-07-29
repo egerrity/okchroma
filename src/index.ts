@@ -52,7 +52,7 @@ export {
 } from './engine/figmaRender'
 
 // ── Token vocabulary ─────────────────────────────────────────────────────────
-export { stopTokenName, onFillTokenName, tokenOrder, type RampKind } from './engine/tokenNames'
+export { stopTokenName, tokenOrder } from './engine/tokenNames'
 
 // ── Supporting types + data ──────────────────────────────────────────────────
 export { classifyArchetype, type Archetype } from './engine/archetypes'

@@ -1,6 +1,6 @@
 // Shape gate for plugin v2 (extended collections): snapshots WHICH token paths each
-// brand OVERRIDES vs the default-seed base, per solve COLUMN (wcag · wcag-dark · apca ·
-// apca-dark) — the v2 emission contract. The engine and themeToFigma are untouched by v2
+// brand OVERRIDES vs the default-seed base, per MODE COLUMN (light · dark — the apca
+// pair was retired 2026-07-29) — the v2 emission contract. The engine and themeToFigma are untouched by v2
 // (figma:verify guards them); this audit only moves when the payload builder, a brand,
 // or the base seed does.
 //

@@ -19,7 +19,7 @@ import {
   DARK_FLOOR_FULL_C, DARK_FLOOR_MUTED_MAX_C, onTextIsWhite,
 } from '../engine/colorMath'
 import { p2Diff, P2_D, P2_D_UP } from '../engine/p2'
-import { DARK_STOP_9_MIN_L, DARK_CTA_C } from '../engine/stopTable'
+import { DARK_CTA_MIN_L, DARK_CTA_C } from '../engine/stopTable'
 import { CTA_ONFILL_ENFORCE_LC } from './profiles'
 import { darkCtaTrim } from '../engine/darkChromaCurve'
 import type { GenerateOptions } from '../engine/colorEngine'   // type-only: erased at runtime, no cycle
@@ -155,11 +155,8 @@ export const lightScaleChromaAt = (ctx: Ctx, baseC: number, satFraction: number)
   return ctx.cAt('light', L, cLadder + ctx.envW * (cEnv - cLadder))
 }
 
-// ---- light highlight chroma (stop 9): same blend but gamut-CLAMPED before the solve (colorEngine.ts:441–442)
-export const lightHighlightChromaAt = (ctx: Ctx, baseC: number, satFraction: number) => (L: number, hh: number): number => {
-  const hlLadderC = ctx.vSubtle * ctx.chromaBoost * baseC
-  return clampChromaToGamut(L, ctx.cAt('light', L, hlLadderC + ctx.envW * (ctx.brandSat * satFraction * maxChromaAt(L, hh) - hlLadderC)), hh)
-}
+// (lightHighlightChromaAt DELETED with highlight-9, owner 2026-07-29 — it was the stop's
+// only consumer: the same ladder/envelope blend as the scale, gamut-clamped before the solve.)
 
 // ---- APCA metric primitives (the 'apca' contrast profile). apcaYAt mirrors wcagY's treatment of
 // out-of-gamut chroma (apcaY channel-clamps, wcagY zero-floors); findMaxLForApcaLc is the exact
@@ -274,11 +271,7 @@ export function placeLightText(
   return { L, C: ctx.cAt('light', L, inkC), H: ctx.lightHueAt(L) }
 }
 
-// ---- light highlight placement (stop 9): perceptual on the clamped highlight chroma (colorEngine.ts:462–465)
-export function placeLightHighlight(ctx: Ctx, rootL: number, chromaAt: (L: number, hh: number) => number): { L: number; C: number; H: number } {
-  const L = perceptualRungL(rootL, chromaAt(rootL, ctx.lightHueAt(rootL)), ctx.lightHueAt(rootL))
-  return { L, C: chromaAt(L, ctx.lightHueAt(L)), H: ctx.lightHueAt(L) }
-}
+// (placeLightHighlight DELETED with highlight-9, owner 2026-07-29.)
 
 // ---- on-fill (light), PRE-enforcement: judged at fill9 = the brand fill at scaleL (colorEngine.ts:271–273).
 // `enforce` resolves at the call site: caller opts override the spec's declared default.
@@ -287,18 +280,15 @@ export function onFillIsWhiteLight(ctx: Ctx, enforce: boolean): boolean {
   return onTextIsWhite(fill9ApcaY, ctx.scaleL, ctx.brandC, ctx.brandH, enforce)
 }
 
-// ---- on-highlight: judged at the emitted highlight-9 stop — perceptual preference, with the
-// declared conformance floor (spec.ons.onHighlight.ratioFloor: 4.5 under wcag, stripped under apca)
-export function onHighlightIsWhiteAt(L: number, C: number, H: number, ratioFloor?: number): boolean {
-  return onTextIsWhite(apcaYAt(L, C, H), L, C, H, false, ratioFloor)
-}
+// (onHighlightIsWhiteAt DELETED with the on-highlight token, owner 2026-07-29 — ink-9's
+// on-color is a declared paper token now, not a solved pole.)
 
 // ================= DARK producers (colorEngine.ts:378–434, 469–481, verbatim) =================
 
 // the dark role/hue context: the cta anchor resolves FIRST because the dark torsion anchors at it
 // (colorEngine.ts:380–386, 395). NOTE: gOffPath is the LIGHT spine-ref gaussian, reused verbatim.
 // `specFloorL` = the declared role floor (spec data); caller opts (darkFillMinL) override it.
-export function buildDarkContext(ctx: Ctx, specFloorL: number = DARK_STOP_9_MIN_L) {
+export function buildDarkContext(ctx: Ctx, specFloorL: number = DARK_CTA_MIN_L) {
   const opts = ctx.opts
   const dark9L = Math.max(ctx.scaleL, opts?.darkFillMinL ?? specFloorL)
   // dark cta chroma by the DECLARED register (DARK_CTA_C, C16): brand = trimmed, signal =
@@ -327,14 +317,9 @@ export const darkScaleChromaAt = (ctx: Ctx, dctx: DarkCtx, stopIndex: number, mu
 export const darkInkChromaAt = (ctx: Ctx, dctx: DarkCtx, stopIndex: number, multiplier: number, maxC = Infinity) => (L: number): number =>
   ctx.cAt('dark', L, Math.min(applyChromaFloor(ctx.brandC, multiplier, stopIndex, ctx.darkFloorStrength), maxC))
 
-// dark highlight chroma (stop 9): curve override or the light blend through cAt('dark'), clamped (colorEngine.ts:469–472)
-export const darkHighlightChromaAt = (ctx: Ctx, dctx: DarkCtx, baseC: number, satFraction: number) => (L: number, h: number): number => {
-  if (ctx.opts?.darkChromaCurve) return clampChromaToGamut(L, ctx.opts.darkChromaCurve(L, h, ctx.brandC), h)
-  const hlLadderC = ctx.vSubtle * ctx.chromaBoost * baseC
-  return clampChromaToGamut(L, ctx.cAt('dark', L, hlLadderC + ctx.u * (ctx.brandSat * satFraction * maxChromaAt(L, h) - hlLadderC)), h)
-}
+// (darkHighlightChromaAt DELETED with highlight-9, owner 2026-07-29.)
 
-// dark perceptual placement (stops 1–7, 10/11): placeDarkStop verbatim (colorEngine.ts:396–399).
+// dark perceptual placement (stops 1–7, 9/10): placeDarkStop verbatim (colorEngine.ts:396–399).
 // `lift` = the 'perceptual-lift' producer: the H-K solve may raise a hue above its scaffold (low-boost
 // hues like yellow) but never place it BELOW (high-boost hues — blue/violet — otherwise sink under the
 // near-black neutral surfaces they render on: the blue-recede failure). "Dark fills lift, never sink,"

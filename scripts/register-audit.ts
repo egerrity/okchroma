@@ -31,10 +31,10 @@ const ok = (msg: string) => console.log('  ✓ ' + msg)
 // ── 1. table shape ────────────────────────────────────────────────────────────
 {
   const t = SCALE_C_LIGHT
-  // stop 10 deleted (owner 2026-07-09) — the highlight band is 8–9
-  if (!(t[8].base === t[9].base)) {
-    fail(`light highlight band 8–9 must share one base register: ${t[8].base}/${t[9].base}`)
-  } else ok(`light 8–9 share one base register (${t[8].base})`)
+  // (the "light highlight band 8–9 shares one base register" check DIED with the band,
+  // owner 2026-07-29: highlight-9 is deleted, so stop 8 is the whole band and there is
+  // no pair to hold together. Its replacement guards the thing the collapse put at
+  // risk instead — see the chroma-floor check below.)
   // wash run 1→7: strictly ascending, per-step ratio bounded (the historical ladder's
   // own max step is the bound — a bigger jump means a register cliff crept in)
   const MAX_WASH_STEP = 2.6 // paper 1→2 is ×2.5 by design (0.004→0.010); wash steps run ≤ ×1.8
@@ -45,12 +45,30 @@ const ok = (msg: string) => console.log('  ✓ ' + msg)
   }
   ok('light 1–7 ascend with bounded steps')
   const d = SCALE_C_DARK
-  if (!(d[9].base === t[9].base)) fail(`dark highlight 9 must share the light base register: ${d[9].base}/${t[9].base}`)
   for (let i = 1; i < 8; i++) {
     const a = d[i].sat!, b = d[i + 1].sat!
     if (!(b >= a)) fail(`dark sat ladder must not descend ${i}→${i + 1}: ${a} → ${b}`)
   }
   ok('dark ladders shaped')
+
+  // THE CHROMA-FLOOR LADDER IS PINNED, NOT DERIVED (owner 2026-07-29). The dark ink
+  // chroma floor is (0.02 + 0.02·idx/7)·strength, and `idx` used to be the stop number
+  // reused as an array index — so the 2026-07-29 renumber (ink 10/11 → 9/10) would have
+  // silently moved every dark ink's chroma floor. It is a DECLARED field now, and it
+  // deliberately does NOT equal the stop number. This check fails if someone "tidies"
+  // it back into agreement.
+  const INK_FLOOR_LADDER: Record<number, number> = { 9: 10, 10: 11 }
+  for (const [label, tbl] of [['light', t], ['dark', d]] as const) {
+    for (const [stopStr, expected] of Object.entries(INK_FLOOR_LADDER)) {
+      const stop = Number(stopStr)
+      const e = tbl[stop]
+      if (!e) { fail(`${label} ink stop ${stop} missing from SCALE_C`); continue }
+      if (e.inkMult === undefined || e.inkMaxC === undefined) fail(`${label} ink stop ${stop} must declare inkMult + inkMaxC`)
+      if (e.chromaFloorIndex !== expected)
+        fail(`${label} ink stop ${stop} chromaFloorIndex is ${e.chromaFloorIndex}, must stay pinned at ${expected} (a physical ladder rung, not the stop number)`)
+    }
+  }
+  ok('ink chroma-floor ladder indices stay pinned at 10/11 (never follow a stop renumber)')
 }
 
 // ── 2. spec ↔ table binding ──────────────────────────────────────────────────
@@ -65,6 +83,7 @@ const ok = (msg: string) => console.log('  ✓ ' + msg)
       if (sp.satFraction !== undefined && sp.satFraction !== e.sat) fail(`${mode} s${sp.stop} satFraction ${sp.satFraction} != table ${e.sat}`)
       if (sp.chromaMult !== undefined && sp.chromaMult !== e.inkMult) fail(`${mode} s${sp.stop} chromaMult ${sp.chromaMult} != table ${e.inkMult}`)
       if (sp.group === 'ink' && e.inkMult === undefined) fail(`${mode} s${sp.stop} is ink but the table declares no inkMult`)
+      if (sp.chromaFloorIndex !== e.chromaFloorIndex) fail(`${mode} s${sp.stop} chromaFloorIndex ${sp.chromaFloorIndex} != table ${e.chromaFloorIndex}`)
     }
   }
   ok('MODE_SPECS chroma params bind to the SCALE_C tables, field for field')

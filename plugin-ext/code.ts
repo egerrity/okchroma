@@ -1,14 +1,16 @@
 /// <reference path="./figma-env.d.ts" />
 
 // Plugin v2 — extended collections (Enterprise-only). ONE base collection (`theme`)
-// carries the whole semantic set; its MODE COLUMNS are the solve conditions
-// (wcag · wcag-dark · apca · apca-dark — wcag is this plugin’s default, defaults are
-// silent, departures are named). Each brand is ONE ExtendedVariableCollection of it,
+// carries the whole semantic set; its MODE COLUMNS are the two schemes, `light` and
+// `dark`, solved in the WCAG lane. (They were wcag · wcag-dark · apca · apca-dark until
+// 2026-07-29; the APCA pair is retired — see payload.ts.) Each brand is ONE
+// ExtendedVariableCollection of it,
 // overriding only what differs from the base, across every column ("always both,
 // no picker"). Brand axis = which extension is applied; solve axis = the mode.
 // No alias maps, no dedup keys, no profile forks, no sister extensions.
 
 import type { FlatTok, TokenColumns, Column } from './payload'
+import { LEGACY_COLUMN_NAME, RETIRED_COLUMN_NAMES } from './payload'
 import { runSmoke } from './smoke'
 
 figma.showUI(__html__, { width: 720, height: 640, title: 'OKChroma Extended' })
@@ -26,12 +28,10 @@ const SPEC_KEY = 'okchroma-ext-spec'
 const COLS_KEY = 'okchroma-ext-cols'
 // Mirrors payload.COLUMNS (type-only import keeps the engine out of the sandbox bundle).
 // Column order IS the mode-dropdown order: the default lane leads, pairs group by prefix.
-const COLUMNS: Column[] = ['wcag', 'wcag-dark', 'apca', 'apca-dark']
-const DARK_COLUMNS = new Set<Column>(['wcag-dark', 'apca-dark'])
-// Every variable carries the file's solve posture, visible without the plugin —
-// the apca clause only when the file actually carries those columns (Include APCA).
-const stampFor = (apcaOn: boolean) =>
-  `OKChroma · modes: wcag 3:1/4.5/7:1 (default)${apcaOn ? ' · apca Lc 30/75/90' : ''}`
+const COLUMNS: Column[] = ['light', 'dark']
+const DARK_COLUMNS = new Set<Column>(['dark'])
+// Every variable carries the file's solve posture, visible without the plugin.
+const STAMP = 'OKChroma · modes: light · dark (WCAG 3:1/4.5/7:1)'
 
 // Token renames (old leaf → new leaf), migrated IN PLACE on the existing variable —
 // Figma keeps the variable id on rename, so user bindings survive (owner 2026-07-09:
@@ -58,16 +58,14 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['wash-6', 'wash/6'],
   ['wash-7', 'wash/7'],
   ['highlight-8', 'highlight/8'],
-  ['highlight-9', 'highlight/9'],
+  ['ink-9', 'ink/9'],
   ['ink-10', 'ink/10'],
   ['ink-11', 'ink/11'],
-  ['ink-12', 'ink/12'],
   ['cta', 'cta/enabled'],
   ['cta-hover', 'cta/hover'],
   ['cta-pressed', 'cta/pressed'],
   ['cta-border', 'cta/border'],
   ['on-cta', 'cta/on'],
-  ['on-highlight', 'highlight/on'],
   ['cta-ink', 'cta-ink/enabled'],
   ['cta-ink-hover', 'cta-ink/hover'],
   ['cta-ink-pressed', 'cta-ink/pressed'],
@@ -75,9 +73,23 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // one-hop rule). Renumber entries shift names DOWN; safe in ascending order
   // with self-deleting consumed keys — new ink/10 eats old ink-11 first.
   ['cta-stroke', 'cta/border'],
+  // ── THE 2026-07-29 COLLAPSE. highlight/9 and highlight/on are DELETED (they ORPHAN —
+  // the plugin reports orphans, it never deletes a user's variables), and every ink name
+  // shifts DOWN one: ink/10 → ink/9, ink/11 → ink/10, ink/12 → ink/11. That last row is
+  // the off-scale anchor, so the NAME ink/11 changes meaning between vintages — which is
+  // exactly why order matters here. Same discipline as the 2026-07-10 pass: paths are
+  // ensured in ladder order, so ink/9 consumes ink/10 BEFORE ink/10 is looked up, and
+  // ink/10 consumes ink/11 before ink/11 is. One row per vintage, banded first.
+  ['ink/10', 'ink/9'],
+  ['ink/11', 'ink/10'],
+  ['ink/12', 'ink/11'],
+  // ── pre-banding flat names at the 2026-07-10 numbering
   ['ink-11', 'ink/10'],
   ['ink-12', 'ink/11'],
-  ['ink-13', 'ink/12'],
+  // ── pre-banding flat names from BEFORE the 2026-07-10 renumber (two renumbers back)
+  ['ink-11', 'ink/9'],
+  ['ink-12', 'ink/10'],
+  ['ink-13', 'ink/11'],
   // blue-signal variant relabels (2026-07-13, info-color → blue): variant leaf =
   // label + resolved light-cta hex (variantKey), so the relabel needs per-lane entries.
   ['magenta-de8df6', 'magenta-side-de8df6'],
@@ -170,9 +182,9 @@ const toRGBA = (t: FlatTok): figma.RGBA =>
 
 figma.ui.onmessage = async (msg) => {
   if (msg.type === 'apply') {
-    const { brand, brandTokens, baseTokens, hasSecondary, confirmed, confirmedToken, spec, includeApca } = msg as unknown as {
+    const { brand, brandTokens, baseTokens, hasSecondary, confirmed, confirmedToken, spec } = msg as unknown as {
       type: 'apply'; brand: string; brandTokens: TokenColumns; baseTokens: TokenColumns
-      hasSecondary: boolean; confirmed?: boolean; confirmedToken?: string; spec?: unknown; includeApca?: boolean
+      hasSecondary: boolean; confirmed?: boolean; confirmedToken?: string; spec?: unknown
     }
     try {
       const collections = await figma.variables.getLocalVariableCollectionsAsync()
@@ -219,24 +231,30 @@ figma.ui.onmessage = async (msg) => {
       // two lanes onto one mode and clobber writes)
       const claimedByStored = new Set(
         Object.values(storedCols).filter((id): id is string => !!id && baseModeIds.has(id)))
+      // ADOPT, DON'T DUPLICATE (owner 2026-07-29). The column identifiers changed with
+      // the APCA removal: 'wcag'/'wcag-dark' became 'light'/'dark'. A file stamped under
+      // the old names has neither a stored id under the new key nor a mode named "light",
+      // so without this fallback every existing base would grow two NEW modes beside its
+      // populated ones and leave the real values stranded in the old pair. Resolution
+      // order: stored id under the current key → stored id under the LEGACY key → a mode
+      // named the current name → a mode named the LEGACY name. An adopted legacy mode is
+      // renamed in place below; Figma keeps the modeId across a rename, so bindings live.
       const resolveCol = (c: Column): string | undefined => {
-        const stored = storedCols[c]
+        const stored = storedCols[c] ?? (storedCols as Record<string, string | undefined>)[LEGACY_COLUMN_NAME[c]]
         if (stored && baseModeIds.has(stored)) return stored
-        return baseMatch?.modes.find(m => m.name === c && !claimedByStored.has(m.modeId))?.modeId
+        const byName = (n: string) => baseMatch?.modes.find(m => m.name === n && !claimedByStored.has(m.modeId))?.modeId
+        return byName(c) ?? byName(LEGACY_COLUMN_NAME[c])
       }
-      // The file's APCA posture (owner ask 2026-07-16: "turn off APCA so it doesn't
-      // regenerate if I delete it"). Detection is LIVE from the base's modes (stored
-      // id or canonical name — same resolution as colIds/missingCols, so a stray
-      // user mode named "apca…" still can't resurrect a deliberately deleted pair,
-      // and a RENAMED pair still counts as present). The toggle governs whether the
-      // apca columns should EXIST: any apca column present → the lane keeps being
-      // written regardless of the toggle (no data holes; delete BOTH columns to
-      // drop the lane, and with the toggle off no future apply recreates them).
-      // Toggle ON over a base without them = the posture flip; a missing HALF of a
-      // surviving pair is restored — both behind the confirm gate below.
-      const baseHasApca = !!baseMatch && (!!resolveCol('apca') || !!resolveCol('apca-dark'))
-      const apcaOn = !!includeApca || baseHasApca
-      const activeCols: Column[] = apcaOn ? COLUMNS : COLUMNS.slice(0, 2)
+      // The RETIRED APCA pair (removed 2026-07-29 — the owner is not authorised to use
+      // APCA for design decisions, and this plugin was its last exposure). It is never
+      // written or created again. A file that already carries those modes KEEPS them:
+      // the plugin does not delete modes it no longer owns. They stop being updated and
+      // are the user's to remove. Reported so the UI can say so, rather than leaving two
+      // silently-stale columns sitting in the mode picker looking current.
+      const staleApcaCols = baseMatch
+        ? RETIRED_COLUMN_NAMES.filter(n => baseMatch!.modes.some(m => m.name === n))
+        : []
+      const activeCols: Column[] = COLUMNS
       // Columns this apply would have to CREATE on an existing base (adversarial
       // review 2026-07-16: positional slot-reuse hijacked hand-deleted halves and
       // user-added modes). The first column adopts the default mode by design on a
@@ -343,7 +361,13 @@ figma.ui.onmessage = async (msg) => {
       for (let i = 0; i < activeCols.length; i++) {
         const name = activeCols[i]
         const resolved = resolveCol(name)
-        if (resolved && !usedCols.has(resolved)) { colIds.push(resolved); usedCols.add(resolved); continue }
+        if (resolved && !usedCols.has(resolved)) {
+          // adopted under its LEGACY name → rename in place. The modeId, and therefore
+          // every binding, is untouched. A mode the USER renamed is left exactly alone.
+          const cur = base.modes.find(m => m.modeId === resolved)
+          if (cur && cur.name === LEGACY_COLUMN_NAME[name]) base.renameMode(resolved, name)
+          colIds.push(resolved); usedCols.add(resolved); continue
+        }
         if (i === 0 && created) {
           base.renameMode(base.modes[0].modeId, name)
           colIds.push(base.modes[0].modeId)
@@ -371,7 +395,7 @@ figma.ui.onmessage = async (msg) => {
           if (legacy) { legacy.name = path; baseVars.delete(legacyPath); baseVars.set(path, legacy); v = legacy; break }
         }
         if (!v) { v = figma.variables.createVariable(path, base, 'COLOR'); baseVars.set(path, v); createdVars++ }
-        v.description = stampFor(apcaOn)
+        v.description = STAMP
         v.scopes = ['ALL_SCOPES']
         return v
       }
@@ -379,10 +403,12 @@ figma.ui.onmessage = async (msg) => {
       // are exact poles by construction — alias them to the system/abs-* rows so the
       // chip READS as the pole and the poles stay single-source. Emit-layer
       // representation only: a non-pole value (an outline secondary's on-cta rides
-      // its ink-10) falls back to a raw write, so the alias never constrains the
+      // its ink-9) falls back to a raw write, so the alias never constrains the
       // solve — the engine still picks the pole per family × column.
+      // (highlight/on dropped from this list 2026-07-29 with the token; the neutral
+      // anchor renumbered ink/12 → ink/11 in the same round.)
       const POLE_LEAVES = (path: string) =>
-        path.endsWith('/cta/on') || path.endsWith('/highlight/on') || path === 'neutral/ink/12'
+        path.endsWith('/cta/on') || path === 'neutral/ink/11'
       // EXACT poles only (per-channel EPS): the engine emits true 0/1 poles, so a
       // loose band buys nothing — and the conversion pass below must never snap a
       // hand-edited near-pole value (#FFFFF8) onto the abs row (review-caught
@@ -602,7 +628,7 @@ figma.ui.onmessage = async (msg) => {
         }
       }
 
-      figma.ui.postMessage({ type: 'done', brand, set, removed, inherited, createdVars, baseCreated: created, secondary: secondaryMode, secondaryAdded, addedCols, rowsAdded, orphaned, backfill, unstamped })
+      figma.ui.postMessage({ type: 'done', brand, set, removed, inherited, createdVars, baseCreated: created, secondary: secondaryMode, secondaryAdded, addedCols, rowsAdded, orphaned, backfill, unstamped, staleApcaCols })
     } catch (err) {
       figma.ui.postMessage({ type: 'error', message: String(err) })
     }

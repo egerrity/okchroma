@@ -59,24 +59,29 @@ for (const H of HUES) for (const C of CHROMAS) {
         if (got < sp.require.target - 1e-4) fails.push({ seed: id, mode, check: `separation-stop${sp.stop}`, detail: `ΔE ${got.toFixed(4)} < ${sp.require.target}`, sev: 10 })
       }
     }
-    // 3. monotonic L where the system guarantees it: stops 1–8 (paper→highlight-8) and the 9→10 pair.
-    //    The 8↔9 seam is NOT guaranteed — the stop-8 3:1 clamp can legitimately cross the highlight band
-    //    (true in production okchroma for saturated greens); it is reported, not failed.
+    // 3. monotonic L where the system guarantees it: stops 1–8 (paper→highlight-8).
     const ladder = [1, 2, 3, 4, 5, 6, 7, 8].map(n => byStop(n)!).filter(Boolean)
     for (let i = 1; i < ladder.length; i++) {
       const bad = mode === 'light' ? ladder[i].L > ladder[i - 1].L + 1e-6 : ladder[i].L < ladder[i - 1].L - 1e-6
       if (bad) fails.push({ seed: id, mode, check: 'monotonic-L', detail: `stop ${ladder[i].stop} L${ladder[i].L.toFixed(3)} vs ${ladder[i - 1].L.toFixed(3)}`, sev: 10 })
     }
-    // (the 9→10 highlight-order check died with stop 10 — owner 2026-07-09)
-    const h9 = byStop(9)!
-    // dark 8<9: the require-raised stop 8 must not ride past the hand-placed highlight 9 (Stage-5 constraint)
-    if (mode === 'dark') {
-      const s8d = byStop(8)!
-      if (s8d.L > h9.L + 1e-6) fails.push({ seed: id, mode, check: 'dark-8<9', detail: `8 L${s8d.L.toFixed(3)} > 9 L${h9.L.toFixed(3)}`, sev: 12 })
-    }
-    const t10 = byStop(10)!, t11 = byStop(11)!
+    // 3b. BAND ORDER — the invariant that did not exist, and whose absence let
+    //    highlight-9 drift onto ink-10 unnoticed (drift handoff 2026-07-29). The old
+    //    check here was `dark-8<9`, an L-comparison against a stop that no longer
+    //    exists. Its successor is stated as CONTRAST against the shared plane both
+    //    stops sit on (paper-3), because contrast is what the two requires are about:
+    //    the emphasis fill must read further off the page than the focus ring does.
+    //    Both modes now, not just dark. Margin declared in highlight-audit
+    //    (BAND_ORDER_MARGIN 1.0); this gate asserts the ORDER, the sweep gate asserts
+    //    the margin — a strict-order failure here is the louder signal.
+    const s8b = byStop(8)!, i9 = byStop(9)!, p3b = byStop(3)!
+    const p3Y = wcagY(p3b.L, clampChromaToGamut(p3b.L, p3b.C, p3b.H), p3b.H)
+    const vsP3 = (st: typeof s8b) => contrastRatio(wcagY(st.L, clampChromaToGamut(st.L, st.C, st.H), st.H), p3Y)
+    if (vsP3(i9) <= vsP3(s8b) + 1e-6)
+      fails.push({ seed: id, mode, check: 'band-order', detail: `ink-9 ${vsP3(i9).toFixed(2)} !> highlight-8 ${vsP3(s8b).toFixed(2)} vs paper-3`, sev: 12 })
+    const t10 = byStop(9)!, t11 = byStop(10)!
     const inkBad = mode === 'light' ? t11.L > t10.L + 1e-6 : t11.L < t10.L - 1e-6
-    if (inkBad) fails.push({ seed: id, mode, check: 'ink-order', detail: `10 L${t10.L.toFixed(3)} vs 11 L${t11.L.toFixed(3)}`, sev: 10 })
+    if (inkBad) fails.push({ seed: id, mode, check: 'ink-order', detail: `ink-9 L${t10.L.toFixed(3)} vs ink-10 L${t11.L.toFixed(3)}`, sev: 10 })
     // 4. in-gamut + valid rgb for every stop
     for (const st of s) {
       const gC = clampChromaToGamut(st.L, st.C, st.H)
@@ -110,18 +115,18 @@ for (const H of HUES) for (const C of CHROMAS) {
     const hoverUp = ctaHover.L > cta.L
     if ((ctaPressed.L > cta.L) !== hoverUp || Math.abs(ctaPressed.L - cta.L) < Math.abs(ctaHover.L - cta.L) - 1e-9)
       fails.push({ seed: id, mode, check: 'pressed-travel', detail: `cta L${cta.L.toFixed(3)} hover L${ctaHover.L.toFixed(3)} pressed L${ctaPressed.L.toFixed(3)}`, sev: 10 })
-    // 5c. the cta-ink trio: rest MATCHES the resolved stop 10 exactly; PRESSED MATCHES
-    //    stop 11 exactly (owner 2026-07-16 restrengthening — "too subtle when text only":
+    // 5c. the cta-ink trio: rest MATCHES the resolved ink-9 exactly; PRESSED MATCHES
+    //    ink-10 exactly (owner 2026-07-16 restrengthening — "too subtle when text only":
     //    press lands on the family's 7:1 register); HOVER (the doubled step) may never
-    //    read under the declared stop-10 bar (the state floor — a dark hover darkening
+    //    read under the declared ink-9 bar (the state floor — a dark hover darkening
     //    toward the paper is the case that keeps link states legal).
-    const i10 = byStop(10)!
+    const i10 = byStop(9)!
     if (Math.abs(ctaInk.L - i10.L) > 1e-9 || Math.abs(ctaInk.C - i10.C) > 1e-9 || Math.abs(ctaInk.H - i10.H) > 1e-9)
-      fails.push({ seed: id, mode, check: 'cta-ink-anchor', detail: `ink L${ctaInk.L.toFixed(4)} != stop10 L${i10.L.toFixed(4)}`, sev: 20 })
-    const i11 = byStop(11)!
+      fails.push({ seed: id, mode, check: 'cta-ink-anchor', detail: `ink L${ctaInk.L.toFixed(4)} != ink-9 L${i10.L.toFixed(4)}`, sev: 20 })
+    const i11 = byStop(10)!
     if (Math.abs(ctaInkPressed.L - i11.L) > 1e-9 || Math.abs(ctaInkPressed.C - i11.C) > 1e-9 || Math.abs(ctaInkPressed.H - i11.H) > 1e-9)
-      fails.push({ seed: id, mode, check: 'cta-ink-pressed-anchor', detail: `pressed L${ctaInkPressed.L.toFixed(4)} != stop11 L${i11.L.toFixed(4)}`, sev: 20 })
-    const t10req = spec.stops.find(x => x.stop === 10)!.require
+      fails.push({ seed: id, mode, check: 'cta-ink-pressed-anchor', detail: `pressed L${ctaInkPressed.L.toFixed(4)} != ink-10 L${i11.L.toFixed(4)}`, sev: 20 })
+    const t10req = spec.stops.find(x => x.stop === 9)!.require
     for (const [nm, st] of [['cta-ink-hover', ctaInkHover], ['cta-ink-pressed', ctaInkPressed]] as const) {
       if (t10req?.metric === 'wcag') {
         const got = contrastRatio(wcagY(st.L, clampChromaToGamut(st.L, st.C, st.H), st.H), p2Y)

@@ -50,7 +50,6 @@ for (const C of CHROMAS) for (const H of HUES) {
   const pick = (s: GeneratedScale, mode: 'light' | 'dark') => ({
     stops: mode === 'light' ? s.light : s.dark,
     cta: mode === 'light' ? s.cta : s.ctaDark,
-    onHl: mode === 'light' ? s.onHighlightIsWhite : s.onHighlightIsWhiteDark,
     onCta: mode === 'light' ? s.onFillTextIsWhite : s.onFillTextIsWhiteDark,
   })
   for (const mode of ['light', 'dark'] as const) {
@@ -58,7 +57,6 @@ for (const C of CHROMAS) for (const H of HUES) {
     cases.push({
       seed, C, H, mode,
       slots: [
-        { slot: 'highlight-9', fill: b.stops.find(s => s.stop === 9)!, current: b.onHl! },
         { slot: 'cta', fill: b.cta, current: b.onCta! },
         { slot: 'neutral cta (quiet)', fill: nn.cta, current: nn.onCta! },
         { slot: 'derived-secondary cta', fill: dd.cta, current: dd.onCta! },
@@ -68,7 +66,7 @@ for (const C of CHROMAS) for (const H of HUES) {
 }
 
 // ── counts ──
-const SLOTS = ['highlight-9', 'cta', 'neutral cta (quiet)', 'derived-secondary cta']
+const SLOTS = ['cta', 'neutral cta (quiet)', 'derived-secondary cta']
 const counts: Record<string, { light: [number, number]; dark: [number, number] }> = {}
 for (const s of SLOTS) counts[s] = { light: [0, 0], dark: [0, 0] }
 for (const c of cases) for (const s of c.slots) {
@@ -112,66 +110,10 @@ const section = (mode: 'light' | 'dark') => {
 const total = SLOTS.reduce((a, s) => a + counts[s].light[0] + counts[s].dark[0], 0)
 const grand = SLOTS.reduce((a, s) => a + counts[s].light[1] + counts[s].dark[1], 0)
 
-// ── ② THE SHIFT LEDGER — the owner's alternative: keep white text, MOVE the highlights.
-// For every hue: solve how far hl-9 must DROP for white to hit 4.5:1, then show what that
-// does to the ladder around it (hl-8 · hl-9 · ink-11). A "break" = the shifted stop
-// crosses its neighbor: light mode descends in L (break when shifted-9 lands at/below ink-11);
-// dark mode ascends (break when shifted-9 lands at/below hl-8 — the band inverts).
-type Shift = {
-  H: number; C: number; mode: 'light' | 'dark'
-  s8: ColorStop; s9: ColorStop; ink10: ColorStop
-  req9: number; d9: number; breaks: boolean
-}
-const shifts: Shift[] = []
-for (const c of cases) {
-  // one scale per case is enough — the brand scale (highlights live there)
-  const r = resolveBrand(c.seed, 'brand')
-  const stops = c.mode === 'light' ? r.scale.light : r.scale.dark
-  const s8 = stops.find(s => s.stop === 8)!, s9 = stops.find(s => s.stop === 9)!
-  const ink10 = stops.find(s => s.stop === 10)!
-  const req9 = findLForContrast(s9.L, s9.C, s9.H, 1.0, 4.5)
-  const breaks = c.mode === 'light' ? req9 <= ink10.L + 0.02 : req9 <= s8.L + 0.02
-  shifts.push({ H: c.H, C: c.C, mode: c.mode, s8, s9, ink10, req9, d9: req9 - s9.L, breaks })
-}
-const shiftHex = (L: number, C: number, H: number) => seedHex(L, clampChromaToGamut(L, C, H), H)
-const stat = (mode: 'light' | 'dark') => {
-  const list = shifts.filter(s => s.mode === mode)
-  const ds = list.map(s => -s.d9).sort((a, b) => a - b)
-  return {
-    median: ds[Math.floor(ds.length / 2)],
-    max: ds[ds.length - 1],
-    breaks: list.filter(s => s.breaks).length,
-    n: list.length,
-  }
-}
-const chipL = (bg: string, white: boolean, label: string, w = 60) =>
-  `<div style="width:${w}px;height:34px;border-radius:7px;background:${bg};color:${white ? '#fff' : '#000'};display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:600">${label}</div>`
-const ladder = (s: Shift, shifted: boolean) => {
-  const nine = shifted ? s.req9 : s.s9.L
-  return `<div style="display:flex;gap:2px">
-    ${chipL(shiftHex(s.s8.L, s.s8.C, s.s8.H), false, '8')}
-    ${chipL(shiftHex(nine, s.s9.C, s.s9.H), true, shifted ? 'Aa 9*' : 'Aa 9')}
-    ${chipL(shiftHex(s.ink10.L, s.ink10.C, s.ink10.H), true, '11')}
-  </div>`
-}
-const shiftSection = (mode: 'light' | 'dark') => {
-  const fg = mode === 'light' ? '#1a1a1a' : '#eee'
-  const bg = mode === 'light' ? '#fff' : '#111'
-  const sub = mode === 'light' ? '#666' : '#999'
-  const st = stat(mode)
-  const rows = shifts.filter(s => s.mode === mode && s.C === 0.17).map(s => `
-    <div style="display:flex;align-items:center;gap:14px;margin:4px 0;${s.breaks ? 'outline:2px solid #e5484d;outline-offset:3px;border-radius:8px;' : ''}">
-      <div style="width:64px;font-size:11px;color:${sub};font-family:ui-monospace,monospace">H${s.H}</div>
-      ${ladder(s, false)}
-      <div style="font-size:11px;color:${sub};width:110px;text-align:center">→ ΔL ${s.d9.toFixed(3)}${s.breaks ? ' · <b style="color:#e5484d">BAND BREAK</b>' : ''}</div>
-      ${ladder(s, true)}
-    </div>`).join('')
-  return `<div style="background:${bg};color:${fg};padding:26px 30px;border-radius:16px;margin:20px 0">
-    <h2 style="margin:0 0 4px;font-size:17px">${mode.toUpperCase()} — the shift ledger (C .17): keep white, move the fill</h2>
-    <div style="font-size:12px;color:${sub};max-width:78ch;line-height:1.5">Left ladder = shipped 8·9·11. Right = 9 re-solved so WHITE passes 4.5:1 (starred).
-    <b>median drop ${st.median.toFixed(3)} L · worst ${st.max.toFixed(3)} L · ${st.breaks}/${st.n} band breaks</b> (shifted 9 crosses ${mode === 'light' ? 'ink-11' : 'highlight-8'} — the ladder inverts).</div>
-    <div style="margin-top:10px">${rows}</div></div>`
-}
+// (② THE SHIFT LEDGER — "keep white text, MOVE highlight-9 until white passes 4.5" —
+// DELETED 2026-07-29 with the stop it interrogated. The question it answered was settled
+// twice over: C31 forced hl-9 to 4.5 against paper-3 (making its on-text a constant), and
+// the 2026-07-29 collapse deleted the stop. The on-cta pole question above is still live.)
 
 const html = `<!doctype html><meta charset="utf-8"><title>strict wcag-pole — the flip sweep</title>
 <body style="font-family:Inter,system-ui,sans-serif;background:#f4f4f5;margin:0;padding:28px;max-width:1080px">
@@ -183,18 +125,9 @@ so nothing ever needs to move a fill — adopting strict wcag-pole is <b>purely 
 <b>${total} flips / ${grand} judgments.</b> Left chip = shipped today · right chip = strict.</p>
 ${section('light')}
 ${section('dark')}
-<h1 style="font-size:20px;margin:30px 0 6px">② Or: keep white text and SHIFT the highlights?</h1>
-<p style="font-size:13px;color:#555;line-height:1.5;max-width:70ch">The alternative to flipping text: re-solve hl-9 darker until white passes 4.5:1.
-The ledger shows the required drop per hue and flags where the band inverts against its neighbors.</p>
-${shiftSection('light')}
-${shiftSection('dark')}
 </body>`
 
 mkdirSync('render', { recursive: true })
 writeFileSync('render/wcag-pole.html', html)
 console.log(`wrote render/wcag-pole.html — ${total}/${grand} flips`)
 for (const s of SLOTS) console.log(`  ${s.padEnd(24)} light ${counts[s].light[0]}/${counts[s].light[1]} · dark ${counts[s].dark[0]}/${counts[s].dark[1]}`)
-for (const m of ['light', 'dark'] as const) {
-  const st = stat(m)
-  console.log(`shift ${m}: median ΔL -${st.median.toFixed(3)} · worst -${st.max.toFixed(3)} · band breaks ${st.breaks}/${st.n}`)
-}

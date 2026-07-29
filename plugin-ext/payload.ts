@@ -4,11 +4,15 @@
 //
 // v2 axes (owner 2026-07-07, revised after the Enterprise mock):
 //   brand   = which extension is applied (ONE per brand — the flat picker stays clean)
-//   solve   = the base's MODE COLUMNS: wcag · wcag-dark · apca · apca-dark.
-// A contrast profile is a re-solve of the same tokens — mode-shaped, like light/dark —
-// so it lives on the mode axis, not on forked collections or sister extensions. WCAG is
-// this plugin’s default (leads, unmarked); apca is the marked extra. The scheme-only names
-// extend to future solve conditions (wcag-dark-high-contrast, …).
+//   scheme  = the base's MODE COLUMNS: light · dark.
+//
+// WCAG ONLY (owner 2026-07-29). The columns used to be wcag · wcag-dark · apca · apca-dark:
+// a contrast profile is a re-solve of the same tokens, so it rode the mode axis alongside
+// the schemes. The APCA pair is REMOVED — the owner is not authorised to use APCA for
+// design decisions, and this plugin was its last exposure. What remains is the plain
+// light/dark pair, solved in the WCAG lane. The profile machinery itself stays dormant in
+// src/reqtoken/profiles.ts (the wcag path is a passthrough), so re-enabling is a column
+// list, not a rebuild.
 //
 // Token shape: the operative `brand-` CATEGORY stays in the token name (brand-primary/*,
 // brand-secondary/*), the brand's NAME lives on the extension, so a designer reads
@@ -21,8 +25,17 @@ import type { ContrastProfile, NeutralLevel } from '../src/engine/colorEngine'
 
 export interface FlatTok { path: string; r: number; g: number; b: number; a?: number }
 
-export type Column = 'wcag' | 'wcag-dark' | 'apca' | 'apca-dark'
-export const COLUMNS: Column[] = ['wcag', 'wcag-dark', 'apca', 'apca-dark']
+export type Column = 'light' | 'dark'
+export const COLUMNS: Column[] = ['light', 'dark']
+// What a column was called BEFORE 2026-07-29, for adopting an existing file's modes in
+// place instead of adding duplicates beside them. code.ts resolves a column by stored
+// modeId → canonical name → LEGACY name, then renames the adopted mode. Bindings survive
+// because Figma keeps the modeId across a rename.
+export const LEGACY_COLUMN_NAME: Record<Column, string> = { light: 'wcag', dark: 'wcag-dark' }
+// The retired APCA pair. Never written or created again; named only so an existing file
+// can be REPORTED as still carrying them (they are the user's to delete — the plugin does
+// not remove modes it no longer owns).
+export const RETIRED_COLUMN_NAMES = ['apca', 'apca-dark']
 export type TokenColumns = Record<Column, FlatTok[]>
 
 // resolveTheme's input, minus the profile — the payload always solves BOTH lanes
@@ -58,8 +71,10 @@ function flatten(node: FigmaGroup, prefix: string, out: FlatTok[]): void {
 // system root, then surface/, then alpha/): system → neutral → brand-primary →
 // brand-secondary → signals. The system/surface/sink|base|lift|pop planes are NOT here —
 // they are scheme-divergent aliases the plugin creates after the abs rows (ordering) and
-// wires once the neutral exists. neutral/ink/12 (the anchor) is injected right after
-// ink/11 (ladder order), a scheme-flipping pole. The alpha/shadow ladder (owner
+// wires once the neutral exists. neutral/ink/11 (the OFF-SCALE anchor — pure black in
+// light, pure white in dark) is injected right after the last real ink stop, in ladder
+// order. ⚠️ Its trigger is the LAST SCALE INK, so a stop renumber moves it: it fired on
+// ink/11 and emitted ink/12 until the 2026-07-29 collapse renumbered the inks down one. The alpha/shadow ladder (owner
 // 2026-07-27) is pure black at 4/8/12% light; dark is heavier by necessity — near black
 // a light-mode alpha vanishes — at 32/48/64%.
 function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boolean): FlatTok[] {
@@ -79,7 +94,7 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
   flatten(g.neutral as FigmaGroup, 'neutral', neutral)
   for (const t of neutral) {
     out.push(t)
-    if (t.path === 'neutral/ink/11') out.push({ path: 'neutral/ink/12', ...(scheme === 'light' ? K : W) })
+    if (t.path === 'neutral/ink/10') out.push({ path: 'neutral/ink/11', ...(scheme === 'light' ? K : W) })
   }
   // identity rows re-home to the system ABSOLUTES (owner 2026-07-27: the
   // unprocessed inputs sit with the poles — abs-primary/abs-secondary; the
@@ -111,7 +126,7 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
   return out
 }
 
-// One profile lane: resolve → themeToFigma → the two scheme columns.
+// The WCAG lane: resolve → themeToFigma → the two scheme columns.
 // `canonicalSignals` = the base seed's posture (unshifted ramps); a brand passes false
 // and carries its collision overrides, which the diff turns into extension overrides.
 function lane(
@@ -141,12 +156,11 @@ function lane(
 }
 
 function columns(input: ThemeSpec, neutralLevel: NeutralLevel, canonicalSignals: boolean, includeSecondary: 'auto' | true): TokenColumns {
-  const w = lane(input, undefined, neutralLevel, canonicalSignals, includeSecondary) // wcag = this plugin’s default lane
-  const a = lane(input, 'apca', neutralLevel, canonicalSignals, includeSecondary)
-  return { 'wcag': w.light, 'wcag-dark': w.dark, 'apca': a.light, 'apca-dark': a.dark }
+  const w = lane(input, undefined, neutralLevel, canonicalSignals, includeSecondary) // undefined profile = the wcag lane
+  return { 'light': w.light, 'dark': w.dark }
 }
 
-// The apply payload for a brand — both lanes, both schemes, collision overrides merged.
+// The apply payload for a brand — both schemes, collision overrides merged.
 // The payload ALWAYS carries a brand-secondary: the brand's own (hex or derived-by-choice)
 // when it brings one, otherwise the DERIVED pastel from its primary (owner 2026-07-07 —
 // no brand ever has a blank or wrong-hue secondary; supersedes v1's mirror). Whether those

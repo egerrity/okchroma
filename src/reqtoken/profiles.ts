@@ -17,13 +17,14 @@ export type ContrastProfile = 'wcag' | 'apca'
 // wcag ratio → APCA Lc, THE RECOMMENDED MAP (each slot measured against the real resolved output, not
 // copied from a bridge table):
 //   3:1 → Lc 30 (stop 8, non-text) — APCA's solid-UI-component minimum. NOT the text-bridge 45: the dark
-//     scale reads only Lc ≈ 24–29 at the scaffold, and Lc 45 would force dark stop-8 to L ≈ 0.69, past the
-//     hand-placed highlight-9 (0.600) — a structural break.
-//   4.5 → Lc 75 (ink-11) — APCA's body-text minimum. The cta/on-fill enforcement no longer rides
+//     scale reads only Lc ≈ 24–29 at the scaffold, and Lc 45 would force dark stop-8 to L ≈ 0.69. That
+//     used to be "past the hand-placed highlight-9 (0.600) — a structural break"; highlight-9 is gone
+//     (2026-07-29) so the break is no longer the argument, but the scaffold reading stands on its own.
+//   4.5 → Lc 75 (ink-9) — APCA's body-text minimum. The cta/on-fill enforcement no longer rides
 //     this slot: the owner's declared contract (2026-07-10) is on-cta Lc 60 — APCA's large-text bar;
 //     cta labels are button text, not body copy — set via CTA_ONFILL_ENFORCE_LC below. Side effects
 //     she accepted: enforcement-bound warm/pink ctas release lighter, dark ctas enforce less.
-//   7 → Lc 90 (ink-12) — APCA's preferred-body value; the scale already reads ≈ 90+.
+//   7 → Lc 90 (ink-10) — APCA's preferred-body value; the scale already reads ≈ 90+.
 export type LcMap = Record<number, number>
 export const DEFAULT_APCA_LC_MAP: LcMap = { 3: 30, 4.5: 75, 7: 90 }
 
@@ -35,33 +36,25 @@ function toApca(req: Require, lcMap: LcMap): Require {
 }
 
 // The cta/on-fill enforcement bar — DECOUPLED from the 4.5 text slot. OWNER SPEC (2026-07-10,
-// typo-corrected same day): apca = ink-12 Lc 90 · ink-11 Lc 75 · ON-CTA Lc 60; wcag = ink-12 7:1 ·
-// ink-11 4.5 · on-cta 4.5. The map slots carry the inks; this constant carries on-cta. wcag lane
-// unaffected (returns the spec unchanged above).
+// typo-corrected same day): apca = the 7:1 ink Lc 90 · the 4.5 ink Lc 75 · ON-CTA Lc 60; wcag =
+// 7:1 · 4.5 · on-cta 4.5. (Those inks are ink-10 / ink-9 since the 2026-07-29 renumber.) The map
+// slots carry the inks; this constant carries on-cta. wcag lane unaffected (returns the spec
+// unchanged above).
 export const CTA_ONFILL_ENFORCE_LC = 60
 
 export function withProfile(spec: ModeSpec, profile: ContrastProfile, lcMap: LcMap = DEFAULT_APCA_LC_MAP): ModeSpec {
   if (profile === 'wcag') return spec
   return {
     ...spec,
-    // STOP 9 IS WCAG-ONLY (owner 2026-07-28). Its surface require — highlight-9 clears 4.5
-    // against paper-3 — has no honest slot in this map: the map's bars are TEXT bars
-    // (3 → 30 non-text, 4.5 → 75 body, 7 → 90), and a fill separating from its own plane
-    // is a fourth kind. Translating it through the 4.5 slot lands Lc 75, where the wcag
-    // lane's own placement measures Lc 65–68 — ~10 Lc past the equivalent, dragging apca's
-    // hl-9 visibly darker than its wcag twin (warning #8E5100 vs #A56000). Rather than
-    // invent a calibrated slot, the apca lane keeps its own hl-9 placement and solves the
-    // ON-TEXT for whatever that placement gives (max-|Lc| against enforceLc 60 below).
-    stops: spec.stops.map((s): StopReq =>
-      s.require && s.stop !== 9 ? { ...s, require: toApca(s.require, lcMap) } : { ...s, require: s.stop === 9 ? undefined : s.require }),
+    // (The stop-9 CARVE-OUT is gone with the stop, owner 2026-07-29. It existed because
+    // highlight-9's require was a fill-vs-its-own-plane bar with no honest slot in a map
+    // of TEXT bars — 3 → 30 non-text, 4.5 → 75 body, 7 → 90 — so the apca lane kept its
+    // own hl-9 placement instead. Today's stop 9 is an INK stop: 4.5 is a text bar, the
+    // 75 slot is its correct translation, and it maps like every other require.)
+    stops: spec.stops.map((s): StopReq => (s.require ? { ...s, require: toApca(s.require, lcMap) } : s)),
     ons: {
       ...spec.ons,
       onFill: { ...spec.ons.onFill, enforceLc: CTA_ONFILL_ENFORCE_LC },
-      // the apca law is the Lc bar (band placement + the highlight-audit gate), not the ratio —
-      // strip the wcag conformance floor so the pole stays purely perceptual. enforceLc 60 = APCA's
-      // body-text bar for the highlight fill (the highlight-audit's HL_BODY; declared here so the dark
-      // delta placement can respect it — the band-order floor could land hl9 in the mid dead zone).
-      onHighlight: { ...spec.ons.onHighlight, ratioFloor: undefined, enforceLc: 60 },
     },
   }
 }

@@ -5,8 +5,12 @@ export interface StopSpec {
 
 // Stops 1–8 (paper→highlight-8) are a GEOMETRIC ladder — gaps grow ~1.25× per step — so every adjacent
 // stop is distinct by construction and paper-2 falls onto its ID curve with no clamp (owner 2026-07-09,
-// distribution "B"; separation is a shape property, not a delta — see spec.ts). Indices 8–11 = highlight-9
-// + ink scaffolds (index 9 = the retired stop-10 rootL, kept so the ink indices don't shift).
+// distribution "B"; separation is a shape property, not a delta — see spec.ts). Indices 8–11 are the ink
+// scaffolds and two RETIRED slots (8 = the deleted highlight-9 rootL, 9 = the older retired stop-10).
+// ⚠️ THESE ARRAYS MUST KEEP THEIR SHAPE. Two independent things read them by POSITION, not by stop
+// number: the ink rootLs below index them at 10/11, and neutralCurve.ts interpolates NEUTRAL_SHAPE
+// against the whole array to place the neutral's tint at an arbitrary L. Dropping a retired slot would
+// silently re-shape every neutral in the system. Retire slots in place; never splice.
 // Dark ink scaffolds (indices 10/11) dimmed 0.800/0.940 → 0.767/0.919 (owner midpoint pick, 2026-07-20):
 // the shipped dark inks ran ~1.9× their light twins' WCAG contrast (ink-10 #bfbdbd 9.9:1 vs light 5.1:1)
 // and the 10/11 hierarchy flattened. Neutral midpoint = #b3b3b3 / #e4e4e4; every family re-solves off the
@@ -28,14 +32,21 @@ export const DARK_L  = [0.178, 0.213, 0.252, 0.285, 0.313, 0.348, 0.420, 0.550, 
 // contrast requires; the base is deliberately hue-agnostic); inkMult = the ink
 // stops' ID-relative multiplier semantics, declared here pending the C9/C11 ink
 // round (which may normalize ink to a text register).
-// Stops 8–9 share one base register — the highlight family (C10, owner-approved
-// 2026-07-09); s8 keeps its historical sat 0.78 (the approved rows are the target).
+// KEYED BY STOP NUMBER, so the 2026-07-29 collapse re-keyed the ink rows down with
+// the stops (old 10/11 → 9/10) and deleted the old highlight-9 row. The VALUES did
+// not move. `chromaFloorIndex` on the ink rows is the one thing that must NOT follow
+// the renumber — see the field note below.
 // inkMaxC = the TEXT REGISTER ceiling (C9/C11 ink round): ink chroma is the ID-relative
 // multiplier NORMALIZED to the band register — min(inkMult × brandC, inkMaxC) — and the
 // H-K placement solve consumes the normalized value, so lightness placement and apparent
 // register follow from the pipeline (no emit-side cap). Muted brands sit below the
 // ceiling untouched; the ceiling only trims the big-room hues (yellow-green worst).
-export interface ScaleChroma { base?: number; sat?: number; inkMult?: number; inkMaxC?: number }
+// chromaFloorIndex = the dark ink chroma-FLOOR ladder position (applyChromaFloor:
+// floor = (0.02 + 0.02·idx/7)·strength). It is a PHYSICAL ladder rung, not a name:
+// it used to be `sp.stop` reused as an index, which is exactly the trap the 2026-07-10
+// renumber documented (darkInkChromaAt's indices deliberately did not move with the
+// stop numbers). Declared here so a future renumber cannot move it by accident.
+export interface ScaleChroma { base?: number; sat?: number; inkMult?: number; inkMaxC?: number; chromaFloorIndex?: number }
 export const SCALE_C_LIGHT: Record<number, ScaleChroma> = {
   0: { base: 0.000, sat: 0.00 },
   1: { base: 0.004, sat: 0.50 },
@@ -46,13 +57,11 @@ export const SCALE_C_LIGHT: Record<number, ScaleChroma> = {
   6: { base: 0.068, sat: 0.85 },
   7: { base: 0.086, sat: 0.78 },
   8: { base: 0.142, sat: 0.78 },
-  9: { base: 0.142, sat: 0.75 },
-  10: { inkMult: 0.95, inkMaxC: 0.150 },
-  11: { inkMult: 0.50, inkMaxC: 0.080 },
+  9: { inkMult: 0.95, inkMaxC: 0.150, chromaFloorIndex: 10 },
+  10: { inkMult: 0.50, inkMaxC: 0.080, chromaFloorIndex: 11 },
 }
 // Dark: sat = the dark subtle-chroma ladder (values verbatim — the fold is
-// structure-only, byte-identical by contract); 9 declares the highlight params
-// the engine already reused from light (was HIGHLIGHT_LIGHT via spec).
+// structure-only, byte-identical by contract).
 export const SCALE_C_DARK: Record<number, ScaleChroma> = {
   0: { sat: 0.40 },
   1: { sat: 0.40 },
@@ -63,9 +72,8 @@ export const SCALE_C_DARK: Record<number, ScaleChroma> = {
   6: { sat: 0.76 },
   7: { sat: 0.80 },
   8: { sat: 0.84 },
-  9: { base: 0.142, sat: 0.75 },
-  10: { inkMult: 0.95, inkMaxC: 0.120 },
-  11: { inkMult: 0.62, inkMaxC: 0.045 },
+  9: { inkMult: 0.95, inkMaxC: 0.120, chromaFloorIndex: 10 },
+  10: { inkMult: 0.62, inkMaxC: 0.045, chromaFloorIndex: 11 },
 }
 // ── the DARK CTA chroma register (CATALOG C16, owner ruling 2026-07-12: "declare,
 // don't change"). The cta is off-scale, so the SCALE_C tables never covered it; its
@@ -90,11 +98,16 @@ export const DARK_CTA_C = {
 export type DarkCtaKind = keyof typeof DARK_CTA_C
 // ──────────────────────────────────────────────────────────────────────────────
 
-// Stop 8 (highlight-8) carries the WCAG 1.4.11 non-text 3:1 guarantee against
-// paper-2 (the scale's own stop 2). The light ramp clamps its perceptual rung L
-// down to this ceiling — the same kind of contrast bound stops 10/11 already use
-// (findMaxLForContrast). Dark stop 8 solves the SAME law as a declared require
-// against the resolved dark paper-2 (reqtoken spec S8) — this clamp is the light half.
+// Stop 8 (highlight-8) carries the WCAG 1.4.11 non-text 3:1 guarantee — against
+// paper-3 in light (the highest plane a ring is drawn on), paper-2 in dark. The
+// light ramp clamps its perceptual rung L down to this ceiling — the same kind of
+// contrast bound the ink stops use (findMaxLForContrast). Dark stop 8 solves the
+// SAME law as a declared require against the resolved dark paper-2 (reqtoken spec
+// S8_DARK) — this clamp is the light half.
+// ⚠️ UNBOUNDED UPWARD IN DARK since the collapse (owner 2026-07-29, KNOWN AND
+// DEFERRED to the phase-2 dark round): the deleted highlight-9 was what dark stop 8
+// was not allowed to ride past. It already sits at ~151% of this target, and
+// bounding it in isolation would pre-empt the wash/highlight spacing decision.
 export const STOP_8_NONTEXT_CONTRAST = 3.0
 
 // ── DARK BAND LIFT (owner-calibrated 2026-07-27; marks rounds 1–3, wcag-lane exhibits) ──
@@ -102,9 +115,10 @@ export const STOP_8_NONTEXT_CONTRAST = 3.0
 // mirror-of-light separations read quieter in dark than the same separations read in
 // light. Her picks: the surface band's apparent depth scales by a RAMP — ×1.25 at stop 2
 // rising to ×1.75 at stop 7 (the "washes" candidate; flat ×2 was vetoed at the card/field
-// seams, and a ×2 top inverted the 7→8 seam). Stops 1 and 8–11 carry NO lift: stop 8's
-// 3:1 law re-solves against the lifted paper-2 on its own, stop 9 rides the band-order
-// floor, inks are dark-native. The lifted stop's VIRTUAL light twin moves with it — its
+// seams, and a ×2 top inverted the 7→8 seam). Stops 1 and 8–10 carry NO lift: stop 8's
+// 3:1 law re-solves against the lifted paper-2 on its own, and the inks are dark-native.
+// (The band-order floor that stop 9 rode died with the highlight band, 2026-07-29.)
+// The lifted stop's VIRTUAL light twin moves with it — its
 // chroma samples the light ladder's own chroma-at-depth relationship at the scaled depth
 // (deltaLiftChroma; per seed, per hue — the cross-hue perceptualDarkC equalizer was tried
 // for this and vetoed: it dusted strong-H-K hues ~30%).
@@ -139,32 +153,32 @@ export const DARK_SHINE_PARITY_T: Record<number, number> = {
 // lift value was never consumed anywhere and is deleted; only the band definition was live.
 export const YELLOW_BAND = { centerH: 92, sigmaDeg: 20 }
 
-// L-axis scaffolds only — chroma params live in the SCALE_C tables above.
-// (rootL10 deleted with stop 10, owner 2026-07-09; the LIGHT_L/DARK_L arrays keep their shape — ink rootLs index them.)
-export const HIGHLIGHT_LIGHT = { rootL: LIGHT_L[8] }
-export const HIGHLIGHT_DARK = { rootL: DARK_L[8] }
+// (HIGHLIGHT_LIGHT/HIGHLIGHT_DARK deleted with highlight-9, owner 2026-07-29. They were
+// the stop's L-axis scaffold — LIGHT_L[8] / DARK_L[8]. Those array slots stay: they are
+// still control points for the neutral tint curve. See the array banner above.)
 
 const DARK_CHROMA_ANCHORS_MID = [0.66, 0.72]
 export const DARK_NEUTRAL_L = [...DARK_L.slice(0, 8), ...DARK_CHROMA_ANCHORS_MID, DARK_L[10], DARK_L[11]]
 
-// HIGHLIGHT-9 vs its SURFACE (owner 2026-07-28): the highlight fill must clear this
-// against paper-3 — the plane it is drawn on, the same anchor stop 8's focus ring uses,
-// one band louder. Light-only; dark clears it from its own hand-placed scaffold.
-// Carries the pole for free: at this bar white text clears 4.5 on the fill everywhere
-// (agnostic worst 4.91), so on-highlight becomes a constant instead of a solved value.
-export const STOP_9_SURFACE_CONTRAST = 4.5
+// INK-9 (owner 2026-07-29) is BOTH the first text stop and the emphasis FILL — the role
+// highlight-9 used to hold. One stop, one bar: 4.5 against the nearest paper. Its
+// on-color is no longer solved; it is a paper token (semantic.css `-fg-on-emphasis` →
+// --paper-0, measured worst 4.96 light / 8.04 dark over the 360-seed agnostic sweep).
+// Named by ROLE, not by stop number, so the next renumber cannot make the name lie.
+export const INK_9_CONTRAST = 4.5
 
-export const STOP_10_CONTRAST = 4.5
-
-export const STOP_11_CONTRAST_FLOOR = 7.0
+export const INK_10_CONTRAST_FLOOR = 7.0
 
 // Dark fill min-L family — one concept (how light a fed dark fill may sit),
-// parameterized by consumer via the `darkFillMinL` opt: DARK_STOP_9_MIN_L is the
+// parameterized by consumer via the `darkFillMinL` opt: DARK_CTA_MIN_L is the
 // default floor; brands raise it for prominence (DARK_BRAND_FILL_MIN_L); signals
 // override per-def in signals.ts (green 0.75, info 0.70). Kept as named constants
 // (not one object) because the signal half is signal-identity data and belongs
 // with the signal defs.
-export const DARK_STOP_9_MIN_L = 0.63
+// (Was DARK_STOP_9_MIN_L — renamed 2026-07-29. It is the off-scale CTA role's floor
+// and always was; the old name came from the dead prototype pairing "stop 9 = cta"
+// and would have read as a reference to the stop this round deletes.)
+export const DARK_CTA_MIN_L = 0.63
 
 export const DARK_BRAND_FILL_MIN_L = 0.70
 

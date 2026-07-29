@@ -47,7 +47,6 @@ export interface ShiftResult {
 
 function swapScale(baseHex: string, def: SignalDef, contrastProfile?: ContrastProfile): GeneratedScale {
   return generateScale(baseHex, def.name, undefined, {
-    highlight: true,
     darkChromaCurve,
     darkCtaC: 'signal',
     darkFillMinL: def.darkFillMinL,
@@ -62,7 +61,6 @@ function lemonScale(def: SignalDef, contrastProfile?: ContrastProfile): Generate
   return generateScale(def.hex, def.name, 'light', {
     hueShiftDeg: def.hueShift.cool,
     chromaScale: def.yieldChromaScale,
-    highlight: true,
     darkChromaCurve,
     darkCtaC: 'signal',
     enforceOnFillContrast: true,

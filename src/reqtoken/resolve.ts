@@ -15,10 +15,10 @@ import { DARK_BAND_LIFT, DARK_SHINE_PARITY_T, LIGHT_L, DARK_SIGNAL_WARM_DRIFT } 
 import { MODE_SPECS, type ModeSpec, type StopReq, type RoleReq, type Require } from './spec'
 import {
   buildContext, buildDarkContext, type Ctx, type DarkCtx, type ResolveOpts,
-  lightScaleChromaAt, lightHighlightChromaAt, placeLightScale, placeLightText, placeLightHighlight,
+  lightScaleChromaAt, placeLightScale, placeLightText,
   separationClampLight,
-  darkScaleChromaAt, darkInkChromaAt, darkHighlightChromaAt, placeDark, placeDarkDelta, deltaDarkTargetL, deltaLiftChroma, deltaDarkPlace, flatDarkCtaL,
-  onFillIsWhiteLight, onFillIsWhiteDarkAt, onHighlightIsWhiteAt, ctaLightL, ctaDarkEnforcedL,
+  darkScaleChromaAt, darkInkChromaAt, placeDark, placeDarkDelta, deltaDarkTargetL, deltaLiftChroma, deltaDarkPlace, flatDarkCtaL,
+  onFillIsWhiteLight, onFillIsWhiteDarkAt, ctaLightL, ctaDarkEnforcedL,
   ctaLightLApca, ctaDarkEnforcedLApca, solveBrandExit, solveDarkCtaExit, ctaDualGateL,
   apcaYAt, findMaxLForApcaLc, APCA_SOLVE_MARGIN_LC, APCA_TOL_LC, APCA_ENFORCE_MARGIN_LC,
 } from './producers'
@@ -38,12 +38,14 @@ export type ResolvedRamp = {
   seed: Seed
   stops: ResolvedStop[]
   // the six-token cta family (owner respec 2026-07-16): the fill trio + the ink trio
-  // (cta-ink = the family's 4.5 text-register cta, anchored at the resolved stop 10)
+  // (cta-ink = the family's 4.5 text-register cta, anchored at the resolved ink-9)
   roles: {
     cta: ResolvedRole; ctaHover: ResolvedRole; ctaPressed: ResolvedRole
     ctaInk: ResolvedRole; ctaInkHover: ResolvedRole; ctaInkPressed: ResolvedRole
   }
-  ons: { onFillIsWhite: boolean; onHighlightIsWhite: boolean }
+  // one on-color left: the cta's own text pole. onHighlightIsWhite died with the
+  // highlight band (owner 2026-07-29) — ink-9's on-color is a paper token now.
+  ons: { onFillIsWhite: boolean }
 }
 export type { ResolveOpts }
 
@@ -99,13 +101,16 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   const declaredAnchor = (req: Require): number =>
     req.metric === 'min-separation' ? 1 : AGAINST_STOP[req.against] ?? 2
   // THE INK ANCHOR (owner rule 2026-07-28: "ink-10 can only be used on papers" — and it
-  // must PASS on all of them): in the WCAG lane the ink requires (stops 10-11 + the
+  // must PASS on all of them): in the WCAG lane the ink requires (stops 9-10 + the
   // cta-ink state floor) anchor at paper-3, the NEAREST paper (light's darkest, dark's
   // lightest), so clearing the bar there clears every paper. The apca lane keeps its
   // paper-2 anchor — its Lc solve already clears paper-3 with margin everywhere
   // (agnostic sweep worst 5.28 wcag-ratio, 0/216 under 4.5) and stays byte-identical.
   // Lane-specific, so it stays an override on top of the declaration rather than in it.
-  const wcagAnchorStop = (req: Require, stop: number) => (stop >= 10 ? 3 : declaredAnchor(req))
+  // Threshold moved 10 → 9 with the 2026-07-29 renumber: the ink band starts at 9 now.
+  // This IS why the collapse is visually cheap — it is the rule that made ink-9 (then
+  // ink-10) land on top of highlight-9, both solving 4.5 against paper-3.
+  const wcagAnchorStop = (req: Require, stop: number) => (stop >= 9 ? 3 : declaredAnchor(req))
   // the light contrast solves are metric-blind: the resolver hands the producer a maxLFor closure built
   // from the declared require. wcag closures call findMaxLForContrast with the exact old arguments
   // (float-identical — the wcag profile stays byte-for-byte); apca closures swap in the Lc bisection.
@@ -123,11 +128,14 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     }
     throw new Error(`stop ${forWhom}: ${req.metric} is not a contrast require`)
   }
-  const deepenFor = (stop: number) => (stop === 10 ? ctx.opts?.stop10DeepenL ?? 0 : stop === 11 ? ctx.opts?.stop11DeepenL ?? 0 : 0)
+  // (the stop10DeepenL/stop11DeepenL opts were DELETED 2026-07-29: no caller in the repo
+  // ever set either, so the ink solve always ran at deepen 0. Removing them rather than
+  // renumbering them keeps a dead knob from naming a stop that no longer means what it said.)
+  const INK_DEEPEN = 0
 
-  // the dark ink-10 chroma closure, captured while the loop resolves stop 10 — the cta-ink
+  // the dark ink-9 chroma closure, captured while the loop resolves ink-9 — the cta-ink
   // states re-evaluate the SAME register at their own L (incl. the delta-carry twin carve-out)
-  let darkInk10ChromaAt: ((L: number) => number) | null = null
+  let darkInk9ChromaAt: ((L: number) => number) | null = null
 
   for (const sp of spec.stops) {
     let placed: { L: number; C: number; H: number }
@@ -137,46 +145,8 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       // LIGHT: verbatim engine producers, dispatched by group
       if (sp.group === 'ink') {
         if (!sp.require) throw new Error(`light ink stop ${sp.stop} must declare a contrast require`)
-        placed = placeLightText(ctx, sp.rootL, sp.chromaMult ?? 1, maxLForOf(sp.require, sp.stop, false), deepenFor(sp.stop), sp.inkMaxC)
+        placed = placeLightText(ctx, sp.rootL, sp.chromaMult ?? 1, maxLForOf(sp.require, sp.stop, false), INK_DEEPEN, sp.inkMaxC)
         clamped = true
-      } else if (sp.stop === 9) {
-        placed = placeLightHighlight(ctx, sp.rootL, lightHighlightChromaAt(ctx, sp.baseC ?? 0, sp.satFraction ?? 1))
-        // HIGHLIGHT-9 SEPARATES FROM ITS SURFACE (owner 2026-07-28): the highlight FILL
-        // must clear the declared bar against paper-3 — the plane it is drawn on — the
-        // same anchor stop 8's ring uses, one band louder. Light only: dark already
-        // clears from its own hand-placed scaffold (4.48–7.44), and routing dark hl-9
-        // through the require solve would abandon that placement for a ≤0.02 shortfall.
-        //
-        // The pole falls out of it. Forcing 4.5 against paper-3 lands hl-9 dark enough
-        // that WHITE text clears 4.5 for free (agnostic worst 4.91 over 1152 seed×mode
-        // cases; dark's own placement gives black 5.75), so on-highlight becomes a
-        // constant — white in light, black in dark — without a second rule to enforce
-        // it. Raising the bar buys nothing: hl-8/hl-9 separation stays 1.00 at every
-        // target tried, because their convergence for luminous hues is a placement
-        // property, not a contrast one (highlight-audit already declines to assert it).
-        //
-        // Floor semantics, lightness only — chroma and hue carry, re-clamped at the new L.
-        if (sp.require && sp.require.metric !== 'min-separation') {
-          const req = sp.require
-          const chromaAt = lightHighlightChromaAt(ctx, sp.baseC ?? 0, sp.satFraction ?? 1)
-          const at = (L: number) => { const H = ctx.lightHueAt(L); return { L, C: clampChromaToGamut(L, chromaAt(L, H), H), H } }
-          const isApca = req.metric === 'apca'
-          const refMeas = isApca
-            ? refApcaYOf(declaredAnchor(req), sp.stop)
-            : refYOf(declaredAnchor(req), sp.stop)
-          const measure = (L: number) => {
-            const s = at(L)
-            return isApca ? Math.abs(apcaLc(apcaYAt(s.L, s.C, s.H), refMeas)) : legalRatio(s.L, s.C, s.H, refMeas)
-          }
-          const target = isApca ? req.targetLc : req.target
-          const tol = isApca ? APCA_TOL_LC : 1e-5
-          if (measure(placed.L) < target - tol) {
-            let lo = 0.05, hi = placed.L   // darker raises contrast against a light paper
-            for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; measure(m) < target ? (hi = m) : (lo = m) }
-            placed = at(lo)
-            clamped = true
-          }
-        }
       } else if (sp.produce.L === 'fixed') {
         // fixed light stop (paper-0): sits exactly at its declared extreme
         const chromaAt = lightScaleChromaAt(ctx, sp.baseC ?? 0, sp.satFraction ?? 1)
@@ -205,23 +175,25 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
           // curve-bearing ramps (neutral, derived secondary): ink chroma = the light twin's (the curve's dark
           // branch is keyed to the OLD dark L geography — sampling it at delta ink L's made the 11-jump).
           // Low-chroma inks carry no hue-family risk; L and hue stay dark-native.
-          // ink stopIndex = sp.stop (NOT stop-1): the ink renumber (2026-07-10) moved the ink stop
-          // NUMBERS down to 10/11 but their chroma-floor ladder indices stayed at 10/11 — the old
-          // stop-1 mapping belonged to the 11/12 numbering.
-          ? (inkTwin ? ((_L: number) => inkTwin.C) : darkInkChromaAt(ctx, d, sp.stop, sp.chromaMult ?? 1, sp.inkMaxC))
-        : sp.stop === 9 ? undefined
+          // THE CHROMA-FLOOR LADDER INDEX IS DECLARED, NOT DERIVED (sp.chromaFloorIndex, stopTable.ts).
+          // It was `sp.stop` reused as an index, which is the trap the 2026-07-10 renumber
+          // documented and the 2026-07-29 renumber would have sprung: moving the ink stops to
+          // 9/10 would have moved the floor from 0.0486/0.0514 to 0.0457/0.0486 and quietly
+          // re-chroma'd every dark ink. The declaration pins it at 10/11 where it has always been.
+          ? (inkTwin ? ((_L: number) => inkTwin.C) : darkInkChromaAt(ctx, d, sp.chromaFloorIndex ?? sp.stop, sp.chromaMult ?? 1, sp.inkMaxC))
         // chroma-floor index clamps at 0: stop 0 shares paper-1's tint treatment
         : darkScaleChromaAt(ctx, d, Math.max(0, sp.stop - 1), sp.satFraction ?? 1)
-      // DELTA-KEYED: derive dark from the resolved light twin for the SURFACE stops 1–9 (papers, washes,
-      // fill, highlight). INKS 10/11 are dark-native (owner 2026-07-09): text INVERTS across modes — there is
+      // DELTA-KEYED: derive dark from the resolved light twin for the SURFACE stops 1–8 (papers, washes,
+      // focus ring). INKS 9/10 are dark-native (owner 2026-07-09): text INVERTS across modes — there is
       // no "same color, re-referenced" for a stop that crosses the paper; carrying a dark-gold ink's hue up
-      // ~0.3 L lands in a different hue family (gold→orange). The C9/C11 dark text register + the T11/T12
+      // ~0.3 L lands in a different hue family (gold→orange). The C9/C11 dark text register + the T9/T10
       // requires own the inks, on the seed-keyed path below.
-      if (sp.group === 'ink' && sp.stop === 10 && chromaAt) darkInk10ChromaAt = chromaAt
+      if (sp.group === 'ink' && sp.stop === 9 && chromaAt) darkInk9ChromaAt = chromaAt
       // C28 SIGNAL WARM DRIFT: the re-derived hue for this stop (signals only), else null
       let spineH: number | null = null
       const dl = ctx.opts?.deltaLightStops
-      const ls = dl && sp.stop >= 1 && sp.stop <= 9 ? dl.find(s => s.stop === sp.stop) : undefined
+      // carry range ends at 8 — it used to run to 9 for the highlight fill, which is gone
+      const ls = dl && sp.stop >= 1 && sp.stop <= 8 ? dl.find(s => s.stop === sp.stop) : undefined
       if (ls && ctx.opts?.deltaCarry) {
         // THE CARRY: hue carried verbatim from the light twin; chroma verbatim at ×1 and resampled from
         // the light ladder's chroma-at-depth under a C24 band lift — for EVERY ramp kind (OKLab C is
@@ -270,54 +242,15 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
           const h = ls.H + DARK_SIGNAL_WARM_DRIFT * (ctx.lightHueAt(L) - ls.H)
           if (Math.abs(h - ls.H) > 1e-9) spineH = h
         }
-        // BAND ORDER (owner 2026-07-09): the highlight fill (9) sits ABOVE its 3:1 rung (8). Light gets this
-        // free from near-white geometry; in dark the rung's luminance law reads hue-dependently in apparent
-        // terms and lands above parity-9 (inverted 108/108 under apca). Floor 9 at the rung's apparent plus
-        // light's own 8→9 apparent gap — the band's carried structure. Parity stands wherever it clears.
-        if (sp.stop === 9) {
-          const d8 = stops.find(s => s.stop === 8)
-          const l8 = dl!.find(s => s.stop === 8)
-          if (d8 && l8) {
-            const appOf = (s: { L: number; C: number; H: number }) => apparentL(s.L, clampChromaToGamut(s.L, s.C, s.H), s.H)
-            const floorApp = appOf(d8) + Math.max(0, appOf(l8) - appOf(ls))
-            if (appOf({ L, C, H: ls.H }) < floorApp) L = solveLForApparent(floorApp, C, ls.H)
-          }
-          // on-highlight legibility (apca profile): hl9 must keep a pole at the declared body bar
-          // (ons.onHighlight.enforceLc) — the band floor can land low-chroma fills in APCA's mid dead
-          // zone (both poles < 60; caught on the neutral h320). Raise L until the BLACK pole clears
-          // (lighter exits the zone upward, preserving the band order). wcag needs nothing: the 4.5
-          // ratioFloor pole-flip has no dead zone.
-          const hlLc = spec.ons.onHighlight.enforceLc
-          if (hlLc !== undefined) {
-            const blackY = apcaYAt(0, 0, 0)
-            const bestPole = (LL: number) => {
-              const y = apcaYAt(LL, clampChromaToGamut(LL, C, ls.H), ls.H)
-              return Math.max(Math.abs(apcaLc(1.0, y)), Math.abs(apcaLc(blackY, y)))
-            }
-            if (bestPole(L) < hlLc - APCA_TOL_LC) {
-              let lo = L, hi = 0.98
-              for (let i = 0; i < 24; i++) {
-                const m = (lo + hi) / 2
-                Math.abs(apcaLc(blackY, apcaYAt(m, clampChromaToGamut(m, C, ls.H), ls.H))) < hlLc + APCA_SOLVE_MARGIN_LC ? (lo = m) : (hi = m)
-              }
-              L = hi
-            }
-          }
-        }
+        // (The dark BAND-ORDER FLOOR that held the highlight fill above its 3:1 rung, and the
+        // apca dead-zone lift that rode with it, are DELETED with stop 9 — owner 2026-07-29.
+        // Their mirror for the 7→8 seam survives below; it is a different constraint.)
         // PER-BOLT-ON INSTRUMENTS (gated, default off → byte-identical): layer exactly ONE old dark mechanism
         // onto the pure carry, real engine fns only. Only one is set per resolve (one column of the exhibit).
         if (ctx.opts.deltaHKPlace) L = perceptualRungL(sp.rootL, ls.C, ls.H)                                       // old apparent-L placement
         if (ctx.opts.deltaLiftFloor) L = Math.max(L, sp.rootL)                                                     // old lift/recede floor
         if (ctx.opts.deltaChromaEq && sp.group !== 'ink') C = ctx.cAt('dark', L, perceptualDarkC(L, ls.H, ctx.brandC))  // old H-K chroma equalizer
         placed = { L, C, H: spineH ?? ls.H }
-      } else if (sp.stop === 9) {
-        const hlC = darkHighlightChromaAt(ctx, d, sp.baseC ?? 0, sp.satFraction ?? 1)
-        if (ls) {
-          placed = placeDarkDelta(d, sp.rootL, (L: number) => hlC(L, d.darkHueAtL(L)), ls)
-        } else {
-          const H = d.darkHueAtL(sp.rootL)
-          placed = { L: sp.rootL, C: hlC(sp.rootL, H), H }
-        }
       } else if (sp.produce.L === 'fixed') {
         placed = ls
           ? placeDarkDelta(d, sp.rootL, chromaAt!, ls)
@@ -338,11 +271,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         // seed-keyed path keeps the old recompute byte-identically.
         const carryReq = !!(ls && ctx.opts?.deltaCarry)
         const hAtL = (L: number) => (carryReq ? (spineH ?? ls!.H) : d.darkHueAtL(L))
-        const cAtL = (L: number) => carryReq
-          ? ls!.C
-          : sp.stop === 9
-            ? darkHighlightChromaAt(ctx, d, sp.baseC ?? 0, sp.satFraction ?? 1)(L, hAtL(L))
-            : chromaAt!(L)
+        const cAtL = (L: number) => (carryReq ? ls!.C : chromaAt!(L))
         const isApca = req.metric === 'apca'
         const refMeasY = isApca ? refApcaYOf(declaredAnchor(req), sp.stop) : refYOf(wcagAnchorStop(req, sp.stop), sp.stop)
         // wcag floors are D1 legality: both renditions of the fill must clear the target
@@ -563,74 +492,58 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   }
 
   // ---- the CTA-INK trio (owner respec 2026-07-16): the family's 4.5 text-register cta —
-  // the link-color escape. cta-ink MATCHES the resolved stop 10 exactly (same L/C/H — the
+  // the link-color escape. cta-ink MATCHES the resolved ink-9 exactly (same L/C/H — the
   // family's text stop IS its 4.5 rendition). States RESTRENGTHENED (owner 2026-07-16,
   // "too subtle to be noticeable when text only"): HOVER takes the doubled hoverL step
   // (the former pressed derivation) with hue held constant and chroma re-evaluated at the
-  // state L through the SAME ink register; the stop-10 contrast require rides it as a
+  // state L through the SAME ink register; the ink-9 contrast require rides it as a
   // FLOOR (light darkens into more contrast — never fires; a dark hover reading under the
-  // bar is pulled back toward ink-10's L). PRESSED mimics ink-11 EXACTLY — the family's
-  // stronger text register (the rest≡ink-10 idiom extended: press lands on the 7:1 stop;
+  // bar is pulled back toward ink-9's L). PRESSED mimics ink-10 EXACTLY — the family's
+  // stronger text register (the rest≡ink-9 idiom extended: press lands on the 7:1 stop;
   // its floor rides along by construction; monotonic darker in light, brighter in dark).
-  const ink10 = stops.find(s => s.stop === 10)
-  if (!ink10) throw new Error('spec has no ink stop 10 — the cta-ink roles anchor at it')
-  const sp10 = spec.stops.find(s => s.stop === 10)!
+  const ink9 = stops.find(s => s.stop === 9)
+  if (!ink9) throw new Error('spec has no ink stop 9 — the cta-ink roles anchor at it')
+  const sp9 = spec.stops.find(s => s.stop === 9)!
   const inkCFor: (L: number) => number = mode === 'light'
-    ? (L) => ctx.cAt('light', L, Math.min((sp10.chromaMult ?? 1) * ctx.brandC, sp10.inkMaxC ?? Infinity))
-    : darkInk10ChromaAt ?? ((_L) => ink10.C)
+    ? (L) => ctx.cAt('light', L, Math.min((sp9.chromaMult ?? 1) * ctx.brandC, sp9.inkMaxC ?? Infinity))
+    : darkInk9ChromaAt ?? ((_L) => ink9.C)
   const inkStateL = (L0: number): number => {
-    const req = sp10.require
+    const req = sp9.require
     if (!req || req.metric === 'min-separation') return L0
     const isApca = req.metric === 'apca'
-    const refY = isApca ? refApcaYOf(declaredAnchor(req), 10) : refYOf(wcagAnchorStop(req, 10), 10)
+    const refY = isApca ? refApcaYOf(declaredAnchor(req), 9) : refYOf(wcagAnchorStop(req, 9), 9)
     const measure = (L: number): number => {
-      const C = clampChromaToGamut(L, inkCFor(L), ink10.H)
-      return isApca ? Math.abs(apcaLc(apcaYAt(L, C, ink10.H), refY)) : legalRatio(L, C, ink10.H, refY)
+      const C = clampChromaToGamut(L, inkCFor(L), ink9.H)
+      return isApca ? Math.abs(apcaLc(apcaYAt(L, C, ink9.H), refY)) : legalRatio(L, C, ink9.H, refY)
     }
     const target = isApca ? req.targetLc : req.target
     if (measure(L0) >= target - (isApca ? APCA_TOL_LC : 1e-5)) return L0
-    // failing state: bisect back toward ink-10's own L (which passes by construction),
+    // failing state: bisect back toward ink-9's own L (which passes by construction),
     // landing just past the bar on the passing side — the house floor idiom
     const solveTo = target + (isApca ? APCA_SOLVE_MARGIN_LC : 0.05)
-    let fail = L0, pass = ink10.L
+    let fail = L0, pass = ink9.L
     for (let i = 0; i < 24; i++) {
       const m = (fail + pass) / 2
       measure(m) >= solveTo ? (pass = m) : (fail = m)
     }
     return pass
   }
-  const ctaInk = emitRole('cta-ink', ink10.L, ink10.C, ink10.H)
-  const ink11 = stops.find(s => s.stop === 11)
-  if (!ink11) throw new Error('spec has no ink stop 11 — cta-ink-pressed anchors at it')
-  // hover = the doubled step TOWARD ink-11 (the state axis rest→press). In light that is
-  // exactly pressedL's darken; in DARK ink-11 sits BRIGHTER than ink-10 and the naive
-  // darkening step fell into the stop-10 floor and collapsed onto rest — the maximally
-  // subtle state this respec exists to kill. Toward ink-11, the floor never fires (both
+  const ctaInk = emitRole('cta-ink', ink9.L, ink9.C, ink9.H)
+  const ink10 = stops.find(s => s.stop === 10)
+  if (!ink10) throw new Error('spec has no ink stop 10 — cta-ink-pressed anchors at it')
+  // hover = the doubled step TOWARD ink-10 (the state axis rest→press). In light that is
+  // exactly pressedL's darken; in DARK ink-10 sits BRIGHTER than ink-9 and the naive
+  // darkening step fell into the ink-9 floor and collapsed onto rest — the maximally
+  // subtle state this respec exists to kill. Toward ink-10, the floor never fires (both
   // directions gain contrast against paper-2).
-  const hL = inkStateL(ink10.L + Math.sign(ink11.L - ink10.L) * (0.06 / (ink10.L + 0.1)))
-  const ctaInkHover = emitRole('cta-ink-hover', hL, inkCFor(hL), ink10.H)
-  const ctaInkPressed = emitRole('cta-ink-pressed', ink11.L, ink11.C, ink11.H)
+  const hL = inkStateL(ink9.L + Math.sign(ink10.L - ink9.L) * (0.06 / (ink9.L + 0.1)))
+  const ctaInkHover = emitRole('cta-ink-hover', hL, inkCFor(hL), ink9.H)
+  const ctaInkPressed = emitRole('cta-ink-pressed', ink10.L, ink10.C, ink10.H)
 
-  // on-highlight: judged at the emitted highlight-9 — never feeds back into the fill. The
-  // declared ratioFloor (wcag profile) flips the pole when the preferred one fails 4.5.
-  const hl9 = stops.find(s => s.stop === 9)
-  // ON-HIGHLIGHT IS A CONSTANT (owner 2026-07-28) once hl-9 declares its surface require:
-  // clearing 4.5 against paper-3 lands the fill dark enough that white passes in light
-  // (agnostic worst 4.91) while dark's own scaffold gives black 5.75 — so the pole is
-  // pinned by mode rather than solved, and the token stops carrying a per-family value.
-  // A declaration WITHOUT that require (portable specs) keeps the old max-|Lc| pick and
-  // its ratioFloor pole-flip.
-  const hl9Declares = spec.stops.find(s => s.stop === 9)?.require?.metric === 'wcag'
-    || spec.stops.find(s => s.stop === 9)?.require?.metric === 'apca'
-  const ons = {
-    onFillIsWhite,
-    onHighlightIsWhite: hl9Declares
-      ? mode === 'light'
-      : hl9 ? onHighlightIsWhiteAt(hl9.L, hl9.C, hl9.H, spec.ons.onHighlight.ratioFloor) : true,
-  }
+  // (on-highlight DELETED, owner 2026-07-29. It was solved here, judged at the emitted
+  // highlight-9 and never fed back into the fill. C31 had already reduced it to a
+  // per-mode constant; the collapse removes the fill it named. The successor is a
+  // declaration in the semantic layer, `-fg-on-emphasis` → --paper-0.)
 
-  // (The former PAIR law — the shared on-highlight pole passing on both hl-9 and its hover hl-10 — died with
-  // stop 10 (owner 2026-07-09): with one highlight fill, on-highlight is judged at hl-9 alone, above.)
-
-  return { mode, seed, stops, roles: { cta, ctaHover, ctaPressed, ctaInk, ctaInkHover, ctaInkPressed }, ons }
+  return { mode, seed, stops, roles: { cta, ctaHover, ctaPressed, ctaInk, ctaInkHover, ctaInkPressed }, ons: { onFillIsWhite } }
 }

@@ -5,10 +5,15 @@ import { SECONDARIES } from './secondaries'
 import { resolveBrand } from './engine/resolve'
 import { brandCss, signalsCss } from './engine/cssRender'
 
-// The SHIPPED default is the APCA profile (owner 2026-07-04, the true wcag/apca split):
-// the page carries the perceptually-solved look; the wcag profile — every pole ratio-passing —
-// is the opt-in legal mode (demo toggle / plugin seg).
-const SHIPPED_PROFILE = 'apca' as const
+// WCAG IS THE SHIPPED LANE (owner 2026-07-29). It was 'apca' from 2026-07-04, when the
+// two lanes were a real product choice: the page carried the perceptually-solved look and
+// wcag was the opt-in legal mode. That choice is closed — the owner is not authorised to
+// use APCA for design decisions, and this round removed its last exposure (the enterprise
+// plugin's column pair). Generated CSS now matches the lane actually in use.
+// ⚠️ This MOVES generated colour, independently of the highlight collapse: the two lanes
+// place the focus ring and the cta differently (the washes are identical). withProfile is
+// still the identity for 'wcag', so the engine is unchanged — only which lane is emitted.
+const SHIPPED_PROFILE = 'wcag' as const
 
 function generateBrandCss(brand: Brand): string {
   const { name, hex, slug } = brand

@@ -31,7 +31,7 @@ for (const hex of SEEDS) for (const mode of ['light', 'dark'] as const) {
   const ROLE_NAMES = ['cta', 'cta-hover', 'cta-pressed', 'cta-ink', 'cta-ink-hover', 'cta-ink-pressed'] as const
   const stopsOk = rt.stops.every((s, i) => s.hex === direct.stops[i].hex)
   const rolesOk = ROLE_KEYS.every(k => rt.roles[k].hex === direct.roles[k].hex)
-  const onsOk = rt.ons.onFillIsWhite === direct.ons.onFillIsWhite && rt.ons.onHighlightIsWhite === direct.ons.onHighlightIsWhite
+  const onsOk = rt.ons.onFillIsWhite === direct.ons.onFillIsWhite
   check(`${label} round-trip bit-identical`, stopsOk && rolesOk && onsOk,
     stopsOk && rolesOk && onsOk ? '' : `stops:${stopsOk} roles:${rolesOk} ons:${onsOk}`)
 

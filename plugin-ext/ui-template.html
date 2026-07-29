@@ -288,19 +288,8 @@ body {
     <div class="info-line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span id="neutral-info">Adds a touch of primary hue</span></div>
   </div>
 
-  <div class="bar-field">
-    <div class="label">Preview contrast</div>
-    <div class="seg">
-      <button class="seg-btn active" data-profile="wcag">WCAG</button>
-      <button class="seg-btn" data-profile="apca">APCA</button>
-    </div>
-    <div class="info-line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span>Preview lens only — Apply writes the file’s columns</span></div>
-    <label class="check-line" for="include-apca">
-      <input type="checkbox" id="include-apca" />
-      <span>Include APCA columns</span>
-    </label>
-    <div class="info-line" id="include-apca-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span id="include-apca-copy">Off: new files get wcag only; delete both apca columns and they stay deleted</span></div>
-  </div>
+  <!-- The "Preview contrast" field (WCAG/APCA lens + "Include APCA columns") was removed
+       2026-07-29. This plugin is WCAG-only now; the file's modes are simply light and dark. -->
 
   <div class="bar-field" style="flex-basis:100%">
     <details id="advanced-menu">

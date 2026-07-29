@@ -17,14 +17,12 @@ let neutralLevel: NeutralLevel = 'default'
 // derived rides the default seed-transform, the engine's call).
 let primaryMode: 'recommended' | 'exact' | Archetype = 'recommended'
 let secondaryStyle: SecondaryStyle = 'default'
-// PREVIEW lens only — the apply writes the file's ACTIVE solve columns. WCAG is this
-// plugin’s default lane, so it leads the preview too.
-let contrastProfile: ContrastProfile = 'wcag'
-// APCA columns are OPT-IN (owner 2026-07-16, default OFF): governs whether apply
-// creates the apca/apca-dark columns. A file already carrying them keeps being written
-// regardless (delete the columns to drop the lane; with this off they stay deleted —
-// no regeneration). Turning it on over an existing base = a confirm + full backfill.
-let includeApca = false
+// WCAG ONLY (owner 2026-07-29). The preview lens and the "Include APCA columns" opt-in
+// are both gone: this plugin was APCA's last exposure, and the owner is not authorised to
+// use it for design decisions. Preview and Apply now read the same single lane, so the
+// class of bug where the preview showed a different band than Apply wrote goes with them.
+// The profile machinery itself stays dormant in src/reqtoken/profiles.ts (the wcag path
+// is a passthrough), so re-enabling is a column list, not a rebuild.
 // the NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): red-range brands can swap the cta
 // fill trio to the brand-neutral's ink register (near-black light / near-white dark).
 // The toggle is VISIBLE only in red range, and the EFFECTIVE flag is ctaEscape &&
@@ -79,8 +77,6 @@ const neutralLabel       = $<HTMLElement>('neutral-label')
 const neutralInfo        = $<HTMLElement>('neutral-info')
 const neutralSwatch   = $<HTMLElement>('neutral-swatch')
 const neutralSelect   = $<HTMLSelectElement>('neutral-select')
-const profileBtns     = document.querySelectorAll<HTMLButtonElement>('.seg-btn[data-profile]')
-const includeApcaBox  = $<HTMLInputElement>('include-apca')
 const ctaEscapeRow    = $<HTMLElement>('cta-escape-row')
 const ctaEscapeBox    = $<HTMLInputElement>('cta-escape')
 const linkHexInput    = $<HTMLInputElement>('link-hex')
@@ -166,7 +162,6 @@ function setSecondaryMode(mode: SecondaryMode) {
 // the THEME input: primary + secondary posture, each under its OWN mode (per-family chips —
 // the demo's model exactly). Derived rides the default model; the style select applies to custom only.
 function themeInput(name: string) {
-  const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
   return {
     primaryHex, name,
     primaryMode: primaryMode === 'exact' ? ('exact' as const) : ('recommended' as const),
@@ -174,7 +169,7 @@ function themeInput(name: string) {
     secondaryHex: secondaryMode === 'custom' && secondaryHex ? secondaryHex : null,
     deriveSecondary: secondaryMode === 'derived' || undefined,
     secondaryStyle: secondaryMode === 'custom' ? secondaryStyle : undefined,
-    contrastProfile: cp,
+    contrastProfile: undefined,
     // emit-layer flags — resolveTheme ignores them; the payload builder hands them to
     // themeToFigma and the recipe stores the EFFECTIVE values, so a stale checkbox
     // can't ride a recipe replay
@@ -187,13 +182,12 @@ function themeInput(name: string) {
   }
 }
 
-// the demo's top-card matrix: every family × ID + the 11 stops + the cta pair (light mode).
+// the demo's top-card matrix: every family × ID + the scale stops + the cta pair (light).
 // Stop 8 renders AS a stroke (it's the boundary stop); cta cells carry the family's cta-border.
-// Cells iterate the scale's ACTUAL stops (stop 10 deleted 2026-07-09) — a future stop change
-// reshapes the grid instead of throwing into updatePreview's catch.
+// Cells iterate the scale's ACTUAL stops — a stop change reshapes the grid instead of
+// throwing into updatePreview's catch (the 2026-07-29 highlight collapse rode this).
 function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
-  const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
-  const sigScales = signalScalesFor(cp)
+  const sigScales = signalScalesFor(undefined)
   // the escape resets red to canonical (owner 2026-07-16) — the preview mirrors the apply
   const effective = (n: typeof SIGNALS[number]['name']) =>
     (ctaEscape && inRedRange && n === 'red')
@@ -225,8 +219,10 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     for (const s of row.scale.light) {
       const n = s.stop
       const h = hx(s)
+      // ink-9 is BOTH the emphasis fill and a text stop (owner 2026-07-29), so it renders
+      // as a filled chip carrying its on-emphasis paper — the role highlight-9 used to show.
       if (n === 8) cells.push(`<div class="mx-cell" style="border:2px solid ${h}" title="highlight-8"></div>`)
-      else if (n === 9) cells.push(`<div class="mx-aa" style="background:${h};color:${pole(row.scale.onHighlightIsWhite ?? false)}" title="highlight-9">Aa</div>`)
+      else if (n === 9) cells.push(`<div class="mx-aa" style="background:${h};color:${hx(nScale.light[0])}" title="ink-9 (emphasis fill)">Aa</div>`)
       else if (n >= 10) cells.push(`<div class="mx-aa" style="color:${h};font-size:15px;font-weight:800" title="ink-${n}">Aa</div>`)
       else cells.push(`<div class="mx-cell" style="background:${h};box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)" title="${n <= 2 ? 'paper' : 'wash'}-${n}"></div>`)
     }
@@ -234,7 +230,7 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     if (row.outline) {
       // outline's re-expressed fill trio: transparent + ring + ink-10 label; hover/pressed =
       // the STABLE highlight-8 at 9%/18% (the same stop the ring uses; pressed doubles hover)
-      const ink10 = hx(st(10))
+      const ink10 = hx(st(9))
       const c8 = st(8)
       const rgb = `${Math.round(c8.r * 255)},${Math.round(c8.g * 255)},${Math.round(c8.b * 255)}`
       cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink10}" title="cta (outline)">Aa</div>`)
@@ -242,7 +238,7 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
       cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink10};background:rgba(${rgb},0.18)" title="cta-pressed (outline)">Aa</div>`)
     } else if (row.escape) {
       // the neutral cta escape: the fill trio previews the brand-neutral's ink register
-      const esc = escapeCtaFamily(nScale, 'light', cp)
+      const esc = escapeCtaFamily(nScale, 'light', undefined)
       const on = pole(esc.onFillIsWhite)
       cells.push(`<div class="mx-aa" style="background:${hx(esc.cta)};color:${on}" title="cta/enabled (neutral escape)">Aa</div>`)
       cells.push(`<div class="mx-aa" style="background:${hx(esc.ctaHover)};color:${on}" title="cta/hover (neutral escape)">Aa</div>`)
@@ -258,7 +254,7 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     // a text button, never a hyperlink, so no underline). Under the escape it swaps to
     // the neutral's register with the fills.
     const inkTrio = row.escape
-      ? (() => { const e = escapeCtaFamily(nScale, 'light', cp); return [['cta-ink/enabled', e.ctaInk], ['cta-ink/hover', e.ctaInkHover], ['cta-ink/pressed', e.ctaInkPressed]] as const })()
+      ? (() => { const e = escapeCtaFamily(nScale, 'light', undefined); return [['cta-ink/enabled', e.ctaInk], ['cta-ink/hover', e.ctaInkHover], ['cta-ink/pressed', e.ctaInkPressed]] as const })()
       : ([['cta-ink/enabled', row.scale.ctaInk], ['cta-ink/hover', row.scale.ctaInkHover], ['cta-ink/pressed', row.scale.ctaInkPressed]] as const)
     for (const [name, c] of inkTrio)
       cells.push(`<div class="mx-aa" style="color:${hx(c)};font-size:15px;font-weight:800" title="${name}">Aa</div>`)
@@ -270,15 +266,14 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
 
 function updatePreview() {
   try {
-    const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
     const t = resolveTheme(themeInput('x'))
-    const nScale = generateNeutralScale(t.themed.scale.brandH, neutralLevel, cp)
+    const nScale = generateNeutralScale(t.themed.scale.brandH, neutralLevel, undefined)
 
     // red-range detection: the repel FIRING means the given hex was in the red region
     // (recommended mode exits the register, so the resolved cta alone would miss exactly
     // the brands the escape is for); the direct gate check catches exact-mode reds.
     // The toggle stays checked-but-inert outside the range (effective = && inRedRange).
-    const redCta = signalScalesFor(cp).get('red')!.scale.cta
+    const redCta = signalScalesFor(undefined).get('red')!.scale.cta
     // TWO GATES (owner-caught + review-hardened 2026-07-16): the OFFER (row visibility)
     // is the union of BOTH clamp postures — membership is NOT monotone in the lever
     // (probe the OPPOSITE posture; a one-way probe collapsed when the clamp was on), so
@@ -289,7 +284,7 @@ function updatePreview() {
       !!rb.redRepel || redGateDist(rb.scale.cta, redCta) <= RED_GATE.G
     inRedRange = rangeOf(t.themed)
     inRedRangeOffer = inRedRange || rangeOf(resolveBrand(primaryHex, 'range-probe', {
-      style: fullChroma ? undefined : 'full-chroma', contrastProfile: cp,
+      style: fullChroma ? undefined : 'full-chroma',
       exact: primaryMode === 'exact' || undefined,
       archetypeOverride: primaryMode !== 'recommended' && primaryMode !== 'exact' ? primaryMode : undefined,
     }))
@@ -308,9 +303,9 @@ function updatePreview() {
     // register, else the primary's cta-ink (escaped when the escape is active). The
     // from-primary posture shows the resolved hex GREYED + read-only; clicking the hex
     // takes it over (owner Advanced-menu spec 2026-07-16).
-    const fromPrimaryStop = ctaEscape && inRedRange ? escapeCtaFamily(nScale, 'light', cp).ctaInk : t.themed.scale.ctaInk
+    const fromPrimaryStop = ctaEscape && inRedRange ? escapeCtaFamily(nScale, 'light', undefined).ctaInk : t.themed.scale.ctaInk
     const linkStop = linkCustom && normalizeHex(linkHexInput.value)
-      ? resolveLinkTrio(normalizeHex(linkHexInput.value)!, cp).link
+      ? resolveLinkTrio(normalizeHex(linkHexInput.value)!, undefined).link
       : fromPrimaryStop
     linkSwatch.style.background = toHex(linkStop.r, linkStop.g, linkStop.b)
     linkHexInput.readOnly = !linkCustom
@@ -324,8 +319,9 @@ function updatePreview() {
 
     renderMatrix(t, nScale)
 
-    // the bar's live swatches: neutral shows its highlight-9; a derived secondary shows the
-    // RESOLVED default secondary (the input tracks the primary hex — that's the source, not the result)
+    // the bar's live swatches: neutral shows its emphasis fill (ink-9 since the
+    // 2026-07-29 collapse); a derived secondary shows the RESOLVED default secondary
+    // (the input tracks the primary hex — that's the source, not the result)
     const n9 = nScale.light.find(s => s.stop === 9)
     if (n9) neutralSwatch.style.background = toHex(n9.r, n9.g, n9.b)
     if (t.secondary) {
@@ -401,7 +397,7 @@ function buildAndSend() {
     // reason-scoped confirm: echo back the exact token the confirm was armed with —
     // the plugin re-derives the reasons and only proceeds if they still match
     const confirmedToken = pendingConfirm?.name === name ? pendingConfirm.token : undefined
-    parent.postMessage({ pluginMessage: { type: 'apply', brand: name, brandTokens, baseTokens, hasSecondary: recipe.hasSecondary, confirmedToken, spec: recipe, includeApca } }, '*')
+    parent.postMessage({ pluginMessage: { type: 'apply', brand: name, brandTokens, baseTokens, hasSecondary: recipe.hasSecondary, confirmedToken, spec: recipe } }, '*')
   } catch (err) {
     applyBtn.disabled = false
     setStatus(String(err), 'err')
@@ -492,15 +488,6 @@ neutralSelect.addEventListener('change', () => {
   updatePreview()
 })
 
-profileBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
-    profileBtns.forEach(b => b.classList.remove('active'))
-    btn.classList.add('active')
-    contrastProfile = btn.dataset.profile as ContrastProfile
-    updatePreview()
-  })
-})
-
 // Include APCA (default off): the ⓘ copy tracks the state so the flip's consequence —
 // the confirm + collection-wide backfill — is announced before Apply is ever pressed.
 // Changing the toggle DISARMS any armed batch (the arm copy described the old posture)
@@ -551,17 +538,6 @@ linkHexInput.addEventListener('input', () => {
   // an EMPTY field is invalid too while custom — apply blocks on it
   linkHexInput.classList.toggle('invalid', !normalizeHex(linkHexInput.value))
   updatePreview()
-})
-
-includeApcaBox.addEventListener('change', () => {
-  includeApca = includeApcaBox.checked
-  rosterArmed = false
-  reapplyArmed = false
-  pendingConfirm = null
-  const copy = document.getElementById('include-apca-copy')
-  if (copy) copy.textContent = includeApca
-    ? 'On: Apply adds apca columns if missing (asks first, then updates every brand)'
-    : 'Off: new files get wcag only; delete both apca columns and they stay deleted'
 })
 
 applyBtn.addEventListener('click', buildAndSend)
@@ -646,7 +622,7 @@ window.addEventListener('message', e => {
       setStatus(`No stored recipes to re-apply${msg.unstamped?.length ? ` — ${msg.unstamped.length} extension(s) predate recipes: ${msg.unstamped.join(', ')}` : ''}.`, 'err')
       return
     }
-    startQueue(items, 're-apply', reapplyApcaSnapshot)
+    startQueue(items, 're-apply')
     if (msg.unstamped?.length) qUnstamped.push(...msg.unstamped)
   } else if (msg.type === 'smoke-result') {
     smokeLog.style.display = ''
@@ -677,7 +653,6 @@ let qUnstamped: string[] = []
 // 2026-07-16: reading the live checkbox per item let a mid-batch tick flip the file's
 // posture with confirmed:true and no arm mention). The arm copy names what the snapshot
 // will do; ticking the box after arming resets the arms (see the change handler).
-let qIncludeApca = false
 let rosterArmed = false
 let reapplyArmed = false
 let reapplyApcaSnapshot = false // click-time posture, carried across the collect-specs round-trip
@@ -687,19 +662,17 @@ function sendQueueItem() {
   setStatus(`${qLabel} ${qi + 1}/${queue!.length} — ${it.brand}…`)
   const brandTokens = buildBrandColumns(it.theme, it.neutralLevel)
   const baseTokens = buildBaseColumns()
-  parent.postMessage({ pluginMessage: { type: 'apply', brand: it.brand, brandTokens, baseTokens, hasSecondary: it.hasSecondary, confirmed: true, spec: it, includeApca: qIncludeApca } }, '*')
+  parent.postMessage({ pluginMessage: { type: 'apply', brand: it.brand, brandTokens, baseTokens, hasSecondary: it.hasSecondary, confirmed: true, spec: it } }, '*')
 }
 
-// apcaPosture: the snapshot the batch runs under — defaults to the toggle NOW, but
-// re-apply passes its CLICK-time snapshot through the async collect-specs round-trip
-// (ticking the toggle in that gap must not upgrade a batch armed under the old copy)
-function startQueue(items: Recipe[], label: string, apcaPosture: boolean = includeApca) {
+// (the apcaPosture parameter died with the Include-APCA toggle, 2026-07-29: there is one
+// column set now, so a batch can no longer be armed under a different posture.)
+function startQueue(items: Recipe[], label: string) {
   queue = items
   qi = 0
   qLabel = label
   qTotals = { set: 0, removed: 0, inherited: 0, baseCreated: false, addedCols: [], orphaned: 0 }
   qUnstamped = []
-  qIncludeApca = apcaPosture
   applyBtn.disabled = true
   rosterBtn.disabled = true
   sendQueueItem()
@@ -729,16 +702,12 @@ function enqueueBackfill(specs: unknown[], unstamped?: string[], note?: string) 
   for (const it of items) if (!ahead.has(it.brand)) queue.push(it)
 }
 
-// batch runs pass confirmed:true (the arm step IS their confirm) — so when the Include
-// APCA toggle is on, the arm copy must name the posture flip the batch may perform
-const apcaArmNote = () => (includeApca ? ' Include APCA is ON — adds apca columns if the file lacks them.' : '')
-
 rosterBtn.addEventListener('click', () => {
   if (queue) return // a batch is already running
   if (!rosterArmed) {
     rosterArmed = true
     setStatus(`Applies the fixed ${ROSTER.length}-brand test set (ignores the fields above; overwrites existing roster extensions). `
-      + `Keep the plugin open until it finishes.${apcaArmNote()} Click the same button again to start.`, 'err')
+      + `Keep the plugin open until it finishes. Click the same button again to start.`, 'err')
     return
   }
   rosterArmed = false
@@ -754,13 +723,10 @@ reapplyBtn.addEventListener('click', () => {
   if (queue) return
   if (!reapplyArmed) {
     reapplyArmed = true
-    setStatus(`Rebuilds every brand from its stored recipe (posture + engine refresh). Keep the plugin open.${apcaArmNote()} Click again to run.`, 'err')
+    setStatus(`Rebuilds every brand from its stored recipe (posture + engine refresh). Keep the plugin open. Click again to run.`, 'err')
     return
   }
   reapplyArmed = false
-  // snapshot NOW: collect-specs round-trips through the sandbox before the queue starts,
-  // and a toggle tick in that gap must not change the posture the arm copy promised
-  reapplyApcaSnapshot = includeApca
   parent.postMessage({ pluginMessage: { type: 'collect-specs' } }, '*')
 })
 

@@ -4,8 +4,8 @@
 //   $extensions['org.okchroma.requirement'] — the live requirement data + a NAMED resolver reference
 // A requirement-aware resolver ignores $value and re-resolves from the extension; a dumb tool uses the
 // fallback. Per DTCG Format 2025.10, unknown $extensions entries MUST be preserved by tools.
-// Scale stops are keyed by number ('1'..'12'); off-scale roles by name ('cta', 'cta-hover') — the numbering
-// truth (cta is NOT stop 9) survives serialization.
+// Scale stops are keyed by number ('0'..'10'); off-scale roles by name ('cta', 'cta-hover') — the numbering
+// truth (the cta is a ROLE, never a scale stop) survives serialization.
 import type { StopReq, RoleReq, ModeSpec, OnReq } from './spec'
 import { resolveRamp, type ResolvedRamp } from './resolve'
 import { MODE_SPECS } from './spec'

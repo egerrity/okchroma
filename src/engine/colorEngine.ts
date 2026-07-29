@@ -68,8 +68,6 @@ export interface GeneratedScale {
   // C12 value repel: per-mode fired flags (the cta exited red's register) — annotation/audit data
   ctaRepelled?: { light: boolean; dark: boolean }
 
-  onHighlightIsWhite?: boolean
-  onHighlightIsWhiteDark?: boolean
 
   identityHex?: string
 
@@ -87,8 +85,6 @@ export interface GenerateOptions {
 
   subtleChromaScale?: number
 
-  stop10DeepenL?: number
-  stop11DeepenL?: number
 
   darkFillMinL?: number
 
@@ -111,8 +107,6 @@ export interface GenerateOptions {
   signalWarmDrift?: boolean
 
   style?: 'default' | 'deeper' | 'full-chroma'
-
-  highlight?: boolean
 
   chromaCurve?: (L: number, mode: 'light' | 'dark') => number
 
@@ -184,14 +178,12 @@ export function generateScale(
 ): GeneratedScale {
   // compile: opts + the built-in declaration → per-mode resolver runs. enforceOnFillContrast is passed
   // explicitly (generateScale's contract defaults it OFF; the spec's declared default only applies to
-  // direct resolver users). The highlight flag gates stop 9 out of the compiled spec; the contrast
-  // profile rewrites the wcag requires (withProfile is the identity for 'wcag' — byte-identical default).
+  // direct resolver users). The contrast profile rewrites the wcag requires (withProfile is the
+  // identity for 'wcag' — byte-identical default).
+  // (The `highlight` opt DELETED 2026-07-29: it filtered stop 9 out of the compiled spec, and every
+  // caller in the repo passed true. With highlight-9 gone it had nothing left to gate.)
   const rOpts = { ...opts, forcedArchetype, enforceOnFillContrast: !!opts?.enforceOnFillContrast }
-  const compile = (spec: ModeSpec): ModeSpec =>
-    withProfile(
-      opts?.highlight ? spec : { ...spec, stops: spec.stops.filter(s => s.stop !== 9) },
-      opts?.contrastProfile ?? 'wcag',
-    )
+  const compile = (spec: ModeSpec): ModeSpec => withProfile(spec, opts?.contrastProfile ?? 'wcag')
   const lightRamp = resolveRamp(hex, 'light', compile(MODE_SPECS.light), rOpts)
   // DELTA-KEYED dark IS the dark model (un-gated, owner 2026-07-09): dark is a live function of the resolved
   // light — hue carried per stop, lightness re-referenced to the dark ground (0.178) in APPARENT space at
@@ -235,8 +227,6 @@ export function generateScale(
     ctaInkHoverDark: roleStop(darkRamp.roles.ctaInkHover, 13),
     ctaInkPressedDark: roleStop(darkRamp.roles.ctaInkPressed, 14),
     ctaRepelled: { light: !!lightRamp.roles.cta.repelled, dark: !!darkRamp.roles.cta.repelled },
-    onHighlightIsWhite: opts?.highlight ? lightRamp.ons.onHighlightIsWhite : undefined,
-    onHighlightIsWhiteDark: opts?.highlight ? darkRamp.ons.onHighlightIsWhite : undefined,
     identityHex: hex.toUpperCase(),
     paper0: p0Light ? makeStop(0, p0Light.L, p0Light.C, p0Light.H) : undefined,
     paper0Dark: p0Dark ? makeStop(0, p0Dark.L, p0Dark.C, p0Dark.H) : undefined,
@@ -280,7 +270,6 @@ export function generateNeutralScale(
   const curve = neutralChromaCurve(brandH, level)
   const scale = generateScale(grayHex, 'neutral', 'light', {
     chromaCurve: curve,
-    highlight: true,
     enforceOnFillContrast: true,
     contrastProfile,
   })
@@ -370,7 +359,6 @@ export function generateSubtleSecondary(
     : subtleSecondaryChromaCurve(H, opts?.mult))
   const scale = generateScale(hex, 'secondary', 'light', {
     chromaCurve: curve,
-    highlight: true,
     enforceOnFillContrast: true,
     contrastProfile: opts?.contrastProfile,
   })

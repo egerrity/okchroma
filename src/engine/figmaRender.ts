@@ -2,7 +2,7 @@
 
 import { toHex } from './cssRender'
 import { srgbEmitChannels } from './colorMath'
-import { stopTokenName, onFillTokenName, tokenOrder, type RampKind } from './tokenNames'
+import { stopTokenName, tokenOrder } from './tokenNames'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
 import { OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, escapeCtaFamily, resolveLinkTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
 
@@ -46,7 +46,8 @@ function colorFromHexString(hex: string): FigmaColorToken {
 // BAND GROUPING (owner 2026-07-27): the emitted shape nests each family into its
 // bands — paper/ wash/ highlight/ ink/ with bare-number leaves, cta/ + cta-ink/
 // with STATE leaves (enabled/hover/pressed, matching system/link), and the
-// on-colors riding their carrier group (cta/on, highlight/on). `identity` stays
+// on-colors riding their carrier group (cta/on — highlight/on died with the
+// highlight band, 2026-07-29). `identity` stays
 // a flat leaf here (the primitive lanes keep it); the plugins re-home the BIND
 // surfaces to system/abs-primary|abs-secondary. Both plugins migrate every old
 // flat name in place via RENAMED_LEAVES.
@@ -55,7 +56,6 @@ function bandedLeaf(flat: string): string {
     'cta': 'cta/enabled', 'cta-hover': 'cta/hover', 'cta-pressed': 'cta/pressed',
     'cta-border': 'cta/border', 'on-cta': 'cta/on',
     'cta-ink': 'cta-ink/enabled', 'cta-ink-hover': 'cta-ink/hover', 'cta-ink-pressed': 'cta-ink/pressed',
-    'on-highlight': 'highlight/on',
   }
   const mapped = STATE[flat]
   if (mapped) return mapped
@@ -74,12 +74,13 @@ export function putLeaf(g: FigmaGroup, flat: string, tok: FigmaColorToken): void
   cur[path[path.length - 1]] = tok
 }
 
+// (the `kind` param DELETED 2026-07-29: it selected between the two on-fill token
+// names, and every call site already passed 'brand'. One on-color per family now.)
 function rampGroup(
   stops: ColorStop[],
   onFillWhite: boolean,
-  kind: RampKind,
   extra?: {
-    onHighlightWhite?: boolean; identityHex?: string
+    identityHex?: string
     cta?: ColorStop; ctaHover?: ColorStop; ctaPressed?: ColorStop
     ctaInk?: ColorStop; ctaInkHover?: ColorStop; ctaInkPressed?: ColorStop
   },
@@ -102,8 +103,7 @@ function rampGroup(
   // owner 2026-07-04): the token stays for components + a future high-contrast re-solve; the
   // outline secondary override is the only resolver (→ its own highlight/8).
   if (extra?.cta) putLeaf(g, 'cta-border', TRANSPARENT_TOKEN)
-  putLeaf(g, onFillTokenName(kind), colorFromHex(onFillWhite))
-  if (extra?.onHighlightWhite !== undefined) putLeaf(g, onFillTokenName('neutral'), colorFromHex(extra.onHighlightWhite))
+  putLeaf(g, 'on-cta', colorFromHex(onFillWhite))
   if (extra?.identityHex) g['identity'] = colorFromHexString(extra.identityHex)
   return g
 }
@@ -114,7 +114,7 @@ export interface ThemeInput {
 
   // the secondary's mode chip — 'outline' re-expresses the cta pair (mirrors cssRender's
   // outline override): cta transparent, cta-hover/-pressed the cta color at OUTLINE alphas,
-  // cta-border ALWAYS the secondary's own highlight-8, on-cta the secondary's ink-11.
+  // cta-border ALWAYS the secondary's own highlight-8, on-cta the secondary's ink-9.
   secondaryStyle?: SecondaryStyle
 
   neutralLevel?: NeutralLevel
@@ -149,7 +149,6 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     : { cta: s.ctaDark, ctaHover: s.ctaHoverDark, ctaPressed: s.ctaPressedDark, ctaInk: s.ctaInkDark, ctaInkHover: s.ctaInkHoverDark, ctaInkPressed: s.ctaInkPressedDark })
 
   const brandExtra = (s: GeneratedScale, mode: 'light' | 'dark') => ({
-    onHighlightWhite: mode === 'light' ? s.onHighlightIsWhite : s.onHighlightIsWhiteDark,
     identityHex: s.identityHex,
     ...ctaFamily(s, mode),
   })
@@ -157,25 +156,22 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
   const nScale = generateNeutralScale(scale.brandH, input.neutralLevel ?? 'default', input.contrastProfile)
   // custom link seed resolved ONCE (both modes read it)
   const lt = input.linkHex ? resolveLinkTrio(input.linkHex, input.contrastProfile) : null
-  const neutralExtra = (mode: 'light' | 'dark') => ({
-    onHighlightWhite: mode === 'light' ? nScale.onHighlightIsWhite : nScale.onHighlightIsWhiteDark,
-    ...ctaFamily(nScale, mode),
-  })
+  const neutralExtra = (mode: 'light' | 'dark') => ctaFamily(nScale, mode)
   const build = (mode: 'light' | 'dark'): FigmaGroup => {
     // paper-0 rides WITH the neutral ramp at paper/0 (its dark value is
     // neutral-tinted, so it dedups and aliases through the same per-tint
     // machinery as the rest of the neutral — never a global absolute); JS
     // integer-key enumeration keeps 0 ahead of 1 regardless of insertion order.
     const p0 = mode === 'light' ? nScale.paper0 : nScale.paper0Dark
-    const neutralGroup: FigmaGroup = rampGroup(nScale[mode], mode === 'light' ? nScale.onFillTextIsWhite : nScale.onFillTextIsWhiteDark, 'brand', neutralExtra(mode))
+    const neutralGroup: FigmaGroup = rampGroup(nScale[mode], mode === 'light' ? nScale.onFillTextIsWhite : nScale.onFillTextIsWhiteDark, neutralExtra(mode))
     if (p0) putLeaf(neutralGroup, 'paper-0', colorFromStop(p0))
-    const secondaryGroup = rampGroup(secondary[mode], mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark, 'brand', brandExtra(secondary, mode))
+    const secondaryGroup = rampGroup(secondary[mode], mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark, brandExtra(secondary, mode))
     // outline re-expression (only a real secondary can be outline) — same values cssRender
     // emits. The hover = highlight-8 at OUTLINE_HOVER_ALPHA (the STABLE gated stop the ring
     // uses — 9% of the generated subtle cta was imperceptible).
     if (input.secondaryStyle === 'outline' && input.secondary) {
       const s8 = secondary[mode].find(s => s.stop === 8)
-      const s10 = secondary[mode].find(s => s.stop === 10)
+      const s9 = secondary[mode].find(s => s.stop === 9)
       putLeaf(secondaryGroup, 'cta', TRANSPARENT_TOKEN)
       if (s8) {
         const e = srgbEmitChannels(s8)
@@ -190,10 +186,10 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
       if (s8) putLeaf(secondaryGroup, 'cta-border', colorFromStop(s8))
       // cta-ink trio untouched: outline re-expresses the FILL trio only — links keep the
       // exact ramp's text-register values already emitted by rampGroup
-      // cta/on = the family's ink/10, NOT a pole — the plugin aliases non-pole on-fills to the sibling ink/10
-      if (s10) putLeaf(secondaryGroup, onFillTokenName('brand'), colorFromStop(s10))
+      // cta/on = the family's ink/9, NOT a pole — the plugin aliases non-pole on-fills to the sibling ink/9
+      if (s9) putLeaf(secondaryGroup, 'on-cta', colorFromStop(s9))
     }
-    const brandGroup = rampGroup(scale[mode], mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark, 'brand', brandExtra(scale, mode))
+    const brandGroup = rampGroup(scale[mode], mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark, brandExtra(scale, mode))
     // neutral cta escape re-expression (mirrors the outline block above): the brand's
     // FILL trio + on-cta swap to the brand-neutral's ink register; cta-ink + the ramp
     // stay the brand's own. With NO real secondary the secondary group MIRRORS the brand
@@ -209,7 +205,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
         putLeaf(g, 'cta-ink', colorFromStop(esc.ctaInk))
         putLeaf(g, 'cta-ink-hover', colorFromStop(esc.ctaInkHover))
         putLeaf(g, 'cta-ink-pressed', colorFromStop(esc.ctaInkPressed))
-        putLeaf(g, onFillTokenName('brand'), colorFromHex(esc.onFillIsWhite))
+        putLeaf(g, 'on-cta', colorFromHex(esc.onFillIsWhite))
       }
     }
     // the SYSTEM LINK trio (Phase 4): ONE per theme. Custom seed → its ink-register
@@ -236,11 +232,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
       g[sig.name] = rampGroup(
         sig.scale[mode],
         mode === 'light' ? sig.scale.onFillTextIsWhite : sig.scale.onFillTextIsWhiteDark,
-        'brand',
-        {
-          onHighlightWhite: mode === 'light' ? sig.scale.onHighlightIsWhite : sig.scale.onHighlightIsWhiteDark,
-          ...ctaFamily(sig.scale, mode),
-        },
+        ctaFamily(sig.scale, mode),
       )
     }
     return g

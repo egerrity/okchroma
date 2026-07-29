@@ -1,17 +1,25 @@
-// Highlight + off-scale-cta audit. Validates the additive tokens the dark-audit's
-// stop-1..11 window doesn't cover: the highlight rung (slot 9; stop 10 DELETED, owner 2026-07-09) and the off-scale
-// cta pair.
+// Emphasis-band + off-scale-cta audit. Validates the tokens around the focus ring and
+// the first ink stop, plus the off-scale cta family.
+//
+// THE BAND COLLAPSED (owner 2026-07-29): highlight-9 and on-highlight are deleted and
+// ink-9 (the old ink-10) carries the emphasis fill as well as the first text register.
+// The two checks that named them are REPLACED, not dropped — a deleted solve leaves a
+// property that now has to be asserted instead of computed:
 //
 // What it gates (all code-grounded, verified against the real pipeline):
-//   1. on-highlight legibility — judged by APCA at the BODY-TEXT bar (Lc 60). The
-//      gate runs over an AGNOSTIC hue×chroma fixture (synthetic inputs spanning the
-//      space), not the brand list: the bar is the worst-case hue, so clearing it
-//      clears every real brand for free. Covers hl9 (stop 10 deleted — on-highlight is
-//      judged at hl9 alone).
-//   2. structure on the real fleet — identity === input hex. (stop 8 and hl9 may converge
-//      in L for luminous hues — they are not a border/fill pair — so their ordering is NOT asserted.)
-//   2b. non-text contrast — stop 8 (highlight-8) clears WCAG 1.4.11 3:1 vs paper-2 in
-//      BOTH modes, swept agnostically (worst-case hue×chroma×L is the bar).
+//   1. BAND ORDER + the on-emphasis guarantee, agnostic hue×chroma×L:
+//      (a) ink-9 clears highlight-8 by BAND_ORDER_MARGIN against the shared paper-3
+//          anchor, both modes. This invariant NEVER EXISTED — the ordering was held by
+//          incidental spacing, which is exactly how highlight-9 drifted onto ink-10
+//          unnoticed (drift handoff 2026-07-29). Baseline at the collapse: worst 1.41
+//          light / 3.18 dark.
+//      (b) --paper-0 clears 4.5 against ink-9, both modes — the property the deleted
+//          on-highlight solve used to guarantee, now that semantic.css declares the
+//          on-emphasis text as a paper token. Baseline: worst 4.96 light / 8.04 dark.
+//   2. structure on the real fleet — identity === input hex.
+//   2b. non-text contrast — stop 8 (highlight-8) clears WCAG 1.4.11 3:1 against ITS OWN
+//      DECLARED ANCHOR (light paper-3, dark paper-2 — spec.ts S8/S8_DARK), swept
+//      agnostically (worst-case hue×chroma×L is the bar).
 //   3. neutral cta is LOW-HIERARCHY — its REST tracks the scale's own stop 4, so it
 //      FLIPS per mode (near-white wash in light, dark wash in dark) and on-cta stays
 //      legible. DARK additionally lifts the rest to clear NEUTRAL_CTA_DARK_POP_CLEARANCE
@@ -20,7 +28,7 @@
 //      (owner 2026-07-28): ΔL = k/(nearness-to-ground+0.1) mode-mirrored, pressed 2×,
 //      light darkens / dark lightens with the archetype override at the terminal bands.
 //   4. signal cta legible + clean 12-stop scale.
-//   5. blessed-snapshot regression on the highlight rung + off-scale cta (L,C,H).
+//   5. blessed-snapshot regression on ink-9 + off-scale cta (L,C,H).
 
 import { BRANDS } from '../src/brands'
 import { SECONDARIES } from '../src/secondaries'
@@ -60,64 +68,79 @@ const isYellow = (scale: GeneratedScale) =>
 const fails: string[] = []
 const ok = (cond: boolean, msg: string) => { if (!cond) fails.push(msg) }
 
-// ── 1. Agnostic legibility fixture — the bar is the worst-case hue, not a brand ──
-// Sweep hue × chroma over synthetic inputs and gate the on-highlight pick at the
-// body-text APCA floor (Lc 60) on hl9, both modes.
+// ── 1. Agnostic band order + the on-emphasis guarantee ──
+// The bar is the worst-case hue, not a brand. Both checks replace solves that the
+// 2026-07-29 collapse removed; see the header.
 const encSrgb = (c: number) => { c = Math.min(1, Math.max(0, c)); return c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055 }
 const synthHex = (L: number, C: number, H: number) => {
   const [r, g, b] = oklchToLinearRgb(L, clampChromaToGamut(L, C, H), H)
   const h2 = (v: number) => Math.round(Math.max(0, Math.min(1, encSrgb(v))) * 255).toString(16).padStart(2, '0')
   return `#${h2(r)}${h2(g)}${h2(b)}`
 }
-const FIX_FLOOR = { darkFillMinL: DARK_BRAND_FILL_MIN_L, enforceOnFillContrast: true, darkChromaCurve, highlight: true } as const
-// APCA lane: the shipped default — on-highlight clears the Lc-60 body-text bar
-const worst = { l9: 999, d9: 999 }
-// WCAG lane: the legal mode — the CHOSEN pole passes the 4.5 ratio on hl9
-const worstW = { l9: 999, d9: 999 }
-let fixN = 0
-for (let H = 0; H < 360; H += 15) for (const C of [0.04, 0.08, 0.12, 0.16, 0.20]) {
-  const s = generateScale(synthHex(0.55, C, H), `fix-h${H}c${C}`, undefined, { ...FIX_FLOOR, contrastProfile: 'apca' })
-  const lc = { l9: onApcaLc(s.light[8], s.onHighlightIsWhite), d9: onApcaLc(s.dark[8], s.onHighlightIsWhiteDark) }
-  worst.l9 = Math.min(worst.l9, lc.l9)
-  worst.d9 = Math.min(worst.d9, lc.d9)
-  ok(lc.l9 >= HL_BODY, `agnostic H${H} C${C} apca light hl9 on-text below body-text (Lc ${lc.l9.toFixed(1)})`)
-  ok(lc.d9 >= HL_BODY, `agnostic H${H} C${C} apca dark hl9 on-text below body-text (Lc ${lc.d9.toFixed(1)})`)
-
-  const w = generateScale(synthHex(0.55, C, H), `fixw-h${H}c${C}`, undefined, FIX_FLOOR)
-  const wr = { l9: onWcag(w.light[8], w.onHighlightIsWhite), d9: onWcag(w.dark[8], w.onHighlightIsWhiteDark) }
-  worstW.l9 = Math.min(worstW.l9, wr.l9)
-  worstW.d9 = Math.min(worstW.d9, wr.d9)
-  ok(wr.l9 >= 4.5, `agnostic H${H} C${C} wcag light hl9 chosen pole fails 4.5 (${wr.l9.toFixed(2)})`)
-  ok(wr.d9 >= 4.5, `agnostic H${H} C${C} wcag dark hl9 chosen pole fails 4.5 (${wr.d9.toFixed(2)})`)
-  fixN++
+const FIX_FLOOR = { darkFillMinL: DARK_BRAND_FILL_MIN_L, enforceOnFillContrast: true, darkChromaCurve } as const
+// declared 2026-07-29 from the measured worst case (1.41 light / 3.18 dark), rounded
+// DOWN to a round number. It is a floor on the SEPARATION, not a target for it.
+const BAND_ORDER_MARGIN = 1.0
+const ON_EMPHASIS_BAR = 4.5
+const ratioOf = (x: ColorStop, y: ColorStop) => contrastRatio(wcagY(x.L, x.C, x.H), wcagY(y.L, y.C, y.H))
+const bandWorst = { light: 999, lAt: '', dark: 999, dAt: '' }
+const emphWorst = { light: 999, lAt: '', dark: 999, dAt: '' }
+let bandN = 0
+for (let H = 0; H < 360; H += 15) for (const C of [0.04, 0.08, 0.12, 0.16, 0.20]) for (const L of [0.45, 0.62, 0.78]) {
+  for (const lane of ['wcag', 'apca'] as const) {
+    const sc = generateScale(synthHex(L, C, H), `band-h${H}c${C}l${L}`, undefined,
+      { ...FIX_FLOOR, contrastProfile: lane === 'apca' ? 'apca' : undefined })
+    const at = `H${H} C${C} L${L} ${lane}`
+    for (const mode of ['light', 'dark'] as const) {
+      const arr = mode === 'light' ? sc.light : sc.dark
+      const hl8 = arr[7], ink9 = arr[8], p3 = arr[2]
+      // (a) band order — both stops read against the plane they sit on
+      const margin = ratioOf(ink9, p3) - ratioOf(hl8, p3)
+      if (margin < bandWorst[mode]) { bandWorst[mode] = margin; bandWorst[mode === 'light' ? 'lAt' : 'dAt'] = at }
+      ok(margin >= BAND_ORDER_MARGIN,
+        `agnostic ${at} ${mode}: ink-9 clears highlight-8 by only ${margin.toFixed(2)} (< ${BAND_ORDER_MARGIN})`)
+      // (b) the on-emphasis text token must read on the emphasis fill
+      const p0 = mode === 'light' ? sc.paper0 : sc.paper0Dark
+      if (p0) {
+        const r = ratioOf(ink9, p0)
+        if (r < emphWorst[mode]) { emphWorst[mode] = r; emphWorst[mode === 'light' ? 'lAt' : 'dAt'] = at }
+        ok(r >= ON_EMPHASIS_BAR,
+          `agnostic ${at} ${mode}: paper-0 on ink-9 reads ${r.toFixed(2)} (< ${ON_EMPHASIS_BAR}) — -fg-on-emphasis is unusable`)
+      }
+    }
+    bandN++
+  }
 }
-console.log(`=== agnostic legibility fixture: ${fixN} hue×chroma points × BOTH profiles ===`)
-console.log(`  apca lane (Lc ${HL_BODY} bar) worst — light hl9 ${worst.l9.toFixed(1)} | dark hl9 ${worst.d9.toFixed(1)}`)
-console.log(`  wcag lane (4.5 floor) worst  — light hl9 ${worstW.l9.toFixed(2)} | dark hl9 ${worstW.d9.toFixed(2)}`)
+console.log(`=== agnostic band order + on-emphasis: ${bandN} scales (hue×chroma×L × both lanes) ===`)
+console.log(`  ink-9 over highlight-8 (vs paper-3, floor ${BAND_ORDER_MARGIN}) worst — light ${bandWorst.light.toFixed(2)} (${bandWorst.lAt}) | dark ${bandWorst.dark.toFixed(2)} (${bandWorst.dAt})`)
+console.log(`  paper-0 on ink-9 (floor ${ON_EMPHASIS_BAR}) worst        — light ${emphWorst.light.toFixed(2)} (${emphWorst.lAt}) | dark ${emphWorst.dark.toFixed(2)} (${emphWorst.dAt})`)
 
 // ── 1b. Agnostic non-text contrast — stop 8 (highlight-8) clears WCAG 1.4.11 3:1
-// vs paper-2 (the scale's own stop 2) in BOTH modes. The bar is the worst-case
-// hue×chroma×L, so clearing it clears every brand. Guards the light-ramp clamp
-// from silently re-drifting (the failure this audit step was added for). ──
+// against ITS OWN DECLARED ANCHOR in each mode: paper-3 in light, paper-2 in dark
+// (spec.ts S8 / S8_DARK). It used to read paper-2 in BOTH, which since C31 measured
+// the light ring against a lighter plane than its rule names — a weaker test than the
+// law. The bar is the worst-case hue×chroma×L, so clearing it clears every brand.
+// Guards the light-ramp clamp from silently re-drifting. ──
 const NONTEXT = 3.0
 const s8c = { light: 999, lAt: '', dark: 999, dAt: '' }
-const vsPaper2 = (s: GeneratedScale, mode: 'light' | 'dark') => {
+const vsDeclaredPaper = (s: GeneratedScale, mode: 'light' | 'dark') => {
   const arr = mode === 'light' ? s.light : s.dark
-  return contrastRatio(wcagY(arr[7].L, arr[7].C, arr[7].H), wcagY(arr[1].L, arr[1].C, arr[1].H))
+  const anchor = mode === 'light' ? arr[2] : arr[1]   // light → paper-3, dark → paper-2
+  return contrastRatio(wcagY(arr[7].L, arr[7].C, arr[7].H), wcagY(anchor.L, anchor.C, anchor.H))
 }
 let s8n = 0
 for (let H = 0; H < 360; H += 15) for (const C of [0.04, 0.08, 0.12, 0.16, 0.20, 0.26]) for (const L of [0.45, 0.6, 0.7, 0.82]) {
   const s = generateScale(synthHex(L, C, H), `nt-h${H}c${C}l${L}`, undefined, FIX_FLOOR)
-  const cl = vsPaper2(s, 'light'), cd = vsPaper2(s, 'dark')
+  const cl = vsDeclaredPaper(s, 'light'), cd = vsDeclaredPaper(s, 'dark')
   if (cl < s8c.light) { s8c.light = cl; s8c.lAt = `H${H} C${C} L${L}` }
   if (cd < s8c.dark) { s8c.dark = cd; s8c.dAt = `H${H} C${C} L${L}` }
-  ok(cl >= NONTEXT, `agnostic H${H} C${C} L${L} light stop-8 below 3:1 vs paper-2 (${cl.toFixed(2)})`)
+  ok(cl >= NONTEXT, `agnostic H${H} C${C} L${L} light stop-8 below 3:1 vs paper-3 (${cl.toFixed(2)})`)
   ok(cd >= NONTEXT, `agnostic H${H} C${C} L${L} dark stop-8 below 3:1 vs paper-2 (${cd.toFixed(2)})`)
   s8n++
 }
-console.log(`=== agnostic non-text 3:1 (stop 8 vs paper-2): ${s8n} points · worst light ${s8c.light.toFixed(2)}:1 (${s8c.lAt}) · dark ${s8c.dark.toFixed(2)}:1 (${s8c.dAt}) ===`)
+console.log(`=== agnostic non-text 3:1 (stop 8 vs its declared paper — light 3 / dark 2): ${s8n} points · worst light ${s8c.light.toFixed(2)}:1 (${s8c.lAt}) · dark ${s8c.dark.toFixed(2)}:1 (${s8c.dAt}) ===`)
 
-// ── 2. Real fleet — structure (monotonic / distinct / identity) + printout ──
+// ── 2. Real fleet — structure (identity) + printout of the emphasis fill (ink-9) ──
 interface Item { name: string; hex: string; scale: GeneratedScale }
 const items: Item[] = []
 for (const b of BRANDS) items.push({ name: b.name, hex: b.hex, scale: resolveBrand(b.hex, b.slug, { exact: b.exact, archetypeOverride: b.archetypeOverride, style: b.style, contrastProfile: SHIPPED_PROFILE }).scale })
@@ -126,11 +149,11 @@ for (const slug of Object.keys(SECONDARIES)) {
   items.push({ name: `${slug}-secondary`, hex: SECONDARIES[slug], scale: resolveBrand(SECONDARIES[slug], `${slug} accent`, { exact: b.exact, style: b.style, contrastProfile: SHIPPED_PROFILE }).scale })
 }
 
-console.log(`\n=== highlight structure across ${items.length} brand+secondary ramps ===`)
-console.log('  ramp                    H     yel | LIGHT hl9            | DARK  hl9')
+console.log(`\n=== emphasis-fill structure across ${items.length} brand+secondary ramps ===`)
+console.log('  ramp                    H     yel | LIGHT ink-9          | DARK  ink-9')
 for (const { name, hex, scale } of items) {
   const l9 = scale.light[8], d9 = scale.dark[8]
-  if (!l9 || !d9) { fails.push(`${name}: missing highlight stop`); continue }
+  if (!l9 || !d9) { fails.push(`${name}: missing ink-9 stop`); continue }
   ok(scale.identityHex === hex.toUpperCase(), `${name}: identity ${scale.identityHex} != input ${hex.toUpperCase()}`)
   console.log(`  ${name.padEnd(22)} ${scale.brandH.toFixed(0).padStart(3)}   ${isYellow(scale) ? 'Y' : '·'}  | ${hx(l9)} L${f(l9.L)} w${whiteWcag(l9).toFixed(1)} | ${hx(d9)} L${f(d9.L)} w${whiteWcag(d9).toFixed(1)}`)
 }
@@ -149,10 +172,9 @@ const NEUTRAL_HUES = [30, 90, 143, 210, 270, 320]
 // apca lane = the shipped default (structure + the Lc bar); wcag lane = the legal ratios
 const neutralByHue = NEUTRAL_HUES.map(h => ({ h, s: generateNeutralScale(h, 'default', SHIPPED_PROFILE) }))
 const neutralWcag = NEUTRAL_HUES.map(h => ({ h, s: generateNeutralScale(h, 'default') }))
-console.log(`\n=== neutral cta (rest = stop 4; states ride the mirrored k/(nearness+.1) law; dark lifts to clear ${NEUTRAL_CTA_DARK_POP_CLEARANCE} vs pop) + highlight on-text — ${NEUTRAL_HUES.length} hues × both profiles ===`)
+console.log(`\n=== neutral cta (rest = stop 4; states ride the mirrored k/(nearness+.1) law; dark lifts to clear ${NEUTRAL_CTA_DARK_POP_CLEARANCE} vs pop) — ${NEUTRAL_HUES.length} hues × both profiles ===`)
 for (const { h, s } of neutralByHue) {
   const ctaL = s.cta, ctaD = s.ctaDark, hovL = s.ctaHover, hovD = s.ctaHoverDark
-  const hlL = s.light[8], hlD = s.dark[8]
   // LIGHT: rest == stop 4 (fed); states = the shared mirrored law (darken, k/(L+.1)).
   ok(Math.abs(ctaL.L - s.light[3].L) < 0.01, `neutral h${h} cta light != stop4 (${f(ctaL.L)} vs ${f(s.light[3].L)})`)
   ok(Math.abs((ctaL.L - hovL.L) - stateStepL(ctaL.L, 'light', 1)) < 1e-6, `neutral h${h} light hover step off the law (${f(ctaL.L - hovL.L)})`)
@@ -167,17 +189,13 @@ for (const { h, s } of neutralByHue) {
     `neutral h${h} cta dark over-lifted (${popRatio.toFixed(3)} — the solve must be minimal)`)
   ok(Math.abs((hovD.L - ctaD.L) - stateStepL(ctaD.L, 'dark', 1)) < 1e-6, `neutral h${h} dark hover step off the law (${f(hovD.L - ctaD.L)})`)
   ok(Math.abs((s.ctaPressedDark.L - ctaD.L) - stateStepL(ctaD.L, 'dark', 2)) < 1e-6, `neutral h${h} dark pressed step off the law (${f(s.ctaPressedDark.L - ctaD.L)})`)
-  // apca lane: highlight on-text at the body-text Lc bar, both modes
-  ok(onApcaLc(hlL, s.onHighlightIsWhite) >= HL_BODY, `neutral h${h} apca light: highlight on-text below body-text (Lc ${onApcaLc(hlL, s.onHighlightIsWhite).toFixed(1)})`)
-  ok(onApcaLc(hlD, s.onHighlightIsWhiteDark) >= HL_BODY, `neutral h${h} apca dark: highlight on-text below body-text (Lc ${onApcaLc(hlD, s.onHighlightIsWhiteDark).toFixed(1)})`)
   console.log(`  h${String(h).padStart(3)}  cta ${hx(ctaL)} L${f(ctaL.L)} / ${hx(ctaD)} L${f(ctaD.L)}  (stop4 ${f(s.light[3].L)}/${f(s.dark[3].L)})  | on-cta ${s.onFillTextIsWhite ? 'wht' : 'blk'}→${s.onFillTextIsWhiteDark ? 'wht' : 'blk'}`)
 }
 for (const { h, s } of neutralWcag) {
-  // wcag lane: every chosen pole passes its ratio — on-cta AND on-highlight (both modes)
+  // wcag lane: the chosen on-cta pole passes its ratio, both modes. (The on-highlight
+  // pole checks died with the token — its successor is asserted agnostically in §1.)
   ok(onWcag(s.cta, s.onFillTextIsWhite) >= 4.5, `neutral h${h} wcag on-cta light fails 4.5`)
   ok(onWcag(s.ctaDark, s.onFillTextIsWhiteDark) >= 4.5, `neutral h${h} wcag on-cta dark fails 4.5`)
-  ok(onWcag(s.light[8], s.onHighlightIsWhite) >= 4.5, `neutral h${h} wcag light highlight pole fails 4.5 (${onWcag(s.light[8], s.onHighlightIsWhite).toFixed(2)})`)
-  ok(onWcag(s.dark[8], s.onHighlightIsWhiteDark) >= 4.5, `neutral h${h} wcag dark highlight pole fails 4.5 (${onWcag(s.dark[8], s.onHighlightIsWhiteDark).toFixed(2)})`)
 }
 
 // ── 4. Signals — on-cta legible under each profile's own law, clean 12-stop scale ──
@@ -191,7 +209,7 @@ for (const sig of SIGNALS) {
     if (pol) ok(onApcaLc(st, true) >= CTA_ONFILL_ENFORCE_LC - 1, `signal ${sig.name} ${mode} apca: enforced white on-cta below Lc ${CTA_ONFILL_ENFORCE_LC - 1} (${onApcaLc(st, true).toFixed(1)})`)
     else ok(onApcaLc(st, false) >= onApcaLc(st, true), `signal ${sig.name} ${mode} apca: black pole chosen but white reads better`)
   }
-  ok(s.light.length === 11 && s.dark.length === 11, `signal ${sig.name} not a clean 11-stop scale (light ${s.light.length}, dark ${s.dark.length})`)
+  ok(s.light.length === 10 && s.dark.length === 10, `signal ${sig.name} not a clean 10-stop scale (light ${s.light.length}, dark ${s.dark.length})`)
   // wcag lane: the ratio law
   const w = SIGNALS_WCAG.get(sig.name)!.scale
   for (const [mode, st, pol] of [['light', w.cta, w.onFillTextIsWhite], ['dark', w.ctaDark, w.onFillTextIsWhiteDark]] as const) {
@@ -199,10 +217,12 @@ for (const sig of SIGNALS) {
   }
 }
 
-// ── 5. Blessed-snapshot regression — highlight rung (slot 9) + off-scale cta ──
+// ── 5. Blessed-snapshot regression — the emphasis fill (ink-9) + off-scale cta ──
 // --bless records L,C,H per ramp (both modes) after visual approval; the default run
-// diffs against it so future engine changes can't silently move these tokens. (Stops
-// 1–12 are guarded separately by dark-audit.)
+// diffs against it so future engine changes can't silently move these tokens. The
+// slot is `light[8]`/`dark[8]` — an ARRAY POSITION, which held highlight-9 before the
+// collapse and holds ink-9 after it: same index, successor token. (The rest of the
+// scale is guarded separately by dark-audit.)
 const SNAP_PATH = path.join(process.cwd(), 'scripts', 'highlight-snapshot.json')
 const TOL = 0.015
 const rungAndCta = (s: GeneratedScale) =>
@@ -228,7 +248,7 @@ if (process.argv.includes('--bless')) {
     if (!r) { drift.push(`${k} (new, not in snapshot)`); continue }
     for (let i = 0; i < v.length; i += 3) {
       // full OKLab ΔE per (L,C,H) triple — the L-only compare let C/H drift ship invisibly
-      // on the highlight rung and all four cta roles (2026-07-11 hunt)
+      // on the emphasis fill and all four cta roles (2026-07-11 hunt)
       const d = oklabDist({ L: v[i], C: v[i + 1], H: v[i + 2] }, { L: r[i], C: r[i + 1], H: r[i + 2] })
       if (d > TOL) { drift.push(`${k} token ${i / 3}: ΔE ${d.toFixed(3)} vs blessed`); break }
     }
@@ -242,4 +262,4 @@ if (process.argv.includes('--bless')) {
 
 console.log()
 if (fails.length) { console.error(`FAIL: ${fails.length}\n` + fails.map(s => '  - ' + s).join('\n')); process.exit(1) }
-console.log('PASS — agnostic on-highlight legibility (apca lane Lc 60 · wcag lane 4.5 floor, hl9) · structure · neutral cta rest=stop4 + state law · signals (both lanes) · snapshot (shipped=apca).')
+console.log('PASS — agnostic band order (ink-9 over highlight-8) + on-emphasis (paper-0 on ink-9) · stop-8 3:1 vs its declared paper · structure · neutral cta rest=stop4 + state law · signals (both lanes) · snapshot (shipped=apca).')

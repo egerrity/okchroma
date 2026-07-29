@@ -1603,3 +1603,99 @@ item. Baselines re-blessed (dark, divergence, highlight, smoothness), so this is
 here rather than visible to the detector.
 
 Ten gates green. Closes Open 2 of `scripts/highlight-band-handoff-2026-07-28.md`.
+
+## C33 — THE HIGHLIGHT BAND COLLAPSES: one emphasis stop, and the inks renumber
+
+Owner-led round, 2026-07-29. Planned in `scripts/highlight-collapse-plan-2026-07-29.md`,
+resting on the measurements in `scripts/stop-8-9-drift-handoff-2026-07-29.md`.
+
+THE BAND CARRIED A SPLIT IT DID NOT NEED. After C31, highlight-9 required 4.5 against
+paper-3 and ink-10 required 4.5 against paper-3 as well — the same bar against the same
+anchor, because `resolve.ts wcagAnchorStop` overrides the ink anchor to paper-3 in the
+WCAG lane. Two stops solving one requirement land in one place: 145 of 360 agnostic seeds
+sat within 0.01, and 50 had highlight-9 fractionally past ink-10. Pre-C31 they were never
+closer than 1.11. The 8/9 distinction existed largely to serve APCA, and APCA is not
+authorised for design decisions — so the split bought nothing and cost a collision.
+
+WHAT SHIPPED. highlight-9 and on-highlight are DELETED; the inks renumber down onto the
+gap (ink-10 → ink-9, ink-11 → ink-10, the off-scale anchor ink-12 → ink-11). ink-9 is now
+both the emphasis fill and the first text stop — it inherits every highlight-9 role. The
+scale is contiguous 1–10 plus the two off-scale anchors. highlight-8 keeps its name, its
+3:1 law and all its consumers, and does not move.
+
+THE ON-COLOUR IS DECLARED, NOT SOLVED. `ons.onHighlight` is gone from the spec and the
+resolver. C31 had already reduced it to a per-mode constant, so it was an emitted token
+carrying no solved value. Its successor is a line in the semantic layer:
+`-fg-on-emphasis` → `--paper-0`, the mode-flipping paper extreme. Measured worst over the
+360-seed agnostic sweep: 4.96 light / 8.04 dark against ink-9. Every other candidate fails
+one mode (pure white 1.72 in dark; pure black 3.21 in light).
+
+`--border-default` IS THE ACCESSIBILITY BORDER (owner ruling mid-round). It rode
+highlight-9 — a text-bar stop — and now rides highlight-8, the stop that carries the WCAG
+1.4.11 3:1 non-text require, because a border that has to be there is a control border.
+Light #6D6C6C → #898888 (4.50 → 3.05 vs paper-3), dark #A7A6A6 → #8B8989 (6.77 → 4.70).
+Quieter in both modes, and on the law instead of over-satisfying it. Decorative borders
+are `--border-subtle` (wash-5) and the per-family `--*-border-default` (wash-6).
+
+THE INDEX TRAP DID NOT SPRING. `applyChromaFloor`'s dark ink floor is
+`(0.02 + 0.02·idx/7)·strength` and `idx` was `sp.stop` reused as an array index — the trap
+the 2026-07-10 renumber documented. Moving the inks to 9/10 would have shifted the floor
+from 0.0486/0.0514 to 0.0457/0.0486 and silently re-chroma'd every dark ink. It is a
+DECLARED field now (`chromaFloorIndex`, SCALE_C_*), pinned at 10/11, with a register-audit
+check that fails if anyone tidies it back into agreement with the stop number.
+Also load-bearing and NOT touched: `LIGHT_L` / `DARK_L` keep their shape. neutralCurve
+interpolates NEUTRAL_SHAPE against those arrays BY POSITION, so splicing a retired slot
+would have re-shaped every neutral in the system. Retired slots stay in place.
+
+PROOF THAT NOTHING ELSE MOVED. Name-normalized CSS byte-compare, both lanes, 9 brands +
+secondaries + signals + 8 neutral hues: 12,010 lines byte-identical, the 1,001 deleted
+declarations being the only difference. Snapshot drift was read before blessing, against a
+git worktree at the branch point rather than an assumption — 2,304 divergence values and
+518 highlight values, max ΔE exactly 0.00. The enterprise override sets match 94/94 columns
+under the rename, and the base row count reconciles exactly: 154 → 140, the 14 dropped
+being highlight/9 × 7 + highlight/on × 7.
+
+THE CONSEQUENCE THE OWNER SHOULD OWN. The emphasis fill is a TEXT-register colour now
+(`inkMult × brandC`, capped at `inkMaxC`) where highlight-9 was a fill-register one, so it
+loses chroma: median 87% retained in light, 86% in dark, min 85%. Light positive goes
+#0D811F → #3D7C3E. Lightness barely moves in light; dark lifts ~0.066 L, which reads as
+the dark emphasis fills getting lighter (contrast vs paper-3, median 6.01 → 7.72).
+
+TWO INVARIANTS THAT NEVER EXISTED. The ordering of these stops was held by incidental
+spacing, which is exactly how highlight-9 drifted onto ink-10 unnoticed. Now declared:
+ink-9 clears highlight-8 against the shared paper-3 anchor by BAND_ORDER_MARGIN 1.0
+(worst measured 1.41 light / 3.18 dark), and `--paper-0` clears 4.5 on ink-9 (worst 4.93 /
+8.08). `req:audit`'s dead `dark-8<9` check is replaced by a both-modes band-order check
+stated as contrast rather than L. `highlight-audit`'s stop-8 sweep also now reads its OWN
+declared anchor per mode (light paper-3, dark paper-2); it read paper-2 in both, which
+since C31 tested the light ring against a lighter plane than its rule names.
+
+APCA LEAVES THE PRODUCT. The enterprise plugin's mode columns were
+wcag · wcag-dark · apca · apca-dark; they are `light` · `dark`, solved in the WCAG lane.
+The preview lens and the "Include APCA columns" opt-in are gone with them, so the preview
+and the apply can no longer disagree. `src/build.ts SHIPPED_PROFILE` flips 'apca' → 'wcag'
+so generated CSS matches the lane in use — INDEPENDENT of the collapse and the larger
+visual change of the two: the washes are identical between lanes, the ring and the cta are
+not (critical ring #ED8368 → #D0684F). The profile machinery stays dormant in
+`reqtoken/profiles.ts`, where the wcag path is a passthrough.
+Existing enterprise files ADOPT their old columns rather than growing new ones: resolution
+falls back to the legacy name and renames the mode in place, so modeIds — and every
+binding — survive. The retired apca pair is left for the user to delete; the plugin does
+not remove modes it no longer owns.
+
+CAUGHT BY RECONCILIATION, NOT BY TESTS. `plugin-ext/payload.ts` injects the off-scale ink
+anchor when it sees the LAST scale ink, keyed by name. After the renumber that trigger
+never fired and `neutral/ink/11` silently vanished from the Figma payload. Found only
+because the base row count came up one short of what the deleted tokens explained.
+
+LOGGED, NOT FIXED: dark stop 8 loses its upper bound — the deleted stop 9 was what capped
+it. Owner-accepted and deferred to the phase-2 dark round, where it belongs with the wash
+spread and the 151%/184% overshoot it is part of. Values did not move; only the gate that
+would have caught the case is gone. Also open: the public plugin is compile-only by owner
+ruling, so `plugin/ui.ts` still reads the deleted `onHighlightIsWhite` and its preview chip
+will render a wrong-pole label; `plugin/` is outside the root tsconfig, so nothing catches
+it. The demo keeps its own WCAG/APCA toggle — removing APCA was scoped to the plugin.
+
+Ten gates green. The docs-page ramp brackets were ALSO found stale by a hardcoded column
+count (spans 2/5/3/2 against a 12-column grid — a band layout two renames old); every
+bracket grid in the demo now derives its column count from its own scale and asserts it.
