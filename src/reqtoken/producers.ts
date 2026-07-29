@@ -10,7 +10,9 @@ import {
   hexToOklch, maxChromaAt, goldSpineHue, torsionedHue, gauss, sigmoid, hueDelta, oklabDist, redGateDist, RED_GATE,
   RED_SOLVE, redSolveDist, inBrickBand,
   SPINE_OFFPATH_SIGMA, RED_TORSION_CENTER_H, RED_TORSION_SOFTNESS, VIVID_C, HUE_NOISE_C, MUTED_BLEND_DENOM,
-  LIGHT_DRIFT_COOL_HI, LIGHT_DRIFT_COOL_RANGE, VIVID_LIFT_BLEND, VIVID_LIFT_L_LO, VIVID_LIFT_L_RANGE,
+  LIGHT_DRIFT_COOL_HI, LIGHT_DRIFT_COOL_RANGE,
+  BRAND_BELL_H, BRAND_BELL_SIGMA, BRAND_BELL_AMOUNT, BRAND_BELL_L_HI, BRAND_BELL_L_LO,
+  BRAND_BELL_RED_H, BRAND_BELL_RED_SIGMA,
   CREAM_UPPER_H, CREAM_UPPER_SOFTNESS,
   DEEPER_BAND_H_LO, DEEPER_BAND_H_HI, DEEPER_BAND_H_SOFT, DEEPER_BAND_U_LO, DEEPER_BAND_U_HI, DEEPER_BAND_U_SOFT,
   DEEPER_STRENGTH, redRepelShiftDeg, RED_BAND_LO_H, applyChromaFloor,
@@ -86,16 +88,31 @@ export function buildContext(hex: string, opts?: ResolveOpts) {
 
   const brandSat = subtleC / Math.max(1e-6, maxChromaAt(brandL, brandH))
 
-  // the LIGHT envelope blend weight (C8 V3 + the owner's brightness correction,
-  // 2026-07-09): the muted path (u) OR the vivid-ID lift, whichever is stronger.
-  // Identity expresses through the room-relative envelope — the ROOM does the hue
-  // weighting (no gaussian, no hue table); the lift is one rule, ID-scaled by
-  // vividness × brightness. Signals are exempt (goldBoost carries their own lift —
-  // one lift per scale, never both). Dark blends keep u: the dark ID-relative
-  // counterpart is the parked dark round's design.
-  const envW = opts?.goldBoost
-    ? u
-    : Math.max(u, VIVID_LIFT_BLEND * Math.min(1, brandC / VIVID_C) * Math.min(1, Math.max(0, (brandL - VIVID_LIFT_L_LO) / VIVID_LIFT_L_RANGE)))
+  // the LIGHT envelope blend weight = the muted path only (C32, 2026-07-28). C8 V3's
+  // vivid-ID lift rode this same weight toward a gamut-proportional envelope; it is
+  // retired for brands in favour of the declared warm bell below (BRAND_BELL_*, see
+  // colorMath). Signals always took u here, so this is now one rule for every scale.
+  const envW = u
+
+  // the BRAND WARM BELL (C32) — the declared replacement for the retired envelope lift.
+  // Multiplies the hue-blind ladder, so its peak lands exactly at BRAND_BELL_H. Scaled by
+  // the seed's vividness (capped, as the ladder is) and by S, so hue-noise seeds and the
+  // red-torsion approach are treated as everywhere else. The L ramp is what makes the help
+  // diminish as the band deepens. Signals are exempt — goldBoost carries their own lift,
+  // one lift per scale, never both.
+  //
+  // redExcl keys on the SEED hue, so a brand near critical is damped across its whole ramp
+  // (not a slice out of each one). It is what keeps the bell from spending the separation
+  // the red repel earns: measured on #ff977e, the repel already holds 10.8° of hue between
+  // brand and critical at every wash stop, but the un-excluded bell walked the brand's
+  // wash chroma from 0.0220 to 0.0250 against critical's 0.0255 — a 0.0005 gap. Hue was
+  // never the failing axis there; chroma was.
+  const bellAt = (L: number): number => {
+    if (hueIsNoise || opts?.goldBoost) return 1
+    const ramp = Math.min(1, Math.max(0, (L - BRAND_BELL_L_LO) / (BRAND_BELL_L_HI - BRAND_BELL_L_LO)))
+    const redExcl = 1 - gauss(hueDelta(brandH, BRAND_BELL_RED_H), BRAND_BELL_RED_SIGMA)
+    return 1 + BRAND_BELL_AMOUNT * gauss(hueDelta(brandH, BRAND_BELL_H), BRAND_BELL_SIGMA) * S * v * ramp * redExcl
+  }
 
   const lightSpineRef = goldSpineHue(scaleL)
   const gOffPath = gauss(hueDelta(brandH, lightSpineRef), SPINE_OFFPATH_SIGMA)
@@ -122,15 +139,18 @@ export function buildContext(hex: string, opts?: ResolveOpts) {
   return {
     hex, opts, brandL, brandC, brandH, subtleC, cAt, archetype, scaleL,
     darkFloorStrength, hueIsNoise, v, vSubtle, u, envW, chromaBoost, brandSat,
-    lightHueAt, darkH, darkCtaH, gOffPath, redShift,
+    lightHueAt, bellAt, darkH, darkCtaH, gOffPath, redShift,
   }
 }
 export type Ctx = ReturnType<typeof buildContext>
 
-// ---- light scale chroma (stops 1–8: paper/wash/highlight-8): ladder/envelope blend, cAt-wrapped (colorEngine.ts:322–326).
+// ---- light scale chroma (stops 1–8: paper/wash/highlight-8): ladder/envelope blend, cAt-wrapped.
+// The ladder carries the C32 brand bell (ctx.bellAt, L-ramped); the envelope blend is now the
+// muted path only. Stop 9 has its own producer and is deliberately outside the bell — C31 gave
+// the highlight band its own laws and this must not reach them.
 // NOTE: unclamped by design — the perceptual solve sees the raw blend; makeStop clamps at emit.
 export const lightScaleChromaAt = (ctx: Ctx, baseC: number, satFraction: number) => (L: number): number => {
-  const cLadder = ctx.vSubtle * ctx.chromaBoost * baseC
+  const cLadder = ctx.vSubtle * ctx.chromaBoost * baseC * ctx.bellAt(L)
   const cEnv = ctx.brandSat * satFraction * maxChromaAt(L, ctx.lightHueAt(L))
   return ctx.cAt('light', L, cLadder + ctx.envW * (cEnv - cLadder))
 }

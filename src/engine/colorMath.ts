@@ -216,16 +216,43 @@ export const VIVID_C = 0.13
 export const LIGHT_DRIFT_COOL_HI = 88
 export const LIGHT_DRIFT_COOL_RANGE = 16
 
-// The ID-scaled paper/wash lift (owner design + approval 2026-07-09, CATALOG C8 V3):
-// vivid BRIGHT identities ride the room-relative envelope — the need scales with the
-// ID's vividness (C/VIVID_C, capped) AND its brightness (L ramp LO→LO+RANGE; an ID at
-// L 0.70 takes nothing, 0.90+ full). One rule, no per-color cases: where an ID lands
-// on these ramps IS its dose. Mid-L vivid colliders take zero lift by construction
-// (the red/green/info signals live at L .54–.65) — that is what protects the fired-case
-// margins the solo envelope broke. Signals are exempt (goldBoost carries their lift).
-export const VIVID_LIFT_BLEND = 0.50
-export const VIVID_LIFT_L_LO = 0.70
-export const VIVID_LIFT_L_RANGE = 0.20
+// The BRAND WARM BELL (owner-placed 2026-07-28, CATALOG C32) — replaces C8 V3's
+// room-relative envelope lift for brands. The envelope was proportional to the gamut
+// ceiling, which peaks sharply at yellow: it spiked there, stranded the oranges and
+// salmons next door, and handed the naturally-loud green/cyan as much again. Measured,
+// its brightness gate selected a permanent HUE ARC (H42–H339) rather than bright brands,
+// because a saturated hue's lightness is fixed by gamut geometry.
+//
+// So the help is DECLARED rather than derived: a bell on the hue-blind ladder, centred
+// between orange and yellow nearest yellow. Declaring a centre on the old envelope moved
+// the emitted peak by 0° (the ceiling and per-brand saturation swamped it) — a placed
+// curve is the only shape that puts the help where it is aimed.
+//
+// AMOUNT ramps with lightness: full at L_HI, nothing at L_LO. The ladder grows more
+// chromatic as the band deepens, so a constant multiplier hands out MORE help the darker
+// it gets; the ramp is what makes the help diminish instead (owner: "extra in diminishing
+// amounts as the color gets darker"). Applied in lightScaleChromaAt only — stops 1–8;
+// the highlight producer keeps C31's laws.
+//
+// Lineage: the engine carried a brand bell until acb6a83 (2026-07-07, C7), at H90 /
+// sigma 35 / amount 1.7 — a narrow, strong spike. This is that idea, moved slightly warm,
+// ~1.6× as wide and about a third the strength.
+// RED EXCLUSION: the bell is tapered out across the critical signal's hue band. Measured
+// (sweep:collision, 2026-07-28): ANY amount of the bell costs red its wash separation —
+// worst unfired red went 0.00603 (no bell) → 0.00546, under the owner-accepted
+// RED_ONHUE_ACCEPTED_FLOOR 0.0057. Narrowing the bell to 35° or dropping the amount to
+// 0.35 did not recover it (0.00561 / 0.00550); only excluding the band does, and it
+// restores the margin exactly to the no-bell value. The taper is ALSO the owner's own
+// eye-call on the same round — orange was reading hot (light H60 wash-5 0.054 → 0.074
+// before the exclusion), so damping the warm approach is wanted, not merely tolerated.
+// BRAND_BELL_RED_H tracks the critical signal's hue (SIGNALS 'red', H 33.3).
+export const BRAND_BELL_H = 95
+export const BRAND_BELL_SIGMA = 55
+export const BRAND_BELL_AMOUNT = 0.6
+export const BRAND_BELL_L_HI = 0.95
+export const BRAND_BELL_L_LO = 0.76
+export const BRAND_BELL_RED_H = 33.3
+export const BRAND_BELL_RED_SIGMA = 30
 
 export const HUE_NOISE_C = 0.008
 

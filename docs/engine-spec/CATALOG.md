@@ -1535,3 +1535,71 @@ BONUS, unasked-for: the light highlight band is now near-photometric. L* spread 
 families went hl-9 8.7 → 1.96 and hl-8 0.6 → 1.64, because a shared contrast law places
 them instead of the apparent-L solve. The washes still spread 10.71 at wash-7 — the
 apparent dialect, still parked. Re-blessed: dark, divergence, highlight, ext, smoothness.
+
+## C32 — THE BRAND WARM BELL: the help is declared, not derived from the gamut
+
+Owner-led round, 2026-07-28. The complaint was that brands "wobble around a lot": at the
+pale stops the oranges and salmons washed out while yellow-through-cyan ran hot, worst at
+stop 3 and acceptable by stop 7. Measured across 120 hues, that severity ranking IS a
+metric — the hot ratio (most colourful hue / least, in absolute chroma) reads 4.86× · 3.38×
+· 2.81× · 2.26× · 1.74× at stops 3–7, matching her wording rung for rung. 1.74× is a level
+she accepts; 4.86× is not.
+
+DIAGNOSIS — THE BRIGHTNESS GATE SELECTED A HUE ARC, NOT BRIGHT BRANDS. C8 V3's lift was
+`envW = max(u, 0.50 · min(1, C/0.13) · min(1, (L−0.70)/0.20))`. At full saturation a hue's
+lightness is fixed by gamut geometry, so the L term never selected bright *brands* — it
+selected H42–H339, permanently, with no user input able to change it. Everything from blue
+round to orange fell back to a flat hue-blind ladder (wash-7 pinned at C 0.0860 for 12 of
+24 hues) while the arc that cleared the gate rode a gamut-proportional envelope. Removing
+the gate alone barely helped (stop-3 hot ratio 4.86× → 4.47×): the envelope itself is
+proportional to a ceiling that peaks sharply at yellow, so ANY weight on it tilts the band.
+
+THE STEERING DOESN'T STEER. Multiplying a placed bell onto the envelope moved the emitted
+peak by **0°** — declaring centre 75, 95 or 100 all landed the peak at H132/H129/H132. The
+ceiling shape and per-brand `brandSat` swamp anything multiplied on top. A curve can only
+be placed if it is DECLARED on the hue-blind ladder, not derived from the gamut and nudged.
+
+THE SHAPE. `bellAt(L)` multiplies the ladder in `lightScaleChromaAt` (stops 1–8 only; stop
+9 keeps C31's laws): amount 0.6 · gauss(hueDelta(brandH, 95), 55) · S · v · ramp(L) ·
+redExcl. Centre 95 is the owner's placement, "between orange and yellow, nearest yellow".
+The L ramp (full at 0.95, nothing by 0.76) exists because the ladder grows more chromatic
+as the band deepens — a constant multiplier hands out MORE help the darker it gets, which
+is backwards; peak help now turns over at stop 6 (13.2 → 23.2 → 27.6 → 28.5 → 23.6, ×1000).
+Result: hot ratio 1.60× · 1.60× · 1.52× · 1.42× · 1.27× at stops 3–7, and 1.02× at stop 8.
+
+THE ENVELOPE LIFT IS RETIRED FOR BRANDS — `envW = u`, which is what signals always took, so
+this is now one rule for every scale. VIVID_LIFT_BLEND / _L_LO / _L_RANGE are gone.
+
+THE RED EXCLUSION IS NOT A GATE-DODGE. Any amount of bell costs critical its wash
+separation: worst unfired red 0.00603 (no bell) → 0.00546, under RED_ONHUE_ACCEPTED_FLOOR
+0.0057. Narrowing to 35° or dropping the amount to 0.35 did NOT recover it (0.00561 /
+0.00550) — it is not a tuning problem. Tracing #ff977e showed why: the red repel already
+holds 10.8° of hue between brand and critical at every wash stop, so HUE was never the
+failing axis; the bell walked the brand's wash chroma from 0.0220 to 0.0250 against
+critical's 0.0255 — a 0.0005 gap. The bell was spending the separation the repel earns.
+`redExcl = 1 − gauss(hueDelta(brandH, 33.3), 30)` keys on the SEED hue, so a brand near
+critical is damped across its whole ramp, and restores the margin exactly to the no-bell
+value (0.00603). It is ALSO the owner's own eye-call the same round — orange was reading
+hot (light H60 wash-5 0.054 → 0.074 un-excluded), so the damping is wanted, not tolerated.
+Cost: salmon (H45) keeps 7% of its bell, orange 62%, yellow 94%. Measured, the exclusion
+makes that arc SMOOTHER than any alternative including today — worst neighbouring-hue
+chroma step across H0–120 at wash-5: today 0.0156, un-excluded 0.0037, excluded 0.0020.
+
+DARK CARRIES, AND IT IS A GREEN FIX. Dark surfaces are delta-keyed from their light twins,
+so this lands in dark too. Owner's read: "the only problem in the before swatches is that
+green stands out a lot; the only color that looks noticeably better afterwards is green."
+Measured agreement — H153 held the loudest dark chroma at every stop 4–7 (0.1495 vs a
+quietest 0.084–0.101), and median |ΔC| by band is green/cyan 0.0219 against yellow-orange
+0.0013, cyan-blue 0.0001, red-magenta 0.0000, blue-violet 0.0000. Dark hot ratio 3.13× →
+1.26× at stop 3. Fleet: warm brands move (golden-milk wash-5 #f5e5b8 → #f7e5b0), cranberry
+and butterfly-pea are byte-identical.
+
+LOGGED, NOT FIXED: 336 grid / 23 fleet `smooth` regressions (89 / 3 improvements), all
+concentrated at H78–90 L0.85 — the bell's centre — and almost all in `drift`. Second-order:
+chroma feeds the apparent-L placement, L moves ~0.002, and the hue spine is a function of
+L, so hue moves ~0.2°. Per-stop hue steps at the worst seed go 0.56 0.75 1.06 3.45 17.55 →
+0.53 0.77 1.06 3.23 17.76 — two of five improve. Same coupling as C31's open dark-carry
+item. Baselines re-blessed (dark, divergence, highlight, smoothness), so this is recorded
+here rather than visible to the detector.
+
+Ten gates green. Closes Open 2 of `scripts/highlight-band-handoff-2026-07-28.md`.
