@@ -210,12 +210,21 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         // re-derive the SAME light drift law (ctx.lightHueAt — WITH its C8 cool-edge taper,
         // so lemon holds its identity hue) at this stop's own dark L, at the owner's
         // conservative fraction. Brands keep a mode-stable identity hue by design.
+        // The drift rotates HUE ONLY. C28 also re-clamped chroma to the gamut at the
+        // rotated hue here; that guard is DELETED (owner 2026-07-28) — emit owns the
+        // gamut boundary (makeStop + emit() both clampChromaToGamut on the final
+        // L/C/H), so the guard re-did a job already done one layer down. It ran BEFORE
+        // this stop's lightness was final, which made it wrong exactly where L still
+        // moves: stop 9 clamped at its pre-floor L (.499, ceiling .127) and the
+        // band-order floor then lifted L to .758 where the ceiling is .193 — 21% of
+        // warning's chroma discarded against a limit that wasn't there, and nothing
+        // downstream to rebuild it (stop 8 hits the same trap at the L=0.05 sentinel
+        // but its require solve restores C from ls.C). Measured: removing it moves
+        // 2 of 176 stops — warning's dark hl-9 in each lane, #E79F51 → #F59920 —
+        // and leaves 174 byte-identical.
         if (ctx.opts?.signalWarmDrift) {
           const h = ls.H + DARK_SIGNAL_WARM_DRIFT * (ctx.lightHueAt(L) - ls.H)
-          if (Math.abs(h - ls.H) > 1e-9) {
-            spineH = h
-            C = Math.min(C, clampChromaToGamut(L, C, h))
-          }
+          if (Math.abs(h - ls.H) > 1e-9) spineH = h
         }
         // BAND ORDER (owner 2026-07-09): the highlight fill (9) sits ABOVE its 3:1 rung (8). Light gets this
         // free from near-white geometry; in dark the rung's luminance law reads hue-dependently in apparent

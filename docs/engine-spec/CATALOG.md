@@ -1449,3 +1449,35 @@ longer olive, no longer a leap, but the palest pressed in the set; the decorativ
 stroke for pale ctas is the open follow-up. Neutral moved the other way (ΔL* 8.7 →
 11.6). Re-blessed: highlight, divergence — drift confined to ctaHover/ctaHoverDark
 in both, with nothing drifting at a scale-stop or cta-rest index.
+
+## C30 — the warm-drift chroma clamp: a gamut guard read before the L was final
+
+Owner, on warning's dark ramp: "why is this happening? is this the gold boost?" —
+w7 and hl-8 sitting at 100% of their gamut ceiling, then hl-9 collapsing to a
+washed tan between them.
+
+NOT the gold boost. C28's signal warm drift rotates hue, and guarded the rotation
+with `C = Math.min(C, clampChromaToGamut(L, C, h))` — don't carry a chroma the new
+hue can't hold. Sound intent, but the engine ALREADY clamps at emit (makeStop and
+the resolver's own emit() both clampChromaToGamut the final L/C/H), so the guard
+re-did a job one layer down — and it ran BEFORE this stop's lightness was final,
+which made it wrong exactly where L still moves:
+
+  DRIFT     stop=9  L=0.4992  C 0.16133 -> 0.12736  (ceiling at .4992 IS .12736)
+  CARRY-OUT stop=9  L=0.7582                        (ceiling at .7582 is .19330)
+
+21% of warning's chroma discarded against a limit that had already been lifted,
+with nothing downstream to rebuild it. Stop 8 hits the same trap harder — clamped
+to .053 at the L=0.05 sentinel — but survives because its require solve restores C
+from ls.C. Stop 9 carries no require, so the error reached emit.
+
+RULE: the drift rotates HUE ONLY. Guard deleted; emit owns the gamut boundary, as
+it does for every other stop. Warning was the only casualty by luck: info and
+positive drift exactly zero, and critical's clamp is a no-op (ceiling .1709 vs its
+.1647).
+
+MEASURED SCOPE — 2 of 176 stops move, both warning's dark hl-9:
+  wcag  #C27D2A -> #C37600      apca  #E79F51 -> #F59920      C .1274 -> .1613
+174 byte-identical. Both snapshot gates independently reported the same single
+entry (dark-audit `signal:yellow stop 8 (dark)`, divergence `token 19` — the same
+dark array index 8). Re-blessed: dark, divergence.
