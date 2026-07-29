@@ -54,24 +54,27 @@ jobs:
           cp demo/favicon.png _site/favicon.png
           sed 's#\.\./dist/#dist/#g; s#\.\./tokens/#tokens/#g' demo/index.html > _site/index.html
 
-      # THE PUBLIC PLUGIN IS NO LONGER PUBLISHED (owner 2026-07-29). /install.html and
-      # /okchroma-plugin.zip are gone from the site; the demo's install link went with
-      # commit 053d4b6. The reason is the 2026-07-29 highlight collapse (CATALOG C33):
-      # the token shape changed — highlight-9 and on-highlight deleted, every ink name
-      # renumbered down — and the public plugin ships WITHOUT the RENAMED_LEAVES entries
-      # that migrate a Figma file across that change. Republishing it would hand anyone
-      # who re-downloads a plugin that orphans their existing bindings. `plugin/` still
-      # BUILDS above; it just does not ship. Restoring publication means writing the
-      # migration table first (collapse plan, phase 4) — not re-adding these two lines.
+      # Manual install: /install.html + /okchroma-extended.zip. The page is the ONLY way
+      # in — nothing in the demo links to it (the extended plugin is unlisted), so the
+      # URL is what gets shared. The zip unpacks to ONE folder holding exactly what
+      # Figma's "Import plugin from manifest" needs — manifest.json beside its dist/.
       #
-      # The zip below unpacks to ONE folder holding exactly what Figma's "Import plugin
-      # from manifest" needs — manifest.json beside its dist/ bundle.
+      # THE PUBLIC PLUGIN'S ZIP IS NOT PUBLISHED (owner 2026-07-29): the 2026-07-29
+      # highlight collapse (CATALOG C33) changed the token shape — highlight-9 and
+      # on-highlight deleted, every ink name renumbered down — and `plugin/` ships
+      # WITHOUT the RENAMED_LEAVES entries that migrate a Figma file across it, so a
+      # re-download would leave someone's variables pointing at names that are gone.
+      # It still BUILDS above; it just does not ship. Restoring it means writing the
+      # migration table first (collapse plan, phase 4), not re-adding a cp line.
+      # install.html lives in plugin-ext/ because it documents THAT plugin — it was
+      # plugin/install.html when the public one was the subject.
       - name: Package the extended plugin for manual install
         run: |
           mkdir -p stage/okchroma-extended/dist
           cp plugin-ext/manifest.json stage/okchroma-extended/
           cp plugin-ext/dist/plugin-ext-code.js plugin-ext/dist/plugin-ext-ui.html stage/okchroma-extended/dist/
           (cd stage && zip -rq ../_site/okchroma-extended.zip okchroma-extended)
+          cp plugin-ext/install.html _site/install.html
 
       - uses: actions/upload-pages-artifact@v3
         with:

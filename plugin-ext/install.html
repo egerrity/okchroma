@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Install OKChroma manually</title>
+<title>Install OKChroma Extended</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <style>
   :root {
@@ -59,20 +59,23 @@
 </head>
 <body>
 <main>
-  <h1>Install OKChroma manually</h1>
+  <h1>Install OKChroma Extended</h1>
   <p class="tagline">A full accessibility-solved color system from one brand color — written into
-  your file as Figma variables. The Figma Community listing is in review; this page installs the
-  exact same plugin manually. It takes about a minute.</p>
+  your file as Figma variables. This build uses Figma's <b>extended collections</b>: one
+  <code>theme</code> base with <code>light</code> and <code>dark</code> modes, plus one extension
+  per brand that overrides only what differs. It takes about a minute to install.</p>
 
-  <a class="download" href="okchroma-plugin.zip" download>⬇&nbsp; Download OKChroma</a>
+  <a class="download" href="okchroma-extended.zip" download>⬇&nbsp; Download OKChroma Extended</a>
   <p class="fineprint">Rebuilt automatically from the latest engine — this link is always current.</p>
 
-  <div class="callout">You'll need the <b>Figma desktop app</b> — the browser version can't
-  install plugins this way. (Free from figma.com/downloads.)</div>
+  <div class="callout">Two requirements: the <b>Figma desktop app</b> (the browser version can't
+  install plugins this way — free from figma.com/downloads), and a <b>Figma Enterprise</b> plan.
+  Extended collections are an Enterprise feature; on other plans the plugin says so and writes
+  nothing rather than half-applying.</div>
 
   <ol class="steps">
     <li><b>Unzip the download.</b><span class="menupath">You'll get a folder called
-      <code>okchroma-plugin</code>. Put it somewhere it can stay — Figma reads it from this
+      <code>okchroma-extended</code>. Put it somewhere it can stay — Figma reads it from this
       location every time the plugin runs.</span></li>
     <li><b>Open any design file in Figma desktop.</b><span class="menupath">A new empty file
       works fine.</span></li>
@@ -80,7 +83,7 @@
       <kbd>Plugins</kbd> → <kbd>Development</kbd> → <kbd>Import plugin from manifest…</kbd> —
       then pick <code>manifest.json</code> inside the unzipped folder.</span></li>
     <li><b>Run it.</b><span class="menupath">From now on it lives under <kbd>Plugins</kbd> →
-      <kbd>Development</kbd> → <kbd>OKChroma</kbd>. Name a brand, pick a color, hit
+      <kbd>Development</kbd> → <kbd>OKChroma Extended</kbd>. Name a brand, pick a color, hit
       <i>Apply to Figma</i>, then open the Variables panel.</span></li>
   </ol>
 
@@ -91,19 +94,29 @@
     <span>• To update later: download the zip again, replace the old folder's contents, done —
       no re-import needed if the folder stays in the same place.</span>
     <span>• It never touches the network and stores nothing outside your file.</span>
-    <span>• When the Community version is approved, install that one instead and delete the
-      development copy.</span>
+    <span>• Applying to a file that already has an OKChroma base updates it in place. Existing
+      variables keep their ids, so anything bound to them stays bound.</span>
   </div>
 
-  <h2>OKChroma Extended — for Figma Enterprise</h2>
+  <h2>If you applied this before July 2026</h2>
   <div class="notes">
-    <span>• A second plugin built on Figma's <b>extended collections</b>: one <code>theme</code>
-      base (modes <code>wcag · wcag-dark · apca · apca-dark</code>) plus one extension per brand,
-      overriding only what differs. Extended collections are currently an
-      <b>Enterprise-plan</b> feature — on other plans the plugin says so and writes nothing.</span>
-    <span>• Not on Community yet — install it the same way:
-      <a href="okchroma-extended.zip" download>Download OKChroma Extended</a>, same four steps,
-      with a folder called <code>okchroma-extended</code>.</span>
+    <span>• The base's mode columns used to be <code>wcag · wcag-dark · apca · apca-dark</code>.
+      They are now just <code>light</code> and <code>dark</code>. Applying once renames your
+      existing pair in place — the modes keep their ids, so bindings survive.</span>
+    <span>• The two APCA columns are left exactly as they are. The plugin no longer writes them
+      and will not recreate them; delete them whenever you like.</span>
+    <span>• The scale also changed shape: <code>highlight-9</code> and <code>on-highlight</code>
+      are gone, and the ink stops renumbered down. The plugin migrates the renamed stops in place.
+      The two deleted ones are reported so you can remove them yourself — it never deletes a
+      variable you might still be using.</span>
+  </div>
+
+  <h2>The other plugin</h2>
+  <div class="notes">
+    <span>• The non-Enterprise OKChroma plugin is <b>withdrawn for now</b>. It does not yet carry
+      the rename table for the scale change above, so updating an installed copy would leave its
+      variables pointing at names that no longer exist. It will return once that migration is
+      written. Building from source still works — see the repo.</span>
   </div>
 
   <footer>

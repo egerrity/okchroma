@@ -71,12 +71,14 @@ npm install && npm run plugin:build
 then Figma → Plugins → Development → **Import plugin from manifest** →
 `plugin/manifest.json`.
 
-> The hosted early-access download is **withdrawn** as of 2026-07-29. The scale changed
-> shape in that round — `highlight-9` and `on-highlight` were removed and the ink stops
-> renumbered — and this plugin does not yet carry the rename table that migrates an
+> The hosted download for **this** plugin is **withdrawn** as of 2026-07-29. The scale
+> changed shape in that round — `highlight-9` and `on-highlight` were removed and the ink
+> stops renumbered — and this plugin does not yet carry the rename table that migrates an
 > existing Figma file across it, so updating an installed copy would orphan its variable
 > bindings. Building from source is unaffected: a fresh file gets the new shape correctly.
-> The enterprise (extended collections) plugin does carry the migration and is unaffected.
+>
+> The **extended collections** plugin (Figma Enterprise) does carry the migration and is
+> published as normal — **[install it here](https://egerrity.github.io/okchroma/install.html)**.
 
 **Use** — name the brand, pick a primary, and Apply. Optional before applying:
 
