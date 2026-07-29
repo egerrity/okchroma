@@ -1732,3 +1732,87 @@ Blast radius is the Custom chip alone. Every audit that builds a secondary eithe
 `resolveBrand` directly or lets `secStyle` fall through to `exact`, so ten gates pass with
 ZERO snapshot movement — no re-bless, which is itself the evidence that nothing else uses
 this path.
+
+## C35 — DARK STOP 8 IS PLACED BY ITS OWN LAW, NOT BY THE STOP BELOW IT
+
+Owner-led round, 2026-07-29 — phase 2 of the dark round scoped in
+`scripts/highlight-collapse-plan-2026-07-29.md` §Sequencing, resting on
+`scripts/stop-8-9-drift-handoff-2026-07-29.md`. Owner ruling: *"dark stop 8 has the same
+requirements as light, it is a 3:1 contrast require on paper 3 so inputs can be placed on
+any paper."*
+
+THE OVERSHOOT WAS NEVER DRIFT. The drift handoff recorded dark stop 8 at 151% of its 3:1
+target and attributed it to the mechanism it had just named — a require is a floor, the
+scaffold already clears it, so the solve never runs. That is not what happens at stop 8.
+The require DOES fire and solves to 3.05; it is then overridden by the C24 7→8 band-order
+floor. Measured over 366 ramps (360 agnostic brand seeds + 6 neutrals) the floor fired
+366/366, supplied 0.056–0.157 of stop 8's L, and accounted for the whole gap between its
+law (3.05 vs paper-2) and where it shipped (4.65 brand median, 5.01 neutral). It was not a
+guard that occasionally caught an edge case. It was the placement rule.
+
+A GUARD FOR AN INVERSION THAT CANNOT HAPPEN. The floor reads as an inversion guard — C24
+added it because a lifted wash-7 could overshoot an achromatic ramp's low-riding 3:1 solve
+(the neutral inverted at ×1.75). It is IMPLEMENTED as "carry light's 7→8 apparent gap", and
+the 3:1 solve is never near that gap — short by 11.6 apparent-L at the median, 18.1 at the
+worst — so the condition held on every ramp and the floor always won. The inversion itself
+stopped being possible when C28 halved the lift and nobody re-checked the guard: without
+the floor, stop 8 still sits at least 5.35 apparent-L above wash-7 (median 6.85) on all 366
+ramps, 0 inverting.
+
+AN ACCESSIBILITY BORDER CHAINED TO AN ILLUSTRATION STOP. wash-7 carries no `semantic.css`
+alias, and the owner's ruling is that it is an ILLUSTRATION colour. Through the floor,
+moving wash-7 for an illustration reason silently repositioned the stop carrying WCAG
+1.4.11 — which since C33 is `--border-default`, the border of every input. Owner:
+*"if 8 is getting boosted by 7 and then that is in turn closing it in on 9 that doesn't
+make any sense."* It was not closing onto ink-9 to a breaking degree (gap 0.143–0.212 L),
+but it was SPENDING that room, which is why it surfaced only as "no ink ceiling tighter
+than 150% is available" rather than as a visible defect.
+
+THE PAPER-2 ANCHOR WAS MASKING A REAL FAILURE. `S8_DARK` declared 3:1 against paper-2, on
+two grounds that had both expired: that the dark ring already cleared paper-3 from its own
+scaffold, and that re-anchoring drove it past the hand-placed hl-9. hl-9 died in C33, and
+the paper-3 clearance was the floor's doing, not the scaffold's. In dark the ring is
+lighter than every paper, so the LIGHTEST paper is the hardest — with the floor gone and
+paper-2 kept, stop 8 lands at 2.86 against paper-3 on ALL 366 ramps: an input border on the
+pop plane would fail 1.4.11. Anchored at paper-3 it lands on the law, worst 3.04.
+
+WHAT SHIPPED. `S8_DARK` is deleted and both modes reference one `S8` at paper-3 — one rule,
+one anchor, one number. The 7→8 floor in `resolve.ts` is deleted with it. Dark stop 8 is now
+bounded by its own law in both directions rather than by whatever the stop below it does,
+which CLOSES the "unbounded upward in dark" item C33 deferred to this round — on a premise
+that turned out to be wrong, since it was never riding free.
+
+THE GATE COULD NOT HAVE CAUGHT IT. `highlight-audit` §1b hardcoded `dark → paper-2`,
+mirroring the old declaration, and paper-2 is the easier plane in dark. It would have gone
+on certifying the retired rule against the weaker anchor indefinitely. Now paper-3 in both
+modes. `divergence-audit` §D still reads paper-2 and is labelled so its stop-8 row is not
+mistaken for the compliance number.
+
+PROOF THAT NOTHING ELSE MOVED. A 4,800-value dump — every brand, secondary, signal and
+neutral, both lanes, every stop plus the off-scale roles — bundled against a git worktree at
+the branch point AND re-run against the true parent after a concurrent session moved the
+branch under it. 150 lines differ; all 150 are dark highlight-8. No light stop, no dark
+wash, no ink, no cta role, no on-fill pole. Neutral `#878a8a → #686b6b`, reading 3.05
+against paper-3 where it read 4.70. The band-order margin under ink-9 IMPROVES, 3.18 → 3.75
+worst. `smooth`: 0 regressions, 406 improvements. Divergence and smoothness re-blessed after
+the diff was read; the dark and highlight snapshots came back clean on their own — neither
+covers stop 8.
+
+CORRECTIONS TO THE DRIFT HANDOFF. Its ink overshoot figures were measured against the
+DECLARED anchor while `wcagAnchorStop` overrides ink requires to paper-3 in the WCAG lane.
+Against the anchor that actually binds: dark ink-9 172% (not 184%), dark ink-10 183% (not
+195%), light ink-10 170% (not 180%). Same story, lower numbers.
+
+LOGGED, NOT FIXED: the wash lift itself is untouched and still wants the owner's mark — ALL
+of dark's excess wash spread is `DARK_BAND_LIFT` (her C28 ramp), and with the lift off the
+dark seams sit at light's spacing; the photometric ladder underneath is not the cause. It is
+now purely a wash-and-illustration decision, because the lift no longer reaches stop 8 at
+all. The ink ceiling is also open: the inks are scaffold-placed (owner's 2026-07-20 pick),
+do NOT move with the lift, and only a 150% ceiling survives C33's band-order invariant —
+125% fails 97/360 and 100% fails 360/360, inverting the band so the emphasis fill reads
+dimmer than the focus ring. Also open: `P_FIXED` on dark stop 8 is now vestigial, since the
+require places it from the sentinel on every production ramp; and the APCA lane moved the
+other way, slightly lighter (`#7b797a → #7d7b7b`), because there the harder paper-3 anchor
+outweighs what the floor contributed.
+
+Ten gates green.
