@@ -7,7 +7,7 @@
 //
 // The producers are verbatim ports of the pre-resolver engine, proven byte-identical at cutover (c7542b7);
 // the blessed snapshot audits are the standing regression gate.
-import { apparentL, perceptualRungL, perceptualDarkC, solveLForApparent } from '../engine/perceptualL'
+import { apparentL, perceptualRungL, perceptualDarkC } from '../engine/perceptualL'
 import { clampChromaToGamut, wcagY, contrastRatio, legalRatio, findMaxLForContrast, apcaLc } from '../engine/constraints'
 import { hexToOklch, srgbEmitChannels, redSolveDist, RED_GATE, RED_SOLVE } from '../engine/colorMath'
 import { hoverL, pressedL, stateFillL } from '../engine/archetypes'
@@ -297,23 +297,17 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
           clamped = true
         }
       }
-      // C24 BAND ORDER, the 8-vs-7 half (mirror of the stop-9 floor above): the lifted
-      // wash-7 can overshoot an achromatic ramp's low-riding 3:1 solve (the neutral
-      // inverted at ×1.75; brand ramps cleared). Floor stop 8 at wash-7's apparent plus
-      // light's own 7→8 apparent gap — the band's carried structure. Raising L only adds
-      // contrast against the dark paper-2, so the just-solved 3:1 law is preserved.
-      if (sp.stop === 8 && ls && ctx.opts?.deltaCarry) {
-        const d7 = stops.find(s => s.stop === 7)
-        const l7 = dl?.find(s => s.stop === 7)
-        if (d7 && l7) {
-          const appOf = (s: { L: number; C: number; H: number }) => apparentL(s.L, clampChromaToGamut(s.L, s.C, s.H), s.H)
-          const floorApp = appOf(d7) + Math.max(0, appOf(l7) - appOf(ls))
-          if (appOf(placed) < floorApp) {
-            placed = { ...placed, L: solveLForApparent(floorApp, placed.C, placed.H) }
-            clamped = true
-          }
-        }
-      }
+      // (The C24 8-vs-7 BAND-ORDER FLOOR is DELETED — owner 2026-07-29. It floored stop 8 at
+      // wash-7's apparent plus light's own 7→8 apparent gap, written when the C24 lift was
+      // ×1.75 and a lifted wash-7 could overshoot an achromatic ramp's low-riding 3:1 solve.
+      // C28 then halved the lift and the guard was never re-checked. Measured at the shipped
+      // lift: it fired on 366/366 ramps — not a guard but THE placement rule for dark stop 8,
+      // supplying 0.056–0.157 of its L and every bit of the gap between its law (3.05 vs
+      // paper-2) and where it shipped (4.65). The inversion it was written for cannot occur:
+      // without it stop 8 still sits 5.35–6.85 apparent-L above wash-7 on every ramp, 0 of 366
+      // inverting. It also chained an ACCESSIBILITY BORDER to an ILLUSTRATION STOP — moving
+      // wash-7 for an illustration silently repositioned the stop carrying WCAG 1.4.11. Stop 8
+      // is now placed by its own require, anchored at paper-3 in both modes; see spec.ts S8.)
     }
 
     // verify any declared require against the emitted (gamut-clamped) values — total, fail loud

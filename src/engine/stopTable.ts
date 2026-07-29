@@ -99,15 +99,18 @@ export type DarkCtaKind = keyof typeof DARK_CTA_C
 // ──────────────────────────────────────────────────────────────────────────────
 
 // Stop 8 (highlight-8) carries the WCAG 1.4.11 non-text 3:1 guarantee — against
-// paper-3 in light (the highest plane a ring is drawn on), paper-2 in dark. The
-// light ramp clamps its perceptual rung L down to this ceiling — the same kind of
-// contrast bound the ink stops use (findMaxLForContrast). Dark stop 8 solves the
-// SAME law as a declared require against the resolved dark paper-2 (reqtoken spec
-// S8_DARK) — this clamp is the light half.
-// ⚠️ UNBOUNDED UPWARD IN DARK since the collapse (owner 2026-07-29, KNOWN AND
-// DEFERRED to the phase-2 dark round): the deleted highlight-9 was what dark stop 8
-// was not allowed to ride past. It already sits at ~151% of this target, and
-// bounding it in isolation would pre-empt the wash/highlight spacing decision.
+// PAPER-3 IN BOTH MODES (owner 2026-07-29: "it is a 3:1 contrast require on paper 3
+// so inputs can be placed on any paper"). Paper-3 is the hardest plane in each mode:
+// light's darkest paper, dark's lightest. The light ramp clamps its perceptual rung L
+// down to this ceiling — the same kind of contrast bound the ink stops use
+// (findMaxLForContrast); dark solves the same law as a declared require. ONE rule,
+// one anchor, one number, both modes (reqtoken spec S8; the old dark-only S8_DARK at
+// paper-2 is deleted).
+// The "unbounded upward in dark" item C33 deferred to this round is CLOSED by that
+// change: dark stop 8 was never riding free, it was being PLACED by the C24 7→8 carry
+// floor (fired 366/366, worth 0.056–0.157 L). With the floor gone the require places
+// it — 3.05 vs paper-3, worst 3.04 over 366 ramps — so it is bounded by its own law
+// in both directions rather than by whatever the stop below it happens to do.
 export const STOP_8_NONTEXT_CONTRAST = 3.0
 
 // ── DARK BAND LIFT (owner-calibrated 2026-07-27; marks rounds 1–3, wcag-lane exhibits) ──
@@ -116,8 +119,11 @@ export const STOP_8_NONTEXT_CONTRAST = 3.0
 // light. Her picks: the surface band's apparent depth scales by a RAMP — ×1.25 at stop 2
 // rising to ×1.75 at stop 7 (the "washes" candidate; flat ×2 was vetoed at the card/field
 // seams, and a ×2 top inverted the 7→8 seam). Stops 1 and 8–10 carry NO lift: stop 8's
-// 3:1 law re-solves against the lifted paper-2 on its own, and the inks are dark-native.
-// (The band-order floor that stop 9 rode died with the highlight band, 2026-07-29.)
+// 3:1 law re-solves against the lifted paper-3 on its own, and the inks are dark-native.
+// (Both band-order floors are gone: stop 9's died with the highlight band and the 7→8 half
+// was deleted 2026-07-29. The lift therefore no longer reaches stop 8 AT ALL — it used to,
+// through that floor, which meant an illustration-facing wash decision silently moved the
+// accessibility border. Changing these numbers is now purely a wash decision.)
 // The lifted stop's VIRTUAL light twin moves with it — its
 // chroma samples the light ladder's own chroma-at-depth relationship at the scaled depth
 // (deltaLiftChroma; per seed, per hue — the cross-hue perceptualDarkC equalizer was tried

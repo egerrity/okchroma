@@ -136,14 +136,19 @@ const P_TEXT: Producer = { hue: 'warm-torsion', L: 'perceptual', chroma: 'brand'
 // short against the one it sits on. `against` is authoritative now (resolve.ts
 // declaredAnchor), so the apca lane picks this up through DEFAULT_APCA_LC_MAP — 3:1
 // translates to Lc 30, the same RULE in its own currency, never the wcag number.
+//
+// ONE DECLARATION, BOTH MODES (owner 2026-07-29): *"dark stop 8 has the same requirements
+// as light, it is a 3:1 contrast require on paper 3 so inputs can be placed on any paper."*
+// Dark used to declare its own S8_DARK anchored at PAPER-2, justified on two grounds that
+// have both since expired: that the dark ring "already clears paper-3 from its own
+// scaffold", and that re-anchoring drove it past the hand-placed hl-9. hl-9 was deleted in
+// C33, and the paper-3 clearance was never the scaffold's doing — it was the 7→8 carry
+// floor, which fired on 366/366 ramps and has been deleted with this change. Measured with
+// the floor gone and the paper-2 anchor kept, dark stop 8 lands at 2.86 against paper-3 on
+// ALL 366 ramps: an input border on the pop plane would fail 1.4.11. The floor was masking
+// a mis-anchored requirement. Anchored at paper-3 it lands on the law — worst 3.04 over 360
+// agnostic seeds + 6 neutrals, clearing 3:1 on every paper in both modes from one rule.
 const S8: Require = { metric: 'wcag', against: 'paper-3', target: STOP_8_NONTEXT_CONTRAST, level: 'AA' }
-// DARK keeps the paper-2 anchor. In dark the ring already clears paper-3 by a wide
-// margin from its own scaffold (wcag 3.37–4.43), so re-anchoring buys nothing there —
-// and it costs: pushing hl-8 lighter to satisfy a bar it already meets drove it PAST
-// the hand-placed hl-9 (8/288 agnostic seeds, apca high-chroma) and degraded warm-band
-// hue smoothness (680 grid hueStep regressions). The gap the owner reported is a LIGHT
-// gap; the rule is anchored where the ring is actually short.
-const S8_DARK: Require = { metric: 'wcag', against: 'paper-2', target: STOP_8_NONTEXT_CONTRAST, level: 'AA' }
 // INK ANCHOR NOTE (owner 2026-07-28): in the WCAG lane the resolver anchors ink
 // requires (stops 9-10 + the cta-ink state floor) at paper-3 — the nearest paper —
 // so "ink-9 is usable on every paper" is a law, not a hope (resolve.ts
@@ -212,12 +217,14 @@ export const DARK: ModeSpec = {
     // absolute void (the old hard-coded #000000 was "too much"). Lift applies like the rest of the scale.
     { stop: 0, rootL: PAPER0_DARK_ROOT_L, group: 'paper', produce: P_LIFT, satFraction: SCALE_C_DARK[0].sat },
     // paper/wash 1–7: perceptual on the dark scaffold. stop 8: FIXED at the hand-placed scaffold BUT with the
-    // 3:1 non-text require DECLARED (the Stage-5 flip, owner-approved): most hues already clear it from the
-    // scaffold and don't move; low-luminance hues (blue) get raised until they read off the dark paper —
-    // the blue-recede failure is prevented BY RULE, not by patch.
+    // 3:1 non-text require DECLARED (the Stage-5 flip, owner-approved) — the blue-recede failure is prevented
+    // BY RULE, not by patch. The require now genuinely PLACES the stop rather than catching a few low-luminance
+    // hues: on the delta-carry path it solves from the sentinel every time, and the old claim that "most hues
+    // already clear it from the scaffold and don't move" was only ever true because the 7→8 carry floor had
+    // already lifted them past it (owner 2026-07-29 — see the S8 note above).
     ...DARK_NEUTRAL_L.slice(0, 8).map((rootL, i): StopReq => ({
       stop: i + 1, rootL, group: groupOf(i + 1), produce: i === 7 ? P_FIXED : P_LIFT,
-      satFraction: SCALE_C_DARK[i + 1].sat, require: i === 7 ? S8_DARK : undefined,
+      satFraction: SCALE_C_DARK[i + 1].sat, require: i === 7 ? S8 : undefined,
     })),
     // ink text: perceptual + the contrast requires DECLARED in dark too (Stage-5 flip): the scaffold already
     // clears them for every hue (the gate proves it), so values don't move — but the guarantee is now a rule.

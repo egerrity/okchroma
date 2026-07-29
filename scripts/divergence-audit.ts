@@ -131,9 +131,14 @@ console.log(`  CTA  |    ${f1(ctaSpread.light.hi - ctaSpread.light.lo).padStart(
 console.log(`  worst dark vivid-stop wave ${f1(worstDark)} L*  ·  dark CTA wave ${f1(ctaSpread.dark.hi - ctaSpread.dark.lo)} L*`)
 
 // ── D. dark text-stop contrast (REPORT) — drives the W2 decision ──────────────
-// Light clamps stop 8 to 3:1, the inks 9/10 to 4.5/7. Dark places them directly with
-// no clamp. Sweep agnostically; report the worst dark ratio so W2 decides whether a
-// dark clamp is needed or the scaffold already clears.
+// Light clamps stop 8 to 3:1, the inks 9/10 to 4.5/7. Sweep agnostically; report the worst
+// dark ratio so W2 decides whether a dark clamp is needed or the scaffold already clears.
+// ⚠️ This section reads PAPER-2, which is no longer stop 8's anchor: since 2026-07-29 stop 8
+// declares 3:1 against PAPER-3 in both modes (spec.ts S8) and is placed by that require, not
+// by the scaffold. Paper-2 is the EASIER plane in dark, so the stop-8 row below reads high by
+// the paper-2→paper-3 offset and is NOT the compliance number — highlight-audit §1b owns that.
+// The ink rows are still on their declared anchor and unaffected. Left reading paper-2 so the
+// series stays comparable to its own history; read the label, not the bare ratio.
 // find by STOP number — the arrays are contiguous stops 1..10 (highlight-9 deleted and
 // the inks renumbered down 2026-07-29)
 const vsPaper2 = (arr: ColorStop[], stop: number) => {
@@ -150,7 +155,7 @@ for (let H = 0; H < 360; H += 15) for (const C of [0.04, 0.10, 0.16, 0.22]) for 
   if (c11 < dark.s11) { dark.s11 = c11; dark.s11at = `H${H} C${C} L${L}` }
 }
 console.log(`\n=== D. dark text contrast vs paper-2 (agnostic worst) — REPORT ===`)
-console.log(`  stop 8  worst ${dark.s8.toFixed(2)}:1 (${dark.s8at})  [light floor 3.0]`)
+console.log(`  stop 8  worst ${dark.s8.toFixed(2)}:1 (${dark.s8at})  [floor 3.0 — but vs PAPER-3, not this plane]`)
 console.log(`  ink-9   worst ${dark.s10.toFixed(2)}:1 (${dark.s10at})  [light floor 4.5]`)
 console.log(`  ink-10  worst ${dark.s11.toFixed(2)}:1 (${dark.s11at})  [light floor 7.0]`)
 

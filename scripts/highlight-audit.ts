@@ -17,9 +17,9 @@
 //          on-highlight solve used to guarantee, now that semantic.css declares the
 //          on-emphasis text as a paper token. Baseline: worst 4.96 light / 8.04 dark.
 //   2. structure on the real fleet — identity === input hex.
-//   2b. non-text contrast — stop 8 (highlight-8) clears WCAG 1.4.11 3:1 against ITS OWN
-//      DECLARED ANCHOR (light paper-3, dark paper-2 — spec.ts S8/S8_DARK), swept
-//      agnostically (worst-case hue×chroma×L is the bar).
+//   2b. non-text contrast — stop 8 (highlight-8) clears WCAG 1.4.11 3:1 against PAPER-3
+//      IN BOTH MODES (spec.ts S8 — one declaration since 2026-07-29), swept agnostically
+//      (worst-case hue×chroma×L is the bar).
 //   3. neutral cta is LOW-HIERARCHY — its REST tracks the scale's own stop 4, so it
 //      FLIPS per mode (near-white wash in light, dark wash in dark) and on-cta stays
 //      legible. DARK additionally lifts the rest to clear NEUTRAL_CTA_DARK_POP_CLEARANCE
@@ -116,17 +116,19 @@ console.log(`  ink-9 over highlight-8 (vs paper-3, floor ${BAND_ORDER_MARGIN}) w
 console.log(`  paper-0 on ink-9 (floor ${ON_EMPHASIS_BAR}) worst        — light ${emphWorst.light.toFixed(2)} (${emphWorst.lAt}) | dark ${emphWorst.dark.toFixed(2)} (${emphWorst.dAt})`)
 
 // ── 1b. Agnostic non-text contrast — stop 8 (highlight-8) clears WCAG 1.4.11 3:1
-// against ITS OWN DECLARED ANCHOR in each mode: paper-3 in light, paper-2 in dark
-// (spec.ts S8 / S8_DARK). It used to read paper-2 in BOTH, which since C31 measured
-// the light ring against a lighter plane than its rule names — a weaker test than the
-// law. The bar is the worst-case hue×chroma×L, so clearing it clears every brand.
-// Guards the light-ramp clamp from silently re-drifting. ──
+// against PAPER-3 IN BOTH MODES (spec.ts S8, one declaration since 2026-07-29). Owner:
+// *"dark stop 8 has the same requirements as light, it is a 3:1 contrast require on
+// paper 3 so inputs can be placed on any paper."* This check read paper-2 for dark until
+// then, mirroring the old S8_DARK — and paper-2 is the EASIER anchor in dark (the ring
+// is lighter than every paper, so the lightest paper is the hardest). It therefore could
+// not have caught the thing that was actually wrong: with the 7→8 carry floor removed,
+// the paper-2 rule lands the ring at 2.86 against paper-3 on all 366 ramps. The bar is
+// the worst-case hue×chroma×L, so clearing it clears every brand. ──
 const NONTEXT = 3.0
 const s8c = { light: 999, lAt: '', dark: 999, dAt: '' }
 const vsDeclaredPaper = (s: GeneratedScale, mode: 'light' | 'dark') => {
   const arr = mode === 'light' ? s.light : s.dark
-  const anchor = mode === 'light' ? arr[2] : arr[1]   // light → paper-3, dark → paper-2
-  return contrastRatio(wcagY(arr[7].L, arr[7].C, arr[7].H), wcagY(anchor.L, anchor.C, anchor.H))
+  return contrastRatio(wcagY(arr[7].L, arr[7].C, arr[7].H), wcagY(arr[2].L, arr[2].C, arr[2].H))
 }
 let s8n = 0
 for (let H = 0; H < 360; H += 15) for (const C of [0.04, 0.08, 0.12, 0.16, 0.20, 0.26]) for (const L of [0.45, 0.6, 0.7, 0.82]) {
@@ -135,10 +137,10 @@ for (let H = 0; H < 360; H += 15) for (const C of [0.04, 0.08, 0.12, 0.16, 0.20,
   if (cl < s8c.light) { s8c.light = cl; s8c.lAt = `H${H} C${C} L${L}` }
   if (cd < s8c.dark) { s8c.dark = cd; s8c.dAt = `H${H} C${C} L${L}` }
   ok(cl >= NONTEXT, `agnostic H${H} C${C} L${L} light stop-8 below 3:1 vs paper-3 (${cl.toFixed(2)})`)
-  ok(cd >= NONTEXT, `agnostic H${H} C${C} L${L} dark stop-8 below 3:1 vs paper-2 (${cd.toFixed(2)})`)
+  ok(cd >= NONTEXT, `agnostic H${H} C${C} L${L} dark stop-8 below 3:1 vs paper-3 (${cd.toFixed(2)})`)
   s8n++
 }
-console.log(`=== agnostic non-text 3:1 (stop 8 vs its declared paper — light 3 / dark 2): ${s8n} points · worst light ${s8c.light.toFixed(2)}:1 (${s8c.lAt}) · dark ${s8c.dark.toFixed(2)}:1 (${s8c.dAt}) ===`)
+console.log(`=== agnostic non-text 3:1 (stop 8 vs paper-3, both modes): ${s8n} points · worst light ${s8c.light.toFixed(2)}:1 (${s8c.lAt}) · dark ${s8c.dark.toFixed(2)}:1 (${s8c.dAt}) ===`)
 
 // ── 2. Real fleet — structure (identity) + printout of the emphasis fill (ink-9) ──
 interface Item { name: string; hex: string; scale: GeneratedScale }
