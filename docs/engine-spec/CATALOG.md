@@ -1816,3 +1816,67 @@ other way, slightly lighter (`#7b797a → #7d7b7b`), because there the harder pa
 outweighs what the floor contributed.
 
 Ten gates green.
+
+## C36 — CUSTOM KEEPS THE RAMP, THE CTA IS THE TINT; AND THE ANCHORS PLACE THE BUTTON
+
+Owner-reframed, 2026-07-29, the round after C34. C34 kept the lift on a supplied hex and said
+so; testing it against a saturated orange showed why that was the wrong call. Her statement of
+the offering, verbatim: a secondary is either **derived from primary** (mutes and rotates the
+hue), **custom** (*"the id is preserved as is, but the cta is generated as if it was a tint of
+the given hex"*), or **exact** (*"whatever hex, and it generates the ramp like a primary"*).
+
+WHAT THE LIFT WAS ACTUALLY COSTING. Applied to the whole ramp it did not just pale the
+surfaces, it took the INK — the text colour. Agnostic seeds at 95% of the sRGB gamut, ink-10
+chroma, custom-as-shipped vs the hands-off ramp: warm cusp H 69° 0.080 → **0.017**, red H 29°
+0.080 → 0.023, blue H 264° 0.080 → 0.024. A saturated orange's text colour came back
+gray-brown. The measured cause is C34's: the `kR` ceiling binds at the lifted L, so `kC`'s
+halving is not the story — but the round's finding is that the ramp was never the thing that
+needed quietening.
+
+TWO MODELS, ONE TRANSFORM — this supersedes the 2026-07-12 "one default model, two seeds"
+unification. Derived is MANUFACTURING a secondary that does not exist, so the whole ramp
+descends from the rotated, lifted seed; there is no pick to preserve. Custom is QUIETENING one
+the user chose, so their hex is the seed for the ramp and only the cta trio comes from the
+tinted seed. `resolveCustomModel` resolves the ramp through the EXACT posture's own call, byte
+for byte, so "preserved" is literal and gateable — a first cut used the derived opt-set and
+210/960 dark ramps diverged, because that set carries `darkCtaFlatApp` and leaves on-fill
+enforcement on. `cta-ink` is NOT tinted (owner ruling): it is the text-register cta whose rest
+value matches ink-9/ink-10, which under this model are the user's colour.
+
+THE TINT EARNS ITS PLACE BY MEASUREMENT. When someone supplies a secondary on the primary's
+own hue, the untinted cta is the SAME BUTTON — cta ΔE vs the primary 0.000, and 0.025 dark for
+a near-black navy. The tint lifts that to 0.39 light / 0.24 dark, clear of
+`SECONDARY_DISTINCT_DELTA_E`. On-cta label contrast after the splice: 9.93–15.88:1 light,
+5.36–6.21:1 dark, every seed.
+
+THE ANCHORS PLACE THE CTA, NOT THE RAMP. The plan doc assumed an anchor pins the ramp's
+lightness. Measured, four seeds × six anchors: green, navy and pink move **0 of 20** ramp
+stops; only the near-cusp #FFA200 moves 18–19/20, and there because shifting the seed's L
+shifts `maxChromaAt` and so the saturation envelope. The cta moves across the full range every
+time. That is the engine's core rule showing through — the ladder is shared, the cta is the
+per-family differentiator. So an anchor REPLACES the custom posture instead of composing with
+it (custom's tint owns the cta): both UIs send `secondaryStyle: 'exact'` alongside an anchor.
+Owner's ruling, from the exhibit: picking a band gives **their colour at that lightness**, not
+a muted version of it — the alternative flattened #FFA200 to C 0.035 in all six bands, which
+is the complaint that started the round, reproduced six times.
+
+THE GATE CAUGHT ITS OWN BLIND SPOT TWICE. `secondary-audit` lane 1b now asserts the MODEL, not
+a note-string: the custom ramp equals the exact ramp in both modes, the cta does not, and
+cta-ink does not. Lane 3's first cut asserted only that the anchor was threaded and the ramp
+preserved — both stay true when the anchor does nothing, which is exactly the bug it shipped
+past. Its second cut asserted "cta differs from un-anchored", which false-positives on a seed
+whose own L already sits at a median, where a no-op is correct. It now asserts the anchored cta
+LANDS ON the band median (±1e-6) and that the six are distinct — the definition, so it can
+neither miss nor false-positive.
+
+FIXED IN PASSING, a live crash on main: both chip previews in `plugin-ext/ui.ts` asked for ramp
+stop 11, which C33's ink renumber removed from the array (it emits as an off-scale literal). So
+`hxs(undefined)` threw on EVERY render, the catch logged an unattributable "Cannot read
+properties of undefined (reading 'r')", and the throw skipped the `syncInfoLines()` below it —
+the info copy never updated. Now stop 10, and `at()` throws a named error instead of using a
+bare non-null assertion. Also: grey is now reserved for the hands-off Exact chip, since an
+anchor sends style 'exact' and derived leaves the last style in place — both used to inherit
+the grey chip and stop looking like a colour.
+
+Blast radius is the Custom chip and the new anchor entries. Ten gates green with ZERO snapshot
+movement and no re-bless — the same evidence C34 rested on.

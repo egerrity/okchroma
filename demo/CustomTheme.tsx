@@ -107,6 +107,12 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   // Custom (exact) / Outline — the struck subtle models are gone (owner 2026-07-12).
   const [primaryMode, setPrimaryMode] = useState<'recommended' | 'exact' | Archetype>('recommended')
   const [secondaryStyle, setSecondaryStyle] = useState<SecondaryStyle>('default')
+  // the six anchors, now offered for the secondary too (owner 2026-07-29). Kept as its OWN
+  // state beside secondaryStyle — the chip shows postures and anchors in one list the way the
+  // primary's does, but an anchor COMPOSES with the posture rather than replacing it: it pins
+  // the ramp's lightness and leaves custom's tinted cta alone. Picking a posture clears it.
+  const [secondaryArchetype, setSecondaryArchetype] = useState<Archetype | null>(null)
+  const isArchetype = (v: string): v is Archetype => ARCHETYPES.some(a => a.name === v)
   // legacy shape for the checklist/toast logic: anchors count as recommended machinery
   const rung: RungMode = primaryMode === 'exact' ? 'exact' : 'recommended'
   // APCA is the DEFAULT (owner 2026-07-04, the true split): the perceptually-solved look ships;
@@ -180,6 +186,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
       secondaryHex: derived ? null : secondary,
       deriveSecondary: derived || undefined,
       secondaryStyle: derived ? undefined : secondaryStyle,   // derived has no chip — the default model runs on the primary
+      secondaryArchetype: derived ? undefined : (secondaryArchetype ?? undefined),
       contrastProfile: cp,
       style: fullChroma ? 'full-chroma' : undefined,
     })
@@ -214,7 +221,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
       ? escapeCtaFamily(generateNeutralScale(t.themed.scale.brandH, neutralLevel, cp), 'light', cp).ctaInk
       : t.themed.scale.ctaInk).toUpperCase()
     return { t, r: t.themed, accent: t.secondary?.scale ?? null, css, inRedRange, escapeOn: ctaEscape && inRedRangeNow, linkFromPrimaryHex }
-  }, [primary, secondary, derived, primaryMode, secondaryStyle, neutralLevel, profile, ctaEscape, linkCustom, linkInput, fullChroma])
+  }, [primary, secondary, derived, primaryMode, secondaryStyle, secondaryArchetype, neutralLevel, profile, ctaEscape, linkCustom, linkInput, fullChroma])
 
   // BUNDLE HYGIENE (review-caught 2026-07-16): an untouched bundle auto-reverts the
   // moment the escape stops being effective (range exit / posture flip) — the frozen
@@ -321,10 +328,13 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   const primaryInfo = primaryMode === 'recommended' ? 'Engine adjusts for optimal legibility'
     : primaryMode === 'exact' ? 'Your hex ships untouched'
     : `Anchored to the ${primaryMode} archetype`
+  // the six names place the BUTTON, not the surfaces (measured 2026-07-29: an anchor moves the
+  // cta across the full lightness range and leaves the ramp alone). The copy says which.
   const secondaryInfo = secState === 'derived' ? 'A lighter take on your primary — derived by default'
+    : secondaryArchetype ? `Your color, with the button at ${secondaryArchetype} lightness`
     : secondaryStyle === 'exact' ? 'Your hex ships untouched'
     : secondaryStyle === 'outline' ? 'Outline only'
-    : 'Your color through the derived model — lifted, engine-normal'
+    : 'Your color keeps the ramp; the button is a tint of it'
   const neutralInfo = neutralLevel === 'default' ? 'Adds a touch of primary hue'
     : neutralLevel === 'branded' ? 'Adds a noticeable tint to neutral'
     : 'Neutrals are pure grey'
@@ -378,19 +388,28 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
             <input value={derived ? primary.toUpperCase() : secondaryInput} placeholder="enter a hex"
               style={derived ? { color: 'var(--fg-subtle)' } : undefined}
               onChange={e => { setSecState('custom'); setSecondaryInput(e.target.value) }} spellCheck={false} />
-            <ChipSelect value={derived ? 'from-primary' : secondaryStyle} title="Secondary options"
-              label={derived ? 'From primary' : styleLabel[secondaryStyle]}
-              tone={!derived && secondaryStyle === 'exact' ? chipTone.grey : chipTone.secondary}
+            <ChipSelect value={derived ? 'from-primary' : (secondaryArchetype ?? secondaryStyle)} title="Secondary options"
+              label={derived ? 'From primary' : (secondaryArchetype ?? styleLabel[secondaryStyle])}
+              tone={!derived && !secondaryArchetype && secondaryStyle === 'exact' ? chipTone.grey : chipTone.secondary}
               onChange={v => {
                 if (v === 'from-primary') { setSecState('derived'); return }
                 if (v === 'remove') { setSecState('none'); setSecondaryInput(''); return }
                 if (!secondaryInput) setSecondaryInput(primary.toUpperCase())
-                setSecState('custom'); setSecondaryStyle(v as SecondaryStyle)
+                setSecState('custom')
+                // an anchor REPLACES Custom rather than stacking on it (owner 2026-07-29):
+                // the six names place the BUTTON, and Custom's tint owns the button, so the
+                // two cannot both apply. An anchor therefore selects the hands-off ramp and
+                // pins the cta into its band. A posture pick clears any anchor.
+                if (isArchetype(v)) { setSecondaryArchetype(v); setSecondaryStyle('exact'); return }
+                setSecondaryArchetype(null); setSecondaryStyle(v as SecondaryStyle)
               }}>
               <option value="from-primary">From primary</option>
               <option value="default">Custom</option>
               <option value="exact">Exact</option>
               <option value="remove">Remove</option>
+              <optgroup label="Anchor archetype">
+                {ARCHETYPES.map(a => <option key={a.name} value={a.name}>{a.name}</option>)}
+              </optgroup>
             </ChipSelect>
           </div>
         )}

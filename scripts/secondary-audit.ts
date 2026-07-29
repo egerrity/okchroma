@@ -8,6 +8,7 @@
 import { resolveBrand, resolveTheme, signalScalesFor } from '../src/engine/resolve'
 import { SIGNALS } from '../src/engine/signals'
 import { checkHueCollision, SECONDARY_NOTE_MIN_V } from '../src/engine/collision'
+import { ARCHETYPES } from '../src/engine/archetypes'
 import { oklchToLinearRgb } from '../src/engine/constraints'
 import type { ContrastProfile, GeneratedScale } from '../src/engine/colorEngine'
 
@@ -56,16 +57,32 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
     }
     if (t.notes.some(n => n.includes('close to the primary'))) closeAdvice++
 
-    // LANE 1b — the 'default' style on a SUPPLIED hex = FROM BRAND (owner 2026-07-12): the
-    // user's color through the SAME model as the derived posture. Invariant: the shape is the
-    // default model's (style 'default', subtle, never demoted) — their pick is the seed, not
-    // the shipped ramp.
+    // LANE 1b — the 'default' style on a SUPPLIED hex = CUSTOM (owner 2026-07-29, superseding
+    // the 2026-07-12 "same model as derived" unification): "the id is preserved as is, but the
+    // cta is generated as if it was a tint of the given hex". Invariants, and they are the
+    // MODEL rather than a note-text spot check:
+    //   i.   the shape is still the default model's (style 'default', subtle, never demoted)
+    //   ii.  the RAMP is byte-identical to the exact posture's — the user's colour is preserved
+    //        across every stop, papers through inks. This is the guard that catches a
+    //        regression back to transforming the whole ramp.
+    //   iii. the CTA is NOT the exact posture's — it is the tint, and it must actually differ,
+    //        or the posture has silently collapsed into exact.
+    //   iv.  cta-ink is NOT tinted (owner ruling): it stays the own ramp's, matching ink-9/10.
     const tf = resolveTheme({ primaryHex: pHex, secondaryHex: sHex, secondaryStyle: 'default', contrastProfile: cp })
     const secF = tf.secondary!
+    const secX = resolveTheme({ primaryHex: pHex, secondaryHex: sHex, secondaryStyle: 'exact', contrastProfile: cp }).secondary!
     if (secF.style !== 'default' || secF.level !== 'subtle' || secF.demoted || secF.derived)
       fails.push({ theme: id, check: 'from-brand-shape', detail: `style ${secF.style} level ${secF.level} demoted ${secF.demoted} derived ${secF.derived}` })
-    if (!secF.notes.some(n => n.includes('derived from your color')))
-      fails.push({ theme: id, check: 'from-brand-note', detail: 'from-brand secondary missing its model note' })
+    if (!secF.notes.some(n => n.includes('the cta is a tint of it')))
+      fails.push({ theme: id, check: 'custom-note', detail: 'custom secondary missing its model note' })
+    for (const mode of ['light', 'dark'] as const) {
+      if (JSON.stringify(secF.scale[mode]) !== JSON.stringify(secX.scale[mode]))
+        fails.push({ theme: id, check: 'custom-ramp-preserved', detail: `${mode} ramp differs from the exact posture — the transform reached past the cta` })
+    }
+    if (JSON.stringify(secF.scale.cta) === JSON.stringify(secX.scale.cta))
+      fails.push({ theme: id, check: 'custom-cta-tinted', detail: 'custom cta equals the exact cta — the tint did not apply' })
+    if (JSON.stringify(secF.scale.ctaInk) !== JSON.stringify(secX.scale.ctaInk))
+      fails.push({ theme: id, check: 'custom-ctaink-untinted', detail: 'cta-ink was tinted; it must stay the user colour (matches ink-9/10)' })
 
     // LANE 2 — the EXACT style (the owner model: standard IS exact — user's color ships as a
     // full ramp, hands off): the invariant is ADVICE — every signal collision must be annotated,
@@ -85,6 +102,39 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
         if (!secS.notes.some(n => n.includes(`the ${def.name} signal`)))
           fails.push({ theme: id, check: 'exact-advice-silent', detail: `${def.name} collision without an advice note` })
       }
+    }
+
+    // LANE 3 — the SIX ANCHORS, newly exposed for the secondary (owner 2026-07-29). They ride
+    // the EXACT posture, because what an anchor does is PLACE THE CTA and custom's tint already
+    // owns the cta (owner ruling: the anchor replaces Custom, it does not stack on it).
+    // Sampled (every 90° at the low chroma) to keep the gate quick. Invariants:
+    //   i.   resolveTheme THREADS the anchor — the resolved scale is what a direct resolveBrand
+    //        with the same archetypeOverride produces. This is the whole of the change.
+    //   ii.  the anchor is what the scale reports, so annotations and the plugin agree with it.
+    //   iii. THE NO-OP GUARD, stated precisely: the anchored cta must LAND ON the band median.
+    //        A first cut of this lane asserted only threading and ramp-preservation, both of
+    //        which stay true when the anchor does nothing at all — exactly the bug it shipped
+    //        past (anchors were wired onto the custom posture, where the tint overwrote them).
+    //        A second cut asserted "cta differs from un-anchored", which false-positives on a
+    //        seed whose own L already sits at a median — where a no-op IS the right answer.
+    //        Landing on the median is the definition, so it can neither miss nor false-positive.
+    if (C === SEC_CHROMAS[0] && H % 90 === 0) {
+      const seen: Array<{ anchor: string; L: number; key: string }> = []
+      for (const a of ARCHETYPES) {
+        const anchor = a.name
+        const tA = resolveTheme({ primaryHex: pHex, secondaryHex: sHex, secondaryStyle: 'exact', secondaryArchetype: anchor, contrastProfile: cp })
+        const direct = resolveBrand(sHex, 'secondary', { contrastProfile: cp, exact: true, skipCollisionRules: true, archetypeOverride: anchor })
+        if (JSON.stringify(tA.secondary!.scale) !== JSON.stringify(direct.scale))
+          fails.push({ theme: id, check: 'anchor-threaded', detail: `${anchor}: resolveTheme output differs from resolveBrand with the same override` })
+        if (tA.secondary!.scale.archetype !== anchor)
+          fails.push({ theme: id, check: 'anchor-reported', detail: `${anchor}: scale reports ${tA.secondary!.scale.archetype}` })
+        const cta = tA.secondary!.scale.cta
+        if (Math.abs(cta.L - a.medianL) > 1e-6)
+          fails.push({ theme: id, check: 'anchor-lands-on-median', detail: `${anchor}: cta L ${cta.L.toFixed(4)}, band median ${a.medianL}` })
+        seen.push({ anchor, L: cta.L, key: JSON.stringify(cta) })
+      }
+      if (new Set(seen.map(s => s.key)).size !== seen.length)
+        fails.push({ theme: id, check: 'anchor-distinct', detail: `the six anchors did not produce six distinct ctas: ${seen.map(s => `${s.anchor} L${s.L.toFixed(2)}`).join(' ')}` })
     }
 
     // 4. validity: every emitted stop is a real color. clampChromaToGamut tolerates ±1e-4 in

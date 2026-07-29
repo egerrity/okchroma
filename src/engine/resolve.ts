@@ -489,11 +489,23 @@ export function resolveTheme(input: {
   primaryMode?: 'recommended' | 'exact'
   primaryArchetype?: Archetype
   secondaryHex?: string | null
-  // the secondary's own mode chip; default 'muted'. Supersedes secondaryLevel (kept for
-  // programmatic compat: 'standard' ≈ 'exact', 'subtle' ≈ 'muted'). Legacy 'tint'/'pastel'
-  // ids are normalized (the 2026-07-12 rename).
+  // the secondary's own mode chip. Supersedes secondaryLevel (kept for programmatic compat:
+  // both 'standard' and 'subtle' resolve to 'exact', as does the absent case). Legacy
+  // 'tint'/'pastel' ids are normalized (the 2026-07-12 rename).
   secondaryStyle?: LegacySecondaryStyle
   secondaryLevel?: SecondaryLevel
+  // one of the six anchors, exposed for the secondary the way primaryArchetype is for the
+  // primary (owner 2026-07-29). WHAT IT ACTUALLY DOES, measured rather than assumed: it places
+  // the CTA — across the full lightness range — and leaves the ramp alone (0 of 20 stops move
+  // on green/navy/pink; the near-cusp #FFA200 is the exception at 18-19/20, where moving the
+  // seed's L changes maxChromaAt and so the saturation envelope). That is the engine's core
+  // rule showing through: the ladder is shared, the cta is the per-family differentiator.
+  //
+  // Because it places the cta, an anchor REPLACES the custom posture rather than composing with
+  // it — custom's tint owns the cta, so both cannot apply. The UI sends secondaryStyle 'exact'
+  // alongside an anchor. Passing an anchor WITH 'default' is not a supported combination: the
+  // tint still wins the cta and the anchor reaches only the ramp.
+  secondaryArchetype?: Archetype
   // §2b posture: no secondaryHex + deriveSecondary → a subtle secondary from the brand hue
   deriveSecondary?: boolean
   // legacy GLOBAL exact (pre-decoupling callers): applies to both families when the per-family
@@ -509,6 +521,7 @@ export function resolveTheme(input: {
   const secStyle: SecondaryStyle = (input.secondaryStyle && normalizeSecondaryStyle(input.secondaryStyle))
     ?? (input.secondaryLevel === 'standard' ? 'exact' : input.secondaryLevel === 'subtle' ? 'exact'
       : 'exact')
+  const sArchetype = input.secondaryArchetype
   const opts = { exact: pExact, style: input.style, contrastProfile: input.contrastProfile, apcaClearance: input.apcaClearance }
   const primary = resolveBrand(input.primaryHex, input.name ?? 'brand', { ...opts, archetypeOverride: pArchetype })
   const cp = input.contrastProfile
@@ -550,22 +563,69 @@ export function resolveTheme(input: {
     return out
   }
 
-  // ONE default model, two seeds (owner 2026-07-12: '"from brand" custom … would just let
-  // them pick the color but do the same thing as derived from brand'): the derived posture
-  // transforms the PRIMARY; the 'default' style on a supplied hex transforms the USER'S color
-  // the same way — lift transform, engine-normal ramp, flat dark cta. One machinery.
-  // ONE EXCEPTION, and it is the hue (owner 2026-07-29): the +12° rotation is how a DERIVED
-  // secondary steps off the primary it was made from. A supplied seed was already chosen, so
-  // rotating it re-colours the user's pick — see defaultSecondarySeed. Everything else about
-  // the model is shared, so this stays one machinery with one flag, not two paths.
+  // TWO MODELS, ONE TRANSFORM (owner 2026-07-29 — this SUPERSEDES the "one default model, two
+  // seeds" unification of 2026-07-12). The lift-and-damp transform is shared, but what it is
+  // applied TO now differs by posture, because the two postures are doing different jobs:
+  //
+  //   DERIVED (no secondary supplied) — MANUFACTURING a secondary that does not exist. Rotate
+  //     +12° off the parent hue, lift and damp, then a normal ramp. The whole ramp descends
+  //     from the transformed seed, because there is no user pick to preserve.
+  //   CUSTOM ('default' style + a supplied hex) — QUIETENING a secondary the user chose. Their
+  //     hex is the seed for the RAMP; only the cta trio comes from the transformed seed. Owner:
+  //     "the id is preserved as is, but the cta is generated as if it was a tint of the given
+  //     hex". Applying the transform to the whole ramp is what made a saturated orange come
+  //     back as a pale tan — and it took the INK with it (ink-10 C 0.080 → 0.017, so the text
+  //     colour went gray-brown). See resolveCustomModel.
+  //
+  // The hue never rotates on a supplied seed (C34): rotation is how a DERIVED secondary steps
+  // off the primary it was made from; applied to a pick it just re-colours it.
+  const secOpts = {
+    skipCollisionRules: true as const,
+    contrastProfile: cp,
+    darkCtaFlatApp: DEFAULT_SECONDARY.darkFlatGapApp,
+  }
+
   const resolveDefaultModel = (seedHex: string, rotate: boolean) => {
     const liftedHex = defaultSecondarySeed(seedHex, rotate)
     return {
       liftedHex,
-      scale: resolveBrand(liftedHex, 'secondary', {
-        skipCollisionRules: true, contrastProfile: cp,
-        darkCtaFlatApp: DEFAULT_SECONDARY.darkFlatGapApp,
-      }).scale,
+      scale: resolveBrand(liftedHex, 'secondary', { ...secOpts, archetypeOverride: sArchetype }).scale,
+    }
+  }
+
+  // CUSTOM, the owner's reading: the ramp is the user's colour (measured identical to the exact
+  // posture, ΔE 0.000 at every stop), and the cta trio is the tint. The tint earns its place by
+  // measurement, not taste — when someone supplies a secondary on the primary's own hue, the
+  // untinted cta is the SAME BUTTON (cta ΔE vs primary 0.000); the tint lifts that to 0.39
+  // light / 0.24 dark, clear of SECONDARY_DISTINCT_DELTA_E.
+  //
+  // cta-ink is deliberately NOT tinted (owner ruling 2026-07-29): it is the text-register cta,
+  // its rest value matches ink-9/ink-10, and under this model those are the user's colour. A
+  // tinted cta-ink would be a pale link on a pale surface, and would stop matching the ink it
+  // is specified to match.
+  //
+  // onFillTextIsWhite comes across WITH the cta because it is computed FROM it
+  // (colorEngine.ts: onTextIsWhite(…scale.cta…)) and is consumed only as the on-cta token —
+  // leaving the own ramp's flag behind would pick the on-text pole for a fill that no longer
+  // ships. Measured after the splice: label contrast 9.93–15.88:1 light, 5.36–6.21:1 dark.
+  const resolveCustomModel = (seedHex: string) => {
+    const tintedHex = defaultSecondarySeed(seedHex, false)
+    // the RAMP is the EXACT posture's, byte for byte — the same call with the same opts, so
+    // "preserved" is literal and the gate can assert equality. (A first cut resolved it through
+    // the derived model's opt-set instead; the light stops matched but 210/960 dark ramps did
+    // not, because that set carries darkCtaFlatApp and leaves on-fill enforcement on.)
+    const own = resolveBrand(seedHex, 'secondary', { ...opts, exact: true, skipCollisionRules: true, archetypeOverride: sArchetype }).scale
+    // the CTA is the tint, resolved through the derived model's register — flat dark cta and all
+    const tinted = resolveBrand(tintedHex, 'secondary', secOpts).scale
+    return {
+      tintedHex,
+      scale: {
+        ...own,
+        cta: tinted.cta, ctaHover: tinted.ctaHover, ctaPressed: tinted.ctaPressed,
+        ctaDark: tinted.ctaDark, ctaHoverDark: tinted.ctaHoverDark, ctaPressedDark: tinted.ctaPressedDark,
+        onFillTextIsWhite: tinted.onFillTextIsWhite,
+        onFillTextIsWhiteDark: tinted.onFillTextIsWhiteDark,
+      } satisfies GeneratedScale,
     }
   }
 
@@ -593,11 +653,11 @@ export function resolveTheme(input: {
     }
   }
 
-  // ---- supplied hex + the 'default' style = FROM BRAND: the user's color through the SAME
-  // model as the derived posture. Their pick is the seed, not the shipped ramp — exact is the
-  // hands-off path.
+  // ---- supplied hex + the 'default' style = CUSTOM: the user's colour keeps the ramp, and
+  // only the cta is generated as a tint of it. Exact is the fully hands-off path (its cta is
+  // the pick itself); custom differs from exact in exactly one token family.
   if (secStyle === 'default') {
-    const { liftedHex, scale } = resolveDefaultModel(input.secondaryHex, false)
+    const { tintedHex, scale } = resolveCustomModel(input.secondaryHex)
     const distinctness = ctaDistinctness(primary.scale, scale)
     if (distinctness.close)
       notes.push(`secondary reads close to the primary (ΔE ${Math.min(distinctness.light, distinctness.dark).toFixed(2)}) — consider a more distinct color`)
@@ -606,9 +666,9 @@ export function resolveTheme(input: {
       secondary: {
         scale, style: 'default', level: 'subtle', demoted: false, derived: false,
         notes: [
-          `secondary derived from your color (default model, seed ${liftedHex})`,
+          `secondary keeps your color through the ramp; the cta is a tint of it (tint seed ${tintedHex})`,
           ...signalNotesFor(scale, (name, dE) =>
-            `derived secondary sits on the ${name} signal's hue (wash ΔE ${dE.toFixed(3)}) — it tracks your color; expected, annotated for the remedy round`),
+            `secondary sits on the ${name} signal's hue (wash ΔE ${dE.toFixed(3)}) — it tracks your color; expected, annotated for the remedy round`),
         ],
         distinctness,
       },
@@ -620,7 +680,7 @@ export function resolveTheme(input: {
   // use custom" — the bespoke subtle models are struck). The user's color ships as a full
   // standard ramp, hands off; signal proximity is ADVICE, never a reshape. 'outline' rides
   // this same ramp — its cta re-resolution happens at the EMITTERS.
-  const rSec = resolveBrand(input.secondaryHex, 'secondary', { ...opts, exact: true, skipCollisionRules: true })
+  const rSec = resolveBrand(input.secondaryHex, 'secondary', { ...opts, exact: true, skipCollisionRules: true, archetypeOverride: sArchetype })
   const scale: GeneratedScale = rSec.scale
   const level: SecondaryLevel = 'standard'
   const secNotes = signalNotesFor(scale, (name, dE) =>

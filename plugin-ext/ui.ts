@@ -17,6 +17,11 @@ let neutralLevel: NeutralLevel = 'default'
 // derived rides the default seed-transform, the engine's call).
 let primaryMode: 'recommended' | 'exact' | Archetype = 'recommended'
 let secondaryStyle: SecondaryStyle = 'default'
+// the six anchors, now offered for the secondary too (owner 2026-07-29). Own state beside
+// secondaryStyle: one list in the chip, but an anchor COMPOSES with the posture — it pins the
+// ramp's lightness and leaves custom's tinted cta alone. A posture pick clears it.
+let secondaryArchetype: Archetype | null = null
+const isArchetype = (v: string): v is Archetype => ARCHETYPES.some(a => a.name === v)
 // WCAG ONLY (owner 2026-07-29). The preview lens and the "Include APCA columns" opt-in
 // are both gone: this plugin was APCA's last exposure, and the owner is not authorised to
 // use it for design decisions. Preview and Apply now read the same single lane, so the
@@ -63,6 +68,7 @@ const primaryChip        = $<HTMLElement>('primary-chip')
 const primaryChipLabel   = $<HTMLElement>('primary-chip-label')
 const primaryInfo        = $<HTMLElement>('primary-info')
 const archetypeGroup     = $<HTMLElement>('archetype-group')
+const secArchetypeGroup  = $<HTMLElement>('secondary-archetype-group')
 const secondaryAddBtn    = $<HTMLButtonElement>('secondary-add')
 const secondaryField     = $<HTMLElement>('secondary-field')
 const secondaryHexInput  = $<HTMLInputElement>('secondary-hex')
@@ -123,7 +129,7 @@ function setStatus(text: string, tone: '' | 'ok' | 'err' = '') {
 // the ⓘ copy per selection (Figma spec) — the always-visible tooltip replacement
 const STYLE_LABEL: Record<SecondaryStyle, string> = { default: 'Custom', outline: 'Outline', exact: 'Exact' }
 const STYLE_INFO: Record<SecondaryStyle, string> = {
-  default: 'Your color through the derived model — lifted, engine-normal',
+  default: 'Your color keeps the ramp; the button is a tint of it',
   outline: 'Outline only',
   exact: 'Your hex ships untouched',
 }
@@ -139,10 +145,16 @@ function syncInfoLines() {
   primaryInfo.textContent = primaryMode === 'recommended' ? 'Engine adjusts for optimal legibility'
     : primaryMode === 'exact' ? 'Your hex ships untouched'
     : `Anchored to the ${primaryMode} archetype`
-  secondaryChipLabel.textContent = secondaryMode === 'derived' ? 'From primary' : STYLE_LABEL[secondaryStyle]
-  secondaryStyleSelect.value = secondaryMode === 'derived' ? 'from-primary' : secondaryStyle
+  secondaryChipLabel.textContent = secondaryMode === 'derived' ? 'From primary'
+    : (secondaryArchetype ?? STYLE_LABEL[secondaryStyle])
+  secondaryStyleSelect.value = secondaryMode === 'derived' ? 'from-primary'
+    : (secondaryArchetype ?? secondaryStyle)
   secondaryInfoLine.style.display = secondaryMode === 'off' ? 'none' : ''
-  secondaryInfo.textContent = secondaryMode === 'derived' ? 'A lighter take on your primary — derived by default' : STYLE_INFO[secondaryStyle]
+  // the six names place the BUTTON, not the surfaces (measured 2026-07-29: an anchor moves the
+  // cta across the full lightness range and leaves the ramp alone). The copy says which.
+  secondaryInfo.textContent = secondaryMode === 'derived' ? 'A lighter take on your primary — derived by default'
+    : secondaryArchetype ? `Your color, with the button at ${secondaryArchetype} lightness`
+    : STYLE_INFO[secondaryStyle]
   neutralLabel.textContent = NEUTRAL_LABEL[neutralLevel]
   neutralInfo.textContent = NEUTRAL_INFO[neutralLevel]
 }
@@ -169,6 +181,7 @@ function themeInput(name: string) {
     secondaryHex: secondaryMode === 'custom' && secondaryHex ? secondaryHex : null,
     deriveSecondary: secondaryMode === 'derived' || undefined,
     secondaryStyle: secondaryMode === 'custom' ? secondaryStyle : undefined,
+    secondaryArchetype: secondaryMode === 'custom' ? (secondaryArchetype ?? undefined) : undefined,
     contrastProfile: undefined,
     // emit-layer flags — resolveTheme ignores them; the payload builder hands them to
     // themeToFigma and the recipe stores the EFFECTIVE values, so a stale checkbox
@@ -342,22 +355,36 @@ function updatePreview() {
     // exact = neutral-grey "hands off". Stops looked up by IDENTITY, never array position
     // (positions shift when the stop set changes — the stop-10 deletion lesson).
     const hxs = (s: { r: number; g: number; b: number }) => toHex(s.r, s.g, s.b)
-    const at = (arr: ColorStop[], n: number) => arr.find(s => s.stop === n)!
+    // NAME the miss (2026-07-29): `at` used a bare non-null assertion, so a stop that no longer
+    // exists returned undefined and surfaced as "Cannot read properties of undefined (reading
+    // 'r')" from inside hxs — unattributable. Both chips asked for stop 11, which C33's ink
+    // renumber removed from the array (it emits as an off-scale literal), so BOTH chip colours
+    // threw on every render and the throw skipped syncInfoLines below it. Fail loudly instead.
+    const at = (arr: ColorStop[], n: number) => {
+      const s = arr.find(x => x.stop === n)
+      if (!s) throw new Error(`chip preview asked for stop ${n}, which is not in the ramp (${arr.map(x => x.stop).join(',')})`)
+      return s
+    }
     if (primaryMode === 'exact') {
       primaryChip.style.background = '#ededf0'; primaryChip.style.color = '#646464'; primaryChip.style.borderColor = 'transparent'
     } else {
       primaryChip.style.background = hxs(at(t.themed.scale.light, 4))
-      primaryChip.style.color = hxs(at(t.themed.scale.light, 11))
+      primaryChip.style.color = hxs(at(t.themed.scale.light, 10))
       primaryChip.style.borderColor = 'transparent'
     }
     if (t.secondary) {
       const sl = t.secondary.scale.light
-      if (secondaryStyle === 'exact') {
+      // GREY IS FOR HANDS-OFF ONLY. The chip reads the EFFECTIVE posture, not secondaryStyle
+      // alone: an anchor now sends style 'exact' (it rides the hands-off ramp), and derived
+      // leaves whatever style was last picked in place — both used to inherit the grey Exact
+      // chip and stop looking like a colour at all. Matches the demo's `tone` logic.
+      const greyChip = secondaryMode === 'custom' && !secondaryArchetype && secondaryStyle === 'exact'
+      if (greyChip) {
         secondaryChip.style.background = '#ededf0'; secondaryChip.style.color = '#646464'; secondaryChip.style.borderColor = 'transparent'
-      } else if (secondaryStyle === 'outline') {
+      } else if (secondaryMode === 'custom' && secondaryStyle === 'outline') {
         secondaryChip.style.background = 'transparent'; secondaryChip.style.color = hxs(at(sl, 10)); secondaryChip.style.borderColor = hxs(at(sl, 8))
       } else {
-        secondaryChip.style.background = hxs(at(sl, 6)); secondaryChip.style.color = hxs(at(sl, 11)); secondaryChip.style.borderColor = 'transparent'
+        secondaryChip.style.background = hxs(at(sl, 6)); secondaryChip.style.color = hxs(at(sl, 10)); secondaryChip.style.borderColor = 'transparent'
       }
     }
     syncInfoLines()
@@ -465,14 +492,15 @@ secondaryPicker.addEventListener('input', () => {
   updatePreview()
 })
 
-// ONE select carries the whole offering (owner 2026-07-12): From primary / Custom (their
-// hex through the model) / Exact / Remove.
+// ONE select carries the whole offering (owner 2026-07-12, extended 2026-07-29): From primary /
+// Custom (their hex keeps the ramp, the button is a tint) / Exact / Remove / the six anchors.
 secondaryStyleSelect.addEventListener('change', () => {
   const v = secondaryStyleSelect.value
   if (v === 'from-primary') { setSecondaryMode('derived'); return }
   if (v === 'remove') {
     secondaryHex = null
     secondaryHexInput.value = ''
+    secondaryArchetype = null
     setSecondaryMode('off')
     return
   }
@@ -483,7 +511,16 @@ secondaryStyleSelect.addEventListener('change', () => {
     secondaryPicker.value = primaryHex
     secondarySwatch.style.background = primaryHex
   }
-  secondaryStyle = v as SecondaryStyle
+  // an anchor REPLACES Custom rather than stacking on it (owner 2026-07-29): the six names
+  // place the BUTTON, and Custom's tint owns the button, so both cannot apply. An anchor
+  // selects the hands-off ramp and pins the cta into its band. A posture pick clears it.
+  if (isArchetype(v)) {
+    secondaryArchetype = v
+    secondaryStyle = 'exact'
+  } else {
+    secondaryArchetype = null
+    secondaryStyle = v as SecondaryStyle
+  }
   setSecondaryMode('custom')
 })
 
@@ -736,12 +773,15 @@ reapplyBtn.addEventListener('click', () => {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
-// the six archetype anchors under the primary's mode select (source of truth: the engine)
+// the six archetype anchors under BOTH mode selects (source of truth: the engine — the count
+// is never hardcoded in the template, which carries an empty optgroup for each)
 for (const a of ARCHETYPES) {
-  const opt = document.createElement('option')
-  opt.value = a.name
-  opt.textContent = a.name
-  archetypeGroup.appendChild(opt)
+  for (const group of [archetypeGroup, secArchetypeGroup]) {
+    const opt = document.createElement('option')
+    opt.value = a.name
+    opt.textContent = a.name
+    group.appendChild(opt)
+  }
 }
 
 updatePreview()
