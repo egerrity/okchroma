@@ -60,9 +60,10 @@ export default function App() {
               renumbers the ink stops without a migration table for this plugin — see
               scripts/highlight-collapse-plan-2026-07-29.md §5. Anyone who updates an
               installed copy after that lands would orphan their Figma bindings.
-              NOTE: pages.yml still BUILDS and publishes plugin/install.html and
-              okchroma-plugin.zip — this removes the way in, not the artifact. Gate the
-              workflow too if the files must stop being reachable by URL. */}
+              The workflow was gated to match (2026-07-29): pages.yml no longer stages
+              install.html or okchroma-plugin.zip into the site, so the artifacts are
+              unreachable by URL too, not just unlinked. It still BUILDS the plugin —
+              a compile break is still a CI failure. */}
           <a className="app-navlink" href="https://github.com/egerrity/okchroma" target="_blank" rel="noreferrer" aria-label="View OKChroma on GitHub">
             <GithubMark /> GitHub
           </a>

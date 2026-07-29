@@ -62,9 +62,7 @@ your file as variables: **theme** + **mode** collections whose semantic tokens a
 shared primitives — per-brand ramps under `brand/<name>`, with neutrals and signals
 deduplicated across brands, light + dark values on every token.
 
-**Install** — from the Figma Community listing (search "OKChroma"; in review), or the
-**[early-access manual install](https://egerrity.github.io/okchroma/install.html)** — a
-one-minute walkthrough with an always-current download built from this repo. Or from source:
+**Install** — from source:
 
 ```bash
 npm install && npm run plugin:build
@@ -72,6 +70,13 @@ npm install && npm run plugin:build
 
 then Figma → Plugins → Development → **Import plugin from manifest** →
 `plugin/manifest.json`.
+
+> The hosted early-access download is **withdrawn** as of 2026-07-29. The scale changed
+> shape in that round — `highlight-9` and `on-highlight` were removed and the ink stops
+> renumbered — and this plugin does not yet carry the rename table that migrates an
+> existing Figma file across it, so updating an installed copy would orphan its variable
+> bindings. Building from source is unaffected: a fresh file gets the new shape correctly.
+> The enterprise (extended collections) plugin does carry the migration and is unaffected.
 
 **Use** — name the brand, pick a primary, and Apply. Optional before applying:
 

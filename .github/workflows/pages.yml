@@ -32,8 +32,10 @@ jobs:
       # Bundles the engine + demo and generates the token CSS into dist/.
       - run: npm run demo:build
 
-      # Builds the Figma plugin (manifest + dist bundle) — zipped below for the
-      # early-access manual-install page, always current with main.
+      # Builds the public Figma plugin. It is NO LONGER PUBLISHED (owner 2026-07-29 —
+      # see the packaging step below), but the build stays in CI: it bundles the engine,
+      # so a compile break here is a real break, and the collapse plan requires the
+      # public plugin to keep compiling even while it carries no migration table.
       - run: npm run plugin:build
 
       # Builds plugin v2 (extended collections, unlisted for now) — zipped below
@@ -52,16 +54,20 @@ jobs:
           cp demo/favicon.png _site/favicon.png
           sed 's#\.\./dist/#dist/#g; s#\.\./tokens/#tokens/#g' demo/index.html > _site/index.html
 
-      # Early-access plugin install: /install.html + /okchroma-plugin.zip.
-      # The zip unpacks to ONE folder holding exactly what Figma's "Import
-      # plugin from manifest" needs — manifest.json beside its dist/ bundle.
-      - name: Package plugin for manual install
+      # THE PUBLIC PLUGIN IS NO LONGER PUBLISHED (owner 2026-07-29). /install.html and
+      # /okchroma-plugin.zip are gone from the site; the demo's install link went with
+      # commit 053d4b6. The reason is the 2026-07-29 highlight collapse (CATALOG C33):
+      # the token shape changed — highlight-9 and on-highlight deleted, every ink name
+      # renumbered down — and the public plugin ships WITHOUT the RENAMED_LEAVES entries
+      # that migrate a Figma file across that change. Republishing it would hand anyone
+      # who re-downloads a plugin that orphans their existing bindings. `plugin/` still
+      # BUILDS above; it just does not ship. Restoring publication means writing the
+      # migration table first (collapse plan, phase 4) — not re-adding these two lines.
+      #
+      # The zip below unpacks to ONE folder holding exactly what Figma's "Import plugin
+      # from manifest" needs — manifest.json beside its dist/ bundle.
+      - name: Package the extended plugin for manual install
         run: |
-          mkdir -p stage/okchroma-plugin/dist
-          cp plugin/manifest.json stage/okchroma-plugin/
-          cp plugin/dist/plugin-code.js plugin/dist/plugin-ui.html stage/okchroma-plugin/dist/
-          (cd stage && zip -rq ../_site/okchroma-plugin.zip okchroma-plugin)
-          cp plugin/install.html _site/install.html
           mkdir -p stage/okchroma-extended/dist
           cp plugin-ext/manifest.json stage/okchroma-extended/
           cp plugin-ext/dist/plugin-ext-code.js plugin-ext/dist/plugin-ext-ui.html stage/okchroma-extended/dist/
