@@ -261,6 +261,10 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     return cells.join('')
   }
 
+  // the grid's column count FOLLOWS THE SCALE (see .matrix in ui-template.html): one ID
+  // cell, one per stop, then the cta and cta-ink trios. Derived, never written down — a
+  // stop change must not be able to knock the rows out of alignment again.
+  matrixEl.style.setProperty('--mx-cols', String(1 + nScale.light.length + 3 + 3))
   matrixEl.innerHTML = rows.map(rowHtml).join('')
 }
 

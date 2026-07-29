@@ -145,7 +145,7 @@ body {
   box-shadow: 0 1px 3px rgba(0,0,0,.12), 0 0 0 1px rgba(0,0,0,.04);
 }
 
-/* the Include-APCA checkbox line (under the preview seg) */
+/* checkbox lines (cta-escape, full-chroma) */
 .check-line {
   display: flex; align-items: center; gap: 6px; margin-top: 8px;
   font-size: 12px; font-weight: 600; color: #1a1a1a; cursor: pointer; user-select: none;
@@ -171,7 +171,12 @@ body {
 .divider { height: 1px; background: #f0f0f0; margin: 14px -16px; }
 .matrix {
   display: grid; gap: 4px; align-items: center;
-  grid-template-columns: 62px repeat(18, 1fr); /* ID + 11 stops + cta trio + cta-ink trio */
+  /* label + ID + the scale's stops + cta trio + cta-ink trio. The count is SET FROM JS
+     (--mx-cols, renderMatrix) because it follows the scale: it was hardcoded 18 for an
+     11-stop scale, and the 2026-07-29 highlight collapse took the scale to 10, which left
+     every row one column short and pushed the family labels out of alignment. The fallback
+     is today's 17 = 1 ID + 10 stops + 3 + 3. */
+  grid-template-columns: 62px repeat(var(--mx-cols, 17), 1fr);
 }
 .mx-label { font-size: 11px; font-weight: 700; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mx-cell { height: 26px; border-radius: 5px; }
@@ -223,7 +228,7 @@ body {
 <body>
 
 <div style="margin-bottom:14px;padding:8px 10px;background:#f6f6f7;border:1px solid #ececec;border-radius:7px;font-size:11px;color:#666;line-height:1.4;">
-  <b>theme</b> is the base collection — bind these. Its modes are the solve columns: <b>wcag · wcag-dark</b> always; <b>apca · apca-dark</b> when “Include APCA” is on (or already in the file). Each brand becomes one <b>extension</b>, overriding only what differs. Needs a Figma <b>Enterprise</b> org (extended collections).
+  <b>theme</b> is the base collection — bind these. Its modes are the two schemes, <b>light · dark</b>, solved in the WCAG lane. Each brand becomes one <b>extension</b>, overriding only what differs. Needs a Figma <b>Enterprise</b> org (extended collections). Applying to a file made before July 2026 renames its <b>wcag · wcag-dark</b> columns in place — the modes keep their ids, so bindings survive.
 </div>
 
 <div class="section">
