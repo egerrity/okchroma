@@ -1,8 +1,32 @@
-# Handoff — the highlight band round, and four things it left open
+# Handoff — the highlight band round, and five things it left open
 
 Written 2026-07-28 at the end of the session that landed C29–C31. Everything below is
 measured through the real pipeline (`resolveBrand` / `signalScalesFor` → emitters), not
 inferred. Branch `demo/presentation-polish`, all three commits pushed.
+
+---
+
+## Where the session stopped, and what order the open items want
+
+**The live thread is Open 2, the vivid lift.** Shipped vs hidden vs un-gated is measured
+(hidden is *worse* than shipped); the only thing left is running `sweep:collision` against
+an un-gated build to see whether it breaches `RED_ONHUE_ACCEPTED_FLOOR`. That is one
+command and needs no decision from the owner. Resume there.
+
+**The five items are NOT independent.** Two real dependencies:
+
+- **1 before 3.** Open 1 fixes the dark band inheriting hue from its light twin. Open 3
+  moves the light washes, which propagate through that same carry — fixing the leak first
+  keeps Open 3 from dragging dark hue smoothness around behind it.
+- **2 and 3 interact.** Open 2 changes wash *chroma*; Open 3 changes wash *placement*. But
+  chroma feeds `meanBoost`, which feeds the H-K placement — so Open 2 moves lightness as a
+  side effect, and Open 3 would delete that feedback path entirely. Whichever lands second
+  is measured against a baseline the first one moved.
+
+**Open 4 and 5 are genuinely independent** — both blocked on the owner's eye, not on any
+other item. Slot them in whenever there is an exhibit to look at.
+
+Sane order: **2 → 1 → 3**, with 4 and 5 any time.
 
 ---
 
