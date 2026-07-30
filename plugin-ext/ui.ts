@@ -780,6 +780,10 @@ reapplyBtn.addEventListener('click', () => {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
+// the roster button's count, from the roster itself — the template used to hardcode
+// "(16 brands)", which would have gone stale the first time an entry was added or retired
+rosterBtn.textContent = `Apply test roster (${ROSTER.length} brands)`
+
 // the six archetype anchors under BOTH mode selects (source of truth: the engine — the count
 // is never hardcoded in the template, which carries an empty optgroup for each)
 for (const a of ARCHETYPES) {

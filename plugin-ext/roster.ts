@@ -39,10 +39,14 @@ export interface RosterEntry {
   // A real secondary the bulk action APPLIES (activated 2026-07-07 — fis is the
   // group-add exerciser: the batch's first apply flips the base's secondary posture on).
   secondaryHex?: string
-  // The secondary's render mode (the 2026-07-13 offering): 'default' = FROM BRAND — the hex
-  // runs through the derived model (lift transform, lands lighter than the primary); 'exact'
-  // ships the hex as-is. Omitted falls to the engine's supplied-hex default ('exact'), so
-  // roster entries carry the style explicitly.
+  // The secondary's render mode. NOTE THE OVERLOADED ID: `'default'` means the DERIVED posture
+  // when no secondary is supplied at all, and the UI's "Custom" chip when one is — the id was
+  // kept across the 2026-07-29 rename so stored recipes replay unchanged. With a hex present,
+  // as every entry below has, it therefore selects CUSTOM: the supplied colour keeps the whole
+  // ramp (byte-identical to exact) and only the cta is a tint of it (C36, Reading B). It no
+  // longer runs the lift over the whole ramp, which is what this comment used to describe.
+  // `'exact'` ships the hex as its own cta too. Omitting the field falls to 'exact', so the
+  // entries below carry the style explicitly.
   secondaryStyle?: SecondaryStyle
   note: string
 }

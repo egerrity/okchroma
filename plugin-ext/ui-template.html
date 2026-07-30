@@ -334,7 +334,10 @@ body {
 <div class="matrix" id="matrix"></div>
 
 <button class="apply-btn" id="apply-btn">Apply to Figma</button>
-<button class="roster-btn" id="roster-btn" title="Applies the edge-case brand set — one extension per roster entry, all solve columns. Ignores the fields above.">Apply test roster (16 brands)</button>
+<!-- the count is SET FROM JS at init (ui.ts, from ROSTER.length) — it was hardcoded and would
+     have gone stale the first time an entry was added or retired, the same way the matrix's
+     column count and three post-C33 reporters did. -->
+<button class="roster-btn" id="roster-btn" title="Applies the edge-case brand set — one extension per roster entry, all solve columns. Ignores the fields above.">Apply test roster</button>
 <div class="status" id="status"></div>
 
 <div style="margin-top:10px;text-align:center;display:flex;gap:14px;justify-content:center">
