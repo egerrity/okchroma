@@ -54,7 +54,10 @@ export function withProfile(spec: ModeSpec, profile: ContrastProfile, lcMap: LcM
     stops: spec.stops.map((s): StopReq => (s.require ? { ...s, require: toApca(s.require, lcMap) } : s)),
     ons: {
       ...spec.ons,
-      onFill: { ...spec.ons.onFill, enforceLc: CTA_ONFILL_ENFORCE_LC },
+      // the ratio floor is STRIPPED here, as spec.ts always documented it would be — the apca
+      // law is the Lc bar. Until onFill gained a floor (2026-07-29) there was nothing to strip,
+      // so the promise had never been implemented.
+      onFill: { ...spec.ons.onFill, enforceLc: CTA_ONFILL_ENFORCE_LC, ratioFloor: undefined },
     },
   }
 }

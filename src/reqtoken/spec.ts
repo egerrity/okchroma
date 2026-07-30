@@ -168,7 +168,14 @@ const T10: Require = { metric: 'wcag', against: 'paper-2', target: INK_10_CONTRA
 // carried a solved value. Its successor is a declaration in the semantic layer —
 // `-fg-on-emphasis` → --paper-0 — measured at worst 4.96 (light) / 8.04 (dark) against
 // ink-9 over the 360-seed agnostic sweep. Only the cta still solves its own text pole.
-const ONS = { onFill: { metric: 'apca-pole', enforce: true, coEnforceLc: 60 } as OnReq }
+// onFill CARRIES THE POLE FLOOR (owner 2026-07-29). It was the one requirement without a
+// `ratioFloor`, on the reasoning recorded above — "onFill's floor is the ENFORCEMENT itself
+// (the fill re-solves to 4.5-white)". That reasoning fails wherever the fill is not allowed to
+// move: `exact` turns enforcement off to ship the typed hex, and with no pole floor the label
+// simply missed 4.5 (22 of 31 shipped brand secondaries did, dark 2.54-2.97:1). Declaring the
+// floor makes the POLE carry legality — measured sufficient, a flip alone reaches 4.5 on 240/240
+// agnostic seeds and 62/62 brand-secondary lanes with the fill left on the hex.
+const ONS = { onFill: { metric: 'apca-pole', enforce: true, ratioFloor: 4.5, coEnforceLc: 60 } as OnReq }
 
 // paper/wash separation is a PROPERTY OF THE LIGHT_L SHAPE, not a runtime delta (owner 2026-07-09,
 // render/paper2-distributions.html, distribution "B"). The near-white ladder's gaps grow geometrically

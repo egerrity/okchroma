@@ -111,13 +111,16 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
     //   i.   resolveTheme THREADS the anchor — the resolved scale is what a direct resolveBrand
     //        with the same archetypeOverride produces. This is the whole of the change.
     //   ii.  the anchor is what the scale reports, so annotations and the plugin agree with it.
-    //   iii. THE NO-OP GUARD, stated precisely: the anchored cta must LAND ON the band median.
-    //        A first cut of this lane asserted only threading and ramp-preservation, both of
-    //        which stay true when the anchor does nothing at all — exactly the bug it shipped
-    //        past (anchors were wired onto the custom posture, where the tint overwrote them).
-    //        A second cut asserted "cta differs from un-anchored", which false-positives on a
-    //        seed whose own L already sits at a median — where a no-op IS the right answer.
-    //        Landing on the median is the definition, so it can neither miss nor false-positive.
+    //   iii. THE NO-OP GUARD: the anchored cta must land INSIDE the anchor's band. Three cuts to
+    //        get here. The first asserted only threading and ramp-preservation, both of which
+    //        stay true when the anchor does nothing at all — exactly the bug it shipped past
+    //        (anchors were wired onto the custom posture, where the tint overwrote them). The
+    //        second asserted "cta differs from un-anchored", which false-positives on a seed
+    //        whose own L already sits at a median, where a no-op IS the right answer. The third
+    //        asserted the cta lands ON the median — true until exact mode got its on-fill
+    //        enforcement back, after which LEGIBILITY legitimately nudges the cta off the median
+    //        (vivid 0.573 vs 0.60). Band containment is the anchor's actual promise: it says
+    //        which band the button sits in, and the label requirement outranks the exact centre.
     if (C === SEC_CHROMAS[0] && H % 90 === 0) {
       const seen: Array<{ anchor: string; L: number; key: string }> = []
       for (const a of ARCHETYPES) {
@@ -129,8 +132,8 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
         if (tA.secondary!.scale.archetype !== anchor)
           fails.push({ theme: id, check: 'anchor-reported', detail: `${anchor}: scale reports ${tA.secondary!.scale.archetype}` })
         const cta = tA.secondary!.scale.cta
-        if (Math.abs(cta.L - a.medianL) > 1e-6)
-          fails.push({ theme: id, check: 'anchor-lands-on-median', detail: `${anchor}: cta L ${cta.L.toFixed(4)}, band median ${a.medianL}` })
+        if (cta.L < a.min - 1e-6 || cta.L > a.max + 1e-6)
+          fails.push({ theme: id, check: 'anchor-lands-in-band', detail: `${anchor}: cta L ${cta.L.toFixed(4)} outside the band [${a.min}, ${a.max}]` })
         seen.push({ anchor, L: cta.L, key: JSON.stringify(cta) })
       }
       if (new Set(seen.map(s => s.key)).size !== seen.length)

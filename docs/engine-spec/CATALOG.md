@@ -1956,3 +1956,53 @@ widest seam in the dark ramp. The earlier finding that only a 150% ink ceiling s
 band-order invariant PREDATES C35 and must be re-measured, not reused.
 
 Ten gates green.
+
+## C38 — THE POLE CARRIES LEGALITY, SO THE EXACT CTA CAN BE THE HEX
+
+Owner-caught, 2026-07-29, reviewing C36: *"exact mode isn't supposed to be turning off on fill
+enforcement, it is just supposed to not do any collision avoidance"* — then, on the first
+attempt: *"you should be making the cta literally the hex color, where is it changing?"*
+
+Both statements are right, and together they were incompatible with the declared architecture.
+`resolve.ts` read `enforceOnFillContrast: !opts?.exact`, and for `onFill` the enforcement IS the
+fill re-solve — spec.ts said so outright: *"onFill's floor is the ENFORCEMENT itself (the fill
+re-solves to 4.5-white)"*. So exact had a choice of two wrongs: keep the hex and ship an
+illegible label, or enforce and move the hex. It kept the hex.
+
+WHAT THAT COST, measured through resolveTheme: **22 of the 31 shipped brands** had a secondary
+whose on-cta label missed 4.5:1 — dark almost universally, 2.54–2.97:1, plus light on ube-latte
+2.78, peppermint 3.14, espresso 3.28. Brands carry a real `secondaryHex` with no style, and
+`secStyle` defaults to `'exact'`, so the whole fleet's secondaries went down the hands-off path.
+Agnostic 240-seed sweep: 45 light + 142 dark failures.
+
+THE RESOLUTION IS THE NEUTRAL'S LAW, which colorEngine already stated for the scale-fed cta:
+*"the fill can't re-solve, so the pole flips."* `onFill` was the one requirement with no
+`ratioFloor`; it now declares 4.5, `withProfile('apca')` strips it (as spec.ts always claimed it
+would — there had never been a floor to strip), and the floor is applied at THE FILL THAT SHIPS,
+after every move has settled. Measured sufficient and free: a pole flip alone reaches 4.5 on
+240/240 agnostic seeds and 62/62 brand-secondary lanes, and the exact cta now holds the typed hex
+on 240/240 seeds — max movement 0.0000 — with zero label failures in either lane.
+
+THE FIRST TWO ATTEMPTS WERE BOTH WRONG, recorded because the shape of the error is the lesson.
+(1) `enforceOnFillContrast: true` for exact fixed legibility by MOVING THE HEX — 87/240 seeds,
+which is what the owner caught. (2) Flooring the PRE-ENFORCEMENT pole instead: that boolean is an
+INPUT to the fill solve (`ctaLightL` darkens for white, `apcaClearance` lightens for black), so
+flooring it early re-routed the chain and rewrote brands that were already legal — matcha
+`#00873f` white 4.60:1 → `#53c877` black, dragonfruit `#d52f83` → `#ff91bd`, signal:red moved
+too. Seven scales drifted and `audit:ext` went to 67 changes. The floor only belongs where the
+fill is final.
+
+IT IS A REPAIR, NOT A PREFERENCE. The check flips the pole only when the chosen one misses the
+floor AND the other clears it — deliberately narrower than `onTextIsWhite`'s own ratioFloor
+branch, which flips whenever the chosen pole misses, including into a pole that also misses. So
+it is inert for every fill whose label already passes, which is why the fleet holds still.
+
+BLAST RADIUS: `audit:ext` only, 28 override-set changes, every one `brand-secondary/cta/on` — 22
+dark gain the override, 6 light LOSE it because their pole now matches the base. Zero lines of
+that snapshot changed on any other path. Brand primaries, signals, divergence and smoothness all
+clean; nine gates needed no bless.
+
+STILL OPEN, and it is the other half of the owner's question: `apcaClearance` (`coEnforceLc` 60)
+moves the exact fill independently of any of this — 42 of 240 seeds, APCA driving a decision in
+the WCAG lane. It is owner-blessed (C18, the 2026-07-13 dead-zone ruling) and untouched here, but
+it is the remaining reason an exact cta is ever not the typed hex.

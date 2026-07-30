@@ -275,9 +275,13 @@ export function placeLightText(
 
 // ---- on-fill (light), PRE-enforcement: judged at fill9 = the brand fill at scaleL (colorEngine.ts:271–273).
 // `enforce` resolves at the call site: caller opts override the spec's declared default.
-export function onFillIsWhiteLight(ctx: Ctx, enforce: boolean): boolean {
+// `ratioFloor` (owner 2026-07-29): the wcag conformance floor on the POLE. It matters most where
+// the fill cannot move — exact mode ships the typed hex, so a failing preferred pole has to flip
+// rather than drag the fill. Where the fill CAN move, flooring the pole here also means the flip
+// happens INSTEAD of the re-solve, since ctaLightL feeds from this boolean.
+export function onFillIsWhiteLight(ctx: Ctx, enforce: boolean, ratioFloor?: number): boolean {
   const fill9ApcaY = apcaYAt(ctx.scaleL, clampChromaToGamut(ctx.scaleL, ctx.cAt('light', ctx.scaleL, ctx.brandC), ctx.brandH), ctx.brandH)
-  return onTextIsWhite(fill9ApcaY, ctx.scaleL, ctx.brandC, ctx.brandH, enforce)
+  return onTextIsWhite(fill9ApcaY, ctx.scaleL, ctx.brandC, ctx.brandH, enforce, ratioFloor)
 }
 
 // (onHighlightIsWhiteAt DELETED with the on-highlight token, owner 2026-07-29 — ink-9's

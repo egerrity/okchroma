@@ -342,6 +342,10 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   // APCA legibility clearance (opt-in, default off → byte-identical): wcag lane only (enforceLc undefined),
   // under opts.apcaClearance — the second Lc bar the cta fill must also clear, alongside the 4.5 floor.
   const coLc = ctx.opts?.apcaClearance && enforceLc === undefined ? spec.ons.onFill.coEnforceLc : undefined
+  // the declared pole floor — wcag lane only (withProfile strips it for apca, whose law is the
+  // Lc bar). One source for every on-fill pole judgement in this function, replacing the lone
+  // hardcoded 4.5 at the light post-move re-judge.
+  const onFloor = enforceLc !== undefined ? undefined : spec.ons.onFill.ratioFloor
   let cta: ResolvedRole, ctaHover: ResolvedRole, ctaPressed: ResolvedRole, onFillIsWhite: boolean
   if (mode === 'light') {
     // on-fill judged PRE-enforcement at fill9 (:271–273); the enforce re-solve feeds FROM it (:354–358)
@@ -422,7 +426,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       // move itself delivers a passing pole (solveBrandExit's poleOk), preference picks it.
       onFillIsWhite = onFillIsWhiteDarkAt(cta.L, cta.C, cta.H,
         enforceLc !== undefined ? false : onFillEnforce,
-        enforceLc !== undefined ? undefined : 4.5)
+        onFloor)
     }
   } else {
     // dark: base cta from the pre-resolved anchor; judge on-fill at the emitted base; then the enforce re-solve
@@ -483,6 +487,27 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
           enforceLc !== undefined ? undefined : 4.5)
       }
     }
+  }
+
+  // ---- THE FINAL POLE FLOOR (owner 2026-07-29: "exact isn't supposed to be turning off on
+  // fill enforcement, it is just supposed to not do any collision avoidance" + "you should be
+  // making the cta literally the hex color"). Judged at THE FILL THAT SHIPS, after every move
+  // above has settled, and it is a REPAIR not a preference: it flips only when the chosen pole
+  // misses the floor AND the other pole clears it. So it is inert for every fill whose label
+  // already passes — the whole shipped fleet — and it is the only thing standing between a
+  // hands-off `exact` cta and an illegible label, because exact takes no move at all.
+  //
+  // It must live HERE, not on the pre-enforcement judgement: that boolean is an INPUT to the
+  // fill solve (ctaLightL darkens for white; apcaClearance lightens for black), so flooring it
+  // early re-routed the whole chain and rewrote passing brands — matcha's cta went #00873f
+  // (white, 4.60:1) → #53c877 (black), dragonfruit #d52f83 → #ff91bd. Both were already legal.
+  //
+  // Deliberately narrower than onTextIsWhite's own ratioFloor branch, which flips whenever the
+  // chosen pole misses — including into a pole that also misses. This one checks the landing.
+  if (onFloor !== undefined) {
+    const chosen = legalRatio(cta.L, cta.C, cta.H, onFillIsWhite ? 1.0 : 0)
+    const other = legalRatio(cta.L, cta.C, cta.H, onFillIsWhite ? 0 : 1.0)
+    if (chosen < onFloor && other >= onFloor) onFillIsWhite = !onFillIsWhite
   }
 
   // ---- the CTA-INK trio (owner respec 2026-07-16): the family's 4.5 text-register cta —
