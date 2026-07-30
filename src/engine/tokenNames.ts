@@ -30,6 +30,11 @@ const SHARED_NAMES: Record<number, string> = {
   10: 'ink-10',
 }
 
+// How many stops a ramp array carries — DERIVED from the name table, so a band collapse or a
+// renumber updates it for free. Added 2026-07-29 because gamut-sweep hardcoded `!== 11` and had
+// been failing "MALFORMED … light=10 dark=10" on every seed since C33 took the scale to 10.
+export const SCALE_STOP_COUNT = Object.keys(SHARED_NAMES).length
+
 export function stopTokenName(stop: number): string {
   const name = SHARED_NAMES[stop]
   if (!name) throw new Error(`stopTokenName: unexpected stop ${stop}`)

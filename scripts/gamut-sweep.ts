@@ -18,6 +18,7 @@ import { generateScale } from '../src/engine/colorEngine'
 import { clampChromaToGamut, oklchToLinearRgb } from '../src/engine/constraints'
 import { resolveBrand, SIGNAL_SCALES } from '../src/engine/resolve'
 import { RED_GATE, redGateDist, checkCollision, checkHueCollision } from '../src/engine/collision'
+import { SCALE_STOP_COUNT } from '../src/engine/tokenNames'
 
 function oklchToHex(L: number, C: number, H: number): string {
   const c = clampChromaToGamut(L, C, H)
@@ -53,11 +54,15 @@ for (const H of HUES) {
       try {
         const r = resolveBrand(hex, 'sweep')
 
-        // 1. structural sanity
+        // 1. structural sanity. The expected count is DERIVED from the token table
+        // (SCALE_STOP_COUNT), not written here: this asserted a literal 11 and so failed
+        // "MALFORMED … light=10 dark=10" on every seed from C33's highlight collapse onward —
+        // the whole sweep was red for that reason alone, which is why it fails loud but had
+        // stopped saying anything useful.
         const all = [...r.scale.light, ...r.scale.dark]
-        if (r.scale.light.length !== 11 || r.scale.dark.length !== 11 || all.some(s => !isFinite(s.L) || !isFinite(s.r))) {
+        if (r.scale.light.length !== SCALE_STOP_COUNT || r.scale.dark.length !== SCALE_STOP_COUNT || all.some(s => !isFinite(s.L) || !isFinite(s.r))) {
           crashed++
-          console.error(`MALFORMED at ${hex}: light=${r.scale.light.length} dark=${r.scale.dark.length}`)
+          console.error(`MALFORMED at ${hex}: light=${r.scale.light.length} dark=${r.scale.dark.length} (expected ${SCALE_STOP_COUNT} each)`)
           continue
         }
 
