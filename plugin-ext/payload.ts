@@ -21,6 +21,7 @@
 import { resolveTheme, signalScalesFor, type ResolvedTheme } from '../src/engine/resolve'
 import { themeToFigma, type FigmaGroup, type FigmaColorToken } from '../src/engine/figmaRender'
 import { SIGNALS } from '../src/engine/signals'
+import { CTA_BORDER_ALPHA } from '../src/engine/cssRender'
 import type { ContrastProfile, NeutralLevel } from '../src/engine/colorEngine'
 
 export interface FlatTok { path: string; r: number; g: number; b: number; a?: number }
@@ -86,6 +87,11 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
     { path: 'system/abs-white', ...W },
     { path: 'system/alpha/transparent', ...W, a: 0 },
     { path: 'system/alpha/scrim', ...K, a: 0.6 },
+    // the decorative cta stroke (owner 2026-07-29): 12% black in light, flipped to WHITE in
+    // dark. Unlike the shadow set below it does NOT scale up in dark — a stroke sits on the
+    // fill rather than bleeding into the ground, and 12% was confirmed in both directions.
+    // Brand-independent, so it stays a base row and costs no per-brand overrides.
+    { path: 'system/alpha/cta-border', ...(dark ? W : K), a: CTA_BORDER_ALPHA },
     { path: 'system/alpha/shadow-04', ...K, a: dark ? 0.32 : 0.04 },
     { path: 'system/alpha/shadow-08', ...K, a: dark ? 0.48 : 0.08 },
     { path: 'system/alpha/shadow-12', ...K, a: dark ? 0.64 : 0.12 },

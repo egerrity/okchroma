@@ -1,7 +1,7 @@
 {
  "base": {
-  "light": 140,
-  "dark": 140
+  "light": 141,
+  "dark": 141
  },
  "brands": {
   "dark-roast": {
@@ -4108,6 +4108,7 @@
     "brand-secondary/cta-ink/enabled",
     "brand-secondary/cta-ink/hover",
     "brand-secondary/cta-ink/pressed",
+    "brand-secondary/cta/border",
     "brand-secondary/cta/enabled",
     "brand-secondary/cta/hover",
     "brand-secondary/cta/pressed",

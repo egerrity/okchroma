@@ -2006,3 +2006,62 @@ STILL OPEN, and it is the other half of the owner's question: `apcaClearance` (`
 moves the exact fill independently of any of this — 42 of 240 seeds, APCA driving a decision in
 the WCAG lane. It is owner-blessed (C18, the 2026-07-13 dead-zone ruling) and untouched here, but
 it is the remaining reason an exact cta is ever not the typed hex.
+
+## C38 — THE CTA-BORDER SAFETY: A DECORATIVE STROKE FOR FILLS THAT VIBRATE
+
+Owner-requested, 2026-07-29: *"when a cta is below 3:1 is it possible for us to check it and alias
+the next darkest stroke to it's cta border? right now they are all sitting at transparent."* This
+reverses the 2026-07-04 removal of the conditional gate (*"filled is filled"*) — knowingly, and on
+a different basis: it is **not** a conformance requirement. Her framing: *"it's a safety … maybe I
+overstated it. This is for buttons who are so light or so vibrant that they vibrate against the
+background instead of sitting on it."* No WCAG claim is made or implied.
+
+THE TRIGGER IS A LIGHTNESS TEST. It took three passes to land, and the wrong turns are worth
+recording because each was a plausible misreading of "below 3:1":
+  · **3:1 vs paper-3** — the first build. Wrong: she was not describing a contrast requirement.
+  · **≈1:1 vs paper-3** — measured, and no seed in the fleet is within 1.15:1 of paper-3, so it
+    would have fired on nothing.
+  · **cta.L ≥ paper-3.L** — her literal correction, and it INVERTED: 0/186 light, 62/62 dark. In
+    light mode paper-3 is the darkest paper and the pale vibrating fills are darker still
+    (`#f1e1c8` cta against a `#fcf2e1` paper-3), so the rule excluded exactly its targets.
+
+The landed rule, mode-mirrored on her mark:
+
+```
+light: cta.L >= wash-5.L     — vibrates by being too LIGHT, like another sheet of paper
+dark:  cta.L <= wash-5.L     — dark surfaces are dark, so it vibrates by being too DARK
+```
+
+WHY WASH-5, derived from her own data point rather than picked. She said *"the neutral button as
+is falls in this category"*, and the neutral's cta rests exactly on stop 4 (L 0.9216) — paper-3
+sits at 0.9479 and misses it. wash-5 also satisfies her second constraint, that this *"mostly
+[affects] secondaries"*: a custom secondary's tinted cta lands at L ≈ 0.89, just UNDER wash-4, so
+over pale agnostic seeds wash-4 catches 0/96 custom secondaries where wash-5 catches 81/96.
+Verified through the shipped helper: neutral BOTH modes, 0/31 primaries, 0/31 exact secondaries.
+
+THE STROKE IS AN ALPHA, NOT A RAMP STOP — 12% black in light, flipped to WHITE in dark, confirmed
+on her Figma screenshot of both frames. This was the last thing settled and it mattered more than
+it looked: a family-relative source (highlight-8, the outline secondary's precedent) made the
+NEUTRAL's border brand-hue-tinted, so it differed per brand and cost **88 new per-brand
+overrides**. The brand-independent alpha stays a base row and costs **1**. It also cannot fight
+the fill's hue, which a same-family wash stop can. Unlike the shadow set (4/8/12% black in light →
+32/48/64% in dark, because near black a light alpha vanishes) this does NOT scale up: a stroke
+sits ON the fill rather than bleeding into the ground.
+
+BOTH STATES ARE ALIASES, NEVER RAW (owner: *"the rest of them should get aliased to the transparent
+variable instead of being raw"*). New `system/alpha/cta-border` row beside `system/alpha/transparent`;
+CSS gains `--alpha-cta-border` / `--alpha-transparent` at the engine's one global `:root`, emitted
+per scheme because the stroke is scheme-divergent. figmaRender's banner had claimed this aliasing
+already happened — it never did. Both rows are created in the early alias-target pass with the abs
+poles, because `ensure()` registers into `baseVars` as it creates and a target created later in
+payload order would silently fall back to a raw write.
+
+Layout never shifts: components already carried `border: 1.5px solid var(...-cta-border)`
+unconditionally against the transparent value, which is why the token survived 2026-07-04.
+
+BLAST RADIUS: `audit:ext` only — base token count 140 → 141 (the new row) and ONE roster entry
+gaining `brand-secondary/cta/border`. Nine gates needed no bless. Demo untouched, per her
+instruction. Both plugins rebuilt and the extended UI re-verified in a browser.
+
+TRAP FOUND: `npm run generate` runs `node dist/build-script.js` — a PREBUILT bundle. It will
+silently emit from stale engine source. Use `npm run build`, which bundles first.

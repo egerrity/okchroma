@@ -1,6 +1,6 @@
 
 
-import { toHex } from './cssRender'
+import { toHex, ctaNeedsBorder, CTA_BORDER_ALPHA } from './cssRender'
 import { srgbEmitChannels } from './colorMath'
 import { stopTokenName, tokenOrder } from './tokenNames'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
@@ -18,6 +18,17 @@ export type FigmaGroup = { [key: string]: FigmaColorToken | FigmaGroup }
 const TRANSPARENT_TOKEN: FigmaColorToken = {
   $type: 'color',
   $value: { colorSpace: 'srgb', components: [0, 0, 0], alpha: 0, hex: '#000000' },
+}
+
+// the decorative cta stroke (owner 2026-07-29): 12% black in light, flipped to white in dark.
+// Scheme-divergent, brand-independent — the plugin aliases both this and TRANSPARENT_TOKEN onto
+// their system/alpha/* rows, so a cta-border is never a raw write in either state.
+const CTA_BORDER_TOKEN = (mode: 'light' | 'dark'): FigmaColorToken => {
+  const c = mode === 'light' ? 0 : 1
+  return {
+    $type: 'color',
+    $value: { colorSpace: 'srgb', components: [c, c, c], alpha: CTA_BORDER_ALPHA, hex: mode === 'light' ? '#000000' : '#ffffff' },
+  }
 }
 
 // D6: Figma always receives the sRGB clamp-down — gamut-mapped (chroma-reduce at
@@ -83,6 +94,11 @@ function rampGroup(
     identityHex?: string
     cta?: ColorStop; ctaHover?: ColorStop; ctaPressed?: ColorStop
     ctaInk?: ColorStop; ctaInkHover?: ColorStop; ctaInkPressed?: ColorStop
+    // the already-resolved border token — the decorative alpha stroke when this cta vibrates,
+    // else transparent. Resolved by the caller because the choice is mode-dependent and
+    // rampGroup has no mode. Both outcomes are ALIAS targets on the plugin side
+    // (system/alpha/cta-border | system/alpha/transparent), so neither is ever a raw write.
+    ctaBorder?: FigmaColorToken
   },
 ): FigmaGroup {
   const g: FigmaGroup = {}
@@ -99,10 +115,12 @@ function rampGroup(
   if (extra?.ctaInk) putLeaf(g, 'cta-ink', colorFromStop(extra.ctaInk))
   if (extra?.ctaInkHover) putLeaf(g, 'cta-ink-hover', colorFromStop(extra.ctaInkHover))
   if (extra?.ctaInkPressed) putLeaf(g, 'cta-ink-pressed', colorFromStop(extra.ctaInkPressed))
-  // cta/border pairs with the cta family, TRANSPARENT everywhere (the conditional gate is gone —
-  // owner 2026-07-04): the token stays for components + a future high-contrast re-solve; the
-  // outline secondary override is the only resolver (→ its own highlight/8).
-  if (extra?.cta) putLeaf(g, 'cta-border', TRANSPARENT_TOKEN)
+  // cta/border pairs with the cta family: the SAFETY STROKE when the fill would vibrate against
+  // the background rather than sit on it (owner 2026-07-29, superseding the 2026-07-04 "filled is
+  // filled" removal), else transparent. The rule lives in cssRender.ctaBorderStop so both
+  // emitters decide identically. The outline secondary still overrides this with its own
+  // highlight/8 unconditionally — there the border is the button's identity, not a safety.
+  if (extra?.cta) putLeaf(g, 'cta-border', extra.ctaBorder ?? TRANSPARENT_TOKEN)
   putLeaf(g, 'on-cta', colorFromHex(onFillWhite))
   if (extra?.identityHex) g['identity'] = colorFromHexString(extra.identityHex)
   return g
@@ -143,10 +161,16 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
   const secondaryOnFillLight = input.secondary ? input.secondary.onFillTextIsWhite : scale.onFillTextIsWhite
   const secondaryOnFillDark = input.secondary ? input.secondary.onFillTextIsWhiteDark : scale.onFillTextIsWhiteDark
 
-  // the full cta family per mode — one helper, every family call-site rides it
-  const ctaFamily = (s: GeneratedScale, mode: 'light' | 'dark') => (mode === 'light'
-    ? { cta: s.cta, ctaHover: s.ctaHover, ctaPressed: s.ctaPressed, ctaInk: s.ctaInk, ctaInkHover: s.ctaInkHover, ctaInkPressed: s.ctaInkPressed }
-    : { cta: s.ctaDark, ctaHover: s.ctaHoverDark, ctaPressed: s.ctaPressedDark, ctaInk: s.ctaInkDark, ctaInkHover: s.ctaInkHoverDark, ctaInkPressed: s.ctaInkPressedDark })
+  // the full cta family per mode — one helper, every family call-site rides it.
+  // ctaBorder rides here too (owner 2026-07-29) so brand, secondary, neutral AND the signals
+  // all get the safety stroke from one decision — see cssRender.ctaBorderStop, which owns the
+  // rule (cta under 3:1 vs paper-3 → that family's highlight-8, else transparent).
+  const ctaFamily = (s: GeneratedScale, mode: 'light' | 'dark') => ({
+    ctaBorder: ctaNeedsBorder(s, mode) ? CTA_BORDER_TOKEN(mode) : TRANSPARENT_TOKEN,
+    ...(mode === 'light'
+      ? { cta: s.cta, ctaHover: s.ctaHover, ctaPressed: s.ctaPressed, ctaInk: s.ctaInk, ctaInkHover: s.ctaInkHover, ctaInkPressed: s.ctaInkPressed }
+      : { cta: s.ctaDark, ctaHover: s.ctaHoverDark, ctaPressed: s.ctaPressedDark, ctaInk: s.ctaInkDark, ctaInkHover: s.ctaInkHoverDark, ctaInkPressed: s.ctaInkPressedDark }),
+  })
 
   const brandExtra = (s: GeneratedScale, mode: 'light' | 'dark') => ({
     identityHex: s.identityHex,

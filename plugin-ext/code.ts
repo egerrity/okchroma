@@ -421,8 +421,20 @@ figma.ui.onmessage = async (msg) => {
       }
       const absFor = (t: { r: number; g: number; b: number }) =>
         baseVars.get(t.r + t.g + t.b > 1.5 ? 'system/abs-white' : 'system/abs-black')
+      // CTA-BORDER ALIASING (owner 2026-07-29: *"the rest of them should get aliased to the
+      // transparent variable instead of being raw"*). BOTH states are aliases, never raw writes:
+      // alpha 0 → system/alpha/transparent, the decorative stroke → system/alpha/cta-border. So
+      // the panel reads the token rather than a raw swatch, and the stroke stays single-source.
+      // isPole() deliberately rejects alpha≠1, so the poles path can never claim either of these
+      // — this is its own rule with its own targets.
+      // (figmaRender's banner claimed this aliasing already happened; it never did.)
+      const strokeFor = (t: FlatTok) => {
+        if (!t.path.endsWith('/cta/border')) return undefined
+        if (t.a === 0) return baseVars.get('system/alpha/transparent')
+        return baseVars.get('system/alpha/cta-border')
+      }
       const seedValue = (v: figma.Variable, colId: string, t: FlatTok) => {
-        const target = POLE_LEAVES(t.path) && isPole(t) ? absFor(t) : undefined
+        const target = strokeFor(t) ?? (POLE_LEAVES(t.path) && isPole(t) ? absFor(t) : undefined)
         v.setValueForMode(colId, target ? figma.variables.createVariableAlias(target) : toRGBA(t))
       }
       const seedFresh = (v: figma.Variable, path: string) => {
@@ -435,7 +447,11 @@ figma.ui.onmessage = async (msg) => {
       // layout leads with them), then the elevation planes (aliased below once the
       // neutral exists — ensure() migrates legacy sink/base/lift/pop names in place
       // via RENAMED_LEAVES), then everything else in payload order.
-      for (const path of ['system/abs-black', 'system/abs-white']) {
+      // the two alpha rows join the abs poles in this pass for the same reason: they are now
+      // ALIAS TARGETS (every cta/border points at one or the other), and ensure() registers into
+      // baseVars as it creates — a target created later in payload order would not exist yet when
+      // an earlier leaf tried to alias it, silently falling back to a raw write.
+      for (const path of ['system/abs-black', 'system/abs-white', 'system/alpha/transparent', 'system/alpha/cta-border']) {
         const before = createdVars
         const v = ensure(path)
         if (createdVars > before) seedFresh(v, path)

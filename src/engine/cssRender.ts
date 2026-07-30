@@ -48,18 +48,77 @@ const onColor = (white: boolean) => (white ? '#ffffff' : '#000000')
 // it once (the neutral has none). Used for the brand, the (real) secondary, AND
 // the generated neutral — every family is emitted the same way.
 // (on-highlight dropped 2026-07-29 with the highlight band — one on-color per family now.)
+// THE CTA-BORDER SAFETY (owner 2026-07-29). This supersedes the 2026-07-04 "filled is filled"
+// removal of the conditional gate — not as a conformance requirement (the owner's words: *"it's a
+// safety … maybe I overstated it"*, and it makes no WCAG claim), but as a DECORATIVE stroke for
+// the buttons that would otherwise vibrate against the background instead of sitting on it.
+//
+// THE TRIGGER IS A LIGHTNESS TEST, NOT A CONTRAST RATIO (owner-corrected twice: it is neither
+// 3:1 nor 1:1 against paper-3). A cta at wash-5's lightness or beyond has drifted into the
+// surface band and cannot read as a filled button unaided.
+//
+//   light: cta.L >= wash-5.L     — vibrates by being too LIGHT, like another sheet of paper
+//   dark:  cta.L <= wash-5.L     — MIRRORED (owner mark): dark surfaces are dark, so a dark-mode
+//                                  fill vibrates by being too DARK. Same rule, reflected.
+//
+// WHY WASH-5 and not paper-3, which was the first proposal: the owner's own data point is that
+// the NEUTRAL button already falls in this category, and the neutral's cta rests exactly on
+// stop 4 (L 0.9216). paper-3 sits at 0.9479 and would miss it. wash-5 also satisfies the second
+// constraint — that this "mostly affects secondaries" — because a custom secondary's tinted cta
+// lands at L ≈ 0.89, just UNDER wash-4: measured over pale agnostic seeds, wash-4 catches 0/96
+// custom secondaries where wash-5 catches 81/96.
+//
+// Layout never shifts — components already carry `border: 1.5px solid var(...-cta-border)`
+// unconditionally against the transparent value, which is why that token stayed in the
+// vocabulary through the 2026-07-04 removal.
+const CTA_BORDER_ANCHOR_STOP = 5
+
+// THE STROKE IS AN ALPHA, NOT A RAMP STOP (owner mark 2026-07-29, confirmed on her Figma
+// screenshot of both frames): 12% black in light, FLIPPED TO WHITE in dark. Two consequences
+// worth naming, both good:
+//   · it is BRAND-INDEPENDENT, so it lives in the base collection as a system row and costs
+//     ZERO per-brand overrides. Sourcing it from the family's ramp instead cost 88 — the
+//     neutral is brand-hue-tinted, so its border differed per brand (measured).
+//   · it cannot fight the fill's hue, which a same-family wash stop can.
+// The alpha DOES NOT scale up in dark the way the shadow set does (4/8/12% black → 32/48/64%),
+// because a stroke sits ON the fill rather than bleeding into the ground — her screenshot
+// confirms 12% reads in both directions. If dark ever needs more, it is this one constant.
+export const CTA_BORDER_ALPHA = 0.12
+
+// The system alpha VARIABLES, never raw values (owner 2026-07-29: *"the rest of them should get
+// aliased to the transparent variable instead of being raw"*). Both mirror rows the Figma side
+// carries under system/alpha/*; emitted per scheme by alphaRootVars() because the cta-border
+// value is scheme-DIVERGENT (black in light, white in dark) while transparent is invariant.
+export const TRANSPARENT_VAR = '--alpha-transparent'
+export const CTA_BORDER_VAR = '--alpha-cta-border'
+export const ctaBorderRgba = (mode: 'light' | 'dark'): string =>
+  mode === 'light' ? `rgba(0, 0, 0, ${CTA_BORDER_ALPHA})` : `rgba(255, 255, 255, ${CTA_BORDER_ALPHA})`
+export const alphaRootVars = (mode: 'light' | 'dark'): string[] => [
+  `  ${TRANSPARENT_VAR}: transparent;`,
+  `  ${CTA_BORDER_VAR}: ${ctaBorderRgba(mode)};`,
+]
+
+// Compared in OKLCH L directly — the trigger is a lightness question, so it reads the same
+// number the ramp is built from rather than routing through a luminance model.
+export function ctaNeedsBorder(s: GeneratedScale, mode: 'light' | 'dark'): boolean {
+  const stops = mode === 'light' ? s.light : s.dark
+  const anchor = stops.find(x => x.stop === CTA_BORDER_ANCHOR_STOP)
+  if (!anchor) return false
+  const cta = mode === 'light' ? s.cta : s.ctaDark
+  return mode === 'light' ? cta.L >= anchor.L : cta.L <= anchor.L
+}
+
 export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' | 'dark'): string[] {
   const stops = mode === 'light' ? s.light : s.dark
   const f = ctaFamilyOf(s, mode)
   const onCta = mode === 'light' ? s.onFillTextIsWhite : s.onFillTextIsWhiteDark
-  // cta-border: TRANSPARENT everywhere (owner 2026-07-04: the conditional 3:1 gate is gone —
-  // filled is filled). The token stays in the vocabulary so components carry
-  // `border: 1.5px solid var(...-cta-border)` unconditionally (layout never shifts) and a
-  // future high-contrast mode can re-solve it; the OUTLINE secondary override is the only
-  // resolver today (→ its own highlight-8). Renamed from cta-stroke (owner 2026-07-09);
-  // the Figma side renamed with it — plugins migrate existing variables in place.
+  // cta-border: the safety stroke above, else the transparent variable. The OUTLINE secondary
+  // keeps its own unconditional highlight-8 override at the emitter — there the border is the
+  // button's identity, not a safety. Renamed from cta-stroke (owner 2026-07-09); the Figma side
+  // renamed with it — plugins migrate existing variables in place.
   // cta family SEMANTIC-named (owner ruling 2026-07-16): cta/cta-hover/cta-pressed +
   // the cta-ink trio (the 4.5 text-register link escape; rest matches ink-9).
+  const border = ctaNeedsBorder(s, mode)
   return [
     stopsToVars(stops, prefix),
     `  --${prefix}-cta: ${stopHex(f.cta)};`,
@@ -68,7 +127,7 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
     `  --${prefix}-cta-ink: ${stopHex(f.ctaInk)};`,
     `  --${prefix}-cta-ink-hover: ${stopHex(f.ctaInkHover)};`,
     `  --${prefix}-cta-ink-pressed: ${stopHex(f.ctaInkPressed)};`,
-    `  --${prefix}-cta-border: transparent;`,
+    `  --${prefix}-cta-border: var(${border ? CTA_BORDER_VAR : TRANSPARENT_VAR});`,
     `  --${prefix}-on-cta: ${onColor(onCta)};`,
   ]
 }
@@ -163,9 +222,15 @@ export function signalsCss(contrastProfile?: ContrastProfile): string {
   return [
     `/* Signal scales — engine-generated from canonical hexes, shared across brands */`,
     `:root {`,
+    // the system alpha variables every family's cta-border aliases (owner 2026-07-29) — this is
+    // the engine's one global :root, the CSS counterpart of the Figma side's system/alpha/* rows.
+    // Emitted in BOTH blocks because --alpha-cta-border is scheme-divergent (12% black in light,
+    // 12% white in dark); --alpha-transparent repeats harmlessly and keeps the pair together.
+    ...alphaRootVars('light'),
     ...lightBlocks,
     `}`,
     `${SIGNALS_DARK_SELECTOR} {`,
+    ...alphaRootVars('dark'),
     ...darkBlocks,
     `}`,
     ...(p3LightBlocks.length || p3DarkBlocks.length ? [
