@@ -29,6 +29,10 @@ const COLS_KEY = 'okchroma-ext-cols'
 // Mirrors payload.COLUMNS (type-only import keeps the engine out of the sandbox bundle).
 // Column order IS the mode-dropdown order: the default lane leads, pairs group by prefix.
 const COLUMNS: Column[] = ['light', 'dark']
+// Mirrors cssRender.OFFSET_12_ALPHA — declared locally for the same reason COLUMNS is: a value
+// import from payload would drag the engine into the sandbox bundle. Used only to RECOGNISE our
+// own decorative stroke when converting a pre-existing raw value to the alias, never to write one.
+const OFFSET_ALPHA = 0.12
 const DARK_COLUMNS = new Set<Column>(['dark'])
 // Every variable carries the file's solve posture, visible without the plugin.
 const STAMP = 'OKChroma · modes: light · dark (WCAG 3:1/4.5/7:1)'
@@ -488,15 +492,29 @@ figma.ui.onmessage = async (msg) => {
         const v = ensure(t.path)
         if (createdVars > before) seedFresh(v, t.path) // fresh variable → seed every active column
       }
-      // Existing bases predate the pole-aliasing: convert a RAW value that is exactly
-      // a pole to the alias (resolution-identical, so the create-once contract is
-      // preserved); user-edited (non-pole) values are never touched.
+      // Existing bases predate the aliasing: convert a RAW value that is exactly what we
+      // would have written to the alias (resolution-identical, so the create-once contract
+      // is preserved); user-EDITED values are never touched.
+      //
+      // THIS IS THE HALF THAT WAS MISSING (owner-caught 2026-07-30: "the alpha transparent
+      // didn't take"). Aliasing lived only in seedValue, which runs on FRESHLY CREATED
+      // variables — and cta/border has existed since 2026-07-04, so in any real file ensure()
+      // found the row, seedFresh never ran, and it kept its raw value forever. The pole guard
+      // here meant this pass could not rescue it either. Now both idioms convert.
+      const strokeTargetFor = (path: string, cur: figma.RGBA) => {
+        // only OUR values: fully transparent, or the 12% black/white offset. Anything else is
+        // a designer's own border colour and is left exactly alone.
+        const a = cur.a ?? 1
+        if (Math.abs(a) < EPS) return strokeFor(path, { a: 0 })
+        if (Math.abs(a - OFFSET_ALPHA) < EPS && isPole({ r: cur.r, g: cur.g, b: cur.b })) return strokeFor(path, { a })
+        return undefined
+      }
       for (const [path, v] of baseVars) {
-        if (!POLE_LEAVES(path)) continue
         for (let i = 0; i < activeCols.length; i++) {
           const cur = v.valuesByMode[colIds[i]]
-          if (!cur || isAlias(cur) || !isPole(cur)) continue
-          const target = absFor(cur)
+          if (!cur || isAlias(cur)) continue
+          const target = strokeTargetFor(path, cur)
+            ?? (POLE_LEAVES(path) && isPole(cur) ? absFor(cur) : undefined)
           if (target && target.id !== v.id) v.setValueForMode(colIds[i], figma.variables.createVariableAlias(target))
         }
       }
