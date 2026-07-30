@@ -14,11 +14,17 @@ accuracy bar is per artifact.
 `demo/unify-compare/UnifyCompare.tsx` rather than creating a new route or a deck — one scrollable
 page the owner captures images out of.
 
-⚠️ **THE ORPHAN LINK PUBLISHES FROM `main` ONLY.** `.github/workflows/pages.yml` builds on pushes to
-`main`, so work parked on a branch is NOT visible at that URL. The round can develop on a branch,
-but she cannot screenshot anything until it merges — plan for a merge when the artifacts are ready
-(mid-round merges to `main` are normal here), and verify the deploy from the SITE afterwards, never
-from a green workflow.
+⚠️ **THE ORPHAN LINK PUBLISHES FROM `main` ONLY** (`.github/workflows/pages.yml` builds on pushes to
+`main`), **and this round does NOT go live until it is completely done.** Owner ruling 2026-07-30.
+That means:
+
+- **Stay on `unify/mapping-artifacts`. ONE merge, at the end.** No mid-round merges — unlike the
+  plugin rounds, nothing here needs to reach her work machine early, and publishing a half-built
+  exhibit to a bookmarked URL is just noise.
+- **Approval checkpoints happen LOCALLY, not on the deployed page.** Render it and show her —
+  screenshots from the browser pane, or deliver the built page as a file. Do not merge to `main` to
+  let her look at something.
+- Verify the deploy from the SITE after the final merge, never from a green workflow.
 
 That framing decides several things:
 
@@ -256,8 +262,11 @@ The comparison invites "can you trust the generated values?" The answer is instr
 >
 > **The deliverable is ONE PAGE I can screenshot from, and it lives at the orphan link** —
 > `#/unify-compare`, which is bookmarked and linked from nowhere. Extend
-> `demo/unify-compare/UnifyCompare.tsx`; don't make a new route or a deck. Note that link only
-> publishes from `main`, so I can't see anything until it merges — plan for that.
+> `demo/unify-compare/UnifyCompare.tsx`; don't make a new route or a deck.
+>
+> **This does not need to be live until it is completely done.** Work on
+> `unify/mapping-artifacts` and merge ONCE at the end. Show me checkpoints locally — screenshots or
+> the built page as a file — rather than merging so I can look at something.
 >
 > SVG export would be nice but I am deliberately prioritising completeness and accuracy over
 > portability — that is why we are not printing this into Figma.
