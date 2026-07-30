@@ -2007,7 +2007,7 @@ moves the exact fill independently of any of this — 42 of 240 seeds, APCA driv
 the WCAG lane. It is owner-blessed (C18, the 2026-07-13 dead-zone ruling) and untouched here, but
 it is the remaining reason an exact cta is ever not the typed hex.
 
-## C38 — THE CTA-BORDER SAFETY: A DECORATIVE STROKE FOR FILLS THAT VIBRATE
+## C39 — THE CTA-BORDER SAFETY: A DECORATIVE STROKE FOR FILLS THAT VIBRATE
 
 Owner-requested, 2026-07-29: *"when a cta is below 3:1 is it possible for us to check it and alias
 the next darkest stroke to it's cta border? right now they are all sitting at transparent."* This
