@@ -128,15 +128,48 @@ export const STOP_8_NONTEXT_CONTRAST = 3.0
 // chroma samples the light ladder's own chroma-at-depth relationship at the scaled depth
 // (deltaLiftChroma; per seed, per hue — the cross-hue perceptualDarkC equalizer was tried
 // for this and vetoed: it dusted strong-H-K hues ~30%).
-// C28 RE-MARK (owner 2026-07-28, "half the lift looks right"): the values below are her
-// original 2026-07-27 ramp at HALF strength — 1 + (old−1)/2. The ramp SHAPE is hers,
-// unchanged; only the amount moved, because C28 changed what the number multiplies. The
-// old ×1.25→1.75 was calibrated against APPARENT depth; the photometric ladder now
-// supplies most of that loudness itself, so the same numbers over-applied and pushed
-// wash-7 into the highlight band (7→8 seam collapse + a chroma peak at stop 7 — caught
-// by dark-audit §A and smoothness `wobble`). Her exhibit compared full/half/quarter.
+// C28 RE-MARK (owner 2026-07-28, "half the lift looks right"): stops 2–3 below are her
+// original 2026-07-27 ramp at HALF strength — 1 + (old−1)/2. The old ×1.25→1.75 was
+// calibrated against APPARENT depth; the photometric ladder now supplies most of that
+// loudness itself, so the same numbers over-applied and pushed wash-7 into the highlight
+// band (7→8 seam collapse + a chroma peak at stop 7 — caught by dark-audit §A and
+// smoothness `wobble`). Her exhibit compared full/half/quarter.
+//
+// ── WASHES 4–7 ARE NO LONGER A HAND RAMP (owner 2026-07-29) ──────────────────
+// Owner's framing: dark has different surfaces, so its needs differ — the washes carry no
+// contrast requirement but they still have to READ on paper, and flipped to dark they recede.
+// *"4–7 probably do need to be higher than they are in light mode, but their distribution
+// should be more analogous."*
+//
+// THE RAMP WAS SLOPING THE WRONG WAY. The lift is PROPORTIONAL on apparent depth from the
+// ground, and depth is near zero at the top of the band. So a rising ramp delivered almost
+// nothing where the recession actually was: measured as S = dark's contrast-vs-paper-1 over
+// its light twin's, the old 1.225/1.275/1.325/1.375 produced S = 1.03 / 1.09 / 1.20 / 1.41.
+// wash-4 got 3% and wash-7 got 41% — and `-bg-subtle` is wash-5. Turning the number up
+// cannot fix it: even a flat ×5 lift only reaches S 3.3 at wash-4 against 9.7 at wash-7.
+//
+// SO THE BAND IS DECLARED IN CONTRAST SPACE, AT ONE S. Seam contrast between adjacent
+// washes equals c_n/c_{n−1} in BOTH modes, where c is contrast against that mode's own
+// paper — so a constant S cancels in the ratio and every seam ratio matches light's
+// identically while the whole band sits S× further off the paper. One number, and the
+// distribution comes out analogous by algebra rather than by luck.
+//
+// S = 1.20 IS WASH-6'S OWN CURRENT VALUE (her pick: "a lighter touch"). Choosing the pivot
+// that way makes this a pure REDISTRIBUTION rather than a boost — wash-6 does not move at
+// all (its solved lift comes back at 1.325, identical to shipped), washes 4 and 5 come up,
+// wash-7 comes down. Contrast vs paper-1, median: wash-4 1.24→1.45, wash-5 1.45→1.60,
+// wash-6 1.82→1.82, wash-7 2.53→2.16. Resulting seams 1.105/1.137/1.186 against light's
+// 1.105/1.139/1.188. A full 1.40 was built and looked right on chips but read as too much
+// in full-ramp context — her call.
+//
+// THE VALUES BELOW ARE SOLVED, NOT PICKED. Each is the per-stop lift that delivers S=1.20
+// through the real pipeline, bisected on the agnostic median. Re-deriving them means
+// re-running that solve, not nudging the digits — and the SHAPE is the finding: it must
+// DECREASE down the band, because the operator it feeds is proportional.
+// Accepted cost: the papers stay pinned by C27, so the whole raise lands on the single
+// 3→4 seam where the band meets paper-3 — 1.107 → 1.295 (= light's 1.082 × S).
 export const DARK_BAND_LIFT: Record<number, number> = {
-  2: 1.125, 3: 1.175, 4: 1.225, 5: 1.275, 6: 1.325, 7: 1.375,
+  2: 1.125, 3: 1.175, 4: 1.818, 5: 1.521, 6: 1.325, 7: 1.190,
 }
 
 // ── DARK SHINE PARITY (owner-calibrated 2026-07-27, per-element marks + cusp confirm) ──

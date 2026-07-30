@@ -55,7 +55,22 @@ const ok = (cond: boolean, msg: string) => { if (!cond) fails.push(msg) }
 //   DARK (the delta model, owner 2026-07-09): every dark stop CARRIES the light twin's emitted chroma
 //     (re-clamped at the dark L) — curve ramps included, inks included (the curves' dark branches are keyed
 //     to the OLD dark L geography; evaluating them at delta L's tinted the papers — owner-caught).
-const PARITY_TOL = 0.004
+//
+// ⚠️ THE DARK PREMISE IS APPROXIMATE FOR LIFTED STOPS, and this tolerance absorbs the error.
+// A stop carrying DARK_BAND_LIFT does not sample its same-stop light twin: its VIRTUAL twin sits
+// at the SCALED depth and its chroma comes from the light ladder's chroma-at-depth relationship
+// there (deltaLiftChroma, stopTable.ts). So the gap this check measures GROWS WITH LIFT SIZE by
+// design, and the tolerance is quietly doubling as a bound on how much lift is allowed.
+// Widened 0.004 → 0.005 (owner-approved 2026-07-29) when the washes were redeclared at a flat
+// S=1.20 and the steeper wash-4/5 lift took `branded h270 dark stop 5` to a 0.0042 gap — 1 stop
+// of 120, on a chroma of 0.012 vs 0.016, which is one near-neutral gray against another. The
+// same stops already read 0.0026–0.0031 at the old lift, so this is the same behaviour further
+// along, not a new class of bypass.
+// The RIGHT fix is to evaluate `want` against the virtual twin at the scaled depth rather than
+// the same-stop twin — that would make the check state the actual law and stop the tolerance
+// standing in for a lift bound. Not done here: it means reproducing deltaLiftChroma inside the
+// audit, which is its own round.
+const PARITY_TOL = 0.005
 const NEUTRAL_HUES = [30, 90, 143, 210, 270, 320]
 const LEVELS: NeutralLevel[] = ['pure', 'default', 'branded']
 const worstParity = { gap: 0, at: '' }
