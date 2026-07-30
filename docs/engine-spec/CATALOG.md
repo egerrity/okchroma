@@ -1880,3 +1880,79 @@ the grey chip and stop looking like a colour.
 
 Blast radius is the Custom chip and the new anchor entries. Ten gates green with ZERO snapshot
 movement and no re-bless — the same evidence C34 rested on.
+
+## C37 — THE DARK WASHES ARE DECLARED AT ONE S, AND THE OLD RAMP SLOPED THE WRONG WAY
+
+Owner-led round, 2026-07-29 — the wash third of the phase-2 dark round
+(`scripts/highlight-collapse-plan-2026-07-29.md` §Sequencing). Her framing: dark has
+different surfaces, so its needs differ. The washes carry no contrast requirement, but they
+still have to READ ON PAPER, and flipped to dark the surfaces move the other way and the
+washes recede. *"4–7 probably do need to be higher than they are in light mode, but their
+distribution should be more analogous."*
+
+THAT CLAIM IS TESTABLE, AND IT FAILED. Define S as a dark wash's contrast against paper-1
+divided by its light twin's. If dark were light RAISED, S would be one number for the whole
+band, because multiplying every stop's contrast-vs-paper by a constant cancels in the ratio
+between neighbours. Measured over 366 ramps, shipped S ran **1.03 / 1.09 / 1.20 / 1.41**
+across washes 4–7 — a 37% spread, identical against paper-1 and paper-2 so not an artifact
+of the plane. Dark was light STRETCHED, not light raised.
+
+AND THE RAMP DELIVERED LEAST WHERE THE RECESSION WAS. `DARK_BAND_LIFT` was a RISING ramp
+(1.225 → 1.375), but it is a PROPORTIONAL operator on apparent depth from the ground, and
+depth is near zero at the top of the band. k × almost nothing stays almost nothing: wash-4
+took 3% while wash-7 took 41% — and `-bg-subtle`, the chip fill the owner flagged as washed
+out, is wash-5. No multiplier fixes that. Swept far past anything shippable, a FLAT lift
+gives wash-4 / wash-7 of 1.03/1.27 at ×1.25, 1.27/2.39 at ×2, and 3.30/9.69 at ×5. Level and
+distribution are coupled by the operator's form, so no single number delivers both — with no
+lift at all the distribution is already analogous (S 0.97–1.03) but sits at light's level,
+which is the thing that was wrong.
+
+SO THE BAND IS DECLARED IN CONTRAST SPACE. Seam contrast between adjacent washes equals
+`c_n / c_{n−1}` in BOTH modes, where c is contrast against that mode's own paper. A constant
+S therefore cancels and every seam ratio matches light's identically while the whole band
+sits S× further off the paper — the distribution comes out analogous by algebra rather than
+by calibration. S is the one number; the four per-stop lift values are SOLVED from it by
+bisection through the real pipeline, and the shape must DECREASE down the band because of
+the operator it feeds.
+
+S = 1.20 IS WASH-6'S OWN CURRENT VALUE. A full S=1.40 was built first and read well on
+chips, but the owner saw it in full-ramp context and asked for a lighter touch. Choosing the
+pivot at wash-6's existing S makes the change a pure REDISTRIBUTION rather than a boost:
+wash-6 does not move at all — its solved lift returns 1.325, byte-identical to shipped,
+which is the check that the pivot is real — while 4 and 5 come up and 7 comes down. Contrast
+vs paper-1, median: wash-4 1.24→1.45, wash-5 1.45→1.60, wash-6 1.82→1.82, wash-7 2.53→2.16.
+Resulting seams 1.105 / 1.137 / 1.186 against light's 1.105 / 1.139 / 1.188.
+
+ACCEPTED COST, THE 3→4 SEAM. The papers stay pinned by C27's one photometric level, so the
+entire raise lands on the single seam where the wash band meets paper-3: 1.107 → 1.295,
+which is exactly light's 1.082 × S. That is not a side effect, it IS the raise — the band is
+light's band translated up, and a translation shows up entirely at the boundary.
+
+BLAST RADIUS. 504 of 4,800 values, measured against a git worktree at the true parent: dark
+wash-4/5/7 on all 150 ramps, wash-6 untouched, plus 54 neutral dark cta values because
+`--neutral-cta`'s rest tracks the scale's own stop 4 by design (highlight-audit §3). No light
+stop, no paper, no highlight-8, no ink, no brand or signal cta. Zero gamut clamping in the
+wash band at any S tried up to 1.40. Band order holds with no inversions and no non-monotone
+steps; the tightest step in the ramp remains paper-1→paper-2 at 2.41 apparent-L, so no seam
+becomes a new bottleneck. `smooth`: 646 improvements against 23 regressions (grid), 23
+against 2 (fleet), the regressions all `dark.wobble` / `dark.drift` at C 0.06 in H69–102.
+
+A TOLERANCE WAS WIDENED, DELIBERATELY. `divergence-audit` §A compares a dark stop's chroma
+to its SAME-STOP light twin's, but a lifted stop samples the light ladder at the SCALED depth
+by design (`deltaLiftChroma`) — so that gap grows with lift size and the tolerance was
+quietly doubling as a bound on how much lift is allowed. The steeper wash-4/5 lift took
+`branded h270 dark stop 5` to a 0.0042 gap against a 0.004 bar: one stop of 120, on a chroma
+of 0.0121 versus 0.0163, one near-neutral gray against another, and the same stops already
+read 0.0026–0.0031 at the old lift. PARITY_TOL 0.004 → 0.005, owner-approved. The correct fix
+— evaluate `want` against the virtual twin at the scaled depth so the check states the actual
+law — is recorded in the file and not done here.
+
+LOGGED, NOT FIXED: the owner is considering flattening the washes in BOTH modes. That is
+upstream of S, because light's distribution is the reference this solve copies; if light
+flattens, S stays meaningful but the shape it reproduces changes. Its own round. Also still
+open, and the last of phase 2: the dark inks. They are scaffold-placed (owner's 2026-07-20
+pick), do NOT move with the lift, and now that C35 dropped dark stop 8 the 8→9 gap is the
+widest seam in the dark ramp. The earlier finding that only a 150% ink ceiling survives the
+band-order invariant PREDATES C35 and must be re-measured, not reused.
+
+Ten gates green.
