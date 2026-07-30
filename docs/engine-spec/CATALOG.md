@@ -2065,3 +2065,39 @@ instruction. Both plugins rebuilt and the extended UI re-verified in a browser.
 
 TRAP FOUND: `npm run generate` runs `node dist/build-script.js` — a PREBUILT bundle. It will
 silently emit from stale engine source. Use `npm run build`, which bundles first.
+
+## C40 — C33 LEFT THREE REPORTERS DESCRIBING THE OLD SHAPE
+
+Surfaced 2026-07-29 while double-checking main after a session ran out of context mid-round.
+Nothing here is an engine defect — all three are gates that went stale and then lied about the
+engine, which is the more dangerous failure because it costs a diagnosis every time.
+
+**`gamut-sweep` had been failing on every one of its 1800 seeds since the highlight collapse.**
+The structural check asserted a literal `light.length !== 11` while the scale has carried 10
+stops since C33, so each seed reported `MALFORMED … light=10 dark=10` and hit `continue` before
+a single real check ran. A gate that fails identically on all inputs reads as broken plumbing,
+so nobody read past it — for two rounds, and nothing in CI runs it. The count now derives from
+the token name table (`SCALE_STOP_COUNT`).
+
+**Then the un-muted sweep reported two false findings, and the gate was wrong again.** With the
+structural check fixed, `#c92359` (L 0.55 C 0.20 H 9) and `#b84c00` (L 0.55 C 0.20 H 51) came
+up as brand ctas sitting inside the C12 red gate with no resolution. They are not. C12 v8
+resolves a brand/red collision from EITHER side — the brand exits via repel, or red moves to the
+deep-core complement — and the check compared the brand cta to CANONICAL red, crediting only
+the first mechanism. Both seeds resolve by the second: each ships a `red → coral L0.65`
+override, so they sat 0.087 and 0.082 from a red they never ship beside while sitting **0.119**
+from the one they do, clear of the 0.09 gate. Now measured against `signalOverrides` red when
+present. The engine was right both times.
+
+**`dark-audit`'s drift labeler computed `% 12` over rows holding 10 stops per mode**, renaming
+every drift it reported: this session's dark wash-4 surfaced as "stop 2 (dark)", which reads as
+a PAPER stop and flatly contradicts C37's own "no paper" — that mislabel is what made a routine
+unblessed snapshot look like an engine bug. Per-mode width now derives from the row.
+`highlight-audit` reported bare triple indices, so "token 5" had to be hand-decoded back to
+`cta-dark`; its triples are named now.
+
+THE PATTERN, which is the reason to log this at all: C33 renumbered the scale and updated the
+engine, and three separate reporters kept describing the old shape. Anything holding a hardcoded
+stop count, index width, or a canonical-vs-effective comparison is suspect after a renumber.
+`sweep` now passes end to end — 1800 seeds, 0 malformed, 0 residuals, 0 shear-induced, 0
+unhandled warning collisions — for the first time since C33.
