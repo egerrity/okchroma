@@ -72,10 +72,18 @@ for (const H of HUES) {
         if (r.warningVariant === 'macaroni') macaroniCount++
         for (const p of r.pending) pendingCounts[p] = (pendingCounts[p] ?? 0) + 1
 
-        // 2. error guarantee (C12 gate): NO brand cta may sit inside the owner-calibrated
-        // red-family gate — the joint solve releases past the boundary by construction
+        // 2. error guarantee (C12 gate): no brand cta may sit inside the owner-calibrated
+        // red-family gate. Measured against the red that SHIPS BESIDE THIS BRAND, not the
+        // canonical one — C12 v8 resolves the pair from either side: the brand exits via
+        // repel, OR red itself moves to the deep-core complement ("resolves for EVERY solving
+        // brand against its FINAL cta"). Comparing to canonical red credits only the first
+        // mechanism, so a brand resolved by the second read as an unresolved residual: #c92359
+        // and #b84c00 both sat 0.082–0.087 from canonical red while shipping 0.119 from their
+        // own `red → coral L0.65` override, comfortably clear. Both were reported as findings
+        // by this gate until 2026-07-29; the engine had been right.
         const err = SIGNAL_SCALES.get('red')!
-        if (redGateDist(r.scale.cta, err.scale.cta) <= RED_GATE.G - 1e-3) {
+        const shippedRed = r.signalOverrides.find(o => o.name === 'red')?.scale ?? err.scale
+        if (redGateDist(r.scale.cta, shippedRed.cta) <= RED_GATE.G - 1e-3) {
           errorResidual.push(`${hex} (L${L} C${C} H${H})`)
         }
 
