@@ -232,6 +232,14 @@ const rungAndCta = (s: GeneratedScale) =>
     s.cta, s.ctaHover, s.ctaPressed, s.ctaDark, s.ctaHoverDark, s.ctaPressedDark,
     s.ctaInk, s.ctaInkHover, s.ctaInkPressed, s.ctaInkDark, s.ctaInkHoverDark, s.ctaInkPressedDark,
   ].flatMap(c => [c.L, c.C, c.H])
+// …and what each triple IS, so a drift line names the token instead of an index (2026-07-29:
+// diagnosing an unblessed snapshot meant hand-decoding "token 5" back to ctaDark). Order must
+// track rungAndCta above.
+const RUNG_CTA_NAMES = [
+  'light stop-9', 'dark stop-9',
+  'cta', 'cta-hover', 'cta-pressed', 'cta-dark', 'cta-hover-dark', 'cta-pressed-dark',
+  'cta-ink', 'cta-ink-hover', 'cta-ink-pressed', 'cta-ink-dark', 'cta-ink-hover-dark', 'cta-ink-pressed-dark',
+]
 const snapshot = (): Record<string, number[]> => {
   const o: Record<string, number[]> = {}
   for (const { name, scale } of items) o[name] = rungAndCta(scale)
@@ -252,7 +260,7 @@ if (process.argv.includes('--bless')) {
       // full OKLab ΔE per (L,C,H) triple — the L-only compare let C/H drift ship invisibly
       // on the emphasis fill and all four cta roles (2026-07-11 hunt)
       const d = oklabDist({ L: v[i], C: v[i + 1], H: v[i + 2] }, { L: r[i], C: r[i + 1], H: r[i + 2] })
-      if (d > TOL) { drift.push(`${k} token ${i / 3}: ΔE ${d.toFixed(3)} vs blessed`); break }
+      if (d > TOL) { drift.push(`${k} ${RUNG_CTA_NAMES[i / 3] ?? `token ${i / 3}`}: ΔE ${d.toFixed(3)} vs blessed`); break }
     }
   }
   console.log(`\nhighlight snapshot regression: ${drift.length === 0 ? 'clean — matches blessed' : `${drift.length} drifted`}`)

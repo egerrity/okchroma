@@ -215,7 +215,14 @@ if (process.argv.includes('--bless')) {
       const [L2, C2, H2] = ref[i]
       const d = stopDeltaE({ L: L1, C: C1, H: H1 } as any, { L: L2, C: C2, H: H2 } as any)
       if (d > DRIFT_TOLERANCE) {
-        drifted.push(`${key} stop ${(i % 12) + 1} (${i < 12 ? 'light' : 'dark'}): ΔE ${d.toFixed(3)} vs blessed`)
+        // The label is DERIVED, not hardcoded (fixed 2026-07-29). Each row is
+        // [...light.slice(0,12), ...dark.slice(0,12)] — a 12-cap that used to yield 12 stops per
+        // mode and now yields 10, because C33's collapse took the scale to 10. The label still
+        // computed `% 12`, so it renamed every drift: a dark wash-4 (index 13) was reported as
+        // "stop 2 (dark)" and dark stops 1-2 surfaced as "light stop 11-12". Splitting the row
+        // in half is correct for any stop count, so a future renumber cannot re-break it.
+        const perMode = stops.length / 2
+        drifted.push(`${key} stop ${(i % perMode) + 1} (${i < perMode ? 'light' : 'dark'}): ΔE ${d.toFixed(3)} vs blessed`)
         break
       }
     }
