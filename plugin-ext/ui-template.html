@@ -249,6 +249,11 @@ body {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         <select id="primary-mode">
           <option value="recommended" selected>Recommended</option>
+          <!-- Exact was missing here while every other layer supported it (owner-caught
+               2026-07-29): themeInput sends primaryMode 'exact', the chip label and the grey
+               chip tone both branch on it, and the demo has always offered it. Only the option
+               was absent, so the plugin could not ship a primary untouched. -->
+          <option value="exact">Exact</option>
           <optgroup label="Anchor archetype" id="archetype-group"></optgroup>
         </select>
       </span>

@@ -348,6 +348,13 @@ function updatePreview() {
         secondarySwatch.style.background = h
         secondaryHexInput.value = primaryHex
         secondaryPicker.value = primaryHex
+      } else if (secondaryHex) {
+        // LEAVING DERIVED USED TO STRAND THE SWATCH (owner-caught 2026-07-29): the swatch was
+        // only ever repainted inside the derived branch, so switching to Custom or Exact with a
+        // hex already set left the old derived TINT sitting next to a field reading the real
+        // hex — it looked like the engine had paled the user's colour when it had not. Custom
+        // and Exact show the supplied hex, matching the demo's swatch rule.
+        secondarySwatch.style.background = secondaryHex
       }
     }
 
