@@ -83,19 +83,25 @@ const CTA_BORDER_ANCHOR_STOP = 5
 // The alpha DOES NOT scale up in dark the way the shadow set does (4/8/12% black → 32/48/64%),
 // because a stroke sits ON the fill rather than bleeding into the ground — her screenshot
 // confirms 12% reads in both directions. If dark ever needs more, it is this one constant.
-export const CTA_BORDER_ALPHA = 0.12
+export const OFFSET_12_ALPHA = 0.12
 
 // The system alpha VARIABLES, never raw values (owner 2026-07-29: *"the rest of them should get
 // aliased to the transparent variable instead of being raw"*). Both mirror rows the Figma side
-// carries under system/alpha/*; emitted per scheme by alphaRootVars() because the cta-border
-// value is scheme-DIVERGENT (black in light, white in dark) while transparent is invariant.
+// carries under system/alpha/*; emitted per scheme by alphaRootVars() because offset-12's value
+// is scheme-DIVERGENT (black in light, white in dark) while transparent is invariant.
+//
+// NAMED offset-12, NOT cta-border (owner 2026-07-30). It sits in the alpha ladder beside
+// shadow-04/08/12 and reads as what it is — a 12% offset from whatever it edges — rather than
+// as the property of one token. Nothing about it is cta-specific, so any border that wants the
+// same quiet edge can point at it. Renamed in place via RENAMED_LEAVES so a file that already
+// carries system/alpha/cta-border adopts the row instead of gaining a duplicate.
 export const TRANSPARENT_VAR = '--alpha-transparent'
-export const CTA_BORDER_VAR = '--alpha-cta-border'
-export const ctaBorderRgba = (mode: 'light' | 'dark'): string =>
-  mode === 'light' ? `rgba(0, 0, 0, ${CTA_BORDER_ALPHA})` : `rgba(255, 255, 255, ${CTA_BORDER_ALPHA})`
+export const OFFSET_12_VAR = '--alpha-offset-12'
+export const offset12Rgba = (mode: 'light' | 'dark'): string =>
+  mode === 'light' ? `rgba(0, 0, 0, ${OFFSET_12_ALPHA})` : `rgba(255, 255, 255, ${OFFSET_12_ALPHA})`
 export const alphaRootVars = (mode: 'light' | 'dark'): string[] => [
   `  ${TRANSPARENT_VAR}: transparent;`,
-  `  ${CTA_BORDER_VAR}: ${ctaBorderRgba(mode)};`,
+  `  ${OFFSET_12_VAR}: ${offset12Rgba(mode)};`,
 ]
 
 // Compared in OKLCH L directly — the trigger is a lightness question, so it reads the same
@@ -127,7 +133,7 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
     `  --${prefix}-cta-ink: ${stopHex(f.ctaInk)};`,
     `  --${prefix}-cta-ink-hover: ${stopHex(f.ctaInkHover)};`,
     `  --${prefix}-cta-ink-pressed: ${stopHex(f.ctaInkPressed)};`,
-    `  --${prefix}-cta-border: var(${border ? CTA_BORDER_VAR : TRANSPARENT_VAR});`,
+    `  --${prefix}-cta-border: var(${border ? OFFSET_12_VAR : TRANSPARENT_VAR});`,
     `  --${prefix}-on-cta: ${onColor(onCta)};`,
   ]
 }

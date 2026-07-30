@@ -73,6 +73,13 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // one-hop rule). Renumber entries shift names DOWN; safe in ascending order
   // with self-deleting consumed keys — new ink/10 eats old ink-11 first.
   ['cta-stroke', 'cta/border'],
+  // the decorative stroke's system row, renamed cta-border → offset-12 (owner 2026-07-30): it
+  // belongs to the alpha ladder beside shadow-04/08/12 and is not cta-specific. Only ever
+  // resolves under system/alpha/, so it cannot collide with the ['cta-border','cta/border']
+  // entry above — candidates are prefix-scoped, and no other path ends in /offset-12. Needed
+  // because the row shipped under the old name at b72bfd9, so an already-imported file must
+  // adopt it in place rather than gain a duplicate.
+  ['cta-border', 'offset-12'],
   // ── THE 2026-07-29 COLLAPSE. highlight/9 and highlight/on are DELETED (they ORPHAN —
   // the plugin reports orphans, it never deletes a user's variables), and every ink name
   // shifts DOWN one: ink/10 → ink/9, ink/11 → ink/10, ink/12 → ink/11. That last row is
@@ -423,18 +430,23 @@ figma.ui.onmessage = async (msg) => {
         baseVars.get(t.r + t.g + t.b > 1.5 ? 'system/abs-white' : 'system/abs-black')
       // CTA-BORDER ALIASING (owner 2026-07-29: *"the rest of them should get aliased to the
       // transparent variable instead of being raw"*). BOTH states are aliases, never raw writes:
-      // alpha 0 → system/alpha/transparent, the decorative stroke → system/alpha/cta-border. So
+      // alpha 0 → system/alpha/transparent, the decorative stroke → system/alpha/offset-12. So
       // the panel reads the token rather than a raw swatch, and the stroke stays single-source.
       // isPole() deliberately rejects alpha≠1, so the poles path can never claim either of these
       // — this is its own rule with its own targets.
       // (figmaRender's banner claimed this aliasing already happened; it never did.)
-      const strokeFor = (t: FlatTok) => {
-        if (!t.path.endsWith('/cta/border')) return undefined
+      // Takes the path explicitly so BOTH write paths can share it — the base seeding below and
+      // the per-brand extension overrides, which used to alias only poles and so wrote every
+      // cta/border override raw (owner-caught 2026-07-30: "there is a transparent token that can
+      // be aliased to all the rest that are raw"). Base rows aliased while overrides went raw
+      // was the actual gap.
+      const strokeFor = (path: string, t: { a?: number }) => {
+        if (!path.endsWith('/cta/border')) return undefined
         if (t.a === 0) return baseVars.get('system/alpha/transparent')
-        return baseVars.get('system/alpha/cta-border')
+        return baseVars.get('system/alpha/offset-12')
       }
       const seedValue = (v: figma.Variable, colId: string, t: FlatTok) => {
-        const target = strokeFor(t) ?? (POLE_LEAVES(t.path) && isPole(t) ? absFor(t) : undefined)
+        const target = strokeFor(t.path, t) ?? (POLE_LEAVES(t.path) && isPole(t) ? absFor(t) : undefined)
         v.setValueForMode(colId, target ? figma.variables.createVariableAlias(target) : toRGBA(t))
       }
       const seedFresh = (v: figma.Variable, path: string) => {
@@ -451,7 +463,7 @@ figma.ui.onmessage = async (msg) => {
       // ALIAS TARGETS (every cta/border points at one or the other), and ensure() registers into
       // baseVars as it creates — a target created later in payload order would not exist yet when
       // an earlier leaf tried to alias it, silently falling back to a raw write.
-      for (const path of ['system/abs-black', 'system/abs-white', 'system/alpha/transparent', 'system/alpha/cta-border']) {
+      for (const path of ['system/abs-black', 'system/abs-white', 'system/alpha/transparent', 'system/alpha/offset-12']) {
         const before = createdVars
         const v = ensure(path)
         if (createdVars > before) seedFresh(v, path)
@@ -617,9 +629,12 @@ figma.ui.onmessage = async (msg) => {
             if (cur && cur[extColIds[i]] !== undefined) { v.removeOverrideForMode(extColIds[i]); removed++ }
             else inherited++
           } else {
-            // a differing pole override rides the same alias idiom (a flipped on-cta
-            // reads "abs-white" in the extension, not an anonymous hex)
-            const target = POLE_LEAVES(path) && isPole(tok) ? absFor(tok) : undefined
+            // a differing override rides the same alias idiom (a flipped on-cta reads
+            // "abs-white" in the extension, not an anonymous hex; a cta/border reads
+            // "alpha/transparent" or "alpha/offset-12" rather than a raw invisible swatch).
+            // strokeFor comes FIRST for the same reason it does at the base seeding: isPole
+            // rejects alpha≠1, so the poles rule can never claim an alpha-carrying border.
+            const target = strokeFor(path, tok) ?? (POLE_LEAVES(path) && isPole(tok) ? absFor(tok) : undefined)
             v.setValueForMode(extColIds[i], target ? figma.variables.createVariableAlias(target) : toRGBA(tok))
             set++
           }

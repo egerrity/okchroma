@@ -1,6 +1,6 @@
 
 
-import { toHex, ctaNeedsBorder, CTA_BORDER_ALPHA } from './cssRender'
+import { toHex, ctaNeedsBorder, OFFSET_12_ALPHA } from './cssRender'
 import { srgbEmitChannels } from './colorMath'
 import { stopTokenName, tokenOrder } from './tokenNames'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
@@ -23,11 +23,11 @@ const TRANSPARENT_TOKEN: FigmaColorToken = {
 // the decorative cta stroke (owner 2026-07-29): 12% black in light, flipped to white in dark.
 // Scheme-divergent, brand-independent — the plugin aliases both this and TRANSPARENT_TOKEN onto
 // their system/alpha/* rows, so a cta-border is never a raw write in either state.
-const CTA_BORDER_TOKEN = (mode: 'light' | 'dark'): FigmaColorToken => {
+const OFFSET_12_TOKEN = (mode: 'light' | 'dark'): FigmaColorToken => {
   const c = mode === 'light' ? 0 : 1
   return {
     $type: 'color',
-    $value: { colorSpace: 'srgb', components: [c, c, c], alpha: CTA_BORDER_ALPHA, hex: mode === 'light' ? '#000000' : '#ffffff' },
+    $value: { colorSpace: 'srgb', components: [c, c, c], alpha: OFFSET_12_ALPHA, hex: mode === 'light' ? '#000000' : '#ffffff' },
   }
 }
 
@@ -97,7 +97,7 @@ function rampGroup(
     // the already-resolved border token — the decorative alpha stroke when this cta vibrates,
     // else transparent. Resolved by the caller because the choice is mode-dependent and
     // rampGroup has no mode. Both outcomes are ALIAS targets on the plugin side
-    // (system/alpha/cta-border | system/alpha/transparent), so neither is ever a raw write.
+    // (system/alpha/offset-12 | system/alpha/transparent), so neither is ever a raw write.
     ctaBorder?: FigmaColorToken
   },
 ): FigmaGroup {
@@ -166,7 +166,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
   // all get the safety stroke from one decision — see cssRender.ctaBorderStop, which owns the
   // rule (cta under 3:1 vs paper-3 → that family's highlight-8, else transparent).
   const ctaFamily = (s: GeneratedScale, mode: 'light' | 'dark') => ({
-    ctaBorder: ctaNeedsBorder(s, mode) ? CTA_BORDER_TOKEN(mode) : TRANSPARENT_TOKEN,
+    ctaBorder: ctaNeedsBorder(s, mode) ? OFFSET_12_TOKEN(mode) : TRANSPARENT_TOKEN,
     ...(mode === 'light'
       ? { cta: s.cta, ctaHover: s.ctaHover, ctaPressed: s.ctaPressed, ctaInk: s.ctaInk, ctaInkHover: s.ctaInkHover, ctaInkPressed: s.ctaInkPressed }
       : { cta: s.ctaDark, ctaHover: s.ctaHoverDark, ctaPressed: s.ctaPressedDark, ctaInk: s.ctaInkDark, ctaInkHover: s.ctaInkHoverDark, ctaInkPressed: s.ctaInkPressedDark }),
