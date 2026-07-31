@@ -1,12 +1,18 @@
 import React, { useMemo, useState } from 'react'
-import { resolveBrand, type ResolvedBrand } from '../../src/engine/resolve'
+import { resolveBrand, signalScalesFor, type ResolvedBrand } from '../../src/engine/resolve'
 import { brandCss, neutralCss, stopHex } from '../../src/engine/cssRender'
 import { hexToOklch } from '../../src/engine/colorMath'
+import { generateNeutralScale, type GeneratedScale } from '../../src/engine/colorEngine'
 import { apparentL } from '../../src/engine/perceptualL'
+import { SCALE_STOP_COUNT } from '../../src/engine/tokenNames'
+import {
+  STOP_8_NONTEXT_CONTRAST, INK_9_CONTRAST, INK_10_CONTRAST_FLOOR,
+} from '../../src/engine/stopTable'
 import { TokenCards } from '../TokenCards'
 import { FONT_STACK } from '../shared'
 import {
-  UNIFY_THEMES, UNIFY_RAMPS, UNIFY_SIGNALS, UNIFY_SEMANTIC_CENSUS, UNIFY_GRAY, type UnifyTheme,
+  UNIFY_THEMES, UNIFY_RAMPS, UNIFY_SIGNALS, UNIFY_SIGNAL_RAMPS, UNIFY_SEMANTIC_CENSUS, UNIFY_GRAY,
+  type UnifyTheme,
 } from './unifyData'
 
 // ─── Unify × OKChroma comparison — an ORPHANED page ─────────────────────────
@@ -158,6 +164,165 @@ function RampChart({ mode, lines, xTicks, height = 210 }: {
   )
 }
 
+// ─── distribution lanes ─────────────────────────────────────────────────────
+// PORTED FROM THE OWNER'S dist-lime.html (session scratchpad, 2026-07-29) — that
+// file is the artifact this section is for, not a starting point to redesign.
+// Both scales on ONE measured axis: WCAG contrast against the page. Verified to
+// reproduce that file's every hex, every pin position and all three requirement
+// lines to four decimals.
+//
+// Axis spacing is LOG of contrast, kneed at 8:1. The scratch original square-rooted
+// the log, which spent 18% of the width on 1 → 1.1 — nearly three swatches of dead
+// space before the first stop, and read as misleading (owner 2026-07-30). Plain log
+// fixed that but left the low end tight and the 8 → 20 tail luxurious; above 8:1 the
+// differences stop mattering, so that tail is condensed and the width goes to
+// 1 → 8 instead. The natural gap between wash-7 and highlight-8 absorbs the stretch.
+// 21 is the true WCAG ceiling (pure black on pure white) — the neutral lane plots
+// ink-11, which is exactly that, so the axis has to reach it rather than clamp.
+const DIST_MAX = 21
+const DIST_KNEE = 8
+const DIST_KNEE_FRAC = 0.84
+const DIST_TICKS = [1, 1.1, 1.25, 1.5, 2, 3, 5, 8, 12, 21]
+// The page each mode measures against — and the panel's own fill, so the swatches
+// sit on the surface their contrast is quoted against rather than near it.
+const DIST_PAGE: Record<PanelMode, string> = { light: '#ffffff', dark: '#0d0d0f' }
+const distX = (c: number) => {
+  const v = Math.min(Math.max(c, 1), DIST_MAX)
+  return v <= DIST_KNEE
+    ? DIST_KNEE_FRAC * (Math.log(v) / Math.log(DIST_KNEE))
+    : DIST_KNEE_FRAC + (1 - DIST_KNEE_FRAC) * (Math.log(v / DIST_KNEE) / Math.log(DIST_MAX / DIST_KNEE))
+}
+
+// sRGB luminance computed from the EMITTED HEX — the same formula on both sides,
+// which is what makes the two lanes comparable. Deliberately not the engine's
+// wcagY(L,C,H): that measures in the master gamut, and this exhibit is about the
+// hex that actually ships.
+const srgbY = (hex: string): number => {
+  const n = hex.replace('#', '')
+  const ch = [0, 2, 4].map(i => parseInt(n.slice(i, i + 2), 16) / 255)
+    .map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4))
+  return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2]
+}
+const distRatio = (a: string, b: string): number => {
+  const x = srgbY(a), y = srgbY(b)
+  return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05)
+}
+// whichever pole reads better on the swatch — the only criterion is which passes
+const pinInk = (hex: string) => (distRatio(hex, '#000000') >= distRatio(hex, '#ffffff') ? '#000' : '#fff')
+
+interface DistPin { label: string; hex: string; cr: number }
+interface DistLane { name: string; pins: DistPin[] }
+// Requirement lines are drawn UNLABELLED (owner 2026-07-30) — the line is the
+// information; naming each one is chrome she does not want in the screenshot.
+interface DistReq { cr: number }
+
+const SW = 34, SH = 30, LANE_GAP = 16
+
+function DistributionChart({ mode, lanes, reqs }: { mode: PanelMode; lanes: DistLane[]; reqs: DistReq[] }) {
+  const p = PANEL[mode]
+  const width = 1000
+  // t only has to clear the tick-value row now that the requirement lines are unlabelled
+  const m = { l: 62, r: 18, t: 34 }
+  // Half a swatch of pad at each end so the end pins sit fully on canvas, plus a
+  // dedicated ZERO SLOT: contrast 1:1 means "identical to the page", a degenerate
+  // point that log pins to the same place as paper-1. Neutral's paper-0 lives there
+  // and needs somewhere to sit (owner 2026-07-30), so it gets its own swatch-width
+  // at the far left and the log range starts after it.
+  const pw = width - m.l - m.r
+  const ZERO_SLOT = SW + 6
+  const X = (c: number) => (c <= 1
+    ? m.l + SW / 2
+    : m.l + SW / 2 + ZERO_SLOT + distX(c) * (pw - SW - ZERO_SLOT))
+
+  // ONE ROW PER LANE — pins OVERLAP rather than staggering (owner 2026-07-30):
+  // staggering made the asset's height jump between families and modes, and an
+  // illegible label is hers to fix by hand. Later pins draw over earlier ones.
+  const placed = lanes.map(l => ({
+    name: l.name,
+    pins: [...l.pins].sort((a, b) => a.cr - b.cr).map(pin => ({ pin, cx: X(pin.cr) })),
+  }))
+  const laneTop = placed.map((_, i) => m.t + i * (SH + LANE_GAP))
+  const height = m.t + placed.length * (SH + LANE_GAP) - LANE_GAP + 6
+
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} role="img"
+      aria-label={`Where the current stops fall on the new ramp, ${mode} mode`}
+      style={{ width: '100%', height: 'auto', display: 'block', background: DIST_PAGE[mode], borderRadius: 10 }}>
+      {DIST_TICKS.map(t => (
+        <g key={t}>
+          <line x1={X(t)} x2={X(t)} y1={m.t - 12} y2={height - 4}
+            stroke={p.grid} strokeWidth={1} strokeDasharray="3 3" />
+          <text x={X(t)} y={m.t - 18} textAnchor="middle" fontSize={9} fill={p.ink}>{t}</text>
+        </g>
+      ))}
+      {reqs.map(rq => (
+        <line key={rq.cr} x1={X(rq.cr)} x2={X(rq.cr)} y1={m.t - 12} y2={height - 4}
+          stroke={p.ink} strokeOpacity={0.62} strokeWidth={1.5} />
+      ))}
+      {placed.map((l, li) => (
+        <g key={l.name}>
+          <text x={m.l - 10} y={laneTop[li] + 19} textAnchor="end" fontSize={10}
+            letterSpacing=".06em" fill={p.ink}>{l.name.toUpperCase()}</text>
+          {l.pins.map(({ pin, cx }) => (
+            <g key={pin.label}>
+              <rect x={cx - SW / 2} y={laneTop[li]} width={SW} height={SH} rx={4} fill={pin.hex}
+                stroke={p.ink} strokeOpacity={0.3} strokeWidth={1} />
+              <text x={cx} y={laneTop[li] + SH / 2 + 4} textAnchor="middle" fontSize={11}
+                fontWeight={600} fill={pinInk(pin.hex)}>{pin.label}</text>
+              <title>{`${pin.label} · ${pin.hex.toUpperCase()} · ${pin.cr.toFixed(2)}:1`}</title>
+            </g>
+          ))}
+        </g>
+      ))}
+    </svg>
+  )
+}
+
+// ─── the fork composition ───────────────────────────────────────────────────
+// The six jobs IN CONTEXT as one form, not lined up in rows (owner 2026-07-30) —
+// and unlabelled, because she adds the labelling herself. Both sides render on the
+// same page colour so they read against each other. She rebuilds this in Figma to
+// toggle modes, so it is deliberately not gold-plated.
+// heading = the FIRST text level (ink-9, the brand-carrying one), body = the second
+// (ink-10, the darkest and most legible). Owner ordering.
+function ForkComposition({ heading, body, page, ring, fill, onFill, linkC, textBtn }: {
+  heading: string; body: string; page: string; ring: string; fill: string
+  onFill: string; linkC: string; textBtn: string
+}) {
+  // the focus halo has to be an ALPHA of the ring, and `${cssVar}55` is not valid
+  // CSS — it silently dropped the shadow on the token side. color-mix takes a var.
+  const halo = `color-mix(in srgb, ${ring} 32%, transparent)`
+  return (
+    <div style={{
+      background: page, borderRadius: 10, padding: '22px 24px 24px',
+      display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'flex-start',
+    }}>
+      <div style={{ fontSize: 20, fontWeight: 700, color: heading, lineHeight: 1.2 }}>Create your account</div>
+      <div style={{ fontSize: 14, lineHeight: 1.5, color: body, maxWidth: 290 }}>
+        Use your work email so we can match you to your organisation.
+      </div>
+      <input readOnly value="you@company.com" style={{
+        width: 260, boxSizing: 'border-box', padding: '9px 12px', borderRadius: 8, fontSize: 14,
+        fontFamily: 'inherit', background: page, color: body,
+        border: `1.5px solid ${ring}`, boxShadow: `0 0 0 3px ${halo}`, outline: 'none',
+      }} />
+      <div style={{ fontSize: 13, lineHeight: 1.5, color: body, maxWidth: 290 }}>
+        By continuing you agree to the{' '}
+        <a href="#" onClick={e => e.preventDefault()}
+          style={{ color: linkC, textDecoration: 'underline', textUnderlineOffset: 2 }}>terms of service</a>.
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 2 }}>
+        <button style={{
+          background: fill, color: onFill, border: '1.5px solid transparent',
+          borderRadius: 999, padding: '10px 24px', fontSize: 14, fontWeight: 600,
+          fontFamily: 'inherit', cursor: 'pointer',
+        }}>Create account</button>
+        <span style={{ fontSize: 14, fontWeight: 600, color: textBtn, cursor: 'pointer' }}>Sign in instead</span>
+      </div>
+    </div>
+  )
+}
+
 // ─── shared section chrome ──────────────────────────────────────────────────
 const CARD: React.CSSProperties = {
   background: 'var(--surface-lift)', borderRadius: 16, padding: '20px 22px',
@@ -168,13 +333,15 @@ const CARD_SUB: React.CSSProperties = { fontSize: 12.5, lineHeight: 1.5, color: 
 const STAT: React.CSSProperties = { fontSize: 12.5, color: 'var(--fg-default)', lineHeight: 1.5 }
 const MODE_TAG: React.CSSProperties = { fontSize: 10.5, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--fg-subtle)' }
 
-function Section({ n, title, lede, children }: { n: number; title: string; lede: string; children: React.ReactNode }) {
+// lede is OPTIONAL: the signal-contrast section is graphs and labels only (owner
+// 2026-07-30), so it renders a heading with no paragraph under it.
+function Section({ n, title, lede, children }: { n: number; title: string; lede?: string; children: React.ReactNode }) {
   return (
     <section style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
         <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.08em', color: 'var(--brand-ink-9, var(--fg-subtle))' }}>0{n}</div>
         <h2 style={{ margin: '2px 0 6px', fontSize: 22, fontWeight: 700, color: 'var(--fg-default)' }}>{title}</h2>
-        <p style={{ margin: 0, maxWidth: 720, fontSize: 14, lineHeight: 1.55, color: 'var(--fg-subtle)' }}>{lede}</p>
+        {lede && <p style={{ margin: 0, maxWidth: 720, fontSize: 14, lineHeight: 1.55, color: 'var(--fg-subtle)' }}>{lede}</p>}
       </div>
       {children}
     </section>
@@ -330,6 +497,8 @@ export default function UnifyCompare() {
   }
   const uPrimL = unifyRole('primary', 'light'), uPrimD = unifyRole('primary', 'dark')
   const oCtaL = okRole(okCta, 'light'), oCtaD = okRole(okCta, 'dark')
+  // one-line spread of a structural stop across the seven seeds, in apparent L*
+  const okSpread = (stop: number, mode: PanelMode) => spread(okRole(okStop(stop), mode)).toFixed(1)
 
   // ── section 1b data: ramp shapes ──
   const UNIFY_STOP_AXIS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900]
@@ -339,14 +508,86 @@ export default function UnifyCompare() {
       stroke: stops.find(s => s.stop === 500)?.[mode] ?? stops[Math.floor(stops.length / 2)][mode],
       points: stops.map(s => ({ x: UNIFY_STOP_AXIS.indexOf(s.stop) / (UNIFY_STOP_AXIS.length - 1), y: appL(s[mode]) })),
     }))
+  // x = position along the ramp, normalized 0–1, so a shape is compared to a shape rather
+  // than to a stop count. DERIVED from SCALE_STOP_COUNT — this was hardcoded as `/10` with
+  // an eleventh tick, left over from before C33 collapsed the highlight band and took the
+  // scale to ten stops. The engine's curve was drawn across 90% of its panel next to Unify's
+  // 100%, and the axis printed a label for a stop that does not exist (ink-11 is the
+  // off-scale anchor, emitted as a literal in cssRender and never on the ramp array).
+  const OK_SPAN = SCALE_STOP_COUNT - 1
   const okRampLines = (mode: PanelMode): RampLine[] =>
     resolved.map(({ t, r }) => ({
       label: shortName(t),
       stroke: stopHex(mode === 'light' ? r.scale.cta : r.scale.ctaDark),
-      points: (mode === 'light' ? r.scale.light : r.scale.dark).map(s => ({ x: (s.stop - 1) / 10, y: appL(stopHex(s)) })),
+      points: (mode === 'light' ? r.scale.light : r.scale.dark).map(s => ({ x: (s.stop - 1) / OK_SPAN, y: appL(stopHex(s)) })),
     }))
   const unifyTicks = UNIFY_STOP_AXIS.map((s, i) => ({ x: i / (UNIFY_STOP_AXIS.length - 1), label: String(s) }))
-  const okTicks = Array.from({ length: 11 }, (_, i) => ({ x: i / 10, label: String(i + 1) }))
+  const okTicks = Array.from({ length: SCALE_STOP_COUNT }, (_, i) => ({ x: i / OK_SPAN, label: String(i + 1) }))
+
+  // ── distribution roster ──
+  // The NEW lane is whatever OKChroma actually ships for that family: the SIGNAL
+  // scale for signals (looked up by the role name its tokens emit under), the
+  // generated NEUTRAL for gray, and resolveBrand(seed) for the brands — where the
+  // engine genuinely has no canonical, so re-deriving the seed IS the comparison.
+  // Owner check 2026-07-30: the scratch original plotted resolveBrand(Lime 500) for
+  // the signal case, a brand ramp that merely happens to be green and differs from
+  // the shipped --positive-* tokens on all ten stops.
+  // follows the page's own Dark toggle, so one exhibit yields both assets
+  const distMode: PanelMode = dark ? 'dark' : 'light'
+  const signalScale = (emitName: string) => {
+    const e = [...signalScalesFor('wcag').values()].find(v => v.def.emitName === emitName)
+    if (!e) throw new Error(`UnifyCompare: no signal family emits as "${emitName}"`)
+    return e.scale
+  }
+  const unifyRamp = (fam: string) => {
+    const r = UNIFY_SIGNAL_RAMPS[fam] ?? UNIFY_RAMPS[fam] ?? (fam === 'Gray' ? UNIFY_GRAY : undefined)
+    if (!r) throw new Error(`UnifyCompare: no Unify ramp named "${fam}"`)
+    return r
+  }
+  const pin = (label: string, hex: string, mode: PanelMode): DistPin =>
+    ({ label, hex, cr: distRatio(hex, DIST_PAGE[mode]) })
+  const currentLane = (fam: string, mode: PanelMode): DistLane => ({
+    name: 'Current',
+    pins: unifyRamp(fam).map(s => pin(String(s.stop), mode === 'light' ? s.light : s.dark, mode)),
+  })
+  // anchors: paper-0 and ink-11 ride along on every scope but are the neutral's own
+  // extremes, and they are the reason the axis needs a zero slot and a 21 ceiling.
+  const newLane = (sc: GeneratedScale, mode: PanelMode, anchors = false): DistLane => {
+    const arr = mode === 'light' ? sc.light : sc.dark
+    const p0 = mode === 'light' ? sc.paper0 : sc.paper0Dark
+    return {
+      name: 'New',
+      pins: [
+        ...(anchors && p0 ? [pin('0', stopHex(p0), mode)] : []),
+        ...arr.map(s => pin(String(s.stop), stopHex(s), mode)),
+        ...(anchors ? [pin('11', mode === 'light' ? '#000000' : '#ffffff', mode)] : []),
+      ],
+    }
+  }
+  // Every ink/highlight require binds against paper-3 in the WCAG lane (resolve.ts
+  // wcagAnchorStop overrides the paper-2 anchor the declaration carries for apca),
+  // so each threshold lands at its target × paper-3's own distance from the page.
+  // Targets read from stopTable, never typed in — they have moved twice.
+  const distReqs = (sc: GeneratedScale, mode: PanelMode): DistReq[] => {
+    const arr = mode === 'light' ? sc.light : sc.dark
+    const p3 = distRatio(stopHex(arr.find(s => s.stop === 3)!), DIST_PAGE[mode])
+    return [STOP_8_NONTEXT_CONTRAST, INK_9_CONTRAST, INK_10_CONTRAST_FLOOR].map(t => ({ cr: t * p3 }))
+  }
+
+  // label · Unify family · the OKChroma scale opposite it
+  const roster: Array<{ label: string; fam: string; scale: GeneratedScale; anchors?: boolean }> = [
+    { label: 'lime vs. positive', fam: 'Lime', scale: signalScale('positive') },
+    { label: 'amber vs. warning', fam: 'Amber', scale: signalScale('warning') },
+    { label: 'scarlet vs. critical', fam: 'Scarlet', scale: signalScale('critical') },
+    { label: 'gray vs. neutral', fam: 'Gray', scale: generateNeutralScale(0, 'pure', 'wcag'), anchors: true },
+    ...UNIFY_THEMES.filter(t => ['Eggplant-800', 'Blue-600', 'Orange-500', 'Green-500']
+      .includes(`${t.primary.family}-${t.primary.stop}`))
+      .map(t => ({
+        label: `${t.primary.family.toLowerCase()} ${t.primary.stop}`,
+        fam: t.primary.family,
+        scale: resolveBrand(t.primary.hex, t.primary.family.toLowerCase(), { contrastProfile: 'wcag' }).scale,
+      })),
+  ]
 
   // ── section 2 data: the indicator-chip recipe, re-rolled per theme ──
   // Unify's chip = Accent(50) fill · Highlight(200) border · Primary text — all three
@@ -385,6 +626,8 @@ export default function UnifyCompare() {
     return new Set(css.match(/--[a-z0-9-]+(?=:)/g)).size
   }, [focus])
   const semanticTotal = Object.values(UNIFY_SEMANTIC_CENSUS).reduce((a, b) => a + b, 0)
+  // the one alias Unify hands all five jobs to
+  const forkPrimary = dark ? focus.t.primary.darkHex : focus.t.primary.hex
 
   return (
     <div data-brand="chrome" data-theme={dark ? 'dark' : 'light'}
@@ -423,7 +666,7 @@ export default function UnifyCompare() {
 
         {/* ── 01 · DRIFT ── */}
         <Section n={1} title="The same role lands somewhere different in every theme"
-          lede={'Unify’s "Brand Primary" aliases stop 500 in one theme, 600 in the next, 800 in another — one role carrying both the brand’s identity AND every structural job, so its weight changes per brand and everything built on it moves too. The engine separates the two: identity lives in exactly one role (the cta, gated to stay usable), and every structural role is placed by law — flat across brands, in both modes.'}>
+          lede={'Unify’s "Brand Primary" aliases stop 500 in one theme, 600 in the next, 800 in another — one role carrying both the brand’s identity AND every structural job, so its weight changes per brand and everything built on it moves too. The engine separates the two: identity lives in exactly one role (the cta, gated to stay usable), and every structural role is placed by law rather than per brand — holding still across all seven seeds, on the ladder each mode is declared against.'}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: 18 }}>
             <div style={CARD}>
               <div style={CARD_TITLE}>Unify — Brand Primary · Highlight · Accent, as aliased</div>
@@ -470,14 +713,29 @@ export default function UnifyCompare() {
               ]} />
               <div style={STAT}>
                 Unify's one Primary is doing the button job, the text job, and the emphasis job at once — here it
-                forks: <b>ink-10</b> (the body text register,
-                spans {spread(okRole(okStop(10), 'light')).toFixed(0)} L* light), <b>ink-9</b> (the emphasis
-                fill and first text stop, {spread(okRole(okStop(9), 'light')).toFixed(0)} L*), with the tint registers wash-6 / paper-3
-                (Unify's Highlight and Accent analogs) flat within ~<b>1 L*</b>. The fourth fork, the <b>cta</b>, is
+                forks. In light mode: <b>ink-10</b>, the body text register, spans <b>{okSpread(10, 'light')} L*</b> across
+                the seven seeds; <b>ink-9</b>, the emphasis fill and first text stop, <b>{okSpread(9, 'light')} L*</b>; and
+                the tint registers wash-6 / paper-3 — Unify's Highlight and Accent analogs —
+                <b> {okSpread(6, 'light')}</b> and <b>{okSpread(3, 'light')} L*</b>. Unify's Primary spans
+                <b> {spread(uPrimL).toFixed(0)} L*</b> over the same seven. The fourth fork, the <b>cta</b>, is
                 left off the chart on purpose: it carries the brand's identity inside a gated register, so it is
-                supposed to vary and plotting it here only competes with the point. The small wobble that remains in ink-9 is principled:
-                the text register solves a contrast requirement, and contrast is pure luminance — equal contrast
-                across hues can't also be equal apparent lightness once chroma differs.
+                supposed to vary, and plotting it here only competes with the point.
+              </div>
+              {/* Added 2026-07-30. The old copy said the tint registers were "flat within ~1 L*" with no
+                  mode qualifier, and the section lede said "flat across brands, in both modes" — both are
+                  true of light and false of dark, where paper-3 spans 2.7 L* and wash-7 spans 7.8. Not a
+                  regression: dark is placed on the PHOTOMETRIC ladder on purpose (a dark surface only reads
+                  as one plane if its stops share a luminance), so measuring it with an apparent-L ruler is
+                  supposed to fan out. The chart was already showing this; only the sentence was wrong. */}
+              <div style={STAT}>
+                Where a line is <i>not</i> flat, the reason is the ruler rather than the placement. Each mode is
+                placed on its own declared ladder — light on apparent lightness, dark on luminance, because a dark
+                surface only reads as a single plane when its stops share a luminance. This chart measures both
+                with the apparent-lightness ruler, so the dark papers and washes fan out with chroma
+                (<b>{okSpread(3, 'dark')}</b> to <b>{okSpread(7, 'dark')} L*</b>) while their luminance holds within
+                about a tenth of a percentage point. Light mode's ink-9 is the same trade running the other way:
+                the text register solves a contrast requirement, contrast is pure luminance, and equal contrast
+                across hues cannot also be equal apparent lightness once chroma differs.
               </div>
             </div>
           </div>
@@ -495,7 +753,7 @@ export default function UnifyCompare() {
               <RampChart mode="dark" lines={unifyRampLines('dark')} xTicks={unifyTicks} />
             </div>
             <div style={CARD}>
-              <div style={CARD_TITLE}>OKChroma — generated scales, stops 1–11</div>
+              <div style={CARD_TITLE}>OKChroma — generated scales, stops 1–{SCALE_STOP_COUNT}</div>
               <p style={CARD_SUB}>
                 Same seeds, full scales. One curve shape repeated per brand, in both modes, with no stop left unpicked —
                 the shape is the system, not a per-family judgment call.
@@ -548,13 +806,29 @@ export default function UnifyCompare() {
                 ))}
               </div>
               <div style={STAT}>
-                Same recipe from structural stops: the text register spans <b>{spread(okRole(okStop(10), 'light')).toFixed(0)} L*</b> light
-                / <b>{spread(okRole(okStop(10), 'dark')).toFixed(0)} L*</b> dark and the tint fill under <b>1 L*</b> —
+                Same recipe from structural stops: the ink-9 text spans <b>{okSpread(9, 'light')} L*</b> light
+                / <b>{okSpread(9, 'dark')} L*</b> dark, and the paper-3 fill <b>{okSpread(3, 'light')}</b> / <b>{okSpread(3, 'dark')} L*</b> —
                 the chip reads as one component everywhere, and the hue alone says which brand you're in.
               </div>
             </div>
           </div>
         </Section>
+
+        {/* ── DISTRIBUTION — a SCREENSHOT TARGET, not a narrative section ─────────
+            Owner 2026-07-30: "all i want is literally what you see in the screenshot."
+            No section number, no lede, no caption — just the two family names in the
+            style of her Gray | neutral board, and the graph. Light only for now; dark
+            is one more <DistributionChart mode="dark"> against page #0d0d0f. */}
+        <section style={{ display: 'flex', flexDirection: 'column', gap: 26 }}>
+          {roster.map(r => (
+            <div key={r.label} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ fontSize: 12, color: 'var(--fg-subtle)' }}>{r.label}</div>
+              <DistributionChart mode={distMode}
+                lanes={[currentLane(r.fam, distMode), newLane(r.scale, distMode, r.anchors)]}
+                reqs={distReqs(r.scale, distMode)} />
+            </div>
+          ))}
+        </section>
 
         {/* ── 03 · COVERAGE ── */}
         <Section n={3} title="Three tokens per brand, next to a full system per brand"
@@ -597,6 +871,34 @@ export default function UnifyCompare() {
             </div>
           </div>
         </Section>
+
+        {/* ── THE FORK — a SCREENSHOT TARGET, like the distribution roster ────────
+            Same five jobs twice: all on Unify's one Brand Primary, then each on the
+            token the engine gives it. Follows the theme picker above. */}
+        <section style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ fontSize: 12, color: 'var(--fg-subtle)' }}>
+            one token vs. forked — {shortName(focus.t).toLowerCase()}
+          </div>
+          {/* 360, not the 420 the narrative sections use: the two forms have to stay SIDE BY
+              SIDE to be comparable, and the form's widest child is a 300px input + padding. */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 14 }}>
+            {/* Every job on the one alias, and the two text levels are the reason why: these
+                are COLOURED text, and Brand Primary is the only stop Unify vets for it — so
+                asking for a second level gets you the same value back. Do NOT route these to
+                Gray (I did once): gray text is a different subject and it deletes the
+                comparison the forked side is making with ink-9 vs ink-10. */}
+            <ForkComposition
+              page={DIST_PAGE[distMode]} heading={forkPrimary} body={forkPrimary}
+              ring={forkPrimary} fill={forkPrimary} onFill={dark ? '#0E0F10' : '#FFFFFF'}
+              linkC={forkPrimary} textBtn={forkPrimary} />
+            <div data-brand={focus.slug} data-theme={dark ? 'dark' : 'light'}>
+              <ForkComposition
+                page={DIST_PAGE[distMode]} heading="var(--brand-ink-9)" body="var(--brand-ink-10)"
+                ring="var(--brand-highlight-8)" fill="var(--brand-cta)" onFill="var(--brand-on-cta)"
+                linkC="var(--link)" textBtn="var(--brand-cta-ink)" />
+            </div>
+          </div>
+        </section>
       </main>
     </div>
   )
