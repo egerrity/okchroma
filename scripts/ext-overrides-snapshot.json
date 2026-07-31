@@ -1,7 +1,7 @@
 {
  "base": {
-  "light": 141,
-  "dark": 141
+  "light": 143,
+  "dark": 143
  },
  "brands": {
   "dark-roast": {
@@ -3165,6 +3165,7 @@
     "warning/cta-ink/enabled",
     "warning/cta-ink/hover",
     "warning/cta-ink/pressed",
+    "warning/cta/border",
     "warning/cta/enabled",
     "warning/cta/hover",
     "warning/cta/pressed",
@@ -3512,6 +3513,7 @@
     "warning/cta-ink/enabled",
     "warning/cta-ink/hover",
     "warning/cta-ink/pressed",
+    "warning/cta/border",
     "warning/cta/enabled",
     "warning/cta/hover",
     "warning/cta/pressed",
@@ -3659,6 +3661,7 @@
     "warning/cta-ink/enabled",
     "warning/cta-ink/hover",
     "warning/cta-ink/pressed",
+    "warning/cta/border",
     "warning/cta/enabled",
     "warning/cta/hover",
     "warning/cta/pressed",
@@ -3770,6 +3773,7 @@
     "brand-secondary/cta-ink/enabled",
     "brand-secondary/cta-ink/hover",
     "brand-secondary/cta-ink/pressed",
+    "brand-secondary/cta/border",
     "brand-secondary/cta/enabled",
     "brand-secondary/cta/hover",
     "brand-secondary/cta/pressed",
@@ -3883,6 +3887,7 @@
     "brand-secondary/cta-ink/enabled",
     "brand-secondary/cta-ink/hover",
     "brand-secondary/cta-ink/pressed",
+    "brand-secondary/cta/border",
     "brand-secondary/cta/enabled",
     "brand-secondary/cta/hover",
     "brand-secondary/cta/pressed",
@@ -4487,6 +4492,7 @@
     "warning/cta-ink/enabled",
     "warning/cta-ink/hover",
     "warning/cta-ink/pressed",
+    "warning/cta/border",
     "warning/cta/enabled",
     "warning/cta/hover",
     "warning/cta/pressed",
@@ -4968,6 +4974,7 @@
     "brand-secondary/cta-ink/enabled",
     "brand-secondary/cta-ink/hover",
     "brand-secondary/cta-ink/pressed",
+    "brand-secondary/cta/border",
     "brand-secondary/cta/enabled",
     "brand-secondary/cta/hover",
     "brand-secondary/cta/pressed",
@@ -5602,6 +5609,7 @@
     "brand-secondary/cta-ink/enabled",
     "brand-secondary/cta-ink/hover",
     "brand-secondary/cta-ink/pressed",
+    "brand-secondary/cta/border",
     "brand-secondary/cta/enabled",
     "brand-secondary/cta/hover",
     "brand-secondary/cta/pressed",
@@ -5639,6 +5647,7 @@
     "warning/cta-ink/enabled",
     "warning/cta-ink/hover",
     "warning/cta-ink/pressed",
+    "warning/cta/border",
     "warning/cta/enabled",
     "warning/cta/hover",
     "warning/cta/pressed",

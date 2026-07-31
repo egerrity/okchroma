@@ -5,8 +5,10 @@
 import { BRANDS } from '../src/brands'
 import { SECONDARIES } from '../src/secondaries'
 import { SIGNALS } from '../src/engine/signals'
-import { resolveBrand, SIGNAL_SCALES } from '../src/engine/resolve'
+import { resolveBrand, resolveTheme, SIGNAL_SCALES } from '../src/engine/resolve'
 import { themeToFigma } from '../src/engine/figmaRender'
+import { brandCss, signalsCss, ctaNeedsBorder, ctaPageLc, pageStopFor } from '../src/engine/cssRender'
+import { generateNeutralScale } from '../src/engine/colorEngine'
 
 const brand = BRANDS.find(b => b.slug === 'dark-roast')!
 const r = resolveBrand(brand.hex, brand.name, { exact: brand.exact, archetypeOverride: brand.archetypeOverride, style: brand.style })
@@ -197,6 +199,67 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
     ok(leaf(sg, 'on-cta').$value.hex === leaf(sg, 'ink-9').$value.hex, `${mode} outline cta/on should be the family ink/9`)
     ok(!sg['cta'] || !sg['cta'].$type, `${mode} outline left a FLAT cta leaf (band regression)`)
   }
+}
+
+// ── THE CTA-BORDER GATE (owner 2026-07-31) ───────────────────────────────────────────────────
+// Until this round NOTHING asserted ctaNeedsBorder: the only regression evidence was an
+// ext-overrides-snapshot diff, which is exactly the blind spot CATALOG C40 was written about —
+// a snapshot tells you a number moved, never whether the rule still means what it says.
+//
+// Three properties, each of which a plausible refactor breaks silently:
+//   1. the two emitters DECIDE IDENTICALLY (css var vs figma alpha) — they own separate copies
+//      of the decision and have drifted before (figmaRender's banner described a rule that never
+//      shipped, for two rounds);
+//   2. the rung matches the family — a ladder keyed by prefix is easy to mis-thread;
+//   3. the gate tracks the PAGE, not the family's own ramp — the C39 rule it replaced was
+//      family-relative, and reverting to that shape would still typecheck.
+{
+  const probes: Array<[string, string, string]> = [
+    // [primary, custom secondary, what it exercises]
+    ['#B8FFB9', '#C4DAF2', 'pale primary — brand + secondary + neutral all fire in light'],
+    ['#004E75', '#B45309', 'deep primary — only the neutral fires'],
+  ]
+  const RUNG: Record<string, number> = { brand: 0.16, secondary: 0.06, neutral: 0.08 }
+  for (const [pHex, sHex, what] of probes) {
+    const t = resolveTheme({ primaryHex: pHex, secondaryHex: sHex, secondaryStyle: 'default', contrastProfile: 'wcag' })
+    const nScale = generateNeutralScale(t.primary.scale.brandH, 'default', 'wcag')
+    const css = brandCss('probe', 'Probe', t.themed, t.secondary!.scale, '', 'default', 'wcag', 'default')
+    const fg = themeToFigma(t.themed, {
+      secondary: t.secondary!.scale, secondaryStyle: 'default', neutralLevel: 'default',
+      contrastProfile: 'wcag', signals: t.signalOverrides.map(o => ({ name: o.name, scale: o.scale })),
+    })
+    for (const mode of ['light', 'dark'] as const) {
+      const page = pageStopFor(nScale, mode)
+      // the css block for this mode — dark is the second occurrence of each var
+      const blocks = css.split('[data-theme="dark"]')
+      const block = mode === 'light' ? blocks[0] : blocks.slice(1).join('')
+      for (const fam of ['brand', 'secondary', 'neutral'] as const) {
+        const scale = fam === 'brand' ? t.themed.scale : fam === 'secondary' ? t.secondary!.scale : nScale
+        const should = ctaNeedsBorder(scale, mode, page)
+        const alpha = leaf((fg[mode] as any)[fam], 'cta-border').$value.alpha
+        // (3) the gate is page-relative and agrees with a freshly measured |Lc|
+        const measured = ctaPageLc(scale, mode, page!) < 15
+        ok(measured === should, `${what}: ${mode}.${fam} gate disagrees with a re-measured |Lc| vs the page`)
+        // (1) both emitters reached the same verdict
+        const cssFires = new RegExp(`--${fam}-cta-border: var\\(--alpha-offset-`).test(block)
+        ok(cssFires === should, `${what}: ${mode}.${fam} css says ${cssFires}, gate says ${should}`)
+        ok((alpha > 0) === should, `${what}: ${mode}.${fam} figma says ${alpha > 0}, gate says ${should}`)
+        // (2) and when it fires, at this family's rung, in both emitters
+        if (should) {
+          ok(Math.abs(alpha - RUNG[fam]) < 1e-9, `${what}: ${mode}.${fam} figma rung ${alpha}, expected ${RUNG[fam]}`)
+          const want = `--${fam}-cta-border: var(--alpha-offset-${String(RUNG[fam] * 100).padStart(2, '0')});`
+          ok(block.includes(want), `${what}: ${mode}.${fam} css missing ${want}`)
+        }
+      }
+    }
+  }
+  // the ladder's rows must exist in :root for every rung an emitter can name, or a firing
+  // family aliases a variable nothing declares
+  const root = signalsCss('wcag')
+  for (const rung of [6, 8, 16])
+    for (const mode of ['light', 'dark'] as const)
+      ok(root.includes(`--alpha-offset-${String(rung).padStart(2, '0')}: rgba(${mode === 'light' ? '0, 0, 0' : '255, 255, 255'}`),
+        `system alpha row --alpha-offset-${String(rung).padStart(2, '0')} missing from :root (${mode})`)
 }
 
 if (fails.length) { console.error('FAIL:\n' + fails.map(f => '  - ' + f).join('\n')); process.exit(1) }

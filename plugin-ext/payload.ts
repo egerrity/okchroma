@@ -21,7 +21,7 @@
 import { resolveTheme, signalScalesFor, type ResolvedTheme } from '../src/engine/resolve'
 import { themeToFigma, type FigmaGroup, type FigmaColorToken } from '../src/engine/figmaRender'
 import { SIGNALS } from '../src/engine/signals'
-import { OFFSET_12_ALPHA } from '../src/engine/cssRender'
+import { OFFSET_ALPHAS, offsetTokenPath, type OffsetRung } from '../src/engine/cssRender'
 import type { ContrastProfile, NeutralLevel } from '../src/engine/colorEngine'
 
 export interface FlatTok { path: string; r: number; g: number; b: number; a?: number }
@@ -45,6 +45,9 @@ export type TokenColumns = Record<Column, FlatTok[]>
 // re-applies preserve a brand's escape posture.
 export type ThemeSpec = Omit<Parameters<typeof resolveTheme>[0], 'contrastProfile'> & {
   ctaEscape?: boolean
+  // THE CTA-BORDER OPT-OUT (owner 2026-07-31: "on by default but optional"). ABSENT = ON, so
+  // every recipe stored before this flag existed keeps its strokes on re-apply/backfill.
+  ctaBorder?: boolean
   // the SYSTEM LINK's custom seed (Phase 4) — one link per theme; absent = the link rows
   // carry the primary's cta-ink values (extensions override them per brand)
   linkHex?: string | null
@@ -87,11 +90,18 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
     { path: 'system/abs-white', ...W },
     { path: 'system/alpha/transparent', ...W, a: 0 },
     { path: 'system/alpha/scrim', ...K, a: 0.6 },
-    // the decorative cta stroke (owner 2026-07-29): 12% black in light, flipped to WHITE in
-    // dark. Unlike the shadow set below it does NOT scale up in dark — a stroke sits on the
-    // fill rather than bleeding into the ground, and 12% was confirmed in both directions.
-    // Brand-independent, so it stays a base row and costs no per-brand overrides.
-    { path: 'system/alpha/offset-12', ...(dark ? W : K), a: OFFSET_12_ALPHA },
+    // the decorative cta stroke (owner 2026-07-29, ladder 2026-07-31): black in light, flipped
+    // to WHITE in dark, one row per rung — neutral takes 08, secondary 06, primary and the
+    // signals 16. Unlike the shadow set below these do NOT scale up in dark: a stroke sits on the
+    // fill rather than bleeding into the ground. Brand-independent, so each stays a base row and
+    // costs no per-brand overrides — the whole reason C39 chose an alpha over a family stop.
+    //
+    // offset-12 is GONE, renamed to offset-08 with its value adjusted (owner 2026-07-31). The
+    // neutral was its only consumer, so the rename carries every existing binding across; see
+    // RENAMED_LEAVES in code.ts, plus the value-correction pass that rewrites the old 0.12 in
+    // files that already carry the row — ensure() renames in place WITHOUT re-seeding.
+    ...(Object.keys(OFFSET_ALPHAS) as unknown as OffsetRung[]).map(Number).sort((a, b) => a - b)
+      .map(r => ({ path: offsetTokenPath(r as OffsetRung), ...(dark ? W : K), a: OFFSET_ALPHAS[r as OffsetRung] })),
     { path: 'system/alpha/shadow-04', ...K, a: dark ? 0.32 : 0.04 },
     { path: 'system/alpha/shadow-08', ...K, a: dark ? 0.48 : 0.08 },
     { path: 'system/alpha/shadow-12', ...K, a: dark ? 0.64 : 0.12 },
@@ -156,6 +166,7 @@ function lane(
     contrastProfile: profile,
     ctaEscape: input.ctaEscape,
     linkHex: input.linkHex,
+    ctaBorder: input.ctaBorder,
   })
   const inc = includeSecondary === true || !!t.secondary
   return { light: toFlat(light, 'light', inc), dark: toFlat(dark, 'dark', inc), theme: t }

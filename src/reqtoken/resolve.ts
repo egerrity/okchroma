@@ -8,7 +8,7 @@
 // The producers are verbatim ports of the pre-resolver engine, proven byte-identical at cutover (c7542b7);
 // the blessed snapshot audits are the standing regression gate.
 import { apparentL, perceptualRungL, perceptualDarkC } from '../engine/perceptualL'
-import { clampChromaToGamut, wcagY, contrastRatio, legalRatio, findMaxLForContrast, apcaLc } from '../engine/constraints'
+import { clampChromaToGamut, wcagY, legalRatio, findMaxLForContrast, apcaLc } from '../engine/constraints'
 import { hexToOklch, srgbEmitChannels, redSolveDist, RED_GATE, RED_SOLVE } from '../engine/colorMath'
 import { hoverL, pressedL, stateFillL } from '../engine/archetypes'
 import { DARK_BAND_LIFT, DARK_SHINE_PARITY_T, LIGHT_L, DARK_SIGNAL_WARM_DRIFT } from '../engine/stopTable'

@@ -2,7 +2,7 @@
 // colorEngine.ts so the requirement-token resolver and the engine can share one implementation without an
 // import cycle (colorEngine → reqtoken/resolve → colorMath). No formula here may change without a parity
 // dump (scripts/p3-parity-dump.ts, before/after byte-compare) proving the output is byte-identical.
-import { clampChromaToGamut, oklchToLinearRgb, apcaLc, contrastRatio, legalRatio, encodedChannels, MASTER_GAMUT, type Gamut } from './constraints'
+import { clampChromaToGamut, oklchToLinearRgb, apcaLc, legalRatio, encodedChannels, MASTER_GAMUT, type Gamut } from './constraints'
 import { GOLD_SPINE, WARM_TORSION } from './stopTable'
 
 function goldSpineHueTable(L: number): number {

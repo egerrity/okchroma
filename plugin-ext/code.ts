@@ -29,10 +29,15 @@ const COLS_KEY = 'okchroma-ext-cols'
 // Mirrors payload.COLUMNS (type-only import keeps the engine out of the sandbox bundle).
 // Column order IS the mode-dropdown order: the default lane leads, pairs group by prefix.
 const COLUMNS: Column[] = ['light', 'dark']
-// Mirrors cssRender.OFFSET_12_ALPHA — declared locally for the same reason COLUMNS is: a value
+// Mirrors cssRender.OFFSET_ALPHAS — declared locally for the same reason COLUMNS is: a value
 // import from payload would drag the engine into the sandbox bundle. Used only to RECOGNISE our
-// own decorative stroke when converting a pre-existing raw value to the alias, never to write one.
-const OFFSET_ALPHA = 0.12
+// own decorative strokes when converting a pre-existing raw value to the alias, never to write one.
+// 0.12 is the RETIRED rung (owner 2026-07-31) and stays in the recognise set precisely because
+// files in the wild still hold it — dropping it would leave those raw forever.
+const RUNG_ALPHAS: Record<string, number> = { '06': 0.06, '08': 0.08, '16': 0.16 }
+const RETIRED_RUNG_ALPHA = 0.12
+const RUNG_FOR_ALPHA = (a: number | undefined): string | undefined =>
+  a === undefined ? undefined : Object.keys(RUNG_ALPHAS).find(k => Math.abs(RUNG_ALPHAS[k] - a) < 1e-6)
 const DARK_COLUMNS = new Set<Column>(['dark'])
 // Every variable carries the file's solve posture, visible without the plugin.
 const STAMP = 'OKChroma · modes: light · dark (WCAG 3:1/4.5/7:1)'
@@ -84,6 +89,18 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // because the row shipped under the old name at b72bfd9, so an already-imported file must
   // adopt it in place rather than gain a duplicate.
   ['cta-border', 'offset-12'],
+  // ── THE RUNG LADDER (owner 2026-07-31). offset-12 is retired: the ladder is offset-06 for the
+  // secondary, offset-08 for the neutral, offset-16 for the primary and the signals, and no
+  // family lands on 12 any more. The NEUTRAL was offset-12's only real consumer (in shipped dist
+  // it fired 62 times, all neutral), so 12 → 08 carries every existing binding across in place
+  // rather than stranding the row. Chained ahead of the 2026-07-30 entry above so a file still
+  // carrying the pre-rename `cta-border` name walks cta-border → offset-12 → offset-08.
+  //
+  // ⚠️ THE RENAME MOVES THE NAME, NOT THE VALUE. ensure() adopts a legacy row by renaming it and
+  // does NOT bump createdVars, so seedFresh never runs and the row keeps its old 0.12 under the
+  // new name — a token called offset-08 holding 12%. The value-correction pass further down
+  // (the RUNG_ALPHAS loop) is what actually re-values it; do not delete one without the other.
+  ['offset-12', 'offset-08'],
   // ── THE 2026-07-29 COLLAPSE. highlight/9 and highlight/on are DELETED (they ORPHAN —
   // the plugin reports orphans, it never deletes a user's variables), and every ink name
   // shifts DOWN one: ink/10 → ink/9, ink/11 → ink/10, ink/12 → ink/11. That last row is
@@ -434,7 +451,7 @@ figma.ui.onmessage = async (msg) => {
         baseVars.get(t.r + t.g + t.b > 1.5 ? 'system/abs-white' : 'system/abs-black')
       // CTA-BORDER ALIASING (owner 2026-07-29: *"the rest of them should get aliased to the
       // transparent variable instead of being raw"*). BOTH states are aliases, never raw writes:
-      // alpha 0 → system/alpha/transparent, the decorative stroke → system/alpha/offset-12. So
+      // alpha 0 → system/alpha/transparent, the decorative stroke → its rung row (offset-06/08/16). So
       // the panel reads the token rather than a raw swatch, and the stroke stays single-source.
       // isPole() deliberately rejects alpha≠1, so the poles path can never claim either of these
       // — this is its own rule with its own targets.
@@ -444,10 +461,13 @@ figma.ui.onmessage = async (msg) => {
       // cta/border override raw (owner-caught 2026-07-30: "there is a transparent token that can
       // be aliased to all the rest that are raw"). Base rows aliased while overrides went raw
       // was the actual gap.
+      // The rung is carried by the token's own alpha (the engine picks it per family), so the
+      // router is a value lookup — no family table to keep in sync with cssRender.ctaBorderRung.
       const strokeFor = (path: string, t: { a?: number }) => {
         if (!path.endsWith('/cta/border')) return undefined
         if (t.a === 0) return baseVars.get('system/alpha/transparent')
-        return baseVars.get('system/alpha/offset-12')
+        const rung = RUNG_FOR_ALPHA(t.a)
+        return rung ? baseVars.get(`system/alpha/offset-${rung}`) : undefined
       }
       const seedValue = (v: figma.Variable, colId: string, t: FlatTok) => {
         const target = strokeFor(t.path, t) ?? (POLE_LEAVES(t.path) && isPole(t) ? absFor(t) : undefined)
@@ -467,7 +487,8 @@ figma.ui.onmessage = async (msg) => {
       // ALIAS TARGETS (every cta/border points at one or the other), and ensure() registers into
       // baseVars as it creates — a target created later in payload order would not exist yet when
       // an earlier leaf tried to alias it, silently falling back to a raw write.
-      for (const path of ['system/abs-black', 'system/abs-white', 'system/alpha/transparent', 'system/alpha/offset-12']) {
+      for (const path of ['system/abs-black', 'system/abs-white', 'system/alpha/transparent',
+        ...Object.keys(RUNG_ALPHAS).map(r => `system/alpha/offset-${r}`)]) {
         const before = createdVars
         const v = ensure(path)
         if (createdVars > before) seedFresh(v, path)
@@ -501,21 +522,52 @@ figma.ui.onmessage = async (msg) => {
       // variables — and cta/border has existed since 2026-07-04, so in any real file ensure()
       // found the row, seedFresh never ran, and it kept its raw value forever. The pole guard
       // here meant this pass could not rescue it either. Now both idioms convert.
-      const strokeTargetFor = (path: string, cur: figma.RGBA) => {
-        // only OUR values: fully transparent, or the 12% black/white offset. Anything else is
-        // a designer's own border colour and is left exactly alone.
+      const strokeTargetFor = (path: string, cur: figma.RGBA, col: Column) => {
+        // only OUR values: fully transparent, or a black/white offset at one of our rung alphas
+        // (including the RETIRED 0.12, which files in the wild still carry). Anything else is a
+        // designer's own border colour and is left exactly alone.
         const a = cur.a ?? 1
         if (Math.abs(a) < EPS) return strokeFor(path, { a: 0 })
-        if (Math.abs(a - OFFSET_ALPHA) < EPS && isPole({ r: cur.r, g: cur.g, b: cur.b })) return strokeFor(path, { a })
-        return undefined
+        if (!isPole({ r: cur.r, g: cur.g, b: cur.b })) return undefined
+        const ours = RUNG_FOR_ALPHA(a) !== undefined || Math.abs(a - RETIRED_RUNG_ALPHA) < EPS
+        if (!ours) return undefined
+        // target the rung the PAYLOAD wants for this path, not the one the old value implies —
+        // a file still holding the retired 12% neutral border must land on 08, not on a 12 row
+        // that no longer exists.
+        const seed = seedByCol.get(col)!.get(path)
+        return seed ? strokeFor(path, seed) : undefined
       }
       for (const [path, v] of baseVars) {
         for (let i = 0; i < activeCols.length; i++) {
           const cur = v.valuesByMode[colIds[i]]
           if (!cur || isAlias(cur)) continue
-          const target = strokeTargetFor(path, cur)
+          const target = strokeTargetFor(path, cur, activeCols[i])
             ?? (POLE_LEAVES(path) && isPole(cur) ? absFor(cur) : undefined)
           if (target && target.id !== v.id) v.setValueForMode(colIds[i], figma.variables.createVariableAlias(target))
+        }
+      }
+      // ── THE RENAMED ROW'S VALUE (owner 2026-07-31) ────────────────────────────────────────
+      // offset-12 → offset-08 is a rename WITH a value change, and ensure() only renames: it
+      // adopts the legacy row without bumping createdVars, so seedFresh never runs and the row
+      // arrives here still holding 0.12 under its new name. Every cta/border aliasing it then
+      // resolves 12% while the token says 08 — the name would lie, which is worse than a raw
+      // value. This pass is the other half of that rename; deleting it silently un-does it.
+      //
+      // Conservative in the same way strokeTargetFor is: only a value that is EXACTLY one of our
+      // own rung alphas at a pure pole is rewritten. A designer who re-valued the row keeps it.
+      for (const rung of Object.keys(RUNG_ALPHAS)) {
+        const v = baseVars.get(`system/alpha/offset-${rung}`)
+        if (!v) continue
+        for (let i = 0; i < activeCols.length; i++) {
+          const cur = v.valuesByMode[colIds[i]]
+          if (!cur || isAlias(cur)) continue
+          const rgba = cur as figma.RGBA
+          const a = rgba.a ?? 1
+          if (!isPole({ r: rgba.r, g: rgba.g, b: rgba.b })) continue
+          const isOurs = RUNG_FOR_ALPHA(a) !== undefined || Math.abs(a - RETIRED_RUNG_ALPHA) < EPS
+          if (!isOurs || Math.abs(a - RUNG_ALPHAS[rung]) < EPS) continue
+          const seed = seedByCol.get(activeCols[i])!.get(`system/alpha/offset-${rung}`)
+          if (seed) v.setValueForMode(colIds[i], toRGBA(seed))
         }
       }
       // Columns CREATED on an existing base (the apca posture flip, or a hand-deleted
@@ -649,7 +701,7 @@ figma.ui.onmessage = async (msg) => {
           } else {
             // a differing override rides the same alias idiom (a flipped on-cta reads
             // "abs-white" in the extension, not an anonymous hex; a cta/border reads
-            // "alpha/transparent" or "alpha/offset-12" rather than a raw invisible swatch).
+            // "alpha/transparent" or an "alpha/offset-*" rung rather than a raw invisible swatch).
             // strokeFor comes FIRST for the same reason it does at the base seeding: isPole
             // rejects alpha≠1, so the poles rule can never claim an alpha-carrying border.
             const target = strokeFor(path, tok) ?? (POLE_LEAVES(path) && isPole(tok) ? absFor(tok) : undefined)

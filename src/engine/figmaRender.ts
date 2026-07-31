@@ -1,6 +1,6 @@
 
 
-import { toHex, ctaNeedsBorder, OFFSET_12_ALPHA } from './cssRender'
+import { toHex, ctaNeedsBorder, pageStopFor, ctaBorderRung, OFFSET_ALPHAS, type OffsetRung } from './cssRender'
 import { srgbEmitChannels } from './colorMath'
 import { stopTokenName, tokenOrder } from './tokenNames'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
@@ -20,14 +20,15 @@ const TRANSPARENT_TOKEN: FigmaColorToken = {
   $value: { colorSpace: 'srgb', components: [0, 0, 0], alpha: 0, hex: '#000000' },
 }
 
-// the decorative cta stroke (owner 2026-07-29): 12% black in light, flipped to white in dark.
-// Scheme-divergent, brand-independent — the plugin aliases both this and TRANSPARENT_TOKEN onto
-// their system/alpha/* rows, so a cta-border is never a raw write in either state.
-const OFFSET_12_TOKEN = (mode: 'light' | 'dark'): FigmaColorToken => {
+// the decorative cta stroke (owner 2026-07-29, ladder 2026-07-31): black in light, flipped to
+// white in dark, at this family's rung. Scheme-divergent, brand-independent — the plugin aliases
+// every rung and TRANSPARENT_TOKEN onto their system/alpha/* rows, so a cta-border is never a raw
+// write in any state.
+const OFFSET_TOKEN = (rung: OffsetRung, mode: 'light' | 'dark'): FigmaColorToken => {
   const c = mode === 'light' ? 0 : 1
   return {
     $type: 'color',
-    $value: { colorSpace: 'srgb', components: [c, c, c], alpha: OFFSET_12_ALPHA, hex: mode === 'light' ? '#000000' : '#ffffff' },
+    $value: { colorSpace: 'srgb', components: [c, c, c], alpha: OFFSET_ALPHAS[rung], hex: mode === 'light' ? '#000000' : '#ffffff' },
   }
 }
 
@@ -97,7 +98,7 @@ function rampGroup(
     // the already-resolved border token — the decorative alpha stroke when this cta vibrates,
     // else transparent. Resolved by the caller because the choice is mode-dependent and
     // rampGroup has no mode. Both outcomes are ALIAS targets on the plugin side
-    // (system/alpha/offset-12 | system/alpha/transparent), so neither is ever a raw write.
+    // (system/alpha/offset-06|08|16 | system/alpha/transparent), so neither is ever a raw write.
     ctaBorder?: FigmaColorToken
   },
 ): FigmaGroup {
@@ -117,9 +118,10 @@ function rampGroup(
   if (extra?.ctaInkPressed) putLeaf(g, 'cta-ink-pressed', colorFromStop(extra.ctaInkPressed))
   // cta/border pairs with the cta family: the SAFETY STROKE when the fill would vibrate against
   // the background rather than sit on it (owner 2026-07-29, superseding the 2026-07-04 "filled is
-  // filled" removal), else transparent. The rule lives in cssRender.ctaBorderStop so both
-  // emitters decide identically. The outline secondary still overrides this with its own
-  // highlight/8 unconditionally — there the border is the button's identity, not a safety.
+  // filled" removal), else transparent. The rule lives in cssRender.ctaNeedsBorder — |Lc| of the
+  // cta against the page under 15 — so both emitters decide identically, and the rung comes from
+  // cssRender.ctaBorderRung. The outline secondary still overrides this with its own highlight/8
+  // unconditionally — there the border is the button's identity, not a safety.
   if (extra?.cta) putLeaf(g, 'cta-border', extra.ctaBorder ?? TRANSPARENT_TOKEN)
   putLeaf(g, 'on-cta', colorFromHex(onFillWhite))
   if (extra?.identityHex) g['identity'] = colorFromHexString(extra.identityHex)
@@ -153,6 +155,11 @@ export interface ThemeInput {
   // emitted link group carries ITS ink-register resolution (the red de-conflict);
   // absent = the link group carries the primary's cta-ink trio (the plugins alias it).
   linkHex?: string | null
+
+  // THE CTA-BORDER OPT-OUT (owner 2026-07-31: "on by default but optional"). DEFAULT ON —
+  // absent means the stroke ships, so every stored recipe predating the flag is unchanged.
+  // Off withholds the PAGE rather than branching the gate; see cssRender.brandCss.
+  ctaBorder?: boolean
 }
 
 export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: FigmaGroup; dark: FigmaGroup } {
@@ -162,25 +169,28 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
   const secondaryOnFillDark = input.secondary ? input.secondary.onFillTextIsWhiteDark : scale.onFillTextIsWhiteDark
 
   // the full cta family per mode — one helper, every family call-site rides it.
-  // ctaBorder rides here too (owner 2026-07-29) so brand, secondary, neutral AND the signals
-  // all get the safety stroke from one decision — see cssRender.ctaBorderStop, which owns the
-  // rule (cta under 3:1 vs paper-3 → that family's highlight-8, else transparent).
-  const ctaFamily = (s: GeneratedScale, mode: 'light' | 'dark') => ({
-    ctaBorder: ctaNeedsBorder(s, mode) ? OFFSET_12_TOKEN(mode) : TRANSPARENT_TOKEN,
+  // ctaBorder rides here too (owner 2026-07-29) so brand, secondary, neutral AND the signals all
+  // get the stroke from one decision — see cssRender.ctaNeedsBorder, which owns the rule (|Lc| of
+  // the cta against the PAGE under 15), and ctaBorderRung, which owns the per-family rung.
+  // `prefix` must match the css side's var prefix or the two emitters would disagree on the rung.
+  // nScale is declared below but only READ when build() runs, which is after — no TDZ.
+  const borderPage = (mode: 'light' | 'dark') => (input.ctaBorder ?? true) ? pageStopFor(nScale, mode) : undefined
+  const ctaFamily = (s: GeneratedScale, mode: 'light' | 'dark', prefix: string) => ({
+    ctaBorder: ctaNeedsBorder(s, mode, borderPage(mode)) ? OFFSET_TOKEN(ctaBorderRung(prefix), mode) : TRANSPARENT_TOKEN,
     ...(mode === 'light'
       ? { cta: s.cta, ctaHover: s.ctaHover, ctaPressed: s.ctaPressed, ctaInk: s.ctaInk, ctaInkHover: s.ctaInkHover, ctaInkPressed: s.ctaInkPressed }
       : { cta: s.ctaDark, ctaHover: s.ctaHoverDark, ctaPressed: s.ctaPressedDark, ctaInk: s.ctaInkDark, ctaInkHover: s.ctaInkHoverDark, ctaInkPressed: s.ctaInkPressedDark }),
   })
 
-  const brandExtra = (s: GeneratedScale, mode: 'light' | 'dark') => ({
+  const brandExtra = (s: GeneratedScale, mode: 'light' | 'dark', prefix: string) => ({
     identityHex: s.identityHex,
-    ...ctaFamily(s, mode),
+    ...ctaFamily(s, mode, prefix),
   })
 
   const nScale = generateNeutralScale(scale.brandH, input.neutralLevel ?? 'default', input.contrastProfile)
   // custom link seed resolved ONCE (both modes read it)
   const lt = input.linkHex ? resolveLinkTrio(input.linkHex, input.contrastProfile) : null
-  const neutralExtra = (mode: 'light' | 'dark') => ctaFamily(nScale, mode)
+  const neutralExtra = (mode: 'light' | 'dark') => ctaFamily(nScale, mode, 'neutral')
   const build = (mode: 'light' | 'dark'): FigmaGroup => {
     // paper-0 rides WITH the neutral ramp at paper/0 (its dark value is
     // neutral-tinted, so it dedups and aliases through the same per-tint
@@ -189,7 +199,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     const p0 = mode === 'light' ? nScale.paper0 : nScale.paper0Dark
     const neutralGroup: FigmaGroup = rampGroup(nScale[mode], mode === 'light' ? nScale.onFillTextIsWhite : nScale.onFillTextIsWhiteDark, neutralExtra(mode))
     if (p0) putLeaf(neutralGroup, 'paper-0', colorFromStop(p0))
-    const secondaryGroup = rampGroup(secondary[mode], mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark, brandExtra(secondary, mode))
+    const secondaryGroup = rampGroup(secondary[mode], mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark, brandExtra(secondary, mode, 'secondary'))
     // outline re-expression (only a real secondary can be outline) — same values cssRender
     // emits. The hover = highlight-8 at OUTLINE_HOVER_ALPHA (the STABLE gated stop the ring
     // uses — 9% of the generated subtle cta was imperceptible).
@@ -213,7 +223,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
       // cta/on = the family's ink/9, NOT a pole — the plugin aliases non-pole on-fills to the sibling ink/9
       if (s9) putLeaf(secondaryGroup, 'on-cta', colorFromStop(s9))
     }
-    const brandGroup = rampGroup(scale[mode], mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark, brandExtra(scale, mode))
+    const brandGroup = rampGroup(scale[mode], mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark, brandExtra(scale, mode, 'brand'))
     // neutral cta escape re-expression (mirrors the outline block above): the brand's
     // FILL trio + on-cta swap to the brand-neutral's ink register; cta-ink + the ramp
     // stay the brand's own. With NO real secondary the secondary group MIRRORS the brand
@@ -256,7 +266,9 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
       g[sig.name] = rampGroup(
         sig.scale[mode],
         mode === 'light' ? sig.scale.onFillTextIsWhite : sig.scale.onFillTextIsWhiteDark,
-        ctaFamily(sig.scale, mode),
+        // signals rank with the primary (ctaBorderRung: anything not neutral/secondary takes 16).
+        // Unreachable at the Lc 15 gate — no signal gets within 4 Lc of it — but defined, not accidental.
+        ctaFamily(sig.scale, mode, sig.name),
       )
     }
     return g

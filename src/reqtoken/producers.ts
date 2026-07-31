@@ -4,7 +4,7 @@
 // and proven byte-identical at cutover (commit c7542b7); the blessed snapshots are the standing gate — do not
 // "simplify" an expression here without eye-check + re-bless.
 import { classifyArchetype, medianLForArchetype, type Archetype } from '../engine/archetypes'
-import { clampChromaToGamut, wcagY, contrastRatio, legalRatio, findMaxLForContrast, findLForContrast, findLForContrastUp, apcaY, apcaLc, encodedChannels } from '../engine/constraints'
+import { clampChromaToGamut, wcagY, legalRatio, findMaxLForContrast, findLForContrast, findLForContrastUp, apcaY, apcaLc, encodedChannels } from '../engine/constraints'
 import { perceptualRungL, apparentL, grayApparentL, solveLForApparent, lstarFromY } from '../engine/perceptualL'
 import {
   hexToOklch, maxChromaAt, goldSpineHue, torsionedHue, gauss, sigmoid, hueDelta, oklabDist, redGateDist, RED_GATE,

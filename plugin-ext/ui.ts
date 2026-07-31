@@ -46,6 +46,10 @@ let linkCustom = false
 let linkBundled = false
 // the VIVIDNESS LEVER (phase 5): default OFF = the shipped dampened registers
 let fullChroma = false
+// THE CTA-BORDER OPT-OUT (owner 2026-07-31: "on by default but optional"). Default ON, and the
+// spec stores it as `false | undefined` rather than `true | false` so that ABSENT means ON —
+// every recipe written before this flag existed replays with its strokes intact.
+let ctaBorder = true
 // brand + the exact confirm TOKEN it was armed with (reason-scoped — the plugin only
 // honors a confirm whose reasons haven't changed since it was shown; changing the
 // toggle or fields between the two Applies re-confirms)
@@ -90,6 +94,7 @@ const linkField       = $<HTMLElement>('link-field')
 const linkResetBtn    = $<HTMLButtonElement>('link-reset')
 const linkHint        = $<HTMLElement>('link-hint')
 const fullChromaBox   = $<HTMLInputElement>('full-chroma')
+const ctaBorderBox    = $<HTMLInputElement>('cta-border')
 const linkSwatch      = $<HTMLElement>('link-swatch')
 const matrixEl        = $<HTMLElement>('matrix')
 const applyBtn        = $<HTMLButtonElement>('apply-btn')
@@ -192,6 +197,9 @@ function themeInput(name: string) {
     // separate from signals. Turn off for full vividness.") — primary only; rides the
     // recipe so "Re-apply all brands" preserves each brand's posture
     style: fullChroma ? ('full-chroma' as const) : undefined,
+    // absent = on (the default). Only the OFF posture is written, so the recipe stays
+    // forward-compatible and an older stored spec keeps its strokes.
+    ctaBorder: ctaBorder ? undefined : false,
   }
 }
 
@@ -559,6 +567,11 @@ ctaEscapeBox.addEventListener('change', () => {
 
 fullChromaBox.addEventListener('change', () => {
   fullChroma = fullChromaBox.checked
+  updatePreview()
+})
+
+ctaBorderBox.addEventListener('change', () => {
+  ctaBorder = ctaBorderBox.checked
   updatePreview()
 })
 

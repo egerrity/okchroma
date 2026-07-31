@@ -2,7 +2,7 @@
 
 import { generateIllustrationScale, generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
 import { srgbEmitChannels, masterEmitChannels } from './colorMath'
-import { clampChromaToGamut } from './constraints'
+import { clampChromaToGamut, apcaY, apcaLc } from './constraints'
 import { stopTokenName, tokenOrder } from './tokenNames'
 import { signalScalesFor, OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, escapeCtaFamily, resolveLinkTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
 import { SIGNALS, SIGNAL_EMIT_NAME } from './signals'
@@ -48,42 +48,81 @@ const onColor = (white: boolean) => (white ? '#ffffff' : '#000000')
 // it once (the neutral has none). Used for the brand, the (real) secondary, AND
 // the generated neutral — every family is emitted the same way.
 // (on-highlight dropped 2026-07-29 with the highlight band — one on-color per family now.)
-// THE CTA-BORDER SAFETY (owner 2026-07-29). This supersedes the 2026-07-04 "filled is filled"
-// removal of the conditional gate — not as a conformance requirement (the owner's words: *"it's a
-// safety … maybe I overstated it"*, and it makes no WCAG claim), but as a DECORATIVE stroke for
-// the buttons that would otherwise vibrate against the background instead of sitting on it.
-//
-// THE TRIGGER IS A LIGHTNESS TEST, NOT A CONTRAST RATIO (owner-corrected twice: it is neither
-// 3:1 nor 1:1 against paper-3). A cta at wash-5's lightness or beyond has drifted into the
-// surface band and cannot read as a filled button unaided.
-//
-//   light: cta.L >= wash-5.L     — vibrates by being too LIGHT, like another sheet of paper
-//   dark:  cta.L <= wash-5.L     — MIRRORED (owner mark): dark surfaces are dark, so a dark-mode
-//                                  fill vibrates by being too DARK. Same rule, reflected.
-//
-// WHY WASH-5 and not paper-3, which was the first proposal: the owner's own data point is that
-// the NEUTRAL button already falls in this category, and the neutral's cta rests exactly on
-// stop 4 (L 0.9216). paper-3 sits at 0.9479 and would miss it. wash-5 also satisfies the second
-// constraint — that this "mostly affects secondaries" — because a custom secondary's tinted cta
-// lands at L ≈ 0.89, just UNDER wash-4: measured over pale agnostic seeds, wash-4 catches 0/96
-// custom secondaries where wash-5 catches 81/96.
+// THE CTA-BORDER SAFETY (owner 2026-07-29, re-declared 2026-07-31). This supersedes the
+// 2026-07-04 "filled is filled" removal of the conditional gate — not as a conformance
+// requirement (her words: *"it's a safety … maybe I overstated it"*, and it makes no WCAG claim),
+// but as a DECORATIVE stroke for buttons that would otherwise vibrate against the background
+// instead of sitting on it.
 //
 // Layout never shifts — components already carry `border: 1.5px solid var(...-cta-border)`
 // unconditionally against the transparent value, which is why that token stayed in the
 // vocabulary through the 2026-07-04 removal.
-const CTA_BORDER_ANCHOR_STOP = 5
+//
+// ── THE GATE, RE-DECLARED IN APCA (owner 2026-07-31) ─────────────────────────────────────────
+// C39's trigger was `cta.L >= wash-5.L`, a family-relative lightness test, and it caught almost
+// nothing: in shipped dist it fired 62 times and every one was the neutral — 0 primaries,
+// 0 secondaries, 0 signals. The owner's ask was that more ctas earn the stroke, measured as a
+// distance from the page rather than from the family's own ramp.
+//
+// APCA IS USED HERE AS A TASTE INSTRUMENT, NOT AN ACCESSIBILITY ONE — her ruling, verbatim:
+// "This is NOT an accessibility measure, it is a taste measure. The buttons don't have a
+// requirement to pass 3:1." She supplied the numbers as a BAND, not as rival thresholds:
+// Lc 15 is APCA's floor for a non-text element to be discernible at all, Lc 30 its text minimum,
+// which she set as the ceiling — "we aren't making something readable, we are adding a stylistic
+// pop." So: a fill under Lc 15 against the page earns a stroke, and the stroke lands inside 15-30.
+// This does not reopen the wcag lane; see the C39 entry and the wcag-only standing rule.
+//
+// THE REFERENCE IS THE PAGE, not the family's own paper: neutral paper-2 in light, paper-1 in
+// dark (the demo's --surface-base, which swaps between modes). One ruler for every family.
+// The light/dark branch C39 hand-wrote is GONE — |Lc| is absolute, so mirroring falls out.
+export const CTA_BORDER_LC_FLOOR = 15
+const CTA_BORDER_PAGE_STOP = { light: 2, dark: 1 } as const
+
+// the page a family's cta is judged against. Exported because the audit gate and the round's
+// instruments must measure the same plane the emitter does, not a re-derived one.
+export function pageStopFor(neutral: GeneratedScale, mode: 'light' | 'dark'): ColorStop | undefined {
+  const stops = mode === 'light' ? neutral.light : neutral.dark
+  return stops.find(x => x.stop === CTA_BORDER_PAGE_STOP[mode])
+}
 
 // THE STROKE IS AN ALPHA, NOT A RAMP STOP (owner mark 2026-07-29, confirmed on her Figma
-// screenshot of both frames): 12% black in light, FLIPPED TO WHITE in dark. Two consequences
-// worth naming, both good:
-//   · it is BRAND-INDEPENDENT, so it lives in the base collection as a system row and costs
-//     ZERO per-brand overrides. Sourcing it from the family's ramp instead cost 88 — the
+// screenshot of both frames): black in light, FLIPPED TO WHITE in dark. Two consequences worth
+// naming, both good, and both still true of the ladder below:
+//   · it is BRAND-INDEPENDENT, so each rung lives in the base collection as one system row and
+//     costs ZERO per-brand overrides. Sourcing it from the family's ramp instead cost 88 — the
 //     neutral is brand-hue-tinted, so its border differed per brand (measured).
 //   · it cannot fight the fill's hue, which a same-family wash stop can.
-// The alpha DOES NOT scale up in dark the way the shadow set does (4/8/12% black → 32/48/64%),
-// because a stroke sits ON the fill rather than bleeding into the ground — her screenshot
-// confirms 12% reads in both directions. If dark ever needs more, it is this one constant.
-export const OFFSET_12_ALPHA = 0.12
+//
+// C39 asserted the alpha "does not scale up in dark the way the shadow set does … if dark ever
+// needs more, it is this one constant." THAT CLAIM IS MEASURABLY WRONG and the 2026-07-31 round
+// retired it: at the Lc 15 gate the neutral's dark stroke needs upwards of 32% to reach the band
+// where light needs 8%. The ladder does not encode a dark scale-up anyway — the owner declined
+// to fix the dark neutral, calling the rung that would (offset-24) too loud — but do not repeat
+// the claim as if it were established.
+//
+// ── THE RUNG LADDER (owner 2026-07-31) ───────────────────────────────────────────────────────
+// One rung per family, fixed by role. Picked off a four-way render of 06|08 secondary × 16|20
+// primary: 06/16 held hierarchy in 36 of 36 cases with the secondary in band everywhere, while
+// 04 bottomed out at Lc 15-16 ("too low") and 20 pushed the primary past the Lc 30 ceiling in
+// half of them. Because 06/16 holds unconditionally there is NO conditional escalation — the
+// pairing is the answer to "when do we bump the primary because the secondary is darker".
+//
+// WHY THE RUNGS ARE NOT EVENLY SPACED, and why a rung is not a loudness: the same alpha over
+// different fills lands at a different Lc. offset-12 reads 26.0 over a pale blue secondary but
+// only 19.2 over a pale green primary, so a ladder that looks ordered as numbers can still
+// invert as pixels. These three were chosen on the RESULTING Lc, not on their spacing.
+//
+// THE NEUTRAL IS FIXED AT 08 AND IS NOT SOLVED (her ruling). Its cta sits under APCA's own
+// black-level clamp against the page — |Lc| reads exactly 0.0 in both modes, meaning "below the
+// reporting floor of Lc 7.3", i.e. genuinely indistinguishable. At 08 its stroke lands Lc 17.1
+// in light (in band) and 8.7 in dark (under). She accepted the dark shortfall rather than raise
+// it: the rung that would fix it, offset-24, she called too loud.
+export const OFFSET_ALPHAS = { 6: 0.06, 8: 0.08, 16: 0.16 } as const
+export type OffsetRung = keyof typeof OFFSET_ALPHAS
+export const ctaBorderRung = (prefix: string): OffsetRung =>
+  prefix === 'neutral' ? 8 : prefix === 'secondary' ? 6 : 16
+export const offsetVarName = (rung: OffsetRung) => `--alpha-offset-${String(rung).padStart(2, '0')}`
+export const offsetTokenPath = (rung: OffsetRung) => `system/alpha/offset-${String(rung).padStart(2, '0')}`
 
 // The system alpha VARIABLES, never raw values (owner 2026-07-29: *"the rest of them should get
 // aliased to the transparent variable instead of being raw"*). Both mirror rows the Figma side
@@ -96,35 +135,42 @@ export const OFFSET_12_ALPHA = 0.12
 // same quiet edge can point at it. Renamed in place via RENAMED_LEAVES so a file that already
 // carries system/alpha/cta-border adopts the row instead of gaining a duplicate.
 export const TRANSPARENT_VAR = '--alpha-transparent'
-export const OFFSET_12_VAR = '--alpha-offset-12'
-export const offset12Rgba = (mode: 'light' | 'dark'): string =>
-  mode === 'light' ? `rgba(0, 0, 0, ${OFFSET_12_ALPHA})` : `rgba(255, 255, 255, ${OFFSET_12_ALPHA})`
+export const offsetRgba = (rung: OffsetRung, mode: 'light' | 'dark'): string =>
+  mode === 'light' ? `rgba(0, 0, 0, ${OFFSET_ALPHAS[rung]})` : `rgba(255, 255, 255, ${OFFSET_ALPHAS[rung]})`
 export const alphaRootVars = (mode: 'light' | 'dark'): string[] => [
   `  ${TRANSPARENT_VAR}: transparent;`,
-  `  ${OFFSET_12_VAR}: ${offset12Rgba(mode)};`,
+  ...(Object.keys(OFFSET_ALPHAS) as unknown as OffsetRung[])
+    .map(Number).sort((a, b) => a - b)
+    .map(r => `  ${offsetVarName(r as OffsetRung)}: ${offsetRgba(r as OffsetRung, mode)};`),
 ]
 
-// Compared in OKLCH L directly — the trigger is a lightness question, so it reads the same
-// number the ramp is built from rather than routing through a luminance model.
-export function ctaNeedsBorder(s: GeneratedScale, mode: 'light' | 'dark'): boolean {
-  const stops = mode === 'light' ? s.light : s.dark
-  const anchor = stops.find(x => x.stop === CTA_BORDER_ANCHOR_STOP)
-  if (!anchor) return false
+// |Lc| of the cta against the page. apcaLc is SIGNED and order-sensitive — it branches on which
+// side is lighter with different exponents — so every caller in this engine takes the magnitude,
+// and discernibility is a magnitude question. ColorStop.r/g/b are already the master basis's own
+// gamma-encoded components, which is exactly what apcaY consumes; nothing to convert.
+export function ctaPageLc(s: GeneratedScale, mode: 'light' | 'dark', page: ColorStop): number {
   const cta = mode === 'light' ? s.cta : s.ctaDark
-  return mode === 'light' ? cta.L >= anchor.L : cta.L <= anchor.L
+  return Math.abs(apcaLc(apcaY(cta.r, cta.g, cta.b), apcaY(page.r, page.g, page.b)))
 }
 
-export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' | 'dark'): string[] {
+// A cta earns the stroke when it cannot separate itself from the page. Absent a page (no neutral
+// in scope) nothing fires — the same conservative default the missing-anchor case had.
+export function ctaNeedsBorder(s: GeneratedScale, mode: 'light' | 'dark', page: ColorStop | undefined): boolean {
+  if (!page) return false
+  return ctaPageLc(s, mode, page) < CTA_BORDER_LC_FLOOR
+}
+
+export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' | 'dark', page: ColorStop | undefined): string[] {
   const stops = mode === 'light' ? s.light : s.dark
   const f = ctaFamilyOf(s, mode)
   const onCta = mode === 'light' ? s.onFillTextIsWhite : s.onFillTextIsWhiteDark
-  // cta-border: the safety stroke above, else the transparent variable. The OUTLINE secondary
-  // keeps its own unconditional highlight-8 override at the emitter — there the border is the
-  // button's identity, not a safety. Renamed from cta-stroke (owner 2026-07-09); the Figma side
-  // renamed with it — plugins migrate existing variables in place.
+  // cta-border: the gated stroke at THIS family's rung, else the transparent variable. The
+  // OUTLINE secondary keeps its own unconditional highlight-8 override at the emitter — there the
+  // border is the button's identity, not a safety. Renamed from cta-stroke (owner 2026-07-09);
+  // the Figma side renamed with it — plugins migrate existing variables in place.
   // cta family SEMANTIC-named (owner ruling 2026-07-16): cta/cta-hover/cta-pressed +
   // the cta-ink trio (the 4.5 text-register link escape; rest matches ink-9).
-  const border = ctaNeedsBorder(s, mode)
+  const border = ctaNeedsBorder(s, mode, page)
   return [
     stopsToVars(stops, prefix),
     `  --${prefix}-cta: ${stopHex(f.cta)};`,
@@ -133,7 +179,7 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
     `  --${prefix}-cta-ink: ${stopHex(f.ctaInk)};`,
     `  --${prefix}-cta-ink-hover: ${stopHex(f.ctaInkHover)};`,
     `  --${prefix}-cta-ink-pressed: ${stopHex(f.ctaInkPressed)};`,
-    `  --${prefix}-cta-border: var(${border ? OFFSET_12_VAR : TRANSPARENT_VAR});`,
+    `  --${prefix}-cta-border: var(${border ? offsetVarName(ctaBorderRung(prefix)) : TRANSPARENT_VAR});`,
     `  --${prefix}-on-cta: ${onColor(onCta)};`,
   ]
 }
@@ -162,8 +208,9 @@ export function brandKindP3Body(prefix: string, s: GeneratedScale, mode: 'light'
 // theme to carry a per-brand neutral) reuse this. The product emits the
 // neutral inline per brand (see brandCss); this is the same brand-kind body,
 // just scoped to an arbitrary selector.
-export function neutralCss(selector: string, brandH: number, level: NeutralLevel = 'default', contrastProfile?: ContrastProfile): string {
+export function neutralCss(selector: string, brandH: number, level: NeutralLevel = 'default', contrastProfile?: ContrastProfile, ctaBorder = true): string {
   const s = generateNeutralScale(brandH, level, contrastProfile)
+  const nPage = (mode: 'light' | 'dark') => ctaBorder ? pageStopFor(s, mode) : undefined
   // The universal paper-0/ink-11 anchors ride along: any scope that carries the
   // ladder must also carry its mode-flipping extremes (semantic aliases like
   // --surface-pop resolve through them). paper-0 = the neutral's resolved
@@ -175,12 +222,13 @@ export function neutralCss(selector: string, brandH: number, level: NeutralLevel
     `${selector} {`,
     `  --paper-0: ${p0(s.paper0, '#ffffff')};`,
     `  --ink-11: #000000;`,
-    ...brandKindBody('neutral', s, 'light'),
+    // the neutral IS the page, so it is judged against its own paper stop
+    ...brandKindBody('neutral', s, 'light', nPage('light')),
     `}`,
     `${selector}[data-theme="dark"] {`,
     `  --paper-0: ${p0(s.paper0Dark, '#000000')};`,
     `  --ink-11: #ffffff;`,
-    ...brandKindBody('neutral', s, 'dark'),
+    ...brandKindBody('neutral', s, 'dark', nPage('dark')),
     `}`,
     ...(p3Light.length || p3Dark.length ? [
       `${P3_SUPPORTS} {`,
@@ -207,6 +255,15 @@ export function neutralCss(selector: string, brandH: number, level: NeutralLevel
 const SIGNALS_DARK_SELECTOR = ':root[data-theme="dark"], [data-theme="dark"]'
 export function signalsCss(contrastProfile?: ContrastProfile): string {
   const sigScales = signalScalesFor(contrastProfile)
+  // THE ONE PLACE WITH NO BRAND IN SCOPE. signals.css is a single shared file across every brand,
+  // so a per-brand neutral is unreachable here — but the neutral's L scaffold is brand-independent
+  // and only its chroma tints, so a canonical plane is faithful. Measured over 12 brand hues the
+  // spread of each signal's |Lc| against its own brand's page is 0.76 in light and 0.08 in dark,
+  // far under the gate's resolution, so this cannot diverge from the Figma side (where
+  // themeToFigma does have the brand's neutral). Moot in practice — no signal reaches Lc 15 in
+  // either mode, the nearest being warning-light at 19.4 — but the branch needs a defined plane.
+  const canonicalNeutral = generateNeutralScale(0, 'default', contrastProfile)
+  const sigPage = { light: pageStopFor(canonicalNeutral, 'light'), dark: pageStopFor(canonicalNeutral, 'dark') }
   const lightBlocks: string[] = []
   const darkBlocks: string[] = []
   const p3LightBlocks: string[] = []
@@ -219,8 +276,8 @@ export function signalsCss(contrastProfile?: ContrastProfile): string {
     // Emitted prefix = the ROLE name (critical/warning/positive/info, owner
     // 2026-07-27) — the signals are the re-pointable in-between tier; the
     // identity name stays engine-internal.
-    lightBlocks.push(...brandKindBody(sig.emitName, scale, 'light'))
-    darkBlocks.push(...brandKindBody(sig.emitName, scale, 'dark'))
+    lightBlocks.push(...brandKindBody(sig.emitName, scale, 'light', sigPage.light))
+    darkBlocks.push(...brandKindBody(sig.emitName, scale, 'dark', sigPage.dark))
     p3LightBlocks.push(...brandKindP3Body(sig.emitName, scale, 'light'))
     p3DarkBlocks.push(...brandKindP3Body(sig.emitName, scale, 'dark'))
   }
@@ -230,8 +287,8 @@ export function signalsCss(contrastProfile?: ContrastProfile): string {
     `:root {`,
     // the system alpha variables every family's cta-border aliases (owner 2026-07-29) — this is
     // the engine's one global :root, the CSS counterpart of the Figma side's system/alpha/* rows.
-    // Emitted in BOTH blocks because --alpha-cta-border is scheme-divergent (12% black in light,
-    // 12% white in dark); --alpha-transparent repeats harmlessly and keeps the pair together.
+    // Emitted in BOTH blocks because the offset rungs are scheme-DIVERGENT (black in light,
+    // white in dark); --alpha-transparent repeats harmlessly and keeps the set together.
     ...alphaRootVars('light'),
     ...lightBlocks,
     `}`,
@@ -289,7 +346,13 @@ export function brandCss(
   // the SYSTEM LINK (Phase 4, owner 2026-07-16): one link trio per theme. Absent =
   // --link aliases the primary's cta-ink trio; a custom seed = its ink-register
   // resolution ships raw (the red de-conflict for links).
-  linkHex?: string | null
+  linkHex?: string | null,
+  // THE CTA-BORDER OPT-OUT (owner 2026-07-31: "this should be on by default but optional").
+  // DEFAULT ON, so an absent flag — every stored recipe predating it — keeps the stroke.
+  // Off is expressed by withholding the PAGE rather than by a second branch in the gate:
+  // ctaNeedsBorder already returns false without a page, so there is exactly one place that
+  // decides, and "no ruler" and "don't measure" are the same code path.
+  ctaBorder = true
 ): string {
   const { scale } = r
   // the escape RESETS the red collision to default (owner 2026-07-16): with the brand's
@@ -330,6 +393,12 @@ export function brandCss(
   // rides inside this brand's block as a brand-kind ramp — no longer a shared
   // global :root block.
   const nScale = generateNeutralScale(scale.brandH, neutralLevel, contrastProfile)
+  // the page every family in this brand is judged against for the cta-border gate — this brand's
+  // own neutral, since the neutral is generated per brand hue. Withheld entirely when the opt-out
+  // is off, which is what turns the whole feature off (see the ctaBorder param).
+  const page = ctaBorder
+    ? { light: pageStopFor(nScale, 'light'), dark: pageStopFor(nScale, 'dark') }
+    : { light: undefined, dark: undefined }
 
   // When no secondary ramp is given, secondary mirrors brand var-for-var
   // (scale stops, off-scale cta, and the on-text token).
@@ -349,8 +418,8 @@ export function brandCss(
     ]
   }
 
-  const secondaryLight = secondary ? brandKindBody('secondary', secondary, 'light') : mirrorBody('secondary', 'light')
-  const secondaryDark = secondary ? brandKindBody('secondary', secondary, 'dark') : mirrorBody('secondary', 'dark')
+  const secondaryLight = secondary ? brandKindBody('secondary', secondary, 'light', page.light) : mirrorBody('secondary', 'light')
+  const secondaryDark = secondary ? brandKindBody('secondary', secondary, 'dark', page.dark) : mirrorBody('secondary', 'dark')
   // identity — literal input hex, mode-invariant (light block only). Secondary
   // mirrors the brand's when no secondary ramp exists.
   const brandIdentity = `  --brand-identity: ${scale.identityHex};`
@@ -469,7 +538,7 @@ export function brandCss(
     ``,
     `[data-brand="${slug}"] {`,
     ...lightAnchors,
-    ...brandKindBody('brand', scale, 'light'),
+    ...brandKindBody('brand', scale, 'light', page.light),
     ...escape('light'),
     ...link('light'),
     brandIdentity,
@@ -477,18 +546,18 @@ export function brandCss(
     ...secondaryLight,
     ...outline('light'),
     secondaryIdentity,
-    ...brandKindBody('neutral', nScale, 'light'),
-    ...effOverrides.flatMap(o => brandKindBody(SIGNAL_EMIT_NAME[o.name], o.scale, 'light')),
+    ...brandKindBody('neutral', nScale, 'light', page.light),
+    ...effOverrides.flatMap(o => brandKindBody(SIGNAL_EMIT_NAME[o.name], o.scale, 'light', page.light)),
     `}`,
     `[data-brand="${slug}"][data-theme="dark"] {`,
     ...darkAnchors,
-    ...brandKindBody('brand', scale, 'dark'),
+    ...brandKindBody('brand', scale, 'dark', page.dark),
     ...escape('dark'),
     ...link('dark'),
     ...secondaryDark,
     ...outline('dark'),
-    ...brandKindBody('neutral', nScale, 'dark'),
-    ...effOverrides.flatMap(o => brandKindBody(SIGNAL_EMIT_NAME[o.name], o.scale, 'dark')),
+    ...brandKindBody('neutral', nScale, 'dark', page.dark),
+    ...effOverrides.flatMap(o => brandKindBody(SIGNAL_EMIT_NAME[o.name], o.scale, 'dark', page.dark)),
     `}`,
     ...(p3Light.length || p3Dark.length ? [
       `${P3_SUPPORTS} {`,

@@ -157,6 +157,8 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   const linkBundled = useRef(false)
   // the VIVIDNESS LEVER (Phase 5): default OFF = the shipped dampened registers
   const [fullChroma, setFullChroma] = useState(false)
+  // the cta-border opt-out (owner 2026-07-31) — ON by default, mirrors the plugin's Advanced row
+  const [ctaBorder, setCtaBorder] = useState(true)
   const derived = secState === 'derived'
 
   // Suggestions and the theme always derive from the last VALID hex, so a
@@ -214,14 +216,14 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
       archetypeOverride: primaryMode !== 'recommended' && primaryMode !== 'exact' ? primaryMode : undefined,
     }))
     const linkHex = (linkCustom && normalizeHex(linkInput)) || null
-    const css = brandCss('custom', 'Custom brand', t.themed, t.secondary?.scale ?? null, '', neutralLevel, cp, t.secondary?.style, ctaEscape && inRedRangeNow, linkHex)
+    const css = brandCss('custom', 'Custom brand', t.themed, t.secondary?.scale ?? null, '', neutralLevel, cp, t.secondary?.style, ctaEscape && inRedRangeNow, linkHex, ctaBorder)
       + '\n' + signalsCss(cp)
     // the Advanced link field's from-primary display hex (escaped when the escape is on)
     const linkFromPrimaryHex = stopHex(ctaEscape && inRedRangeNow
       ? escapeCtaFamily(generateNeutralScale(t.themed.scale.brandH, neutralLevel, cp), 'light', cp).ctaInk
       : t.themed.scale.ctaInk).toUpperCase()
     return { t, r: t.themed, accent: t.secondary?.scale ?? null, css, inRedRange, escapeOn: ctaEscape && inRedRangeNow, linkFromPrimaryHex }
-  }, [primary, secondary, derived, primaryMode, secondaryStyle, secondaryArchetype, neutralLevel, profile, ctaEscape, linkCustom, linkInput, fullChroma])
+  }, [primary, secondary, derived, primaryMode, secondaryStyle, secondaryArchetype, neutralLevel, profile, ctaEscape, linkCustom, linkInput, fullChroma, ctaBorder])
 
   // BUNDLE HYGIENE (review-caught 2026-07-16): an untouched bundle auto-reverts the
   // moment the escape stops being effective (range exit / posture flip) — the frozen
@@ -491,6 +493,15 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
           >
             <input type="checkbox" checked={fullChroma} onChange={e => setFullChroma(e.target.checked)} style={{ accentColor: 'var(--brand-cta)', width: 14, height: 14, cursor: 'pointer' }} />
             <span>Remove brightness clamp</span>
+          </label>
+          {/* the cta-border opt-out (owner 2026-07-31) — ON by default, mirrors the plugin's
+              Advanced row so the demo can preview both postures */}
+          <label
+            title="Buttons whose fill sits too close to the page get a faint stroke so they read as buttons rather than as another sheet of paper. Neutral, secondary and primary each get their own weight. Turn this off to ship every cta borderless."
+            style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 24, fontSize: 12, fontWeight: 600, cursor: 'pointer', userSelect: 'none', color: 'var(--fg-default)' }}
+          >
+            <input type="checkbox" checked={ctaBorder} onChange={e => setCtaBorder(e.target.checked)} style={{ accentColor: 'var(--brand-cta)', width: 14, height: 14, cursor: 'pointer' }} />
+            <span>Outline low-contrast buttons</span>
           </label>
         </div>
       </details>

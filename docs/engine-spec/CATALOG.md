@@ -2051,6 +2051,10 @@ sits ON the fill rather than bleeding into the ground.
 BOTH STATES ARE ALIASES, NEVER RAW (owner: *"the rest of them should get aliased to the transparent
 variable instead of being raw"*). New `system/alpha/cta-border` row beside `system/alpha/transparent`;
 CSS gains `--alpha-cta-border` / `--alpha-transparent` at the engine's one global `:root`, emitted
+<!-- NAMES AS OF C39. The row was renamed `cta-border` → `offset-12` one commit later (5a30f1b,
+     never back-written here), and C41 then retired `offset-12` entirely for the 06/08/16 ladder.
+     Read the token names in this entry as historical. -->
+
 per scheme because the stroke is scheme-divergent. figmaRender's banner had claimed this aliasing
 already happened — it never did. Both rows are created in the early alias-target pass with the abs
 poles, because `ensure()` registers into `baseVars` as it creates and a target created later in
@@ -2101,3 +2105,132 @@ engine, and three separate reporters kept describing the old shape. Anything hol
 stop count, index width, or a canonical-vs-effective comparison is suspect after a renumber.
 `sweep` now passes end to end — 1800 seeds, 0 malformed, 0 residuals, 0 shear-induced, 0
 unhandled warning collisions — for the first time since C33.
+
+## C41 — THE CTA-BORDER GATE MOVES TO APCA, AND THE STROKE BECOMES A LADDER
+
+Owner-driven, 2026-07-31, off her own edge-case review of C39's output. She was explicit that this
+is **two separate problems plus one addition**, and that the stroke caused neither:
+
+1. **hierarchy is not accounted for in edge cases** — a custom secondary can come out reading as
+   heavy as, or heavier than, the primary. That is the FILL.
+2. **more ctas need the stroke than are getting it** — C39's gate caught almost nothing. In shipped
+   `dist` it fired 62 times and every one was the neutral: 0 primaries, 0 secondaries, 0 signals.
+3. an **addition**: a rank-ordered ladder, so the stroke can also carry hierarchy.
+
+### APCA IS AUTHORIZED HERE, AS A TASTE INSTRUMENT
+Her ruling, verbatim: *"This is NOT an accessibility measure, it is a taste measure. The buttons
+don't have a requirement to pass 3:1."* And on the numbers: *"lc 30 is for text, I included that as
+a max, 15 is min for visibility... We aren't making something readable, we are adding a stylistic
+pop."* So **Lc 15 / Lc 30 is a BAND, not a pair of rival thresholds** — a first build read them as
+candidate gate bars and invented a third at 45, which cost a rebuild. This does not reopen the wcag
+lane; it is the same carve-out as C36's APCA clearance.
+
+### THE GATE
+```
+|apcaLc(cta, page)| < 15   →  this family earns a stroke
+page = neutral paper-2 in LIGHT, neutral paper-1 in DARK   (the demo's --surface-base)
+```
+The reference is **the page, not the family's own ramp** — that was C39's mistake and it is why it
+under-fired. C39's hand-written light/dark branch is GONE: |Lc| is absolute, so mode-mirroring falls
+out instead of being maintained.
+
+`signalsCss()` is the one emitter with no brand in scope (it takes only a profile), so it uses a
+canonical neutral plane. Measured spread of each signal's |Lc| across 12 brand hues: **0.76 light /
+0.08 dark** — far under the gate's resolution, so the CSS side cannot diverge from the Figma side.
+
+### THE LADDER
+| family | rung | |
+|---|---|---|
+| neutral | `offset-08` | fixed by owner ruling, never solved |
+| secondary | `offset-06` | |
+| brand + signals | `offset-16` | signals are unreachable at Lc 15 but defined |
+
+Picked off a four-way render of 06\|08 secondary × 16\|20 primary: **06/16 held hierarchy in 36 of
+36 cases** with the secondary in band everywhere. 04 bottomed out at Lc 15–16 (*"04 is too low"*);
+20 pushed the primary past the Lc 30 ceiling in half the cases. Her hand edit had been 08/12/24 —
+12 validated cleanly (Lc 23.5–28.5 across 12 firing secondaries) but 24 missed the ceiling in every
+case it fired (34.8–36.2).
+
+**Because 06/16 holds unconditionally there is NO conditional escalation.** Her question — *"when do
+we increase the offset on the primary because the secondary is darker?"* — dissolves: the pairing is
+the answer.
+
+**A RUNG IS NOT A LOUDNESS.** The same alpha over different fills lands at a different Lc:
+`offset-12` reads 26.0 over a pale blue secondary but only 19.2 over a pale green primary. A ladder
+ordered as numbers can still invert as pixels, so the three rungs were chosen on the RESULTING Lc.
+
+### THE NEUTRAL IS NOT TOUCHED
+Owner ruling. Its cta sits under APCA's own **black-level clamp** — |Lc| reads exactly `0.0` in both
+modes, which means "below the reporting floor of Lc 7.3", i.e. genuinely indistinguishable, not a
+bug. At 08 its stroke lands Lc 17.1 in light (in band) and 8.7 in dark (under). She accepted the
+dark shortfall rather than raise it, calling the rung that would fix it (offset-24) *"too loud"*.
+
+**C39's claim that the alpha never scales up in dark is measurably wrong** and is retired here: at
+this gate the dark neutral needs upwards of 32% where light needs 8%.
+
+### SCOPE, MEASURED
+Strokes on secondary/primary appear in **light mode only**. By tier: pale → secondary + primary ·
+mid → secondary only · deep → nothing. Across 18 brands in dark, the only stroke is the neutral's.
+No signal reaches Lc 15 in either mode (nearest: warning-light at 19.4), though per-brand warning
+*variants* do dip under and fire.
+
+### MIGRATION — A RENAME MOVES THE NAME, NOT THE VALUE
+`offset-12` is retired via `RENAMED_LEAVES` `['offset-12','offset-08']` (owner: *"just rename
+offset-12 and adjust the value"*). The neutral was its only consumer, so the rename carries every
+existing binding. **But `ensure()` adopts a legacy row by renaming it WITHOUT bumping `createdVars`,
+so `seedFresh` never runs and the row arrives still holding 0.12 under its new name** — a token
+called offset-08 resolving 12%, which is worse than a raw value because the name lies. A third pass
+(the `RUNG_ALPHAS` loop in `plugin-ext/code.ts`) re-values it, conservatively: only an exact pole at
+one of our own rung alphas is rewritten, so a designer's edit survives. Deleting that pass silently
+un-does the rename. Same class as the 2026-07-30 *"the alpha transparent didn't take"* catch.
+`strokeTargetFor` also targets the rung the PAYLOAD wants for a path rather than the one the old
+value implies, so a file holding the retired 12% neutral border lands on 08.
+
+### WHAT ELSE THIS ROUND FIXED
+- **A gate now asserts `ctaNeedsBorder`** (`figma-verify`). There was none: the only regression
+  evidence was an ext-snapshot diff, exactly the blind spot C40 was written about. It checks that
+  the two emitters decide identically, that the rung matches the family, and that the gate is
+  page-relative — all three of which a plausible refactor breaks silently.
+- **The demo wired the token for one of three buttons.** `.u-btn-primary` and `.u-btn-neutral`
+  carried `border: 1.5px solid transparent` and never referenced `--*-cta-border`, so a firing brand
+  or neutral emitted a stroke nothing drew.
+- Stale comments retired: `figmaRender`'s banner named `ctaBorderStop` (never existed) and stated
+  the discarded 3:1-vs-paper-3 rule; three files imported `contrastRatio` and never called it.
+
+### PAUSED
+**Ask #1 — the secondary shifting lighter — is PAUSED by the owner, not dropped.** Measured for
+whenever it resumes: 51% of custom primary/secondary pairs have the secondary heavier; a lift fixes
+44% of those and **cannot reach the rest**, because the shipped `minGapApp 10` ground floor caps any
+secondary at apparent 90.0 while a pale primary's cta sits at 97.2 — above the secondary's own legal
+ceiling. Entirely driven by the primary's lightness (0/72 broken at seed L 0.55 → 72/72 unreachable
+at L 0.94). Her screenshot is in the unreachable class, which is why the ladder, not the lift, is
+what fixed it.
+
+BLAST RADIUS: `audit:ext` only — base token count 141 → 143 (offset-12 renamed to 08, plus 06 and
+16), and 8 roster entries gaining a `cta/border` override (warning variants and roster secondaries),
+**all light-mode**. Eleven other gates needed no bless. Instruments:
+`scripts/cta-border-sweep.ts`, `cta-border-trio.ts`, `cta-border-hierarchy.ts`.
+
+### C41 addendum — THE OPT-OUT
+Owner, same day: *"this should be on by default but optional. when this fires, can we add a check
+box to the plugin?"* Added as **"Outline low-contrast buttons"** in the Advanced menu of the
+extended plugin and the demo, **checked by default**.
+
+*"When this fires"* resolves to **always**: the neutral's cta reads |Lc| 0.0 against the page in
+every theme and both modes, so at least one family always fires and a conditional row would never
+be hidden. Shown unconditionally rather than behind a condition that is always true. (Contrast the
+`cta-escape` row, which really is hidden outside the red range.)
+
+TWO THINGS THE IMPLEMENTATION LEANS ON:
+- **Off is expressed by withholding the PAGE, not by a second branch in the gate.**
+  `ctaNeedsBorder` already returns false without a page, so there stays exactly one place that
+  decides — "no ruler" and "don't measure" are the same code path.
+- **Absent means ON.** The flag serialises as `false | undefined`, never `true`, so every recipe
+  stored before it existed replays with its strokes intact. Same reasoning as `ctaEscape` storing
+  only its effective value, inverted for a default-on flag.
+
+Layout still never shifts when it is off: the border stays `1.5px solid` against the transparent
+variable, verified in the demo (all four buttons `rgba(0,0,0,0) / 1.5px`).
+
+`plugin/` (public v1) does not get the row — stale vintage, pre-C33 names, unpublished since
+`8106a92`.

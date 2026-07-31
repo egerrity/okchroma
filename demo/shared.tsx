@@ -71,7 +71,12 @@ export const COMPONENT_CSS = `
   cursor: pointer; font-size: 14px; font-weight: 500; font-family: inherit;
   display: inline-flex; align-items: center; gap: 6px;
 }
-.u-btn-primary { background: var(--brand-bg-emphasis); color: var(--brand-fg-on-emphasis); }
+/* cta-border rides EVERY cta button, not just the secondary (owner 2026-07-31). Until this
+   round only .u-btn-secondary wired the token, so a firing brand or neutral emitted a stroke
+   that nothing drew — the engine and the demo disagreed about what shipped. The value is an
+   alias to system/alpha/* (transparent when the gate does not fire), so the border stays
+   unconditional and layout never shifts. */
+.u-btn-primary { background: var(--brand-bg-emphasis); color: var(--brand-fg-on-emphasis); border-color: var(--brand-cta-border); }
 .u-btn-primary:hover { background: var(--brand-bg-emphasis-hover); }
 .u-btn-primary:active { background: var(--brand-bg-emphasis-pressed); }
 .u-btn-subtle { background: var(--brand-bg-subtle); color: var(--brand-fg); }
@@ -79,13 +84,13 @@ export const COMPONENT_CSS = `
 /* the LOW-HIERARCHY button: the neutral's quiet scale-fed cta (stop 4/5). The
    secondary-showcase slots fall back to this when no secondary exists — a
    subtle slot reads neutral until a secondary claims it, never brand-again. */
-.u-btn-neutral { background: var(--neutral-cta); color: var(--neutral-on-cta); }
+.u-btn-neutral { background: var(--neutral-cta); color: var(--neutral-on-cta); border-color: var(--neutral-cta-border); }
 .u-btn-neutral:hover { background: var(--neutral-cta-hover); }
 .u-btn-neutral:active { background: var(--neutral-cta-pressed); }
 /* the SECONDARY cta trio (--secondary-cta/-hover/-pressed + on-cta), shown beside the
-   brand cta wherever that is showcased. cta-border is transparent for every style
-   except outline (where the ring IS the component), so the border is
-   unconditional and layout never shifts. */
+   brand cta wherever that is showcased. cta-border carries the gated stroke at this
+   family's rung, transparent when the gate does not fire, and the outline style's own
+   unconditional ring (where the ring IS the component). Always set, so layout never shifts. */
 .u-btn-secondary { background: var(--secondary-cta); color: var(--secondary-on-cta); border-color: var(--secondary-cta-border); }
 .u-btn-secondary:hover { background: var(--secondary-cta-hover); }
 .u-btn-secondary:active { background: var(--secondary-cta-pressed); }

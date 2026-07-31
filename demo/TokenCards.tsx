@@ -33,9 +33,10 @@ const SIGNAL_ICON: Record<string, typeof AlertCircle> = {
 // pill in on-cta text, with the cta-ink (text-style cta) rest/hover/pressed right
 // beneath it. Reads the live vars, so the per-brand signal overrides the
 // resolved theme carries show up here automatically; names the theme shifted
-// off-canonical get a "shifted" tag. The cta-border border is unconditional —
-// it's transparent everywhere except the outline secondary, where the ring IS
-// the component.
+// off-canonical get a "shifted" tag. The cta-border border is always SET (so layout never
+// shifts) but not always visible: it carries this family's rung of the alpha ladder when the
+// gate fires — |Lc| of the cta against the page under 15 — and the transparent variable
+// otherwise. The outline secondary overrides it unconditionally, where the ring IS the component.
 export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; shifted?: string[] }) {
   const families: Array<{ prefix: string; label: string }> = [
     { prefix: 'brand', label: 'brand' },
