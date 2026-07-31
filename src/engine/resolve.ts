@@ -164,10 +164,11 @@ export function resolveBrand(
     // canonical signal set (collision decisions must compare like with like). Default 'wcag'.
     contrastProfile?: ContrastProfile
 
-    // internal (resolveTheme): skip the collision machinery (rung-1 / dark collider / signal
-    // shifts) — the SECONDARY's signal interactions are the THEME's decisions, and its red
-    // yield goes LIGHTER (subtle), the MIRROR of rung-1's darken (owner rule; supersedes
-    // "a secondary red earns rung 1 like a primary would").
+    // internal (resolveTheme): skip the collision machinery ENTIRELY (rung-1 / dark collider /
+    // signal shifts) — the SECONDARY's signal interactions are the THEME's decisions, and its
+    // red yield goes LIGHTER (subtle), the MIRROR of rung-1's darken (owner rule; supersedes
+    // "a secondary red earns rung 1 like a primary would"). This is the FULL skip; `exact`
+    // is narrower — it exempts only the brand, and the signals still move.
     skipCollisionRules?: boolean
 
     // APCA legibility clearance (wcag lane only): the chosen cta pole must also clear the
@@ -186,13 +187,17 @@ export function resolveBrand(
   // ONE classification — the joint solve. The brand side rides opts.ctaSolve through
   // generation (solveBrandExit, producers.ts: membership on the nominal seed, nearest-edge
   // exit, her direction rules, brick-band diagonal); the red complement resolves after,
-  // against the brand's FINAL cta. Off for exact (hands-off — its true-red unification is
-  // the follow-up), the secondary (theme's subtle treatment), and archetypeOverride (the
-  // solve is pair-calibrated; neither half ships alone).
+  // against the brand's FINAL cta. The brand side is off for exact (hands-off) and off for
+  // archetypeOverride (the solve is pair-calibrated; neither half ships alone); both are off
+  // for the secondary (theme's subtle treatment).
+  //
+  // Owner correction 2026-07-31: exact keeps the BRAND untouched but the SIGNALS still move
+  // — the signal-side machinery (red complement, warning variant, yellow/green/blue shifts,
+  // hue-collision detection) is gated on skipCollisionRules alone.
   const red = sigScales.get('red')!.scale
   const seedO = hexToOklch(hex)
-  const collisions = !opts?.exact && !opts?.skipCollisionRules
-  const solving = collisions && !opts?.archetypeOverride
+  const signalMoves = !opts?.skipCollisionRules
+  const solving = !opts?.exact && signalMoves && !opts?.archetypeOverride
   // "APCA DECIDES, WCAG FLOORS" (owner ruling 2026-07-16, C23): the collision GEOMETRY
   // references the APCA lane's canonical red in BOTH lanes. Each lane judging against
   // its own red made membership flip for borderline seeds (#FF4747 fired in apca, never
@@ -233,7 +238,7 @@ export function resolveBrand(
 
   if (opts?.archetypeOverride) {
     scale = generateScale(hex, name, opts.archetypeOverride, floor)
-  } else if (!opts?.exact && !opts?.skipCollisionRules) {
+  } else if (signalMoves) {
     pending = hueCollisionPending(scale, sigScales)
   }
 
@@ -245,11 +250,13 @@ export function resolveBrand(
 
   const signalOverrides: SignalOverride[] = []
 
-  // C12 v8 red complement: resolves for EVERY solving brand against its FINAL cta —
+  // C12 v8 red complement: resolves for every solving OR exact brand against its FINAL cta —
   // independent of firing (a near-red neighbor vibrates beside canonical red even when not
   // confusable). A lightened brand always gets a deep-core red; canonical stands only when
-  // it is already clean beside this brand.
-  if (solving) {
+  // it is already clean beside this brand. In exact the brand cta is the untouched seed and
+  // brandWentUp is naturally false (no repel fires); archetypeOverride stays excluded (the
+  // solve is pair-calibrated).
+  if (solving || (opts?.exact && signalMoves && !opts?.archetypeOverride)) {
     const brandWentUp = !!scale.ctaRepelled?.light && scale.cta.L > seedO.L + 1e-6
     const v = redComplementVariant(scale.cta, seedO, brandWentUp, sigScales.get('red')!, opts?.contrastProfile)
     if (v) signalOverrides.push({ name: 'red', scale: v.scale, note: v.note })
@@ -257,7 +264,7 @@ export function resolveBrand(
 
   let warnVariant: 'lemon' | 'macaroni' | null = null
 
-  if (!opts?.exact && !opts?.skipCollisionRules) {
+  if (signalMoves) {
     const warn = sigScales.get('yellow')!
     warnVariant = warningVariant(scale, warn.scale, warn.def)
     if (warnVariant) pending = pending.filter(n => n !== 'yellow')
@@ -529,13 +536,16 @@ export function resolveTheme(input: {
   const notes: string[] = []
 
   // C12 exact-mode ADVICE (owner ruling 2026-07-09: outline is "something we recommend
-  // for exact mode, not something we do"). Exact skips every collision rule, so the file
-  // carries recommendations instead: the outline shape for red-register clashes, and a
-  // legibility warning for the true dead zones (measured: 34/288 exact seed-lanes have
-  // no on-cta pole reaching Lc 60; the pick itself is already the best pole).
+  // for exact mode, not something we do"). Exact keeps the BRAND untouched (owner correction
+  // 2026-07-31: the signals still move), so the brand side carries recommendations instead:
+  // the outline shape for red-register clashes — only when the red complement did NOT
+  // resolve, since a moved red already handles the clash — and a legibility warning for the
+  // true dead zones (measured: 34/288 exact seed-lanes have no on-cta pole reaching Lc 60;
+  // the pick itself is already the best pole).
   if (pExact) {
     const red = sigScales.get('red')!
-    if (redGateDist(primary.scale.cta, red.scale.cta) <= RED_GATE.G)
+    const redMoved = primary.signalOverrides.some(o => o.name === 'red')
+    if (!redMoved && redGateDist(primary.scale.cta, red.scale.cta) <= RED_GATE.G)
       notes.push("exact mode: this color sits in the red signal's family — outline style is recommended for destructive actions beside the primary cta")
     const c = primary.scale.cta
     const Ybg = apcaY(...encodedChannels(c.L, c.C, c.H))

@@ -513,7 +513,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   // re-pointable in-between tier); the ENGINE keeps identity names (red/yellow/
   // green/blue) for its hue machinery, so lookups map role → identity here.
   // Override note shown when this brand shifted a signal away for extra
-  // distance. red is never shifted (engine owns red).
+  // distance (red included — the C12 per-brand complement variant).
   const SIGNAL_ROLES = ['critical', 'warning', 'positive', 'info'] as const
   const ROLE_TO_SIGNAL: Record<(typeof SIGNAL_ROLES)[number], 'red' | 'yellow' | 'green' | 'blue'> = {
     critical: 'red', warning: 'yellow', positive: 'green', info: 'blue',
@@ -859,29 +859,37 @@ function checklistRows(rRec: ResolvedBrand, rung: RungMode, primaryHex: string, 
   const shipsHex = stopHex(rRec.scale.cta).toUpperCase()
 
   const redMove = rRec.signalOverrides.find(o => o.name === 'red')
+  // the EXACT resolve (owner correction 2026-07-31: exact keeps the brand untouched but the
+  // signals still move) — exact rows narrate ITS signal moves against the untouched cta;
+  // rRec keeps narrating what recommended would do. Also feeds the a11y row below.
+  const rEx = rec ? null : resolveBrand(primaryHex, 'x', { exact: true })
+  const exRedMove = rEx?.signalOverrides.find(o => o.name === 'red')
   // the escape SUPERSEDES the red machinery (owner 2026-07-16): the checklist narrates
   // the shipped outcome, not the resolution the escape replaced
   if (escapeOn) {
     rows.push({ key: 'hue', tone: 'adjusted', label: 'conflict with error red resolved — neutral cta escape', detail: 'Every action color (fills, text actions, links) rides the brand neutral — near-black in light, near-white in dark — so nothing can read as destructive. The error signal ships canonical, no per-brand variant.' })
+  } else if (!rec && exRedMove) {
+    rows.push({ key: 'hue', tone: 'adjusted', label: `your hex ships untouched — the error signal moves instead (${exRedMove.note})`, detail: 'This brand lives in the error signal\'s neighborhood. Exact mode never touches your color; the error signal takes a per-brand variant from the error-credible range, clearly distinct beside your buttons.' })
   } else if (rRec.redRepel) {
     rows.push(rec
       ? { key: 'hue', tone: 'adjusted', label: `conflict with error red resolved — ${primaryHex.toUpperCase()} → ${shipsHex}`, detail: 'This primary sits in the error signal\'s register. The action color exits by its nearest edge — deep and vivid reds go deeper (into burgundy when needed), pinks lighten, vivid oranges brighten — until it reads clearly apart from red.' }
-      : { key: 'hue', tone: 'fail', label: 'color conflicts with error red — separation not applied', detail: 'Exact mode ships the hex untouched, so the error-signal conflict is not resolved at the color level. Destructive buttons render as outlines everywhere as a backstop.' })
+      : { key: 'hue', tone: 'fail', label: 'color conflicts with error red — separation not applied', detail: 'Exact mode ships the hex untouched, and no error-credible variant sits clear beside this color, so the conflict is unresolved at the color level. Destructive buttons render as outlines everywhere as a backstop.' })
     if (rec && redMove) {
       rows.push({ key: 'vivid', tone: 'adjusted', label: `the error signal also moves (${redMove.note})`, detail: 'Beside your treated action color the canonical error red would still sit too close — so the error signal takes a per-brand variant from the error-credible range, on the opposite side of your action color.' })
     }
   } else if (redMove) {
     rows.push(rec
       ? { key: 'hue', tone: 'adjusted', label: `your color keeps its exact register — the error signal moves instead (${redMove.note})`, detail: 'This brand lives in the error signal\'s neighborhood, and moving it would cost its identity. The action color stays exactly yours; the error signal takes a per-brand variant from the error-credible range, clearly distinct beside your buttons.' }
-      : { key: 'hue', tone: 'fail', label: 'color conflicts with error red — separation not applied', detail: 'Exact mode ships the hex untouched, so the error-signal conflict is not resolved at the color level. Destructive buttons render as outlines everywhere as a backstop.' })
+      : { key: 'hue', tone: 'fail', label: 'color conflicts with error red — separation not applied', detail: 'Exact mode ships the hex untouched, and no error-credible variant sits clear beside this color, so the conflict is unresolved at the color level. Destructive buttons render as outlines everywhere as a backstop.' })
   } else {
     rows.push({ key: 'hue', tone: 'pass', label: `${origArch} archetype, no signal conflicts`, detail: 'The hue clears every signal gate; the fill anchors at your exact color.' })
   }
 
 
-  if (rRec.warningVariant === 'lemon') {
-    rows.push({ key: 'warn', tone: rec ? 'adjusted' : 'fail', label: 'warning signal shifted to a cooler yellow', detail: 'This brand owns the warm gold range, so the warning signal moves to a cooler yellow to stay clearly distinct from brand surfaces.' })
-  } else if (rRec.warningVariant === 'macaroni') {
+  const warnVariant = rec ? rRec.warningVariant : rEx!.warningVariant
+  if (warnVariant === 'lemon') {
+    rows.push({ key: 'warn', tone: 'adjusted', label: 'warning signal shifted to a cooler yellow', detail: 'This brand owns the warm gold range, so the warning signal moves to a cooler yellow to stay clearly distinct from brand surfaces.' })
+  } else if (warnVariant === 'macaroni') {
     rows.push({ key: 'warn', tone: 'standard', label: 'warning signal kept standard amber', detail: 'A cool-yellow brand: the standard amber warning is already clearly distinct.' })
   }
 
@@ -894,8 +902,8 @@ function checklistRows(rRec: ResolvedBrand, rung: RungMode, primaryHex: string, 
   } else {
     // Exact mode: text color is still optimized (APCA picks the better of
     // black/white) — but the engine may not darken the fill, so the WCAG
-    // pass depends on where the hex sits. Computed live:
-    const ex = resolveBrand(primaryHex, 'x', { exact: true })
+    // pass depends on where the hex sits. Computed live (rEx from above):
+    const ex = rEx!
     const fillOk = (s: { L: number; C: number; H: number }, white: boolean) => {
       const y = wcagY(s.L, s.C, s.H)
       return (white ? contrastRatio(1.0, y) : contrastRatio(y, 0)) >= 4.5
@@ -907,13 +915,14 @@ function checklistRows(rRec: ResolvedBrand, rung: RungMode, primaryHex: string, 
       : { key: 'a11y', tone: 'fail', label: `fill fails WCAG AA in ${!lightOk && !darkOk ? 'both modes' : !lightOk ? 'light mode' : 'dark mode'} — recommended mode would fix it`, detail: 'Text color is still APCA-optimized (best possible choice), but exact mode forbids darkening the fill to the compliant edge, so the pair falls short of WCAG 4.5:1.' })
   }
 
-  if (rRec.pending.length) {
-    rows.push({ key: 'pending', tone: 'standard', label: `pending: ${rRec.pending.join(', ')} overlap`, detail: 'Detected but intentionally unresolved — the softened treatment for non-critical signals is still in design.' })
+  const pending = rec ? rRec.pending : rEx!.pending
+  if (pending.length) {
+    rows.push({ key: 'pending', tone: 'standard', label: `pending: ${pending.join(', ')} overlap`, detail: 'Detected but intentionally unresolved — the softened treatment for non-critical signals is still in design.' })
   }
 
   rows.push(rec
     ? { key: 'verdict', tone: 'adjusted', label: 'recommendations accepted — optimal UX color logic applied', detail: 'Every engine adjustment is active: collisions, contrast, dark mode.' }
-    : { key: 'verdict', tone: 'fail', label: 'recommendations rejected — UX not recommended', detail: 'Exact mode ships the hex untouched; the adjustments above are off.' })
+    : { key: 'verdict', tone: 'fail', label: 'recommendations rejected — UX not recommended', detail: 'Exact mode ships the hex untouched — every brand-side adjustment is off; the signals still move to stay distinct beside it.' })
   return rows
 }
 
