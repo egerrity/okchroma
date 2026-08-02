@@ -14,23 +14,29 @@ import {
   RED_GATE,
   redGateDist,
 } from './collision'
-import { apcaY, apcaLc, encodedChannels, clampChromaToGamut, oklchToLinearRgb } from './constraints'
+import { apcaY, apcaLc, encodedChannels, clampChromaToGamut, oklchToLinearRgb, legalRatio } from './constraints'
 import { pickSignalShift, signalSwapVariants } from './signalShift'
 import { hexToOklch, hueDelta, makeStop, maxChromaAt, onTextIsWhite, RED_SOLVE, redSolveDist } from './colorMath'
 import { apparentL, grayApparentL, solveCForApparent, solveLForApparent } from './perceptualL'
 import { subtleSecondaryChromaCurve } from './neutralCurve'
 import { stateFillL } from './archetypes'
 import { p2Diff, P2_D, P2_D_UP } from './p2'
-import { buildContext, whiteTextLcAt, apcaYAt, onFillIsWhiteDarkAt } from '../reqtoken/producers'
-import { CTA_ONFILL_ENFORCE_LC } from '../reqtoken/profiles'
+import {
+  buildContext, whiteTextLcAt, apcaYAt, onFillIsWhiteDarkAt,
+  findLForWhiteTextLc, findLForBlackTextLc, APCA_ENFORCE_MARGIN_LC, APCA_SOLVE_MARGIN_LC,
+} from '../reqtoken/producers'
+import { CTA_ONFILL_ENFORCE_LC, CRITICAL_CLEARANCE_LC } from '../reqtoken/profiles'
 
 type SignalScales = Map<SignalDef['name'], { def: SignalDef; scale: GeneratedScale }>
+// C42 (owner 2026-08-02): the signals are one group under the clearance law — every signal
+// cta clears the spec bar (Lc 65) except critical, whose identity carve-out rides the lower
+// CRITICAL_CLEARANCE_LC (50). Reverses C18's "signals excluded (static-seeded)".
 const buildSignalScales = (contrastProfile?: ContrastProfile): SignalScales =>
   new Map(
     SIGNALS.map(def => [
       def.name,
 
-      { def, scale: generateScale(def.hex, def.name, undefined, { darkChromaCurve, darkCtaC: 'signal', darkFillMinL: def.darkFillMinL, enforceOnFillContrast: true, suppressRedCool: true, goldBoost: true, signalWarmDrift: true, contrastProfile }) },
+      { def, scale: generateScale(def.hex, def.name, undefined, { darkChromaCurve, darkCtaC: 'signal', darkFillMinL: def.darkFillMinL, enforceOnFillContrast: true, suppressRedCool: true, goldBoost: true, signalWarmDrift: true, contrastProfile, apcaClearance: true, apcaClearanceLc: def.name === 'red' ? CRITICAL_CLEARANCE_LC : undefined }) },
     ])
   )
 
@@ -86,7 +92,7 @@ function hueCollisionPending(scale: GeneratedScale, sigScales: SignalScales): Si
 // (.12 deep / .11 light) + solve-metric release + a passing pole. The variant cta is PINNED
 // (makeStop, never re-enforced — enforcement would collapse it back onto canonical red;
 // generateSubtleSecondary's ctaL pin is the precedent); ramp, washes, inks and the ENTIRE
-// dark side stay canonical red verbatim (dark never fires under the Lc-60 bar).
+// dark side stay canonical red verbatim (the dark canonical carries its own C42 clearance).
 // Returns null = canonical red already stands clean beside this brand.
 const blackLcAt = (L: number, C: number, H: number): number =>
   Math.abs(apcaLc(apcaYAt(0, 0, 0), apcaYAt(L, clampChromaToGamut(L, C, H), H)))
@@ -104,12 +110,30 @@ function redComplementVariant(
   const redCta = red.scale.cta
   const release = RED_GATE.G + RED_SOLVE.ring
   const at = (L: number, H: number) => ({ L, C: clampChromaToGamut(L, rctx.cAt('light', L, rctx.brandC), H), H })
-  // "APCA DECIDES, WCAG FLOORS" (C23): the zone pick's pole gate is the perceptual Lc bar
-  // in BOTH lanes (the old wcag short-circuit made the lanes pick different zones for the
-  // same seed); wcag legality rides the pinned mint's pole re-judge with the 4.5 floor.
-  const poleOk = (c: { L: number; C: number; H: number }): boolean =>
-    whiteTextLcAt(c.L, c.C, c.H) >= CTA_ONFILL_ENFORCE_LC ||
-    blackLcAt(c.L, c.C, c.H) >= CTA_ONFILL_ENFORCE_LC
+  // C42 (owner 2026-08-02, supersedes the C23 either-pole gate): candidates are judged at
+  // the SHIPPABLE pole under critical's clearance bar (CRITICAL_CLEARANCE_LC 50 — the
+  // identity carve-out). The old gate accepted a zone when EITHER pole reached the bar,
+  // but the wcag 4.5 floor then flipped the shipped pole to one it never checked — the
+  // coral shipped black at Lc 42. Now: the pole that would ship must pass 4.5 (wcag lane)
+  // AND clear the bar; a candidate short of the bar SLIDES pole-preserving up to it before
+  // the distance gates judge it (the value falls out of the pipeline, no post-pick patch).
+  const fireLc = CRITICAL_CLEARANCE_LC + APCA_ENFORCE_MARGIN_LC
+  const shipsWhite = (c: { L: number; C: number; H: number }): boolean =>
+    onFillIsWhiteDarkAt(c.L, c.C, c.H, true, contrastProfile === 'apca' ? undefined : 4.5)
+  const poleOk = (c: { L: number; C: number; H: number }): boolean => {
+    const white = shipsWhite(c)
+    const lc = white ? whiteTextLcAt(c.L, c.C, c.H) : blackLcAt(c.L, c.C, c.H)
+    const legal = contrastProfile === 'apca' || legalRatio(c.L, c.C, c.H, white ? 1.0 : 0) >= 4.5
+    return legal && lc >= fireLc
+  }
+  const slideToBar = (c: { L: number; C: number; H: number }): { L: number; C: number; H: number } | null => {
+    if (poleOk(c)) return c
+    const L2 = shipsWhite(c)
+      ? findLForWhiteTextLc(c.L, c.C, c.H, fireLc + APCA_SOLVE_MARGIN_LC)
+      : findLForBlackTextLc(c.L, c.C, c.H, fireLc + APCA_SOLVE_MARGIN_LC, 0.92)
+    const c2 = at(L2, c.H)
+    return poleOk(c2) ? c2 : null
+  }
   const clean = (c: { L: number; C: number; H: number }): boolean =>
     p2Diff(brandCta, c) >= (c.L < brandCta.L ? P2_D : P2_D_UP) &&
     redSolveDist(brandCta, c) >= release && poleOk(c)
@@ -124,7 +148,11 @@ function redComplementVariant(
   outer: for (const tier of tiers) {
     const ls = [...tier].sort((a, b) => wantLighter ? a - b : b - a)
     for (const L of ls) for (const H of hues) {
-      const c = at(L, H)
+      // C42: the candidate slides to critical's bar first; side + distances judge the fill
+      // that would actually ship (a slide can carry a core candidate past its tier stop —
+      // the bar outranks the grid)
+      const c = slideToBar(at(L, H))
+      if (!c) continue
       const onSide = wantLighter ? c.L > brandCta.L : c.L < brandCta.L
       if (!onSide || !clean(c)) continue
       pick = c
@@ -226,8 +254,9 @@ export function resolveBrand(
     // DEFAULT ON (owner 2026-07-13, the cta dead-zone ruling: "pick closest to id that
     // passes apca"): the wcag lane's chosen cta pole must also clear the APCA bar,
     // moving the fill in that pole's own direction (pole-preserving = her candidate 1;
-    // the apca lane already guarantees its bar, so it ships unmoved). Brand-kind only —
-    // signals/neutral never pass through resolveBrand; exact mode has enforce off.
+    // the apca lane already guarantees its bar, so it ships unmoved). Since C42 the
+    // clearance covers light AND dark and the signal set passes it in its own generation
+    // (buildSignalScales/signalShift) — neutral alone stays outside; exact has enforce off.
     apcaClearance: opts?.apcaClearance ?? true,
     darkCtaFlatApp: opts?.darkCtaFlatApp,
   }

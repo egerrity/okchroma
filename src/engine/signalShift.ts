@@ -45,6 +45,8 @@ export interface ShiftResult {
   note: string
 }
 
+// C42: swap/yield variants are signals — they carry the group's clearance law (Lc 65;
+// none of these paths generate red, so the critical carve-out never applies here).
 function swapScale(baseHex: string, def: SignalDef, contrastProfile?: ContrastProfile): GeneratedScale {
   return generateScale(baseHex, def.name, undefined, {
     darkChromaCurve,
@@ -54,6 +56,7 @@ function swapScale(baseHex: string, def: SignalDef, contrastProfile?: ContrastPr
     suppressRedCool: true,
     goldBoost: true, signalWarmDrift: true,
     contrastProfile,
+    apcaClearance: true,
   })
 }
 
@@ -67,6 +70,7 @@ function lemonScale(def: SignalDef, contrastProfile?: ContrastProfile): Generate
     suppressRedCool: true,
     goldBoost: true, signalWarmDrift: true,
     contrastProfile,
+    apcaClearance: true,
   })
 }
 

@@ -615,6 +615,27 @@ export function ctaDualGateL(
   return Math.max(l45, Math.min(lLc, capHiL))
 }
 
+// C42 — the DARK clearance twin of ctaDualGateL (owner 2026-08-02: dark ctas carry the same
+// law; dark had never been held to any Lc bar — 139/144 of the agnostic sweep read under 60).
+// Same pole-symmetric shape on the dark basis: 4.5 hard (uncapped), the Lc ambition capped.
+// Solves at the base's emitted chroma (the ctaDarkEnforcedL idiom — the caller re-evaluates
+// chroma at the landing via its dark register).
+export function ctaDarkDualGateL(
+  base: { L: number; C: number }, darkH: number, onFillTextIsWhite: boolean, enforce: boolean,
+  coLc: number, capLoL: number, capHiL: number,
+): number {
+  if (!enforce) return base.L
+  const { L: startL, C } = base
+  if (onFillTextIsWhite) {
+    const l45 = legalRatio(startL, C, darkH, 1.0) >= 4.5 ? startL : findLForContrast(startL, C, darkH, 1.0, 4.6)
+    const lLc = findLForWhiteTextLc(startL, C, darkH, coLc + APCA_SOLVE_MARGIN_LC)
+    return Math.min(l45, Math.max(lLc, capLoL))
+  }
+  const l45 = legalRatio(startL, C, darkH, 0) >= 4.5 ? startL : findLForContrastUp(startL, C, darkH, 0, 4.6)
+  const lLc = findLForBlackTextLc(startL, C, darkH, coLc + APCA_SOLVE_MARGIN_LC, capHiL)
+  return Math.max(l45, Math.min(lLc, capHiL))
+}
+
 // on-fill (dark): judged at the emitted (gamut-clamped) base ctaDark, PRE-enforcement (:424–425).
 // ratioFloor: the wcag conformance floor for POST-MOVE re-judges (a moved cta sits where the
 // enforce-darken can no longer guarantee white — the chosen pole must still pass 4.5; the
@@ -742,6 +763,9 @@ export function solveDarkCtaExit(
   cFor: (L: number) => number, darkH: number,
   redDark: { L: number; C: number; H: number },
   enforceLc?: number,
+  // C42: the wcag lane's clearance bar rides the law extension (mirrors solveBrandExit's
+  // coLc) — an exit must land where a pole passes BOTH 4.5 and the clearance Lc
+  coLc?: number,
 ): number | null {
   const at = (L: number) => ({ L, C: clampChromaToGamut(L, cFor(L), darkH), H: darkH })
   // MEMBERSHIP = the CLEAN bar (owner-caught 2026-07-16, two live holes): the old split
@@ -757,9 +781,13 @@ export function solveDarkCtaExit(
   const decisionBar = (enforceLc ?? CTA_ONFILL_ENFORCE_LC) + APCA_ENFORCE_MARGIN_LC
   const apcaOk = (L: number, C: number, H: number): boolean =>
     whiteTextLcAt(L, C, H) >= decisionBar || blackTextLcAt(L, C, H) >= decisionBar
-  const lawOk = (L: number, C: number, H: number): boolean => enforceLc !== undefined
-    ? true
-    : (legalRatio(L, C, H, 1.0) >= 4.5 || legalRatio(L, C, H, 0) >= 4.5)
+  const lawOk = (L: number, C: number, H: number): boolean => {
+    if (enforceLc !== undefined) return true             // apca lane: decision IS the law
+    if (coLc === undefined) return legalRatio(L, C, H, 1.0) >= 4.5 || legalRatio(L, C, H, 0) >= 4.5
+    const bar = coLc + APCA_ENFORCE_MARGIN_LC
+    return (legalRatio(L, C, H, 1.0) >= 4.5 && whiteTextLcAt(L, C, H) >= bar)
+        || (legalRatio(L, C, H, 0) >= 4.5 && blackTextLcAt(L, C, H) >= bar)
+  }
   const travel = (dir: 1 | -1, withLaw = false): number | null => {
     for (let L = cur.L; L >= 0.28 && L <= 0.92; L += dir * 0.002) {
       const c = at(L)

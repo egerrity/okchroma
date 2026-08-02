@@ -175,7 +175,10 @@ const T10: Require = { metric: 'wcag', against: 'paper-2', target: INK_10_CONTRA
 // simply missed 4.5 (22 of 31 shipped brand secondaries did, dark 2.54-2.97:1). Declaring the
 // floor makes the POLE carry legality — measured sufficient, a flip alone reaches 4.5 on 240/240
 // agnostic seeds and 62/62 brand-secondary lanes with the fill left on the hex.
-const ONS = { onFill: { metric: 'apca-pole', enforce: true, ratioFloor: 4.5, coEnforceLc: 60 } as OnReq }
+// C42 (owner 2026-08-02): the clearance bar is Lc 65 — every cta clears it except critical,
+// whose identity carve-out (CRITICAL_CLEARANCE_LC 50, profiles.ts) rides in per-call via
+// opts.apcaClearanceLc. Exact and custom-secondary ctas stay inert (enforce off).
+const ONS = { onFill: { metric: 'apca-pole', enforce: true, ratioFloor: 4.5, coEnforceLc: 65 } as OnReq }
 
 // paper/wash separation is a PROPERTY OF THE LIGHT_L SHAPE, not a runtime delta (owner 2026-07-09,
 // render/paper2-distributions.html, distribution "B"). The near-white ladder's gaps grow geometrically

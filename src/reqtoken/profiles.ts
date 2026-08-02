@@ -42,6 +42,12 @@ function toApca(req: Require, lcMap: LcMap): Require {
 // unchanged above).
 export const CTA_ONFILL_ENFORCE_LC = 60
 
+// C42 (owner 2026-08-02): critical's clearance carve-out. The signal group's law is the
+// spec's coEnforceLc (65) — critical alone rides this lower bar (Lc 50): its identity cannot
+// survive the higher bars (the 60-ladder lightened coral out of red). Threaded per-call via
+// opts.apcaClearanceLc; also the red complement's zone-gate bar (engine/resolve.ts).
+export const CRITICAL_CLEARANCE_LC = 50
+
 export function withProfile(spec: ModeSpec, profile: ContrastProfile, lcMap: LcMap = DEFAULT_APCA_LC_MAP): ModeSpec {
   if (profile === 'wcag') return spec
   return {

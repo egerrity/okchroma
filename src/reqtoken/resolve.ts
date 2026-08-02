@@ -19,7 +19,7 @@ import {
   separationClampLight,
   darkScaleChromaAt, darkInkChromaAt, placeDark, placeDarkDelta, deltaDarkTargetL, deltaLiftChroma, deltaDarkPlace, flatDarkCtaL,
   onFillIsWhiteLight, onFillIsWhiteDarkAt, ctaLightL, ctaDarkEnforcedL,
-  ctaLightLApca, ctaDarkEnforcedLApca, solveBrandExit, solveDarkCtaExit, ctaDualGateL,
+  ctaLightLApca, ctaDarkEnforcedLApca, solveBrandExit, solveDarkCtaExit, ctaDualGateL, ctaDarkDualGateL,
   apcaYAt, findMaxLForApcaLc, APCA_SOLVE_MARGIN_LC, APCA_TOL_LC, APCA_ENFORCE_MARGIN_LC,
 } from './producers'
 
@@ -341,7 +341,9 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   const enforceLc = spec.ons.onFill.enforceLc
   // APCA legibility clearance (opt-in, default off → byte-identical): wcag lane only (enforceLc undefined),
   // under opts.apcaClearance — the second Lc bar the cta fill must also clear, alongside the 4.5 floor.
-  const coLc = ctx.opts?.apcaClearance && enforceLc === undefined ? spec.ons.onFill.coEnforceLc : undefined
+  const coLc = ctx.opts?.apcaClearance && enforceLc === undefined
+    ? (ctx.opts.apcaClearanceLc ?? spec.ons.onFill.coEnforceLc)
+    : undefined
   // the declared pole floor — wcag lane only (withProfile strips it for apca, whose law is the
   // Lc bar). One source for every on-fill pole judgement in this function, replacing the lone
   // hardcoded 4.5 at the light post-move re-judge.
@@ -464,6 +466,21 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       ctaPressed = emitRole('cta-pressed', pL, dCFor(pL), ctx.darkCtaH)
       cta.enforced = true; ctaHover.enforced = true; ctaPressed.enforced = true
     }
+    // C42 — the DARK clearance (owner 2026-08-02): dark ctas carry the same Lc law as light
+    // (dark's flat register had never been held to any Lc bar). Runs BEFORE the exit, the
+    // light-branch order — the exit's lawOk then keeps the bar along its travel. The move is
+    // pole-preserving (the dual-gate shape), so 4.5 and the pole survive by construction.
+    if (coLc !== undefined) {
+      const [capLoL, capHiL] = CTA_CLEARANCE_CAPS
+      const clearedL = ctaDarkDualGateL(cta, ctx.darkCtaH, onFillIsWhite, onFillEnforce, coLc + APCA_ENFORCE_MARGIN_LC, capLoL, capHiL)
+      if (Math.abs(clearedL - cta.L) > 1e-9) {
+        cta = emitRole('cta', clearedL, dCFor(clearedL), ctx.darkCtaH)
+        const [hL, pL] = dTrio(clearedL)
+        ctaHover = emitRole('cta-hover', hL, dCFor(hL), ctx.darkCtaH)
+        ctaPressed = emitRole('cta-pressed', pL, dCFor(pL), ctx.darkCtaH)
+        cta.enforced = true; ctaHover.enforced = true; ctaPressed.enforced = true
+      }
+    }
     // C12 dark (owner 2026-07-11, "dark falls out like every cta"; supersedes the v6 "no dark
     // exit" note): the FINAL enforced dark cta runs the same solve on dark geometry, keyed on
     // P2 — the P1 gate passes vibrating dark pairs (the known blindness). Member = p2 < the
@@ -472,7 +489,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     // 4.5 rides as a law extension. Both lanes fire now (post-C22/C23 measurement lives at
     // solveDarkCtaExit's banner). Null = byte-identical.
     if (ctx.opts?.ctaSolve) {
-      const exitL = solveDarkCtaExit(cta, dCFor, ctx.darkCtaH, ctx.opts.ctaSolve.redDark, enforceLc)
+      const exitL = solveDarkCtaExit(cta, dCFor, ctx.darkCtaH, ctx.opts.ctaSolve.redDark, enforceLc, coLc)
       if (exitL !== null) {
         cta = emitRole('cta', exitL, dCFor(exitL), ctx.darkCtaH)
         const [hL, pL] = dTrio(exitL)

@@ -2234,3 +2234,57 @@ variable, verified in the demo (all four buttons `rgba(0,0,0,0) / 1.5px`).
 
 `plugin/` (public v1) does not get the row — stale vintage, pre-C33 names, unpublished since
 `8106a92`.
+
+## C42 — THE CLEARANCE BECOMES THE LAW: Lc 65 EVERYWHERE, CRITICAL AT 50, DARK INCLUDED
+
+Owner-driven, 2026-08-02, off the CTA/APCA audit round (the extended plugin's apca option is
+retired for organizational reasons — the wcag lane is the only lane anyone ships, and its 4.5
+was passing ctas her eye rejected: the coral critical, vibrant cyan/green black-pole fills).
+
+Her rulings, in the order she made them: judge with a buffer over the minimum → red cannot
+clear 60 and stay the signal → **the signals are ONE GROUP, not per-surface bars** — critical
+is the identity carve-out at a minimum of Lc 50, every other signal holds the cta law →
+**Lc 65 for all the ctas besides critical. NOT exact mode.** Dark included (her reversal,
+"the findings for light are so narrow" — dark measured 139/144 under 60, never having been
+held to any Lc bar). CUSTOM secondaries are IN — "the same as the recommended": their cta is
+the engine's tint (resolveCustomModel → the derived register), which inherits the clearance
+with no extra wiring. EXACT-style secondaries are the hands-off posture and stay out with
+exact mode. (An earlier cut of the audit resolved bare secondaryHex — the EXACT posture —
+and mislabeled it custom; her correction 2026-08-02.)
+
+### THE LAW
+```
+every cta (light AND dark, wcag lane): chosen pole passes 4.5 AND clears Lc 65
+critical (the red signal, canonical + variants):  the bar is Lc 50
+exact mode, EXACT-style secondaries, neutral: OUTSIDE the law (enforce off / hands-off / own curve)
+custom secondaries: IN — the tint-model cta rides the derived register's clearance
+apca lane: untouched (coLc is gated on enforceLc === undefined) — dark-audit snapshot clean
+```
+Ship-above-the-razor (C15) holds: fills land at bar + 2 + 0.5 ≈ 67.5 / 52.5.
+
+### WHERE
+- `spec.ts` ONS `coEnforceLc` 60 → **65** (the one-source bar).
+- `profiles.ts` **`CRITICAL_CLEARANCE_LC = 50`**; threaded per-call by the new
+  `opts.apcaClearanceLc` (colorEngine → buildContext → the coLc read).
+- Signals: `buildSignalScales` + `swapScale`/`lemonScale` pass `apcaClearance: true`
+  (red adds the 50 override) — reverses C18's "signals excluded (static-seeded)".
+- Dark: new `ctaDarkDualGateL` (producers) — the dual-gate on the dark basis — wired after
+  the enforce re-solve, before the exit; `solveDarkCtaExit` gains the `coLc` law extension
+  (mirrors `solveBrandExit`).
+- The coral defect: `redComplementVariant` candidates now judged at the SHIPPABLE pole
+  (4.5-floored) under critical's bar, each candidate sliding pole-preserving to the bar
+  before the distance gates — the old either-pole gate let a zone be chosen on a pole the
+  wcag floor then vetoed (black shipped at Lc 42).
+
+### WHAT MOVED
+Canonical green `#63c373`→`#70d07f` · blue `#afa3ff`→`#bcb2ff` (both Lc 67.5) · the corals
+land `L0.72` ≈ `#ff6c4d` Lc 52.5 (notes now read `red → coral L0.72` — annotation only, no
+token path derives from the note) · every under-bar dark cta lightens to Lc 67.5 (e.g.
+dark-roast ctaDark `#869cda`→`#a4bafa`) · red + yellow canonicals untouched (already clear).
+Exact mode proven byte-identical on the brand scale (sha256 grid probe, pre == post).
+
+BLAST RADIUS: divergence snapshot (10 roster scales drifted, all cta tokens — the designed
+movement; bless follows her visual approval) · figma-verify's pinned dark hex updated · dark-audit,
+highlight, smoothness, register, reqtoken, ext-overrides, collision-sweep all clean with no
+re-bless. Instrument: `audit:cta-apca` (new this round) verifies the law end-to-end; exact
+is out of its scope per her ruling.

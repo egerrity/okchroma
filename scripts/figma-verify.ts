@@ -82,10 +82,10 @@ const bcta = leaf((figma.light as any).brand, 'cta')
 ok(bcta.$type === 'color', 'brand/cta not type color')
 ok(bcta.$value && bcta.$value.colorSpace === 'srgb' && Array.isArray(bcta.$value.components) && bcta.$value.components.length === 3, 'brand/cta $value not srgb-components object')
 // Spot value vs known engine output (dark-roast brand cta light #07074f; dark
-// #869cda — the Phase-3 darkChromaCurve's darkCtaTrim gently trims the dark cta
-// chroma per hue, e.g. #8b9dce → #869cda).
+// #a4bafa — the C42 dark clearance lightens the flat-register cta until its black
+// pole clears the Lc law; before C42 this read #869cda).
 ok(leaf((figma.light as any).brand, 'cta').$value.hex === '#07074f', `brand/cta light hex ${leaf((figma.light as any).brand, 'cta').$value.hex} != #07074f`)
-ok(leaf((figma.dark as any).brand, 'cta').$value.hex === '#869cda', `brand/cta dark hex ${leaf((figma.dark as any).brand, 'cta').$value.hex} != #869cda`)
+ok(leaf((figma.dark as any).brand, 'cta').$value.hex === '#a4bafa', `brand/cta dark hex ${leaf((figma.dark as any).brand, 'cta').$value.hex} != #a4bafa`)
 // Identical token names across modes
 // DEEP key walk (review-caught 2026-07-27: with banded groups a shallow
 // Object.keys compare only sees the 7 band names — a dropped dark leaf passed)

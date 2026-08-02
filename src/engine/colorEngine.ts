@@ -146,10 +146,14 @@ export interface GenerateOptions {
   // shipped behavior, byte-identical when unset.
   contrastProfile?: ContrastProfile
 
-  // APCA legibility clearance (opt-in bolt-on, default off → byte-identical): in the wcag lane, push the
-  // cta fill until its chosen on-text pole also clears APCA Lc 60, keeping 4.5 as the hard floor. Gated so
-  // the shipped default is unchanged; flipped on for the A/B exhibit and, once blessed, by default.
+  // APCA legibility clearance: in the wcag lane, push the cta fill until its chosen on-text pole also
+  // clears the clearance bar (spec coEnforceLc, C42: Lc 65), keeping 4.5 as the hard floor. Default-ON
+  // for brand-kind resolution (C18); the signal set passes it explicitly (C42).
   apcaClearance?: boolean
+
+  // C42: per-call clearance bar override — critical rides CRITICAL_CLEARANCE_LC (50, the identity
+  // carve-out); unset = the spec's coEnforceLc. Read only where apcaClearance is on.
+  apcaClearanceLc?: number
 
   // DELTA-KEYED dark (THE dark model, owner 2026-07-09): the resolved LIGHT stops, injected into the DARK
   // resolve — dark is a live function of light (hue carried for surfaces 1-9; lightness re-referenced to

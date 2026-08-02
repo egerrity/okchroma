@@ -27,6 +27,7 @@
     "audit:register": "esbuild scripts/register-audit.ts --bundle --platform=node --outfile=dist/register-audit.js && node dist/register-audit.js",
     "audit:ext": "esbuild scripts/ext-override-audit.ts --bundle --platform=node --outfile=dist/ext-override-audit.js && node dist/ext-override-audit.js",
     "audit:ext:bless": "esbuild scripts/ext-override-audit.ts --bundle --platform=node --outfile=dist/ext-override-audit.js && node dist/ext-override-audit.js --bless",
+    "audit:cta-apca": "esbuild scripts/cta-apca-audit.ts --bundle --platform=node --outfile=dist/cta-apca-audit.js && node dist/cta-apca-audit.js",
     "typecheck": "tsc --noEmit",
     "typecheck:ext": "tsc --noEmit -p plugin-ext"
   },
