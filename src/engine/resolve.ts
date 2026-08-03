@@ -96,6 +96,12 @@ function hueCollisionPending(scale: GeneratedScale, sigScales: SignalScales): Si
 // Returns null = canonical red already stands clean beside this brand.
 const blackLcAt = (L: number, C: number, H: number): number =>
   Math.abs(apcaLc(apcaYAt(0, 0, 0), apcaYAt(L, clampChromaToGamut(L, C, H), H)))
+// the red pair-cleanliness DISTANCES alone (poleOk is the candidate's own legality, judged
+// where the variant is built) — split out so the secondary-collider merge can verify a red
+// variant beside the OTHER brand's cta (owner 2026-08-03, primary-wins).
+const redCleanBeside = (brandCta: { L: number; C: number; H: number }, c: { L: number; C: number; H: number }): boolean =>
+  p2Diff(brandCta, c) >= (c.L < brandCta.L ? P2_D : P2_D_UP)
+  && redSolveDist(brandCta, c) >= RED_GATE.G + RED_SOLVE.ring
 function redComplementVariant(
   brandCta: { L: number; C: number; H: number },
   seed: { L: number; C: number; H: number },
@@ -108,7 +114,6 @@ function redComplementVariant(
     enforceOnFillContrast: true, suppressRedCool: true, goldBoost: true, signalWarmDrift: true, contrastProfile,
   } as any)
   const redCta = red.scale.cta
-  const release = RED_GATE.G + RED_SOLVE.ring
   const at = (L: number, H: number) => ({ L, C: clampChromaToGamut(L, rctx.cAt('light', L, rctx.brandC), H), H })
   // C42 (owner 2026-08-02, supersedes the C23 either-pole gate): candidates are judged at
   // the SHIPPABLE pole under critical's clearance bar (CRITICAL_CLEARANCE_LC 50 — the
@@ -135,8 +140,7 @@ function redComplementVariant(
     return poleOk(c2) ? c2 : null
   }
   const clean = (c: { L: number; C: number; H: number }): boolean =>
-    p2Diff(brandCta, c) >= (c.L < brandCta.L ? P2_D : P2_D_UP) &&
-    redSolveDist(brandCta, c) >= release && poleOk(c)
+    redCleanBeside(brandCta, c) && poleOk(c)
   if (!brandWentUp && clean(redCta)) return null
   const hues = hueDelta(seed.H, redCta.H) <= RED_SOLVE.redHueMagentaDh
     ? RED_SOLVE.redHuesMagentaBrand : RED_SOLVE.redHuesWarmBrand
@@ -598,15 +602,78 @@ export function resolveTheme(input: {
   }
 
 
+  // THE SECONDARY IS A COLLIDER (owner rulings 2026-08-03, restoring SECONDARY-PLAN §2 —
+  // signalSwapVariants was built for exactly this and had lost its caller): every REAL
+  // secondary's shipped ramp de-conflicts the signals, at LOWER PRIORITY than the primary.
+  //   · green/blue: a swap variant is adopted only if it clears BOTH brand colors
+  //   · yellow: the lemon path (pickSignalShift), the same both-brands verification
+  //   · red: within the band only (identity sacred stands) — the primaries' own
+  //     pair-calibrated deep-core complement, calibrated to the secondary when the
+  //     primary didn't claim red
+  //   · PRIMARY WINS TIES: an existing primary override is replaced only by a variant
+  //     that ALSO clears the primary; an unresolvable collision ships as ADVICE (the
+  //     residual note), never a forced move. "As much as possible."
+  // Moves gate at the standard collision bar; the residual NOTES keep the more
+  // sensitive SECONDARY_NOTE_MIN_V qualifier, judged against the POST-MERGE signal set.
+  const mergedOverrides: SignalOverride[] = [...primary.signalOverrides]
+  // signals the merge moved FOR the secondary — their move is reported by the override's
+  // own note, so the residual-advice pass below skips them (a within-band remedy like the
+  // lemon never passes a hue-distance test; a note would call the adopted fix a failure)
+  const adoptedForSecondary = new Set<SignalDef['name']>()
   const effectiveOf = (name: SignalDef['name']) =>
-    primary.signalOverrides.find(o => o.name === name)?.scale ?? sigScales.get(name)!.scale
+    mergedOverrides.find(o => o.name === name)?.scale ?? sigScales.get(name)!.scale
+
+  const mergeSecondarySignals = (secScale: GeneratedScale, secSeedHex: string): void => {
+    const cp = opts?.contrastProfile
+    const adopt = (name: SignalDef['name'], scale: GeneratedScale, note: string) => {
+      const i = mergedOverrides.findIndex(o => o.name === name)
+      if (i >= 0) mergedOverrides.splice(i, 1)
+      mergedOverrides.push({ name, scale, note })
+      adoptedForSecondary.add(name)
+    }
+    // red: the ΔE machinery self-limits to red-adjacent registers (hueCollisionPending
+    // excludes red for the same reason), so the complement solve IS the gate.
+    const red = sigScales.get('red')!
+    const primaryRed = mergedOverrides.find(o => o.name === 'red')
+    if (!primaryRed) {
+      const v = redComplementVariant(secScale.cta, hexToOklch(secSeedHex), false, red, cp)
+      // primary-wins verification: the secondary-calibrated variant must also sit clean
+      // beside the primary's cta (its own poleOk was judged where it was built)
+      if (v && redCleanBeside(primary.scale.cta, v.scale.cta)) adopt('red', v.scale, `${v.note} (for the secondary)`)
+    }
+    for (const sigName of ['yellow', 'green', 'blue'] as const) {
+      const { def, scale: canonical } = sigScales.get(sigName)!
+      const existing = mergedOverrides.find(o => o.name === sigName)
+      const effective = existing?.scale ?? canonical
+      if (!checkHueCollision(secScale, effective, def).collides) continue
+      const clearsBoth = (cand: GeneratedScale) =>
+        !checkHueCollision(primary.scale, cand, def).collides && !checkHueCollision(secScale, cand, def).collides
+      if (!existing) {
+        // calibrate to the colliding secondary; verify against the primary before adopting.
+        // yellow's lemon is a WITHIN-BAND remedy — the side rule is its design bar (a
+        // hue-distance test can never pass inside the band), so like the primary's own
+        // adoption it skips the clears-the-collider check and verifies the primary only.
+        const shift = pickSignalShift(secScale, canonical, def, cp)
+        const ok = !!shift && (sigName === 'yellow'
+          ? !checkHueCollision(primary.scale, shift.scale, def).collides
+          : clearsBoth(shift.scale))
+        if (shift && ok) { adopt(sigName, shift.scale, `${shift.note} (for the secondary)`); continue }
+      }
+      // the other side's variant (or the first that clears both when the primary's own
+      // override is what the secondary collides with) — primary stays clear by the gate
+      const alt = signalSwapVariants(def, cp).find(s => clearsBoth(s.scale))
+      if (alt) adopt(sigName, alt.scale, `${alt.note} (for the secondary)`)
+      // else: residual — the note below reports it against the post-merge set
+    }
+  }
 
   // corrected detection for secondaries (C7): the TYPE-1 hue gate at the annotation
-  // qualifier, against the THEME's effective (post-shift) signal set. Advice only — the
-  // secondary remedy layer is its own owner round; no reshape happens here.
+  // qualifier, against the THEME's effective (POST-MERGE) signal set — after the collider
+  // pass above, a note fires only for the RESIDUALS the machinery could not clear.
   const signalNotesFor = (scale: GeneratedScale, wording: (name: SignalDef['name'], washDE: number) => string): string[] => {
     const out: string[] = []
     for (const def of SIGNALS) {
+      if (adoptedForSecondary.has(def.name)) continue
       const h = checkHueCollision(scale, effectiveOf(def.name), def, { minV: SECONDARY_NOTE_MIN_V })
       if (h.collides) out.push(wording(def.name, Math.min(h.washDeltaE.light, h.washDeltaE.dark)))
     }
@@ -687,8 +754,9 @@ export function resolveTheme(input: {
     // convention: collisions are the theme's decisions). Everything — cta included — falls
     // out of the engine; the old quiet-register derived path is retired for the default.
     const { liftedHex, scale } = resolveDefaultModel(input.primaryHex)
+    mergeSecondarySignals(scale, liftedHex)
     return {
-      primary, themed: primary,
+      primary, themed: { ...primary, signalOverrides: mergedOverrides },
       secondary: {
         scale,
         style: 'default',
@@ -696,11 +764,11 @@ export function resolveTheme(input: {
         notes: [
           `secondary derived from the brand color (default model, seed ${liftedHex})`,
           ...signalNotesFor(scale, (name, dE) =>
-            `derived secondary sits on the ${name} signal's hue (wash ΔE ${dE.toFixed(3)}) — it tracks the brand color; expected, annotated for the remedy round`),
+            `derived secondary sits on the ${name} signal's hue (wash ΔE ${dE.toFixed(3)}) — it tracks the brand color`),
         ],
         distinctness: ctaDistinctness(primary.scale, scale),
       },
-      signalOverrides: primary.signalOverrides, notes,
+      signalOverrides: mergedOverrides, notes,
     }
   }
 
@@ -709,21 +777,22 @@ export function resolveTheme(input: {
   // the pick itself); custom differs from exact in exactly one token family.
   if (secStyle === 'default') {
     const { tintedHex, scale } = resolveCustomModel(input.secondaryHex)
+    mergeSecondarySignals(scale, input.secondaryHex)
     const distinctness = ctaDistinctness(primary.scale, scale)
     if (distinctness.close)
       notes.push(`secondary reads close to the primary (ΔE ${Math.min(distinctness.light, distinctness.dark).toFixed(2)}) — consider a more distinct color`)
     return {
-      primary, themed: primary,
+      primary, themed: { ...primary, signalOverrides: mergedOverrides },
       secondary: {
         scale, style: 'default', level: 'subtle', demoted: false, derived: false,
         notes: [
           `secondary keeps your color through the ramp; the cta is a tint of it (tint seed ${tintedHex})`,
           ...signalNotesFor(scale, (name, dE) =>
-            `secondary sits on the ${name} signal's hue (wash ΔE ${dE.toFixed(3)}) — it tracks your color; expected, annotated for the remedy round`),
+            `secondary sits on the ${name} signal's hue (wash ΔE ${dE.toFixed(3)}) — it tracks your color`),
         ],
         distinctness,
       },
-      signalOverrides: primary.signalOverrides, notes,
+      signalOverrides: mergedOverrides, notes,
     }
   }
 
@@ -734,16 +803,17 @@ export function resolveTheme(input: {
   const rSec = resolveBrand(input.secondaryHex, 'secondary', { ...opts, exact: true, skipCollisionRules: true, archetypeOverride: sArchetype })
   const scale: GeneratedScale = rSec.scale
   const level: SecondaryLevel = 'standard'
+  mergeSecondarySignals(scale, input.secondaryHex)
   const secNotes = signalNotesFor(scale, (name, dE) =>
-    `secondary reads close to the ${name} signal (wash ΔE ${dE.toFixed(3)}) — custom keeps your color; consider more distance`)
+    `secondary reads close to the ${name} signal (wash ΔE ${dE.toFixed(3)}) — your color ships untouched`)
 
   const distinctness = ctaDistinctness(primary.scale, scale)
   if (distinctness.close)
     notes.push(`secondary reads close to the primary (ΔE ${Math.min(distinctness.light, distinctness.dark).toFixed(2)}) — consider a more distinct color`)
 
   return {
-    primary, themed: primary,
+    primary, themed: { ...primary, signalOverrides: mergedOverrides },
     secondary: { scale, style: secStyle, level, demoted: false, derived: false, notes: secNotes, distinctness },
-    signalOverrides: primary.signalOverrides, notes,
+    signalOverrides: mergedOverrides, notes,
   }
 }

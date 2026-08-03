@@ -2444,3 +2444,49 @@ after (72-probe agnostic sweep, true shipped basis, worst paper incl. the neutra
 WHAT MOVED: 13 roster scales total, every drift an ink or stop-8 token at ΔE 0.015–0.019 —
 imperceptible. Divergence re-blessed; dark audit, secondary, register, ext (set unchanged —
 values only), req:audit, cta-apca, both typechecks clean.
+
+## C45 — THE SECONDARY IS A COLLIDER: SECONDARY-PLAN §2 RESTORED, AT LOWER PRIORITY
+
+Owner report, 2026-08-03: *"the signal collisions aren't respecting exact secondaries."*
+Root cause was an ORPHANED REMEDY: `signalSwapVariants` (signalShift.ts) was built for
+exactly this — its own comment reads "used by resolveTheme when a SECONDARY collides: a
+variant is adopted only if it clears BOTH brand colors" — but its caller died somewhere
+after SECONDARY-PLAN §2 (2026-07-04), leaving the import and the advice notes ("expected,
+annotated for the remedy round") as the only survivors. Every secondary path runs
+`skipCollisionRules`, so an exact secondary on a signal hue shipped the collision.
+
+Her rulings, grilled: **every REAL secondary is a collider** (exact + custom — the custom
+ramp is the exact posture's byte-for-byte; derived rides the primary's hue and is covered
+indirectly) · **red and yellow move too, WITHIN their band** (the identity law and the C42
+critical carve-out stand: red takes the primaries' own pair-calibrated deep-core
+complement, yellow the lemon) · **primary wins ties** — an existing primary override is
+replaced only by a variant that also clears the primary, and an unresolvable collision
+ships as ADVICE, never a forced move ("as much as possible", her row-5 wording).
+
+### THE MERGE (resolveTheme, all three posture branches)
+`mergeSecondarySignals(secScale, secSeedHex)` mutates a merged override list seeded from
+the primary's:
+- **green/blue**: gate = the standard hue-collision bar vs the EFFECTIVE signal (canonical
+  or the primary's variant). Remedy = `pickSignalShift` calibrated to the secondary,
+  adopted only when it clears BOTH brands; when the secondary collides with the primary's
+  own variant, the OTHER swap variant is adopted if it clears both.
+- **yellow**: the lemon is a WITHIN-BAND remedy — a hue-distance test can never pass
+  inside the band, so (exactly like the primary's own adoption) it trusts the side rule
+  and verifies the PRIMARY only.
+- **red**: the complement solve IS the gate (the ΔE machinery self-limits to red-adjacent
+  registers). Calibrated to the secondary's cta when the primary didn't claim red;
+  verified beside the primary's cta via `redCleanBeside` (the distance half of the
+  variant's own clean() predicate, split out — zero behavior change to C12).
+- Adopted overrides carry the "(for the secondary)" note suffix; `themed` now ships
+  `{ ...primary, signalOverrides: merged }`, so every consumer (demo css, both plugins)
+  inherits with zero plumbing. The residual-advice pass runs against the POST-MERGE set
+  and skips adopted signals (a note would call the adopted fix a failure).
+
+### WHAT MOVED
+audit:secondary's advice counts tell the story: annotated residuals fell **188 → 62** per
+lane — 126 formerly advice-only collisions are now remedied. audit:ext: 34 rows moved,
+every one a signal family JOINING a secondary-colliding roster brand's override set
+(+warning ×24, +positive ×6, +critical ×2, +info ×2) — re-blessed. The audit lanes were
+taught the new law (remedied-or-annotated, never silent). No-secondary themes are
+byte-identical; cta-apca's signal group unchanged (the adopted variants were already in
+the law). Demo-verified live: navy + #43B02A secondary → positive ships teal-side #51d291.

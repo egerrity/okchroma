@@ -25,9 +25,17 @@ type Fail = { theme: string; check: string; detail: string }
 const fails: Fail[] = []
 let themes = 0, closeAdvice = 0, residuals = 0, exactAdvice = 0
 
-const clearsAll = (scale: GeneratedScale, effective: (n: typeof SIGNALS[number]['name']) => GeneratedScale) =>
+// the SECONDARY-COLLIDER law (owner 2026-08-03): a collision against the effective set is
+// satisfied by EITHER an advice note OR a secondary-driven signal adoption — the merge marks
+// its adoptions with the "(for the secondary)" note suffix, and a within-band remedy (the
+// lemon) can never pass a hue-distance test, so adopted signals are excluded from the
+// collision sweep exactly as the engine excludes them from the note pass.
+const adoptedFor = (t: { signalOverrides: Array<{ name: string; note: string }> }) =>
+  new Set(t.signalOverrides.filter(o => o.note.endsWith('(for the secondary)')).map(o => o.name))
+const clearsAll = (scale: GeneratedScale, effective: (n: typeof SIGNALS[number]['name']) => GeneratedScale, adopted: Set<string>) =>
   SIGNALS.every(def =>
-    !checkHueCollision(scale, effective(def.name), def, { minV: SECONDARY_NOTE_MIN_V }).collides)
+    adopted.has(def.name)
+    || !checkHueCollision(scale, effective(def.name), def, { minV: SECONDARY_NOTE_MIN_V }).collides)
 
 for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
   const cp = profile === 'apca' ? profile : undefined
@@ -37,7 +45,8 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
     themes++
     // LANE 1 — a SUPPLIED secondary with no style = CUSTOM (owner 2026-07-12 strike: derived
     // or custom, nothing else). Invariant: the hex ships as a standard hands-off ramp and
-    // every signal collision is annotated — never silent, never a reshape.
+    // every signal collision is REMEDIED (a secondary-driven variant, owner 2026-08-03)
+    // or ANNOTATED — never silent, and never a reshape of the secondary itself.
     const t = resolveTheme({ primaryHex: pHex, secondaryHex: sHex, contrastProfile: cp })
     const ref = resolveBrand(pHex, 'brand', { contrastProfile: cp })
     const sec = t.secondary!
@@ -50,7 +59,7 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
       t.signalOverrides.find(o => o.name === n)?.scale ?? signalScalesFor(cp).get(n)!.scale
     if (sec.style !== 'exact' || sec.level !== 'standard')
       fails.push({ theme: id, check: 'supplied-is-custom', detail: `style ${sec.style} level ${sec.level} for a supplied hex` })
-    if (!clearsAll(sec.scale, effective)) {
+    if (!clearsAll(sec.scale, effective, adoptedFor(t))) {
       residuals++
       if (!sec.notes.some(n => n.includes('reads close to the')))
         fails.push({ theme: id, check: 'custom-residual-silent', detail: 'custom secondary collides with no annotation' })
@@ -95,7 +104,9 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
       fails.push({ theme: id, check: 'exact-shape', detail: `style ${secS.style} level ${secS.level}` })
     if (secS.demoted)
       fails.push({ theme: id, check: 'exact-untouched', detail: 'exact secondary was reshaped' })
+    const adoptedS = adoptedFor(ts)
     for (const def of SIGNALS) {
+      if (adoptedS.has(def.name)) continue
       const h = checkHueCollision(secS.scale, effectiveS(def.name), def, { minV: SECONDARY_NOTE_MIN_V })
       if (h.collides) {
         exactAdvice++
