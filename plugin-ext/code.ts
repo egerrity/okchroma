@@ -26,6 +26,20 @@ const SPEC_KEY = 'okchroma-ext-spec'
 // rename-proofing (owner 2026-07-27): display names are the user's to change,
 // the stored ids are the contract (the collections' tag idiom, extended to modes).
 const COLS_KEY = 'okchroma-ext-cols'
+// the base collection's SEED COLOR (the rebuild feature, owner 2026-08-03) — absent on
+// files predating it, which means the fixed default (payload.ts BASE_SEED_HEX)
+const BASE_SEED_KEY = 'okchroma-ext-base-seed'
+
+// the FILE-STATE handshake (the rebuild feature): the UI builds every payload's BASE
+// column from the seed, so it must learn the file's stored seed before the first apply —
+// a rebuilt base diffed against the DEFAULT seed would churn every brand's overrides.
+;(async () => {
+  try {
+    const collections = await figma.variables.getLocalVariableCollectionsAsync()
+    const base = collections.find(c => c.getPluginData(OWNER_KEY) === 'base')
+    figma.ui.postMessage({ type: 'file-state', baseSeedHex: base?.getPluginData(BASE_SEED_KEY) || null })
+  } catch { /* fresh file — the UI's default seed stands */ }
+})()
 // Mirrors payload.COLUMNS (type-only import keeps the engine out of the sandbox bundle).
 // Column order IS the mode-dropdown order: the default lane leads, pairs group by prefix.
 const COLUMNS: Column[] = ['light', 'dark']
@@ -36,6 +50,40 @@ const COLUMNS: Column[] = ['light', 'dark']
 // files in the wild still hold it — dropping it would leave those raw forever.
 const RUNG_ALPHAS: Record<string, number> = { '06': 0.06, '08': 0.08, '16': 0.16 }
 const RETIRED_RUNG_ALPHA = 0.12
+
+// RETIRED CANONICAL SIGNAL VALUES (owner report 2026-08-03: "the warning ink-9 [is]
+// fail[ing] on papers … in the main theme still"): base rows are create-once, so an engine
+// value-move strands existing files' SIGNAL rows on the era they were seeded in — a
+// re-apply writes fresh per-brand OVERRIDES, but the base "theme" collection keeps
+// shipping the stale, now-unlawful value. The offset-08 idiom, extended to values: a raw
+// base value that EXACTLY matches a retired canonical is OURS and refreshes to the
+// payload's current value; anything else is a designer's edit and is never touched.
+// Eras covered: C42 (the clearance law moved the positive/info cta trios) and C44 (the
+// shipped-pair law moved the warning/positive inks + the warning/critical highlight-8).
+// Derivation 2026-08-03: SIGNAL_SCALES diffed at e8eff89 → dbac539 → HEAD. Extend this
+// map whenever an engine round moves canonical signal values.
+const RETIRED_SIGNAL_VALUES: Record<string, string[]> = {
+  'critical/highlight/8': ['#e06146'],
+  'warning/highlight/8': ['#c67a00'],
+  'warning/ink/9': ['#a56000'],
+  'warning/cta-ink/enabled': ['#a56000'],
+  'warning/cta-ink/hover': ['#814a00'],
+  'positive/ink/9': ['#1c7e36'],
+  'positive/cta-ink/enabled': ['#1c7e36'],
+  'positive/cta-ink/hover': ['#005f21'],
+  'positive/cta/enabled': ['#63c373', '#67c777'],
+  'positive/cta/hover': ['#52b364', '#77d786'],
+  'positive/cta/pressed': ['#42a355', '#87e896'],
+  'info/cta/enabled': ['#afa3ff'],
+  'info/cta/hover': ['#a093ee', '#bfb7ff'],
+  'info/cta/pressed': ['#9184dd', '#cfcaff'],
+}
+// half-8-bit-step tolerance: Figma stores floats; a retired hex must match to the channel
+const rgbaMatchesHex = (cur: { r: number; g: number; b: number; a?: number }, hex: string): boolean => {
+  if (cur.a !== undefined && cur.a !== 1) return false
+  const ch = (i: number) => parseInt(hex.slice(i, i + 2), 16) / 255
+  return Math.abs(cur.r - ch(1)) < 1 / 510 && Math.abs(cur.g - ch(3)) < 1 / 510 && Math.abs(cur.b - ch(5)) < 1 / 510
+}
 const RUNG_FOR_ALPHA = (a: number | undefined): string | undefined =>
   a === undefined ? undefined : Object.keys(RUNG_ALPHAS).find(k => Math.abs(RUNG_ALPHAS[k] - a) < 1e-6)
 const DARK_COLUMNS = new Set<Column>(['dark'])
@@ -210,9 +258,13 @@ const toRGBA = (t: FlatTok): figma.RGBA =>
 
 figma.ui.onmessage = async (msg) => {
   if (msg.type === 'apply') {
-    const { brand, brandTokens, baseTokens, hasSecondary, confirmed, confirmedToken, spec } = msg as unknown as {
+    const { brand, brandTokens, baseTokens, hasSecondary, confirmed, confirmedToken, spec, rebuildBase, baseSeedHex } = msg as unknown as {
       type: 'apply'; brand: string; brandTokens: TokenColumns; baseTokens: TokenColumns
       hasSecondary: boolean; confirmed?: boolean; confirmedToken?: string; spec?: unknown
+      // the REBUILD flag (owner 2026-08-03): force-reseed every base row from this
+      // payload — the explicit "redo the main theme" action; rides the armed batch (its
+      // first item carries it), so it always arrives confirmed
+      rebuildBase?: boolean; baseSeedHex?: string
     }
     try {
       const collections = await figma.variables.getLocalVariableCollectionsAsync()
@@ -366,6 +418,9 @@ figma.ui.onmessage = async (msg) => {
       const created = !baseMatch
       const base = baseMatch ?? figma.variables.createVariableCollection(BASE_NAME)
       base.setPluginData(OWNER_KEY, 'base')
+      // the rebuild stores its seed as FILE state: every later apply's UI builds the base
+      // column from it (the file-state handshake), so diffs stay against THIS base
+      if (rebuildBase && typeof baseSeedHex === 'string') base.setPluginData(BASE_SEED_KEY, baseSeedHex)
 
       // ── feature-detect (plan §2.2): extended collections are Enterprise-only.
       // BEFORE any mode mutation (adversarial review 2026-07-16): a failed upgrade must
@@ -497,11 +552,14 @@ figma.ui.onmessage = async (msg) => {
       // ALIAS TARGETS (every cta/border points at one or the other), and ensure() registers into
       // baseVars as it creates — a target created later in payload order would not exist yet when
       // an earlier leaf tried to alias it, silently falling back to a raw write.
+      // rebuildBase (the "redo the main theme" action): seedFresh runs for EVERY base row,
+      // not only freshly created ones — the one sanctioned overwrite of base values, taking
+      // each row back to what a fresh seed would write today (values AND alias idioms)
       for (const path of ['system/abs-black', 'system/abs-white', 'system/alpha/transparent', 'system/alpha/ink',
         ...Object.keys(RUNG_ALPHAS).map(r => `system/alpha/offset-${r}`)]) {
         const before = createdVars
         const v = ensure(path)
-        if (createdVars > before) seedFresh(v, path)
+        if (createdVars > before || rebuildBase) seedFresh(v, path)
       }
       ensure('system/surface/sink')
       ensure('system/surface/base')
@@ -521,7 +579,7 @@ figma.ui.onmessage = async (msg) => {
         if (!withSecondary && (t.path.startsWith('brand-secondary/') || t.path === 'system/abs-secondary')) continue
         const before = createdVars
         const v = ensure(t.path)
-        if (createdVars > before) seedFresh(v, t.path) // fresh variable → seed every active column
+        if (createdVars > before || rebuildBase) seedFresh(v, t.path) // fresh variable (or a rebuild) → seed every active column
       }
       // Existing bases predate the aliasing: convert a RAW value that is exactly what we
       // would have written to the alias (resolution-identical, so the create-once contract
@@ -578,6 +636,16 @@ figma.ui.onmessage = async (msg) => {
               || cur.id === baseVars.get('system/abs-white')?.id
             if (soft && isOurAbs && soft.id !== v.id) v.setValueForMode(colIds[i], figma.variables.createVariableAlias(soft))
             continue
+          }
+          // the retired-canonical VALUE refresh (see RETIRED_SIGNAL_VALUES): a signal row
+          // still holding a prior era's exact canonical takes the payload's current value
+          const retired = RETIRED_SIGNAL_VALUES[path]
+          if (retired) {
+            const seed = seedByCol.get(activeCols[i])!.get(path)
+            if (seed && retired.some(h => rgbaMatchesHex(cur, h))) {
+              v.setValueForMode(colIds[i], toRGBA(seed))
+              continue
+            }
           }
           const target = strokeTargetFor(path, cur, activeCols[i])
             ?? softInkTargetFor(path, cur, activeCols[i])

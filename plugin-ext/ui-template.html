@@ -344,9 +344,13 @@ body {
 <button class="roster-btn" id="roster-btn" title="Applies the edge-case brand set — one extension per roster entry, all solve columns. Ignores the fields above.">Apply test roster</button>
 <div class="status" id="status"></div>
 
-<div style="margin-top:10px;text-align:center;display:flex;gap:14px;justify-content:center">
+<div style="margin-top:10px;text-align:center;display:flex;gap:14px;justify-content:center;align-items:center">
   <button class="smoke-link" id="smoke-btn" title="Runs the extended-collections API probes on scratch collections, then removes them">Run Enterprise smoke test</button>
   <button class="smoke-link" id="reapply-btn" title="Rebuilds every brand extension from the recipe stamped at its last apply">Re-apply all brands</button>
+  <span style="display:inline-flex;gap:6px;align-items:center">
+    <button class="smoke-link" id="rebuild-btn" title="Re-seeds every base 'theme' row from the current engine at the seed color (overwrites base-row edits), then re-applies every brand against the new base">Rebuild base theme</button>
+    <input id="rebuild-hex" placeholder="#E93D82" title="The base theme's seed color — leave empty to refresh the current color onto today's engine" style="width:72px;font:inherit;padding:2px 4px">
+  </span>
 </div>
 <pre class="smoke-log" id="smoke-log" style="display:none"></pre>
 

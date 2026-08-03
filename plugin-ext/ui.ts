@@ -4,7 +4,7 @@ import { ARCHETYPES, type Archetype } from '../src/engine/archetypes'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
 import { SIGNALS } from '../src/engine/signals'
 import { toHex } from '../src/engine/cssRender'
-import { buildBrandColumns, buildBaseColumns, type ThemeSpec } from './payload'
+import { buildBrandColumns, buildBaseColumns, BASE_SEED_HEX, type ThemeSpec } from './payload'
 import { ROSTER, rosterSpec } from './roster'
 
 // ─── State ───────────────────────────────────────────────────────────────────
@@ -103,6 +103,8 @@ const smokeBtn        = $<HTMLButtonElement>('smoke-btn')
 const smokeLog        = $<HTMLElement>('smoke-log')
 const rosterBtn       = $<HTMLButtonElement>('roster-btn')
 const reapplyBtn      = $<HTMLButtonElement>('reapply-btn')
+const rebuildBtn      = $<HTMLButtonElement>('rebuild-btn')
+const rebuildHexInput = $<HTMLInputElement>('rebuild-hex')
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -438,7 +440,7 @@ function buildAndSend() {
     const { contrastProfile: _previewOnly, ...theme } = themeInput(name)
     const recipe: Recipe = { brand: name, theme, neutralLevel, hasSecondary: secondaryMode !== 'off' }
     const brandTokens = buildBrandColumns(theme, neutralLevel)
-    const baseTokens = buildBaseColumns()
+    const baseTokens = buildBaseColumns(fileBaseSeed)
 
     // reason-scoped confirm: echo back the exact token the confirm was armed with —
     // the plugin re-derives the reasons and only proceeds if they still match
@@ -610,7 +612,7 @@ window.addEventListener('message', e => {
       set?: number; removed?: number; inherited?: number; createdVars?: number; baseCreated?: boolean
       secondaryAdded?: boolean; addedCols?: string[]; rowsAdded?: boolean; orphaned?: number
       backfill?: unknown[]; unstamped?: string[]; specs?: unknown[]
-      lines?: string[]
+      lines?: string[]; baseSeedHex?: string | null
     }
   }).pluginMessage
   if (!msg) return
@@ -632,6 +634,7 @@ window.addEventListener('message', e => {
       if (qi + 1 < queue.length) { qi++; sendQueueItem(); return }
       const label = qLabel, n = queue.length, un = qUnstamped
       queue = null
+      queueRebuildSeed = null
       applyBtn.disabled = false
       rosterBtn.disabled = false
       setStatus(`✓ ${label}: ${n} brands · ${qTotals.set} overridden · ${qTotals.inherited} inherited`
@@ -642,6 +645,7 @@ window.addEventListener('message', e => {
     }
     const stoppedAt = item?.brand ?? '?'
     queue = null
+    queueRebuildSeed = null
     applyBtn.disabled = false
     rosterBtn.disabled = false
     setStatus(`Batch stopped at ${stoppedAt} — ${msg.message ?? msg.type}`, 'err')
@@ -679,12 +683,30 @@ window.addEventListener('message', e => {
     setStatus(msg.message ?? 'Unknown error', 'err')
   } else if (msg.type === 'specs') {
     const items = ((msg.specs ?? []) as Recipe[]).filter(s => s && typeof s.brand === 'string' && !!s.theme)
+    if (rebuildPending) {
+      // the rebuild rides the re-apply queue: item 0 re-seeds the base, the rest re-diff
+      const seed = rebuildPending
+      rebuildPending = null
+      if (!items.length) {
+        setStatus('Rebuild needs at least one applied brand (it rides the re-apply queue) — apply a brand, then rebuild.', 'err')
+        return
+      }
+      fileBaseSeed = seed
+      queueRebuildSeed = seed
+      startQueue(items, 'rebuild base')
+      if (msg.unstamped?.length) qUnstamped.push(...msg.unstamped)
+      return
+    }
     if (!items.length) {
       setStatus(`No stored recipes to re-apply${msg.unstamped?.length ? ` — ${msg.unstamped.length} extension(s) predate recipes: ${msg.unstamped.join(', ')}` : ''}.`, 'err')
       return
     }
     startQueue(items, 're-apply')
     if (msg.unstamped?.length) qUnstamped.push(...msg.unstamped)
+  } else if (msg.type === 'file-state') {
+    // the sandbox's load-time handshake: adopt the file's stored base seed
+    fileBaseSeed = msg.baseSeedHex || BASE_SEED_HEX
+    rebuildHexInput.placeholder = fileBaseSeed
   } else if (msg.type === 'smoke-result') {
     smokeLog.style.display = ''
     smokeLog.textContent = (msg.lines ?? []).join('\n')
@@ -716,14 +738,27 @@ let qUnstamped: string[] = []
 // will do; ticking the box after arming resets the arms (see the change handler).
 let rosterArmed = false
 let reapplyArmed = false
+// ─── the REBUILD feature (owner 2026-08-03: "a way to redo the main theme … or change it
+// to a different color") ──────────────────────────────────────────────────────────────
+// fileBaseSeed: the base collection's seed color — the file-state handshake delivers the
+// stored value on load; every payload's base column builds from it so diffs stay against
+// THIS file's base, not the fixed default.
+let fileBaseSeed: string = BASE_SEED_HEX
+let rebuildArmed = false
+let rebuildPending: string | null = null   // seed awaiting the collect-specs round-trip
+let queueRebuildSeed: string | null = null // active rebuild batch: item 0 carries the flag
 let reapplyApcaSnapshot = false // click-time posture, carried across the collect-specs round-trip
 
 function sendQueueItem() {
   const it = queue![qi]
   setStatus(`${qLabel} ${qi + 1}/${queue!.length} — ${it.brand}…`)
   const brandTokens = buildBrandColumns(it.theme, it.neutralLevel)
-  const baseTokens = buildBaseColumns()
-  parent.postMessage({ pluginMessage: { type: 'apply', brand: it.brand, brandTokens, baseTokens, hasSecondary: it.hasSecondary, confirmed: true, spec: it } }, '*')
+  const baseTokens = buildBaseColumns(fileBaseSeed)
+  // a rebuild batch: the FIRST item carries the force-reseed flag (the base rebuilds once,
+  // then every following item's diff runs against the fresh base)
+  const rebuild = qi === 0 && queueRebuildSeed
+    ? { rebuildBase: true, baseSeedHex: queueRebuildSeed } : {}
+  parent.postMessage({ pluginMessage: { type: 'apply', brand: it.brand, brandTokens, baseTokens, hasSecondary: it.hasSecondary, confirmed: true, spec: it, ...rebuild } }, '*')
 }
 
 // (the apcaPosture parameter died with the Include-APCA toggle, 2026-07-29: there is one
@@ -788,6 +823,25 @@ reapplyBtn.addEventListener('click', () => {
     return
   }
   reapplyArmed = false
+  parent.postMessage({ pluginMessage: { type: 'collect-specs' } }, '*')
+})
+
+// ─── Rebuild base theme (owner 2026-08-03: "a way to redo the main theme … or change it
+// to a different color"). Armed two-click like the roster/re-apply; the hex field empty =
+// refresh the CURRENT seed onto today's engine. Overwrites base-row edits by design —
+// that is what "redo" means; per-brand extension overrides recompute right after.
+rebuildBtn.addEventListener('click', () => {
+  if (queue) return
+  const raw = rebuildHexInput.value.trim()
+  const seed = raw ? normalizeHex(raw) : fileBaseSeed
+  if (!seed) { setStatus('Rebuild: enter a valid hex (or leave the field empty to refresh the current base color).', 'err'); return }
+  if (!rebuildArmed) {
+    rebuildArmed = true
+    setStatus(`Overwrites every base "theme" row with the current engine at ${seed}, then re-applies every brand against it. Base-row edits are lost. Click again to run.`, 'err')
+    return
+  }
+  rebuildArmed = false
+  rebuildPending = seed
   parent.postMessage({ pluginMessage: { type: 'collect-specs' } }, '*')
 })
 

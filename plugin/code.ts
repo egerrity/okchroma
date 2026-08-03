@@ -517,16 +517,20 @@ figma.ui.onmessage = async (msg) => {
       // shared neutral + signals → grown on demand, recorded as alias targets.
       // lightMap rides along (review-caught 2026-07-16): the cta-ink→ink-10 alias branch
       // is value-guarded against BOTH maps — starving it here shipped shared cta-inks raw.
-      // The LINK prim alone refreshes (review-caught 2026-07-16): it is seed-keyed, so the
+      // The LINK prim refreshes (review-caught 2026-07-16): it is seed-keyed, so the
       // path survives an engine retune while its six values move — a stale reuse would
       // serve old hover/pressed/dark values under every theme alias. Same seed ⇒ same
       // engine output, so the refresh is idempotent across brands sharing the prim.
+      // The SIGNAL prims join that rule (owner report 2026-08-03: a stale warning ink-9
+      // failing on papers — the create-once base stranded C42/C44 canonical moves): their
+      // identity/variant paths survive engine retunes exactly as link's does, and the
+      // same idempotence argument holds. Only the neutral stays grow-on-demand.
       for (const grp of shared) {
         const darkMap = new Map(flatten(grp.dark).map(t => [t.path, t]))
         const lightMap = new Map(flatten(grp.light).map(t => [t.path, t]))
         for (const t of flatten(grp.light)) {
           const path = `${grp.prim}/${t.path}`
-          const { v, created } = writeRaw(path, t, darkMap, grp.theme === 'link', lightMap)
+          const { v, created } = writeRaw(path, t, darkMap, grp.theme !== 'neutral', lightMap)
           if (created) createdShared++
           primVar.set(path, v)
         }

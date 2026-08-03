@@ -196,9 +196,13 @@ export function buildBrandColumns(input: ThemeSpec, neutralLevel: NeutralLevel):
 // The base collection's seed set. brand-secondary is ALWAYS included (the derived pastel):
 // at base creation it's written only when the file's posture says so, and it's the seed for
 // a later "add a secondary to the base" apply.
-export function buildBaseColumns(): TokenColumns {
+// seedHex: the base "theme" collection's seed color — the fixed okchroma baseline by
+// default, or the file's OWN stored seed (the rebuild feature, owner 2026-08-03: "a way
+// to redo the main theme … or change it to a different color"). The secondary stays
+// DERIVED from the seed (owner ruling: the baseline is self-contained — one input).
+export function buildBaseColumns(seedHex: string = BASE_SEED_HEX): TokenColumns {
   return columns(
-    { primaryHex: BASE_SEED_HEX, name: 'okchroma', primaryMode: 'recommended', secondaryHex: null, deriveSecondary: true },
+    { primaryHex: seedHex, name: 'okchroma', primaryMode: 'recommended', secondaryHex: null, deriveSecondary: true },
     'default', true, true,
   )
 }

@@ -2445,6 +2445,42 @@ WHAT MOVED: 13 roster scales total, every drift an ink or stop-8 token at ΔE 0.
 imperceptible. Divergence re-blessed; dark audit, secondary, register, ext (set unchanged —
 values only), req:audit, cta-apca, both typechecks clean.
 
+### C44 addendum — THE STALE BASE: the value heals and the REBUILD action (owner 2026-08-03)
+
+Owner report: *"I am still seeing the warning ink-9 fail on papers … in the main theme."*
+The ENGINE was clean — every signal clears every bar against the worst paper — but Figma
+base rows are CREATE-ONCE, so each engine value-move (C42's clearance ctas, C44's
+shipped-pair inks) strands existing files' base rows on the era they were seeded in.
+Re-applies write fresh per-brand OVERRIDES; the base "theme" collection keeps shipping the
+stale value (her warning ink-9: `#a56000`, the pre-C44 canonical, vs today's `#9d5b00`).
+
+Three shipped pieces, her rulings:
+1. **Ext heal** — `RETIRED_SIGNAL_VALUES` (code.ts): the offset-08 idiom extended to
+   values. The 20 rows the two eras moved (derived by diffing SIGNAL_SCALES at
+   e8eff89 → dbac539 → HEAD), each with its exact retired hex; a raw base value matching
+   one refreshes to the payload's current value on any apply. Extend the map whenever an
+   engine round moves canonical signal values.
+2. **Community heal** — the signal prims join the LINK prim's refresh rule (its own
+   in-code rationale, verbatim applicable: identity-keyed paths survive engine retunes
+   while values move; same seed ⇒ same output ⇒ idempotent). Only the neutral stays
+   grow-on-demand.
+3. **THE REBUILD ACTION** (her redirect: *"we just need a way to redo the main theme …
+   no way to refresh it or to change it to a different color"*): "Rebuild base theme" in
+   the ext panel — armed two-click, seed-hex field (empty = refresh the current color
+   onto today's engine; a hex = re-base the whole theme on it, secondary DERIVED from it
+   per her ruling). Rides the re-apply queue: item 0 carries `rebuildBase` (seedFresh
+   forced for EVERY base row — the one sanctioned overwrite of base values), the rest
+   re-diff against the fresh base. The seed persists as collection pluginData
+   (`BASE_SEED_KEY`) with a load-time `file-state` handshake, so every later apply's
+   base column builds from THE FILE'S seed — without that, the next apply's diff would
+   churn every override. Needs ≥1 applied brand (it rides the recipe queue); the panel
+   says so.
+
+⚠️ BUILD TRAP (caught demoing the UI): `npm run build` builds the DEMO only — the plugin
+bundles build under `node esbuild.config.js --plugin` / `--plugin-ext` (CI runs them on
+push, so deployed zips were always right, but a local "build green" proves nothing about
+plugin assembly).
+
 ## C45 — THE SECONDARY IS A COLLIDER: SECONDARY-PLAN §2 RESTORED, AT LOWER PRIORITY
 
 Owner report, 2026-08-03: *"the signal collisions aren't respecting exact secondaries."*
