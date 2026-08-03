@@ -8,7 +8,7 @@
 // The producers are verbatim ports of the pre-resolver engine, proven byte-identical at cutover (c7542b7);
 // the blessed snapshot audits are the standing regression gate.
 import { apparentL, perceptualRungL, perceptualDarkC } from '../engine/perceptualL'
-import { clampChromaToGamut, wcagY, legalRatio, findMaxLForContrast, apcaLc } from '../engine/constraints'
+import { clampChromaToGamut, wcagY, legalRatio, findMaxLForContrast, apcaLc, contrastRatio, shippedY } from '../engine/constraints'
 import { hexToOklch, srgbEmitChannels, redSolveDist, RED_GATE, RED_SOLVE } from '../engine/colorMath'
 import { hoverL, pressedL, stateFillL } from '../engine/archetypes'
 import { DARK_BAND_LIFT, DARK_SHINE_PARITY_T, LIGHT_L, DARK_SIGNAL_WARM_DRIFT } from '../engine/stopTable'
@@ -111,6 +111,19 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   // This IS why the collapse is visually cheap — it is the rule that made ink-9 (then
   // ink-10) land on top of highlight-9, both solving 4.5 against paper-3.
   const wcagAnchorStop = (req: Require, stop: number) => (stop >= 9 ? 3 : declaredAnchor(req))
+  // the CROSS-FAMILY paper bound (owner defect 2026-08-03 — her measured pair was the
+  // brand ink-9 on the NEUTRAL paper-3, 4.479:1; her follow-up caught highlight-8 the same
+  // way, 26/72 under 3:1): "usable on every paper" includes the per-brand NEUTRAL's papers,
+  // and the own-family paper-3 is NOT the nearest paper for green-band brands — their
+  // tinted paper carries more Y than the near-gray neutral at the same L. Covers every
+  // contrast-required stop from 8 up: the inks are text on any paper, and highlight-8 is
+  // the focus-ring/border register that sits on neutral surfaces (WCAG 1.4.11).
+  // The bound is the worst SHIPPED neutral paper-3 Y over hue 0..350 × every NeutralLevel:
+  // light min 0.845015 (H260 branded #e8edf8) · dark max 0.014247 (H300 default #211f23),
+  // measured 2026-08-03 via generateNeutralScale → stopHex. A per-theme neutral is not in
+  // scope here (the ramp resolves per family), so the floor clears the worst neutral any
+  // theme can generate. RE-DERIVE if the neutral curve or the paper ladder moves.
+  const NEUTRAL_P3_WORST_SHIP_Y = { light: 0.845015, dark: 0.014247 } as const
   // the light contrast solves are metric-blind: the resolver hands the producer a maxLFor closure built
   // from the declared require. wcag closures call findMaxLForContrast with the exact old arguments
   // (float-identical — the wcag profile stays byte-for-byte); apca closures swap in the Lc bisection.
@@ -312,8 +325,37 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
 
     // verify any declared require against the emitted (gamut-clamped) values — total, fail loud
     if (sp.require?.metric === 'wcag') {
+      // THE SHIPPED-PAIR FLOOR (owner defect 2026-08-03 — #43B02A ink-9 read 4.44:1 on
+      // paper-3): the analytic solve lands exactly on the bar, and the sRGB encode plus
+      // 8-bit hex quantization of BOTH sides then eats up to ~0.08 of ratio. legalRatio
+      // covers the fill's renditions, but its reference side is the ANALYTIC anchor Y —
+      // whose "near-neutral, sub-tolerance" assumption broke when the ink anchor moved
+      // to the chromatic paper-3, on a solve that carries no margin. The law is the pair
+      // that ships: if the 8-bit sRGB rendition of stop-vs-anchor reads under target,
+      // walk L away from the anchor (chroma re-clamps inside shippedY; C/H otherwise
+      // held — the dark floor's delta-purity idiom, and the moves are ≤ ~0.01 L) until
+      // it clears. A stop whose shipped pair already clears does not move — byte-
+      // identical outside the failing set (19/72 of the agnostic sweep, green–cyan).
+      const anchor = refOf(wcagAnchorStop(sp.require, sp.stop), sp.stop)
+      const anchorShipY = shippedY(anchor.L, anchor.C, anchor.H)
+      // stops 8+ also clear the worst neutral paper (the cross-family bound above) —
+      // the min-ratio anchor, since the binding paper is whichever sits nearest in Y
+      const shipRatio = (L: number) => {
+        const y = shippedY(L, placed.C, placed.H)
+        const own = contrastRatio(y, anchorShipY)
+        return sp.stop >= 8 ? Math.min(own, contrastRatio(y, NEUTRAL_P3_WORST_SHIP_Y[mode])) : own
+      }
+      if (shipRatio(placed.L) < sp.require.target) {
+        const away = shippedY(placed.L, placed.C, placed.H) < anchorShipY ? -1 : +1
+        let L2 = placed.L
+        for (let i = 0; i < 100 && shipRatio(L2) < sp.require.target; i++) L2 += away * 0.001
+        if (shipRatio(L2) >= sp.require.target) { placed = { ...placed, L: L2 }; clamped = true }
+      }
       const refY = refYOf(wcagAnchorStop(sp.require, sp.stop), sp.stop)
-      const got = legalRatio(placed.L, clampChromaToGamut(placed.L, placed.C, placed.H), placed.H, refY)
+      const got = Math.min(
+        legalRatio(placed.L, clampChromaToGamut(placed.L, placed.C, placed.H), placed.H, refY),
+        shipRatio(placed.L),
+      )
       if (got < sp.require.target - 1e-3) unresolvable = `stop ${sp.stop}: contrast ${got.toFixed(2)} < required ${sp.require.target}`
     } else if (sp.require?.metric === 'apca') {
       const refA = refApcaYOf(declaredAnchor(sp.require), sp.stop)

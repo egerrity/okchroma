@@ -2360,3 +2360,54 @@ functions: None · quiet companion from the primary (this round) · a companion 
 GIVEN hex, with levels drawn from the data · Recommended (all adjustments INCLUDING collision
 avoidance, which does not exist today — the secondary paths run `skipCollisionRules`) ·
 Exact. The last three are future rounds and are blocked on the naming ruling.
+
+## C44 — THE LAW IS THE PAIR THAT SHIPS: THE SHIPPED-PAIR FLOOR AND THE CROSS-FAMILY BOUND
+
+Owner defect report, 2026-08-03: *"I am seeing ink 9's fail on paper 3… 43B02A… 4.47:1."*
+Confirmed, and it was two defects stacked. Her follow-up ("check this for highlight as
+well") caught the second surface before commit.
+
+### DEFECT 1 — the razor solve loses its margin at the emit
+The wcag requires (S8/T9/T10) solve to exactly the bar in ANALYTIC space with a `5e-4`
+margin — float-noise insurance — while the sRGB encode + 8-bit hex quantization of BOTH
+sides eats up to ~0.08 of real ratio. `legalRatio` covers the fill's renditions, but its
+REFERENCE side is the analytic anchor Y, whose "near-neutral, sub-tolerance" assumption
+broke when the ink anchor moved to the chromatic paper-3 (2026-07-28) — on a solve that,
+unlike the scale solve's `+0.05` idiom, carries no margin at all. On the true shipped-hex
+basis 10/72 agnostic probes shipped ink-9 under 4.5 within their own family.
+
+⚠️ MEASUREMENT TRAP (cost this round a wrong first diagnosis): `ColorStop.r/g/b` are
+MASTER-GAMUT (P3) encoded components — reading them as sRGB and hexing them measures a
+pair that never ships. The true basis is `stopHex`/`srgbEmitChannels`. Any shipped-value
+instrument must route through those.
+
+### DEFECT 2 — the own-family paper-3 is not "the nearest paper"
+Her actual measured pair was the brand ink-9 on the NEUTRAL paper-3 (4.479). The ink
+anchor law ("usable on every paper") anchors at the family's OWN paper-3 assuming it
+bounds all papers — false for green-band brands, whose tinted paper carries more Y than
+the near-gray neutral at the same L. Highlight-8 had the same hole wider: 26/72 light
+probes under its 3:1 (1.4.11) against the worst neutral paper-3 — and highlight-8 is the
+focus-ring/border register that sits on neutral surfaces.
+
+### THE FIX — in the resolver's verify step, both modes
+1. **The shipped-pair floor**: after placement, every wcag-required stop re-measures on
+   the 8-bit sRGB rendition of stop-vs-anchor (`shippedY`, constraints.ts); if under, L
+   walks away from the anchor (C/H held — the dark floor's delta-purity idiom; moves are
+   ≤ ~0.02 L) until it clears. A stop whose shipped pair already clears does not move.
+2. **The cross-family bound** (stops 8+): the floor also clears the worst SHIPPED neutral
+   paper-3 any theme can generate — `NEUTRAL_P3_WORST_SHIP_Y` = light 0.845015 (H260
+   branded) · dark 0.014247 (H300 default), measured over hue 0..350 × every NeutralLevel.
+   RE-DERIVE if the neutral curve or the paper ladder moves. Min-ratio anchor: the binding
+   paper is whichever sits nearest in Y.
+
+```
+after (72-probe agnostic sweep, true shipped basis, worst paper incl. the neutral bound):
+  light  ink-9 min 4.501 · ink-10 min 10.612 · highlight-8 min 3.001   (all 0/72 under)
+  dark   ink-9 min 6.791 · ink-10 min 12.295 · highlight-8 min 3.017   (all 0/72 under)
+  cta-ink trio rides ink-9's floor: light 4.50/6.71/10.61 · dark 6.79/8.82/12.30
+  #43B02A: ink-9 #2d7b1b → 4.66 own p3 / 4.61 neutral p3 · hl-8 #509842 → 3.09 neutral p3
+```
+
+WHAT MOVED: 13 roster scales total, every drift an ink or stop-8 token at ΔE 0.015–0.019 —
+imperceptible. Divergence re-blessed; dark audit, secondary, register, ext (set unchanged —
+values only), req:audit, cta-apca, both typechecks clean.

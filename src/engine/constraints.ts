@@ -96,6 +96,21 @@ export function legalRatio(L: number, C: number, H: number, otherY: number): num
   return Math.min(r, contrastRatio(wcagY(L, cS, H, 'srgb'), otherY))
 }
 
+// the SHIPPED Y (owner defect 2026-08-03 — #43B02A ink-9 read 4.44:1 on paper-3): the
+// relative luminance of the 8-bit sRGB HEX rendition — sRGB gamut clamp, gamma encode,
+// round to /255, decode — the value every browser and audit tool measures. legalRatio's
+// reference side stays the analytic Y under the assumption its anchors are near-neutral;
+// that broke when the ink anchor moved to the chromatic paper-3 (2026-07-28). Contrast
+// checks on the pair that ships use THIS on both sides.
+export function shippedY(L: number, C: number, H: number): number {
+  const cS = clampChromaToGamut(L, C, H, 'srgb')
+  const [rl, gl, bl] = linearChannels(L, cS, H, 'srgb')
+  const gm = (v: number) => { const x = Math.min(1, Math.max(0, v)); return x <= 0.0031308 ? 12.92 * x : 1.055 * x ** (1 / 2.4) - 0.055 }
+  const lin = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
+  const q = (v: number) => Math.round(gm(v) * 255) / 255
+  return 0.2126 * lin(q(rl)) + 0.7152 * lin(q(gl)) + 0.0722 * lin(q(bl))
+}
+
 export function findLForY(targetY: number, C: number, H: number, gamut: Gamut = MASTER_GAMUT): number {
   let lo = 0.005, hi = 0.999
   for (let i = 0; i < 20; i++) {
