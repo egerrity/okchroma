@@ -555,12 +555,30 @@ figma.ui.onmessage = async (msg) => {
         const seed = seedByCol.get(col)!.get(path)
         if (!seed || !softInkFor(path, seed)) return undefined
         if (!isPole({ r: cur.r, g: cur.g, b: cur.b })) return undefined
-        return Math.abs((cur.a ?? 1) - (seed.a ?? 1)) < EPS ? softInkFor(path, seed) : undefined
+        // OUR values only, across both eras: the C43 raw write (alpha = the register) and
+        // the PRE-C43 solid pole (alpha 1 — what the base shipped before the soft on-cta
+        // existed). Any other alpha is a designer's own soft text and is left alone.
+        const a = cur.a ?? 1
+        return Math.abs(a - (seed.a ?? 1)) < EPS || Math.abs(a - 1) < EPS ? softInkFor(path, seed) : undefined
       }
       for (const [path, v] of baseVars) {
         for (let i = 0; i < activeCols.length; i++) {
           const cur = v.valuesByMode[colIds[i]]
-          if (!cur || isAlias(cur)) continue
+          if (!cur) continue
+          if (isAlias(cur)) {
+            // the era-crossing alias (owner-caught: "not updating the main theme"): a base
+            // cta/on seeded PRE-C43 was pole-aliased onto abs-black/abs-white, and an alias
+            // is otherwise never touched — so the base kept reading the SOLID pole after the
+            // payload went soft. OUR abs alias on a path whose seed is soft is exactly the
+            // stale half of that migration: re-point it to system/alpha/ink. An alias to any
+            // OTHER target is a designer's own wiring and is left alone.
+            const seed = seedByCol.get(activeCols[i])!.get(path)
+            const soft = seed ? softInkFor(path, seed) : undefined
+            const isOurAbs = cur.id === baseVars.get('system/abs-black')?.id
+              || cur.id === baseVars.get('system/abs-white')?.id
+            if (soft && isOurAbs && soft.id !== v.id) v.setValueForMode(colIds[i], figma.variables.createVariableAlias(soft))
+            continue
+          }
           const target = strokeTargetFor(path, cur, activeCols[i])
             ?? softInkTargetFor(path, cur, activeCols[i])
             ?? (POLE_LEAVES(path) && isPole(cur) ? absFor(cur) : undefined)
