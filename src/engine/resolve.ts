@@ -354,11 +354,13 @@ export type LegacySecondaryStyle = SecondaryStyle | 'tint' | 'pastel' | 'muted' 
 export const normalizeSecondaryStyle = (s: LegacySecondaryStyle): SecondaryStyle =>
   s === 'tint' || s === 'pastel' || s === 'muted' || s === 'vibrant' ? 'exact' : s
 // ── the DEFAULT (derived) secondary — a SEED TRANSFORM (owner-picked "strong" on
-// render/secondary-default-model.html, 2026-07-12): slight hue rotation; L lifted
-// proportionally to the remaining room toward the light pole (the delta shrinks as the seed
-// nears the background); chroma gently relative to the seed, bounded by the room at the
-// landing. The lifted seed then resolves as a NORMAL ramp — no pinned cta, no bespoke curve,
-// primary-independent by construction ("we just didn't try to set this for people").
+// render/secondary-default-model.html, 2026-07-12; hue rotation retired 2026-08-03 — the
+// derived secondary is a QUIET COMPANION on the primary's own hue, "without selecting
+// another color"): L lifted proportionally to the remaining room toward the light pole (the
+// delta shrinks as the seed nears the background); chroma gently relative to the seed,
+// bounded by the room at the landing. The lifted seed then resolves as a NORMAL ramp — no
+// pinned cta, no bespoke curve, primary-independent by construction ("we just didn't try to
+// set this for people").
 // The two GAP registers (owner 2026-07-12, picked on render/secondary-gap-combo.html: "a min
 // of g10 in light but a flat g23 in dark"), both in APPARENT (H-K) distance:
 //   minGapApp — the lifted seed keeps at least this distance from the light ground (white), so
@@ -374,20 +376,18 @@ export const normalizeSecondaryStyle = (s: LegacySecondaryStyle): SecondaryStyle
 // and the lifted neutral wash-7 delta is ≈ 40.3 (review-corrected: a first cut used a blue
 // probe brand's wash-7 as the anchor and landed 44, ~4 apparent-L* louder than the blessed
 // quiet register).
-export const DEFAULT_SECONDARY = { rot: 12, kL: 0.65, kC: 0.5, kR: 0.4, lRoom: 0.97, minGapApp: 10, darkFlatGapApp: 40 } as const
+export const DEFAULT_SECONDARY = { kL: 0.65, kC: 0.5, kR: 0.4, lRoom: 0.97, minGapApp: 10, darkFlatGapApp: 40 } as const
 const LIGHT_GROUND_APP = grayApparentL(1.0)
-// `rotate` — THE ROTATION IS FOR DERIVING, NOT FOR TRANSFORMING (owner 2026-07-29).
-// `rot` exists so a secondary DERIVED FROM THE PRIMARY steps off its parent hue instead of
-// reading as a paler copy of it. Applied to a hex the user typed it is just re-colouring
-// their pick: +9° to +13° across the wheel, which is why "a lighter version of a brand
-// colour" came back a different colour. Derived passes true; a supplied seed passes false.
-// The lift and the chroma damp still apply to both — Custom is documented as "your color
-// through the derived model, lifted" and the owner kept that; Exact is the hands-off path.
-export function defaultSecondarySeed(hex: string, rotate = true): string {
+// NO ROTATION (owner 2026-08-03, retiring `rot 12` and the derived/supplied split): the
+// derived secondary is a quiet companion — its distinctness comes from the lift, not the
+// hue, so a tonal value-step off the parent is the intent, not the failure the rotation
+// existed to prevent. A derived seed and a user-supplied one take the identical transform;
+// Exact is the hands-off path.
+export function defaultSecondarySeed(hex: string): string {
   const seed = hexToOklch(hex)
   const d = DEFAULT_SECONDARY
   let L2 = seed.L + d.kL * Math.max(0, d.lRoom - seed.L)
-  const H2 = rotate ? (seed.H + d.rot + 360) % 360 : seed.H
+  const H2 = seed.H
   let C2 = Math.min(d.kC * seed.C, d.kR * maxChromaAt(L2, H2))
   // the light minimum gap (two passes settle the L↔C interaction)
   for (let i = 0; i < 2; i++) {
@@ -413,6 +413,17 @@ export const OUTLINE_HOVER_ALPHA = 0.09    // owner: "8–10% of the resolved ct
 // outline pressed = the hover treatment at doubled strength (the pressed-doubles-hover
 // convention carried to the alpha register) — C19, owner-approved 2026-07-16
 export const OUTLINE_PRESSED_ALPHA = 0.18
+
+// ── the SECONDARY SOFT ON-CTA (owner 2026-08-03, the derived-secondary round): a
+// default-model secondary's button text is the on-text POLE AT ALPHA instead of the solid
+// pole — the renderer composites it over whatever the fill's current state is, so
+// hover/pressed carry their own legibility (a solid tinted ink died there: dark hover
+// 3.69 / pressed 3.00 against the state fills). Bars: WCAG 4.5 on every state fill plus
+// the Lc-60 on-cta bar at rest; the worst-case floor across the agnostic sweep is 0.726
+// in both modes, and the owner picked light .75 / dark .80 by eye on the alpha ladder.
+// Applies to style 'default' only — derived and custom share the tint register; exact,
+// outline, and the no-secondary mirror keep their own on-cta.
+export const SECONDARY_ON_CTA_ALPHA = { light: 0.75, dark: 0.80 } as const
 
 // ── the NEUTRAL CTA ESCAPE (Phase 3, owner spec 2026-07-16: stakeholders want a
 // neutral cta escape for red collisions): the brand's cta FILL trio swaps to the brand's
@@ -606,9 +617,10 @@ export function resolveTheme(input: {
   // seeds" unification of 2026-07-12). The lift-and-damp transform is shared, but what it is
   // applied TO now differs by posture, because the two postures are doing different jobs:
   //
-  //   DERIVED (no secondary supplied) — MANUFACTURING a secondary that does not exist. Rotate
-  //     +12° off the parent hue, lift and damp, then a normal ramp. The whole ramp descends
-  //     from the transformed seed, because there is no user pick to preserve.
+  //   DERIVED (no secondary supplied) — MANUFACTURING a secondary that does not exist. Lift
+  //     and damp on the parent's own hue (a quiet companion, owner 2026-08-03), then a normal
+  //     ramp. The whole ramp descends from the transformed seed, because there is no user
+  //     pick to preserve.
   //   CUSTOM ('default' style + a supplied hex) — QUIETENING a secondary the user chose. Their
   //     hex is the seed for the RAMP; only the cta trio comes from the transformed seed. Owner:
   //     "the id is preserved as is, but the cta is generated as if it was a tint of the given
@@ -616,16 +628,16 @@ export function resolveTheme(input: {
   //     back as a pale tan — and it took the INK with it (ink-10 C 0.080 → 0.017, so the text
   //     colour went gray-brown). See resolveCustomModel.
   //
-  // The hue never rotates on a supplied seed (C34): rotation is how a DERIVED secondary steps
-  // off the primary it was made from; applied to a pick it just re-colours it.
+  // The hue never rotates on either posture (owner 2026-08-03; C34 had exempted supplied
+  // seeds only) — both take the one quiet-companion transform.
   const secOpts = {
     skipCollisionRules: true as const,
     contrastProfile: cp,
     darkCtaFlatApp: DEFAULT_SECONDARY.darkFlatGapApp,
   }
 
-  const resolveDefaultModel = (seedHex: string, rotate: boolean) => {
-    const liftedHex = defaultSecondarySeed(seedHex, rotate)
+  const resolveDefaultModel = (seedHex: string) => {
+    const liftedHex = defaultSecondarySeed(seedHex)
     return {
       liftedHex,
       scale: resolveBrand(liftedHex, 'secondary', { ...secOpts, archetypeOverride: sArchetype }).scale,
@@ -648,7 +660,7 @@ export function resolveTheme(input: {
   // leaving the own ramp's flag behind would pick the on-text pole for a fill that no longer
   // ships. Measured after the splice: label contrast 9.93–15.88:1 light, 5.36–6.21:1 dark.
   const resolveCustomModel = (seedHex: string) => {
-    const tintedHex = defaultSecondarySeed(seedHex, false)
+    const tintedHex = defaultSecondarySeed(seedHex)
     // the RAMP is the EXACT posture's, byte for byte — the same call with the same opts, so
     // "preserved" is literal and the gate can assert equality. (A first cut resolved it through
     // the derived model's opt-set instead; the light stops matched but 210/960 dark ramps did
@@ -674,7 +686,7 @@ export function resolveTheme(input: {
     // the DEFAULT model: transform the brand seed, resolve like a normal brand (secondary
     // convention: collisions are the theme's decisions). Everything — cta included — falls
     // out of the engine; the old quiet-register derived path is retired for the default.
-    const { liftedHex, scale } = resolveDefaultModel(input.primaryHex, true)
+    const { liftedHex, scale } = resolveDefaultModel(input.primaryHex)
     return {
       primary, themed: primary,
       secondary: {

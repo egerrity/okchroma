@@ -4,7 +4,7 @@ import { toHex, ctaNeedsBorder, pageStopFor, ctaBorderRung, OFFSET_ALPHAS, type 
 import { srgbEmitChannels } from './colorMath'
 import { stopTokenName, tokenOrder } from './tokenNames'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
-import { OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, escapeCtaFamily, resolveLinkTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
+import { OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, SECONDARY_ON_CTA_ALPHA, escapeCtaFamily, resolveLinkTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v))
 
@@ -222,6 +222,18 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
       // exact ramp's text-register values already emitted by rampGroup
       // cta/on = the family's ink/9, NOT a pole — the plugin aliases non-pole on-fills to the sibling ink/9
       if (s9) putLeaf(secondaryGroup, 'on-cta', colorFromStop(s9))
+    }
+    // the SOFT on-cta (default-model secondaries only — derived and custom share the tint
+    // register): the on-text pole at SECONDARY_ON_CTA_ALPHA, composited by the consumer over
+    // the fill's current state. Same value cssRender emits; exact keeps the solid pole and
+    // the no-secondary mirror keeps the brand's.
+    if (input.secondaryStyle === 'default' && input.secondary) {
+      const white = mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark
+      const p = white ? 1 : 0
+      putLeaf(secondaryGroup, 'on-cta', {
+        $type: 'color',
+        $value: { colorSpace: 'srgb', components: [p, p, p], alpha: SECONDARY_ON_CTA_ALPHA[mode], hex: white ? '#ffffff' : '#000000' },
+      })
     }
     const brandGroup = rampGroup(scale[mode], mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark, brandExtra(scale, mode, 'brand'))
     // neutral cta escape re-expression (mirrors the outline block above): the brand's

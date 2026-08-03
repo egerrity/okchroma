@@ -4,7 +4,7 @@ import { generateIllustrationScale, generateNeutralScale, type GeneratedScale, t
 import { srgbEmitChannels, masterEmitChannels } from './colorMath'
 import { clampChromaToGamut, apcaY, apcaLc } from './constraints'
 import { stopTokenName, tokenOrder } from './tokenNames'
-import { signalScalesFor, OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, escapeCtaFamily, resolveLinkTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
+import { signalScalesFor, OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, SECONDARY_ON_CTA_ALPHA, escapeCtaFamily, resolveLinkTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
 import { SIGNALS, SIGNAL_EMIT_NAME } from './signals'
 
 export function toHex(r: number, g: number, b: number): string {
@@ -485,6 +485,16 @@ export function brandCss(
     ]
   }
 
+  // the SOFT on-cta (default-model secondaries only — derived and custom share the tint
+  // register): the on-text pole at SECONDARY_ON_CTA_ALPHA, composited by the renderer over
+  // the fill's current state so hover/pressed carry their own legibility. Emitted AFTER the
+  // secondary body so the cascade takes it (the outline idiom). Exact keeps the solid pole.
+  const softOnCta = (mode: 'light' | 'dark'): string[] => {
+    if (!secondary || secondaryStyle !== 'default') return []
+    const white = mode === 'light' ? secondary.onFillTextIsWhite : secondary.onFillTextIsWhiteDark
+    return [`  --secondary-on-cta: rgba(${white ? '255, 255, 255' : '0, 0, 0'}, ${SECONDARY_ON_CTA_ALPHA[mode]});`]
+  }
+
   const outline = (mode: 'light' | 'dark'): string[] => {
     if (secondaryStyle !== 'outline' || !secondary) return []
     const s8 = (mode === 'light' ? secondary.light : secondary.dark).find(s => s.stop === 8)
@@ -544,6 +554,7 @@ export function brandCss(
     brandIdentity,
     ...illusVars,
     ...secondaryLight,
+    ...softOnCta('light'),
     ...outline('light'),
     secondaryIdentity,
     ...brandKindBody('neutral', nScale, 'light', page.light),
@@ -555,6 +566,7 @@ export function brandCss(
     ...escape('dark'),
     ...link('dark'),
     ...secondaryDark,
+    ...softOnCta('dark'),
     ...outline('dark'),
     ...brandKindBody('neutral', nScale, 'dark', page.dark),
     ...effOverrides.flatMap(o => brandKindBody(SIGNAL_EMIT_NAME[o.name], o.scale, 'dark', page.dark)),

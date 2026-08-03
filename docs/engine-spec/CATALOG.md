@@ -2288,3 +2288,75 @@ movement; bless follows her visual approval) · figma-verify's pinned dark hex u
 highlight, smoothness, register, reqtoken, ext-overrides, collision-sweep all clean with no
 re-bless. Instrument: `audit:cta-apca` (new this round) verifies the law end-to-end; exact
 is out of its scope per her ruling.
+
+## C43 — THE DERIVED SECONDARY IS A QUIET COMPANION, AND ITS BUTTON TEXT IS THE POLE AT ALPHA
+
+Owner-driven, 2026-08-03, the derived-secondary round. Her question opened it: *"if a brand
+doesn't have a secondary color, given its primary color, what should its secondary be?"* The
+90-pair bank book that the prior round measured describes brands that HAVE secondaries — so
+it informs the given-hex postures, and the derived one has no book to match. Her answer to
+what it is FOR: **derive a quiet companion without selecting another color.**
+
+Two rulings, one round.
+
+### 1. NO ROTATION — the quiet companion sits on the parent's hue
+`rot: 12` existed to stop a derived secondary reading as a paler copy of its parent. Under
+the new purpose that is the INTENT, not the failure: tonal (a value step on the same hue) is
+the third most common habit in the book and has its tightest pairs. So `rot` is gone from
+`DEFAULT_SECONDARY` — not set to 0, removed, with the `rotate` parameter and the
+derived/supplied split (C34) removed alongside it. Derived and Custom now run the literally
+identical `defaultSecondarySeed`, so **Custom is byte-identical** (it already passed
+`rotate=false`); only derived secondaries move, un-rotating 12°. The lift (`kL .65`,
+`lRoom .97`) and the chroma damp (`kC .5`) are untouched — she kept the damp deliberately:
+*"the quiet stays."*
+
+### 2. THE SOFT ON-CTA — the on-text pole at alpha, not a solid
+Her ask: does the companion's cta land light enough to carry the family's own ink and
+sharpen the hierarchy? Measured on a 72-probe agnostic sweep (6 L×C classes × 12 hues, WCAG
+lane, via `resolveTheme`/`resolveBrand`): **light ink-10 clears 4.5 everywhere** (min 6.98)
+but **dark ink-10 fails 53/72** at the blessed `darkFlatGapApp 40`, and a solid tinted ink
+collapses on the STATES in dark (hover 3.69, pressed 3.00) because the ink is fixed while
+the fill moves. Moving the gap 40 → 38 would clear rest-only and disturbs the C24 register.
+
+The solve is transparency: the text is the **on-text pole at alpha**, composited by the
+renderer over whatever the fill's current state is — so hover/pressed carry their own
+legibility instead of being abandoned by a fixed ink. Worst-case min alpha across the sweep:
+**0.838** under the C42 Lc-65 bar, **0.726** under Lc 60, 0.665 on WCAG alone. She read the
+alpha ladder by eye and picked **light .75 · dark .80** — above the Lc-60 floor, so this
+pairing answers to the Lc-60 on-cta bar (the one the dark audit's hard lane F already uses),
+not C42's Lc 65.
+
+```
+--secondary-on-cta = rgba(pole, SECONDARY_ON_CTA_ALPHA[mode])   // style 'default' only
+SECONDARY_ON_CTA_ALPHA = { light: 0.75, dark: 0.80 }
+measured at the chosen values (72 probes, worst case):
+  light   wcag rest/hover/pressed  6.99 / 6.19 / 5.42   ·  Lc rest 61.3
+  dark    wcag rest/hover/pressed  7.94 / 8.95 / 7.88   ·  Lc rest 63.6
+```
+
+### WHERE
+- `resolve.ts` — `DEFAULT_SECONDARY` loses `rot`; `defaultSecondarySeed(hex)` loses the
+  `rotate` param; `resolveDefaultModel` likewise. New register `SECONDARY_ON_CTA_ALPHA`.
+- `cssRender.ts` — `softOnCta(mode)` emits the rgba after the secondary body (the outline
+  idiom, so the cascade takes it); `figmaRender.ts` emits the matching alpha color token.
+- Scope is `secondaryStyle === 'default'` ONLY: derived + Custom share the tint register.
+  **Exact, outline, and the no-secondary mirror keep their solid on-cta.**
+- `cta-apca-audit.ts` — the secondary lane now measures the COMPOSITE the renderer ships
+  (alpha-blend in encoded sRGB, then wcag/apca Y from the blended channels), plus a new
+  derived-secondary probe pair. Lane n=8, DEAD=0.
+
+### WHAT MOVED
+Derived secondaries un-rotate 12° (hue now the primary's, ΔH residue is 8-bit hex rounding
+only). Every default-model secondary's `on-cta` becomes an rgba. `audit:ext` moved on 15
+rows, all exactly `+brand-secondary/cta/on` — the alpha pole becoming an override for the
+secondary-bearing brands — re-blessed. `audit:secondary` (custom lanes 1/1b assert the
+custom model), dark-audit incl. lane F, divergence, register, cta-apca all clean with no
+re-bless. Both typechecks clean.
+
+OPEN, NOT BUILT: the offering NAMING is unresolved — she read today's chip names as not
+matching the functions and asked for a functionality matrix first
+(`scratch/personas/secondary-offering-matrix-2026-08-03.md`, internal). Her five secondary
+functions: None · quiet companion from the primary (this round) · a companion derived from a
+GIVEN hex, with levels drawn from the data · Recommended (all adjustments INCLUDING collision
+avoidance, which does not exist today — the secondary paths run `skipCollisionRules`) ·
+Exact. The last three are future rounds and are blocked on the naming ruling.
