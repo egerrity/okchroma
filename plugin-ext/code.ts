@@ -722,10 +722,15 @@ figma.ui.onmessage = async (msg) => {
           } else {
             // a differing override rides the same alias idiom (a flipped on-cta reads
             // "abs-white" in the extension, not an anonymous hex; a cta/border reads
-            // "alpha/transparent" or an "alpha/offset-*" rung rather than a raw invisible swatch).
-            // strokeFor comes FIRST for the same reason it does at the base seeding: isPole
-            // rejects alpha≠1, so the poles rule can never claim an alpha-carrying border.
-            const target = strokeFor(path, tok) ?? (POLE_LEAVES(path) && isPole(tok) ? absFor(tok) : undefined)
+            // "alpha/transparent" or an "alpha/offset-*" rung rather than a raw invisible swatch;
+            // the soft on-cta reads "alpha/ink"). strokeFor/softInkFor come FIRST for the same
+            // reason they do at the base seeding: isPole rejects alpha≠1, so the poles rule can
+            // never claim an alpha-carrying leaf. ⚠️ THIS is the write path the APPLIED theme
+            // shows — brand-secondary/cta/on is an OVERRIDE row (the base posture is the
+            // mirror's solid pole), so a router missing HERE ships raw even when the base
+            // seeding and the conversion pass both carry it (owner-caught 2026-08-03: "not
+            // seeing these changes come through in the top level theme").
+            const target = strokeFor(path, tok) ?? softInkFor(path, tok) ?? (POLE_LEAVES(path) && isPole(tok) ? absFor(tok) : undefined)
             v.setValueForMode(extColIds[i], target ? figma.variables.createVariableAlias(target) : toRGBA(tok))
             set++
           }

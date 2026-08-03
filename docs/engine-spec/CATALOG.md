@@ -2383,6 +2383,17 @@ write" idiom — and the ext conversion pass upgrades existing raw C43 writes on
 Blast radius: ext base token count 143 → 144 (the row itself), re-blessed; engine values
 byte-identical.
 
+**Second owner catch, same day** (*"not seeing these changes come through in the top level
+theme"*): the ext plugin has THREE write paths — base seeding, the raw-conversion pass, and
+the per-brand EXTENSION OVERRIDE loop — and the first cut wired the router into only the
+first two. `brand-secondary/cta/on` is an OVERRIDE row (the base posture is the mirror's
+solid pole), and the override loop is the write the APPLIED theme actually shows, so the
+soft on-cta kept shipping raw there on every apply. The router now runs in all three.
+STRUCTURAL BLIND SPOT, recorded: the ext audit measures override MEMBERSHIP in payload
+space — raw-vs-alias in the Figma write is invisible to every gate; only an eye on the
+Figma file catches this class. RULE for any future alias router: it goes in all three
+write paths, or it isn't in.
+
 ## C44 — THE LAW IS THE PAIR THAT SHIPS: THE SHIPPED-PAIR FLOOR AND THE CROSS-FAMILY BOUND
 
 Owner defect report, 2026-08-03: *"I am seeing ink 9's fail on paper 3… 43B02A… 4.47:1."*
