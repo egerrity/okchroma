@@ -226,7 +226,9 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     // the SOFT on-cta (default-model secondaries only — derived and custom share the tint
     // register): the on-text pole at SECONDARY_ON_CTA_ALPHA, composited by the consumer over
     // the fill's current state. Same value cssRender emits; exact keeps the solid pole and
-    // the no-secondary mirror keeps the brand's.
+    // the no-secondary mirror keeps the brand's. The VALUE ships here; both plugins alias
+    // this leaf onto their system/alpha/ink primitive (owner-named 2026-08-03) — the
+    // cta-border idiom, never a raw write.
     if (input.secondaryStyle === 'default' && input.secondary) {
       const white = mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark
       const p = white ? 1 : 0

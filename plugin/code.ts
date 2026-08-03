@@ -374,6 +374,10 @@ figma.ui.onmessage = async (msg) => {
         { path: 'system/surface/pop', elevation: true },
         { path: 'system/alpha/transparent', light: { r: 1, g: 1, b: 1, a: 0 }, dark: { r: 1, g: 1, b: 1, a: 0 } },
         { path: 'system/alpha/scrim', light: { r: 0, g: 0, b: 0, a: 0.6 }, dark: { r: 0, g: 0, b: 0, a: 0.6 } },
+        // the SOFT ON-CTA primitive (C43 follow-up, owner-named 2026-08-03): the on-text
+        // pole at the engine's SECONDARY_ON_CTA_ALPHA register — black@.75 light,
+        // white@.80 dark. The default-model secondary's cta/on aliases this row.
+        { path: 'system/alpha/ink', light: { r: 0, g: 0, b: 0, a: 0.75 }, dark: { r: 1, g: 1, b: 1, a: 0.8 } },
         { path: 'system/alpha/shadow-04', light: { r: 0, g: 0, b: 0, a: 0.04 }, dark: { r: 0, g: 0, b: 0, a: 0.32 } },
         { path: 'system/alpha/shadow-08', light: { r: 0, g: 0, b: 0, a: 0.08 }, dark: { r: 0, g: 0, b: 0, a: 0.48 } },
         { path: 'system/alpha/shadow-12', light: { r: 0, g: 0, b: 0, a: 0.12 }, dark: { r: 0, g: 0, b: 0, a: 0.64 } },
@@ -396,7 +400,9 @@ figma.ui.onmessage = async (msg) => {
         createdShared++
       }
 
-      // An on-fill is always a pure pole; alias it PER MODE to abs-white/abs-black
+      // An on-fill is a pure pole — or, since C43, the default-model secondary's soft
+      // on-cta: the pole at partial alpha, which aliases system/alpha/ink instead.
+      // Solid poles alias PER MODE to abs-white/abs-black
       // (mode-divergent alias, like the elevation pair) instead of duplicating a
       // value. Decoupled from the paper-0/ink-12 anchors on purpose: paper-0 is a
       // RESOLVED color now (near-black, tinted, in dark) — text must stay a pole.
@@ -433,8 +439,15 @@ figma.ui.onmessage = async (msg) => {
         }
         if (t.path === 'cta/on' || t.path === 'highlight/on') {
           const sibling10 = primByName.get(path.replace(/(?:cta\/on|highlight\/on)$/, 'ink/10'))
-          const target = (leaf: { r: number; g: number; b: number }) =>
-            isPole(leaf) ? absPole(isWhite(leaf)) : (sibling10 ?? absPole(isWhite(leaf)))
+          // the SOFT ON-CTA (C43 follow-up, owner 2026-08-03): a POLE AT PARTIAL ALPHA is
+          // the default-model secondary's soft text → alias system/alpha/ink. Checked
+          // BEFORE the solid-pole case — isPole ignores alpha here, so without this the
+          // soft leaf aliased the abs pole and silently DROPPED its alpha.
+          const softInk = primByName.get('system/alpha/ink')
+          const target = (leaf: { r: number; g: number; b: number; a?: number }) =>
+            leaf.a !== undefined && leaf.a > 0 && leaf.a < 1 && isPole(leaf) && softInk
+              ? softInk
+              : isPole(leaf) ? absPole(isWhite(leaf)) : (sibling10 ?? absPole(isWhite(leaf)))
           const lightTarget = target(t)
           const darkTarget = target(dk ?? t)
           if (lightTarget && darkTarget) {

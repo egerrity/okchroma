@@ -469,8 +469,18 @@ figma.ui.onmessage = async (msg) => {
         const rung = RUNG_FOR_ALPHA(t.a)
         return rung ? baseVars.get(`system/alpha/offset-${rung}`) : undefined
       }
+      // the SOFT ON-CTA (C43 follow-up, owner-named 2026-08-03): a cta/on leaf carrying a
+      // POLE AT PARTIAL ALPHA is the default-model secondary's soft text — alias it onto
+      // the system/alpha/ink primitive. isPole() rejects alpha≠1 by design, so before this
+      // router these leaves fell through to RAW writes (owner-caught: "you did not make a
+      // variable for it").
+      const softInkFor = (path: string, t: { r: number; g: number; b: number; a?: number }) => {
+        if (!path.endsWith('/cta/on')) return undefined
+        if (t.a === undefined || t.a >= 1 - EPS || t.a <= EPS) return undefined
+        return isPole({ r: t.r, g: t.g, b: t.b }) ? baseVars.get('system/alpha/ink') : undefined
+      }
       const seedValue = (v: figma.Variable, colId: string, t: FlatTok) => {
-        const target = strokeFor(t.path, t) ?? (POLE_LEAVES(t.path) && isPole(t) ? absFor(t) : undefined)
+        const target = strokeFor(t.path, t) ?? softInkFor(t.path, t) ?? (POLE_LEAVES(t.path) && isPole(t) ? absFor(t) : undefined)
         v.setValueForMode(colId, target ? figma.variables.createVariableAlias(target) : toRGBA(t))
       }
       const seedFresh = (v: figma.Variable, path: string) => {
@@ -487,7 +497,7 @@ figma.ui.onmessage = async (msg) => {
       // ALIAS TARGETS (every cta/border points at one or the other), and ensure() registers into
       // baseVars as it creates — a target created later in payload order would not exist yet when
       // an earlier leaf tried to alias it, silently falling back to a raw write.
-      for (const path of ['system/abs-black', 'system/abs-white', 'system/alpha/transparent',
+      for (const path of ['system/abs-black', 'system/abs-white', 'system/alpha/transparent', 'system/alpha/ink',
         ...Object.keys(RUNG_ALPHAS).map(r => `system/alpha/offset-${r}`)]) {
         const before = createdVars
         const v = ensure(path)
@@ -537,11 +547,22 @@ figma.ui.onmessage = async (msg) => {
         const seed = seedByCol.get(col)!.get(path)
         return seed ? strokeFor(path, seed) : undefined
       }
+      // C43 shipped the soft on-cta as a raw rgba (isPole rejects alpha≠1, so neither
+      // aliasing idiom claimed it). Convert OUR values only: a pure pole at exactly the
+      // alpha the payload wants for this path — a designer's own soft text is left alone.
+      const softInkTargetFor = (path: string, cur: figma.RGBA, col: Column) => {
+        if (!path.endsWith('/cta/on')) return undefined
+        const seed = seedByCol.get(col)!.get(path)
+        if (!seed || !softInkFor(path, seed)) return undefined
+        if (!isPole({ r: cur.r, g: cur.g, b: cur.b })) return undefined
+        return Math.abs((cur.a ?? 1) - (seed.a ?? 1)) < EPS ? softInkFor(path, seed) : undefined
+      }
       for (const [path, v] of baseVars) {
         for (let i = 0; i < activeCols.length; i++) {
           const cur = v.valuesByMode[colIds[i]]
           if (!cur || isAlias(cur)) continue
           const target = strokeTargetFor(path, cur, activeCols[i])
+            ?? softInkTargetFor(path, cur, activeCols[i])
             ?? (POLE_LEAVES(path) && isPole(cur) ? absFor(cur) : undefined)
           if (target && target.id !== v.id) v.setValueForMode(colIds[i], figma.variables.createVariableAlias(target))
         }

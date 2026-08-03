@@ -18,7 +18,7 @@
 // brand-secondary/*), the brand's NAME lives on the extension, so a designer reads
 // kirby → brand-primary/paper-1. Neutral + signals keep their identity names.
 
-import { resolveTheme, signalScalesFor, type ResolvedTheme } from '../src/engine/resolve'
+import { resolveTheme, signalScalesFor, SECONDARY_ON_CTA_ALPHA, type ResolvedTheme } from '../src/engine/resolve'
 import { themeToFigma, type FigmaGroup, type FigmaColorToken } from '../src/engine/figmaRender'
 import { SIGNALS } from '../src/engine/signals'
 import { OFFSET_ALPHAS, offsetTokenPath, type OffsetRung } from '../src/engine/cssRender'
@@ -90,6 +90,10 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
     { path: 'system/abs-white', ...W },
     { path: 'system/alpha/transparent', ...W, a: 0 },
     { path: 'system/alpha/scrim', ...K, a: 0.6 },
+    // the SOFT ON-CTA primitive (C43 follow-up, owner-named 2026-08-03): the on-text pole
+    // at the engine's SECONDARY_ON_CTA_ALPHA — black in light, white in dark, alpha per
+    // mode. The default-model secondary's cta/on aliases this row, never a raw write.
+    { path: 'system/alpha/ink', ...(dark ? W : K), a: dark ? SECONDARY_ON_CTA_ALPHA.dark : SECONDARY_ON_CTA_ALPHA.light },
     // the decorative cta stroke (owner 2026-07-29, ladder 2026-07-31): black in light, flipped
     // to WHITE in dark, one row per rung — neutral takes 08, secondary 06, primary and the
     // signals 16. Unlike the shadow set below these do NOT scale up in dark: a stroke sits on the

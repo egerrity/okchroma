@@ -2361,6 +2361,28 @@ GIVEN hex, with levels drawn from the data · Recommended (all adjustments INCLU
 avoidance, which does not exist today — the secondary paths run `skipCollisionRules`) ·
 Exact. The last three are future rounds and are blocked on the naming ruling.
 
+### C43 addendum — THE system/alpha/ink PRIMITIVE (owner-caught + owner-named, 2026-08-03)
+
+C43's Figma emit shipped the soft on-cta as a RAW rgba: the ext plugin's `isPole` rejects
+alpha≠1 (correctly), so no aliasing idiom claimed the leaf — and the community plugin's
+`cta/on` branch ignored alpha entirely, aliasing the soft value to the abs pole and
+SILENTLY DROPPING the alpha. Her catch: *"you did not make a variable for it."*
+
+Her ruling, walked in two questions: ONE token, not two absolutes (`abs-white-80`/
+`abs-black-75`) — zero pole flips across 144 derived+custom probes makes a single
+mode-resolved row sound, and the offset rows already put the pole flip + alpha inside one
+system path. Named to read like a primitive: **`system/alpha/ink`** (her direction
+"ink-alpha or something generic"; the group name already carries "alpha", and the
+scrim/shadow grammar is one plain word whose value mode-adjusts).
+
+The row: black@.75 light · white@.80 dark (values from `SECONDARY_ON_CTA_ALPHA` in the ext
+payload; the community table carries them inline like its shadow rows). Both plugins alias
+any `cta/on` leaf holding a POLE AT PARTIAL ALPHA onto it — the cta-border "never a raw
+write" idiom — and the ext conversion pass upgrades existing raw C43 writes on re-apply
+(exact register alpha at a pure pole only; a designer's own soft text is left alone).
+Blast radius: ext base token count 143 → 144 (the row itself), re-blessed; engine values
+byte-identical.
+
 ## C44 — THE LAW IS THE PAIR THAT SHIPS: THE SHIPPED-PAIR FLOOR AND THE CROSS-FAMILY BOUND
 
 Owner defect report, 2026-08-03: *"I am seeing ink 9's fail on paper 3… 43B02A… 4.47:1."*
