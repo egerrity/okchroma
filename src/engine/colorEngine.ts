@@ -315,8 +315,8 @@ export function generateNeutralScale(
   scale.ctaPressed = nState(11, 'light', scale.cta, 2)
   scale.ctaHoverDark = nState(10, 'dark', scale.ctaDark, 1)
   scale.ctaPressedDark = nState(11, 'dark', scale.ctaDark, 2)
-  // cta-ink trio stays resolver-minted (the neutral's own ink-10 + floored states) — the
-  // quiet-fill override above touches only the fill trio.
+  // cta-ink trio stays resolver-minted (the neutral's own ink-9 + floored states — the
+  // pre-C33 comment said ink-10) — the quiet-fill override above touches only the fill trio.
   // the scale-fed neutral cta can't move, so on-text is judgment only: apca profile = pure
   // apca-pole (its law is the Lc bar); wcag profile = the mixing flip PLUS the conformance
   // floor — the chosen pole must pass 4.5 (the fill can't re-solve, so the pole flips).

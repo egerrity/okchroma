@@ -2526,3 +2526,47 @@ every one a signal family JOINING a secondary-colliding roster brand's override 
 taught the new law (remedied-or-annotated, never silent). No-secondary themes are
 byte-identical; cta-apca's signal group unchanged (the adopted variants were already in
 the law). Demo-verified live: navy + #43B02A secondary → positive ships teal-side #51d291.
+
+## C46 — THE STRONG TEXT-CTA MIRROR: ONE RAW VALUE, EVERYTHING ELSE REFERENCES
+
+Owner ask, 2026-08-04: a stronger neutral text-cta resting on ink-10 ("cta-ink and
+cta-ink-strong"). A scale renumber (promote the hover into the ladder as a new ink-10,
+shift 10→11, 11→12) was considered and DECLINED: it would be a third renumber vintage that
+REVERSES the pre-C33 `ink-12` name in both plugins' migration ladders, and would force a
+new declared law for the between value. The alias format ships instead.
+
+### THE LAW
+Each family's text-cta system carries exactly ONE raw solved value — the between/hover
+(the resolver's doubled step off ink-9, floored by the ink-9 require). Everything else is
+a REFERENCE over the family's own registers, and the two trios are mirror images over the
+same three values:
+- `cta-ink` ascends: enabled ≡ ink-9 · hover = the raw between · pressed ≡ ink-10
+- `cta-ink-strong` descends: enabled ≡ ink-10 · hover ≡ cta-ink/hover (the SAME shared
+  between — both hovers converge) · pressed ≡ ink-9 (her either/or resolved to the full
+  mirror so the press keeps a visible step past hover)
+
+`cta-ink-strong` is **NEUTRAL-ONLY** (figma-verify asserts absence on every other family).
+No resolver/engine value moved — the trio is an emit-layer construct: figmaRender sources
+it from the neutral's own ink-10 / ctaInkHover / ink-9; cssRender emits the three
+`--neutral-cta-ink-strong*` vars as `var()` references (the cta-border idiom; P3 rides
+the referenced stops for free).
+
+### THE ALIAS REPRESENTATION (both plugins)
+Owner ruling on "is enabled duplicative?": KEEP the token — under the neutral cta escape a
+brand's `cta-ink/enabled` carries the NEUTRAL's register while its own ink/9 stays put, so
+the leaf is load-bearing — but represent equality as ALIASES. Both plugins now route
+(value-guarded per column/mode, so an escaped trio ships raw, never aliasing back to the
+red ink): cta-ink/enabled→ink/9 · cta-ink/pressed→ink/10 · strong/enabled→ink/10 ·
+strong/hover→cta-ink/hover · strong/pressed→ink/9. plugin-ext converts existing raw rows
+holding exactly today's seed on Rebuild base theme + the conversion pass; new rows ride
+the ordinary new-base-token confirm/backfill flow.
+
+### STALE-TARGET FIXES FOUND IN THE ROUND (all the same C33-renumber class)
+- plugin/code.ts's sibling-alias block targeted `ink/10`/`ink/11` — DEAD since C33 (the
+  value guard failed; every trio silently shipped raw). Retargeted 9/10.
+- plugin/code.ts's non-pole cta/on alias targeted `ink/10` — post-C33 the outline's
+  on-cta rides ink-9, so it aliased the WRONG STOP (live value bug in community files
+  with an outline secondary). Retargeted ink/9.
+- plugin/ui.ts's matrix still drew stop 9 as "highlight-9" via the DELETED
+  onHighlightIsWhite field, and the outline label read st(10). Both re-aligned with the
+  ext matrix (ink-9 emphasis-fill cell; ink-9 label).

@@ -179,6 +179,14 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
     `  --${prefix}-cta-ink: ${stopHex(f.ctaInk)};`,
     `  --${prefix}-cta-ink-hover: ${stopHex(f.ctaInkHover)};`,
     `  --${prefix}-cta-ink-pressed: ${stopHex(f.ctaInkPressed)};`,
+    // the STRONG text-cta (neutral only, owner 2026-08-04): the mirror trio over the same
+    // three values cta-ink ascends (10 → between → 9), as pure references — the cta-border
+    // var() idiom, so P3 overrides of the referenced stops ride along for free
+    ...(prefix === 'neutral' ? [
+      `  --neutral-cta-ink-strong: var(--neutral-ink-10);`,
+      `  --neutral-cta-ink-strong-hover: var(--neutral-cta-ink-hover);`,
+      `  --neutral-cta-ink-strong-pressed: var(--neutral-ink-9);`,
+    ] : []),
     `  --${prefix}-cta-border: var(${border ? offsetVarName(ctaBorderRung(prefix)) : TRANSPARENT_VAR});`,
     `  --${prefix}-on-cta: ${onColor(onCta)};`,
   ]

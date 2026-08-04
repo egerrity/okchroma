@@ -68,6 +68,7 @@ function bandedLeaf(flat: string): string {
     'cta': 'cta/enabled', 'cta-hover': 'cta/hover', 'cta-pressed': 'cta/pressed',
     'cta-border': 'cta/border', 'on-cta': 'cta/on',
     'cta-ink': 'cta-ink/enabled', 'cta-ink-hover': 'cta-ink/hover', 'cta-ink-pressed': 'cta-ink/pressed',
+    'cta-ink-strong': 'cta-ink-strong/enabled', 'cta-ink-strong-hover': 'cta-ink-strong/hover', 'cta-ink-strong-pressed': 'cta-ink-strong/pressed',
   }
   const mapped = STATE[flat]
   if (mapped) return mapped
@@ -95,6 +96,11 @@ function rampGroup(
     identityHex?: string
     cta?: ColorStop; ctaHover?: ColorStop; ctaPressed?: ColorStop
     ctaInk?: ColorStop; ctaInkHover?: ColorStop; ctaInkPressed?: ColorStop
+    // the STRONG text-cta (neutral only, owner 2026-08-04): the mirror trio over the same
+    // three values cta-ink ascends — enabled ≡ ink-10, hover ≡ cta-ink/hover (the shared
+    // between value), pressed ≡ ink-9. Emitted as raw values here; both plugins re-express
+    // all three as aliases (the cta-border idiom).
+    ctaInkStrong?: ColorStop; ctaInkStrongHover?: ColorStop; ctaInkStrongPressed?: ColorStop
     // the already-resolved border token — the decorative alpha stroke when this cta vibrates,
     // else transparent. Resolved by the caller because the choice is mode-dependent and
     // rampGroup has no mode. Both outcomes are ALIAS targets on the plugin side
@@ -116,6 +122,9 @@ function rampGroup(
   if (extra?.ctaInk) putLeaf(g, 'cta-ink', colorFromStop(extra.ctaInk))
   if (extra?.ctaInkHover) putLeaf(g, 'cta-ink-hover', colorFromStop(extra.ctaInkHover))
   if (extra?.ctaInkPressed) putLeaf(g, 'cta-ink-pressed', colorFromStop(extra.ctaInkPressed))
+  if (extra?.ctaInkStrong) putLeaf(g, 'cta-ink-strong', colorFromStop(extra.ctaInkStrong))
+  if (extra?.ctaInkStrongHover) putLeaf(g, 'cta-ink-strong-hover', colorFromStop(extra.ctaInkStrongHover))
+  if (extra?.ctaInkStrongPressed) putLeaf(g, 'cta-ink-strong-pressed', colorFromStop(extra.ctaInkStrongPressed))
   // cta/border pairs with the cta family: the SAFETY STROKE when the fill would vibrate against
   // the background rather than sit on it (owner 2026-07-29, superseding the 2026-07-04 "filled is
   // filled" removal), else transparent. The rule lives in cssRender.ctaNeedsBorder — |Lc| of the
@@ -190,7 +199,18 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
   const nScale = generateNeutralScale(scale.brandH, input.neutralLevel ?? 'default', input.contrastProfile)
   // custom link seed resolved ONCE (both modes read it)
   const lt = input.linkHex ? resolveLinkTrio(input.linkHex, input.contrastProfile) : null
-  const neutralExtra = (mode: 'light' | 'dark') => ctaFamily(nScale, mode, 'neutral')
+  // the neutral carries the STRONG text-cta mirror on top of the shared family shape:
+  // no new solved values — enabled/pressed are its own ink-10/ink-9 stops and hover is
+  // the family's cta-ink hover (the one raw between value both trios share)
+  const neutralExtra = (mode: 'light' | 'dark') => {
+    const at = (n: number) => nScale[mode].find(s => s.stop === n)
+    return {
+      ...ctaFamily(nScale, mode, 'neutral'),
+      ctaInkStrong: at(10),
+      ctaInkStrongHover: mode === 'light' ? nScale.ctaInkHover : nScale.ctaInkHoverDark,
+      ctaInkStrongPressed: at(9),
+    }
+  }
   const build = (mode: 'light' | 'dark'): FigmaGroup => {
     // paper-0 rides WITH the neutral ramp at paper/0 (its dark value is
     // neutral-tinted, so it dedups and aliases through the same per-tint

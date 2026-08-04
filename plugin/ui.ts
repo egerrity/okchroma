@@ -178,11 +178,11 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
       ? sigScales.get('red')!.scale
       : t.themed.signalOverrides.find(o => o.name === n)?.scale ?? sigScales.get(n)!.scale
 
-  type Row = { label: string; scale: GeneratedScale; idHex?: string; outline?: boolean; escape?: boolean }
+  type Row = { label: string; scale: GeneratedScale; idHex?: string; outline?: boolean; escape?: boolean; strong?: boolean }
   const rows: Row[] = [
     { label: 'primary', scale: t.themed.scale, idHex: t.themed.scale.identityHex, escape: ctaEscape && inRedRange },
     ...(t.secondary ? [{ label: 'secondary', scale: t.secondary.scale, idHex: t.secondary.scale.identityHex, outline: t.secondary.style === 'outline' }] : []),
-    { label: 'neutral', scale: nScale },
+    { label: 'neutral', scale: nScale, strong: true },
     ...SIGNALS.map(s => ({ label: s.emitName, scale: effective(s.name) })),
   ]
 
@@ -203,21 +203,25 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     for (const s of row.scale.light) {
       const n = s.stop
       const h = hx(s)
+      // ink-9 is BOTH the emphasis fill and a text stop (owner 2026-07-29) — this cell was
+      // stale on the dead highlight-9 name and the DELETED onHighlightIsWhite field until
+      // 2026-08-04; it now mirrors the ext plugin's rendition (on-emphasis = the paper)
       if (n === 8) cells.push(`<div class="mx-cell" style="border:2px solid ${h}" title="highlight-8"></div>`)
-      else if (n === 9) cells.push(`<div class="mx-aa" style="background:${h};color:${pole(row.scale.onHighlightIsWhite)}" title="highlight-9">Aa</div>`)
+      else if (n === 9) cells.push(`<div class="mx-aa" style="background:${h};color:${hx(nScale.light[0])}" title="ink-9 (emphasis fill)">Aa</div>`)
       else if (n >= 10) cells.push(`<div class="mx-aa" style="color:${h};font-size:15px;font-weight:800" title="ink-${n}">Aa</div>`)
       else cells.push(`<div class="mx-cell" style="background:${h};box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)" title="${n <= 2 ? 'paper' : 'wash'}-${n}"></div>`)
     }
     const s8 = hx(st(8))
     if (row.outline) {
-      // outline's re-expressed fill trio: transparent + ring + ink-10 label; hover/pressed =
-      // the STABLE highlight-8 at 9%/18% (the same stop the ring uses; pressed doubles hover)
-      const ink10 = hx(st(10))
+      // outline's re-expressed fill trio: transparent + ring + ink-9 label (the stop the
+      // emitted on-cta rides — st(10) was stale post-C33); hover/pressed = the STABLE
+      // highlight-8 at 9%/18% (the same stop the ring uses; pressed doubles hover)
+      const ink9 = hx(st(9))
       const c8 = st(8)
       const rgb = `${Math.round(c8.r * 255)},${Math.round(c8.g * 255)},${Math.round(c8.b * 255)}`
-      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink10}" title="cta (outline)">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink10};background:rgba(${rgb},0.09)" title="cta-hover (outline)">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink10};background:rgba(${rgb},0.18)" title="cta-pressed (outline)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink9}" title="cta (outline)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink9};background:rgba(${rgb},0.09)" title="cta-hover (outline)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink9};background:rgba(${rgb},0.18)" title="cta-pressed (outline)">Aa</div>`)
     } else if (row.escape) {
       // the neutral cta escape: the fill trio previews the brand-neutral's ink register
       const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
@@ -241,12 +245,26 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
       : ([['cta-ink/enabled', row.scale.ctaInk], ['cta-ink/hover', row.scale.ctaInkHover], ['cta-ink/pressed', row.scale.ctaInkPressed]] as const)
     for (const [name, c] of inkTrio)
       cells.push(`<div class="mx-aa" style="color:${hx(c)};font-size:15px;font-weight:800" title="${name}">Aa</div>`)
+    // the neutral-only STRONG text-cta mirror (owner 2026-08-04): descends the same three
+    // values cta-ink ascends — enabled ≡ ink-10, hover ≡ cta-ink/hover (shared), pressed ≡
+    // ink-9. Non-neutral rows carry blank cells so the derived grid stays rectangular.
+    if (row.strong) {
+      const strongTrio = [
+        ['cta-ink-strong/enabled', st(10)],
+        ['cta-ink-strong/hover', row.scale.ctaInkHover],
+        ['cta-ink-strong/pressed', st(9)],
+      ] as const
+      for (const [name, c] of strongTrio)
+        cells.push(`<div class="mx-aa" style="color:${hx(c)};font-size:15px;font-weight:800" title="${name}">Aa</div>`)
+    } else {
+      for (let i = 0; i < 3; i++) cells.push('<div class="mx-cell"></div>')
+    }
     return cells.join('')
   }
 
   // the grid's column count FOLLOWS THE SCALE (see .matrix in ui-template.html): one ID
-  // cell, one per stop, then the cta and cta-ink trios. Derived, never written down.
-  matrixEl.style.setProperty('--mx-cols', String(1 + nScale.light.length + 3 + 3))
+  // cell, one per stop, then the cta / cta-ink / cta-ink-strong trios. Derived, never written down.
+  matrixEl.style.setProperty('--mx-cols', String(1 + nScale.light.length + 3 + 3 + 3))
   matrixEl.innerHTML = rows.map(rowHtml).join('')
 }
 

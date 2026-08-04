@@ -33,6 +33,7 @@ const BAND_STATE: Record<string, string> = {
   'cta': 'cta/enabled', 'cta-hover': 'cta/hover', 'cta-pressed': 'cta/pressed',
   'cta-border': 'cta/border', 'on-cta': 'cta/on',
   'cta-ink': 'cta-ink/enabled', 'cta-ink-hover': 'cta-ink/hover', 'cta-ink-pressed': 'cta-ink/pressed',
+  'cta-ink-strong': 'cta-ink-strong/enabled', 'cta-ink-strong-hover': 'cta-ink-strong/hover', 'cta-ink-strong-pressed': 'cta-ink-strong/pressed',
   'on-highlight': 'highlight/on',
 }
 const leaf = (g: any, flat: string): any =>
@@ -68,6 +69,16 @@ for (const mode of ['light', 'dark'] as const) {
       `${mode}.${fam} cta-ink ${leaf(m[fam], 'cta-ink').$value.hex} != ink-9 ${leaf(m[fam], 'ink-9').$value.hex}`)
     ok(leaf(m[fam], 'cta-ink-pressed').$value.hex === leaf(m[fam], 'ink-10').$value.hex,
       `${mode}.${fam} cta-ink-pressed ${leaf(m[fam], 'cta-ink-pressed').$value.hex} != ink-10 ${leaf(m[fam], 'ink-10').$value.hex}`)
+    // the STRONG text-cta mirror (owner 2026-08-04) is NEUTRAL-ONLY: it descends the same
+    // three values cta-ink ascends — enabled ≡ ink-10, hover ≡ cta-ink-hover (the one
+    // shared raw value), pressed ≡ ink-9. Any other family emitting it is a regression.
+    if (fam === 'neutral') {
+      for (const [strong, sib] of [['cta-ink-strong', 'ink-10'], ['cta-ink-strong-hover', 'cta-ink-hover'], ['cta-ink-strong-pressed', 'ink-9']] as const)
+        ok(leaf(m[fam], strong)?.$value.hex === leaf(m[fam], sib).$value.hex,
+          `${mode}.${fam} ${strong} ${leaf(m[fam], strong)?.$value.hex} != ${sib} ${leaf(m[fam], sib).$value.hex}`)
+    } else {
+      ok(!leaf(m[fam], 'cta-ink-strong'), `${mode}.${fam} emits cta-ink-strong — the strong trio is neutral-only`)
+    }
     // Signals carry a DISTINCT loud cta (diverged from the emphasis fill, F1);
     // they still have no identity (no user-input hex).
     if (!isBrand && fam !== 'neutral') {

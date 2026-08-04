@@ -57,6 +57,7 @@ const TOKEN_ORDER = [
   'ink-9', 'ink-10',
   'cta', 'cta-hover', 'cta-pressed',
   'cta-ink', 'cta-ink-hover', 'cta-ink-pressed',
+  'cta-ink-strong', 'cta-ink-strong-hover', 'cta-ink-strong-pressed',
   'on-cta',
   'identity',
 ]

@@ -58,7 +58,8 @@ export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; 
   )
   // the TEXT-style cta (cta-ink — the action color's 4.5 text rendition) rendered on
   // the card, so its rest / hover / pressed sit right under the fill cta trio
-  const inkCell = (prefix: string, tok: 'cta-ink' | 'cta-ink-hover' | 'cta-ink-pressed') => (
+  const inkCell = (prefix: string, tok: 'cta-ink' | 'cta-ink-hover' | 'cta-ink-pressed'
+    | 'cta-ink-strong' | 'cta-ink-strong-hover' | 'cta-ink-strong-pressed') => (
     <div title={`--${prefix}-${tok}`} style={{
       flex: 1, textAlign: 'center', fontSize: 15, fontWeight: 800, color: `var(--${prefix}-${tok})`,
     }}>Aa</div>
@@ -76,6 +77,16 @@ export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; 
             {inkCell(f.prefix, 'cta-ink')}
             {inkCell(f.prefix, 'cta-ink-hover')}
             {inkCell(f.prefix, 'cta-ink-pressed')}
+          </div>
+          {/* the neutral-only STRONG text-cta mirror (owner 2026-08-04): descends the same
+              three values cta-ink ascends. Every card carries the row's height so the
+              family labels stay aligned across the deconfliction row. */}
+          <div style={{ display: 'flex', marginTop: 5, minHeight: 18 }}>
+            {f.prefix === 'neutral' && <>
+              {inkCell(f.prefix, 'cta-ink-strong')}
+              {inkCell(f.prefix, 'cta-ink-strong-hover')}
+              {inkCell(f.prefix, 'cta-ink-strong-pressed')}
+            </>}
           </div>
           <div style={{ marginTop: 6, fontSize: 11, textAlign: 'center', color: 'var(--fg-default)', fontWeight: 600 }}>
             {f.label}

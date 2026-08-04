@@ -534,14 +534,40 @@ figma.ui.onmessage = async (msg) => {
         if (t.a === undefined || t.a >= 1 - EPS || t.a <= EPS) return undefined
         return isPole({ r: t.r, g: t.g, b: t.b }) ? baseVars.get('system/alpha/ink') : undefined
       }
-      const seedValue = (v: figma.Variable, colId: string, t: FlatTok) => {
-        const target = strokeFor(t.path, t) ?? softInkFor(t.path, t) ?? (POLE_LEAVES(t.path) && isPole(t) ? absFor(t) : undefined)
+      // TEXT-CTA SIBLING ALIASING (owner 2026-08-04): the cta-ink trios are REFERENCES over
+      // the family's own ink registers — enabled ≡ ink/9, pressed ≡ ink/10, and the neutral's
+      // strong mirror descends the same three values (enabled ≡ ink/10, hover ≡ cta-ink/hover,
+      // pressed ≡ ink/9; the shared hover is the one raw value). Alias the sibling so the
+      // relationship stays live in Figma (the cta/on→ink idiom). VALUE-GUARDED per column:
+      // the neutral cta escape swaps a brand's trio onto the NEUTRAL register — a leaf that
+      // no longer equals its own sibling must ship raw, never alias back to the family ink.
+      const INK_SIBLING: Array<[string, string]> = [
+        ['/cta-ink/enabled', '/ink/9'],
+        ['/cta-ink/pressed', '/ink/10'],
+        ['/cta-ink-strong/enabled', '/ink/10'],
+        ['/cta-ink-strong/hover', '/cta-ink/hover'],
+        ['/cta-ink-strong/pressed', '/ink/9'],
+      ]
+      const chEq = (a: { r: number; g: number; b: number; a?: number } | undefined,
+        b: { r: number; g: number; b: number; a?: number } | undefined): boolean =>
+        !!a && !!b && Math.abs(a.r - b.r) < EPS && Math.abs(a.g - b.g) < EPS
+        && Math.abs(a.b - b.b) < EPS && Math.abs((a.a ?? 1) - (b.a ?? 1)) < EPS
+      const inkSiblingFor = (path: string, t: { r: number; g: number; b: number; a?: number }, toks: Map<string, FlatTok>) => {
+        const hit = INK_SIBLING.find(([suf]) => path.endsWith(suf))
+        if (!hit) return undefined
+        const sibPath = path.slice(0, path.length - hit[0].length) + hit[1]
+        return chEq(t, toks.get(sibPath)) ? baseVars.get(sibPath) : undefined
+      }
+      const seedValue = (v: figma.Variable, colId: string, t: FlatTok, col: Column) => {
+        const target = strokeFor(t.path, t) ?? softInkFor(t.path, t)
+          ?? inkSiblingFor(t.path, t, seedByCol.get(col)!)
+          ?? (POLE_LEAVES(t.path) && isPole(t) ? absFor(t) : undefined)
         v.setValueForMode(colId, target ? figma.variables.createVariableAlias(target) : toRGBA(t))
       }
       const seedFresh = (v: figma.Variable, path: string) => {
         for (let i = 0; i < activeCols.length; i++) {
           const seed = seedByCol.get(activeCols[i])!.get(path)
-          if (seed) seedValue(v, colIds[i], seed)
+          if (seed) seedValue(v, colIds[i], seed, activeCols[i])
         }
       }
       // The abs poles are created FIRST (they are alias targets and the owner's panel
@@ -619,6 +645,16 @@ figma.ui.onmessage = async (msg) => {
         const a = cur.a ?? 1
         return Math.abs(a - (seed.a ?? 1)) < EPS || Math.abs(a - 1) < EPS ? softInkFor(path, seed) : undefined
       }
+      // The cta-ink trios shipped raw before the sibling aliasing existed (owner 2026-08-04;
+      // the community plugin's version had gone dead when C33 renumbered its targets).
+      // Convert OUR values only: a raw row holding exactly what we'd write today is
+      // resolution-identical, so the create-once contract is preserved; a designer's own
+      // re-valued row is left alone.
+      const inkSiblingTargetFor = (path: string, cur: figma.RGBA, col: Column) => {
+        const seed = seedByCol.get(col)!.get(path)
+        if (!seed || !chEq(cur, seed)) return undefined
+        return inkSiblingFor(path, seed, seedByCol.get(col)!)
+      }
       for (const [path, v] of baseVars) {
         for (let i = 0; i < activeCols.length; i++) {
           const cur = v.valuesByMode[colIds[i]]
@@ -649,6 +685,7 @@ figma.ui.onmessage = async (msg) => {
           }
           const target = strokeTargetFor(path, cur, activeCols[i])
             ?? softInkTargetFor(path, cur, activeCols[i])
+            ?? inkSiblingTargetFor(path, cur, activeCols[i])
             ?? (POLE_LEAVES(path) && isPole(cur) ? absFor(cur) : undefined)
           if (target && target.id !== v.id) v.setValueForMode(colIds[i], figma.variables.createVariableAlias(target))
         }
@@ -705,7 +742,7 @@ figma.ui.onmessage = async (msg) => {
           const idx = activeCols.indexOf(c)
           for (const t of baseTokens[c]) {
             const v = baseVars.get(t.path)
-            if (v) seedValue(v, colIds[idx], t)
+            if (v) seedValue(v, colIds[idx], t, c)
           }
         }
       }
@@ -816,7 +853,12 @@ figma.ui.onmessage = async (msg) => {
             // mirror's solid pole), so a router missing HERE ships raw even when the base
             // seeding and the conversion pass both carry it (owner-caught 2026-08-03: "not
             // seeing these changes come through in the top level theme").
-            const target = strokeFor(path, tok) ?? softInkFor(path, tok) ?? (POLE_LEAVES(path) && isPole(tok) ? absFor(tok) : undefined)
+            // inkSiblingFor guards against the BRAND's own sibling (not the base's): an
+            // escaped trio equals neither and ships raw; an equal one aliases the base
+            // sibling VARIABLE, which resolves through this brand's ink override.
+            const target = strokeFor(path, tok) ?? softInkFor(path, tok)
+              ?? inkSiblingFor(path, tok, brandByCol.get(activeCols[i])!)
+              ?? (POLE_LEAVES(path) && isPole(tok) ? absFor(tok) : undefined)
             v.setValueForMode(extColIds[i], target ? figma.variables.createVariableAlias(target) : toRGBA(tok))
             set++
           }

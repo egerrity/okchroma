@@ -418,6 +418,15 @@ figma.ui.onmessage = async (msg) => {
       // payload-space value equality (8-bit tolerance) — used to decide alias-vs-raw
       const leafEq = (a?: { r: number; g: number; b: number }, b?: { r: number; g: number; b: number }): boolean =>
         !!a && !!b && Math.abs(a.r - b.r) < 1 / 255 && Math.abs(a.g - b.g) < 1 / 255 && Math.abs(a.b - b.b) < 1 / 255
+      // the text-cta REFERENCE targets (owner 2026-08-04): leaf-relative path → sibling.
+      // See the alias branch in writeRaw for the law and the C33 staleness story.
+      const INK_SIBLING: Record<string, string> = {
+        'cta-ink/enabled': 'ink/9',
+        'cta-ink/pressed': 'ink/10',
+        'cta-ink-strong/enabled': 'ink/10',
+        'cta-ink-strong/hover': 'cta-ink/hover',
+        'cta-ink-strong/pressed': 'ink/9',
+      }
       const writeRaw = (
         path: string,
         t: { path: string; r: number; g: number; b: number; a?: number },
@@ -432,13 +441,15 @@ figma.ui.onmessage = async (msg) => {
         v.scopes = [] // primitives hidden from every picker (re-applies fix older files too)
         const dk = darkMap.get(t.path)
         // a TRUE pole (the engine's on-fills are exactly white or black); an outline
-        // secondary's on-cta is the family's ink-10 instead — alias the sibling, not a pole
+        // secondary's on-cta is the family's ink-9 instead — alias the sibling, not a pole
+        // (C33 renumbered the inks; the old ink/10 target aliased the WRONG stop for a
+        // post-renumber outline — fixed 2026-08-04 with the cta-ink retargeting below)
         const isPole = (c: { r: number; g: number; b: number }) => {
           const sum = c.r + c.g + c.b
           return sum > 2.97 || sum < 0.03
         }
         if (t.path === 'cta/on' || t.path === 'highlight/on') {
-          const sibling10 = primByName.get(path.replace(/(?:cta\/on|highlight\/on)$/, 'ink/10'))
+          const sibling9 = primByName.get(path.replace(/(?:cta\/on|highlight\/on)$/, 'ink/9'))
           // the SOFT ON-CTA (C43 follow-up, owner 2026-08-03): a POLE AT PARTIAL ALPHA is
           // the default-model secondary's soft text → alias system/alpha/ink. Checked
           // BEFORE the solid-pole case — isPole ignores alpha here, so without this the
@@ -447,7 +458,7 @@ figma.ui.onmessage = async (msg) => {
           const target = (leaf: { r: number; g: number; b: number; a?: number }) =>
             leaf.a !== undefined && leaf.a > 0 && leaf.a < 1 && isPole(leaf) && softInk
               ? softInk
-              : isPole(leaf) ? absPole(isWhite(leaf)) : (sibling10 ?? absPole(isWhite(leaf)))
+              : isPole(leaf) ? absPole(isWhite(leaf)) : (sibling9 ?? absPole(isWhite(leaf)))
           const lightTarget = target(t)
           const darkTarget = target(dk ?? t)
           if (lightTarget && darkTarget) {
@@ -461,20 +472,20 @@ figma.ui.onmessage = async (msg) => {
             v.setValueForMode(pLight, figma.variables.createVariableAlias(transparent))
             v.setValueForMode(pDark, figma.variables.createVariableAlias(transparent))
           }
-        } else if ((t.path === 'cta-ink/enabled'
-            && leafEq(t, lightMap?.get('ink/10')) && leafEq(dk, darkMap.get('ink/10')))
-          || (t.path === 'cta-ink/pressed'
-            && leafEq(t, lightMap?.get('ink/11')) && leafEq(dk, darkMap.get('ink/11')))) {
-          // cta-ink/enabled MATCHES the family's ink/10 and cta-ink/pressed MATCHES
-          // ink/11 by construction (the text-register cta + the 2026-07-16
-          // restrengthening: press lands on the 7:1 register) — alias the sibling so
-          // the relationship stays live in Figma (the cta/on→ink/10 idiom); hover is a
-          // distinct derived value and rides the generic raw branch. VALUE-GUARDED
-          // (owner amendment: the neutral escape swaps the trio to the NEUTRAL's
-          // register — a payload whose leaf no longer equals its own sibling must ship
-          // raw, never alias back to the red ink).
-          const sibLeaf = t.path === 'cta-ink/enabled' ? 'ink/10' : 'ink/11'
-          const siblingInk = primByName.get(path.replace(/cta-ink\/(?:enabled|pressed)$/, sibLeaf))
+        } else if (INK_SIBLING[t.path]
+          && leafEq(t, lightMap?.get(INK_SIBLING[t.path])) && leafEq(dk, darkMap.get(INK_SIBLING[t.path]))) {
+          // the text-cta trios are REFERENCES over the family's own ink registers:
+          // cta-ink/enabled ≡ ink/9, cta-ink/pressed ≡ ink/10, and the neutral-only
+          // strong mirror descends the same three values (enabled ≡ ink/10, hover ≡
+          // cta-ink/hover — the one raw value both trios share — pressed ≡ ink/9).
+          // Alias the sibling so the relationship stays live in Figma (the cta/on→ink/9
+          // idiom). ⚠️ C33 renumbered the inks and this block sat DEAD on the stale
+          // ink/10-and-ink/11 targets until 2026-08-04 — the value guard failed and every
+          // trio shipped raw. VALUE-GUARDED (owner amendment: the neutral escape swaps a
+          // brand's trio to the NEUTRAL's register — a payload whose leaf no longer
+          // equals its own sibling must ship raw, never alias back to the red ink).
+          const sibLeaf = INK_SIBLING[t.path]
+          const siblingInk = primByName.get(path.slice(0, path.length - t.path.length) + sibLeaf)
           if (siblingInk) {
             v.setValueForMode(pLight, figma.variables.createVariableAlias(siblingInk))
             v.setValueForMode(pDark, figma.variables.createVariableAlias(siblingInk))
