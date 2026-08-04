@@ -375,7 +375,7 @@ figma.ui.onmessage = async (msg) => {
         { path: 'system/alpha/transparent', light: { r: 1, g: 1, b: 1, a: 0 }, dark: { r: 1, g: 1, b: 1, a: 0 } },
         { path: 'system/alpha/scrim', light: { r: 0, g: 0, b: 0, a: 0.6 }, dark: { r: 0, g: 0, b: 0, a: 0.6 } },
         // the SOFT ON-CTA primitive (C43 follow-up, owner-named 2026-08-03): the on-text
-        // pole at the engine's SECONDARY_ON_CTA_ALPHA register — black@.75 light,
+        // pole at the engine's SOFT_ON_CTA_ALPHA register — black@.75 light,
         // white@.80 dark. The default-model secondary's cta/on aliases this row.
         { path: 'system/alpha/ink', light: { r: 0, g: 0, b: 0, a: 0.75 }, dark: { r: 1, g: 1, b: 1, a: 0.8 } },
         { path: 'system/alpha/shadow-04', light: { r: 0, g: 0, b: 0, a: 0.04 }, dark: { r: 0, g: 0, b: 0, a: 0.32 } },

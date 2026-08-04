@@ -418,16 +418,24 @@ export const OUTLINE_HOVER_ALPHA = 0.09    // owner: "8–10% of the resolved ct
 // convention carried to the alpha register) — C19, owner-approved 2026-07-16
 export const OUTLINE_PRESSED_ALPHA = 0.18
 
-// ── the SECONDARY SOFT ON-CTA (owner 2026-08-03, the derived-secondary round): a
-// default-model secondary's button text is the on-text POLE AT ALPHA instead of the solid
-// pole — the renderer composites it over whatever the fill's current state is, so
+// ── the SOFT ON-CTA: THE QUIET-FILL RULE (owner 2026-08-03 for the secondary, extended to
+// the neutral 2026-08-04 — *"neutral cta on's should also be the alpha"*). A quiet,
+// low-hierarchy cta carries its button text as the on-text POLE AT ALPHA instead of the
+// solid pole — the renderer composites it over whatever the fill's current state is, so
 // hover/pressed carry their own legibility (a solid tinted ink died there: dark hover
 // 3.69 / pressed 3.00 against the state fills). Bars: WCAG 4.5 on every state fill plus
-// the Lc-60 on-cta bar at rest; the worst-case floor across the agnostic sweep is 0.726
-// in both modes, and the owner picked light .75 / dark .80 by eye on the alpha ladder.
-// Applies to style 'default' only — derived and custom share the tint register; exact,
-// outline, and the no-secondary mirror keep their own on-cta.
-export const SECONDARY_ON_CTA_ALPHA = { light: 0.75, dark: 0.80 } as const
+// the Lc-60 on-cta bar at rest.
+//
+// THE TWO QUIET FILLS, and only these:
+//  · the DEFAULT-model secondary (derived + custom share the tint register) — sweep floor
+//    0.726; exact, outline and the no-secondary mirror keep their own on-cta.
+//  · the NEUTRAL, whose cta is the scale-fed wash-level fill (colorEngine, stop 4) — sweep
+//    floor 0.633, worst state 6.09:1 / Lc 65.2 at the register below.
+// The owner picked light .75 / dark .80 by eye on the alpha ladder; both families share the
+// ONE register, so both alias the single system/alpha/ink primitive in the plugins.
+// LOUD fills keep the solid pole — brand, the signals, and the cta ESCAPE (whose fill is the
+// neutral's ink-10 register, not this quiet one; owner-confirmed 2026-08-04).
+export const SOFT_ON_CTA_ALPHA = { light: 0.75, dark: 0.80 } as const
 
 // ── the NEUTRAL CTA ESCAPE (Phase 3, owner spec 2026-07-16: stakeholders want a
 // neutral cta escape for red collisions): the brand's cta FILL trio swaps to the brand's

@@ -4,7 +4,7 @@ import { generateIllustrationScale, generateNeutralScale, type GeneratedScale, t
 import { srgbEmitChannels, masterEmitChannels } from './colorMath'
 import { clampChromaToGamut, apcaY, apcaLc } from './constraints'
 import { stopTokenName, tokenOrder } from './tokenNames'
-import { signalScalesFor, OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, SECONDARY_ON_CTA_ALPHA, escapeCtaFamily, resolveLinkTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
+import { signalScalesFor, OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, SOFT_ON_CTA_ALPHA, escapeCtaFamily, resolveLinkTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
 import { SIGNALS, SIGNAL_EMIT_NAME } from './signals'
 
 export function toHex(r: number, g: number, b: number): string {
@@ -188,7 +188,17 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
       `  --neutral-cta-ink-strong-pressed: var(--neutral-ink-9);`,
     ] : []),
     `  --${prefix}-cta-border: var(${border ? offsetVarName(ctaBorderRung(prefix)) : TRANSPARENT_VAR});`,
-    `  --${prefix}-on-cta: ${onColor(onCta)};`,
+    // the SOFT on-cta (owner 2026-08-04: "neutral cta on's should also be the alpha"): the
+    // neutral's cta is the scale-fed WASH-level fill, the system's other quiet cta, so its
+    // button text takes the pole AT ALPHA like the default-model secondary's — composited
+    // over whatever state the fill is in, so hover/pressed carry their own legibility. Same
+    // register both families (SOFT_ON_CTA_ALPHA), so both alias the ONE system/alpha/ink
+    // primitive. Emitted HERE rather than as a post-body override because the neutral's is
+    // unconditional — the secondary's rides the cascade only because it gates on the style
+    // chip. Loud fills (brand, signals, the cta escape) keep the solid pole.
+    prefix === 'neutral'
+      ? `  --neutral-on-cta: rgba(${onCta ? '255, 255, 255' : '0, 0, 0'}, ${SOFT_ON_CTA_ALPHA[mode]});`
+      : `  --${prefix}-on-cta: ${onColor(onCta)};`,
   ]
 }
 
@@ -494,13 +504,13 @@ export function brandCss(
   }
 
   // the SOFT on-cta (default-model secondaries only — derived and custom share the tint
-  // register): the on-text pole at SECONDARY_ON_CTA_ALPHA, composited by the renderer over
+  // register): the on-text pole at SOFT_ON_CTA_ALPHA, composited by the renderer over
   // the fill's current state so hover/pressed carry their own legibility. Emitted AFTER the
   // secondary body so the cascade takes it (the outline idiom). Exact keeps the solid pole.
   const softOnCta = (mode: 'light' | 'dark'): string[] => {
     if (!secondary || secondaryStyle !== 'default') return []
     const white = mode === 'light' ? secondary.onFillTextIsWhite : secondary.onFillTextIsWhiteDark
-    return [`  --secondary-on-cta: rgba(${white ? '255, 255, 255' : '0, 0, 0'}, ${SECONDARY_ON_CTA_ALPHA[mode]});`]
+    return [`  --secondary-on-cta: rgba(${white ? '255, 255, 255' : '0, 0, 0'}, ${SOFT_ON_CTA_ALPHA[mode]});`]
   }
 
   const outline = (mode: 'light' | 'dark'): string[] => {

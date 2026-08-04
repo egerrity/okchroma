@@ -2570,3 +2570,54 @@ the ordinary new-base-token confirm/backfill flow.
 - plugin/ui.ts's matrix still drew stop 9 as "highlight-9" via the DELETED
   onHighlightIsWhite field, and the outline label read st(10). Both re-aligned with the
   ext matrix (ink-9 emphasis-fill cell; ink-9 label).
+
+## C47 — THE SOFT ON-CTA IS A QUIET-FILL RULE, NOT A SECONDARY ONE
+
+Owner, 2026-08-04: *"neutral cta on's should also be the alpha and they are not."* Correct —
+`neutral/cta/on` shipped a SOLID pole in both modes while the default-model secondary had
+carried the pole AT ALPHA since C43.
+
+The C43 rationale was never secondary-specific: a QUIET, low-hierarchy cta's button text is
+the on-text pole at alpha so the renderer composites it over whatever state the fill is in,
+and hover/pressed carry their own legibility instead of being judged only at rest. The
+neutral's cta is the system's other quiet fill — scale-fed at stop 4 — so it takes the same
+register. `SECONDARY_ON_CTA_ALPHA` is renamed `SOFT_ON_CTA_ALPHA` to say so; the values are
+unchanged (light .75 / dark .80) and both families share the ONE register, so both alias the
+single `system/alpha/ink` primitive.
+
+### MEASURED BEFORE ADOPTING (agnostic sweep: 36 hues × 2 neutral levels × 3 states × both
+modes, WCAG on the SHIPPED 8-bit pair — C44's basis, not the analytic Y)
+
+| | light SOLID | light @.75 | dark SOLID | dark @.80 |
+|---|---|---|---|---|
+| rest | 16.50 | 9.03 | 12.60 | 8.66 |
+| hover | 14.08 | 8.22 | 10.36 | 7.31 |
+| pressed | 11.95 | 7.41 | 8.41 | 6.09 |
+
+Worst shipped case **6.09:1** (dark pressed) and **Lc 65.2** (light pressed) — clears WCAG
+4.5 with margin and clears the Lc-60 bar C43 judged the secondary against. The minimum alpha
+holding 4.5 anywhere in the sweep is **0.633**, so .75/.80 sit clear of the floor with the
+same headroom shape as C43's 0.726. Pole mis-picks on the shipped pair: **0/144** — the pole
+choice was already right; only its opacity changed.
+
+### SCOPE — the two quiet fills, and only those
+The default-model secondary (exact/outline/no-secondary-mirror keep their own) and the
+neutral. LOUD fills keep the SOLID pole: brand, the signals, and the **cta ESCAPE**, whose
+fill is the neutral's ink-10 register rather than the quiet wash cta (owner-confirmed this
+round). figma-verify now asserts all three postures — soft on the neutral, alpha 1 on every
+loud family, and alpha 1 on the escape (its pre-existing assertions checked the pole's HEX
+only and would not have caught a leak).
+
+### GATE MOVED WITH THE VALUE
+highlight-audit's neutral on-cta check measured the SOLID pole at REST — the thing that no
+longer ships. It now measures the shipped composite (source-over in gamma-encoded sRGB, 8-bit
+pair) across rest AND both states, which is the whole point of the alpha. Its `onWcag` helper
+died with the old check.
+
+### PLUGINS: NO CODE CHANGE (verified, not assumed)
+`softInkFor` matches on `path.endsWith('/cta/on')`, so `neutral/cta/on` routes to
+`system/alpha/ink` on the base seed, the per-brand override path, and the conversion pass;
+plugin-ext's era-crossing branch re-points the existing abs-black/abs-white alias, so existing
+files heal on the next apply with no Rebuild. The payload token is byte-identical to the
+primitive in both modes. The community plugin's `cta/on` branch has the same pole-at-alpha
+check.

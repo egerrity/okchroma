@@ -5,7 +5,7 @@
 import { BRANDS } from '../src/brands'
 import { SECONDARIES } from '../src/secondaries'
 import { SIGNALS } from '../src/engine/signals'
-import { resolveBrand, resolveTheme, SIGNAL_SCALES } from '../src/engine/resolve'
+import { resolveBrand, resolveTheme, SIGNAL_SCALES, SOFT_ON_CTA_ALPHA } from '../src/engine/resolve'
 import { themeToFigma } from '../src/engine/figmaRender'
 import { brandCss, signalsCss, ctaNeedsBorder, ctaPageLc, pageStopFor } from '../src/engine/cssRender'
 import { generateNeutralScale } from '../src/engine/colorEngine'
@@ -79,6 +79,17 @@ for (const mode of ['light', 'dark'] as const) {
     } else {
       ok(!leaf(m[fam], 'cta-ink-strong'), `${mode}.${fam} emits cta-ink-strong — the strong trio is neutral-only`)
     }
+    // the SOFT on-cta (the quiet-fill rule): the neutral's cta is the scale-fed wash-level
+    // fill, so its button text is the on-text POLE AT ALPHA (owner 2026-08-04) — same
+    // register the default-model secondary carries. LOUD fills keep the solid pole; a
+    // signal or the brand going soft here would be a leak.
+    const onCta = leaf(m[fam], 'on-cta').$value
+    const isPole = onCta.components.every((c: number) => c === 0) || onCta.components.every((c: number) => c === 1)
+    ok(isPole, `${mode}.${fam} on-cta is not a pole (${onCta.hex})`)
+    if (fam === 'neutral')
+      ok(onCta.alpha === SOFT_ON_CTA_ALPHA[mode], `${mode}.neutral on-cta alpha ${onCta.alpha} != the soft register ${SOFT_ON_CTA_ALPHA[mode]}`)
+    else if (fam !== 'secondary')
+      ok(onCta.alpha === 1, `${mode}.${fam} on-cta must stay a SOLID pole (got alpha ${onCta.alpha}) — the soft register is the quiet fills only`)
     // Signals carry a DISTINCT loud cta (diverged from the emphasis fill, F1);
     // they still have no identity (no user-input hex).
     if (!isBrand && fam !== 'neutral') {
@@ -147,6 +158,12 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
   }
   ok(leaf((esc.light as any).brand, 'on-cta').$value.hex === '#ffffff', `escape light on-cta should be white on the near-black fill (got ${leaf((esc.light as any).brand, 'on-cta').$value.hex})`)
   ok(leaf((esc.dark as any).brand, 'on-cta').$value.hex === '#000000', `escape dark on-cta should be black on the near-white fill (got ${leaf((esc.dark as any).brand, 'on-cta').$value.hex})`)
+  // the escape's fill is the neutral's LOUD ink-10 register, not the quiet wash cta, so it
+  // keeps the SOLID pole (owner-confirmed 2026-08-04). The hex assertions above check the
+  // pole but not its opacity — a soft-on-cta leak would slip past them.
+  for (const mode of ['light', 'dark'] as const)
+    ok(leaf((esc[mode] as any).brand, 'on-cta').$value.alpha === 1,
+      `${mode} escape on-cta must stay a SOLID pole (got alpha ${leaf((esc[mode] as any).brand, 'on-cta').$value.alpha})`)
 }
 
 // SYSTEM LINK (Phase 4): one trio per theme. Default = the primary's cta-ink verbatim;

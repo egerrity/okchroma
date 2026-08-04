@@ -33,13 +33,13 @@
 import { BRANDS } from '../src/brands'
 import { SECONDARIES } from '../src/secondaries'
 import { SIGNALS } from '../src/engine/signals'
-import { resolveBrand, signalScalesFor } from '../src/engine/resolve'
+import { resolveBrand, signalScalesFor, SOFT_ON_CTA_ALPHA } from '../src/engine/resolve'
 import { wcagY, contrastRatio, apcaY, apcaLc, clampChromaToGamut, oklchToLinearRgb } from '../src/engine/constraints'
 import { YELLOW_BAND, DARK_BRAND_FILL_MIN_L, NEUTRAL_CTA_DARK_POP_CLEARANCE } from '../src/engine/stopTable'
 import { generateNeutralScale, generateScale, type GeneratedScale, type ColorStop } from '../src/engine/colorEngine'
 import { darkChromaCurve } from '../src/engine/darkChromaCurve'
 import { CTA_ONFILL_ENFORCE_LC } from '../src/reqtoken/profiles'
-import { oklabDist } from '../src/engine/colorMath'
+import { oklabDist, srgbEmitChannels } from '../src/engine/colorMath'
 import { stateStepL } from '../src/engine/archetypes'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -60,7 +60,9 @@ const HL_BODY = 60
 // (the ratioFloor flip guarantees it; this lane asserts the guarantee holds).
 const SHIPPED_PROFILE = 'apca' as const
 const SIGNAL_SCALES = signalScalesFor(SHIPPED_PROFILE)
-const onWcag = (s: ColorStop, white: boolean | undefined) => (white ? whiteWcag(s) : blackWcag(s))
+// (onWcag DELETED 2026-08-04: its only caller was the neutral's solid-pole on-cta check, and
+// the neutral now ships the SOFT pole — see softOnFill in §3, which measures the composite.
+// The signals still read whiteWcag/blackWcag directly; their on-cta stays solid.)
 const hueDelta = (h: number, c: number) => { let d = (h - c) % 360; if (d > 180) d -= 360; if (d < -180) d += 360; return d }
 const isYellow = (scale: GeneratedScale) =>
   scale.brandC >= 0.008 && Math.abs(hueDelta(scale.brandH, YELLOW_BAND.centerH)) <= YELLOW_BAND.sigmaDeg
@@ -193,11 +195,40 @@ for (const { h, s } of neutralByHue) {
   ok(Math.abs((s.ctaPressedDark.L - ctaD.L) - stateStepL(ctaD.L, 'dark', 2)) < 1e-6, `neutral h${h} dark pressed step off the law (${f(s.ctaPressedDark.L - ctaD.L)})`)
   console.log(`  h${String(h).padStart(3)}  cta ${hx(ctaL)} L${f(ctaL.L)} / ${hx(ctaD)} L${f(ctaD.L)}  (stop4 ${f(s.light[3].L)}/${f(s.dark[3].L)})  | on-cta ${s.onFillTextIsWhite ? 'wht' : 'blk'}→${s.onFillTextIsWhiteDark ? 'wht' : 'blk'}`)
 }
+// THE SHIPPED COMPOSITE (owner 2026-08-04): the neutral's on-cta is the pole AT
+// SOFT_ON_CTA_ALPHA, not the solid pole this section used to measure — the quiet-fill rule
+// (see resolve.SOFT_ON_CTA_ALPHA). So the bar is judged on what the renderer actually paints:
+// the pole composited over the fill, source-over in gamma-encoded sRGB, on the SHIPPED 8-bit
+// pair (C44's basis — the analytic Y is not what a browser measures). And it rides EVERY
+// STATE, not just rest: the alpha exists precisely so hover/pressed carry their own
+// legibility, so a state that fails is the whole point of the check.
+// Measured floor when this landed: worst 6.09:1 (dark pressed) / Lc 65.2 (light pressed);
+// the minimum alpha holding 4.5 anywhere in the sweep is 0.633, so .75/.80 sit clear.
+const srgb8 = (s: ColorStop) => {
+  const { r, g, b } = srgbEmitChannels(s)
+  return [r, g, b].map(v => Math.round(Math.max(0, Math.min(1, v)) * 255) / 255)
+}
+const lin = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
+const relY = (c: number[]) => 0.2126 * lin(c[0]) + 0.7152 * lin(c[1]) + 0.0722 * lin(c[2])
+const softOnFill = (fill: ColorStop, white: boolean, mode: 'light' | 'dark') => {
+  const fc = srgb8(fill)
+  const p = white ? 1 : 0
+  const txt = fc.map(c => Math.round((SOFT_ON_CTA_ALPHA[mode] * p + (1 - SOFT_ON_CTA_ALPHA[mode]) * c) * 255) / 255)
+  return contrastRatio(relY(txt), relY(fc))
+}
 for (const { h, s } of neutralWcag) {
-  // wcag lane: the chosen on-cta pole passes its ratio, both modes. (The on-highlight
-  // pole checks died with the token — its successor is asserted agnostically in §1.)
-  ok(onWcag(s.cta, s.onFillTextIsWhite) >= 4.5, `neutral h${h} wcag on-cta light fails 4.5`)
-  ok(onWcag(s.ctaDark, s.onFillTextIsWhiteDark) >= 4.5, `neutral h${h} wcag on-cta dark fails 4.5`)
+  // wcag lane: the SHIPPED soft on-cta clears 4.5 on rest AND both states, both modes.
+  // (The on-highlight pole checks died with the token — successor asserted agnostically in §1.)
+  for (const [mode, fills] of [
+    ['light', [['rest', s.cta], ['hover', s.ctaHover], ['pressed', s.ctaPressed]]],
+    ['dark', [['rest', s.ctaDark], ['hover', s.ctaHoverDark], ['pressed', s.ctaPressedDark]]],
+  ] as const) {
+    const white = mode === 'light' ? s.onFillTextIsWhite : s.onFillTextIsWhiteDark
+    for (const [state, fill] of fills) {
+      const r = softOnFill(fill as ColorStop, !!white, mode)
+      ok(r >= 4.5, `neutral h${h} wcag soft on-cta ${mode} ${state} fails 4.5 (${r.toFixed(2)})`)
+    }
+  }
 }
 
 // ── 4. Signals — on-cta legible under each profile's own law, clean 12-stop scale ──
@@ -272,4 +303,4 @@ if (process.argv.includes('--bless')) {
 
 console.log()
 if (fails.length) { console.error(`FAIL: ${fails.length}\n` + fails.map(s => '  - ' + s).join('\n')); process.exit(1) }
-console.log('PASS — agnostic band order (ink-9 over highlight-8) + on-emphasis (paper-0 on ink-9) · stop-8 3:1 vs its declared paper · structure · neutral cta rest=stop4 + state law · signals (both lanes) · snapshot (shipped=apca).')
+console.log('PASS — agnostic band order (ink-9 over highlight-8) + on-emphasis (paper-0 on ink-9) · stop-8 3:1 vs its declared paper · structure · neutral cta rest=stop4 + state law + the SOFT on-cta composite at 4.5 on every state · signals (both lanes) · snapshot (shipped=apca).')

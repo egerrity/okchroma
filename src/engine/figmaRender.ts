@@ -4,7 +4,7 @@ import { toHex, ctaNeedsBorder, pageStopFor, ctaBorderRung, OFFSET_ALPHAS, type 
 import { srgbEmitChannels } from './colorMath'
 import { stopTokenName, tokenOrder } from './tokenNames'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
-import { OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, SECONDARY_ON_CTA_ALPHA, escapeCtaFamily, resolveLinkTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
+import { OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, SOFT_ON_CTA_ALPHA, escapeCtaFamily, resolveLinkTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v))
 
@@ -243,20 +243,26 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
       // cta/on = the family's ink/9, NOT a pole — the plugin aliases non-pole on-fills to the sibling ink/9
       if (s9) putLeaf(secondaryGroup, 'on-cta', colorFromStop(s9))
     }
-    // the SOFT on-cta (default-model secondaries only — derived and custom share the tint
-    // register): the on-text pole at SECONDARY_ON_CTA_ALPHA, composited by the consumer over
-    // the fill's current state. Same value cssRender emits; exact keeps the solid pole and
-    // the no-secondary mirror keeps the brand's. The VALUE ships here; both plugins alias
-    // this leaf onto their system/alpha/ink primitive (owner-named 2026-08-03) — the
-    // cta-border idiom, never a raw write.
-    if (input.secondaryStyle === 'default' && input.secondary) {
-      const white = mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark
+    // the SOFT on-cta — THE QUIET-FILL RULE: a low-hierarchy cta's button text is the
+    // on-text pole at SOFT_ON_CTA_ALPHA, composited by the consumer over the fill's current
+    // state so hover/pressed carry their own legibility. Same values cssRender emits. The
+    // VALUE ships here; both plugins alias this leaf onto their system/alpha/ink primitive
+    // (owner-named 2026-08-03) — the cta-border idiom, never a raw write.
+    // TWO carriers, and only these:
+    //  · the DEFAULT-model secondary (owner 2026-08-03) — exact keeps the solid pole, outline
+    //    took its ink/9 above, and the no-secondary mirror keeps the brand's.
+    //  · the NEUTRAL, whose cta is the scale-fed wash-level fill (owner 2026-08-04).
+    // Loud fills — brand, the signals, and the cta ESCAPE below — keep the solid pole.
+    const softOnCta = (g: FigmaGroup, white: boolean) => {
       const p = white ? 1 : 0
-      putLeaf(secondaryGroup, 'on-cta', {
+      putLeaf(g, 'on-cta', {
         $type: 'color',
-        $value: { colorSpace: 'srgb', components: [p, p, p], alpha: SECONDARY_ON_CTA_ALPHA[mode], hex: white ? '#ffffff' : '#000000' },
+        $value: { colorSpace: 'srgb', components: [p, p, p], alpha: SOFT_ON_CTA_ALPHA[mode], hex: white ? '#ffffff' : '#000000' },
       })
     }
+    softOnCta(neutralGroup, mode === 'light' ? nScale.onFillTextIsWhite : nScale.onFillTextIsWhiteDark)
+    if (input.secondaryStyle === 'default' && input.secondary)
+      softOnCta(secondaryGroup, mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark)
     const brandGroup = rampGroup(scale[mode], mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark, brandExtra(scale, mode, 'brand'))
     // neutral cta escape re-expression (mirrors the outline block above): the brand's
     // FILL trio + on-cta swap to the brand-neutral's ink register; cta-ink + the ramp

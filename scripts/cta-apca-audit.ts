@@ -15,7 +15,7 @@
 // grids, no named brands. RUNGS keeps the historical 63/65/70 ladder for the non-signal
 // sections' cells.
 import { writeFileSync, mkdirSync } from 'fs'
-import { resolveTheme, SIGNAL_SCALES, SECONDARY_ON_CTA_ALPHA } from '../src/engine/resolve'
+import { resolveTheme, SIGNAL_SCALES, SOFT_ON_CTA_ALPHA } from '../src/engine/resolve'
 import {
   whiteTextLcAt, blackTextLcAt, findLForWhiteTextLc, findLForBlackTextLc,
 } from '../src/reqtoken/producers'
@@ -149,15 +149,15 @@ for (const [name, v] of SIGNAL_SCALES) pushSignal(name, 'canonical', v.scale)
 // engine's tint — "the same as the recommended", owner 2026-08-02, so it is IN the law).
 // A bare secondaryHex resolves EXACT — the hands-off posture — which is out of this audit
 // like exact mode; an earlier cut measured that by mistake and called it custom.
-// Their on-cta is the SOFT pole (C43, owner 2026-08-03): the pole at SECONDARY_ON_CTA_ALPHA,
+// Their on-cta is the SOFT pole (C43, owner 2026-08-03): the pole at SOFT_ON_CTA_ALPHA,
 // measured as the composite the renderer ships.
 for (const sec of [{ L: 0.62, C: 0.16, H: 200 }, { L: 0.62, C: 0.18, H: 150 }, { L: 0.55, C: 0.20, H: 30 }]) {
   const secHex = hx(sec)
   const t = resolveTheme({ primaryHex: hx({ L: 0.45, C: 0.12, H: 260 }), secondaryHex: secHex, secondaryStyle: 'default' })
   if (t.secondary) {
     const s = t.secondary.scale
-    rows.push(readCtaSoft('secondary', `secondary ${secHex}`, s.cta, s.onFillTextIsWhite, SECONDARY_ON_CTA_ALPHA.light, hx(s.light[0])))
-    rows.push(readCtaSoft('secondary', `secondary ${secHex} (dark)`, s.ctaDark, s.onFillTextIsWhiteDark, SECONDARY_ON_CTA_ALPHA.dark, hx(s.dark[0])))
+    rows.push(readCtaSoft('secondary', `secondary ${secHex}`, s.cta, s.onFillTextIsWhite, SOFT_ON_CTA_ALPHA.light, hx(s.light[0])))
+    rows.push(readCtaSoft('secondary', `secondary ${secHex} (dark)`, s.ctaDark, s.onFillTextIsWhiteDark, SOFT_ON_CTA_ALPHA.dark, hx(s.dark[0])))
   }
 }
 // 5b) the DERIVED secondary (no hex supplied) — the same tint register, same soft on-cta
@@ -165,8 +165,8 @@ for (const sec of [{ L: 0.62, C: 0.16, H: 200 }, { L: 0.62, C: 0.18, H: 150 }, {
   const t = resolveTheme({ primaryHex: hx({ L: 0.45, C: 0.12, H: 260 }), deriveSecondary: true })
   if (t.secondary) {
     const s = t.secondary.scale
-    rows.push(readCtaSoft('secondary', `derived secondary`, s.cta, s.onFillTextIsWhite, SECONDARY_ON_CTA_ALPHA.light, hx(s.light[0])))
-    rows.push(readCtaSoft('secondary', `derived secondary (dark)`, s.ctaDark, s.onFillTextIsWhiteDark, SECONDARY_ON_CTA_ALPHA.dark, hx(s.dark[0])))
+    rows.push(readCtaSoft('secondary', `derived secondary`, s.cta, s.onFillTextIsWhite, SOFT_ON_CTA_ALPHA.light, hx(s.light[0])))
+    rows.push(readCtaSoft('secondary', `derived secondary (dark)`, s.ctaDark, s.onFillTextIsWhiteDark, SOFT_ON_CTA_ALPHA.dark, hx(s.dark[0])))
   }
 }
 

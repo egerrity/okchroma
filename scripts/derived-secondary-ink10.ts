@@ -4,7 +4,7 @@
 // ink-10 as the button text. WCAG lane. Output: render/derived-secondary-ink10.html
 import * as fs from 'fs'
 import * as path from 'path'
-import { resolveBrand, defaultSecondarySeed, DEFAULT_SECONDARY, SECONDARY_ON_CTA_ALPHA } from '../src/engine/resolve'
+import { resolveBrand, defaultSecondarySeed, DEFAULT_SECONDARY, SOFT_ON_CTA_ALPHA } from '../src/engine/resolve'
 import { type ColorStop } from '../src/engine/colorMath'
 import { clampChromaToGamut, oklchToLinearRgb } from '../src/engine/constraints'
 import { toHex } from '../src/engine/cssRender'
@@ -57,11 +57,11 @@ const pole = (s: ReturnType<typeof resolveBrand>['scale'], mode: Mode) =>
   (mode === 'light' ? s.onFillTextIsWhite : s.onFillTextIsWhiteDark) ? '#fff' : '#000'
 
 // the SHIPPED soft on-cta (owner-picked on the alpha ladder 2026-08-03: light .75 / dark
-// .80): the pole at SECONDARY_ON_CTA_ALPHA, composited by the renderer over the fill's
+// .80): the pole at SOFT_ON_CTA_ALPHA, composited by the renderer over the fill's
 // current state — read from the engine register so this exhibit can't drift from it.
 const poleAlpha = (s: ReturnType<typeof resolveBrand>['scale'], mode: Mode) =>
   (mode === 'light' ? s.onFillTextIsWhite : s.onFillTextIsWhiteDark)
-    ? `rgba(255,255,255,${SECONDARY_ON_CTA_ALPHA[mode]})` : `rgba(0,0,0,${SECONDARY_ON_CTA_ALPHA[mode]})`
+    ? `rgba(255,255,255,${SOFT_ON_CTA_ALPHA[mode]})` : `rgba(0,0,0,${SOFT_ON_CTA_ALPHA[mode]})`
 
 // TWO COLUMNS, one probe per grid row — before on the left, after on the right, under
 // standing column headers. (A wrapped pair-per-cell layout put two probes side by side and
@@ -89,7 +89,7 @@ const section = (mode: Mode): string => {
       </div>
     </div>`)
   }
-  const legend = `two columns: the solid on-text pole shipping today, and the soft on-cta at ${Math.round(SECONDARY_ON_CTA_ALPHA[mode] * 100)}% alpha`
+  const legend = `two columns: the solid on-text pole shipping today, and the soft on-cta at ${Math.round(SOFT_ON_CTA_ALPHA[mode] * 100)}% alpha`
   return `<section class="${mode}"><h2>${mode}</h2><div class="legend">${legend}</div>${blocks.join('')}</section>`
 }
 
