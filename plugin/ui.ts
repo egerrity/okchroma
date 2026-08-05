@@ -76,6 +76,8 @@ const neutralInfo        = $<HTMLElement>('neutral-info')
 const neutralSwatch   = $<HTMLElement>('neutral-swatch')
 const neutralSelect   = $<HTMLSelectElement>('neutral-select')
 const neutralHexIn    = $<HTMLInputElement>('neutral-hex')
+const neutralPicker   = $<HTMLInputElement>('neutral-picker')
+const linkPicker      = $<HTMLInputElement>('link-picker')
 const neutralOptSecondary = $<HTMLOptionElement>('neutral-opt-secondary')
 const profileBtns     = document.querySelectorAll<HTMLButtonElement>('.seg-btn[data-profile]')
 const ctaEscapeRow    = $<HTMLElement>('cta-escape-row')
@@ -346,6 +348,9 @@ function updatePreview() {
       ? resolveLinkTrio(normalizeHex(linkHexInput.value)!, cp).link
       : fromPrimaryStop
     linkSwatch.style.background = toHex(linkStop.r, linkStop.g, linkStop.b)
+    // the picker opens on what the field SHOWS (custom seed, or the from-primary
+    // resolution) rather than a stale default
+    linkPicker.value = normalizeHex(linkHexInput.value) ?? toHex(linkStop.r, linkStop.g, linkStop.b)
     linkHexInput.readOnly = !linkCustom
     linkField.style.opacity = linkCustom ? '1' : '.6'
     linkField.style.cursor = linkCustom ? '' : 'pointer'
@@ -361,6 +366,9 @@ function updatePreview() {
     // RESOLVED default secondary (the input tracks the primary hex — that's the source, not the result)
     const n9 = nScale.light.find(s => s.stop === 9)
     if (n9) neutralSwatch.style.background = toHex(n9.r, n9.g, n9.b)
+    // the neutral picker seeds from the custom hue when set, else the primary — the
+    // hue currently feeding the tint, not the resolved grey the swatch paints
+    neutralPicker.value = normalizeHex(neutralHexIn.value) ?? (normalizeHex(primaryHex) ?? '#E93D82')
     if (t.secondary) {
       const c = t.secondary.scale.cta
       const h = toHex(c.r, c.g, c.b)
@@ -375,12 +383,23 @@ function updatePreview() {
     // exact = neutral-grey "hands off". Stops looked up by IDENTITY, never array position
     // (positions shift when the stop set changes — the stop-10 deletion lesson).
     const hxs = (s: { r: number; g: number; b: number }) => toHex(s.r, s.g, s.b)
-    const at = (arr: ColorStop[], n: number) => arr.find(s => s.stop === n)!
+    // NAME the miss — ported from plugin-ext (fixed there 2026-07-29, missed here until
+    // 2026-08-05): `at` used a bare non-null assertion, so a stop that no longer exists
+    // returned undefined and surfaced as "Cannot read properties of undefined (reading
+    // 'r')" from inside hxs — unattributable. Both chips asked for stop 11, which C33's ink
+    // renumber removed from the array (it emits as an off-scale literal), so BOTH chip
+    // colours threw on EVERY render and the throw skipped syncInfoLines below it — which is
+    // why the info lines and chip labels silently stopped updating. Fail loudly instead.
+    const at = (arr: ColorStop[], n: number) => {
+      const s = arr.find(x => x.stop === n)
+      if (!s) throw new Error(`chip preview asked for stop ${n}, which is not in the ramp (${arr.map(x => x.stop).join(',')})`)
+      return s
+    }
     if (primaryMode === 'exact') {
       primaryChip.style.background = '#ededf0'; primaryChip.style.color = '#646464'; primaryChip.style.borderColor = 'transparent'
     } else {
       primaryChip.style.background = hxs(at(t.themed.scale.light, 4))
-      primaryChip.style.color = hxs(at(t.themed.scale.light, 11))
+      primaryChip.style.color = hxs(at(t.themed.scale.light, 10))
       primaryChip.style.borderColor = 'transparent'
     }
     if (t.secondary) {
@@ -390,7 +409,7 @@ function updatePreview() {
       } else if (secondaryStyle === 'outline') {
         secondaryChip.style.background = 'transparent'; secondaryChip.style.color = hxs(at(sl, 10)); secondaryChip.style.borderColor = hxs(at(sl, 8))
       } else {
-        secondaryChip.style.background = hxs(at(sl, 6)); secondaryChip.style.color = hxs(at(sl, 11)); secondaryChip.style.borderColor = 'transparent'
+        secondaryChip.style.background = hxs(at(sl, 6)); secondaryChip.style.color = hxs(at(sl, 10)); secondaryChip.style.borderColor = 'transparent'
       }
     }
     syncInfoLines()
@@ -609,6 +628,23 @@ neutralHexIn.addEventListener('input', () => {
   neutralHexIn.classList.toggle('invalid', neutralHexIn.value !== '' && !normalizeHex(neutralHexIn.value))
   updatePreview()
 })
+// the swatch PICKERS (owner 2026-08-05: "there is no color picker for the link or for
+// custom"). Both mirror the secondary's picker, which flips the field to custom on use:
+// picking a neutral hue IS the custom source; picking a link color IS the takeover.
+neutralPicker.addEventListener('input', () => {
+  neutralChoice = 'custom'
+  neutralSelect.value = 'custom'
+  neutralHexIn.value = neutralPicker.value.toUpperCase()
+  neutralHexIn.classList.remove('invalid')
+  updatePreview()
+})
+linkPicker.addEventListener('input', () => {
+  linkCustom = true
+  linkBundled = false // a hand-picked color no longer auto-reverts with the escape
+  linkHexInput.value = linkPicker.value.toUpperCase()
+  linkHexInput.classList.remove('invalid')
+  updatePreview()
+})
 
 profileBtns.forEach(btn => {
   btn.addEventListener('click', () => {
@@ -652,6 +688,9 @@ linkField.addEventListener('click', () => {
   linkHexInput.focus()
   linkHexInput.select()
 })
+// the swatch opens the PICKER; the field's own click-to-customize takeover must not
+// race it (it would flash the default blue before the picked color lands)
+linkSwatch.addEventListener('click', e => e.stopPropagation())
 linkResetBtn.addEventListener('click', e => {
   e.stopPropagation()
   linkCustom = false

@@ -469,7 +469,17 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
       <div className="ct-bar-field">
         <div className="ct-label">Neutral color</div>
         <div className="ct-field" style={{ position: 'relative', width: 176 }}>
-          <span className="ct-swatch" style={{ background: 'var(--neutral-ink-9)' }} />
+          {/* the swatch is a PICKER like primary/secondary (owner 2026-08-05: "there is no
+              color picker for the link or for custom"). Picking a color IS the custom
+              source — it flips the choice, the way the secondary's picker flips secState.
+              zIndex clears NeutralSelect's full-field overlay <select>, which would
+              otherwise swallow the click. */}
+          <label className="ct-swatch-btn" title="Pick a custom neutral hue" style={{ zIndex: 1 }}
+            onClick={e => e.stopPropagation()}>
+            <span className="ct-swatch" style={{ background: 'var(--neutral-ink-9)' }} />
+            <input type="color" value={normalizeHex(neutralHexInput) ?? primary}
+              onChange={e => { setNeutralChoice('custom'); setNeutralHexInput(e.target.value.toUpperCase()) }} />
+          </label>
           <NeutralSelect value={neutralChoice} onChange={setNeutralChoice} hasSecondary={secState !== 'none'}
             hexInput={neutralHexInput} onHexInput={setNeutralHexInput} />
         </div>
@@ -509,7 +519,15 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
               title="Hyperlinks — ONE color per theme. Follows the primary's text-action register; click the hex to customize"
               onClick={() => { if (!linkCustom) { linkBundled.current = false; setLinkInput(DEFAULT_LINK_HEX); setLinkCustom(true) } }}
             >
-              <span className="ct-swatch" style={{ background: 'var(--link)' }} />
+              {/* the swatch is a PICKER like primary/secondary (owner 2026-08-05). Picking
+                  IS the takeover — it does what clicking the hex does, so stopPropagation
+                  keeps the field's own takeover from racing it to the default blue. */}
+              <label className="ct-swatch-btn" title="Pick a custom link color"
+                onClick={e => e.stopPropagation()}>
+                <span className="ct-swatch" style={{ background: 'var(--link)' }} />
+                <input type="color" value={(linkCustom ? normalizeHex(linkInput) : normalizeHex(computed.linkFromPrimaryHex)) ?? DEFAULT_LINK_HEX}
+                  onChange={e => { linkBundled.current = false; setLinkInput(e.target.value.toUpperCase()); setLinkCustom(true) }} />
+              </label>
               <input value={linkCustom ? linkInput : computed.linkFromPrimaryHex} readOnly={!linkCustom}
                 onChange={e => { linkBundled.current = false; setLinkInput(e.target.value) }} spellCheck={false} />
               {linkCustom && (

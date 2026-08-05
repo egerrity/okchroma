@@ -259,7 +259,9 @@ body {
   <div class="bar-field">
     <div class="label">Neutral color</div>
     <div class="field" style="width:176px;position:relative">
-      <span class="swatch" id="neutral-swatch" style="background:#888;cursor:default"></span>
+      <span class="swatch" id="neutral-swatch" style="background:#888;z-index:1" title="Pick a custom neutral hue">
+        <input type="color" id="neutral-picker" value="#E93D82" />
+      </span>
       <span id="neutral-label" style="flex:1;font-size:14px;font-weight:500">Default</span>
       <!-- Custom hue source (owner 2026-08-04): shown instead of the label; the overlay
            select shrinks to the chevron strip so this stays typeable (see syncInfoLines) -->
@@ -292,7 +294,9 @@ body {
           <div class="label">Link color</div>
           <div class="field field-color" id="link-field" style="width:200px"
             title="Hyperlinks — ONE color per theme. Follows the primary's text-action register; click the hex to customize (de-conflict links, e.g. a red brand's links reading destructive)">
-            <span class="swatch" id="link-swatch" style="background:#888;cursor:default"></span>
+            <span class="swatch" id="link-swatch" style="background:#888" title="Pick a custom link color">
+              <input type="color" id="link-picker" value="#0B57D0" />
+            </span>
             <input type="text" id="link-hex" value="" spellcheck="false" readonly />
             <button id="link-reset" title="Back to the from-primary link" style="display:none;border:none;background:none;cursor:pointer;font-size:12px;opacity:.7;padding:0 4px">↩</button>
           </div>

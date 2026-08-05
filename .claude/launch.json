@@ -24,6 +24,18 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "8322", "--directory", "."],
       "port": 8322
+    },
+    {
+      "name": "demo-b",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8326", "--directory", "."],
+      "port": 8326
+    },
+    {
+      "name": "demo-c",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8327", "--directory", "."],
+      "port": 8327
     }
   ]
 }

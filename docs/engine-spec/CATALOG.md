@@ -2660,3 +2660,30 @@ Secondary #00696D under primary #E93D82: wash-5 H 197.5 (source 199.4) C .0094 �
 #7A5900 → wash-5 H 84.5 C .0059 (the warm-damp evening working per-hue) · all fallbacks
 land on the primary's hue. Gate suite green, audit:ext snapshot untouched (roster recipes
 carry no source).
+
+### C48 addendum — the link and custom-neutral swatches become pickers
+
+Owner, 2026-08-05: *"the only thing that is weird is there is no color picker for the link
+or for custom."* Correct — primary and secondary swatches wrapped an `input[type=color]`;
+the link swatch and the new custom-neutral swatch were display-only (`cursor:default`).
+Both now carry a picker, following the SECONDARY's idiom: using the picker FLIPS the field
+to custom (picking a neutral hue *is* the custom source; picking a link color *is* the
+takeover), so the control teaches the mode instead of requiring it first. Two stacking
+details: the neutral field has a full-field overlay `<select>`, so the swatch needs
+`z-index` or the menu eats the click; and the link swatch sits inside `#link-field`, whose
+click-to-customize handler would otherwise race the picker to the default blue
+(stopPropagation).
+
+**Verification note worth keeping**: a plugin UI is standalone HTML — its preview path needs
+no Figma API — so the BUILT bundle can be driven in a browser. That closes the usual
+"builds, but unclicked in Figma" gap for plugin UI work.
+
+Doing exactly that surfaced a latent bug in **plugin/ (the community plugin — currently
+unsupported, fixed in passing, not a supported surface)**: `updatePreview` asked for
+`at(scale.light, 11)` for both chip colours, and C33's renumber removed stop 11 from the
+array. The bare non-null assertion returned undefined, `hxs` threw, and the catch swallowed
+it **before `syncInfoLines()`** — so its chip tints and every ⓘ line had been frozen since
+C33. plugin-ext hit and fixed this on 2026-07-29 (its `at` throws a NAMED error); the port
+never happened. Ported, stops 11 → 10. Same C33-stale-stop family as the three found in
+C46 — **a renumber's blast radius is every hardcoded stop number in the plugin UIs, and a
+swallowed throw hides it indefinitely.**

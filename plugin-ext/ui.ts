@@ -95,6 +95,8 @@ const neutralInfo        = $<HTMLElement>('neutral-info')
 const neutralSwatch   = $<HTMLElement>('neutral-swatch')
 const neutralSelect   = $<HTMLSelectElement>('neutral-select')
 const neutralHexIn    = $<HTMLInputElement>('neutral-hex')
+const neutralPicker   = $<HTMLInputElement>('neutral-picker')
+const linkPicker      = $<HTMLInputElement>('link-picker')
 const neutralOptSecondary = $<HTMLOptionElement>('neutral-opt-secondary')
 const ctaEscapeRow    = $<HTMLElement>('cta-escape-row')
 const ctaEscapeBox    = $<HTMLInputElement>('cta-escape')
@@ -389,6 +391,9 @@ function updatePreview() {
       ? resolveLinkTrio(normalizeHex(linkHexInput.value)!, undefined).link
       : fromPrimaryStop
     linkSwatch.style.background = toHex(linkStop.r, linkStop.g, linkStop.b)
+    // the picker opens on what the field SHOWS (custom seed, or the from-primary
+    // resolution) rather than a stale default
+    linkPicker.value = normalizeHex(linkHexInput.value) ?? toHex(linkStop.r, linkStop.g, linkStop.b)
     linkHexInput.readOnly = !linkCustom
     linkField.style.opacity = linkCustom ? '1' : '.6'
     linkField.style.cursor = linkCustom ? '' : 'pointer'
@@ -405,6 +410,9 @@ function updatePreview() {
     // (the input tracks the primary hex — that's the source, not the result)
     const n9 = nScale.light.find(s => s.stop === 9)
     if (n9) neutralSwatch.style.background = toHex(n9.r, n9.g, n9.b)
+    // the neutral picker seeds from the custom hue when set, else the primary — the
+    // hue currently feeding the tint, not the resolved grey the swatch paints
+    neutralPicker.value = normalizeHex(neutralHexIn.value) ?? (normalizeHex(primaryHex) ?? '#E93D82')
     if (t.secondary) {
       const c = t.secondary.scale.cta
       const h = toHex(c.r, c.g, c.b)
@@ -605,6 +613,23 @@ neutralHexIn.addEventListener('input', () => {
   neutralHexIn.classList.toggle('invalid', neutralHexIn.value !== '' && !normalizeHex(neutralHexIn.value))
   updatePreview()
 })
+// the swatch PICKERS (owner 2026-08-05: "there is no color picker for the link or for
+// custom"). Both mirror the secondary's picker, which flips the field to custom on use:
+// picking a neutral hue IS the custom source; picking a link color IS the takeover.
+neutralPicker.addEventListener('input', () => {
+  neutralChoice = 'custom'
+  neutralSelect.value = 'custom'
+  neutralHexIn.value = neutralPicker.value.toUpperCase()
+  neutralHexIn.classList.remove('invalid')
+  updatePreview()
+})
+linkPicker.addEventListener('input', () => {
+  linkCustom = true
+  linkBundled = false // a hand-picked color no longer auto-reverts with the escape
+  linkHexInput.value = linkPicker.value.toUpperCase()
+  linkHexInput.classList.remove('invalid')
+  updatePreview()
+})
 
 // Include APCA (default off): the ⓘ copy tracks the state so the flip's consequence —
 // the confirm + collection-wide backfill — is announced before Apply is ever pressed.
@@ -648,6 +673,9 @@ linkField.addEventListener('click', () => {
   linkHexInput.focus()
   linkHexInput.select()
 })
+// the swatch opens the PICKER; the field's own click-to-customize takeover must not
+// race it (it would flash the default blue before the picked color lands)
+linkSwatch.addEventListener('click', e => e.stopPropagation())
 linkResetBtn.addEventListener('click', e => {
   e.stopPropagation()
   linkCustom = false
