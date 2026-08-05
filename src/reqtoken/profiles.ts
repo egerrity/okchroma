@@ -24,9 +24,13 @@ export type ContrastProfile = 'wcag' | 'apca'
 //     this slot: the owner's declared contract (2026-07-10) is on-cta Lc 60 — APCA's large-text bar;
 //     cta labels are button text, not body copy — set via CTA_ONFILL_ENFORCE_LC below. Side effects
 //     she accepted: enforcement-bound warm/pink ctas release lighter, dark ctas enforce less.
-//   7 → Lc 90 (ink-10) — APCA's preferred-body value; the scale already reads ≈ 90+.
+//   7 → Lc 90 (ink-11) — APCA's preferred-body value; the scale already reads ≈ 90+.
+//   6.5 → Lc 85 (ink-10, the C49 between text stop) — between the body minimum (75) and
+//     the preferred-body value (90), weighted toward 90 as 6.5 sits nearer 7. Like its
+//     wcag twin it is a floor the placement already clears; provisional until the apca
+//     lane is next measured (the lane is extended-plugin-only).
 export type LcMap = Record<number, number>
-export const DEFAULT_APCA_LC_MAP: LcMap = { 3: 30, 4.5: 75, 7: 90 }
+export const DEFAULT_APCA_LC_MAP: LcMap = { 3: 30, 4.5: 75, 6.5: 85, 7: 90 }
 
 function toApca(req: Require, lcMap: LcMap): Require {
   if (req.metric !== 'wcag') return req
@@ -37,7 +41,7 @@ function toApca(req: Require, lcMap: LcMap): Require {
 
 // The cta/on-fill enforcement bar — DECOUPLED from the 4.5 text slot. OWNER SPEC (2026-07-10,
 // typo-corrected same day): apca = the 7:1 ink Lc 90 · the 4.5 ink Lc 75 · ON-CTA Lc 60; wcag =
-// 7:1 · 4.5 · on-cta 4.5. (Those inks are ink-10 / ink-9 since the 2026-07-29 renumber.) The map
+// 7:1 · 4.5 · on-cta 4.5. (Those inks are ink-11 / ink-9 under C49 numbering.) The map
 // slots carry the inks; this constant carries on-cta. wcag lane unaffected (returns the spec
 // unchanged above).
 export const CTA_ONFILL_ENFORCE_LC = 60

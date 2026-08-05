@@ -6,7 +6,7 @@ import { generateNeutralScale, type GeneratedScale } from '../../src/engine/colo
 import { apparentL } from '../../src/engine/perceptualL'
 import { SCALE_STOP_COUNT } from '../../src/engine/tokenNames'
 import {
-  STOP_8_NONTEXT_CONTRAST, INK_9_CONTRAST, INK_10_CONTRAST_FLOOR,
+  STOP_8_NONTEXT_CONTRAST, INK_9_CONTRAST, INK_10_CONTRAST, INK_11_CONTRAST_FLOOR,
 } from '../../src/engine/stopTable'
 import { TokenCards } from '../TokenCards'
 import { FONT_STACK } from '../shared'
@@ -284,7 +284,7 @@ function DistributionChart({ mode, lanes, reqs }: { mode: PanelMode; lanes: Dist
 // same page colour so they read against each other. She rebuilds this in Figma to
 // toggle modes, so it is deliberately not gold-plated.
 // heading = the FIRST text level (ink-9, the brand-carrying one), body = the second
-// (ink-10, the darkest and most legible). Owner ordering.
+// (ink-11, the darkest and most legible). Owner ordering.
 function ForkComposition({ heading, body, page, ring, fill, onFill, linkC, textBtn }: {
   heading: string; body: string; page: string; ring: string; fill: string
   onFill: string; linkC: string; textBtn: string
@@ -560,7 +560,7 @@ export default function UnifyCompare() {
       pins: [
         ...(anchors && p0 ? [pin('0', stopHex(p0), mode)] : []),
         ...arr.map(s => pin(String(s.stop), stopHex(s), mode)),
-        ...(anchors ? [pin('11', mode === 'light' ? '#000000' : '#ffffff', mode)] : []),
+        ...(anchors ? [pin('12', mode === 'light' ? '#000000' : '#ffffff', mode)] : []),
       ],
     }
   }
@@ -571,7 +571,7 @@ export default function UnifyCompare() {
   const distReqs = (sc: GeneratedScale, mode: PanelMode): DistReq[] => {
     const arr = mode === 'light' ? sc.light : sc.dark
     const p3 = distRatio(stopHex(arr.find(s => s.stop === 3)!), DIST_PAGE[mode])
-    return [STOP_8_NONTEXT_CONTRAST, INK_9_CONTRAST, INK_10_CONTRAST_FLOOR].map(t => ({ cr: t * p3 }))
+    return [STOP_8_NONTEXT_CONTRAST, INK_9_CONTRAST, INK_10_CONTRAST, INK_11_CONTRAST_FLOOR].map(t => ({ cr: t * p3 }))
   }
 
   // label · Unify family · the OKChroma scale opposite it
@@ -693,27 +693,27 @@ export default function UnifyCompare() {
             <div style={CARD}>
               <div style={CARD_TITLE}>OKChroma — the roles Brand Primary forks into, from the same seeds</div>
               <span style={MODE_TAG}>Light mode</span>
-              {/* C33's ink renumber renamed BOTH of these series to 'ink-9' — stop 10 is
-                  ink-10. React saw duplicate keys and dropped a line; the legend called two
+              {/* C33's ink renumber renamed BOTH of these series to 'ink-9' (C49 later took the
+                  body register to ink-11). React saw duplicate keys and dropped a line; the legend called two
                   different stops by one name. Caught 2026-07-29 from a console warning.
                   The cta series is deliberately NOT plotted (owner 2026-07-29): it varies by
                   design, and the point of this chart is that the STRUCTURAL roles do not. */}
               <DotChart mode="light" xLabels={labels} series={[
-                { label: 'ink-10', dots: okRole(okStop(10), 'light') },
+                { label: 'ink-11', dots: okRole(okStop(11), 'light') },
                 { label: 'ink-9', dots: okRole(okStop(9), 'light') },
                 { label: 'wash-6', dots: okRole(okStop(6), 'light') },
                 { label: 'paper-3', dots: okRole(okStop(3), 'light') },
               ]} />
               <span style={MODE_TAG}>Dark mode</span>
               <DotChart mode="dark" xLabels={labels} series={[
-                { label: 'ink-10', dots: okRole(okStop(10), 'dark') },
+                { label: 'ink-11', dots: okRole(okStop(11), 'dark') },
                 { label: 'ink-9', dots: okRole(okStop(9), 'dark') },
                 { label: 'wash-6', dots: okRole(okStop(6), 'dark') },
                 { label: 'paper-3', dots: okRole(okStop(3), 'dark') },
               ]} />
               <div style={STAT}>
                 Unify's one Primary is doing the button job, the text job, and the emphasis job at once — here it
-                forks. In light mode: <b>ink-10</b>, the body text register, spans <b>{okSpread(10, 'light')} L*</b> across
+                forks. In light mode: <b>ink-11</b>, the body text register, spans <b>{okSpread(11, 'light')} L*</b> across
                 the seven seeds; <b>ink-9</b>, the emphasis fill and first text stop, <b>{okSpread(9, 'light')} L*</b>; and
                 the tint registers wash-6 / paper-3 — Unify's Highlight and Accent analogs —
                 <b> {okSpread(6, 'light')}</b> and <b>{okSpread(3, 'light')} L*</b>. Unify's Primary spans
@@ -886,14 +886,14 @@ export default function UnifyCompare() {
                 are COLOURED text, and Brand Primary is the only stop Unify vets for it — so
                 asking for a second level gets you the same value back. Do NOT route these to
                 Gray (I did once): gray text is a different subject and it deletes the
-                comparison the forked side is making with ink-9 vs ink-10. */}
+                comparison the forked side is making with ink-9 vs ink-11. */}
             <ForkComposition
               page={DIST_PAGE[distMode]} heading={forkPrimary} body={forkPrimary}
               ring={forkPrimary} fill={forkPrimary} onFill={dark ? '#0E0F10' : '#FFFFFF'}
               linkC={forkPrimary} textBtn={forkPrimary} />
             <div data-brand={focus.slug} data-theme={dark ? 'dark' : 'light'}>
               <ForkComposition
-                page={DIST_PAGE[distMode]} heading="var(--brand-ink-9)" body="var(--brand-ink-10)"
+                page={DIST_PAGE[distMode]} heading="var(--brand-ink-9)" body="var(--brand-ink-11)"
                 ring="var(--brand-highlight-8)" fill="var(--brand-cta)" onFill="var(--brand-on-cta)"
                 linkC="var(--link)" textBtn="var(--brand-cta-ink)" />
             </div>

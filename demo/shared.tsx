@@ -23,7 +23,7 @@ export const FONT_STACK = "'Inter', -apple-system, system-ui, sans-serif"
 // The "accent" Family is emitted as the `secondary` primitive prefix (the role
 // was renamed in the token rename); prim() maps Family → primitive prefix.
 // Stops are the emitted token names: scale paper/wash, the highlight-8 ring, the
-// cta/cta-hover/cta-pressed fill trio (+ the cta-ink link trio), ink-9/ink-10 text,
+// cta/cta-hover/cta-pressed fill trio (+ the cta-ink link trio), ink-9/10/11 text,
 // on-cta on-fill text. (on-highlight died with highlight-9, owner 2026-07-29 — the
 // on-emphasis text is --paper-0 in the semantic layer now.)
 type Family = 'brand' | 'accent'
@@ -31,7 +31,7 @@ function accentModeCss(mode: AccentMode, primary: Family, subtle: Family): strin
   const other = (f: Family): Family => (f === 'brand' ? 'accent' : 'brand')
   const prim = (f: Family): string => (f === 'brand' ? 'brand' : 'secondary')
   const PRIMARY_ROLES: Array<[string, string]> = [
-    ['fg', 'ink-10'], ['fg-hover', 'ink-9'], ['fg-alt', 'ink-9'], ['fg-alt-hover', 'ink-10'], ['fg-on-emphasis', 'on-cta'],
+    ['fg', 'ink-11'], ['fg-hover', 'ink-9'], ['fg-alt', 'ink-9'], ['fg-alt-hover', 'ink-11'], ['fg-on-emphasis', 'on-cta'],
     ['bg-emphasis', 'cta'], ['bg-emphasis-hover', 'cta-hover'], ['bg-emphasis-pressed', 'cta-pressed'],
     ['border-default', 'wash-6'], ['border-default-hover', 'highlight-8'],
     ['border-emphasis', 'cta'], ['border-emphasis-hover', 'cta-hover'],
@@ -53,8 +53,8 @@ function accentModeCss(mode: AccentMode, primary: Family, subtle: Family): strin
   // not re-point them): --fg-link rides --link from semantic.css, no per-mode override
   lines.push(`}`)
   if (subtle !== primary) {
-    lines.push(`[data-accent-mode="${mode}"] .u-btn-subtle { color: var(--${prim(subtle)}-ink-10); }`)
-    lines.push(`[data-accent-mode="${mode}"] .u-btn-ghost:hover { color: var(--${prim(subtle)}-ink-10); }`)
+    lines.push(`[data-accent-mode="${mode}"] .u-btn-subtle { color: var(--${prim(subtle)}-ink-11); }`)
+    lines.push(`[data-accent-mode="${mode}"] .u-btn-ghost:hover { color: var(--${prim(subtle)}-ink-11); }`)
   }
   return lines.join('\n')
 }
@@ -399,7 +399,7 @@ export function Showcase(props: {
         <section>
           <SectionLabel>Typography</SectionLabel>
           <p style={{ margin: 0, lineHeight: 1.6, color: 'var(--fg-default)' }}>
-            Default body text uses <strong>neutral-ink-10</strong> for maximum readability.{' '}
+            Default body text uses <strong>neutral-ink-11</strong> for maximum readability.{' '}
             <a href="#" className="u-link">Link text uses brand-ink-9</a>,
             which meets 4.5:1 AA contrast.{' '}
             <span style={{ color: 'var(--fg-subtle)' }}>Subtle text uses neutral-ink-9 for secondary information.</span>
@@ -439,7 +439,7 @@ export function Readout({ r }: { r: ResolvedBrand }) {
 // --{prefix}-N vars). Kept in emit order; cta stays off-scale and out of the strip.
 export const SCALE_STOP_NAMES = [
   'paper-1', 'paper-2', 'paper-3', 'wash-4', 'wash-5', 'wash-6', 'wash-7',
-  'highlight-8', 'ink-9', 'ink-10',
+  'highlight-8', 'ink-9', 'ink-10', 'ink-11',
 ] as const
 
 // Labeled single-row scale strip — used where multiple scales stack tight
@@ -514,7 +514,7 @@ export function IllustrationLegend() {
     ['#9DC4FF', 'Primary soft', 'brand tint (slot 2)', 'var(--illus-primary-soft)'],
     ['#FF7A00', 'Alt', 'brand deep (slot 4) mono → secondary mid two-color', 'var(--illus-alt)'],
     ['#FFD6A8', 'Alt soft', 'brand tint (slot 2) mono → secondary tint two-color', 'var(--illus-alt-soft)'],
-    ['#1A1A1A', 'Ink', 'neutral-12 ink', 'var(--illus-ink)'],
+    ['#1A1A1A', 'Ink', 'neutral ink-11', 'var(--illus-ink)'],
     ['#9E9E9E', 'Muted', 'neutral-8 — never branded', 'var(--illus-muted)'],
     ['#FFFFFF', 'Paper', 'neutral-1 — flips correctly in dark mode', 'var(--illus-paper)'],
   ]

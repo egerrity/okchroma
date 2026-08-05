@@ -79,9 +79,13 @@ for (const H of HUES) for (const C of CHROMAS) {
     const vsP3 = (st: typeof s8b) => contrastRatio(wcagY(st.L, clampChromaToGamut(st.L, st.C, st.H), st.H), p3Y)
     if (vsP3(i9) <= vsP3(s8b) + 1e-6)
       fails.push({ seed: id, mode, check: 'band-order', detail: `ink-9 ${vsP3(i9).toFixed(2)} !> highlight-8 ${vsP3(s8b).toFixed(2)} vs paper-3`, sev: 12 })
-    const t10 = byStop(9)!, t11 = byStop(10)!
-    const inkBad = mode === 'light' ? t11.L > t10.L + 1e-6 : t11.L < t10.L - 1e-6
-    if (inkBad) fails.push({ seed: id, mode, check: 'ink-order', detail: `ink-9 L${t10.L.toFixed(3)} vs ink-10 L${t11.L.toFixed(3)}`, sev: 10 })
+    // the ink band is strictly monotonic — darker per stop in light, lighter in dark
+    // (three stops since C49: 9 the first text, 10 the between, 11 the strong)
+    for (const [lo, hi] of [[9, 10], [10, 11]] as const) {
+      const a = byStop(lo)!, b = byStop(hi)!
+      const inkBad = mode === 'light' ? b.L > a.L + 1e-6 : b.L < a.L - 1e-6
+      if (inkBad) fails.push({ seed: id, mode, check: 'ink-order', detail: `ink-${lo} L${a.L.toFixed(3)} vs ink-${hi} L${b.L.toFixed(3)}`, sev: 10 })
+    }
     // 4. in-gamut + valid rgb for every stop
     for (const st of s) {
       const gC = clampChromaToGamut(st.L, st.C, st.H)
@@ -115,25 +119,27 @@ for (const H of HUES) for (const C of CHROMAS) {
     const hoverUp = ctaHover.L > cta.L
     if ((ctaPressed.L > cta.L) !== hoverUp || Math.abs(ctaPressed.L - cta.L) < Math.abs(ctaHover.L - cta.L) - 1e-9)
       fails.push({ seed: id, mode, check: 'pressed-travel', detail: `cta L${cta.L.toFixed(3)} hover L${ctaHover.L.toFixed(3)} pressed L${ctaPressed.L.toFixed(3)}`, sev: 10 })
-    // 5c. the cta-ink trio: rest MATCHES the resolved ink-9 exactly; PRESSED MATCHES
-    //    ink-10 exactly (owner 2026-07-16 restrengthening — "too subtle when text only":
-    //    press lands on the family's 7:1 register); HOVER (the doubled step) may never
-    //    read under the declared ink-9 bar (the state floor — a dark hover darkening
-    //    toward the paper is the case that keeps link states legal).
-    const i10 = byStop(9)!
-    if (Math.abs(ctaInk.L - i10.L) > 1e-9 || Math.abs(ctaInk.C - i10.C) > 1e-9 || Math.abs(ctaInk.H - i10.H) > 1e-9)
-      fails.push({ seed: id, mode, check: 'cta-ink-anchor', detail: `ink L${ctaInk.L.toFixed(4)} != ink-9 L${i10.L.toFixed(4)}`, sev: 20 })
-    const i11 = byStop(10)!
-    if (Math.abs(ctaInkPressed.L - i11.L) > 1e-9 || Math.abs(ctaInkPressed.C - i11.C) > 1e-9 || Math.abs(ctaInkPressed.H - i11.H) > 1e-9)
-      fails.push({ seed: id, mode, check: 'cta-ink-pressed-anchor', detail: `pressed L${ctaInkPressed.L.toFixed(4)} != ink-10 L${i11.L.toFixed(4)}`, sev: 20 })
-    const t10req = spec.stops.find(x => x.stop === 9)!.require
-    for (const [nm, st] of [['cta-ink-hover', ctaInkHover], ['cta-ink-pressed', ctaInkPressed]] as const) {
-      if (t10req?.metric === 'wcag') {
+    // 5c. the cta-ink trio is PURE STOP REFERENCES (C49, owner 2026-08-05): enabled ≡
+    //    ink-9, hover ≡ ink-10 (the between text stop — the retired role-side state-step
+    //    law's successor), pressed ≡ ink-11. Exact-match all three; each stop's own
+    //    require (T9/T10/T11) carries the legibility law, and the per-state floor checks
+    //    below assert the states still read at their referenced stops' bars.
+    const refs: Array<[string, { L: number; C: number; H: number }, number]> = [
+      ['cta-ink-anchor', ctaInk, 9], ['cta-ink-hover-anchor', ctaInkHover, 10], ['cta-ink-pressed-anchor', ctaInkPressed, 11],
+    ]
+    for (const [check, role, stopN] of refs) {
+      const st = byStop(stopN)!
+      if (Math.abs(role.L - st.L) > 1e-9 || Math.abs(role.C - st.C) > 1e-9 || Math.abs(role.H - st.H) > 1e-9)
+        fails.push({ seed: id, mode, check, detail: `L${role.L.toFixed(4)} != ink-${stopN} L${st.L.toFixed(4)}`, sev: 20 })
+    }
+    for (const [nm, st, reqStop] of [['cta-ink-hover', ctaInkHover, 10], ['cta-ink-pressed', ctaInkPressed, 11]] as const) {
+      const req = spec.stops.find(x => x.stop === reqStop)!.require
+      if (req?.metric === 'wcag') {
         const got = contrastRatio(wcagY(st.L, clampChromaToGamut(st.L, st.C, st.H), st.H), p2Y)
-        if (got < t10req.target - 1e-3) fails.push({ seed: id, mode, check: `${nm}-floor`, detail: `got ${got.toFixed(2)} < ${t10req.target}`, sev: 15 })
-      } else if (t10req?.metric === 'apca') {
+        if (got < req.target - 1e-3) fails.push({ seed: id, mode, check: `${nm}-floor`, detail: `got ${got.toFixed(2)} < ${req.target}`, sev: 15 })
+      } else if (req?.metric === 'apca') {
         const got = Math.abs(apcaLc(apcaYAt(st.L, clampChromaToGamut(st.L, st.C, st.H), st.H), p2ApcaY))
-        if (got < t10req.targetLc - APCA_TOL_LC) fails.push({ seed: id, mode, check: `${nm}-floor`, detail: `|Lc| ${got.toFixed(1)} < ${t10req.targetLc}`, sev: 15 })
+        if (got < req.targetLc - APCA_TOL_LC) fails.push({ seed: id, mode, check: `${nm}-floor`, detail: `|Lc| ${got.toFixed(1)} < ${req.targetLc}`, sev: 15 })
       }
     }
     // 5d. REPORT-ONLY — the on-cta pole chosen at rest, read on the PRESSED fill (pressed

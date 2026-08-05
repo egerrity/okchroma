@@ -101,8 +101,8 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   const declaredAnchor = (req: Require): number =>
     req.metric === 'min-separation' ? 1 : AGAINST_STOP[req.against] ?? 2
   // THE INK ANCHOR (owner rule 2026-07-28: "ink-10 can only be used on papers" — and it
-  // must PASS on all of them): in the WCAG lane the ink requires (stops 9-10 + the
-  // cta-ink state floor) anchor at paper-3, the NEAREST paper (light's darkest, dark's
+  // must PASS on all of them): in the WCAG lane the ink requires (the ink stops
+  // 9–11) anchor at paper-3, the NEAREST paper (light's darkest, dark's
   // lightest), so clearing the bar there clears every paper. The apca lane keeps its
   // paper-2 anchor — its Lc solve already clears paper-3 with margin everywhere
   // (agnostic sweep worst 5.28 wcag-ratio, 0/216 under 4.5) and stays byte-identical.
@@ -145,10 +145,6 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   // ever set either, so the ink solve always ran at deepen 0. Removing them rather than
   // renumbering them keeps a dead knob from naming a stop that no longer means what it said.)
   const INK_DEEPEN = 0
-
-  // the dark ink-9 chroma closure, captured while the loop resolves ink-9 — the cta-ink
-  // states re-evaluate the SAME register at their own L (incl. the delta-carry twin carve-out)
-  let darkInk9ChromaAt: ((L: number) => number) | null = null
 
   for (const sp of spec.stops) {
     let placed: { L: number; C: number; H: number }
@@ -196,11 +192,10 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         // chroma-floor index clamps at 0: stop 0 shares paper-1's tint treatment
         : darkScaleChromaAt(ctx, d, Math.max(0, sp.stop - 1), sp.satFraction ?? 1)
       // DELTA-KEYED: derive dark from the resolved light twin for the SURFACE stops 1–8 (papers, washes,
-      // focus ring). INKS 9/10 are dark-native (owner 2026-07-09): text INVERTS across modes — there is
+      // focus ring). INKS 9–11 are dark-native (owner 2026-07-09): text INVERTS across modes — there is
       // no "same color, re-referenced" for a stop that crosses the paper; carrying a dark-gold ink's hue up
-      // ~0.3 L lands in a different hue family (gold→orange). The C9/C11 dark text register + the T9/T10
-      // requires own the inks, on the seed-keyed path below.
-      if (sp.group === 'ink' && sp.stop === 9 && chromaAt) darkInk9ChromaAt = chromaAt
+      // ~0.3 L lands in a different hue family (gold→orange). The C9/C11 dark text register + the
+      // T9/T10/T11 requires own the inks, on the seed-keyed path below.
       // C28 SIGNAL WARM DRIFT: the re-derived hue for this stop (signals only), else null
       let spineH: number | null = null
       const dl = ctx.opts?.deltaLightStops
@@ -568,54 +563,23 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     if (chosen < onFloor && other >= onFloor) onFillIsWhite = !onFillIsWhite
   }
 
-  // ---- the CTA-INK trio (owner respec 2026-07-16): the family's 4.5 text-register cta —
-  // the link-color escape. cta-ink MATCHES the resolved ink-9 exactly (same L/C/H — the
-  // family's text stop IS its 4.5 rendition). States RESTRENGTHENED (owner 2026-07-16,
-  // "too subtle to be noticeable when text only"): HOVER takes the doubled hoverL step
-  // (the former pressed derivation) with hue held constant and chroma re-evaluated at the
-  // state L through the SAME ink register; the ink-9 contrast require rides it as a
-  // FLOOR (light darkens into more contrast — never fires; a dark hover reading under the
-  // bar is pulled back toward ink-9's L). PRESSED mimics ink-10 EXACTLY — the family's
-  // stronger text register (the rest≡ink-9 idiom extended: press lands on the 7:1 stop;
-  // its floor rides along by construction; monotonic darker in light, brighter in dark).
-  const ink9 = stops.find(s => s.stop === 9)
-  if (!ink9) throw new Error('spec has no ink stop 9 — the cta-ink roles anchor at it')
-  const sp9 = spec.stops.find(s => s.stop === 9)!
-  const inkCFor: (L: number) => number = mode === 'light'
-    ? (L) => ctx.cAt('light', L, Math.min((sp9.chromaMult ?? 1) * ctx.brandC, sp9.inkMaxC ?? Infinity))
-    : darkInk9ChromaAt ?? ((_L) => ink9.C)
-  const inkStateL = (L0: number): number => {
-    const req = sp9.require
-    if (!req || req.metric === 'min-separation') return L0
-    const isApca = req.metric === 'apca'
-    const refY = isApca ? refApcaYOf(declaredAnchor(req), 9) : refYOf(wcagAnchorStop(req, 9), 9)
-    const measure = (L: number): number => {
-      const C = clampChromaToGamut(L, inkCFor(L), ink9.H)
-      return isApca ? Math.abs(apcaLc(apcaYAt(L, C, ink9.H), refY)) : legalRatio(L, C, ink9.H, refY)
-    }
-    const target = isApca ? req.targetLc : req.target
-    if (measure(L0) >= target - (isApca ? APCA_TOL_LC : 1e-5)) return L0
-    // failing state: bisect back toward ink-9's own L (which passes by construction),
-    // landing just past the bar on the passing side — the house floor idiom
-    const solveTo = target + (isApca ? APCA_SOLVE_MARGIN_LC : 0.05)
-    let fail = L0, pass = ink9.L
-    for (let i = 0; i < 24; i++) {
-      const m = (fail + pass) / 2
-      measure(m) >= solveTo ? (pass = m) : (fail = m)
-    }
-    return pass
+  // ---- the CTA-INK trio: PURE STOP REFERENCES (C49, owner 2026-08-05). The family's
+  // 4.5 text-register cta — the link-color escape — is the ink band read as states:
+  // enabled ≡ ink-9 (the family's text stop IS its 4.5 rendition, owner 2026-07-16),
+  // hover ≡ ink-10 (the between text stop — until C49 a bespoke state-step value
+  // generated HERE; promoted to a normal scale stop the family aliases), pressed ≡
+  // ink-11 (the strong register). Monotonic darker in light / brighter in dark by the
+  // scaffold's shape; every legibility guarantee rides the stops' own requires
+  // (T9/T10/T11) — there is no role-side law left.
+  const inkStop = (n: number) => {
+    const s = stops.find(x => x.stop === n)
+    if (!s) throw new Error(`spec has no ink stop ${n} — the cta-ink trio references it`)
+    return s
   }
+  const ink9 = inkStop(9), ink10 = inkStop(10), ink11 = inkStop(11)
   const ctaInk = emitRole('cta-ink', ink9.L, ink9.C, ink9.H)
-  const ink10 = stops.find(s => s.stop === 10)
-  if (!ink10) throw new Error('spec has no ink stop 10 — cta-ink-pressed anchors at it')
-  // hover = the doubled step TOWARD ink-10 (the state axis rest→press). In light that is
-  // exactly pressedL's darken; in DARK ink-10 sits BRIGHTER than ink-9 and the naive
-  // darkening step fell into the ink-9 floor and collapsed onto rest — the maximally
-  // subtle state this respec exists to kill. Toward ink-10, the floor never fires (both
-  // directions gain contrast against paper-2).
-  const hL = inkStateL(ink9.L + Math.sign(ink10.L - ink9.L) * (0.06 / (ink9.L + 0.1)))
-  const ctaInkHover = emitRole('cta-ink-hover', hL, inkCFor(hL), ink9.H)
-  const ctaInkPressed = emitRole('cta-ink-pressed', ink10.L, ink10.C, ink10.H)
+  const ctaInkHover = emitRole('cta-ink-hover', ink10.L, ink10.C, ink10.H)
+  const ctaInkPressed = emitRole('cta-ink-pressed', ink11.L, ink11.C, ink11.H)
 
   // (on-highlight DELETED, owner 2026-07-29. It was solved here, judged at the emitted
   // highlight-9 and never fed back into the fill. C31 had already reduced it to a

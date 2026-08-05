@@ -180,7 +180,7 @@ The same modules as a table — each piece, where it lives, what it does. Groupe
 |---|---|---|
 | CSS emitter | `cssRender.ts` | `brandCss`/`neutralCss`/`signalsCss` — custom properties per family and mode, on-cta/on-highlight poles, P3 `@supports` override blocks, the outline secondary's cta shape. |
 | Figma emitter | `figmaRender.ts` | `themeToFigma` — the same theme as Figma variable collections (both plugins consume it). |
-| Token vocabulary | `tokenNames.ts` | The shared naming — paper-1/2/3, wash-4–7, highlight-8/9, ink-10/11, cta-1/2, ons — one vocabulary across CSS and Figma. |
+| Token vocabulary | `tokenNames.ts` | The shared naming — paper-1/2/3, wash-4–7, highlight-8, ink-9/10/11, the cta state families, ons — one vocabulary across CSS and Figma. |
 | Public API | `index.ts` | The dependency-free entry point: `resolveBrand`/`resolveTheme`. |
 
 **Product data & pipelines (`src/`)**
@@ -248,8 +248,9 @@ ResolvedBrand  = { scale, shearDeg, redRepel: {light,dark}|null,
 | 3 | `paper-3` | surface plane (light sink / dark pop) — renamed from wash-3, owner 2026-07-24 |
 | 4–7 | `wash-4` … `wash-7` | low-hierarchy fills, borders, decorative |
 | 8 | `highlight-8` | WCAG 1.4.11 **3:1** non-text step (borders, UI elements) |
-| 9 | `highlight-9` | emphasis fill — a **scale stop**, same machinery as the rest (stop 10 deleted 2026-07-09) |
-| 10–11 | `ink-10`, `ink-11` | text (4.5:1 / 7:1) |
+| 9 | `ink-9` | emphasis fill AND first text stop (4.5:1 — the 2026-07-29 highlight collapse) |
+| 10 | `ink-10` | the between text stop (6.5:1 — C49, the promoted cta-ink-hover value) |
+| 11 | `ink-11` | strong text (7:1) |
 | off-scale | `cta-1`, `cta-2` | the **only** off-scale tokens: the pulled-out solid button fill + hover |
 | computed | `on-cta`, `on-highlight` | black/white text for those fills |
 | literal | `identity` | the exact input hex (brand / secondary only) |
@@ -276,9 +277,9 @@ it. Three phases per stop, in order:
   `okchroma-reqtoken@2` — they are the house style *of this resolver*, not portable data.
 - **require** — declared floors, checked and enforced against **resolved** stops (never a
   cached value, so a pushed stop automatically re-solves everything referencing it):
-  - `{ metric: 'wcag', against: 'paper-2', target }` — `highlight-8` 3:1, `ink-10` 4.5,
-    `ink-11` 7.0, declared in **both modes** (light clamps down; dark raises off the
-    paper; a placement that already clears doesn't move).
+  - `{ metric: 'wcag', against: 'paper-2', target }` — `highlight-8` 3:1, `ink-9` 4.5,
+    `ink-10` 6.5, `ink-11` 7.0, declared in **both modes** (light clamps down; dark
+    raises off the paper; a placement that already clears doesn't move).
   - `{ metric: 'min-separation', against: 'paper-1' | 'prev', target }` — OKLab ΔE seam
     floors: `paper-2` ≥ 0.028 off `paper-1`; every wash seam ≥ 0.012 off its predecessor
     (guards low-chroma seeds, where chroma contributes nothing to seam distance).
@@ -357,8 +358,8 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
   a requirement on the declared stop (`spec.ts`): light iterates a fixed-point clamp down;
   dark raises a failing hue off the near-black paper (today's dark scaffold already clears
   it everywhere measured — the declaration makes that a guarantee, not an observation).
-- **Text-stop contrast floors, declared in both modes** — `ink-10` → 4.5:1, `ink-11` → 7:1
-  against `paper-2`.
+- **Text-stop contrast floors, declared in both modes** — `ink-9` → 4.5:1, `ink-10` →
+  6.5:1, `ink-11` → 7:1 against `paper-2` (the WCAG lane re-anchors them at `paper-3`).
 - **Seam separation floors (light)** — `paper-2` must stand OKLab ΔE ≥ 0.028 off
   `paper-1`; every wash seam ≥ 0.012 off its predecessor. The wash rootLs (3–7) were
   re-spaced downward to absorb the paper-2 push holistically, so the floors bind almost
@@ -502,7 +503,7 @@ into `_site/` (rewriting `../` paths for the `/okchroma/` project subpath) → p
 These are deliberate v1 scope boundaries, tracked for later work:
 
 1. **Mixed contrast model.** `highlight` on-text is judged by APCA (Lc 60); everything else
-   (`cta`, `ink-10/12`, `highlight-8`) uses WCAG. Under a strict WCAG 2.x audit, many
+   (`cta`, the ink stops, `highlight-8`) uses WCAG. Under a strict WCAG 2.x audit, many
    highlight fills' text reads below 4.5:1 (fine under APCA). An opt-in APCA *profile* now
    exists (`contrastProfile: 'apca'` re-solves the scale's contrast requires under Lc targets
    via `withProfile()` — see docs/schema.md); the Lc map, default exposure, and moving the

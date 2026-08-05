@@ -324,7 +324,7 @@ export const darkInkChromaAt = (ctx: Ctx, dctx: DarkCtx, floorBase: number, mult
 
 // (darkHighlightChromaAt DELETED with highlight-9, owner 2026-07-29.)
 
-// dark perceptual placement (stops 1–7, 9/10): placeDarkStop verbatim (colorEngine.ts:396–399).
+// dark perceptual placement (stops 1–7, 9–11): placeDarkStop verbatim (colorEngine.ts:396–399).
 // `lift` = the 'perceptual-lift' producer: the H-K solve may raise a hue above its scaffold (low-boost
 // hues like yellow) but never place it BELOW (high-boost hues — blue/violet — otherwise sink under the
 // near-black neutral surfaces they render on: the blue-recede failure). "Dark fills lift, never sink,"

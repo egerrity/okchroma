@@ -36,6 +36,7 @@ import { SIGNALS } from '../src/engine/signals'
 import { resolveBrand, signalScalesFor, SOFT_ON_CTA_ALPHA } from '../src/engine/resolve'
 import { wcagY, contrastRatio, apcaY, apcaLc, clampChromaToGamut, oklchToLinearRgb } from '../src/engine/constraints'
 import { YELLOW_BAND, DARK_BRAND_FILL_MIN_L, NEUTRAL_CTA_DARK_POP_CLEARANCE } from '../src/engine/stopTable'
+import { SCALE_STOP_COUNT } from '../src/engine/tokenNames'
 import { generateNeutralScale, generateScale, type GeneratedScale, type ColorStop } from '../src/engine/colorEngine'
 import { darkChromaCurve } from '../src/engine/darkChromaCurve'
 import { CTA_ONFILL_ENFORCE_LC } from '../src/reqtoken/profiles'
@@ -242,7 +243,10 @@ for (const sig of SIGNALS) {
     if (pol) ok(onApcaLc(st, true) >= CTA_ONFILL_ENFORCE_LC - 1, `signal ${sig.name} ${mode} apca: enforced white on-cta below Lc ${CTA_ONFILL_ENFORCE_LC - 1} (${onApcaLc(st, true).toFixed(1)})`)
     else ok(onApcaLc(st, false) >= onApcaLc(st, true), `signal ${sig.name} ${mode} apca: black pole chosen but white reads better`)
   }
-  ok(s.light.length === 10 && s.dark.length === 10, `signal ${sig.name} not a clean 10-stop scale (light ${s.light.length}, dark ${s.dark.length})`)
+  // stop count DERIVED (the gamut-sweep lesson, 2026-07-29): hardcoding it fails on
+  // every seed the moment a stop lands or dies
+  ok(s.light.length === SCALE_STOP_COUNT && s.dark.length === SCALE_STOP_COUNT,
+    `signal ${sig.name} not a clean ${SCALE_STOP_COUNT}-stop scale (light ${s.light.length}, dark ${s.dark.length})`)
   // wcag lane: the ratio law
   const w = SIGNALS_WCAG.get(sig.name)!.scale
   for (const [mode, st, pol] of [['light', w.cta, w.onFillTextIsWhite], ['dark', w.ctaDark, w.onFillTextIsWhiteDark]] as const) {

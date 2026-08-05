@@ -93,19 +93,19 @@ const STAMP = 'OKChroma · modes: light · dark (WCAG 3:1/4.5/7:1)'
 // Token renames (old leaf → new leaf), migrated IN PLACE on the existing variable —
 // Figma keeps the variable id on rename, so user bindings survive (owner 2026-07-09:
 // cheap by design; a future rename is one more entry). Mirrored in plugin/code.ts.
-// The ink renumber entries (owner 2026-07-10) shift every name DOWN by one; safe only
-// because tokens are processed in ladder (ascending) order and each migration self-deletes
-// its consumed key — new ink-10 eats old ink-11 BEFORE new ink-11 is looked up. Any future
-// renumber must keep that ascending order.
+// DOWNWARD renumber entries are safe only because tokens are processed in ladder
+// (ascending) order and each migration self-deletes its consumed key. An UPWARD
+// renumber (C49) CANNOT ride this table at all — ensure() matches the exact name
+// before any candidate, so the ascending walk would hand the vacating row to the
+// wrong stop; see the inkUpshifts pre-pass in the apply handler.
 const RENAMED_LEAVES: Array<[string, string]> = [
   // ── BAND GROUPING (owner 2026-07-27): families nest into paper/ wash/
   // highlight/ ink/ (bare-number leaves) + cta/ cta-ink/ (state leaves, the
   // system/link idiom); on-colors ride their carrier (cta/on, highlight/on).
-  // CURRENT-name entries MUST precede the historical retargets: candidates are
-  // tried in table order, and a current base holds BOTH ink-11 (scale) and
-  // ink-12 (anchor) — resolving ink/11 must consume ink-11 before the
-  // pre-renumber ['ink-12','ink/11'] entry can capture the anchor. Ascending
-  // processing + self-deleting consumed keys keep the chains sound.
+  // Entry ORDER is load-bearing: candidates are tried in table order and
+  // consumed keys self-delete, which is how one flat spelling (ink-11, ink-12)
+  // can mean different stops in different vintages — the earlier-target ensure
+  // eats its own vintage's row first, freeing the name for the later one.
   ['paper-0', 'paper/0'],
   ['paper-1', 'paper/1'],
   ['paper-2', 'paper/2'],
@@ -115,9 +115,15 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['wash-6', 'wash/6'],
   ['wash-7', 'wash/7'],
   ['highlight-8', 'highlight/8'],
+  // ── ink flats, 2026-07-10-numbering vintage (pre-banding files, 07-10 → 07-27).
+  // C49 restored the strong ink's and the anchor's pre-C33 numbers, so these map
+  // one-hop to homes that are now NUMBER-TRUE for this vintage (the pre-C49 table
+  // had homed flat ink-10 — that era's FIRST text stop — onto the then-strong
+  // ink/10, a wrong-by-one latent C46's sweep class predicted).
   ['ink-9', 'ink/9'],
-  ['ink-10', 'ink/10'],
+  ['ink-10', 'ink/9'],
   ['ink-11', 'ink/11'],
+  ['ink-12', 'ink/12'],
   ['cta', 'cta/enabled'],
   ['cta-hover', 'cta/hover'],
   ['cta-pressed', 'cta/pressed'],
@@ -149,23 +155,22 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // new name — a token called offset-08 holding 12%. The value-correction pass further down
   // (the RUNG_ALPHAS loop) is what actually re-values it; do not delete one without the other.
   ['offset-12', 'offset-08'],
-  // ── THE 2026-07-29 COLLAPSE. highlight/9 and highlight/on are DELETED (they ORPHAN —
-  // the plugin reports orphans, it never deletes a user's variables), and every ink name
-  // shifts DOWN one: ink/10 → ink/9, ink/11 → ink/10, ink/12 → ink/11. That last row is
-  // the off-scale anchor, so the NAME ink/11 changes meaning between vintages — which is
-  // exactly why order matters here. Same discipline as the 2026-07-10 pass: paths are
-  // ensured in ladder order, so ink/9 consumes ink/10 BEFORE ink/10 is looked up, and
-  // ink/10 consumes ink/11 before ink/11 is. One row per vintage, banded first.
+  // ── THE 2026-07-29 COLLAPSE, under C49 numbering. highlight/9 and highlight/on are
+  // DELETED (they ORPHAN — the plugin reports orphans, it never deletes a user's
+  // variables). Of C33's three downshift entries only the first survives: C49 gave the
+  // strong ink and the anchor their pre-C33 names back, so a pre-C33-banded file's
+  // ink/11 and ink/12 rows are ALREADY correctly named — an entry would be an identity
+  // mapping at best and a hijack at worst.
   ['ink/10', 'ink/9'],
-  ['ink/11', 'ink/10'],
-  ['ink/12', 'ink/11'],
-  // ── pre-banding flat names at the 2026-07-10 numbering
-  ['ink-11', 'ink/10'],
-  ['ink-12', 'ink/11'],
-  // ── pre-banding flat names from BEFORE the 2026-07-10 renumber (two renumbers back)
+  // ── pre-banding flat names from BEFORE the 2026-07-10 renumber (two renumbers back:
+  // first text = ink-11, strong = ink-12, anchor = ink-13). Vintage disambiguation vs
+  // the 07-10 flats above is by ensure order + consumption: ink/9 (ensured first) eats
+  // an old-old file's ink-11 — a 07-10 file's ink-11 survives for ink/11 because ink/9
+  // consumed that file's ink-10 instead — then ink/11 falls through its own-name
+  // candidate to this vintage's ink-12, and ink/12 to ink-13.
   ['ink-11', 'ink/9'],
-  ['ink-12', 'ink/10'],
-  ['ink-13', 'ink/11'],
+  ['ink-12', 'ink/11'],
+  ['ink-13', 'ink/12'],
   // blue-signal variant relabels (2026-07-13, info-color → blue): variant leaf =
   // label + resolved light-cta hex (variantKey), so the relabel needs per-lane entries.
   ['magenta-de8df6', 'magenta-side-de8df6'],
@@ -216,7 +221,7 @@ const RENAMED_GROUPS: Array<[string, string]> = [
   ['blue/', 'info/'],
 ]
 // Every legacy spelling of `path`: old leaf, old group, and old group + old leaf composed
-// (a file untouched since before BOTH renames needs e.g. system/info-color/ink-11 → system/blue/ink-10).
+// (a file untouched since before BOTH renames needs e.g. system/info-color/ink-11 → system/blue/ink/9).
 function legacyCandidates(path: string): string[] {
   const out: string[] = []
   const leafVariants = [path]
@@ -356,6 +361,27 @@ figma.ui.onmessage = async (msg) => {
       const existingExt = extsOfBase.find(e => norm(e.getPluginData(BRAND_KEY)) === norm(brand))
         ?? extsOfBase.find(e => norm(e.name) === norm(brand))
 
+      // ── C49 UPWARD RENUMBER (owner 2026-08-05): the strong ink goes ink/10 → ink/11 and
+      // the anchor neutral/ink/11 → neutral/ink/12 (their pre-C33 names back), freeing
+      // ink/10 for the new between text stop. An upward shift cannot ride RENAMED_LEAVES:
+      // ensure() matches the exact name before any legacy candidate, so the ascending
+      // ladder would hand the vacating strong row to the new stop. The renames are
+      // COMPUTED here — read-only, so the newRows detection and the confirm see the
+      // post-rename shape — and EXECUTED only after authorization, right before the
+      // ensure ladder (the identity-absolutes idiom). Guards no-op every other vintage:
+      // post-C49 files have ink/12; pre-C33 files already hold C49-true names at 11/12.
+      const inkUpshifts: Array<[string, string]> = []
+      if (baseMatch) {
+        if (baseVars.has('neutral/ink/11') && !baseVars.has('neutral/ink/12') && baseVars.has('neutral/ink/10'))
+          inkUpshifts.push(['neutral/ink/11', 'neutral/ink/12'])
+        for (const p of [...baseVars.keys()].filter(k => k.endsWith('/ink/10')).sort()) {
+          const fam = p.slice(0, -'/ink/10'.length)
+          const strongAlreadyAt11 = baseVars.has(`${fam}/ink/11`)
+            && !inkUpshifts.some(([from]) => from === `${fam}/ink/11`)
+          if (!strongAlreadyAt11) inkUpshifts.push([p, `${fam}/ink/11`])
+        }
+      }
+
       // New base ROWS this apply would create on an EXISTING base — the token-set-growth
       // posture (review-caught 2026-07-16: the C20 system/link rows appeared silently,
       // seeded from the DEFAULT SEED, and every other extension inherited those values
@@ -387,7 +413,13 @@ figma.ui.onmessage = async (msg) => {
             .filter((p: string) => !(p === 'system/abs-primary' && baseVars.has('brand-primary/identity')))
             .filter((p: string) => !(p === 'system/abs-secondary'
               && (baseVars.has('brand-secondary/identity') || !(baseHasSecondary || hasSecondary))))
-            .filter((p: string) => !baseVars.has(p) && !legacyCandidates(p).some(lp => baseVars.has(lp)))
+            // C49: a path an inkUpshift will FILL by rename is not new — and a vacating
+            // ink/10 name is new even though a row currently squats on it (the strong
+            // ink moves out; the between stop that replaces it needs the full new-row
+            // treatment: confirm + extension backfill so every brand carries its own)
+            .filter((p: string) => !inkUpshifts.some(([, to]) => to === p))
+            .filter((p: string) => inkUpshifts.some(([from]) => from === p)
+              || (!baseVars.has(p) && !legacyCandidates(p).some(lp => baseVars.has(lp))))
         : []
 
       // Nudge before surprising changes (v1's idiom — each needs a second Apply):
@@ -489,9 +521,9 @@ figma.ui.onmessage = async (msg) => {
       // its ink-9) falls back to a raw write, so the alias never constrains the
       // solve — the engine still picks the pole per family × column.
       // (highlight/on dropped from this list 2026-07-29 with the token; the neutral
-      // anchor renumbered ink/12 → ink/11 in the same round.)
+      // anchor is ink/12 — C49 restored its pre-collapse number.)
       const POLE_LEAVES = (path: string) =>
-        path.endsWith('/cta/on') || path === 'neutral/ink/11'
+        path.endsWith('/cta/on') || path === 'neutral/ink/12'
       // EXACT poles only (per-channel EPS): the engine emits true 0/1 poles, so a
       // loose band buys nothing — and the conversion pass below must never snap a
       // hand-edited near-pole value (#FFFFF8) onto the abs row (review-caught
@@ -534,17 +566,19 @@ figma.ui.onmessage = async (msg) => {
         if (t.a === undefined || t.a >= 1 - EPS || t.a <= EPS) return undefined
         return isPole({ r: t.r, g: t.g, b: t.b }) ? baseVars.get('system/alpha/ink') : undefined
       }
-      // TEXT-CTA SIBLING ALIASING (owner 2026-08-04): the cta-ink trios are REFERENCES over
-      // the family's own ink registers — enabled ≡ ink/9, pressed ≡ ink/10, and the neutral's
-      // strong mirror descends the same three values (enabled ≡ ink/10, hover ≡ cta-ink/hover,
-      // pressed ≡ ink/9; the shared hover is the one raw value). Alias the sibling so the
-      // relationship stays live in Figma (the cta/on→ink idiom). VALUE-GUARDED per column:
-      // the neutral cta escape swaps a brand's trio onto the NEUTRAL register — a leaf that
-      // no longer equals its own sibling must ship raw, never alias back to the family ink.
+      // TEXT-CTA SIBLING ALIASING (owner 2026-08-04; C49 completed it): the cta-ink trio
+      // is the ink band read as states — enabled ≡ ink/9, hover ≡ ink/10 (the between
+      // stop; until C49 the one raw value, generated at the role), pressed ≡ ink/11 —
+      // and the neutral's strong mirror descends the same three stops (11 → the shared
+      // hover → 9). Alias the sibling so the relationship stays live in Figma (the
+      // cta/on→ink idiom). VALUE-GUARDED per column: the neutral cta escape swaps a
+      // brand's trio onto the NEUTRAL register — a leaf that no longer equals its own
+      // sibling must ship raw, never alias back to the family ink.
       const INK_SIBLING: Array<[string, string]> = [
         ['/cta-ink/enabled', '/ink/9'],
-        ['/cta-ink/pressed', '/ink/10'],
-        ['/cta-ink-strong/enabled', '/ink/10'],
+        ['/cta-ink/hover', '/ink/10'],
+        ['/cta-ink/pressed', '/ink/11'],
+        ['/cta-ink-strong/enabled', '/ink/11'],
         ['/cta-ink-strong/hover', '/cta-ink/hover'],
         ['/cta-ink-strong/pressed', '/ink/9'],
       ]
@@ -569,6 +603,14 @@ figma.ui.onmessage = async (msg) => {
           const seed = seedByCol.get(activeCols[i])!.get(path)
           if (seed) seedValue(v, colIds[i], seed, activeCols[i])
         }
+      }
+      // C49 upward renumber, EXECUTED (computed + confirmed above): anchor first
+      // (its entry is first in the array), then each family's strong ink — the
+      // rename keeps the variable id, so user bindings ride to the new name and the
+      // vacated ink/10 is created fresh below with the between stop's value.
+      for (const [from, to] of inkUpshifts) {
+        const v = baseVars.get(from)
+        if (v && !baseVars.has(to)) { v.name = to; baseVars.set(to, v); baseVars.delete(from) }
       }
       // The abs poles are created FIRST (they are alias targets and the owner's panel
       // layout leads with them), then the elevation planes (aliased below once the

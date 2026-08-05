@@ -320,11 +320,12 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     for (const [name, c] of inkTrio)
       cells.push(`<div class="mx-aa" style="color:${hx(c)};font-size:15px;font-weight:800" title="${name}">Aa</div>`)
     // the neutral-only STRONG text-cta mirror (owner 2026-08-04): descends the same three
-    // values cta-ink ascends — enabled ≡ ink-10, hover ≡ cta-ink/hover (shared), pressed ≡
-    // ink-9. Non-neutral rows carry blank cells so the derived grid stays rectangular.
+    // stops cta-ink ascends — enabled ≡ ink-11, hover ≡ ink-10 (shared through
+    // cta-ink/hover), pressed ≡ ink-9 (C49 numbering). Non-neutral rows carry blank
+    // cells so the derived grid stays rectangular.
     if (row.strong) {
       const strongTrio = [
-        ['cta-ink-strong/enabled', st(10)],
+        ['cta-ink-strong/enabled', st(11)],
         ['cta-ink-strong/hover', row.scale.ctaInkHover],
         ['cta-ink-strong/pressed', st(9)],
       ] as const
@@ -448,7 +449,7 @@ function updatePreview() {
       primaryChip.style.background = '#ededf0'; primaryChip.style.color = '#646464'; primaryChip.style.borderColor = 'transparent'
     } else {
       primaryChip.style.background = hxs(at(t.themed.scale.light, 4))
-      primaryChip.style.color = hxs(at(t.themed.scale.light, 10))
+      primaryChip.style.color = hxs(at(t.themed.scale.light, 11))
       primaryChip.style.borderColor = 'transparent'
     }
     if (t.secondary) {
@@ -461,9 +462,9 @@ function updatePreview() {
       if (greyChip) {
         secondaryChip.style.background = '#ededf0'; secondaryChip.style.color = '#646464'; secondaryChip.style.borderColor = 'transparent'
       } else if (secondaryMode === 'custom' && secondaryStyle === 'outline') {
-        secondaryChip.style.background = 'transparent'; secondaryChip.style.color = hxs(at(sl, 10)); secondaryChip.style.borderColor = hxs(at(sl, 8))
+        secondaryChip.style.background = 'transparent'; secondaryChip.style.color = hxs(at(sl, 11)); secondaryChip.style.borderColor = hxs(at(sl, 8))
       } else {
-        secondaryChip.style.background = hxs(at(sl, 6)); secondaryChip.style.color = hxs(at(sl, 10)); secondaryChip.style.borderColor = 'transparent'
+        secondaryChip.style.background = hxs(at(sl, 6)); secondaryChip.style.color = hxs(at(sl, 11)); secondaryChip.style.borderColor = 'transparent'
       }
     }
     syncInfoLines()

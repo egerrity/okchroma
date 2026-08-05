@@ -169,21 +169,25 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
   // border is the button's identity, not a safety. Renamed from cta-stroke (owner 2026-07-09);
   // the Figma side renamed with it — plugins migrate existing variables in place.
   // cta family SEMANTIC-named (owner ruling 2026-07-16): cta/cta-hover/cta-pressed +
-  // the cta-ink trio (the 4.5 text-register link escape; rest matches ink-9).
+  // the cta-ink trio (the 4.5 text-register link escape; stops 9/10/11 as states — C49).
   const border = ctaNeedsBorder(s, mode, page)
   return [
     stopsToVars(stops, prefix),
     `  --${prefix}-cta: ${stopHex(f.cta)};`,
     `  --${prefix}-cta-hover: ${stopHex(f.ctaHover)};`,
     `  --${prefix}-cta-pressed: ${stopHex(f.ctaPressed)};`,
-    `  --${prefix}-cta-ink: ${stopHex(f.ctaInk)};`,
-    `  --${prefix}-cta-ink-hover: ${stopHex(f.ctaInkHover)};`,
-    `  --${prefix}-cta-ink-pressed: ${stopHex(f.ctaInkPressed)};`,
-    // the STRONG text-cta (neutral only, owner 2026-08-04): the mirror trio over the same
-    // three values cta-ink ascends (10 → between → 9), as pure references — the cta-border
-    // var() idiom, so P3 overrides of the referenced stops ride along for free
+    // the CTA-INK trio: pure references onto the ink band (C49 — the trio IS stops
+    // 9/10/11 read as states; hover was the last raw between value). The cta-border
+    // var() idiom, so P3 overrides of the referenced stops ride along for free; the
+    // ESCAPE and custom-link postures still override these raw, after this body.
+    `  --${prefix}-cta-ink: var(--${prefix}-ink-9);`,
+    `  --${prefix}-cta-ink-hover: var(--${prefix}-ink-10);`,
+    `  --${prefix}-cta-ink-pressed: var(--${prefix}-ink-11);`,
+    // the STRONG text-cta (neutral only, owner 2026-08-04): the mirror trio over the
+    // same three stops cta-ink ascends (11 → 10 → 9); hover shares the between stop
+    // through the cta-ink chain
     ...(prefix === 'neutral' ? [
-      `  --neutral-cta-ink-strong: var(--neutral-ink-10);`,
+      `  --neutral-cta-ink-strong: var(--neutral-ink-11);`,
       `  --neutral-cta-ink-strong-hover: var(--neutral-cta-ink-hover);`,
       `  --neutral-cta-ink-strong-pressed: var(--neutral-ink-9);`,
     ] : []),
@@ -216,7 +220,9 @@ export function brandKindP3Body(prefix: string, s: GeneratedScale, mode: 'light'
   const f = ctaFamilyOf(s, mode)
   const out: string[] = []
   for (const st of stops) if (p3Differs(st)) out.push(`  --${prefix}-${stopTokenName(st.stop)}: ${p3Value(st)};`)
-  for (const [name, st] of [['cta', f.cta], ['cta-hover', f.ctaHover], ['cta-pressed', f.ctaPressed], ['cta-ink', f.ctaInk], ['cta-ink-hover', f.ctaInkHover], ['cta-ink-pressed', f.ctaInkPressed]] as const)
+  // fill trio only: the cta-ink trio is var() references onto the ink stops (C49), so the
+  // stops' own P3 overrides above carry it — a raw override here would just shadow the chain
+  for (const [name, st] of [['cta', f.cta], ['cta-hover', f.ctaHover], ['cta-pressed', f.ctaPressed]] as const)
     if (p3Differs(st)) out.push(`  --${prefix}-${name}: ${p3Value(st)};`)
   return out
 }
@@ -229,7 +235,7 @@ export function brandKindP3Body(prefix: string, s: GeneratedScale, mode: 'light'
 export function neutralCss(selector: string, brandH: number, level: NeutralLevel = 'default', contrastProfile?: ContrastProfile, ctaBorder = true): string {
   const s = generateNeutralScale(brandH, level, contrastProfile)
   const nPage = (mode: 'light' | 'dark') => ctaBorder ? pageStopFor(s, mode) : undefined
-  // The universal paper-0/ink-11 anchors ride along: any scope that carries the
+  // The universal paper-0/ink-12 anchors ride along: any scope that carries the
   // ladder must also carry its mode-flipping extremes (semantic aliases like
   // --surface-pop resolve through them). paper-0 = the neutral's resolved
   // stop 0 (white in light; one seam below paper-1 in dark, never absolute black).
@@ -239,13 +245,13 @@ export function neutralCss(selector: string, brandH: number, level: NeutralLevel
   return [
     `${selector} {`,
     `  --paper-0: ${p0(s.paper0, '#ffffff')};`,
-    `  --ink-11: #000000;`,
+    `  --ink-12: #000000;`,
     // the neutral IS the page, so it is judged against its own paper stop
     ...brandKindBody('neutral', s, 'light', nPage('light')),
     `}`,
     `${selector}[data-theme="dark"] {`,
     `  --paper-0: ${p0(s.paper0Dark, '#000000')};`,
-    `  --ink-11: #ffffff;`,
+    `  --ink-12: #ffffff;`,
     ...brandKindBody('neutral', s, 'dark', nPage('dark')),
     `}`,
     ...(p3Light.length || p3Dark.length ? [
@@ -453,12 +459,12 @@ export function brandCss(
   // Universal scale anchors — the two off-scale ends that extend the paper→ink
   // ladder past its generated stops, flipping with the mode. paper-0 is now a
   // RESOLVED stop of the neutral ramp (white in light; one seam below paper-1
-  // in dark — never absolute black). ink-11 (the anchor) stays the literal ink
-  // extreme. Renumbered ink-12 → ink-11 with the 2026-07-29 collapse.
-  // Emitted per mode block so each resolves to the right pole.
+  // in dark — never absolute black). ink-12 (the anchor) stays the literal ink
+  // extreme — its pre-collapse number, restored by C49 (it spent 2026-07-29 →
+  // 2026-08-05 as ink-11). Emitted per mode block so each resolves to the right pole.
   const p0hex = (s: ColorStop | undefined, fallback: string) => (s ? stopHex(s) : fallback)
-  const lightAnchors = [`  --paper-0: ${p0hex(nScale.paper0, '#ffffff')};`, `  --ink-11: #000000;`]
-  const darkAnchors = [`  --paper-0: ${p0hex(nScale.paper0Dark, '#000000')};`, `  --ink-11: #ffffff;`]
+  const lightAnchors = [`  --paper-0: ${p0hex(nScale.paper0, '#ffffff')};`, `  --ink-12: #000000;`]
+  const darkAnchors = [`  --paper-0: ${p0hex(nScale.paper0Dark, '#000000')};`, `  --ink-12: #ffffff;`]
 
   // outline re-resolution: emitted AFTER the secondary body so the cascade takes these values.
   // cta-hover = highlight-8 at OUTLINE_HOVER_ALPHA (pressed doubles it) — the STABLE contrast-gated stop, the same one

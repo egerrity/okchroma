@@ -82,10 +82,11 @@ function flatten(node: FigmaGroup, prefix: string, out: FlatTok[]): void {
 // system root, then surface/, then alpha/): system → neutral → brand-primary →
 // brand-secondary → signals. The system/surface/sink|base|lift|pop planes are NOT here —
 // they are scheme-divergent aliases the plugin creates after the abs rows (ordering) and
-// wires once the neutral exists. neutral/ink/11 (the OFF-SCALE anchor — pure black in
+// wires once the neutral exists. neutral/ink/12 (the OFF-SCALE anchor — pure black in
 // light, pure white in dark) is injected right after the last real ink stop, in ladder
 // order. ⚠️ Its trigger is the LAST SCALE INK, so a stop renumber moves it: it fired on
-// ink/11 and emitted ink/12 until the 2026-07-29 collapse renumbered the inks down one. The alpha/shadow ladder (owner
+// ink/11 → emitted ink/12 pre-collapse, ink/10 → ink/11 through the C33 era, and C49
+// restored the original pairing. The alpha/shadow ladder (owner
 // 2026-07-27) is pure black at 4/8/12% light; dark is heavier by necessity — near black
 // a light-mode alpha vanishes — at 32/48/64%.
 function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boolean): FlatTok[] {
@@ -121,7 +122,7 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
   flatten(g.neutral as FigmaGroup, 'neutral', neutral)
   for (const t of neutral) {
     out.push(t)
-    if (t.path === 'neutral/ink/10') out.push({ path: 'neutral/ink/11', ...(scheme === 'light' ? K : W) })
+    if (t.path === 'neutral/ink/11') out.push({ path: 'neutral/ink/12', ...(scheme === 'light' ? K : W) })
   }
   // identity rows re-home to the system ABSOLUTES (owner 2026-07-27: the
   // unprocessed inputs sit with the poles — abs-primary/abs-secondary; the

@@ -21,7 +21,7 @@ export const STYLE_CSS = /* css */ `
      +2 hero    titlebar + brand-black shadow + ink-9 stroke → Customers (pop plane)
      +1 cards   wash-7 grey shadow + highlight-8 stroke            → Get started, Activity, sidebar
      −1 metrics surface-pop shadow (punched in) + wash-4 stroke    → metric tiles (compact)
-     ctas       ink-11 border + ink-9 shadow                      → primary/secondary cta buttons
+     ctas       ink-12 border + ink-9 shadow                      → primary/secondary cta buttons
    Every shadow color is a token (or the brand mix), so DARK FALLS OUT of the
    swap — no bespoke dark block (owner ruling 2026-07-27). */
 [data-style="retro"] .dash {
@@ -50,13 +50,13 @@ export const STYLE_CSS = /* css */ `
   border: 2.5px solid var(--rt-line) !important;
   box-shadow: var(--elev-pop) !important;
 }
-/* +2 hero ONLY: the action titlebar — BRAND ink-10 fill (owner: bar is a brand
+/* +2 hero ONLY: the action titlebar — BRAND ink-11 fill (owner: bar is a brand
    color), control squares in its wash partner (the active-nav pair, swapped);
    slimmed to 24px in the owner's 2026-07-27 set */
 [data-style="retro"] .dash .dash-card-customers { position: relative; padding-top: 24px !important; }
 [data-style="retro"] .dash .dash-card-customers::before {
   content: ""; position: absolute; top: 0; left: 0; right: 0; height: 24px;
-  background-color: var(--brand-ink-10);
+  background-color: var(--brand-ink-11);
   border-bottom: 2.5px solid var(--rt-line);
   background-image:
     linear-gradient(var(--brand-wash-5), var(--brand-wash-5)),
@@ -86,12 +86,12 @@ export const STYLE_CSS = /* css */ `
   font-size: 18px !important; font-weight: 700 !important; margin: 2px 0 !important;
 }
 [data-style="retro"] .dash .dash-metrics { gap: 10px; margin-bottom: 12px; }
-/* buttons: L4 stroke by default; L5 for the cta tiers — ink-11 border, ink-9
+/* buttons: L4 stroke by default; L5 for the cta tiers — ink-12 border, ink-9
    flat shadow (owner spec), press collapses into the surface */
 [data-style="retro"] .dash button { border: 2px solid var(--rt-line); }
 [data-style="retro"] .dash .u-btn-primary,
 [data-style="retro"] .dash .u-btn-secondary {
-  border: 2px solid var(--ink-11) !important;
+  border: 2px solid var(--ink-12) !important;
   box-shadow: 3px 3px 0 var(--brand-ink-9);
   transition: transform 90ms ease, box-shadow 90ms ease;
 }
@@ -101,7 +101,7 @@ export const STYLE_CSS = /* css */ `
 }
 /* INVERTED SELECTION — the active item swaps its own fill/text pair */
 [data-style="retro"] .dash .dash-navitem.active {
-  background: var(--brand-ink-10) !important;
+  background: var(--brand-ink-11) !important;
   color: var(--brand-wash-5) !important;
 }
 /* terminal grammar */

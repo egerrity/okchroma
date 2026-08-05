@@ -26,9 +26,9 @@ accessibility category it carries.
 | `wash-6`       | 0.8495 | 0.348 | ΔE ≥ 0.012 off `wash-5` (light) | decorative |
 | `wash-7`       | 0.797  | 0.420 | ΔE ≥ 0.012 off `wash-6` (light) | decorative |
 | `highlight-8`  | 0.738  | 0.550 | 3:1 vs `paper-2` (both modes) | WCAG 1.4.11 non-text: boundaries, UI elements |
-| `highlight-9`  | 0.600  | 0.600 | — (placed) | element fills with on-text |
-| `ink-10`       | 0.530  | 0.800 | 4.5:1 vs `paper-2` (both modes) | text, inverted fill |
-| `ink-11`       | 0.300  | 0.940 | 7:1 vs `paper-2` (both modes) | text, inverted fill |
+| `ink-9`        | 0.530  | 0.767 | 4.5:1 vs `paper-2` (both modes) | first text stop AND emphasis fill (the 2026-07-29 highlight collapse) |
+| `ink-10`       | 0.415  | 0.843 | 6.5:1 vs `paper-2` (both modes) | the between text stop (C49 — the promoted cta-ink-hover value) |
+| `ink-11`       | 0.300  | 0.919 | 7:1 vs `paper-2` (both modes) | strong text, inverted fill |
 
 ¹ `paper-2`'s rootL is the producer target; the separation requirement pushes the resolved
 stop darker per seed (typically to L ≈ 0.967) until it stands ΔE ≥ 0.028 off `paper-1`.
@@ -43,9 +43,10 @@ collapse two adjacent steps.
   scaffold clears its declared floors everywhere measured — declaring them means any
   future seed or tuning that would break dark legibility fails the gate
   (`npm run req:audit`) instead of shipping.
-- Off the scale: `cta-1` / `cta-2` are **roles**, not stops — the pulled-out button fill +
-  hover (also a 3:1 UI element). Fills that carry text ship `on-highlight` / `on-cta` —
-  see [On-fill text](#on-fill-text).
+- Off the scale: the `cta` state family (`cta`/`cta-hover`/`cta-pressed`) are **roles**,
+  not stops — the pulled-out button fill and its states. Fills that carry text ship
+  `on-cta` — see [On-fill text](#on-fill-text). The `cta-ink` trio is the ink band read
+  as states (enabled ≡ ink-9, hover ≡ ink-10, pressed ≡ ink-11 — C49).
 - Also off the scale despite the contiguous number: `ink-12` is the **universal anchor**
   (literal #000000 light / #ffffff dark, paired with `paper-0`) — a mode-flipping constant,
   not a per-brand resolved stop.

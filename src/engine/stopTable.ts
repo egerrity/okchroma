@@ -15,13 +15,19 @@ export interface StopSpec {
 // dark inks ran ~1.9× their light twins' WCAG contrast and the ink hierarchy flattened. Neutral
 // midpoint = #b3b3b3 / #e4e4e4; every family re-solves off the scaffold through the perceptual
 // placement, with the declared ink requires (spec.ts) as the floor.
+// ink-10 (owner 2026-08-05, C49): the between text stop — the value cta-ink-hover used to
+// generate bespokely, promoted to a normal stop the family aliases. Its rootLs are the
+// midpoints of its neighbors' ((0.530+0.300)/2, (0.767+0.919)/2): the retired state-step
+// law landed at 40–49% of the 9→11 gap (sweep-measured median 0.422 light / 0.834 dark),
+// so the literal midpoint reproduces it within ~0.01 L while being a declaration, not a
+// derivation off another stop.
 export const ROOT_L_LIGHT: Record<number, number> = {
   1: 0.987, 2: 0.970, 3: 0.950, 4: 0.924, 5: 0.892, 6: 0.852, 7: 0.801, 8: 0.738,
-  9: 0.530, 10: 0.300,
+  9: 0.530, 10: 0.415, 11: 0.300,
 }
 export const ROOT_L_DARK: Record<number, number> = {
   1: 0.178, 2: 0.213, 3: 0.252, 4: 0.285, 5: 0.313, 6: 0.348, 7: 0.420, 8: 0.550,
-  9: 0.767, 10: 0.919,
+  9: 0.767, 10: 0.843, 11: 0.919,
 }
 
 // The dark chroma-floor LADDER LAW: the floor a dark stop may not drop under, as a
@@ -71,7 +77,11 @@ export const SCALE_C_LIGHT: Record<number, ScaleChroma> = {
   7: { base: 0.086, sat: 0.78 },
   8: { base: 0.142, sat: 0.78 },
   9: { inkMult: 0.95, inkMaxC: 0.150, chromaFloor: chromaFloorBase(10) },
-  10: { inkMult: 0.50, inkMaxC: 0.080, chromaFloor: chromaFloorBase(11) },
+  // ink-10 keeps the FIRST-text register (ink-9's row, C49): the retired hover law
+  // evaluated ink-9's chroma register at the between L, so the same params reproduce it;
+  // the damped strong register below belongs to the top text stop alone.
+  10: { inkMult: 0.95, inkMaxC: 0.150, chromaFloor: chromaFloorBase(10) },
+  11: { inkMult: 0.50, inkMaxC: 0.080, chromaFloor: chromaFloorBase(11) },
 }
 // Dark: sat = the dark subtle-chroma ladder (values verbatim — the fold is
 // structure-only, byte-identical by contract).
@@ -86,7 +96,8 @@ export const SCALE_C_DARK: Record<number, ScaleChroma> = {
   7: { sat: 0.80 },
   8: { sat: 0.84 },
   9: { inkMult: 0.95, inkMaxC: 0.120, chromaFloor: chromaFloorBase(10) },
-  10: { inkMult: 0.62, inkMaxC: 0.045, chromaFloor: chromaFloorBase(11) },
+  10: { inkMult: 0.95, inkMaxC: 0.120, chromaFloor: chromaFloorBase(10) },
+  11: { inkMult: 0.62, inkMaxC: 0.045, chromaFloor: chromaFloorBase(11) },
 }
 // ── the DARK CTA chroma register (CATALOG C16, owner ruling 2026-07-12: "declare,
 // don't change"). The cta is off-scale, so the SCALE_C tables never covered it; its
@@ -219,7 +230,13 @@ export const YELLOW_BAND = { centerH: 92, sigmaDeg: 20 }
 // Named by ROLE, not by stop number, so the next renumber cannot make the name lie.
 export const INK_9_CONTRAST = 4.5
 
-export const INK_10_CONTRAST_FLOOR = 7.0
+// ink-10, the BETWEEN text stop (C49): a floor that never fires on the current geometry —
+// the perceptual placement at the midpoint rootL already reads 6.84:1+ vs paper-3 across
+// the 360-seed sweep (dark 8.80+) — so the stop stays purely placed while the register is
+// guaranteed. Sits between the 4.5 first-text bar and the 7.0 strong floor by design.
+export const INK_10_CONTRAST = 6.5
+
+export const INK_11_CONTRAST_FLOOR = 7.0
 
 // Dark fill min-L family — one concept (how light a fed dark fill may sit),
 // parameterized by consumer via the `darkFillMinL` opt: DARK_CTA_MIN_L is the

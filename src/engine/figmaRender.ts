@@ -97,9 +97,9 @@ function rampGroup(
     cta?: ColorStop; ctaHover?: ColorStop; ctaPressed?: ColorStop
     ctaInk?: ColorStop; ctaInkHover?: ColorStop; ctaInkPressed?: ColorStop
     // the STRONG text-cta (neutral only, owner 2026-08-04): the mirror trio over the same
-    // three values cta-ink ascends — enabled ≡ ink-10, hover ≡ cta-ink/hover (the shared
-    // between value), pressed ≡ ink-9. Emitted as raw values here; both plugins re-express
-    // all three as aliases (the cta-border idiom).
+    // three stops cta-ink ascends — enabled ≡ ink-11, hover ≡ ink-10 (shared through
+    // cta-ink/hover), pressed ≡ ink-9 (C49 numbering). Emitted as raw values here; both
+    // plugins re-express all three as aliases (the cta-border idiom).
     ctaInkStrong?: ColorStop; ctaInkStrongHover?: ColorStop; ctaInkStrongPressed?: ColorStop
     // the already-resolved border token — the decorative alpha stroke when this cta vibrates,
     // else transparent. Resolved by the caller because the choice is mode-dependent and
@@ -118,7 +118,8 @@ function rampGroup(
   if (extra?.cta) putLeaf(g, 'cta', colorFromStop(extra.cta))
   if (extra?.ctaHover) putLeaf(g, 'cta-hover', colorFromStop(extra.ctaHover))
   if (extra?.ctaPressed) putLeaf(g, 'cta-pressed', colorFromStop(extra.ctaPressed))
-  // cta-ink trio: the family's 4.5 text-register cta (link escape) — rest matches ink/10
+  // cta-ink trio: the family's 4.5 text-register cta (link escape) — the ink band read
+  // as states (enabled ≡ ink/9, hover ≡ ink/10, pressed ≡ ink/11; C49)
   if (extra?.ctaInk) putLeaf(g, 'cta-ink', colorFromStop(extra.ctaInk))
   if (extra?.ctaInkHover) putLeaf(g, 'cta-ink-hover', colorFromStop(extra.ctaInkHover))
   if (extra?.ctaInkPressed) putLeaf(g, 'cta-ink-pressed', colorFromStop(extra.ctaInkPressed))
@@ -206,13 +207,14 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
   // custom link seed resolved ONCE (both modes read it)
   const lt = input.linkHex ? resolveLinkTrio(input.linkHex, input.contrastProfile) : null
   // the neutral carries the STRONG text-cta mirror on top of the shared family shape:
-  // no new solved values — enabled/pressed are its own ink-10/ink-9 stops and hover is
-  // the family's cta-ink hover (the one raw between value both trios share)
+  // no new solved values — the mirror descends the same three stops cta-ink ascends
+  // (enabled ≡ ink-11, hover ≡ ink-10 through the family's hover field, pressed ≡ ink-9;
+  // the hover stopped being a raw between value with C49)
   const neutralExtra = (mode: 'light' | 'dark') => {
     const at = (n: number) => nScale[mode].find(s => s.stop === n)
     return {
       ...ctaFamily(nScale, mode, 'neutral'),
-      ctaInkStrong: at(10),
+      ctaInkStrong: at(11),
       ctaInkStrongHover: mode === 'light' ? nScale.ctaInkHover : nScale.ctaInkHoverDark,
       ctaInkStrongPressed: at(9),
     }

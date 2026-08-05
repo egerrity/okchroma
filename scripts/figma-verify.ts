@@ -57,23 +57,21 @@ for (const mode of ['light', 'dark'] as const) {
     // regressed the collapse.
     const isBrand = fam === 'brand' || fam === 'secondary'
     const tokens = isBrand
-      ? ['paper-1', ...CTA_FAMILY, 'highlight-8', 'ink-9', 'ink-10', 'on-cta', 'identity']
-      : ['paper-1', 'highlight-8', ...CTA_FAMILY, 'ink-10', 'on-cta']
+      ? ['paper-1', ...CTA_FAMILY, 'highlight-8', 'ink-9', 'ink-10', 'ink-11', 'on-cta', 'identity']
+      : ['paper-1', 'highlight-8', ...CTA_FAMILY, 'ink-11', 'on-cta']
     for (const t of tokens) ok(!!leaf(m[fam], t), `${mode}.${fam}.${t} missing`)
     for (const gone of ['highlight-9', 'on-highlight'])
       ok(!leaf(m[fam], gone), `${mode}.${fam}.${gone} is still emitted — the highlight collapse regressed`)
-    // cta-ink matches the family's own ink-9 exactly (the 4.5 text-register link escape);
-    // cta-ink-pressed matches ink-10 (the 2026-07-16 restrengthening — press lands on the
-    // family's 7:1 register)
-    ok(leaf(m[fam], 'cta-ink').$value.hex === leaf(m[fam], 'ink-9').$value.hex,
-      `${mode}.${fam} cta-ink ${leaf(m[fam], 'cta-ink').$value.hex} != ink-9 ${leaf(m[fam], 'ink-9').$value.hex}`)
-    ok(leaf(m[fam], 'cta-ink-pressed').$value.hex === leaf(m[fam], 'ink-10').$value.hex,
-      `${mode}.${fam} cta-ink-pressed ${leaf(m[fam], 'cta-ink-pressed').$value.hex} != ink-10 ${leaf(m[fam], 'ink-10').$value.hex}`)
+    // the cta-ink trio is the ink band as states (C49): enabled ≡ ink-9, hover ≡ ink-10
+    // (the between text stop — the retired raw value's successor), pressed ≡ ink-11
+    for (const [state, sib] of [['cta-ink', 'ink-9'], ['cta-ink-hover', 'ink-10'], ['cta-ink-pressed', 'ink-11']] as const)
+      ok(leaf(m[fam], state).$value.hex === leaf(m[fam], sib).$value.hex,
+        `${mode}.${fam} ${state} ${leaf(m[fam], state).$value.hex} != ${sib} ${leaf(m[fam], sib).$value.hex}`)
     // the STRONG text-cta mirror (owner 2026-08-04) is NEUTRAL-ONLY: it descends the same
-    // three values cta-ink ascends — enabled ≡ ink-10, hover ≡ cta-ink-hover (the one
-    // shared raw value), pressed ≡ ink-9. Any other family emitting it is a regression.
+    // three stops cta-ink ascends — enabled ≡ ink-11, hover ≡ ink-10 (shared through
+    // cta-ink-hover), pressed ≡ ink-9 (C49). Any other family emitting it is a regression.
     if (fam === 'neutral') {
-      for (const [strong, sib] of [['cta-ink-strong', 'ink-10'], ['cta-ink-strong-hover', 'cta-ink-hover'], ['cta-ink-strong-pressed', 'ink-9']] as const)
+      for (const [strong, sib] of [['cta-ink-strong', 'ink-11'], ['cta-ink-strong-hover', 'cta-ink-hover'], ['cta-ink-strong-pressed', 'ink-9']] as const)
         ok(leaf(m[fam], strong)?.$value.hex === leaf(m[fam], sib).$value.hex,
           `${mode}.${fam} ${strong} ${leaf(m[fam], strong)?.$value.hex} != ${sib} ${leaf(m[fam], sib).$value.hex}`)
     } else {
@@ -116,7 +114,7 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
 
 // NEUTRAL CTA ESCAPE (Phase 3 + the ALL-ctas amendment): with the flag on, the brand's
 // fill trio re-resolves from the brand-neutral's ink register (cta anchors at neutral
-// ink-10 exactly; near-black light / near-white dark; on-cta flips) AND the text-style
+// ink-11 exactly; near-black light / near-white dark; on-cta flips) AND the text-style
 // cta trio swaps to the NEUTRAL's cta-ink (its ink-9 register); the ramp stays the
 // brand's own; the default link follows the escaped cta-ink; flag OFF is unchanged.
 {
@@ -140,10 +138,10 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
   const canon = themeToFigma(red, { secondary: null, neutralLevel: 'default', signals: canonSignals })
   for (const mode of ['light', 'dark'] as const) {
     const b = (esc[mode] as any).brand, n = (esc[mode] as any).neutral, p = (plain[mode] as any).brand
-    ok(leaf(b, 'cta').$value.hex === leaf(n, 'ink-10').$value.hex, `${mode} escape cta ${leaf(b, 'cta').$value.hex} != neutral ink-10 ${leaf(n, 'ink-10').$value.hex}`)
+    ok(leaf(b, 'cta').$value.hex === leaf(n, 'ink-11').$value.hex, `${mode} escape cta ${leaf(b, 'cta').$value.hex} != neutral ink-11 ${leaf(n, 'ink-11').$value.hex}`)
     ok(leaf(b, 'cta').$value.hex !== leaf(p, 'cta').$value.hex, `${mode} escape cta did not move off the brand cta`)
     ok(leaf(b, 'cta-ink').$value.hex === leaf(n, 'ink-9').$value.hex, `${mode} escape cta-ink ${leaf(b, 'cta-ink').$value.hex} != neutral ink-9 ${leaf(n, 'ink-9').$value.hex} (ALL the ctas de-red)`)
-    ok(leaf(b, 'cta-ink-pressed').$value.hex === leaf(n, 'ink-10').$value.hex, `${mode} escape cta-ink-pressed ${leaf(b, 'cta-ink-pressed').$value.hex} != neutral ink-10 ${leaf(n, 'ink-10').$value.hex}`)
+    ok(leaf(b, 'cta-ink-pressed').$value.hex === leaf(n, 'ink-11').$value.hex, `${mode} escape cta-ink-pressed ${leaf(b, 'cta-ink-pressed').$value.hex} != neutral ink-11 ${leaf(n, 'ink-11').$value.hex}`)
     ok(leaf(b, 'paper-1').$value.hex === leaf(p, 'paper-1').$value.hex, `${mode} escape touched the ramp`)
     ok((esc[mode] as any).link['link'].$value.hex === leaf(b, 'cta-ink').$value.hex, `${mode} default link does not follow the escaped cta-ink`)
     // the RED RESET (owner amendment): under the escape the red group ships CANONICAL —

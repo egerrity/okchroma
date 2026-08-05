@@ -11,9 +11,9 @@ import { AlertCircle, AlertTriangle, CheckCircle, Info } from 'lucide-react'
 //   wash    → the inset surface(s)
 //   cta     → the full-round pill button (brand/secondary/neutral) OR, on signals,
 //             the ALERT callout (alerts use cta in signals; the pill is hidden)
-//   scale   → the numbered 1–12 ladder with paper/wash/highlight/ink labels
+//   scale   → the numbered 1–11 ladder with paper/wash/highlight/ink labels
 //
-// The universal paper-0/ink-11 anchors are NOT shown here — they're one shared
+// The universal paper-0/ink-12 anchors are NOT shown here — they're one shared
 // white/black pair at the system level, not a per-ramp token.
 export type RampKind = 'brand' | 'neutral' | 'signal'
 
@@ -108,27 +108,29 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
   // signals are generated and carry none.
   const hasIdentity = prefix === 'brand' || prefix === 'secondary'
 
-  // The 1–10 scale. Number text stays legible in BOTH modes by leaning on tokens that
-  // invert with the mode: ink-10 (high-contrast text) on the surface rungs, --paper-0
+  // The 1–11 scale. Number text stays legible in BOTH modes by leaning on tokens that
+  // invert with the mode: ink-11 (high-contrast text) on the surface rungs, --paper-0
   // (the mode-flipping paper extreme) on the emphasis fill, paper-1 (inverse of ink) on
-  // the remaining ink rung. ink-9 is BOTH the emphasis fill and a text stop since the
+  // the remaining ink rungs. ink-9 is BOTH the emphasis fill and a text stop since the
   // 2026-07-29 collapse, so it renders as a FILL here — the role highlight-9 used to
-  // hold — and carries the same on-color the semantic layer gives it.
+  // hold — and carries the same on-color the semantic layer gives it. ink-10 is the
+  // between text stop (C49 — the promoted cta-ink-hover value).
   const scale: Array<{ n: number; tok: string; fg: string }> = [
-    { n: 1, tok: 'paper-1', fg: v('ink-10') },
-    { n: 2, tok: 'paper-2', fg: v('ink-10') },
-    { n: 3, tok: 'paper-3', fg: v('ink-10') },
-    { n: 4, tok: 'wash-4', fg: v('ink-10') },
-    { n: 5, tok: 'wash-5', fg: v('ink-10') },
-    { n: 6, tok: 'wash-6', fg: v('ink-10') },
-    { n: 7, tok: 'wash-7', fg: v('ink-10') },
-    { n: 8, tok: 'highlight-8', fg: v('ink-10') },
+    { n: 1, tok: 'paper-1', fg: v('ink-11') },
+    { n: 2, tok: 'paper-2', fg: v('ink-11') },
+    { n: 3, tok: 'paper-3', fg: v('ink-11') },
+    { n: 4, tok: 'wash-4', fg: v('ink-11') },
+    { n: 5, tok: 'wash-5', fg: v('ink-11') },
+    { n: 6, tok: 'wash-6', fg: v('ink-11') },
+    { n: 7, tok: 'wash-7', fg: v('ink-11') },
+    { n: 8, tok: 'highlight-8', fg: v('ink-11') },
     { n: 9, tok: 'ink-9', fg: 'var(--paper-0)' },
     { n: 10, tok: 'ink-10', fg: v('paper-1') },
+    { n: 11, tok: 'ink-11', fg: v('paper-1') },
   ]
   const groups = [
     { label: 'paper', span: 3 }, { label: 'wash', span: 4 },
-    { label: 'highlight', span: 1 }, { label: 'ink', span: 2 },
+    { label: 'highlight', span: 1 }, { label: 'ink', span: 3 },
   ]
   // the brackets below share the scale's grid, so their spans have to add up to it
   if (groups.reduce((a, g) => a + g.span, 0) !== scale.length)
@@ -151,8 +153,8 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
       )}
 
       {/* ink in context — heading + body, "ink family" called out in ink-9 */}
-      <div style={{ fontSize: 24, fontWeight: 700, color: v('ink-10'), lineHeight: 1.15, marginBottom: 8 }}>Aa Heading</div>
-      <p style={{ fontSize: 15, lineHeight: 1.5, color: v('ink-10'), margin: '0 0 16px' }}>
+      <div style={{ fontSize: 24, fontWeight: 700, color: v('ink-11'), lineHeight: 1.15, marginBottom: 8 }}>Aa Heading</div>
+      <p style={{ fontSize: 15, lineHeight: 1.5, color: v('ink-11'), margin: '0 0 16px' }}>
         The <span style={{ color: v('ink-9') }}>ink family</span> is designed to contrast with the paper and wash stops and is perfect for text. It can also be used as an inverted fill.
       </p>
 
@@ -196,7 +198,7 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 18 }}>
         <div style={{ ...box, background: v('wash-4') }}>
           <div style={{ ...boxLabel, color: v('ink-9') }}>inset &middot; wash</div>
-          <div style={{ ...boxBody, color: v('ink-10') }}>Body copy in ink on a wash fill.</div>
+          <div style={{ ...boxBody, color: v('ink-11') }}>Body copy in ink on a wash fill.</div>
         </div>
         {isSignal ? (
           <div style={{ ...box, background: v('cta'), display: 'flex', gap: 10, alignItems: 'flex-start' }}>
@@ -221,7 +223,7 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
               }}>chip</span>
               <input readOnly value="Focused input" style={{
                 flex: 1, minWidth: 0, boxSizing: 'border-box', padding: '7px 11px', borderRadius: 8,
-                fontSize: 13, fontFamily: 'inherit', background: v('paper-1'), color: v('ink-10'),
+                fontSize: 13, fontFamily: 'inherit', background: v('paper-1'), color: v('ink-11'),
                 border: `1.5px solid ${v('highlight-8')}`, boxShadow: `0 0 0 3px ${v('wash-5')}`, outline: 'none',
               }} />
             </div>
@@ -230,8 +232,8 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
           <div style={{ ...box, background: v('ink-9') }}>
             <div style={{ ...boxLabel, color: 'var(--paper-0)' }}>inset &middot; emphasis</div>
             {/* the emphasis inset is the INVERTED fill: ink-9 (the emphasis fill since the
-                2026-07-29 collapse) carrying --paper-0, over an ink-10 panel with paper-1 text */}
-            <div style={{ background: v('ink-10'), borderRadius: 8, padding: '10px 12px' }}>
+                2026-07-29 collapse) carrying --paper-0, over an ink-11 panel with paper-1 text */}
+            <div style={{ background: v('ink-11'), borderRadius: 8, padding: '10px 12px' }}>
               <div style={{ ...boxBody, color: v('paper-1') }}>Emphasis copy in paper-1 text.</div>
             </div>
           </div>

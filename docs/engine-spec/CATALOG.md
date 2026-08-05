@@ -2687,3 +2687,76 @@ C33. plugin-ext hit and fixed this on 2026-07-29 (its `at` throws a NAMED error)
 never happened. Ported, stops 11 → 10. Same C33-stale-stop family as the three found in
 C46 — **a renumber's blast radius is every hardcoded stop number in the plugin UIs, and a
 swallowed throw hides it indefinitely.**
+
+## C49 — THE BETWEEN INK BECOMES A STOP: INK-10 INSERTED, 11/12 RESTORED
+
+Owner, 2026-08-05: the cta-ink family stays (it de-collides the link from red), but *"I
+still think I need to keep the cta-ink-hover color that you are generating … instead of
+generating that color at ink-hover, it needs to be a stop."* Her spec, for every family:
+ink-9 unchanged · ADD a stop between the inks, named ink-10, the family aliases it ·
+ink-10 renamed back to ink-11 · ink-11 (the anchor) renamed back to ink-12. Grilled
+refinements: the stop must **generate like a normal stop** ("you do need to make it so it
+will generate predictably" — the retired hover value is the calibration target, not a
+byte contract), and the tables get put **in order, the right way** — no more positional
+arrays or physical-rung indices deliberately mismatching stop numbers.
+
+**Two commits.** First the normalization, proven byte-identical (290-hash dump: full
+brandCss over the roster + a 216-seed agnostic sweep + themeToFigma + neutralCss; zero
+re-blesses): the tint curves own their control points (`NEUTRAL_TINT_POINTS` /
+`SHAPE_POINTS` in neutralCurve.ts — the two retired scaffold slots live on only there,
+as the curve knees they always actually were), `ROOT_L_LIGHT/DARK` keyed by stop, and
+`chromaFloorIndex` replaced by a declared `chromaFloor` VALUE (`chromaFloorBase(10)/(11)`
+— the exact historical floats; register-audit now pins the values, and there is no index
+left for a renumber to move). Then the stop itself.
+
+**The stop's declaration.** rootL = the literal midpoint of its neighbors (0.415 light /
+0.843 dark): the retired state-step law landed at 40–49% of the 9→11 gap (sweep median
+0.422 / 0.834), so the midpoint reproduces it within ~0.01 L while being a declaration.
+Chroma = ink-9's register (the old law evaluated exactly that at the between L), dark
+floor = the first-text rung value. Require **T10 = 6.5 vs paper-2** (wcag lane re-anchors
+at paper-3, like its neighbors): a floor the placement already clears everywhere — sweep
+min 6.67 light / 8.83 dark vs paper-3 — so the stop stays purely placed and the number is
+the guarantee. The apca lane's map gained a 6.5 → **Lc 85** slot (provisional; the lane is
+extended-plugin-only). Shipped delta vs the old hover, 638 sweep+roster+neutral rows:
+light ΔE med .016 max .032, dark med .006 max .026 — the hover sits a touch darker (more
+contrast) everywhere. ink-9 and the strong ink are float-identical on every row; the cta
+fills untouched.
+
+**The trio is now pure references** — cta-ink = the ink band as states (9 → 10 → 11),
+the strong mirror descends the same three stops, and the resolver's inkStateL state-step
+law is DELETED. cssRender emits the trio as var() references (the cta-border idiom; the
+escape and custom-link postures still override raw); the P3 body dropped its now-shadowed
+trio overrides; both plugins' INK_SIBLING tables alias all three states.
+
+**Migration: an UPWARD shift is the ascending table's blind spot.** RENAMED_LEAVES'
+discipline (ascending ensure + self-deleting consumed keys) is built for downward
+renumbers — ensure() matches the exact name before any candidate, so C49's ink/10 →
+ink/11 would have handed the old strong row to the new stop. plugin-ext grew an
+`inkUpshifts` pre-pass: computed read-only before the newRows/confirm detection (so the
+confirm names the real changes), executed after authorization (anchor first:
+neutral/ink/11 → /12, then each family's ink/10 → /11), guards no-op'ing every other
+vintage. And C49 SIMPLified the vintage table: C33's ['ink/11','ink/10'] and
+['ink/12','ink/11'] entries are deleted (those rows already carry their C49-true names in
+pre-C33 files), and the flat-vintage entries now map number-true — including flat ink-10
+→ ink/9, a wrong-by-one latent the pre-C49 table carried. Base-default cta-ink/hover rows
+in existing files keep their old raw value until a **Rebuild base theme** (create-once;
+per-brand extensions get the new value on any re-apply). The community plugin got the
+mechanical sweep with an explicit note: the upshift pre-pass is NOT ported there
+(unsupported surface — port `inkUpshifts` before re-listing).
+
+**Trap found in passing (the C46/C48 family, in the ENGINE this time):**
+`escapeCtaFamily` anchored the escape fill at `stop === 10` — the strong ink by value,
+about to become the between stop by name. Re-anchored at 11; figma-verify's escape checks
+(themselves retargeted) confirm. Same sweep fixed the stale-number comment class across
+src/demo/plugins (the pre-C33 "rest matches ink/10" figmaRender banner among them) and
+gave the ink-band rows of docs/scale.md + architecture.md + schema.md their C49 numbers
+(both docs carry OLDER rot beyond the ink band — flagged for a separate refresh pass).
+
+**Gates:** req:audit's trio checks moved to the reference law (exact-match all three
+states; per-state floors read each referenced stop's own require); its ink-order check
+now walks 9→10→11; highlight-audit's stop count derives from SCALE_STOP_COUNT (the
+gamut-sweep lesson, second offender); register-audit pins three floor values. Snapshots
+re-blessed after inspection — every delta shape-attributable (dark/divergence key stop
+"10" against the old strong ink, ΔE ≈ .115; highlight's hover ΔE ≤ .022; smooth's drift
+includes the new seam; ext-overrides + ink/11 rows). cta-apca's `secondary margin<3: 1`
+predates the round (verified at the clean parent).

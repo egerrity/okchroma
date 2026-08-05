@@ -345,7 +345,7 @@ export type SecondaryLevel = 'standard' | 'subtle'
 // The secondary's per-field MODE (owner design 2026-07-04: modes decoupled per family — the
 // mockup's chip dropdown). muted/vibrant = the two subtle chroma models (both ride the locked
 // delta curve); outline = the muted ramp with the cta re-resolved (cta transparent, cta-hover the
-// cta color at OUTLINE_HOVER_ALPHA, on-cta ink-10, cta-border always highlight-8); exact = the
+// cta color at OUTLINE_HOVER_ALPHA, on-cta the family's ink-9, cta-border always highlight-8); exact = the
 // standard full ramp, advice-only.
 // the offering (owner 2026-07-12, striking the bespoke subtle models: "you either use the
 // derived or you use custom"): 'default' = the derived seed-transform (no hex supplied);
@@ -442,8 +442,8 @@ export const SOFT_ON_CTA_ALPHA = { light: 0.75, dark: 0.80 } as const
 // OWN generated neutral's ink register — near-BLACK in light, near-WHITE in dark. An
 // emitter-level re-resolution exactly like the outline style (same tokens, different
 // values; the solve pipeline is untouched and the flag default-off is byte-identical).
-// Construction (owner-decided at planning): cta ANCHORS at the neutral's resolved ink-10
-// (light root L≈0.30 / dark ≈0.94 — the "paper12/1" register); cta-hover/cta-pressed
+// Construction (owner-decided at planning): cta ANCHORS at the neutral's resolved STRONG
+// ink — ink-11 since C49 (light root L≈0.30 / dark ≈0.94); cta-hover/cta-pressed
 // derive via the same stateFillL machinery every cta fill uses, chroma carried from the
 // anchor (the neutral's ink chroma is a whisper — re-evaluating the curve across a
 // 0.03–0.09 L move is imperceptible and the curve closure is gone post-generation), hue
@@ -457,11 +457,11 @@ export const SOFT_ON_CTA_ALPHA = { light: 0.75, dark: 0.80 } as const
 // ── the SYSTEM LINK token (Phase 4, owner spec 2026-07-16: "link is a system level
 // color… a primitive that internally aliases the primary ink 10 unless it's being
 // deconflicted from red"). ONE link trio per theme — link / link-hover / link-pressed:
-//   DEFAULT (no custom color): aliases the primary's cta-ink trio (which matches ink-9
+//   DEFAULT (no custom color): aliases the primary's cta-ink trio (the ink band 9/10/11
 //   by construction, C19 — states ride the alias).
 //   CUSTOM (the de-conflict): the user's hex runs through the SAME ink register — it is
 //   the SEED of a throwaway resolve and the shipped trio is that resolve's cta-ink family
-//   (hue kept, L floor-solved per lane and mode by the stop-10 law, dark solved
+//   (hue kept, L floor-solved per lane and mode by the ink stops' own laws, dark solved
 //   dark-native, states + floors free — owner-picked treatment). Default seed when the
 //   toggle turns on: #0B57D0, the conventional link blue (owner-picked; ships light
 //   ≈#375bae / dark ≈#90b2f9 through the wcag register).
@@ -487,14 +487,16 @@ export function escapeCtaFamily(
   cta: ColorStop; ctaHover: ColorStop; ctaPressed: ColorStop; onFillIsWhite: boolean
   ctaInk: ColorStop; ctaInkHover: ColorStop; ctaInkPressed: ColorStop
 } {
-  const ink10 = (mode === 'light' ? nScale.light : nScale.dark).find(s => s.stop === 10)
-  if (!ink10) throw new Error('escapeCtaFamily: the neutral scale has no ink-10 stop')
-  const mk = (stop: number, L: number) => makeStop(stop, L, ink10.C, ink10.H)
-  const cta = mk(9, ink10.L)
+  // the escape fill anchors on the neutral's STRONG ink — ink-11 since C49 restored
+  // its number (the C33-era spelling was ink-10; the stop lookup must follow the VALUE)
+  const strongInk = (mode === 'light' ? nScale.light : nScale.dark).find(s => s.stop === 11)
+  if (!strongInk) throw new Error('escapeCtaFamily: the neutral scale has no ink-11 stop')
+  const mk = (stop: number, L: number) => makeStop(stop, L, strongInk.C, strongInk.H)
+  const cta = mk(9, strongInk.L)
   // states via the shared fill rule; the near-white dark register is the archetype
   // override case — its dark states DARKEN (the mirror of everyone else's lighten)
-  const ctaHover = mk(10, stateFillL(ink10.L, mode, 1))
-  const ctaPressed = mk(11, stateFillL(ink10.L, mode, 2))
+  const ctaHover = mk(10, stateFillL(strongInk.L, mode, 1))
+  const ctaPressed = mk(11, stateFillL(strongInk.L, mode, 2))
   const onEnforce = contrastProfile !== 'apca'
   const onFloor = contrastProfile === 'apca' ? undefined : 4.5
   const onFillIsWhite = onTextIsWhite(apcaY(cta.r, cta.g, cta.b), cta.L, cta.C, cta.H, onEnforce, onFloor)
@@ -700,7 +702,7 @@ export function resolveTheme(input: {
   //     hex is the seed for the RAMP; only the cta trio comes from the transformed seed. Owner:
   //     "the id is preserved as is, but the cta is generated as if it was a tint of the given
   //     hex". Applying the transform to the whole ramp is what made a saturated orange come
-  //     back as a pale tan — and it took the INK with it (ink-10 C 0.080 → 0.017, so the text
+  //     back as a pale tan — and it took the INK with it (the strong ink's C 0.080 → 0.017, so the text
   //     colour went gray-brown). See resolveCustomModel.
   //
   // The hue never rotates on either posture (owner 2026-08-03; C34 had exempted supplied
@@ -726,7 +728,7 @@ export function resolveTheme(input: {
   // light / 0.24 dark, clear of SECONDARY_DISTINCT_DELTA_E.
   //
   // cta-ink is deliberately NOT tinted (owner ruling 2026-07-29): it is the text-register cta,
-  // its rest value matches ink-9/ink-10, and under this model those are the user's colour. A
+  // its states are the ink stops (9/10/11 — C49), and under this model those are the user's colour. A
   // tinted cta-ink would be a pale link on a pale surface, and would stop matching the ink it
   // is specified to match.
   //

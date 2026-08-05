@@ -11,7 +11,7 @@
 //   #9DC4FF primary-soft  brand-4 — always
 //   #FF7A00 alt           brand-7 mono → accent-9 when two-color is on
 //   #FFD6A8 alt-soft      brand-3 mono → accent-4 when two-color is on
-//   #1A1A1A ink           neutral-12   #9E9E9E muted  neutral-8
+//   #1A1A1A ink           neutral-ink-11   #9E9E9E muted  neutral-highlight-8
 //   #FFFFFF paper         neutral-1
 // Mono is the DEFAULT; two-color is opt-in (data-illustration="two-color")
 // and only when a real secondary exists.

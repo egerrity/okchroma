@@ -16,7 +16,7 @@
 // without a require was highlight-9, and it is gone.
 import {
   ROOT_L_LIGHT, ROOT_L_DARK, SCALE_C_LIGHT, SCALE_C_DARK,
-  STOP_8_NONTEXT_CONTRAST, INK_9_CONTRAST, INK_10_CONTRAST_FLOOR, DARK_CTA_MIN_L,
+  STOP_8_NONTEXT_CONTRAST, INK_9_CONTRAST, INK_10_CONTRAST, INK_11_CONTRAST_FLOOR, DARK_CTA_MIN_L,
 } from '../engine/stopTable'
 
 export type Group = 'paper' | 'wash' | 'highlight' | 'ink'
@@ -45,7 +45,7 @@ export type Require =
   // can ever collapse a seam again, whatever the producers do).
   | { metric: 'min-separation'; against: 'paper-1' | 'prev'; target: number }
 export type StopReq = {
-  stop: number                        // 0..10 — scale stops ONLY (cta is a role, never a stop)
+  stop: number                        // 0..11 — scale stops ONLY (cta is a role, never a stop)
   rootL: number
   group: Group
   produce: Producer
@@ -63,20 +63,19 @@ export type StopReq = {
 // (cta / cta-hover / cta-pressed): anchor = the seed's OWN lightness floored at floorL
 // (product intent: dark fills must not sink; light has no floor); hue constant (the cta
 // carries brand identity, no torsion); hover = hoverL() of the resolved cta, pressed =
-// pressedL() (hover's direction, doubled). The INK trio (cta-ink / -hover / -pressed):
-// the family's 4.5 TEXT-register cta — the link-color escape. cta-ink MATCHES the
-// resolved ink-9 exactly (owner rule); its states derive via the same hoverL/pressedL
-// machinery with the ink-9 contrast require held as a FLOOR (a state may never read
-// worse than the declared text bar; a violating state is pulled back toward ink-9's L).
+// pressedL() (hover's direction, doubled).
+// The INK trio (cta-ink / -hover / -pressed) is NOT produced any more (C49, owner
+// 2026-08-05): it is the ink band read as states — enabled ≡ ink-9, hover ≡ ink-10 (the
+// between stop, formerly a bespoke state-step value generated at the role), pressed ≡
+// ink-11 — so it carries no declaration here; the resolver references the resolved stops
+// and every guarantee rides the stops' own requires (T9/T10/T11).
 export type RoleName = 'cta' | 'cta-hover' | 'cta-pressed' | 'cta-ink' | 'cta-ink-hover' | 'cta-ink-pressed'
 export type RoleReq = {
   role: RoleName
-  // hue 'ink' / chroma 'ink' / L 'ink-*' = the role rides the resolved ink-9 placement
-  // (its hue and the ink chroma register), not the seed anchor
   produce: {
-    hue: 'constant' | 'ink'
-    L: 'anchor' | 'hover' | 'pressed' | 'ink-anchor' | 'ink-hover' | 'ink-pressed'
-    chroma: 'brand' | 'ink'
+    hue: 'constant'
+    L: 'anchor' | 'hover' | 'pressed'
+    chroma: 'brand'
   }
   floorL: number
   chromaMult: number
@@ -150,7 +149,7 @@ const P_TEXT: Producer = { hue: 'warm-torsion', L: 'perceptual', chroma: 'brand'
 // agnostic seeds + 6 neutrals, clearing 3:1 on every paper in both modes from one rule.
 const S8: Require = { metric: 'wcag', against: 'paper-3', target: STOP_8_NONTEXT_CONTRAST, level: 'AA' }
 // INK ANCHOR NOTE (owner 2026-07-28): in the WCAG lane the resolver anchors ink
-// requires (stops 9-10 + the cta-ink state floor) at paper-3 — the nearest paper —
+// requires (the ink stops 9–11) at paper-3 — the nearest paper —
 // so "ink-9 is usable on every paper" is a law, not a hope (resolve.ts
 // wcagAnchorStop). That override is LANE-SPECIFIC, so it stays in the resolver; the
 // apca lane keeps paper-2 (clears paper-3 with margin, byte-identical) and reads it
@@ -160,7 +159,10 @@ const S8: Require = { metric: 'wcag', against: 'paper-3', target: STOP_8_NONTEXT
 // of them can carry both jobs. Nothing about the number changed; only the count of stops
 // asking for it.
 const T9: Require = { metric: 'wcag', against: 'paper-2', target: INK_9_CONTRAST, level: 'AA' }
-const T10: Require = { metric: 'wcag', against: 'paper-2', target: INK_10_CONTRAST_FLOOR, level: 'AAA' }
+// T10 (C49): the between text stop's guarantee — a floor that never fires on the current
+// geometry (the midpoint placement reads 6.84+ vs paper-3 sweep-wide); see stopTable.ts.
+const T10: Require = { metric: 'wcag', against: 'paper-2', target: INK_10_CONTRAST, level: 'AA' }
+const T11: Require = { metric: 'wcag', against: 'paper-2', target: INK_11_CONTRAST_FLOOR, level: 'AAA' }
 
 // ONE on-color left (owner 2026-07-29). `onHighlight` is deleted with the band it named:
 // C31 had already reduced it to a constant (white in light, black in dark, every family)
@@ -203,17 +205,18 @@ export const LIGHT: ModeSpec = {
       require: stop === 8 ? S8 : undefined,
     })),
     // ink text: perceptual + contrast-required. ink-9 is ALSO the emphasis fill (the
-    // highlight-9 collapse, owner 2026-07-29).
+    // highlight-9 collapse, owner 2026-07-29). ink-10 is the between text stop (C49) —
+    // a normal stop like its neighbors; the cta-ink trio references all three as states.
     { stop: 9, rootL: ROOT_L_LIGHT[9], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[9].inkMult, inkMaxC: SCALE_C_LIGHT[9].inkMaxC, chromaFloor: SCALE_C_LIGHT[9].chromaFloor, require: T9 },
     { stop: 10, rootL: ROOT_L_LIGHT[10], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[10].inkMult, inkMaxC: SCALE_C_LIGHT[10].inkMaxC, chromaFloor: SCALE_C_LIGHT[10].chromaFloor, require: T10 },
+    { stop: 11, rootL: ROOT_L_LIGHT[11], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[11].inkMult, inkMaxC: SCALE_C_LIGHT[11].inkMaxC, chromaFloor: SCALE_C_LIGHT[11].chromaFloor, require: T11 },
   ],
   roles: [
+    // (the cta-ink trio carries no role declarations — it references the resolved ink
+    // stops 9/10/11 as states; see the RoleReq banner above)
     { role: 'cta', produce: { hue: 'constant', L: 'anchor', chroma: 'brand' }, floorL: 0, chromaMult: 1 },
     { role: 'cta-hover', produce: { hue: 'constant', L: 'hover', chroma: 'brand' }, floorL: 0, chromaMult: 1 },
     { role: 'cta-pressed', produce: { hue: 'constant', L: 'pressed', chroma: 'brand' }, floorL: 0, chromaMult: 1 },
-    { role: 'cta-ink', produce: { hue: 'ink', L: 'ink-anchor', chroma: 'ink' }, floorL: 0, chromaMult: 1 },
-    { role: 'cta-ink-hover', produce: { hue: 'ink', L: 'ink-hover', chroma: 'ink' }, floorL: 0, chromaMult: 1 },
-    { role: 'cta-ink-pressed', produce: { hue: 'ink', L: 'ink-pressed', chroma: 'ink' }, floorL: 0, chromaMult: 1 },
   ],
   ons: ONS,
 }
@@ -237,18 +240,13 @@ export const DARK: ModeSpec = {
     // clears them for every hue (the gate proves it), so values don't move — but the guarantee is now a rule.
     { stop: 9, rootL: ROOT_L_DARK[9], group: 'ink', produce: P_TEXT, chromaMult: SCALE_C_DARK[9].inkMult, inkMaxC: SCALE_C_DARK[9].inkMaxC, chromaFloor: SCALE_C_DARK[9].chromaFloor, require: T9 },
     { stop: 10, rootL: ROOT_L_DARK[10], group: 'ink', produce: P_TEXT, chromaMult: SCALE_C_DARK[10].inkMult, inkMaxC: SCALE_C_DARK[10].inkMaxC, chromaFloor: SCALE_C_DARK[10].chromaFloor, require: T10 },
+    { stop: 11, rootL: ROOT_L_DARK[11], group: 'ink', produce: P_TEXT, chromaMult: SCALE_C_DARK[11].inkMult, inkMaxC: SCALE_C_DARK[11].inkMaxC, chromaFloor: SCALE_C_DARK[11].chromaFloor, require: T11 },
   ],
   roles: [
+    // (the cta-ink trio: stop references 9/10/11, no declarations — see the light spec)
     { role: 'cta', produce: { hue: 'constant', L: 'anchor', chroma: 'brand' }, floorL: DARK_CTA_MIN_L, chromaMult: 1 },
     { role: 'cta-hover', produce: { hue: 'constant', L: 'hover', chroma: 'brand' }, floorL: DARK_CTA_MIN_L, chromaMult: 1 },
     { role: 'cta-pressed', produce: { hue: 'constant', L: 'pressed', chroma: 'brand' }, floorL: DARK_CTA_MIN_L, chromaMult: 1 },
-    // the ink trio anchors at the resolved dark ink-9 (no fill floor — text is dark-native);
-    // the T9 require rides the states as a floor, so a darkened dark-mode hover that would
-    // read under the bar is pulled back up (the ink states may collapse toward ink-9 on
-    // low-headroom hues — honest, and the audit reports it)
-    { role: 'cta-ink', produce: { hue: 'ink', L: 'ink-anchor', chroma: 'ink' }, floorL: 0, chromaMult: 1 },
-    { role: 'cta-ink-hover', produce: { hue: 'ink', L: 'ink-hover', chroma: 'ink' }, floorL: 0, chromaMult: 1 },
-    { role: 'cta-ink-pressed', produce: { hue: 'ink', L: 'ink-pressed', chroma: 'ink' }, floorL: 0, chromaMult: 1 },
   ],
   ons: ONS,
 }

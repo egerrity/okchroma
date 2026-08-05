@@ -17,7 +17,7 @@
   --surface-lift:       var(--neutral-paper-1);
   --surface-pop:        var(--paper-0, #ffffff);
 
-  --fg-default:           var(--neutral-ink-10);
+  --fg-default:           var(--neutral-ink-11);
   --fg-subtle:            var(--neutral-ink-9);
   /* --fg-link moved to the SYSTEM LINK trio below (owner 2026-07-16: one link per
      theme, riding --link — no longer the brand's raw ink pair) */
@@ -61,10 +61,10 @@
 /* ─── role.brand ────────────────────────────────────────────────────────────── */
 
 [data-brand] {
-  --brand-fg:                    var(--brand-ink-10);
+  --brand-fg:                    var(--brand-ink-11);
   --brand-fg-hover:              var(--brand-ink-9);
   --brand-fg-alt:                var(--brand-ink-9);
-  --brand-fg-alt-hover:          var(--brand-ink-10);
+  --brand-fg-alt-hover:          var(--brand-ink-11);
   --brand-fg-on-emphasis:        var(--brand-on-cta);
 
   --brand-bg-faint:              var(--brand-paper-2);
@@ -91,10 +91,10 @@
 /* ─── role.secondary (the brand's secondary ramp; mirrors brand when none) ──── */
 
 [data-brand] {
-  --secondary-fg:                    var(--secondary-ink-10);
+  --secondary-fg:                    var(--secondary-ink-11);
   --secondary-fg-hover:              var(--secondary-ink-9);
   --secondary-fg-alt:                var(--secondary-ink-9);
-  --secondary-fg-alt-hover:          var(--secondary-ink-10);
+  --secondary-fg-alt-hover:          var(--secondary-ink-11);
   --secondary-fg-on-emphasis:        var(--secondary-on-cta);
 
   --secondary-bg-faint:              var(--secondary-paper-2);
@@ -127,7 +127,7 @@
    mono when no real secondary exists. */
 
 [data-brand] {
-  --illus-ink:      var(--neutral-ink-10);
+  --illus-ink:      var(--neutral-ink-11);
   --illus-muted:    var(--neutral-highlight-8);
   --illus-paper:    var(--neutral-paper-1);
   --illus-alt:      var(--illus-alt-mono);
@@ -145,7 +145,7 @@
    Signal families emit by ROLE (owner 2026-07-27: critical/warning/positive/
    info — the re-pointable in-between tier; identity stays engine-internal),
    so the role tokens and the family ramp share a prefix: --critical-fg rides
-   --critical-ink-10. The old alert-high/alert-med role prefixes collapsed
+   --critical-ink-11. The old alert-high/alert-med role prefixes collapsed
    into critical/warning in the same round.
 
    -fg-on-emphasis rides --paper-0, NOT a solved on-color: the engine's on-highlight
@@ -156,10 +156,10 @@
    in dark that reads lighter (contrast vs paper-3, median 6.01 → 7.72). */
 
 [data-brand] {
-  --critical-fg:                    var(--critical-ink-10);
+  --critical-fg:                    var(--critical-ink-11);
   --critical-fg-hover:              var(--critical-ink-9);
   --critical-fg-alt:                var(--critical-ink-9);
-  --critical-fg-alt-hover:          var(--critical-ink-10);
+  --critical-fg-alt-hover:          var(--critical-ink-11);
   --critical-fg-on-emphasis:        var(--paper-0);
   --critical-bg-faint:              var(--critical-paper-2);
   --critical-bg-subtle:             var(--critical-wash-5);
@@ -171,10 +171,10 @@
   --critical-border-default-hover: var(--critical-highlight-8);
   --critical-border-emphasis:       var(--critical-ink-9);
 
-  --warning-fg:                     var(--warning-ink-10);
+  --warning-fg:                     var(--warning-ink-11);
   --warning-fg-hover:               var(--warning-ink-9);
   --warning-fg-alt:                 var(--warning-ink-9);
-  --warning-fg-alt-hover:           var(--warning-ink-10);
+  --warning-fg-alt-hover:           var(--warning-ink-11);
   --warning-fg-on-emphasis:         var(--paper-0);
   --warning-bg-faint:               var(--warning-paper-2);
   --warning-bg-subtle:              var(--warning-wash-5);
@@ -186,10 +186,10 @@
   --warning-border-default-hover:  var(--warning-highlight-8);
   --warning-border-emphasis:        var(--warning-ink-9);
 
-  --positive-fg:                      var(--positive-ink-10);
+  --positive-fg:                      var(--positive-ink-11);
   --positive-fg-hover:                var(--positive-ink-9);
   --positive-fg-alt:                  var(--positive-ink-9);
-  --positive-fg-alt-hover:            var(--positive-ink-10);
+  --positive-fg-alt-hover:            var(--positive-ink-11);
   --positive-fg-on-emphasis:          var(--paper-0);
   --positive-bg-faint:                var(--positive-paper-2);
   --positive-bg-subtle:               var(--positive-wash-5);
@@ -201,10 +201,10 @@
   --positive-border-default-hover:   var(--positive-highlight-8);
   --positive-border-emphasis:         var(--positive-ink-9);
 
-  --info-fg:                          var(--info-ink-10);
+  --info-fg:                          var(--info-ink-11);
   --info-fg-hover:                    var(--info-ink-9);
   --info-fg-alt:                      var(--info-ink-9);
-  --info-fg-alt-hover:                var(--info-ink-10);
+  --info-fg-alt-hover:                var(--info-ink-11);
   --info-fg-on-emphasis:              var(--paper-0);
   --info-bg-faint:                    var(--info-paper-2);
   --info-bg-subtle:                   var(--info-wash-5);

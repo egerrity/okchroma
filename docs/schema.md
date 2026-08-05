@@ -143,7 +143,7 @@ be fake portability. Changing producer behavior requires a resolver version bump
 
 | variant | fields | meaning |
 |---|---|---|
-| WCAG contrast | `{ "metric": "wcag", "against": "paper-2", "target": n, "level": "AA" \| "AAA" }` | The stop must hold `target`:1 against the RESOLVED paper-2. Declared in both modes: light clamps lightness down; dark raises a failing hue off the paper. In use: highlight-8 → 3.0, ink-10 → 4.5, ink-11 → 7.0. |
+| WCAG contrast | `{ "metric": "wcag", "against": "paper-2", "target": n, "level": "AA" \| "AAA" }` | The stop must hold `target`:1 against the RESOLVED paper-2. Declared in both modes: light clamps lightness down; dark raises a failing hue off the paper. In use: highlight-8 → 3.0, ink-9 → 4.5, ink-10 → 6.5, ink-11 → 7.0. |
 | APCA contrast | `{ "metric": "apca", "against": "paper-2", "targetLc": n }` | The stop must read \|APCA Lc\| ≥ `targetLc` against the RESOLVED paper-2. Same solve shape as wcag (light clamps down, dark raises off the paper). Never hand-declared in the built-in specs — produced by the contrast-profile compiler (below). |
 | Min separation | `{ "metric": "min-separation", "against": "paper-1" \| "prev", "target": n }` | OKLab ΔE floor from the resolved reference stop (`prev` = the stop's predecessor). In use: paper-2 ≥ 0.028 off paper-1; every wash seam ≥ 0.012 off `prev`. |
 

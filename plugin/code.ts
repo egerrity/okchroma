@@ -74,7 +74,15 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['wash-7', 'wash/7'],
   ['highlight-8', 'highlight/8'],
   ['highlight-9', 'highlight/9'],
-  ['ink-10', 'ink/10'],
+  // ── ink flats under C49 numbering (mirrors plugin-ext; the 07-10-era flat vintage
+  // maps number-true now that the strong ink and anchor have their old numbers back).
+  // ⚠️ UNSUPPORTED SURFACE NOTE (C49): the upward renumber pre-pass (banded ink/10 →
+  // ink/11 on C33-era files, freeing ink/10 for the between stop) is implemented in
+  // plugin-ext ONLY. A C33-era community file re-applied here will hand its old
+  // strong-ink row to the new stop. Community is currently unsupported; port the
+  // inkUpshifts idiom from plugin-ext/code.ts before re-listing.
+  ['ink-9', 'ink/9'],
+  ['ink-10', 'ink/9'],
   ['ink-11', 'ink/11'],
   ['ink-12', 'ink/12'],
   ['cta', 'cta/enabled'],
@@ -92,7 +100,8 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // and each migration self-deletes its consumed key — new ink/10 eats old
   // ink-11 BEFORE ink/11 is looked up.
   ['cta-stroke', 'cta/border'],
-  ['ink-11', 'ink/10'],
+  ['ink/10', 'ink/9'],
+  ['ink-11', 'ink/9'],
   ['ink-12', 'ink/11'],
   ['ink-13', 'ink/12'],
   // blue-signal variant relabels (2026-07-13, info-color → blue): the variant leaf is
@@ -153,7 +162,7 @@ const RENAMED_GROUPS: Array<[string, string]> = [
 ]
 // Every legacy spelling of `path` under the rename tables: old leaf, old group, and
 // old group + old leaf together (a file untouched since before BOTH renames needs the
-// composed lookup — e.g. system/info-color/ink-11 → system/blue/ink-10).
+// composed lookup — e.g. system/info-color/ink-11 → system/blue/ink/9).
 function legacyCandidates(path: string): string[] {
   const out: string[] = []
   const leafVariants = [path]
@@ -422,8 +431,9 @@ figma.ui.onmessage = async (msg) => {
       // See the alias branch in writeRaw for the law and the C33 staleness story.
       const INK_SIBLING: Record<string, string> = {
         'cta-ink/enabled': 'ink/9',
-        'cta-ink/pressed': 'ink/10',
-        'cta-ink-strong/enabled': 'ink/10',
+        'cta-ink/hover': 'ink/10',
+        'cta-ink/pressed': 'ink/11',
+        'cta-ink-strong/enabled': 'ink/11',
         'cta-ink-strong/hover': 'cta-ink/hover',
         'cta-ink-strong/pressed': 'ink/9',
       }
@@ -474,10 +484,11 @@ figma.ui.onmessage = async (msg) => {
           }
         } else if (INK_SIBLING[t.path]
           && leafEq(t, lightMap?.get(INK_SIBLING[t.path])) && leafEq(dk, darkMap.get(INK_SIBLING[t.path]))) {
-          // the text-cta trios are REFERENCES over the family's own ink registers:
-          // cta-ink/enabled ≡ ink/9, cta-ink/pressed ≡ ink/10, and the neutral-only
-          // strong mirror descends the same three values (enabled ≡ ink/10, hover ≡
-          // cta-ink/hover — the one raw value both trios share — pressed ≡ ink/9).
+          // the text-cta trios are REFERENCES over the family's own ink registers
+          // (C49 numbering): cta-ink = the ink band as states (enabled ≡ ink/9,
+          // hover ≡ ink/10 — the between stop, a real scale stop since C49 —
+          // pressed ≡ ink/11), and the neutral-only strong mirror descends the
+          // same three stops (11 → the shared hover → 9).
           // Alias the sibling so the relationship stays live in Figma (the cta/on→ink/9
           // idiom). ⚠️ C33 renumbered the inks and this block sat DEAD on the stale
           // ink/10-and-ink/11 targets until 2026-08-04 — the value guard failed and every
