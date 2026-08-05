@@ -11,6 +11,8 @@
 
 import type { FlatTok, TokenColumns, Column } from './payload'
 import { LEGACY_COLUMN_NAME, RETIRED_COLUMN_NAMES } from './payload'
+// zero-import text module — safe here, drags nothing of the engine into the sandbox bundle
+import { describeToken } from '../src/engine/tokenDescriptions'
 import { runSmoke } from './smoke'
 
 figma.showUI(__html__, { width: 720, height: 640, title: 'OKChroma Extended' })
@@ -87,8 +89,8 @@ const rgbaMatchesHex = (cur: { r: number; g: number; b: number; a?: number }, he
 const RUNG_FOR_ALPHA = (a: number | undefined): string | undefined =>
   a === undefined ? undefined : Object.keys(RUNG_ALPHAS).find(k => Math.abs(RUNG_ALPHAS[k] - a) < 1e-6)
 const DARK_COLUMNS = new Set<Column>(['dark'])
-// Every variable carries the file's solve posture, visible without the plugin.
-const STAMP = 'OKChroma · modes: light · dark (WCAG 3:1/4.5/7:1)'
+// Descriptions are per-variable now (tokenDescriptions.ts). The old one-size STAMP is
+// gone: its ratio digits polluted Figma's picker search, which fuzzy-matches descriptions.
 
 // Token renames (old leaf → new leaf), migrated IN PLACE on the existing variable —
 // Figma keeps the variable id on rename, so user bindings survive (owner 2026-07-09:
@@ -510,7 +512,7 @@ figma.ui.onmessage = async (msg) => {
           if (legacy) { legacy.name = path; baseVars.delete(legacyPath); baseVars.set(path, legacy); v = legacy; break }
         }
         if (!v) { v = figma.variables.createVariable(path, base, 'COLOR'); baseVars.set(path, v); createdVars++ }
-        v.description = STAMP
+        v.description = describeToken(path) // restamped every apply — regenerated, never hand-kept
         v.scopes = ['ALL_SCOPES']
         return v
       }

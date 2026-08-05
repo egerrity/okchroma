@@ -1,5 +1,8 @@
 /// <reference path="./figma-env.d.ts" />
 
+// zero-import text module — safe here, drags nothing of the engine into the sandbox bundle
+import { describeToken } from '../src/engine/tokenDescriptions'
+
 figma.showUI(__html__, { width: 720, height: 640, title: 'OKChroma' })
 
 type TokenLeaf = { $type: 'color'; $value: { components: [number, number, number]; alpha?: number } }
@@ -41,8 +44,10 @@ const MODE_IDS_KEY = 'okchroma-mode-ids'
 type Profile = 'wcag' | 'apca'
 const profileOf = (c: figma.VariableCollection): Profile => (c.getPluginData(PROFILE_KEY) === 'apca' ? 'apca' : 'wcag')
 const pairName = (role: string, profile: Profile) => `${role}-${profile}`
-// human-visible stamp, written into every variable's description (owner ask:
-// the file's contrast posture must be visible + checkable without the plugin)
+// Legacy posture stamp, now written only into APCA-pair files (their solve lane can't be
+// described with WCAG conformance phrases). WCAG files get per-variable descriptions from
+// tokenDescriptions.ts — the old shared stamp's ratio digits polluted Figma's picker
+// search, which fuzzy-matches descriptions.
 const profileStamp = (profile: Profile) =>
   profile === 'apca' ? 'OKChroma · contrast: APCA (Lc 30/75/90)' : 'OKChroma · contrast: WCAG (3:1/4.5/7:1)'
 
@@ -329,6 +334,9 @@ figma.ui.onmessage = async (msg) => {
       // both modes every apply).
       const p = resolveOwned(collections, MODE_NAME, profile, suffixed)
       const stamp = profileStamp(profile)
+      // Per-variable descriptions in the WCAG lane (the digit-free search fix); a legacy
+      // APCA pair keeps the old posture stamp — WCAG conformance phrases would lie there.
+      const descFor = (path: string) => (profile === 'apca' ? stamp : describeToken(path))
       let storedModes: { light?: string; dark?: string } = {}
       try { storedModes = JSON.parse(p.coll.getPluginData(MODE_IDS_KEY) || '{}') } catch { /* unstamped */ }
       const modeIds = new Set(p.coll.modes.map(m => m.modeId))
@@ -397,7 +405,7 @@ figma.ui.onmessage = async (msg) => {
         const existing = getOrMigrate(primByName, u.path)
         if (existing) { existing.scopes = [] ; continue } // already seeded — just enforce the scope rule
         const v = figma.variables.createVariable(u.path, p.coll, 'COLOR')
-        v.description = stamp
+        v.description = descFor(u.path)
         // primitives are NEVER bound directly — hidden from every property picker
         // (the theme aliases carry the scopes); the mode collection is the value store
         v.scopes = []
@@ -447,7 +455,7 @@ figma.ui.onmessage = async (msg) => {
         let v = getOrMigrate(primByName, path)
         const created = !v
         if (!v) { v = figma.variables.createVariable(path, p.coll, 'COLOR'); primByName.set(path, v) }
-        v.description = stamp // restamped every apply — the visible contrast posture
+        v.description = descFor(path) // restamped every apply — regenerated, never hand-kept
         v.scopes = [] // primitives hidden from every picker (re-applies fix older files too)
         const dk = darkMap.get(t.path)
         // a TRUE pole (the engine's on-fills are exactly white or black); an outline
@@ -603,7 +611,7 @@ figma.ui.onmessage = async (msg) => {
         if (!target) return
         let v = getOrMigrate(themeByName, themePath)
         if (!v) { v = figma.variables.createVariable(themePath, th.coll, 'COLOR'); themeByName.set(themePath, v) }
-        v.description = stamp
+        v.description = descFor(themePath)
         // the THEME aliases are what users bind — visible in every supported property
         // (the mode primitives underneath carry scope NOTHING)
         v.scopes = ['ALL_SCOPES']
