@@ -1,7 +1,7 @@
 import { resolveTheme, resolveBrand, signalScalesFor, escapeCtaFamily, resolveLinkTrio, DEFAULT_LINK_HEX, type SecondaryStyle, type ResolvedTheme } from '../src/engine/resolve'
 import { redGateDist, RED_GATE } from '../src/engine/collision'
 import { ARCHETYPES, type Archetype } from '../src/engine/archetypes'
-import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
+import { generateNeutralScale, neutralTintHue, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
 import { themeToFigma } from '../src/engine/figmaRender'
 import { SIGNALS } from '../src/engine/signals'
 import { toHex } from '../src/engine/cssRender'
@@ -10,7 +10,13 @@ import { toHex } from '../src/engine/cssRender'
 
 let primaryHex = '#E93D82'
 let secondaryHex: string | null = null
-let neutralLevel: NeutralLevel = 'default'
+// the neutral offering is ONE 5-entry choice (owner 2026-08-04): three strengths of the
+// PRIMARY's hue, or an alternate hue SOURCE at the Default strength — Match secondary
+// (follows the current secondary live) or Custom (the hex's hue tints the grey).
+type NeutralChoice = NeutralLevel | 'secondary' | 'custom'
+let neutralChoice: NeutralChoice = 'default'
+const neutralSourceOf = () => (neutralChoice === 'secondary' || neutralChoice === 'custom' ? neutralChoice : undefined)
+const neutralLevelOf = (): NeutralLevel => (neutralChoice === 'secondary' || neutralChoice === 'custom' ? 'default' : neutralChoice)
 // per-family modes (parity with the demo): the primary's select = Recommended / Exact /
 // the six archetype anchors; the secondary's select = its style chip (custom only —
 // derived rides the default seed-transform, the engine's call).
@@ -69,6 +75,8 @@ const neutralLabel       = $<HTMLElement>('neutral-label')
 const neutralInfo        = $<HTMLElement>('neutral-info')
 const neutralSwatch   = $<HTMLElement>('neutral-swatch')
 const neutralSelect   = $<HTMLSelectElement>('neutral-select')
+const neutralHexIn    = $<HTMLInputElement>('neutral-hex')
+const neutralOptSecondary = $<HTMLOptionElement>('neutral-opt-secondary')
 const profileBtns     = document.querySelectorAll<HTMLButtonElement>('.seg-btn[data-profile]')
 const ctaEscapeRow    = $<HTMLElement>('cta-escape-row')
 const ctaEscapeBox    = $<HTMLInputElement>('cta-escape')
@@ -114,11 +122,16 @@ const STYLE_INFO: Record<SecondaryStyle, string> = {
   outline: 'Outline only',
   exact: 'Your hex ships untouched',
 }
-const NEUTRAL_LABEL: Record<NeutralLevel, string> = { default: 'Default', branded: 'Intense', pure: 'True grey' }
-const NEUTRAL_INFO: Record<NeutralLevel, string> = {
+const NEUTRAL_LABEL: Record<NeutralChoice, string> = {
+  default: 'Default', branded: 'Intense', pure: 'True grey',
+  secondary: 'Match secondary', custom: 'Custom…',
+}
+const NEUTRAL_INFO: Record<NeutralChoice, string> = {
   default: 'Adds a touch of primary hue',
   branded: 'Adds a noticeable tint to neutral',
   pure: 'Neutrals are pure grey',
+  secondary: 'Adds a touch of the secondary hue',
+  custom: 'Adds a touch of your custom hue',
 }
 
 function syncInfoLines() {
@@ -130,8 +143,23 @@ function syncInfoLines() {
   secondaryStyleSelect.value = secondaryMode === 'derived' ? 'from-primary' : secondaryStyle
   secondaryInfoLine.style.display = secondaryMode === 'off' ? 'none' : ''
   secondaryInfo.textContent = secondaryMode === 'derived' ? 'A lighter take on your primary — derived by default' : STYLE_INFO[secondaryStyle]
-  neutralLabel.textContent = NEUTRAL_LABEL[neutralLevel]
-  neutralInfo.textContent = NEUTRAL_INFO[neutralLevel]
+  // NEUTRAL-SOURCE HYGIENE (the linkBundled idiom): "Match secondary" must not outlive
+  // the secondary it matches — with the secondary off, the choice reverts to Default and
+  // the option hides so it can't be re-picked.
+  if (neutralChoice === 'secondary' && secondaryMode === 'off') {
+    neutralChoice = 'default'
+    neutralSelect.value = 'default'
+  }
+  neutralOptSecondary.hidden = secondaryMode === 'off'
+  neutralLabel.textContent = NEUTRAL_LABEL[neutralChoice]
+  neutralInfo.textContent = NEUTRAL_INFO[neutralChoice]
+  // FIELD TAKEOVER under Custom: the hex input replaces the label; the overlay select
+  // shrinks to the chevron strip so the input stays typeable.
+  const nCustom = neutralChoice === 'custom'
+  neutralLabel.style.display = nCustom ? 'none' : ''
+  neutralHexIn.style.display = nCustom ? '' : 'none'
+  neutralSelect.style.left = nCustom ? 'auto' : '0'
+  neutralSelect.style.width = nCustom ? '34px' : '100%'
 }
 
 function setSecondaryMode(mode: SecondaryMode) {
@@ -272,7 +300,12 @@ function updatePreview() {
   try {
     const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
     const t = resolveTheme(themeInput('x'))
-    const nScale = generateNeutralScale(t.themed.scale.brandH, neutralLevel, cp)
+    // the neutral rides the RESOLVED tint hue (the one engine rule) — matrix, swatch and
+    // the escape preview all read THIS nScale, so a source pick can never leave the
+    // escape anchored off a neutral the theme no longer ships
+    const nScale = generateNeutralScale(
+      neutralTintHue(t.themed.scale.brandH, neutralSourceOf(), t.secondary?.scale.brandH, normalizeHex(neutralHexIn.value) || null),
+      neutralLevelOf(), cp)
 
     // red-range detection: the repel FIRING means the given hex was in the red region
     // (recommended mode exits the register, so the resolved cta alone would miss exactly
@@ -418,9 +451,13 @@ function buildAndSend() {
     // profile suffix — the file keeps ONE profile per collection pair (code.ts
     // detects a mismatched apply and forks a separate, labeled pair instead of
     // ever mixing values inside one).
-    const neutralKey = neutralLevel === 'pure'
+    // the tint hue follows the neutral SOURCE (owner 2026-08-04) — resolved once here,
+    // feeding BOTH the primitive key and the emit, so the prim name can never disagree
+    // with the values written under it. Same-hue sources still dedup onto one primitive.
+    const nH = neutralTintHue(r.scale.brandH, neutralSourceOf(), t.secondary?.scale.brandH, normalizeHex(neutralHexIn.value) || null)
+    const neutralKey = neutralLevelOf() === 'pure'
       ? 'pure'
-      : `${neutralLevel}-h${Math.round(r.scale.brandH)}`
+      : `${neutralLevelOf()}-h${Math.round(nH)}`
     // Per-signal variant key for Foundations dedup — keyed on the resolved
     // variant's identity via variantKey (label + cta hex), never the note text.
     // No override → the canonical ramp, keyed 'base'.
@@ -437,7 +474,7 @@ function buildAndSend() {
     })
 
     const customLink = linkCustom ? normalizeHex(linkHexInput.value) : null
-    const { light, dark } = themeToFigma(r, { secondary, secondaryStyle: t.secondary?.style, neutralLevel, signals, contrastProfile: cp, ctaEscape: ctaEscape && inRedRange, linkHex: customLink })
+    const { light, dark } = themeToFigma(r, { secondary, secondaryStyle: t.secondary?.style, neutralLevel: neutralLevelOf(), neutralH: nH, signals, contrastProfile: cp, ctaEscape: ctaEscape && inRedRange, linkHex: customLink })
 
     // Signals are the re-pointable in-between tier (owner 2026-07-27): the
     // THEME group carries the ROLE name (critical/warning/positive/info) while
@@ -563,7 +600,13 @@ secondaryStyleSelect.addEventListener('change', () => {
 })
 
 neutralSelect.addEventListener('change', () => {
-  neutralLevel = neutralSelect.value as NeutralLevel
+  neutralChoice = neutralSelect.value as NeutralChoice
+  updatePreview()
+  if (neutralChoice === 'custom') { neutralHexIn.focus(); neutralHexIn.select() }
+})
+neutralHexIn.addEventListener('input', () => {
+  // empty/invalid falls back to the primary's hue (the helper's law) — flag, never block
+  neutralHexIn.classList.toggle('invalid', neutralHexIn.value !== '' && !normalizeHex(neutralHexIn.value))
   updatePreview()
 })
 

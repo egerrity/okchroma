@@ -2621,3 +2621,42 @@ plugin-ext's era-crossing branch re-points the existing abs-black/abs-white alia
 files heal on the next apply with no Rebuild. The payload token is byte-identical to the
 primitive in both modes. The community plugin's `cta/on` branch has the same pole-at-alpha
 check.
+
+## C48 — THE NEUTRAL PICKS ITS HUE: MATCH SECONDARY + CUSTOM SOURCES
+
+Owner, 2026-08-04: *"can we add the ability to use secondary and a custom to the neutral
+options?"* The tint machinery was already hue-parametric (neutralChromaCurve(hue, level);
+warm-damp + peak are per-hue), so both new options reduce to feeding a different hue — no
+curve or solver change. The offering stays ONE dropdown, now 5 entries: True grey / Default
+/ Intense (three strengths of the PRIMARY's hue, exactly as before) + **Match secondary** +
+**Custom…** (a hex field, the link-field idiom) — the new sources tint at the Default
+strength; source × strength stays collapsed and Intense variants of the sources are a
+later ask. Custom means the hex's HUE tints the generated near-grey; the strength stays
+the declared curve — it is not a custom ramp seed.
+
+### THE LAW
+- ONE resolution rule, one place: `colorEngine.neutralTintHue(primaryH, source?,
+  secondaryH?, customHex?)` — fallbacks INSIDE (no secondary in scope, or a missing/invalid
+  custom hex → the primary's hue). Every surface calls it; emitters stay dumb and take the
+  RESOLVED hue (`ThemeInput.neutralH`, `brandCss(..., neutralH?)`; `neutralCss` was
+  already hue-first).
+- **Absent = primary**: every pre-source recipe/caller replays byte-identical (proven —
+  8-seed snapshot diff is empty; figma-verify asserts explicit `neutralH = brandH` is
+  byte-equal to the absent default and that `neutralH` never leaks outside the neutral).
+- "Match secondary" stores the SOURCE, never a frozen hue — ext-plugin re-applies and
+  backfills resolve against the brand's CURRENT secondary (`payload.lane()` is the one
+  payload-side resolution site). Source hygiene rides the linkBundled idiom: removing the
+  secondary reverts the control to Default and hides the option; the helper's fallback
+  covers any stored recipe that still carries it.
+- Every neutral consumer in a surface reads the SAME resolved nScale — matrix, swatch,
+  link field, and the ESCAPE previews (the C46 trap class: an escape anchored off a
+  neutral the theme no longer ships).
+- Community plugin: the shared-prim key `${level}-h${hue}` now takes the RESOLVED hue —
+  key and emitted values can never disagree; same-hue sources dedup onto one primitive;
+  `pure` stays hue-independent.
+
+### MEASURED AT LANDING
+Secondary #00696D under primary #E93D82: wash-5 H 197.5 (source 199.4) C .0094 · custom
+#7A5900 → wash-5 H 84.5 C .0059 (the warm-damp evening working per-hue) · all fallbacks
+land on the primary's hue. Gate suite green, audit:ext snapshot untouched (roster recipes
+carry no source).

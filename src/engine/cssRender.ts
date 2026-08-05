@@ -370,7 +370,12 @@ export function brandCss(
   // Off is expressed by withholding the PAGE rather than by a second branch in the gate:
   // ctaNeedsBorder already returns false without a page, so there is exactly one place that
   // decides, and "no ruler" and "don't measure" are the same code path.
-  ctaBorder = true
+  ctaBorder = true,
+  // the neutral's RESOLVED tint hue (owner 2026-08-04, the source round): callers resolve
+  // Match-secondary/Custom via colorEngine.neutralTintHue and pass the hue; absent = the
+  // primary's — every pre-source caller is byte-identical (the emitter stays dumb, like
+  // figmaRender's ThemeInput.neutralH).
+  neutralH?: number
 ): string {
   const { scale } = r
   // the escape RESETS the red collision to default (owner 2026-07-16): with the brand's
@@ -410,7 +415,7 @@ export function brandCss(
   // The neutral is now GENERATED per brand (tinted toward the brand hue), so it
   // rides inside this brand's block as a brand-kind ramp — no longer a shared
   // global :root block.
-  const nScale = generateNeutralScale(scale.brandH, neutralLevel, contrastProfile)
+  const nScale = generateNeutralScale(neutralH ?? scale.brandH, neutralLevel, contrastProfile)
   // the page every family in this brand is judged against for the cta-border gate — this brand's
   // own neutral, since the neutral is generated per brand hue. Withheld entirely when the opt-out
   // is off, which is what turns the whole feature off (see the ctaBorder param).

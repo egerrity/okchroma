@@ -22,7 +22,7 @@ import { resolveTheme, signalScalesFor, SOFT_ON_CTA_ALPHA, type ResolvedTheme } 
 import { themeToFigma, type FigmaGroup, type FigmaColorToken } from '../src/engine/figmaRender'
 import { SIGNALS } from '../src/engine/signals'
 import { OFFSET_ALPHAS, offsetTokenPath, type OffsetRung } from '../src/engine/cssRender'
-import type { ContrastProfile, NeutralLevel } from '../src/engine/colorEngine'
+import { neutralTintHue, type ContrastProfile, type NeutralLevel } from '../src/engine/colorEngine'
 
 export interface FlatTok { path: string; r: number; g: number; b: number; a?: number }
 
@@ -51,6 +51,13 @@ export type ThemeSpec = Omit<Parameters<typeof resolveTheme>[0], 'contrastProfil
   // the SYSTEM LINK's custom seed (Phase 4) — one link per theme; absent = the link rows
   // carry the primary's cta-ink values (extensions override them per brand)
   linkHex?: string | null
+  // the NEUTRAL's tint-hue source (owner 2026-08-04): absent = the primary's hue (every
+  // stored recipe replays byte-identical). 'secondary' stores the SOURCE, never a frozen
+  // hue — re-applies/backfills follow the brand's CURRENT secondary; 'custom' reads
+  // neutralHex's hue. Resolution + fallbacks live in colorEngine.neutralTintHue — lane()
+  // is the one place this payload resolves it.
+  neutralSource?: 'secondary' | 'custom'
+  neutralHex?: string | null
 }
 
 // The base collection's documented default seed (owner decision: fixed engine default —
@@ -166,6 +173,9 @@ function lane(
     secondary: t.secondary?.scale ?? null,
     secondaryStyle: t.secondary?.style,
     neutralLevel,
+    // the neutral's tint hue, resolved HERE (the one payload-side site) so a stored
+    // "Match secondary" recipe follows the brand's current secondary on every re-apply
+    neutralH: neutralTintHue(t.themed.scale.brandH, input.neutralSource, t.secondary?.scale.brandH, input.neutralHex),
     signals,
     contrastProfile: profile,
     ctaEscape: input.ctaEscape,

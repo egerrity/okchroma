@@ -9,7 +9,7 @@ import { redGateDist, RED_GATE } from '../src/engine/collision'
 import { SIGNAL_EMIT_NAME } from '../src/engine/signals'
 import { ARCHETYPES, type Archetype } from '../src/engine/archetypes'
 import { brandCss, signalsCss, stopHex } from '../src/engine/cssRender'
-import { generateNeutralScale, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
+import { generateNeutralScale, neutralTintHue, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
 import { wcagY, contrastRatio } from '../src/engine/constraints'
 import { HERO_ILLO } from './heroIllo'
 import { BRAND_LOGO } from './brandLogo'
@@ -62,27 +62,54 @@ function InfoLine({ text }: { text: string }) {
   )
 }
 
-const NEUTRAL_LABELS: Array<[NeutralLevel, string]> = [
+// The neutral offering is ONE 5-entry dropdown (owner 2026-08-04): three strengths of the
+// PRIMARY's hue, plus two alternate hue SOURCES at the Default strength — Match secondary
+// (follows the current secondary live) and Custom (the hex's hue tints the grey; strength
+// stays the declared curve). Source × strength stays collapsed; Intense variants of the
+// sources are a later ask.
+type NeutralChoice = NeutralLevel | 'secondary' | 'custom'
+const NEUTRAL_LABELS: Array<[NeutralChoice, string]> = [
   ['default', 'Default'],
   ['branded', 'Intense'],
   ['pure', 'True grey'],
+  ['secondary', 'Match secondary'],
+  ['custom', 'Custom…'],
 ]
 
-// The neutral is GENERATED from the brand hue (no more Radix families) — the menu picks
-// the tint LEVEL. Figma-spec field: swatch + the level as the field TEXT + a 26px chevron
-// button; the transparent select overlays the WHOLE field so anywhere opens the menu.
-function NeutralSelect({ value, onChange }: {
-  value: NeutralLevel
-  onChange: (v: NeutralLevel) => void
+// The neutral is GENERATED from a hue (no more Radix families) — the menu picks the tint
+// level or an alternate hue source. Figma-spec field: swatch + the choice as the field
+// TEXT + a 26px chevron; the transparent select overlays the WHOLE field so anywhere opens
+// the menu — EXCEPT under Custom, where a hex input takes the field and the overlay
+// shrinks to the chevron so the input stays typeable.
+function NeutralSelect({ value, onChange, hasSecondary, hexInput, onHexInput }: {
+  value: NeutralChoice
+  onChange: (v: NeutralChoice) => void
+  hasSecondary: boolean
+  hexInput: string
+  onHexInput: (v: string) => void
 }) {
+  const overlay = (
+    <select value={value} onChange={e => onChange(e.target.value as NeutralChoice)}
+      style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}>
+      {NEUTRAL_LABELS.filter(([v]) => v !== 'secondary' || hasSecondary)
+        .map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+    </select>
+  )
+  if (value === 'custom') return (
+    <>
+      <input value={hexInput} onChange={e => onHexInput(e.target.value)} spellCheck={false}
+        placeholder="#8A9BAE" style={{ flex: 1, minWidth: 0 }} />
+      <span className="ct-iconbtn" style={{ position: 'relative' }}>
+        <ChevronDown size={12} strokeWidth={2.5} />
+        {overlay}
+      </span>
+    </>
+  )
   return (
     <>
       <span style={{ flex: 1, fontSize: 14, minWidth: 0 }}>{NEUTRAL_LABELS.find(([v]) => v === value)![1]}</span>
       <span className="ct-iconbtn" style={{ pointerEvents: 'none' }}><ChevronDown size={12} strokeWidth={2.5} /></span>
-      <select value={value} onChange={e => onChange(e.target.value as NeutralLevel)}
-        style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}>
-        {NEUTRAL_LABELS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
-      </select>
+      {overlay}
     </>
   )
 }
@@ -119,8 +146,13 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   // WCAG is the opt-in legal mode — every on-text pole ratio-passing, highlights flip to black
   // where white fails 4.5.
   const [profile, setProfile] = useState<ContrastProfile>('wcag')
-  // Neutral tint level (the neutral is always generated from the brand hue now).
-  const [neutralLevel, setNeutralLevel] = useState<NeutralLevel>('default')
+  // Neutral offering (owner 2026-08-04): one 5-entry choice — three strengths of the
+  // primary's hue, or an alternate hue source (Match secondary / Custom hex) at the
+  // Default strength. Level + source derive from the one choice.
+  const [neutralChoice, setNeutralChoice] = useState<NeutralChoice>('default')
+  const [neutralHexInput, setNeutralHexInput] = useState('')
+  const neutralSource = neutralChoice === 'secondary' || neutralChoice === 'custom' ? neutralChoice : undefined
+  const neutralLevel: NeutralLevel = neutralSource ? 'default' : (neutralChoice as NeutralLevel)
   const [controlsMin, setControlsMin] = useState(false)  // collapse the workshop controls bar
   // Palette page tabs (owner 2026-07-24): overview = the frame (matrix, elevation,
   // ctas + identity/illustration); each family tab shows JUST that family's card.
@@ -216,14 +248,28 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
       archetypeOverride: primaryMode !== 'recommended' && primaryMode !== 'exact' ? primaryMode : undefined,
     }))
     const linkHex = (linkCustom && normalizeHex(linkInput)) || null
-    const css = brandCss('custom', 'Custom brand', t.themed, t.secondary?.scale ?? null, '', neutralLevel, cp, t.secondary?.style, ctaEscape && inRedRangeNow, linkHex, ctaBorder)
+    // the neutral's tint hue, resolved through the ONE engine rule (fallbacks inside:
+    // no secondary / no valid custom hex → the primary's hue). Every neutral consumer
+    // below — brandCss's inline neutral AND the escape preview — must read THIS hue;
+    // a local generateNeutralScale on brandH would read the wrong neutral (the C46 trap
+    // class: the escape silently anchored off a neutral the theme no longer ships).
+    const nH = neutralTintHue(t.themed.scale.brandH, neutralSource, t.secondary?.scale.brandH, normalizeHex(neutralHexInput) || null)
+    const css = brandCss('custom', 'Custom brand', t.themed, t.secondary?.scale ?? null, '', neutralLevel, cp, t.secondary?.style, ctaEscape && inRedRangeNow, linkHex, ctaBorder, nH)
       + '\n' + signalsCss(cp)
     // the Advanced link field's from-primary display hex (escaped when the escape is on)
     const linkFromPrimaryHex = stopHex(ctaEscape && inRedRangeNow
-      ? escapeCtaFamily(generateNeutralScale(t.themed.scale.brandH, neutralLevel, cp), 'light', cp).ctaInk
+      ? escapeCtaFamily(generateNeutralScale(nH, neutralLevel, cp), 'light', cp).ctaInk
       : t.themed.scale.ctaInk).toUpperCase()
     return { t, r: t.themed, accent: t.secondary?.scale ?? null, css, inRedRange, escapeOn: ctaEscape && inRedRangeNow, linkFromPrimaryHex }
-  }, [primary, secondary, derived, primaryMode, secondaryStyle, secondaryArchetype, neutralLevel, profile, ctaEscape, linkCustom, linkInput, fullChroma, ctaBorder])
+  }, [primary, secondary, derived, primaryMode, secondaryStyle, secondaryArchetype, neutralChoice, neutralHexInput, profile, ctaEscape, linkCustom, linkInput, fullChroma, ctaBorder])
+
+  // NEUTRAL-SOURCE HYGIENE (the linkBundled idiom): "Match secondary" must not outlive
+  // the secondary it matches — removing the secondary reverts the choice to Default
+  // (the engine helper already falls back to the primary's hue; this keeps the CONTROL
+  // honest rather than showing a source that isn't in effect).
+  useEffect(() => {
+    if (neutralChoice === 'secondary' && secState === 'none') setNeutralChoice('default')
+  }, [neutralChoice, secState])
 
   // BUNDLE HYGIENE (review-caught 2026-07-16): an untouched bundle auto-reverts the
   // moment the escape stops being effective (range exit / posture flip) — the frozen
@@ -337,8 +383,10 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     : secondaryStyle === 'exact' ? 'Your hex ships untouched'
     : secondaryStyle === 'outline' ? 'Outline only'
     : 'Your color keeps the ramp; the button is a tint of it'
-  const neutralInfo = neutralLevel === 'default' ? 'Adds a touch of primary hue'
-    : neutralLevel === 'branded' ? 'Adds a noticeable tint to neutral'
+  const neutralInfo = neutralChoice === 'secondary' ? 'Adds a touch of the secondary hue'
+    : neutralChoice === 'custom' ? 'Adds a touch of your custom hue'
+    : neutralChoice === 'default' ? 'Adds a touch of primary hue'
+    : neutralChoice === 'branded' ? 'Adds a noticeable tint to neutral'
     : 'Neutrals are pure grey'
 
   const controlsBar = (
@@ -422,7 +470,8 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
         <div className="ct-label">Neutral color</div>
         <div className="ct-field" style={{ position: 'relative', width: 176 }}>
           <span className="ct-swatch" style={{ background: 'var(--neutral-ink-9)' }} />
-          <NeutralSelect value={neutralLevel} onChange={setNeutralLevel} />
+          <NeutralSelect value={neutralChoice} onChange={setNeutralChoice} hasSecondary={secState !== 'none'}
+            hexInput={neutralHexInput} onHexInput={setNeutralHexInput} />
         </div>
         <InfoLine text={neutralInfo} />
       </div>
@@ -808,7 +857,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
                 </div>
               )
             ))}
-            {paletteTabSafe === 'neutral' && colorBlock(`Neutral scale — ${neutralLevel} tint`, 'neutral', 'neutral', null, primary)}
+            {paletteTabSafe === 'neutral' && colorBlock(`Neutral scale — ${neutralChoice === 'secondary' ? 'secondary-hue' : neutralChoice === 'custom' ? 'custom-hue' : neutralLevel} tint`, 'neutral', 'neutral', null, primary)}
             {(paletteTabSafe === 'critical' || paletteTabSafe === 'warning' || paletteTabSafe === 'positive' || paletteTabSafe === 'info') && signalBlock(paletteTabSafe)}
             </div>
           </div>

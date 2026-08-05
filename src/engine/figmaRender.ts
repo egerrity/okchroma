@@ -148,6 +148,12 @@ export interface ThemeInput {
 
   neutralLevel?: NeutralLevel
 
+  // the neutral's RESOLVED tint hue (owner 2026-08-04, the source round): callers resolve
+  // the source via colorEngine.neutralTintHue and pass the hue; absent = the primary's —
+  // every pre-source caller is byte-identical. The emitter stays dumb on purpose: the
+  // secondary-follows-live and custom-hex fallback rules live in ONE place, not here.
+  neutralH?: number
+
   signals: Array<{ name: string; scale: GeneratedScale }>
 
   // profile the theme was resolved under: the neutral generated HERE must match the caller's
@@ -196,7 +202,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     ...ctaFamily(s, mode, prefix),
   })
 
-  const nScale = generateNeutralScale(scale.brandH, input.neutralLevel ?? 'default', input.contrastProfile)
+  const nScale = generateNeutralScale(input.neutralH ?? scale.brandH, input.neutralLevel ?? 'default', input.contrastProfile)
   // custom link seed resolved ONCE (both modes read it)
   const lt = input.linkHex ? resolveLinkTrio(input.linkHex, input.contrastProfile) : null
   // the neutral carries the STRONG text-cta mirror on top of the shared family shape:

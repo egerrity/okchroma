@@ -166,6 +166,23 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
       `${mode} escape on-cta must stay a SOLID pole (got alpha ${leaf((esc[mode] as any).brand, 'on-cta').$value.alpha})`)
 }
 
+// NEUTRAL HUE SOURCE (owner 2026-08-04): ThemeInput.neutralH re-tints the neutral toward a
+// non-primary hue (Match secondary / Custom resolve to a hue via colorEngine.neutralTintHue);
+// ABSENT must stay byte-equal to the primary-hued emit — every pre-source caller unchanged.
+{
+  const base = themeToFigma(r, { secondary: null, neutralLevel: 'default', signals })
+  const sourced = themeToFigma(r, { secondary: null, neutralLevel: 'default', neutralH: 200, signals })
+  const dflt = themeToFigma(r, { secondary: null, neutralLevel: 'default', neutralH: r.scale.brandH, signals })
+  for (const mode of ['light', 'dark'] as const) {
+    ok(JSON.stringify((sourced[mode] as any).neutral) !== JSON.stringify((base[mode] as any).neutral),
+      `${mode} neutralH=200 did not move the neutral off the primary-hued emit`)
+    ok(JSON.stringify((sourced[mode] as any).brand) === JSON.stringify((base[mode] as any).brand),
+      `${mode} neutralH leaked outside the neutral group`)
+    ok(JSON.stringify((dflt[mode] as any).neutral) === JSON.stringify((base[mode] as any).neutral),
+      `${mode} explicit neutralH=brandH should be byte-equal to the absent default`)
+  }
+}
+
 // SYSTEM LINK (Phase 4): one trio per theme. Default = the primary's cta-ink verbatim;
 // a custom seed = its ink-register resolution (differs from the brand's own ink).
 {

@@ -262,6 +262,28 @@ export function generateIllustrationScale(scale: GeneratedScale): IllustrationSc
   return { stops }
 }
 
+// ── THE NEUTRAL'S TINT-HUE SOURCE (owner 2026-08-04: "use secondary and a custom") ─────
+// The neutral tint machinery is hue-parametric; the OFFERING picks which hue feeds it:
+// absent = the primary's (every pre-source recipe replays byte-identical) · 'secondary' =
+// the secondary's seed hue, FOLLOWED LIVE (the source is stored, never a frozen hue — a
+// re-apply tracks the current secondary) · 'custom' = the hue of a user hex (the hex's HUE
+// tints the generated near-grey; strength stays the declared curve — not a custom ramp
+// seed). ONE resolution rule for every surface, fallbacks INSIDE: no secondary in scope or
+// no/invalid custom hex → the primary's hue. New sources tint at the DEFAULT level (the
+// 5-entry dropdown collapses source × strength; Intense variants are a later ask).
+export type NeutralSource = 'secondary' | 'custom'
+export function neutralTintHue(
+  primaryH: number,
+  source?: NeutralSource,
+  secondaryH?: number,
+  customHex?: string | null,
+): number {
+  if (source === 'secondary' && secondaryH !== undefined) return secondaryH
+  if (source === 'custom' && customHex && /^#?[0-9a-fA-F]{6}$/.test(customHex))
+    return hexToOklch(customHex.startsWith('#') ? customHex : `#${customHex}`).H
+  return primaryH
+}
+
 export function generateNeutralScale(
   brandH: number,
   level: NeutralLevel = 'default',
