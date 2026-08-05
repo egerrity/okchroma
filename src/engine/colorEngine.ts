@@ -302,7 +302,7 @@ export function generateNeutralScale(
 
   // The neutral cta is LOW-HIERARCHY: unlike a brand/signal cta (a bold off-scale
   // fill), it reads at the quiet wash level, so its REST fill stays fed from the
-  // scale's own stop 4 — which flips via LIGHT_L/DARK_L (light ~0.936, dark ~0.285).
+  // scale's own stop 4 — which flips via ROOT_L_LIGHT/ROOT_L_DARK (light ~0.936, dark ~0.285).
   // on-cta is recomputed so the text stays legible in each mode.
   const asCta = (stop: number, src: ColorStop) => makeStop(stop, src.L, src.C, src.H)
   scale.cta = asCta(9, scale.light[3])

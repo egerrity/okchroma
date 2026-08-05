@@ -15,7 +15,7 @@
 // ink requires vs paper-2; owner-approved). Nothing is hand-placed any more: the last P_FIXED stop
 // without a require was highlight-9, and it is gone.
 import {
-  LIGHT_L, DARK_NEUTRAL_L, SCALE_C_LIGHT, SCALE_C_DARK,
+  ROOT_L_LIGHT, ROOT_L_DARK, SCALE_C_LIGHT, SCALE_C_DARK,
   STOP_8_NONTEXT_CONTRAST, INK_9_CONTRAST, INK_10_CONTRAST_FLOOR, DARK_CTA_MIN_L,
 } from '../engine/stopTable'
 
@@ -53,9 +53,9 @@ export type StopReq = {
   baseC?: number                      // ladder param (light): absolute base chroma for the ladder/envelope blend
   chromaMult?: number                 // param for produce.chroma === 'brand'
   inkMaxC?: number                    // text-register ceiling: chroma = min(chromaMult × brandC, inkMaxC)
-  // dark ink chroma-FLOOR ladder position — a physical rung, DECLARED so it never
-  // follows a stop renumber (see SCALE_C_* in stopTable.ts). Ink stops only.
-  chromaFloorIndex?: number
+  // dark ink chroma-floor VALUE (unscaled; ×floorStrength at runtime), carried from the
+  // stop's SCALE_C_* row. Ink stops only; absent = the ladder law at the stop's own depth.
+  chromaFloor?: number
   require?: Require
 }
 
@@ -180,7 +180,7 @@ const T10: Require = { metric: 'wcag', against: 'paper-2', target: INK_10_CONTRA
 // opts.apcaClearanceLc. Exact and custom-secondary ctas stay inert (enforce off).
 const ONS = { onFill: { metric: 'apca-pole', enforce: true, ratioFloor: 4.5, coEnforceLc: 65 } as OnReq }
 
-// paper/wash separation is a PROPERTY OF THE LIGHT_L SHAPE, not a runtime delta (owner 2026-07-09,
+// paper/wash separation is a PROPERTY OF THE ROOT_L_LIGHT SHAPE, not a runtime delta (owner 2026-07-09,
 // render/paper2-distributions.html, distribution "B"). The near-white ladder's gaps grow geometrically
 // (~1.25×/step), so paper-2 stands ~0.017 ΔE off paper-1 and every wash seam holds BY CONSTRUCTION —
 // paper-2 falls onto its ID curve with nothing clamped. This REPLACES the old min-separation deltas: the
@@ -194,21 +194,18 @@ export const LIGHT: ModeSpec = {
   stops: [
     // paper-0: the resolved ladder extreme — in light it genuinely is white (rootL 1.0, zero chroma)
     { stop: 0, rootL: 1.0, group: 'paper', produce: { hue: 'warm-drift', L: 'fixed', chroma: 'ladder' }, satFraction: SCALE_C_LIGHT[0].sat, baseC: SCALE_C_LIGHT[0].base },
-    // paper/wash/highlight-8: perceptual ladder/envelope blend on the geometric LIGHT_L scaffold. Separation
+    // paper/wash/highlight-8: perceptual ladder/envelope blend on the geometric ROOT_L_LIGHT scaffold. Separation
     // falls out of the shape (see above) — no min-separation require. Only stop 8 carries a require: the WCAG
     // 3:1 vs the resolved paper-2 (re-solves automatically since it references paper-2).
-    ...LIGHT_L.slice(0, 8).map((rootL, i): StopReq => ({
-      stop: i + 1, rootL, group: groupOf(i + 1), produce: PL_LADDER,
-      satFraction: SCALE_C_LIGHT[i + 1].sat, baseC: SCALE_C_LIGHT[i + 1].base,
-      require: i === 7 ? S8 : undefined,
+    ...[1, 2, 3, 4, 5, 6, 7, 8].map((stop): StopReq => ({
+      stop, rootL: ROOT_L_LIGHT[stop], group: groupOf(stop), produce: PL_LADDER,
+      satFraction: SCALE_C_LIGHT[stop].sat, baseC: SCALE_C_LIGHT[stop].base,
+      require: stop === 8 ? S8 : undefined,
     })),
     // ink text: perceptual + contrast-required. ink-9 is ALSO the emphasis fill (the
     // highlight-9 collapse, owner 2026-07-29).
-    // ⚠️ rootLs index LIGHT_L by ARRAY POSITION, not by stop number — they stayed at 10/11
-    // when the stops moved to 9/10. Indices 8 and 9 are retired slots the array keeps for
-    // the neutral tint curve; see the banner in stopTable.ts.
-    { stop: 9, rootL: LIGHT_L[10], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[9].inkMult, inkMaxC: SCALE_C_LIGHT[9].inkMaxC, chromaFloorIndex: SCALE_C_LIGHT[9].chromaFloorIndex, require: T9 },
-    { stop: 10, rootL: LIGHT_L[11], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[10].inkMult, inkMaxC: SCALE_C_LIGHT[10].inkMaxC, chromaFloorIndex: SCALE_C_LIGHT[10].chromaFloorIndex, require: T10 },
+    { stop: 9, rootL: ROOT_L_LIGHT[9], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[9].inkMult, inkMaxC: SCALE_C_LIGHT[9].inkMaxC, chromaFloor: SCALE_C_LIGHT[9].chromaFloor, require: T9 },
+    { stop: 10, rootL: ROOT_L_LIGHT[10], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[10].inkMult, inkMaxC: SCALE_C_LIGHT[10].inkMaxC, chromaFloor: SCALE_C_LIGHT[10].chromaFloor, require: T10 },
   ],
   roles: [
     { role: 'cta', produce: { hue: 'constant', L: 'anchor', chroma: 'brand' }, floorL: 0, chromaMult: 1 },
@@ -232,15 +229,14 @@ export const DARK: ModeSpec = {
     // hues: on the delta-carry path it solves from the sentinel every time, and the old claim that "most hues
     // already clear it from the scaffold and don't move" was only ever true because the 7→8 carry floor had
     // already lifted them past it (owner 2026-07-29 — see the S8 note above).
-    ...DARK_NEUTRAL_L.slice(0, 8).map((rootL, i): StopReq => ({
-      stop: i + 1, rootL, group: groupOf(i + 1), produce: i === 7 ? P_FIXED : P_LIFT,
-      satFraction: SCALE_C_DARK[i + 1].sat, require: i === 7 ? S8 : undefined,
+    ...[1, 2, 3, 4, 5, 6, 7, 8].map((stop): StopReq => ({
+      stop, rootL: ROOT_L_DARK[stop], group: groupOf(stop), produce: stop === 8 ? P_FIXED : P_LIFT,
+      satFraction: SCALE_C_DARK[stop].sat, require: stop === 8 ? S8 : undefined,
     })),
     // ink text: perceptual + the contrast requires DECLARED in dark too (Stage-5 flip): the scaffold already
     // clears them for every hue (the gate proves it), so values don't move — but the guarantee is now a rule.
-    // Same array-position caveat as light: rootLs index DARK_NEUTRAL_L at 10/11.
-    { stop: 9, rootL: DARK_NEUTRAL_L[10], group: 'ink', produce: P_TEXT, chromaMult: SCALE_C_DARK[9].inkMult, inkMaxC: SCALE_C_DARK[9].inkMaxC, chromaFloorIndex: SCALE_C_DARK[9].chromaFloorIndex, require: T9 },
-    { stop: 10, rootL: DARK_NEUTRAL_L[11], group: 'ink', produce: P_TEXT, chromaMult: SCALE_C_DARK[10].inkMult, inkMaxC: SCALE_C_DARK[10].inkMaxC, chromaFloorIndex: SCALE_C_DARK[10].chromaFloorIndex, require: T10 },
+    { stop: 9, rootL: ROOT_L_DARK[9], group: 'ink', produce: P_TEXT, chromaMult: SCALE_C_DARK[9].inkMult, inkMaxC: SCALE_C_DARK[9].inkMaxC, chromaFloor: SCALE_C_DARK[9].chromaFloor, require: T9 },
+    { stop: 10, rootL: ROOT_L_DARK[10], group: 'ink', produce: P_TEXT, chromaMult: SCALE_C_DARK[10].inkMult, inkMaxC: SCALE_C_DARK[10].inkMaxC, chromaFloor: SCALE_C_DARK[10].chromaFloor, require: T10 },
   ],
   roles: [
     { role: 'cta', produce: { hue: 'constant', L: 'anchor', chroma: 'brand' }, floorL: DARK_CTA_MIN_L, chromaMult: 1 },

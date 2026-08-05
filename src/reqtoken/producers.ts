@@ -19,7 +19,7 @@ import {
   DARK_FLOOR_FULL_C, DARK_FLOOR_MUTED_MAX_C, onTextIsWhite,
 } from '../engine/colorMath'
 import { p2Diff, P2_D, P2_D_UP } from '../engine/p2'
-import { DARK_CTA_MIN_L, DARK_CTA_C } from '../engine/stopTable'
+import { DARK_CTA_MIN_L, DARK_CTA_C, chromaFloorBase } from '../engine/stopTable'
 import { CTA_ONFILL_ENFORCE_LC } from './profiles'
 import { darkCtaTrim } from '../engine/darkChromaCurve'
 import type { GenerateOptions } from '../engine/colorEngine'   // type-only: erased at runtime, no cycle
@@ -306,20 +306,21 @@ export function buildDarkContext(ctx: Ctx, specFloorL: number = DARK_CTA_MIN_L) 
 }
 export type DarkCtx = ReturnType<typeof buildDarkContext>
 
-// dark scale chroma (stops 1–8): darkChromaCurve callback or the chroma floor over subtleC (colorEngine.ts:404–406)
+// dark scale chroma (stops 1–8): darkChromaCurve callback or the chroma floor over subtleC
+// (colorEngine.ts:404–406). The band's floor derives from the ladder law at its own depth.
 export const darkScaleChromaAt = (ctx: Ctx, dctx: DarkCtx, stopIndex: number, multiplier: number) => (L: number): number =>
   ctx.cAt('dark', L, ctx.opts?.darkChromaCurve
     ? ctx.opts.darkChromaCurve(L, dctx.darkHueAtL(L), ctx.brandC, dctx.darkC9)
-    : applyChromaFloor(ctx.subtleC, multiplier, stopIndex, ctx.darkFloorStrength))
+    : applyChromaFloor(ctx.subtleC, multiplier, chromaFloorBase(stopIndex), ctx.darkFloorStrength))
 
-// dark ink chroma (stops 10/11): the TEXT-TIER EXEMPTION (C9). The H-K fill policy
-// (perceptualDarkC via opts.darkChromaCurve) is a FILL equalizer — at ink lightness it
-// pumps maximum chroma into the lowest-H-K hues (the yellow-green neon). The text tier
-// keeps its native ID-relative chroma (the DARK_STOP_11/12 multipliers live again),
-// normalized to the declared text register — perceptualDarkC's documented band limit,
-// realized at the consumer.
-export const darkInkChromaAt = (ctx: Ctx, dctx: DarkCtx, stopIndex: number, multiplier: number, maxC = Infinity) => (L: number): number =>
-  ctx.cAt('dark', L, Math.min(applyChromaFloor(ctx.brandC, multiplier, stopIndex, ctx.darkFloorStrength), maxC))
+// dark ink chroma: the TEXT-TIER EXEMPTION (C9). The H-K fill policy (perceptualDarkC via
+// opts.darkChromaCurve) is a FILL equalizer — at ink lightness it pumps maximum chroma
+// into the lowest-H-K hues (the yellow-green neon). The text tier keeps its native
+// ID-relative chroma, normalized to the declared text register — perceptualDarkC's
+// documented band limit, realized at the consumer. floorBase = the row's declared floor
+// value (SCALE_C_*.chromaFloor).
+export const darkInkChromaAt = (ctx: Ctx, dctx: DarkCtx, floorBase: number, multiplier: number, maxC = Infinity) => (L: number): number =>
+  ctx.cAt('dark', L, Math.min(applyChromaFloor(ctx.brandC, multiplier, floorBase, ctx.darkFloorStrength), maxC))
 
 // (darkHighlightChromaAt DELETED with highlight-9, owner 2026-07-29.)
 

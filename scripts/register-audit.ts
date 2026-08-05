@@ -19,7 +19,7 @@
 // Run: npm run audit:register
 import * as fs from 'fs'
 import * as path from 'path'
-import { SCALE_C_LIGHT, SCALE_C_DARK, DARK_CTA_C } from '../src/engine/stopTable'
+import { SCALE_C_LIGHT, SCALE_C_DARK, DARK_CTA_C, chromaFloorBase } from '../src/engine/stopTable'
 import { MODE_SPECS } from '../src/reqtoken/spec'
 import { darkCtaTrim } from '../src/engine/darkChromaCurve'
 import { signalScalesFor, resolveBrand } from '../src/engine/resolve'
@@ -51,24 +51,23 @@ const ok = (msg: string) => console.log('  ✓ ' + msg)
   }
   ok('dark ladders shaped')
 
-  // THE CHROMA-FLOOR LADDER IS PINNED, NOT DERIVED (owner 2026-07-29). The dark ink
-  // chroma floor is (0.02 + 0.02·idx/7)·strength, and `idx` used to be the stop number
-  // reused as an array index — so the 2026-07-29 renumber (ink 10/11 → 9/10) would have
-  // silently moved every dark ink's chroma floor. It is a DECLARED field now, and it
-  // deliberately does NOT equal the stop number. This check fails if someone "tidies"
-  // it back into agreement.
-  const INK_FLOOR_LADDER: Record<number, number> = { 9: 10, 10: 11 }
+  // THE INK CHROMA FLOORS ARE FROZEN VALUES (normalized 2026-08-05 from the pinned-index
+  // form). The floors have sat at the ladder law's rungs 10/11 since before two renumbers
+  // — the values are the invariant, and they are declared per row precisely so a stop
+  // renumber has nothing left to move. This check fails if a row's declared floor drifts
+  // off its historical value.
+  const INK_FLOOR_VALUES: Record<number, number> = { 9: chromaFloorBase(10), 10: chromaFloorBase(11) }
   for (const [label, tbl] of [['light', t], ['dark', d]] as const) {
-    for (const [stopStr, expected] of Object.entries(INK_FLOOR_LADDER)) {
+    for (const [stopStr, expected] of Object.entries(INK_FLOOR_VALUES)) {
       const stop = Number(stopStr)
       const e = tbl[stop]
       if (!e) { fail(`${label} ink stop ${stop} missing from SCALE_C`); continue }
       if (e.inkMult === undefined || e.inkMaxC === undefined) fail(`${label} ink stop ${stop} must declare inkMult + inkMaxC`)
-      if (e.chromaFloorIndex !== expected)
-        fail(`${label} ink stop ${stop} chromaFloorIndex is ${e.chromaFloorIndex}, must stay pinned at ${expected} (a physical ladder rung, not the stop number)`)
+      if (e.chromaFloor !== expected)
+        fail(`${label} ink stop ${stop} chromaFloor is ${e.chromaFloor}, must stay ${expected} (the frozen historical rung value)`)
     }
   }
-  ok('ink chroma-floor ladder indices stay pinned at 10/11 (never follow a stop renumber)')
+  ok('ink chroma floors stay frozen at the historical rung values (a renumber cannot move them)')
 }
 
 // ── 2. spec ↔ table binding ──────────────────────────────────────────────────
@@ -83,7 +82,7 @@ const ok = (msg: string) => console.log('  ✓ ' + msg)
       if (sp.satFraction !== undefined && sp.satFraction !== e.sat) fail(`${mode} s${sp.stop} satFraction ${sp.satFraction} != table ${e.sat}`)
       if (sp.chromaMult !== undefined && sp.chromaMult !== e.inkMult) fail(`${mode} s${sp.stop} chromaMult ${sp.chromaMult} != table ${e.inkMult}`)
       if (sp.group === 'ink' && e.inkMult === undefined) fail(`${mode} s${sp.stop} is ink but the table declares no inkMult`)
-      if (sp.chromaFloorIndex !== e.chromaFloorIndex) fail(`${mode} s${sp.stop} chromaFloorIndex ${sp.chromaFloorIndex} != table ${e.chromaFloorIndex}`)
+      if (sp.chromaFloor !== e.chromaFloor) fail(`${mode} s${sp.stop} chromaFloor ${sp.chromaFloor} != table ${e.chromaFloor}`)
     }
   }
   ok('MODE_SPECS chroma params bind to the SCALE_C tables, field for field')

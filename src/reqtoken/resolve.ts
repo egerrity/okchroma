@@ -11,7 +11,7 @@ import { apparentL, perceptualRungL, perceptualDarkC } from '../engine/perceptua
 import { clampChromaToGamut, wcagY, legalRatio, findMaxLForContrast, apcaLc, contrastRatio, shippedY } from '../engine/constraints'
 import { hexToOklch, srgbEmitChannels, redSolveDist, RED_GATE, RED_SOLVE } from '../engine/colorMath'
 import { hoverL, pressedL, stateFillL } from '../engine/archetypes'
-import { DARK_BAND_LIFT, DARK_SHINE_PARITY_T, LIGHT_L, DARK_SIGNAL_WARM_DRIFT } from '../engine/stopTable'
+import { DARK_BAND_LIFT, DARK_SHINE_PARITY_T, ROOT_L_LIGHT, DARK_SIGNAL_WARM_DRIFT, chromaFloorBase } from '../engine/stopTable'
 import { MODE_SPECS, type ModeSpec, type StopReq, type RoleReq, type Require } from './spec'
 import {
   buildContext, buildDarkContext, type Ctx, type DarkCtx, type ResolveOpts,
@@ -188,12 +188,11 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
           // curve-bearing ramps (neutral, derived secondary): ink chroma = the light twin's (the curve's dark
           // branch is keyed to the OLD dark L geography — sampling it at delta ink L's made the 11-jump).
           // Low-chroma inks carry no hue-family risk; L and hue stay dark-native.
-          // THE CHROMA-FLOOR LADDER INDEX IS DECLARED, NOT DERIVED (sp.chromaFloorIndex, stopTable.ts).
-          // It was `sp.stop` reused as an index, which is the trap the 2026-07-10 renumber
-          // documented and the 2026-07-29 renumber would have sprung: moving the ink stops to
-          // 9/10 would have moved the floor from 0.0486/0.0514 to 0.0457/0.0486 and quietly
-          // re-chroma'd every dark ink. The declaration pins it at 10/11 where it has always been.
-          ? (inkTwin ? ((_L: number) => inkTwin.C) : darkInkChromaAt(ctx, d, sp.chromaFloorIndex ?? sp.stop, sp.chromaMult ?? 1, sp.inkMaxC))
+          // THE CHROMA FLOOR IS A DECLARED VALUE (sp.chromaFloor, from the stop's SCALE_C_* row) —
+          // normalized 2026-08-05 from a ladder index that had to be pinned across renumbers (the
+          // 2026-07-10 trap). A portable spec without the field falls back to the ladder law at the
+          // stop's own depth, which is what an index-less spec means.
+          ? (inkTwin ? ((_L: number) => inkTwin.C) : darkInkChromaAt(ctx, d, sp.chromaFloor ?? chromaFloorBase(sp.stop), sp.chromaMult ?? 1, sp.inkMaxC))
         // chroma-floor index clamps at 0: stop 0 shares paper-1's tint treatment
         : darkScaleChromaAt(ctx, d, Math.max(0, sp.stop - 1), sp.satFraction ?? 1)
       // DELTA-KEYED: derive dark from the resolved light twin for the SURFACE stops 1–8 (papers, washes,
@@ -231,7 +230,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         else if (lift !== 1 || tShine > 0) {
           // C27: full-parity stops (the papers) also get the achromatic scaffold
           // anchor — one photometric level across families (owner 2026-07-28)
-          const p = deltaDarkPlace(dl!, ls, lift, tShine, LIGHT_L[sp.stop - 1])
+          const p = deltaDarkPlace(dl!, ls, lift, tShine, ROOT_L_LIGHT[sp.stop])
           L = p.L; C = p.C
         } else L = deltaDarkTargetL(ls, C, ls.H)
         // C28: the warm-spine drift is L-DEPENDENT, but the carry copies the light twin's

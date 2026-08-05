@@ -1,20 +1,31 @@
 
 
-import { LIGHT_L, DARK_L } from './stopTable'
-
 export type NeutralLevel = 'pure' | 'default' | 'branded'
 
-// SHAPE = the SUBTLE SECONDARY's chroma shape: the relative tint at each stop, sampled
-// across lightness. Its x-axis is the shared stop-lightness scaffold (LIGHT_L / DARK_L),
-// so SHAPE[i] is the tint at stop i+1's lightness. (Previously sampled over a separate,
-// near-identical LANCHOR table; consolidated onto the scaffold 2026-06-29 — the two were
-// the same axis.) The NEUTRAL rode this shape too until the 2026-07-17 tint round gave it
-// its own declared curve (NEUTRAL_SHAPE below); the secondary keeps this one pending its
-// own round. NOTE SHAPE.dark is vestigial for any ramp that delta-carries: dark chroma is
-// the light twin's, carried verbatim (reqtoken/resolve.ts).
-const SHAPE = {
-  light: [0.108, 0.179, 0.253, 0.32, 0.45, 0.503, 0.599, 0.818, 1, 0.939, 0.841, 0.74],
-  dark: [0.236, 0.229, 0.276, 0.394, 0.469, 0.551, 0.648, 0.859, 1, 0.94, 0.745, 0.195],
+// ── TINT-CURVE CONTROL POINTS ──────────────────────────────────────────────────────────
+// The tint curves are declared as their own (L, share) control points, one set per mode
+// axis — they no longer borrow the stop scaffold arrays (decoupled 2026-08-05; the stop
+// tables are stop-keyed in stopTable.ts and the retired scaffold slots live on only here,
+// as the curve knees they always actually were). Values are the verbatim pairing of the
+// former positional arrays: nothing moved, byte-identical by construction.
+//
+// SHAPE = the SUBTLE SECONDARY's chroma shape: the relative tint sampled across lightness.
+// (The neutral rode this shape too until the 2026-07-17 tint round gave it its own curve,
+// NEUTRAL_TINT_POINTS below; the secondary keeps this one pending its own round. The dark
+// branch is vestigial for any ramp that delta-carries: dark chroma is the light twin's,
+// carried verbatim — reqtoken/resolve.ts.)
+type TintPoint = readonly [number, number] // [L, share]
+const SHAPE_POINTS: Record<'light' | 'dark', readonly TintPoint[]> = {
+  light: [
+    [0.987, 0.108], [0.970, 0.179], [0.950, 0.253], [0.924, 0.32], [0.892, 0.45],
+    [0.852, 0.503], [0.801, 0.599], [0.738, 0.818], [0.600, 1], [0.560, 0.939],
+    [0.530, 0.841], [0.300, 0.74],
+  ],
+  dark: [
+    [0.178, 0.236], [0.213, 0.229], [0.252, 0.276], [0.285, 0.394], [0.313, 0.469],
+    [0.348, 0.551], [0.420, 0.648], [0.550, 0.859], [0.600, 1], [0.640, 0.94],
+    [0.767, 0.745], [0.919, 0.195],
+  ],
 }
 
 // PEAK = the SUBTLE SECONDARY's per-hue absolute tint ceiling (see peakC). The neutral no
@@ -35,10 +46,11 @@ const LEVEL: Record<NeutralLevel, number> = { pure: 0, default: 1, branded: 1.75
 //      paper-3) must separate from each other, so the tint LIFTS across them.
 //   2. "the hue has to drop off as you get higher" — so it TAPERS through the highlight
 //      and ink band, landing text ~neutral.
-// The borrowed shape did the exact opposite: it rose monotonically to highlight-9 and was
-// still near peak at the inks — least tint on the planes that needed separating, most where
-// it should be clean. Measured cost: dark ink-11 burned ~32% of its available chroma room,
-// so text carried a visible cast, while dark paper-1/2 sat at ~.002/.003 and read flat.
+// The borrowed shape did the exact opposite: it rose monotonically through the highlight
+// band and was still near peak at the inks — least tint on the planes that needed
+// separating, most where it should be clean. Measured cost: the dark strong ink burned
+// ~32% of its available chroma room, so text carried a visible cast, while dark
+// paper-1/2 sat at ~.002/.003 and read flat.
 //
 // ONE curve serves BOTH modes by construction: dark chroma is the light twin's chroma,
 // carried verbatim (the delta carry, reqtoken/resolve.ts) — so this is the single place the
@@ -47,23 +59,40 @@ const LEVEL: Record<NeutralLevel, number> = { pure: 0, default: 1, branded: 1.75
 // the planes for dark necessarily tints the light papers by the same amount (owner-accepted
 // 2026-07-17, having seen both ramps).
 //
-// NEUTRAL_SHAPE[i] pairs with LIGHT_L[i] / DARK_L[i] (stop i+1), as a share of the peak.
-// One array for both modes — the carry makes a per-mode shape meaningless here.
+// Each point is (L on that mode's axis, share of the peak). The two mid-band knees at
+// light L 0.600/0.560 (dark 0.600/0.640) are ex-scaffold positions of stops that no
+// longer exist — kept as curve geometry, labeled as nothing else.
 const NEUTRAL_TINT_PEAK = 0.0095
-const NEUTRAL_SHAPE = [
-  0.474, // paper-1  ─┐
-  0.684, // paper-2   │ the differentiation lift: tint grows with elevation
-  0.895, // paper-3   ─┘
-  1.000, // wash-4   ─┐ peak: the mid-wash band, the neutral's most-branded moment
-  1.000, // wash-5   ─┘
-  0.842, // wash-6   ─┐
-  0.653, // wash-7    │
-  0.505, // highlight-8
-  0.400, // highlight-9   the drop-off: hue fades as you climb
-  0.347, // (scaffold slot between highlight-9 and ink-10)
-  0.295, // ink-10    │
-  0.189, // ink-11   ─┘ text lands ~neutral
-]
+const NEUTRAL_TINT_POINTS: Record<'light' | 'dark', readonly TintPoint[]> = {
+  light: [
+    [0.987, 0.474], // paper-1  ─┐
+    [0.970, 0.684], // paper-2   │ the differentiation lift: tint grows with elevation
+    [0.950, 0.895], // paper-3  ─┘
+    [0.924, 1.000], // wash-4   ─┐ peak: the mid-wash band, the neutral's most-branded moment
+    [0.892, 1.000], // wash-5   ─┘
+    [0.852, 0.842], // wash-6   ─┐
+    [0.801, 0.653], // wash-7    │
+    [0.738, 0.505], // highlight-8
+    [0.600, 0.400], // knee (ex-scaffold)   the drop-off: hue fades as you climb
+    [0.560, 0.347], // knee (ex-scaffold)
+    [0.530, 0.295], // first text stop
+    [0.300, 0.189], // strong text ─┘ lands ~neutral
+  ],
+  dark: [
+    [0.178, 0.474], // paper-1
+    [0.213, 0.684], // paper-2
+    [0.252, 0.895], // paper-3
+    [0.285, 1.000], // wash-4
+    [0.313, 1.000], // wash-5
+    [0.348, 0.842], // wash-6
+    [0.420, 0.653], // wash-7
+    [0.550, 0.505], // highlight-8
+    [0.600, 0.400], // knee (ex-scaffold)
+    [0.640, 0.347], // knee (ex-scaffold)
+    [0.767, 0.295], // first text stop
+    [0.919, 0.189], // strong text
+  ],
+}
 
 // Per-hue evening. Warm tint is far MORE salient on grey than cool at the SAME chroma — a
 // blue-grey reads "clean", an orange-grey reads "dirty". So magnitude alone can never even
@@ -89,12 +118,12 @@ const peakC = (hue: number, mode: 'light' | 'dark'): number => {
   return mode === 'light' ? 0.0145 : 0.0155
 }
 
-// ONE interpolator, two declared shapes (the neutral's and the secondary's) — the shape is
-// a parameter, not a second mechanism. Reads a shape off the stop-lightness scaffold and
-// interpolates it at an arbitrary L, clamping to the end stops outside the scaffold's range
-// (paper-0 sits outside it, so it takes paper-1's share).
-const interpShapeAt = (L: number, mode: 'light' | 'dark', shape: number[]): number => {
-  const pts = (mode === 'light' ? LIGHT_L : DARK_L).map((l, i) => ({ l, s: shape[i] })).sort((a, b) => a.l - b.l)
+// ONE interpolator, two declared point sets (the neutral's and the secondary's) — the
+// points are a parameter, not a second mechanism. Interpolates a share at an arbitrary L,
+// clamping to the end points outside the declared range (paper-0 sits outside it, so it
+// takes paper-1's share).
+const interpTintAt = (L: number, points: readonly TintPoint[]): number => {
+  const pts = points.map(([l, s]) => ({ l, s })).sort((a, b) => a.l - b.l)
   if (L <= pts[0].l) return pts[0].s
   if (L >= pts[pts.length - 1].l) return pts[pts.length - 1].s
   for (let i = 0; i < pts.length - 1; i++) {
@@ -112,7 +141,7 @@ export function neutralChromaCurve(
 ): (L: number, mode: 'light' | 'dark') => number {
   const mult = LEVEL[level]
   const peak = neutralTintPeak(brandH)
-  return (L, mode) => mult * peak * interpShapeAt(L, mode, NEUTRAL_SHAPE)
+  return (L, mode) => mult * peak * interpTintAt(L, NEUTRAL_TINT_POINTS[mode])
 }
 
 // The SUBTLE SECONDARY (the neutral is "the secondary engine + a chroma clamp" —
@@ -127,5 +156,5 @@ export function subtleSecondaryChromaCurve(
   brandH: number,
   mult: number = SUBTLE_SECONDARY_MULT,
 ): (L: number, mode: 'light' | 'dark') => number {
-  return (L, mode) => mult * peakC(brandH, mode) * interpShapeAt(L, mode, SHAPE[mode])
+  return (L, mode) => mult * peakC(brandH, mode) * interpTintAt(L, SHAPE_POINTS[mode])
 }

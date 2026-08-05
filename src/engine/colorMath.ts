@@ -383,11 +383,13 @@ export interface ColorStop {
   b: number
 }
 
-export function applyChromaFloor(C: number, multiplier: number, stopIndex: number, floorStrength: number): number {
+// floorBase = the unscaled floor value: the surface band derives it from the ladder law at
+// its own depth (stopTable.chromaFloorBase(stop − 1)); ink rows carry it declared on their
+// SCALE_C row (normalized 2026-08-05 — the floor is a value, no longer an index).
+export function applyChromaFloor(C: number, multiplier: number, floorBase: number, floorStrength: number): number {
   const raw = C * multiplier
   if (floorStrength <= 0) return raw
-  const floor = (0.02 + (0.04 - 0.02) * (stopIndex / 7)) * floorStrength
-  return Math.max(raw, floor)
+  return Math.max(raw, floorBase * floorStrength)
 }
 
 export const DARK_FLOOR_FULL_C = 0.022
