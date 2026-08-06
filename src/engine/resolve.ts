@@ -14,9 +14,9 @@ import {
   RED_GATE,
   redGateDist,
 } from './collision'
-import { apcaY, apcaLc, encodedChannels, clampChromaToGamut, oklchToLinearRgb, legalRatio } from './constraints'
+import { apcaY, apcaLc, encodedChannels, clampChromaToGamut, oklchToLinearRgb, legalRatio, contrastRatio } from './constraints'
 import { pickSignalShift, signalSwapVariants } from './signalShift'
-import { hexToOklch, hueDelta, makeStop, maxChromaAt, onTextIsWhite, RED_SOLVE, redSolveDist } from './colorMath'
+import { hexToOklch, hueDelta, makeStop, maxChromaAt, onTextIsWhite, RED_SOLVE, redSolveDist, srgbEmitChannels } from './colorMath'
 import { apparentL, grayApparentL, solveCForApparent, solveLForApparent } from './perceptualL'
 import { subtleSecondaryChromaCurve } from './neutralCurve'
 import { stateFillL } from './archetypes'
@@ -426,16 +426,47 @@ export const OUTLINE_PRESSED_ALPHA = 0.18
 // 3.69 / pressed 3.00 against the state fills). Bars: WCAG 4.5 on every state fill plus
 // the Lc-60 on-cta bar at rest.
 //
-// THE TWO QUIET FILLS, and only these:
-//  · the DEFAULT-model secondary (derived + custom share the tint register) — sweep floor
-//    0.726; exact, outline and the no-secondary mirror keep their own on-cta.
-//  · the NEUTRAL, whose cta is the scale-fed wash-level fill (colorEngine, stop 4) — sweep
-//    floor 0.633, worst state 6.09:1 / Lc 65.2 at the register below.
-// The owner picked light .75 / dark .80 by eye on the alpha ladder; both families share the
-// ONE register, so both alias the single system/alpha/ink primitive in the plugins.
+// THE CARRIERS, in two tiers:
+//  · KNOWN-LEGAL BY CONSTRUCTION — the DEFAULT-model secondary (derived + custom share the
+//    tint register; sweep floor 0.726) and the NEUTRAL, whose cta is the scale-fed wash-level
+//    fill (colorEngine, stop 4; sweep floor 0.633, worst state 6.09:1 / Lc 65.2). These two
+//    always ship soft — the register was calibrated on their fills.
+//  · CHECKED PER BRAND (owner 2026-08-06: soft is the DEFAULT on-text for secondaries, "as
+//    long as it doesn't cause it to fail wcag") — the EXACT-style secondary, whose fill is an
+//    arbitrary user hex. softOnCtaPasses below decides per mode; a failing fill keeps the
+//    solid pole, which is always legal (the C38 ratioFloor picked it at 4.5 already).
+// The owner picked light .75 / dark .80 by eye on the alpha ladder; every carrier shares the
+// ONE register, so all alias the single system/alpha/ink primitive in the plugins.
 // LOUD fills keep the solid pole — brand, the signals, and the cta ESCAPE (whose fill is the
-// neutral's ink-10 register, not this quiet one; owner-confirmed 2026-08-04).
+// neutral's ink register, not this quiet one; owner-confirmed 2026-08-04). Outline keeps its
+// ink-9 (colored text on a transparent fill — there is no fill to compose over).
 export const SOFT_ON_CTA_ALPHA = { light: 0.75, dark: 0.80 } as const
+
+// Can this scale's cta family carry the soft ink and stay WCAG-legal? Judged per mode against
+// ALL THREE fill states — the C43 lesson: a text that clears rest can die on pressed, because
+// the states move the fill under a text that (composited) only partly tracks it.
+//
+// Measured in the SHIPPED basis: the browser composites the rgba text over the 8-bit hex fill,
+// so the fill goes through srgbEmitChannels (ColorStop.r/g/b are P3-encoded — the C44 trap) and
+// is quantized exactly as stopHex ships it. The bar is WCAG 4.5:1 in BOTH lanes — this is a
+// legality floor riding a taste feature, not a lane decision.
+export function softOnCtaPasses(s: GeneratedScale, mode: 'light' | 'dark'): boolean {
+  const white = mode === 'light' ? s.onFillTextIsWhite : s.onFillTextIsWhiteDark
+  const pole = white ? 1 : 0
+  const a = SOFT_ON_CTA_ALPHA[mode]
+  const states = mode === 'light' ? [s.cta, s.ctaHover, s.ctaPressed] : [s.ctaDark, s.ctaHoverDark, s.ctaPressedDark]
+  const lin = (v: number) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
+  const relY = (r: number, g: number, b: number) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+  const q = (v: number) => Math.round(Math.min(1, Math.max(0, v)) * 255) / 255
+  for (const st of states) {
+    const e = srgbEmitChannels(st)
+    const fr = q(e.r), fg = q(e.g), fb = q(e.b)
+    const fillY = relY(fr, fg, fb)
+    const textY = relY(pole * a + fr * (1 - a), pole * a + fg * (1 - a), pole * a + fb * (1 - a))
+    if (contrastRatio(textY, fillY) < 4.5) return false
+  }
+  return true
+}
 
 // ── the NEUTRAL CTA ESCAPE (Phase 3, owner spec 2026-07-16: stakeholders want a
 // neutral cta escape for red collisions): the brand's cta FILL trio swaps to the brand's

@@ -2622,6 +2622,34 @@ files heal on the next apply with no Rebuild. The payload token is byte-identica
 primitive in both modes. The community plugin's `cta/on` branch has the same pole-at-alpha
 check.
 
+### C47 addendum (2026-08-06) — EXACT JOINS, GATED PER BRAND
+Owner: the soft ink *"should be the default on text color as long as it doesn't cause it to
+fail wcag"* — exact-style secondaries were the one carrier left out, and their `cta/on` kept
+aliasing the abs poles while derived/custom aliased `system/alpha/ink`.
+
+The distinction that makes exact different: a default-model fill comes out of the tint register,
+so the .75/.80 pair is legal by construction (the C43 sweep). An exact fill is an ARBITRARY user
+hex, so it is **checked per brand, per mode**: `softOnCtaPasses` (resolve.ts, beside the
+register) composites the mode's pole at `SOFT_ON_CTA_ALPHA` over ALL THREE fill states — rest,
+hover, pressed, the C43 lesson — in the shipped 8-bit sRGB basis (`srgbEmitChannels`, quantized
+as stopHex ships; the C44 trap) and requires WCAG **4.5:1** on every state. A failing fill keeps
+the solid pole, which is always legal (C38's ratioFloor chose it at 4.5; every color has a
+passing pole — worst case anywhere is 4.583:1). The bar is 4.5 in BOTH lanes: a legality floor
+riding a taste feature, not a lane decision.
+
+Absent style normalizes to exact (resolve.ts's own rule), so build.ts/App.tsx callers — which
+pass no style — flip too. MEASURED over the shipped roster (31 exact secondaries × 2 modes):
+**52 slots go soft, 10 keep the solid pole, all 10 in light** — white@.75 over mid-L fills lands
+3.17–4.39:1 (espresso, matcha, honey-lemon class). Dark passes 31/31 at .80. Both branches
+proven through both emitters; the fallback needed no synthetic proof — it fires on real brands.
+
+Outline still keeps its ink-9 (colored text on a transparent fill — nothing to compose over);
+the no-secondary mirror keeps the brand's; loud fills and the escape stay solid. Plugins again
+needed ZERO code — `softInkFor` keys on path + partial alpha, never on style — and existing
+files heal via the same era-crossing pass. Blast radius: `audit:ext` only, 9 light-mode
+`-brand-secondary/cta/on` diffs (those brands' soft value now equals the base's, so the override
+collapses into an inherit).
+
 ## C48 — THE NEUTRAL PICKS ITS HUE: MATCH SECONDARY + CUSTOM SOURCES
 
 Owner, 2026-08-04: *"can we add the ability to use secondary and a custom to the neutral

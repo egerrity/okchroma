@@ -4,7 +4,7 @@ import { generateIllustrationScale, generateNeutralScale, type GeneratedScale, t
 import { srgbEmitChannels, masterEmitChannels } from './colorMath'
 import { clampChromaToGamut, apcaY, apcaLc } from './constraints'
 import { stopTokenName, tokenOrder } from './tokenNames'
-import { signalScalesFor, OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, SOFT_ON_CTA_ALPHA, escapeCtaFamily, resolveLinkTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
+import { signalScalesFor, OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, SOFT_ON_CTA_ALPHA, softOnCtaPasses, escapeCtaFamily, resolveLinkTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
 import { SIGNALS, SIGNAL_EMIT_NAME } from './signals'
 
 export function toHex(r: number, g: number, b: number): string {
@@ -514,12 +514,18 @@ export function brandCss(
     ]
   }
 
-  // the SOFT on-cta (default-model secondaries only — derived and custom share the tint
-  // register): the on-text pole at SOFT_ON_CTA_ALPHA, composited by the renderer over
+  // the SOFT on-cta: the on-text pole at SOFT_ON_CTA_ALPHA, composited by the renderer over
   // the fill's current state so hover/pressed carry their own legibility. Emitted AFTER the
-  // secondary body so the cascade takes it (the outline idiom). Exact keeps the solid pole.
+  // secondary body so the cascade takes it (the outline idiom).
+  // WHO GETS IT (owner 2026-08-06 — soft is the DEFAULT on-text for secondaries): the
+  // default-model secondary unconditionally (its tint-register fill is known-legal by
+  // construction), and the EXACT-style secondary — including the absent-style case, which
+  // resolve normalizes to exact — wherever softOnCtaPasses says the composite stays over
+  // WCAG 4.5 on every fill state. A failing exact fill keeps the solid pole. Outline keeps
+  // its ink-9 and the no-secondary mirror keeps the brand's.
   const softOnCta = (mode: 'light' | 'dark'): string[] => {
-    if (!secondary || secondaryStyle !== 'default') return []
+    if (!secondary || secondaryStyle === 'outline') return []
+    if (secondaryStyle !== 'default' && !softOnCtaPasses(secondary, mode)) return []
     const white = mode === 'light' ? secondary.onFillTextIsWhite : secondary.onFillTextIsWhiteDark
     return [`  --secondary-on-cta: rgba(${white ? '255, 255, 255' : '0, 0, 0'}, ${SOFT_ON_CTA_ALPHA[mode]});`]
   }
