@@ -7,7 +7,12 @@
 //   2. No digit in a body line — a row's own TITLE line is the only digit carrier.
 //   3. No ratio strings, no light/dark/mode talk, no "n/a" filler (the line is dropped).
 //   4. A Contrast line uses one of the owner's conformance phrases verbatim.
-//   5. tokenDescriptions.ts stays import-free — the module both plugin sandboxes bundle.
+//   5. No FOREIGN token label word in a body (owner 2026-08-05: "use a different word to
+//      optimize the search") — "decorative borders" on every wash row floods a search for
+//      the cta border rows exactly the way the stamp's digits flooded number searches. A
+//      label word is allowed only when it is in the row's OWN path; the cta border title
+//      line is the standing exception (it IS the token's name).
+//   6. tokenDescriptions.ts stays import-free — the module both plugin sandboxes bundle.
 
 import * as fs from 'fs'
 import { buildBaseColumns } from '../plugin-ext/payload'
@@ -43,6 +48,23 @@ for (const p of paths) {
   for (const line of body) {
     if (line.startsWith('Contrast: ') && !PHRASES.some(ph => line.includes(ph)))
       fail(p, `Contrast line off-phrase: ${line}`)
+  }
+}
+
+// ── rule 5: no foreign label word ────────────────────────────────────────────
+// The vocabulary is derived from the real paths, so a future token name joins the ban
+// automatically. "cta" is the one allowed crossover: the owner's own lines say "max
+// contrast on CTAs" / "low contrast CTAs" on the poles and the offset rungs, and a search
+// for it wants the action rows anyway.
+const ALLOWED_FOREIGN = new Set(['cta'])
+const vocab = new Set<string>()
+for (const p of paths) for (const w of p.toLowerCase().split(/[/-]/)) if (/^[a-z]{3,}$/.test(w)) vocab.add(w)
+for (const p of paths) {
+  const own = new Set(p.toLowerCase().split(/[/-]/))
+  const text = describeToken(p).split('\n').slice(1).join(' ')
+  for (const w of vocab) {
+    if (own.has(w) || ALLOWED_FOREIGN.has(w)) continue
+    if (new RegExp(`\\b${w}s?\\b`, 'i').test(text)) fail(p, `foreign label word "${w}" in body — floods that word's search`)
   }
 }
 

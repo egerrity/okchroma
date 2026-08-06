@@ -40,7 +40,7 @@ const TINT: Record<Family, string> = {
   'info': 'tints carry info hue',
 }
 
-const COLLIDES = 'may shift within band when the brand collides'
+const COLLIDES = 'may shift within band to de-conflict'
 
 interface Body {
   req: string
@@ -51,24 +51,27 @@ interface Body {
 
 // ── the shared family scale — per-STOP text, the title line carries the family,
 // TINT carries the per-family theming half
-const PAPER: Body = { req: 'surfaces, inverted text', theming: f => TINT[f], collides: true }
-const WASH: Body = { req: 'subtle interaction states, decorative borders, illustrations, signal hierarchy', theming: f => TINT[f], collides: true }
+const PAPER: Body = { req: 'backgrounds, inverted text', theming: f => TINT[f], collides: true }
+// "decorative edges", not "borders": a token label word in a foreign row's body floods that
+// word's search results (the whole reason the shared stamp broke search). A row may carry a
+// label word only when it is in its OWN path — cta border's own title is the exception.
+const WASH: Body = { req: 'subtle interaction states, decorative edges, illustrations, signal hierarchy', theming: f => TINT[f], collides: true }
 const solved = (f: Family) => `${TINT[f]}; re-solved to clear its floor`
 const TEXT_CTA = 'aliases the family’s reading stops'
 
 const SCALE: Record<string, Body> = {
   'paper/1': PAPER,
   'paper/2': PAPER,
-  'paper/3': { req: 'surfaces, inverted text', theming: f => `${TINT[f]}. Worst background text stops must clear.`, collides: true },
+  'paper/3': { req: 'backgrounds, inverted text', theming: f => `${TINT[f]}. Worst background text stops must clear.`, collides: true },
   'wash/4': WASH,
   'wash/5': WASH,
   'wash/6': WASH,
   'wash/7': WASH,
   'highlight/8': { req: 'focus rings, icons, large text', contrast: AA_LARGE, theming: solved, collides: true },
-  'ink/9': { req: 'regular text, inverted surfaces', contrast: AA_BODY, theming: solved, collides: true },
-  'ink/10': { req: 'regular text, inverted surfaces', contrast: AA_BODY, theming: solved, collides: true },
-  'ink/11': { req: 'strong text, inverted surfaces', contrast: AAA_BODY, theming: solved, collides: true },
-  'cta/enabled': { req: 'CTAs', theming: 'fully re-solved per brand and family' },
+  'ink/9': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
+  'ink/10': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
+  'ink/11': { req: 'high-emphasis text, inverted backgrounds', contrast: AAA_BODY, theming: solved, collides: true },
+  'cta/enabled': { req: 'CTAs', theming: 'fully re-solved per theme and family' },
   'cta/hover': { req: 'CTA pointer-over state', theming: 'follows its rest fill' },
   'cta/pressed': { req: 'CTA pressed state', theming: 'follows its rest fill' },
   'cta/border': { req: 'min APCA visibility', theming: 'draws for low contrast CTAs; strength per family tier' },
@@ -81,7 +84,7 @@ const SCALE: Record<string, Body> = {
 // ── rows only the neutral carries ────────────────────────────────────────────
 const STRONG = 'descending mirror of the text CTA'
 const NEUTRAL_ONLY: Record<string, Body> = {
-  'paper/0': { req: 'surfaces, inverted text', theming: f => TINT[f] },
+  'paper/0': { req: 'backgrounds, inverted text', theming: f => TINT[f] },
   'ink/12': { req: 'max-emphasis text', contrast: AAA_BODY },
   'cta-ink-strong/enabled': { req: 'heavier text CTA', contrast: AAA_BODY, theming: STRONG },
   'cta-ink-strong/hover': { req: 'heavier text CTA pointer-over', contrast: AA_BODY, theming: STRONG },
@@ -90,20 +93,20 @@ const NEUTRAL_ONLY: Record<string, Body> = {
 
 // ── system rows, keyed by full path ──────────────────────────────────────────
 const ABS: Body = { req: 'max contrast on CTAs, aliased global endpoints' }
-const OFFSET: Body = { req: 'min APCA visibility', theming: 'aliased to cta-border in themes with low contrast CTAs' }
+const OFFSET: Body = { req: 'min APCA visibility', theming: 'offsets buttons in themes with low contrast CTAs' }
 const SHADOW: Body = { req: 'drop shadows' }
-const PLANE = (req: string): Body => ({ req, theming: 'aliased to the neutral ramp' })
+const PLANE = (req: string): Body => ({ req, theming: 'aliased to the gray ramp' })
 const LINK = (state: string, contrast: string): Body => ({
   req: 'links' + state,
   contrast,
-  theming: 'rides the theme’s text CTA; custom seed re-solves; brand-overridable',
+  theming: 'rides the theme’s text action; custom seed re-solves; overridable per theme',
 })
 
 const SYSTEM: Record<string, Body> = {
   'system/abs-black': ABS,
   'system/abs-white': ABS,
-  'system/abs-primary': { req: 'brand seed reference', theming: 'each brand’s input, as given' },
-  'system/abs-secondary': { req: 'brand seed reference', theming: 'each brand’s companion input, as given' },
+  'system/abs-primary': { req: 'identity seed reference', theming: 'the theme’s own input, as given' },
+  'system/abs-secondary': { req: 'identity seed reference', theming: 'the theme’s companion input, as given' },
   'system/alpha/transparent': { req: 'aliased off-states' },
   'system/alpha/scrim': { req: 'dimming behind elements' },
   'system/alpha/ink': { req: 'soft on-color for quiet fills' },
