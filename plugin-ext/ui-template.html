@@ -232,8 +232,19 @@ body {
 </div>
 
 <div class="section">
+  <div class="label">Edit applied theme</div>
+  <!-- the file's applied brands, straight from their stored recipes (SPEC_KEY). Picking one
+       loads its settings into the form below; "New theme…" resets. Recipe-less extensions
+       (pre-recipe vintages) list disabled with the heal path in their label. -->
+  <select class="input" id="edit-select">
+    <option value="" selected>New theme…</option>
+  </select>
+</div>
+
+<div class="section">
   <div class="label">Brand name</div>
   <input class="input" id="collection-name" spellcheck="false" placeholder="Type a brand name…" />
+  <div class="info-line" id="edit-hint" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span id="edit-hint-text"></span></div>
 </div>
 
 <div class="bar section">

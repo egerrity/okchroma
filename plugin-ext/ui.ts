@@ -1,4 +1,4 @@
-import { resolveTheme, resolveBrand, signalScalesFor, escapeCtaFamily, resolveLinkTrio, DEFAULT_LINK_HEX, type SecondaryStyle, type ResolvedTheme } from '../src/engine/resolve'
+import { resolveTheme, resolveBrand, signalScalesFor, escapeCtaFamily, resolveLinkTrio, DEFAULT_LINK_HEX, normalizeSecondaryStyle, type SecondaryStyle, type ResolvedTheme } from '../src/engine/resolve'
 import { redGateDist, RED_GATE } from '../src/engine/collision'
 import { ARCHETYPES, type Archetype } from '../src/engine/archetypes'
 import { generateNeutralScale, neutralTintHue, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
@@ -116,6 +116,9 @@ const rosterBtn       = $<HTMLButtonElement>('roster-btn')
 const reapplyBtn      = $<HTMLButtonElement>('reapply-btn')
 const rebuildBtn      = $<HTMLButtonElement>('rebuild-btn')
 const rebuildHexInput = $<HTMLInputElement>('rebuild-hex')
+const editSelect      = $<HTMLSelectElement>('edit-select')
+const editHint        = $<HTMLElement>('edit-hint')
+const editHintText    = $<HTMLElement>('edit-hint-text')
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -508,7 +511,11 @@ function buildAndSend() {
     // reason-scoped confirm: echo back the exact token the confirm was armed with —
     // the plugin re-derives the reasons and only proceeds if they still match
     const confirmedToken = pendingConfirm?.name === name ? pendingConfirm.token : undefined
-    parent.postMessage({ pluginMessage: { type: 'apply', brand: name, brandTokens, baseTokens, hasSecondary: recipe.hasSecondary, confirmedToken, spec: recipe } }, '*')
+    // a LOADED theme whose name changed renames its extension in place (case-insensitive,
+    // matching the sandbox's identity rule) — same-name edits ride the normal update path
+    const renameFrom = loadedBrand && loadedBrand.trim().toLowerCase() !== name.trim().toLowerCase()
+      ? loadedBrand : undefined
+    parent.postMessage({ pluginMessage: { type: 'apply', brand: name, brandTokens, baseTokens, hasSecondary: recipe.hasSecondary, confirmedToken, spec: recipe, renameFrom } }, '*')
   } catch (err) {
     applyBtn.disabled = false
     setStatus(String(err), 'err')
@@ -700,7 +707,7 @@ window.addEventListener('message', e => {
       type: string; message?: string; brand?: string; token?: string; secondary?: string
       set?: number; removed?: number; inherited?: number; createdVars?: number; baseCreated?: boolean
       secondaryAdded?: boolean; addedCols?: string[]; rowsAdded?: boolean; orphaned?: number
-      backfill?: unknown[]; unstamped?: string[]; specs?: unknown[]
+      backfill?: unknown[]; unstamped?: string[]; specs?: unknown[]; reason?: string
       lines?: string[]; baseSeedHex?: string | null
     }
   }).pluginMessage
@@ -726,6 +733,7 @@ window.addEventListener('message', e => {
       queueRebuildSeed = null
       applyBtn.disabled = false
       rosterBtn.disabled = false
+      requestThemeList() // batches add/restamp extensions — the edit picker re-syncs
       setStatus(`✓ ${label}: ${n} brands · ${qTotals.set} overridden · ${qTotals.inherited} inherited`
         + `${qTotals.removed ? ` · ${qTotals.removed} reverted` : ''}${qTotals.baseCreated ? ' · base created' : ''}`
         + `${qTotals.addedCols.length ? ` · ${qTotals.addedCols.join('+')} column(s) added${qTotals.orphaned ? ` (${qTotals.orphaned} stale variable(s) kept default values there)` : ''}` : ''}`
@@ -743,6 +751,10 @@ window.addEventListener('message', e => {
   applyBtn.disabled = false
   if (msg.type === 'done') {
     pendingConfirm = null
+    // a single apply while a theme was loaded: the applied brand IS the loaded theme now
+    // (same-name update, or the rename's new name); the picker list re-syncs either way
+    if (loadedBrand && msg.brand) syncEditState(msg.brand)
+    requestThemeList()
     const parts = [`${msg.set ?? 0} overridden`, `${msg.inherited ?? 0} inherited`]
     if (msg.removed) parts.push(`${msg.removed} reverted to base`)
     const grew = msg.baseCreated ? ' · base created' : (msg.createdVars ? ` · ${msg.createdVars} base tokens added` : '')
@@ -772,6 +784,12 @@ window.addEventListener('message', e => {
     setStatus(msg.message ?? 'Unknown error', 'err')
   } else if (msg.type === 'specs') {
     const items = ((msg.specs ?? []) as Recipe[]).filter(s => s && typeof s.brand === 'string' && !!s.theme)
+    // the EDIT PICKER's refresh (reason-tagged so it can never be mistaken for the
+    // re-apply/rebuild round-trips below and start a batch)
+    if (msg.reason === 'list') {
+      renderEditOptions(items, msg.unstamped ?? [])
+      return
+    }
     if (rebuildPending) {
       // the rebuild rides the re-apply queue: item 0 re-seeds the base, the rest re-diff
       const seed = rebuildPending
@@ -934,11 +952,142 @@ rebuildBtn.addEventListener('click', () => {
   parent.postMessage({ pluginMessage: { type: 'collect-specs' } }, '*')
 })
 
+// ─── Edit an applied theme (owner 2026-08-06: "pull up the themes that are in the
+// file to edit") — the picker loads a stored recipe back into the form; Apply then
+// updates the extension through the unchanged single-apply path. A name change while
+// a theme is loaded RENAMES the extension in place (renameFrom rides the apply).
+
+let loadedBrand: string | null = null
+const specCache = new Map<string, Recipe>()
+
+function requestThemeList() {
+  parent.postMessage({ pluginMessage: { type: 'collect-specs', reason: 'list' } }, '*')
+}
+
+function renderEditOptions(items: Recipe[], unstamped: string[]) {
+  specCache.clear()
+  for (const it of items) specCache.set(it.brand, it)
+  const keep = editSelect.value
+  editSelect.innerHTML = ''
+  const add = (value: string, label: string, disabled = false) => {
+    const opt = document.createElement('option')
+    opt.value = value
+    opt.textContent = label
+    opt.disabled = disabled
+    editSelect.appendChild(opt)
+  }
+  add('', 'New theme…')
+  for (const it of items) add(it.brand, it.brand)
+  // recipe-less vintages stay visible with the heal path in the label (owner ruling)
+  for (const n of unstamped) add(` ${n}`, `${n} — predates stored settings (apply once by name to enable)`, true)
+  // the loaded theme wins the selection (a rename just moved it to a new name the old
+  // select value can't know); else keep the previous pick; a vanished brand falls to New
+  editSelect.value = loadedBrand && specCache.has(loadedBrand) ? loadedBrand
+    : keep && specCache.has(keep) ? keep : ''
+  if (loadedBrand && !specCache.has(loadedBrand)) syncEditState(null)
+}
+
+function syncEditState(brand: string | null) {
+  loadedBrand = brand
+  editHint.style.display = brand ? '' : 'none'
+  if (brand) editHintText.textContent = `Editing “${brand}” — changing the name renames it on Apply`
+}
+
+// the exact INVERSE of themeInput(): a stored recipe back onto the state vars and
+// controls. One updatePreview() at the end re-derives everything downstream (escape row,
+// link field, swatches, chips, matrix) exactly as typing would.
+function populateForm(r: Recipe) {
+  const t = r.theme
+  pendingConfirm = null
+  collectionInput.value = r.brand
+  const p = normalizeHex(t.primaryHex) ?? '#E93D82'
+  primaryHex = p
+  primaryHexInput.value = p
+  primaryPicker.value = p
+  primarySwatch.style.background = p
+  primaryHexInput.classList.remove('invalid')
+  primaryMode = t.primaryArchetype ?? t.primaryMode ?? 'recommended'
+  primaryModeSelect.value = primaryMode
+  fullChroma = t.style === 'full-chroma'
+  fullChromaBox.checked = fullChroma
+  ctaBorder = t.ctaBorder !== false // absent = on (the recipe's forward-compat law)
+  ctaBorderBox.checked = ctaBorder
+  ctaEscape = !!t.ctaEscape // the stored flag is the EFFECTIVE one — red range re-derives in updatePreview
+  ctaEscapeBox.checked = ctaEscape
+  linkBundled = false // a loaded link posture is the recipe's own, never an auto-bundle
+  linkCustom = !!t.linkHex
+  if (t.linkHex) { linkHexInput.value = t.linkHex; linkHexInput.classList.remove('invalid') }
+  // secondary BEFORE neutral: the Match-secondary hygiene in syncInfoLines reads its mode
+  secondaryArchetype = t.secondaryArchetype ?? null
+  secondaryStyle = t.secondaryStyle ? normalizeSecondaryStyle(t.secondaryStyle) : 'default' // old recipes may carry retired style ids
+  if (t.secondaryHex) {
+    secondaryHex = t.secondaryHex
+    secondaryHexInput.value = t.secondaryHex
+    secondaryPicker.value = t.secondaryHex
+    secondarySwatch.style.background = t.secondaryHex
+    secondaryHexInput.classList.remove('invalid')
+    setSecondaryMode('custom')
+  } else if (t.deriveSecondary) {
+    secondaryHex = null
+    setSecondaryMode('derived') // the input tracks the primary; updatePreview fills it
+  } else {
+    secondaryHex = null
+    secondaryHexInput.value = ''
+    setSecondaryMode('off')
+  }
+  neutralChoice = t.neutralSource ?? r.neutralLevel ?? 'default'
+  neutralSelect.value = neutralChoice
+  neutralHexIn.value = t.neutralHex ?? ''
+  neutralHexIn.classList.remove('invalid')
+  updatePreview()
+}
+
+function resetForm() {
+  pendingConfirm = null
+  collectionInput.value = ''
+  primaryHex = '#E93D82'
+  primaryHexInput.value = primaryHex
+  primaryPicker.value = primaryHex
+  primarySwatch.style.background = primaryHex
+  primaryHexInput.classList.remove('invalid')
+  primaryMode = 'recommended'
+  primaryModeSelect.value = 'recommended'
+  fullChroma = false; fullChromaBox.checked = false
+  ctaBorder = true; ctaBorderBox.checked = true
+  ctaEscape = false; ctaEscapeBox.checked = false
+  linkCustom = false; linkBundled = false
+  linkHexInput.classList.remove('invalid')
+  secondaryArchetype = null
+  secondaryStyle = 'default'
+  secondaryHex = null
+  secondaryHexInput.value = ''
+  secondaryHexInput.classList.remove('invalid')
+  neutralChoice = 'default'
+  neutralSelect.value = 'default'
+  neutralHexIn.value = ''
+  neutralHexIn.classList.remove('invalid')
+  setSecondaryMode('off') // runs updatePreview
+}
+
+editSelect.addEventListener('change', () => {
+  if (queue) { editSelect.value = loadedBrand ?? ''; return } // a running batch owns the form
+  const brand = editSelect.value
+  if (!brand) { syncEditState(null); resetForm(); return }
+  const spec = specCache.get(brand)
+  if (!spec) { editSelect.value = loadedBrand ?? ''; return }
+  syncEditState(brand)
+  populateForm(spec)
+  setStatus(`Loaded “${brand}” — edit and Apply to update it.`)
+})
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 // the roster button's count, from the roster itself — the template used to hardcode
 // "(16 brands)", which would have gone stale the first time an entry was added or retired
 rosterBtn.textContent = `Apply test roster (${ROSTER.length} brands)`
+
+// the edit picker's first fill — the reason tag keeps the reply out of the batch flows
+requestThemeList()
 
 // the six archetype anchors under BOTH mode selects (source of truth: the engine — the count
 // is never hardcoded in the template, which carries an empty optgroup for each)

@@ -265,13 +265,16 @@ const toRGBA = (t: FlatTok): figma.RGBA =>
 
 figma.ui.onmessage = async (msg) => {
   if (msg.type === 'apply') {
-    const { brand, brandTokens, baseTokens, hasSecondary, confirmed, confirmedToken, spec, rebuildBase, baseSeedHex } = msg as unknown as {
+    const { brand, brandTokens, baseTokens, hasSecondary, confirmed, confirmedToken, spec, rebuildBase, baseSeedHex, renameFrom } = msg as unknown as {
       type: 'apply'; brand: string; brandTokens: TokenColumns; baseTokens: TokenColumns
       hasSecondary: boolean; confirmed?: boolean; confirmedToken?: string; spec?: unknown
       // the REBUILD flag (owner 2026-08-03): force-reseed every base row from this
       // payload — the explicit "redo the main theme" action; rides the armed batch (its
       // first item carries it), so it always arrives confirmed
       rebuildBase?: boolean; baseSeedHex?: string
+      // the EDIT PICKER's rename (owner 2026-08-06): a loaded theme applied under a new
+      // name renames its extension in place instead of creating a sibling
+      renameFrom?: string
     }
     try {
       const collections = await figma.variables.getLocalVariableCollectionsAsync()
@@ -360,8 +363,22 @@ figma.ui.onmessage = async (msg) => {
       // case-insensitive identity: "l1-near-black" typed by hand must overwrite
       // L1-near-black, never create a sibling that differs only by case
       const norm = (s: string) => s.trim().toLowerCase()
-      const existingExt = extsOfBase.find(e => norm(e.getPluginData(BRAND_KEY)) === norm(brand))
-        ?? extsOfBase.find(e => norm(e.name) === norm(brand))
+      const byBrand = (b: string) => extsOfBase.find(e => norm(e.getPluginData(BRAND_KEY)) === norm(b))
+        ?? extsOfBase.find(e => norm(e.name) === norm(b))
+      const existingExt = byBrand(brand)
+      // ── THEME RENAME (owner 2026-08-06): the edit picker's loaded theme, applied under a
+      // new name. Resolved and GUARDED here; executed only at the extension-selection point
+      // below, past every confirm/abort — an apply that bounces must leave the name alone.
+      const renaming = !!renameFrom && norm(renameFrom) !== norm(brand)
+      const renameExt = renaming ? byBrand(renameFrom!) : undefined
+      if (renaming && existingExt) {
+        figma.ui.postMessage({ type: 'error', message: `Can’t rename “${renameFrom}” to “${brand}” — a “${brand}” extension already exists. Pick a different name (or delete the other extension first).` })
+        return
+      }
+      if (renaming && !renameExt) {
+        figma.ui.postMessage({ type: 'error', message: `Can’t rename “${renameFrom}” — no extension answers to that name (was it deleted or renamed by hand?). Reload the theme from the picker and try again.` })
+        return
+      }
 
       // ── C49 UPWARD RENUMBER (owner 2026-08-05): the strong ink goes ink/10 → ink/11 and
       // the anchor neutral/ink/11 → neutral/ink/12 (their pre-C33 names back), freeing
@@ -817,7 +834,11 @@ figma.ui.onmessage = async (msg) => {
       }
 
       // ── the brand's extension (ONE per brand — the picker stays flat and clean) ──
-      let ext = existingExt
+      // The rename EXECUTES here, past every confirm/abort: the collection keeps its id
+      // (bindings + overrides survive); BRAND_KEY and the recipe restamp under the new
+      // name just below, so future applies resolve it by the new identity.
+      if (renameExt) renameExt.name = brand
+      let ext = existingExt ?? renameExt
       if (!ext) {
         try {
           ext = base.extend!(brand)
@@ -945,7 +966,10 @@ figma.ui.onmessage = async (msg) => {
         if (!raw) { unstamped.push(e.name); continue }
         try { specs.push(JSON.parse(raw)) } catch { unstamped.push(e.name) }
       }
-      figma.ui.postMessage({ type: 'specs', specs, unstamped })
+      // the reason echoes back verbatim: the UI routes a 'list' reply to the edit-picker
+      // cache and everything else into the batch flows — without the tag, the picker's
+      // startup request would START a re-apply batch
+      figma.ui.postMessage({ type: 'specs', specs, unstamped, reason: (msg as { reason?: string }).reason })
     } catch (err) {
       figma.ui.postMessage({ type: 'error', message: String(err) })
     }
