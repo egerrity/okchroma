@@ -335,6 +335,24 @@ export function maxChromaAt(L: number, H: number, gamut: Gamut = MASTER_GAMUT): 
   return clampChromaToGamut(L, 0.52, H, gamut)
 }
 
+// The gamut's TYPICAL chroma capacity at a lightness — the median of maxChromaAt across
+// hues (hue-agnostic by construction: the vividness measure it feeds must dampen
+// equal-strength pastels equally, not read wide-gamut hues as muted). Memoized per
+// exact L (the value is a pure function of L; one entry per distinct seed lightness) —
+// buildContext calls this once per scale.
+const medianCapCache = new Map<string, number>()
+export function medianGamutCAt(L: number, gamut: Gamut = MASTER_GAMUT): number {
+  const key = `${L}|${gamut}`
+  const hit = medianCapCache.get(key)
+  if (hit !== undefined) return hit
+  const caps: number[] = []
+  for (let h = 0; h < 360; h += 5) caps.push(maxChromaAt(L, h, gamut))
+  caps.sort((a, b) => a - b)
+  const median = caps[Math.floor(caps.length / 2)]
+  medianCapCache.set(key, median)
+  return median
+}
+
 export function hexToOklch(hex: string): { L: number; C: number; H: number } {
   const h = hex.replace('#', '')
   const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h

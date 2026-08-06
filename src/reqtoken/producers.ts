@@ -7,7 +7,7 @@ import { classifyArchetype, medianLForArchetype, type Archetype } from '../engin
 import { clampChromaToGamut, wcagY, legalRatio, findMaxLForContrast, findLForContrast, findLForContrastUp, apcaY, apcaLc, encodedChannels } from '../engine/constraints'
 import { perceptualRungL, apparentL, grayApparentL, solveLForApparent, lstarFromY } from '../engine/perceptualL'
 import {
-  hexToOklch, maxChromaAt, goldSpineHue, torsionedHue, gauss, sigmoid, hueDelta, oklabDist, redGateDist, RED_GATE,
+  hexToOklch, maxChromaAt, medianGamutCAt, goldSpineHue, torsionedHue, gauss, sigmoid, hueDelta, oklabDist, redGateDist, RED_GATE,
   RED_SOLVE, redSolveDist, inBrickBand,
   SPINE_OFFPATH_SIGMA, RED_TORSION_CENTER_H, RED_TORSION_SOFTNESS, VIVID_C, HUE_NOISE_C, MUTED_BLEND_DENOM,
   LIGHT_DRIFT_COOL_HI, LIGHT_DRIFT_COOL_RANGE,
@@ -52,9 +52,18 @@ export function buildContext(hex: string, opts?: ResolveOpts) {
   // brand ramps from their own identity. OFF = the ladder scales linearly with the seed's
   // true chroma (shape preserved; gamut clamps still bound the emit). Blend weights (envW,
   // mutedness) keep the CAPPED v — the lever releases amplitude, not the blend geometry.
+  // The reference is LIGHTNESS-AWARE (owner 2026-08-06: "a pastel is not a grey"): the
+  // gamut's chroma capacity collapses toward the poles, so an absolute VIVID_C reads a
+  // maxed-out pastel as muted and greys its whole ramp. vRef caps the reference at the
+  // gamut's typical capacity at the seed's L — the MEDIAN across hues, deliberately
+  // hue-agnostic (the seed's own ceiling was tried and rejected: wide-gamut hues like
+  // mint kept measuring muted while narrow ones read vivid at equal pastel strength).
+  // Mid-band seeds (capacity ≥ VIVID_C) are byte-identical; only v-for-blend keeps the
+  // absolute measure (mutedness/bell geometry — same doctrine as the lever above).
+  const vRef = Math.max(1e-6, Math.min(VIVID_C, medianGamutCAt(brandL)))
   const vSubtle = opts?.style === 'full-chroma'
-    ? subtleC / VIVID_C
-    : Math.min(1, subtleC / VIVID_C)
+    ? subtleC / vRef
+    : Math.min(1, subtleC / vRef)
   const S = hueIsNoise ? 0 : sigmoid(hueDelta(brandH, RED_TORSION_CENTER_H) / RED_TORSION_SOFTNESS)
   const redShift = hueIsNoise || opts?.suppressRedCool ? 0 : redRepelShiftDeg(brandH)
   const mutednessRaw = Math.min(1, (1 - v) / MUTED_BLEND_DENOM)
