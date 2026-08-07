@@ -16,7 +16,7 @@
 
 import * as fs from 'fs'
 import { buildBaseColumns } from '../plugin-ext/payload'
-import { describeToken } from '../src/engine/tokenDescriptions'
+import { describeToken, canonicalize } from '../src/engine/tokenDescriptions'
 
 const PHRASES = [
   'AA large text and UI elements',
@@ -24,13 +24,19 @@ const PHRASES = [
   'Level AAA enhanced contrast for standard body text',
 ]
 
+// ext emits register-prefixed paths (primitive/*, semantic/* — the A1 regroup); the
+// elevation planes are code.ts's own rows at semantic/surface/*
 const paths = buildBaseColumns().light.map(t => t.path)
-paths.push('system/surface/sink', 'system/surface/base', 'system/surface/lift', 'system/surface/pop')
-// the community plugin's THEME collection spells the brand families differently — same
-// rows, so the same rules must hold on those spellings too
+paths.push('semantic/surface/sink', 'semantic/surface/base', 'semantic/surface/lift', 'semantic/surface/pop')
+// the community plugin's spellings carry no register prefix and spell the brand families
+// differently — same rows, so the same rules must hold on those spellings too. Derived
+// from the CANONICAL form (adversarial-audit-caught 2026-08-07: matching the raw
+// register-prefixed path left this branch dead and the community shapes untested).
 for (const p of [...paths]) {
-  if (p.startsWith('brand-primary/')) paths.push('brand/primary/' + p.slice('brand-primary/'.length))
-  if (p.startsWith('brand-secondary/')) paths.push('brand/secondary/' + p.slice('brand-secondary/'.length))
+  const c = canonicalize(p)
+  if (c !== p) paths.push(c)
+  if (c.startsWith('brand-primary/')) paths.push('brand/primary/' + c.slice('brand-primary/'.length))
+  if (c.startsWith('brand-secondary/')) paths.push('brand/secondary/' + c.slice('brand-secondary/'.length))
 }
 
 let bad = 0
@@ -39,7 +45,9 @@ const fail = (p: string, why: string) => { console.error(`FAIL ${p}: ${why}`); b
 for (const p of paths) {
   const d = describeToken(p)
   const [title, ...body] = d.split('\n')
-  if (title !== p.replace(/[/-]/g, ' ')) fail(p, 'title is not the spaced name')
+  // title = the CANONICAL spaced name: the register prefix (primitive/semantic) is a
+  // panel-organizing axis and must never enter a description (search-flood rule)
+  if (title !== canonicalize(p).replace(/[/-]/g, ' ')) fail(p, 'title is not the canonical spaced name')
   if (body.length === 0) fail(p, 'title-only — no body authored for a shipped row')
   const text = body.join('\n')
   if (/[0-9]/.test(text)) fail(p, `digit in body: ${text.match(/.{0,15}[0-9].{0,15}/)![0]}`)

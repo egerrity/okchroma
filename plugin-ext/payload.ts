@@ -16,7 +16,10 @@
 //
 // Token shape: the operative `brand-` CATEGORY stays in the token name (brand-primary/*,
 // brand-secondary/*), the brand's NAME lives on the extension, so a designer reads
-// kirby → brand-primary/paper-1. Neutral + signals keep their identity names.
+// kirby → primitive/brand-primary/paper/1. Neutral + signals keep their identity names.
+// Every path also carries a REGISTER prefix (primitive/ or semantic/, added 2026-08-07 —
+// see registerPath below): the FAMILY segment is unchanged, so this line's shape still
+// holds one hop in.
 
 import { resolveTheme, signalScalesFor, SOFT_ON_CTA_ALPHA, type ResolvedTheme } from '../src/engine/resolve'
 import { themeToFigma, type FigmaGroup, type FigmaColorToken } from '../src/engine/figmaRender'
@@ -25,6 +28,22 @@ import { OFFSET_ALPHAS, offsetTokenPath, type OffsetRung } from '../src/engine/c
 import { neutralTintHue, type ContrastProfile, type NeutralLevel } from '../src/engine/colorEngine'
 
 export interface FlatTok { path: string; r: number; g: number; b: number; a?: number }
+
+// THE REGISTER MAP (A1 regroup, owner-dated 2026-08-07): every emitted path lands under
+// exactly one of two registers — primitive/ (a single color, no state) or semantic/ (a
+// state-carrying role: cta/cta-ink/cta-ink-strong, the system link trio). Applied as the
+// FINAL pass in toFlat(), after IDENTITY_HOME and LINK_STATE have already re-homed their
+// rows — this function only sorts the settled path into its register, it never renames.
+const FAMILY_PREFIXES = ['neutral/', 'brand-primary/', 'brand-secondary/', 'critical/', 'warning/', 'positive/', 'info/']
+const SEMANTIC_BANDS = ['cta/', 'cta-ink/', 'cta-ink-strong/']
+export function registerPath(p: string): string {
+  if (p.startsWith('system/link/')) return 'semantic/link/' + p.slice('system/link/'.length)
+  if (p.startsWith('system/')) return 'primitive/' + p            // alpha/*, abs-*
+  const fam = FAMILY_PREFIXES.find(f => p.startsWith(f))
+  if (!fam) return p                                              // defensive: unknown untouched
+  const rest = p.slice(fam.length)
+  return (SEMANTIC_BANDS.some(b => rest.startsWith(b)) ? 'semantic/' : 'primitive/') + p
+}
 
 export type Column = 'light' | 'dark'
 export const COLUMNS: Column[] = ['light', 'dark']
@@ -80,7 +99,7 @@ function flatten(node: FigmaGroup, prefix: string, out: FlatTok[]): void {
 
 // Panel order = creation order (v1's rule; owner layout 2026-07-27: abs poles at the
 // system root, then surface/, then alpha/): system → neutral → brand-primary →
-// brand-secondary → signals. The system/surface/sink|base|lift|pop planes are NOT here —
+// brand-secondary → signals. The semantic/surface/sink|base|lift|pop planes are NOT here —
 // they are scheme-divergent aliases the plugin creates after the abs rows (ordering) and
 // wires once the neutral exists. neutral/ink/12 (the OFF-SCALE anchor — pure black in
 // light, pure white in dark) is injected right after the last real ink stop, in ladder
@@ -151,7 +170,8 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
     'system/link-pressed': 'system/link/pressed',
   }
   for (const t of linkRows) out.push({ ...t, path: LINK_STATE[t.path] ?? t.path })
-  return out
+  // THE REGISTER PASS (final step): every settled path sorts into primitive/ or semantic/.
+  return out.map(t => ({ ...t, path: registerPath(t.path) }))
 }
 
 // The WCAG lane: resolve → themeToFigma → the two scheme columns.

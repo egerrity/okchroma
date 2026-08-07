@@ -23,12 +23,18 @@ On any other plan the plugin detects the missing API and reports it instead of w
 
 - **One base collection `theme`** — the full semantic token set, flat names,
   `ALL_SCOPES` (the base is what users bind — no hidden seed collection):
-  - `brand-primary/*`, `brand-secondary/*` (only if the file uses a secondary) — the
-    operative `brand-` category is in the token name; the brand's NAME lives on the
-    extension, so a designer reads `kirby → brand-primary/paper-1`.
-  - `neutral/*` (paper-0 … ink-12 in ladder order), `red/* yellow/* green/* blue/*`,
-    `system/*` (abs poles, transparent, scrim, and the scheme-divergent
-    sink/base/lift/pop elevation-plane aliases — base-only, never overridden).
+  - `primitive/brand-primary/*`, `primitive/brand-secondary/*` (only if the file uses a
+    secondary) plus their `semantic/brand-primary/{cta,cta-ink}/*` states — the operative
+    `brand-` category is in the token name; the brand's NAME lives on the extension, so a
+    designer reads `kirby → primitive/brand-primary/paper/1`. Every path carries a
+    `primitive/` or `semantic/` register prefix (A1 regroup, owner-dated 2026-08-07) —
+    primitive = a single color, semantic = a state-carrying role (cta/cta-ink/
+    cta-ink-strong, the system link trio).
+  - `primitive/neutral/*` (paper/0 … ink/12 in ladder order), `primitive/critical/*
+    primitive/warning/* primitive/positive/* primitive/info/*` plus their `semantic/`
+    cta states, `primitive/system/*` (abs poles, transparent, scrim) and
+    `semantic/surface/*` (the scheme-divergent sink/base/lift/pop elevation-plane
+    aliases — base-only, never overridden) and `semantic/link/*`.
   - Values = the documented default seed: okchroma pink `#E93D82`, recommended mode,
     derived-pastel secondary, default neutral, CANONICAL signal ramps — solved per
     column. The base is populated **once**; later applies only add missing variables

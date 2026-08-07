@@ -9,7 +9,7 @@
 //
 // Also asserts the invariants the plugin's write path relies on:
 //   · every column shares the same token path set (code.ts iterates one column's paths)
-//   · system/* never diffs from the base (code.ts skips it outright)
+//   · primitive/system/* never diffs from the base (code.ts skips it outright)
 //   · a brand carries a brand-secondary group exactly when it HAS a secondary
 
 import * as fs from 'fs'
@@ -38,13 +38,15 @@ function overridesFor(brand: TokenColumns, base: TokenColumns, label: string): R
     const ov: string[] = []
     for (const t of brand[col]) {
       const b = baseMap.get(t.path)
-      // system/* is contract-invariant — EXCEPT the brand-VARYING rows: the system
-      // link trio (Phase 4, owner: "link is a system level color. It can still be
-      // extended") and the identity absolutes (owner 2026-07-27, abs-primary /
-      // abs-secondary). Mirrors plugin-ext/code.ts OVERRIDABLE_SYSTEM.
-      if (t.path.startsWith('system/')
-        && !t.path.startsWith('system/link')
-        && t.path !== 'system/abs-primary' && t.path !== 'system/abs-secondary') {
+      // primitive/system/* is contract-invariant — EXCEPT the identity absolutes (owner
+      // 2026-07-27, abs-primary / abs-secondary). The system link trio is BRAND-VARYING
+      // too (Phase 4, owner: "link is a system level color. It can still be extended"),
+      // but since the A1 regroup (2026-08-07) it lives in the semantic register
+      // (semantic/link/*) — it never matches this primitive/system/ prefix, so no
+      // explicit exclusion is needed here any more. Mirrors plugin-ext/code.ts
+      // OVERRIDABLE_SYSTEM.
+      if (t.path.startsWith('primitive/system/')
+        && t.path !== 'primitive/system/abs-primary' && t.path !== 'primitive/system/abs-secondary') {
         if (!b || !eq(t, b)) fails.push(`${label} ${col}: system token diverges from base — ${t.path}`)
         continue
       }
@@ -67,8 +69,10 @@ for (const b of BRANDS) {
     style: b.style, secondaryHex,
   }, 'default')
   // every payload carries a brand-secondary now (real or derived from the primary);
-  // code.ts decides whether it's WRITTEN based on the file's posture
-  if (!tokens[COLUMNS[0]].some(x => x.path.startsWith('brand-secondary/')))
+  // code.ts decides whether it's WRITTEN based on the file's posture. The group spans
+  // both registers since A1 (primitive scale rows, semantic cta rows) — the scale rows
+  // are always present whenever a secondary exists, so the primitive check alone suffices.
+  if (!tokens[COLUMNS[0]].some(x => x.path.startsWith('primitive/brand-secondary/')))
     fails.push(`${b.slug}: payload missing brand-secondary (the derive fallback is broken)`)
   snap.brands[b.slug] = overridesFor(tokens, base, b.slug)
 }
@@ -130,4 +134,4 @@ if (fails.length) {
   for (const f of fails) console.error(`  ✗ ${f}`)
   process.exit(1)
 }
-console.log('ext-override-audit: override sets match the snapshot; path-set + system/* invariants hold.')
+console.log('ext-override-audit: override sets match the snapshot; path-set + primitive/system/* invariants hold.')

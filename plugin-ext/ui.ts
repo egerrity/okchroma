@@ -57,6 +57,12 @@ let fullChroma = false
 // spec stores it as `false | undefined` rather than `true | false` so that ABSENT means ON —
 // every recipe written before this flag existed replays with its strokes intact.
 let ctaBorder = true
+// THE DESCOPE POSTURE (owner 2026-08-07): FILE state, not per-brand — unlike every flag
+// above this never rides themeInput/the recipe. Default ON (primitive/* hidden from every
+// Figma picker; semantic/* always stays bindable). Initialized from the file-state
+// handshake on load, then carried on every apply message so a re-apply/rebuild/roster
+// batch always re-stamps the SAME posture the checkbox currently shows.
+let descopePrimitives = true
 // brand + the exact confirm TOKEN it was armed with (reason-scoped — the plugin only
 // honors a confirm whose reasons haven't changed since it was shown; changing the
 // toggle or fields between the two Applies re-confirms)
@@ -106,6 +112,7 @@ const linkResetBtn    = $<HTMLButtonElement>('link-reset')
 const linkHint        = $<HTMLElement>('link-hint')
 const fullChromaBox   = $<HTMLInputElement>('full-chroma')
 const ctaBorderBox    = $<HTMLInputElement>('cta-border')
+const descopeBox      = $<HTMLInputElement>('descope-primitives')
 const linkSwatch      = $<HTMLElement>('link-swatch')
 const matrixEl        = $<HTMLElement>('matrix')
 const applyBtn        = $<HTMLButtonElement>('apply-btn')
@@ -515,7 +522,7 @@ function buildAndSend() {
     // matching the sandbox's identity rule) — same-name edits ride the normal update path
     const renameFrom = loadedBrand && loadedBrand.trim().toLowerCase() !== name.trim().toLowerCase()
       ? loadedBrand : undefined
-    parent.postMessage({ pluginMessage: { type: 'apply', brand: name, brandTokens, baseTokens, hasSecondary: recipe.hasSecondary, confirmedToken, spec: recipe, renameFrom } }, '*')
+    parent.postMessage({ pluginMessage: { type: 'apply', brand: name, brandTokens, baseTokens, hasSecondary: recipe.hasSecondary, confirmedToken, spec: recipe, renameFrom, descopePrimitives } }, '*')
   } catch (err) {
     applyBtn.disabled = false
     setStatus(String(err), 'err')
@@ -670,6 +677,12 @@ ctaBorderBox.addEventListener('change', () => {
   updatePreview()
 })
 
+// FILE-level, not per-brand: no updatePreview (the matrix doesn't reflect scopes) and no
+// recipe field — just the state var that rides the next apply message as-is.
+descopeBox.addEventListener('change', () => {
+  descopePrimitives = descopeBox.checked
+})
+
 // FIELD TAKEOVER (owner Advanced-menu spec): clicking the from-primary hex makes the
 // link custom (prefilled with the default de-conflict blue); ↩ returns to from-primary
 linkField.addEventListener('click', () => {
@@ -708,7 +721,7 @@ window.addEventListener('message', e => {
       set?: number; removed?: number; inherited?: number; createdVars?: number; baseCreated?: boolean
       secondaryAdded?: boolean; addedCols?: string[]; rowsAdded?: boolean; orphaned?: number
       backfill?: unknown[]; unstamped?: string[]; specs?: unknown[]; reason?: string
-      lines?: string[]; baseSeedHex?: string | null
+      lines?: string[]; baseSeedHex?: string | null; descopePrimitives?: boolean
     }
   }).pluginMessage
   if (!msg) return
@@ -811,9 +824,11 @@ window.addEventListener('message', e => {
     startQueue(items, 're-apply')
     if (msg.unstamped?.length) qUnstamped.push(...msg.unstamped)
   } else if (msg.type === 'file-state') {
-    // the sandbox's load-time handshake: adopt the file's stored base seed
+    // the sandbox's load-time handshake: adopt the file's stored base seed + descope posture
     fileBaseSeed = msg.baseSeedHex || BASE_SEED_HEX
     rebuildHexInput.placeholder = fileBaseSeed
+    descopePrimitives = msg.descopePrimitives !== false
+    descopeBox.checked = descopePrimitives
   } else if (msg.type === 'smoke-result') {
     smokeLog.style.display = ''
     smokeLog.textContent = (msg.lines ?? []).join('\n')
@@ -865,7 +880,7 @@ function sendQueueItem() {
   // then every following item's diff runs against the fresh base)
   const rebuild = qi === 0 && queueRebuildSeed
     ? { rebuildBase: true, baseSeedHex: queueRebuildSeed } : {}
-  parent.postMessage({ pluginMessage: { type: 'apply', brand: it.brand, brandTokens, baseTokens, hasSecondary: it.hasSecondary, confirmed: true, spec: it, ...rebuild } }, '*')
+  parent.postMessage({ pluginMessage: { type: 'apply', brand: it.brand, brandTokens, baseTokens, hasSecondary: it.hasSecondary, confirmed: true, spec: it, descopePrimitives, ...rebuild } }, '*')
 }
 
 // (the apcaPosture parameter died with the Include-APCA toggle, 2026-07-29: there is one

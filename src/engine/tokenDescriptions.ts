@@ -133,21 +133,42 @@ const PREFIXES: Array<[string, Family]> = [
   ['brand/secondary/', 'brand-secondary'],
 ]
 
+// CANONICALIZE (A1 regroup, owner-dated 2026-08-07): the ext plugin's paths now carry a
+// primitive/ or semantic/ REGISTER prefix (plugin-ext/payload.ts registerPath) that this
+// module must never see — the register is a Figma-panel organizing axis, not part of a
+// row's identity, and letting register words into a description would flood Figma's
+// picker search exactly like the old ratio-digit stamp did (see the file header). Strip
+// it, then restore the two leaves that only ever existed AS system-pathed (link/surface
+// lost their system/ prefix along with the register, since code.ts homes them under
+// semantic/surface/* — see plugin-ext/code.ts's header). The community plugin's paths
+// (plugin/code.ts) never carried a register to begin with, so this is a no-op for them —
+// they already arrive system-pathed.
+export function canonicalize(path: string): string {
+  let p = path
+  if (p.startsWith('primitive/')) p = p.slice('primitive/'.length)
+  else if (p.startsWith('semantic/')) p = p.slice('semantic/'.length)
+  if (p.startsWith('link/') || p.startsWith('surface/')) p = 'system/' + p
+  return p
+}
+
 function bodyFor(path: string): { body: Body; fam: Family } | undefined {
-  if (SYSTEM[path]) return { body: SYSTEM[path], fam: 'neutral' }
-  const hit = PREFIXES.find(([p]) => path.startsWith(p))
+  const canonical = canonicalize(path)
+  if (SYSTEM[canonical]) return { body: SYSTEM[canonical], fam: 'neutral' }
+  const hit = PREFIXES.find(([p]) => canonical.startsWith(p))
   if (!hit) return undefined
   const [prefix, fam] = hit
-  const leaf = path.slice(prefix.length)
+  const leaf = canonical.slice(prefix.length)
   const body = (fam === 'neutral' && NEUTRAL_ONLY[leaf]) || SCALE[leaf]
   return body ? { body, fam } : undefined
 }
 
-// The full description for a variable path. Title = the spaced own name; unknown paths
-// get the title alone.
+// The full description for a variable path. Title comes from the CANONICAL path — a
+// register word must never enter it (the search-flood rule above); unknown paths get
+// the canonical title alone.
 export function describeToken(path: string): string {
-  const title = path.replace(/[/-]/g, ' ')
-  const hit = bodyFor(path)
+  const canonical = canonicalize(path)
+  const title = canonical.replace(/[/-]/g, ' ')
+  const hit = bodyFor(canonical)
   if (!hit) return title
   const { body, fam } = hit
   const lines = [title, `Req for: ${body.req}`]

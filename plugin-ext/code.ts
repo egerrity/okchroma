@@ -8,6 +8,14 @@
 // overriding only what differs from the base, across every column ("always both,
 // no picker"). Brand axis = which extension is applied; solve axis = the mode.
 // No alias maps, no dedup keys, no profile forks, no sister extensions.
+//
+// THE REGISTER (A1 regroup, owner-dated 2026-08-07): every path payload.ts emits now
+// carries a primitive/ or semantic/ prefix (payload.registerPath) — primitive/system/*,
+// primitive/<fam>/{paper,wash,highlight,ink}/N, semantic/<fam>/{cta,cta-ink,cta-ink-strong}/*,
+// semantic/link/*. The elevation planes are code.ts's own rows (payload never emits
+// them), created directly at semantic/surface/*. RENAMED_GROUPS' universal register strips
+// (below) recover every pre-A1 spelling through legacyCandidates; no value import of
+// registerPath here (see the zero-engine-in-the-bundle note on the describeToken import).
 
 import type { FlatTok, TokenColumns, Column } from './payload'
 import { LEGACY_COLUMN_NAME, RETIRED_COLUMN_NAMES } from './payload'
@@ -31,15 +39,27 @@ const COLS_KEY = 'okchroma-ext-cols'
 // the base collection's SEED COLOR (the rebuild feature, owner 2026-08-03) — absent on
 // files predating it, which means the fixed default (payload.ts BASE_SEED_HEX)
 const BASE_SEED_KEY = 'okchroma-ext-base-seed'
+// the DESCOPE POSTURE (owner 2026-08-07, the A1 regroup's follow-on): whether
+// primitive/* base variables get scopes = [] (hidden from every Figma picker) or
+// ALL_SCOPES like semantic/*. FILE state, not per-brand — the register split is
+// file-wide, so this lives on the base collection same as BASE_SEED_KEY, never
+// inside a ThemeSpec recipe. Absent = default ON (primitives hidden).
+const DESCOPE_KEY = 'okchroma-ext-descope'
 
 // the FILE-STATE handshake (the rebuild feature): the UI builds every payload's BASE
 // column from the seed, so it must learn the file's stored seed before the first apply —
 // a rebuilt base diffed against the DEFAULT seed would churn every brand's overrides.
+// Carries the DESCOPE POSTURE too (owner 2026-08-07) so the UI's checkbox initializes
+// from what the file actually has stamped, not a hardcoded default.
 ;(async () => {
   try {
     const collections = await figma.variables.getLocalVariableCollectionsAsync()
     const base = collections.find(c => c.getPluginData(OWNER_KEY) === 'base')
-    figma.ui.postMessage({ type: 'file-state', baseSeedHex: base?.getPluginData(BASE_SEED_KEY) || null })
+    figma.ui.postMessage({
+      type: 'file-state',
+      baseSeedHex: base?.getPluginData(BASE_SEED_KEY) || null,
+      descopePrimitives: base?.getPluginData(DESCOPE_KEY) !== 'false',
+    })
   } catch { /* fresh file — the UI's default seed stands */ }
 })()
 // Mirrors payload.COLUMNS (type-only import keeps the engine out of the sandbox bundle).
@@ -65,20 +85,20 @@ const RETIRED_RUNG_ALPHA = 0.12
 // Derivation 2026-08-03: SIGNAL_SCALES diffed at e8eff89 → dbac539 → HEAD. Extend this
 // map whenever an engine round moves canonical signal values.
 const RETIRED_SIGNAL_VALUES: Record<string, string[]> = {
-  'critical/highlight/8': ['#e06146'],
-  'warning/highlight/8': ['#c67a00'],
-  'warning/ink/9': ['#a56000'],
-  'warning/cta-ink/enabled': ['#a56000'],
-  'warning/cta-ink/hover': ['#814a00'],
-  'positive/ink/9': ['#1c7e36'],
-  'positive/cta-ink/enabled': ['#1c7e36'],
-  'positive/cta-ink/hover': ['#005f21'],
-  'positive/cta/enabled': ['#63c373', '#67c777'],
-  'positive/cta/hover': ['#52b364', '#77d786'],
-  'positive/cta/pressed': ['#42a355', '#87e896'],
-  'info/cta/enabled': ['#afa3ff'],
-  'info/cta/hover': ['#a093ee', '#bfb7ff'],
-  'info/cta/pressed': ['#9184dd', '#cfcaff'],
+  'primitive/critical/highlight/8': ['#e06146'],
+  'primitive/warning/highlight/8': ['#c67a00'],
+  'primitive/warning/ink/9': ['#a56000'],
+  'semantic/warning/cta-ink/enabled': ['#a56000'],
+  'semantic/warning/cta-ink/hover': ['#814a00'],
+  'primitive/positive/ink/9': ['#1c7e36'],
+  'semantic/positive/cta-ink/enabled': ['#1c7e36'],
+  'semantic/positive/cta-ink/hover': ['#005f21'],
+  'semantic/positive/cta/enabled': ['#63c373', '#67c777'],
+  'semantic/positive/cta/hover': ['#52b364', '#77d786'],
+  'semantic/positive/cta/pressed': ['#42a355', '#87e896'],
+  'semantic/info/cta/enabled': ['#afa3ff'],
+  'semantic/info/cta/hover': ['#a093ee', '#bfb7ff'],
+  'semantic/info/cta/pressed': ['#9184dd', '#cfcaff'],
 }
 // half-8-bit-step tolerance: Figma stores floats; a retired hex must match to the channel
 const rgbaMatchesHex = (cur: { r: number; g: number; b: number; a?: number }, hex: string): boolean => {
@@ -212,18 +232,37 @@ const RENAMED_LEAVES: Array<[string, string]> = [
 // the re-pointable in-between tier. Theme-side entries point STRAIGHT at the
 // final role homes (legacyCandidates expands one group hop only — a chained
 // info-color→blue→info table would strand pre-C17 files on the middle name).
-// system/info-color stays → system/blue: v1 primitive-lane spelling, kept for
-// cross-plugin path parity in legacyCandidates.
+// system/info-color stays → primitive/system/blue: DEAD — no file has ever carried
+// system/blue/* under any register, v1's primitive-lane spelling never shipped a real
+// row here — kept only for cross-plugin path parity in legacyCandidates.
+//
+// THE REGISTER SPLIT (A1 regroup, owner-dated 2026-08-07): every path now also carries
+// a primitive/ or semantic/ prefix (payload.registerPath). legacyCandidates' one-hop
+// rule means recovering a pre-A1 file needs BOTH ends covered: the universal strips
+// (drop the register prefix entirely — the pre-A1 spelling never had one) AND, for the
+// four signal roles, a register-aware PAIR per old prefix — a role's rows could have
+// landed in EITHER register, so red/ → critical/ (etc.) now targets both
+// primitive/critical/ and semantic/critical/, composing with RENAMED_LEAVES' leaf-variant
+// substitution to reach the oldest flat spellings (e.g. red/highlight-8).
 const RENAMED_GROUPS: Array<[string, string]> = [
-  ['system/info-color/', 'system/blue/'],
-  ['info-color/', 'info/'],
-  ['red/', 'critical/'],
-  ['yellow/', 'warning/'],
-  ['green/', 'positive/'],
-  ['blue/', 'info/'],
+  ['system/info-color/', 'primitive/system/blue/'],
+  ['', 'primitive/'],       // universal strip: every pre-regroup spelling of a primitive row
+  ['', 'semantic/'],        // <fam>/cta* post-banding vintages
+  ['system/', 'semantic/'], // system/link/*, system/surface/* + their leaf-variant compositions (system/sink era)
+  ['info-color/', 'primitive/info/'],
+  ['info-color/', 'semantic/info/'],
+  ['red/', 'primitive/critical/'],
+  ['red/', 'semantic/critical/'],
+  ['yellow/', 'primitive/warning/'],
+  ['yellow/', 'semantic/warning/'],
+  ['green/', 'primitive/positive/'],
+  ['green/', 'semantic/positive/'],
+  ['blue/', 'primitive/info/'],
+  ['blue/', 'semantic/info/'],
 ]
 // Every legacy spelling of `path`: old leaf, old group, and old group + old leaf composed
-// (a file untouched since before BOTH renames needs e.g. system/info-color/ink-11 → system/blue/ink/9).
+// (a file untouched since before ALL THREE renames needs e.g. primitive/critical/ink/9 →
+// … → system/info-color/ink-11, through the role rename AND the register strip).
 function legacyCandidates(path: string): string[] {
   const out: string[] = []
   const leafVariants = [path]
@@ -265,7 +304,7 @@ const toRGBA = (t: FlatTok): figma.RGBA =>
 
 figma.ui.onmessage = async (msg) => {
   if (msg.type === 'apply') {
-    const { brand, brandTokens, baseTokens, hasSecondary, confirmed, confirmedToken, spec, rebuildBase, baseSeedHex, renameFrom } = msg as unknown as {
+    const { brand, brandTokens, baseTokens, hasSecondary, confirmed, confirmedToken, spec, rebuildBase, baseSeedHex, renameFrom, descopePrimitives } = msg as unknown as {
       type: 'apply'; brand: string; brandTokens: TokenColumns; baseTokens: TokenColumns
       hasSecondary: boolean; confirmed?: boolean; confirmedToken?: string; spec?: unknown
       // the REBUILD flag (owner 2026-08-03): force-reseed every base row from this
@@ -275,6 +314,10 @@ figma.ui.onmessage = async (msg) => {
       // the EDIT PICKER's rename (owner 2026-08-06): a loaded theme applied under a new
       // name renames its extension in place instead of creating a sibling
       renameFrom?: string
+      // the DESCOPE POSTURE (owner 2026-08-07): FILE state, carried on every apply from
+      // the UI's own checkbox. A boolean here is freshly stamped onto the base and wins;
+      // see the resolution beside BASE_SEED_KEY below for the absent/stored/default chain.
+      descopePrimitives?: boolean
     }
     try {
       const collections = await figma.variables.getLocalVariableCollectionsAsync()
@@ -357,8 +400,8 @@ figma.ui.onmessage = async (msg) => {
       const baseVars = baseMatch ? await varsByName(baseMatch.id) : new Map<string, figma.Variable>()
       // posture probe reads through the rename history (a pre-banding base still
       // spells it brand-secondary/paper-1; read-only, no renames here)
-      const baseHasSecondary = baseVars.has('brand-secondary/paper/1')
-        || legacyCandidates('brand-secondary/paper/1').some(p => baseVars.has(p))
+      const baseHasSecondary = baseVars.has('primitive/brand-secondary/paper/1')
+        || legacyCandidates('primitive/brand-secondary/paper/1').some(p => baseVars.has(p))
       const extsOfBase = baseMatch ? extensions.filter(e => e.rootVariableCollectionId === baseMatch!.id) : []
       // case-insensitive identity: "l1-near-black" typed by hand must overwrite
       // L1-near-black, never create a sibling that differs only by case
@@ -410,10 +453,15 @@ figma.ui.onmessage = async (msg) => {
       // brand-secondary/* is excluded (the secondary posture has its own reason +
       // trigger); a legacy name counts as EXISTING (ensure() migrates it in place).
       // Brand-VARYING system rows — the link trio and the identity absolutes
-      // (owner 2026-07-27) — are the only system/ paths extensions may override.
+      // (owner 2026-07-27) — are the only primitive/system/ paths extensions may
+      // override; the link trio itself now lives in the semantic register (A1 regroup).
       const OVERRIDABLE_SYSTEM = (p: string) =>
-        p.startsWith('system/link') || p === 'system/abs-primary' || p === 'system/abs-secondary'
-      // Contract-invariant system rows (everything under system/ except the
+        p.startsWith('semantic/link/') || p === 'primitive/system/abs-primary' || p === 'primitive/system/abs-secondary'
+      // brand-secondary/* now spans both registers (primitive scale rows, semantic cta
+      // rows) — one helper so every exclusion site stays in sync.
+      const isBrandSecondary = (p: string) =>
+        p.startsWith('primitive/brand-secondary/') || p.startsWith('semantic/brand-secondary/')
+      // Contract-invariant system rows (everything under primitive/system/ except the
       // brand-overridable rows above) are excluded: extensions can never override
       // them (the work loop skips them), so their appearance seeds silently —
       // a confirm promising "each brand carries its own values" would be false
@@ -422,22 +470,28 @@ figma.ui.onmessage = async (msg) => {
       const newRows: string[] = baseMatch
         ? baseTokens[activeCols[0]]
             .map((t: FlatTok) => t.path)
-            .filter((p: string) => !p.startsWith('brand-secondary/'))
-            .filter((p: string) => !p.startsWith('system/') || OVERRIDABLE_SYSTEM(p))
+            .filter((p: string) => !isBrandSecondary(p))
+            .filter((p: string) => !p.startsWith('primitive/system/') || OVERRIDABLE_SYSTEM(p))
             // the identity absolutes migrate via the BESPOKE pre-pass, invisible to
             // legacyCandidates — a base still holding the old identity rows must not
             // count them as new; and abs-secondary follows the SECONDARY POSTURE
             // (the ensure loop skips it when off — counting it would fire a confirm
             // + extension backfill on every apply, forever). Review-caught 2026-07-27.
-            .filter((p: string) => !(p === 'system/abs-primary' && baseVars.has('brand-primary/identity')))
-            .filter((p: string) => !(p === 'system/abs-secondary'
+            .filter((p: string) => !(p === 'primitive/system/abs-primary' && baseVars.has('brand-primary/identity')))
+            .filter((p: string) => !(p === 'primitive/system/abs-secondary'
               && (baseVars.has('brand-secondary/identity') || !(baseHasSecondary || hasSecondary))))
             // C49: a path an inkUpshift will FILL by rename is not new — and a vacating
             // ink/10 name is new even though a row currently squats on it (the strong
             // ink moves out; the between stop that replaces it needs the full new-row
-            // treatment: confirm + extension backfill so every brand carries its own)
-            .filter((p: string) => !inkUpshifts.some(([, to]) => to === p))
-            .filter((p: string) => inkUpshifts.some(([from]) => from === p)
+            // treatment: confirm + extension backfill so every brand carries its own).
+            // ⚠️ inkUpshifts entries are OLD-spelling ('<fam>/ink/N', pre-register — the
+            // vintage this C49 detection targets predates A1) while p here is the
+            // REGISTERIZED emitted path; ink rows are always primitive/ (a scale row, never
+            // a semantic band), so the comparison hardcodes the prefix rather than value-
+            // importing payload.registerPath (would drag the engine into the sandbox bundle
+            // — see the header comment).
+            .filter((p: string) => !inkUpshifts.some(([, to]) => 'primitive/' + to === p))
+            .filter((p: string) => inkUpshifts.some(([from]) => 'primitive/' + from === p)
               || (!baseVars.has(p) && !legacyCandidates(p).some(lp => baseVars.has(lp))))
         : []
 
@@ -472,6 +526,18 @@ figma.ui.onmessage = async (msg) => {
       // the rebuild stores its seed as FILE state: every later apply's UI builds the base
       // column from it (the file-state handshake), so diffs stay against THIS base
       if (rebuildBase && typeof baseSeedHex === 'string') base.setPluginData(BASE_SEED_KEY, baseSeedHex)
+      // the DESCOPE POSTURE (owner 2026-08-07): the UI sends its checkbox on every apply —
+      // single, roster, re-apply, rebuild, backfill all carry it — so this branch is the
+      // live path; stamp it as this file's new posture and use it. The absent case only
+      // guards a hand-crafted message (the smoke probes, an older UI build): fall back to
+      // whatever is already stamped, defaulting ON (primitives hidden) if nothing ever was.
+      // Consumed by ensure() below, so a scope hand-edited in Figma always reverts on the
+      // very next apply, whichever path sent it.
+      if (typeof descopePrimitives === 'boolean')
+        base.setPluginData(DESCOPE_KEY, descopePrimitives ? 'true' : 'false')
+      const descopeOn = typeof descopePrimitives === 'boolean'
+        ? descopePrimitives
+        : base.getPluginData(DESCOPE_KEY) !== 'false'
 
       // ── feature-detect (plan §2.2): extended collections are Enterprise-only.
       // BEFORE any mode mutation (adversarial review 2026-07-16): a failed upgrade must
@@ -516,8 +582,12 @@ figma.ui.onmessage = async (msg) => {
 
       // ── populate the base: CREATE-ONCE from the default seed ─────────────────
       // Existing base values are never rewritten (extensions diff against them); every
-      // apply restamps description + scopes. Base variables are what users bind in v2
-      // (there is no second collection to hide behind) → ALL_SCOPES.
+      // apply restamps description + scopes. THE DESCOPE POSTURE (owner 2026-08-07,
+      // default ON): primitive/* rows are implementation detail — the semantic/* names are
+      // what a designer should bind — so descopeOn hides primitive/* from every picker
+      // (scopes = []) while semantic/* always keeps ALL_SCOPES. Off exposes everything
+      // (the pre-A1 behavior). Re-stamped every apply regardless of rebuildBase, so a scope
+      // hand-edited in Figma's own panel always reverts on the next apply.
       const withSecondary = baseHasSecondary || hasSecondary
       const seedByCol = new Map<Column, Map<string, FlatTok>>(
         activeCols.map(c => [c, new Map(baseTokens[c].map(t => [t.path, t]))]))
@@ -530,11 +600,11 @@ figma.ui.onmessage = async (msg) => {
         }
         if (!v) { v = figma.variables.createVariable(path, base, 'COLOR'); baseVars.set(path, v); createdVars++ }
         v.description = describeToken(path) // restamped every apply — regenerated, never hand-kept
-        v.scopes = ['ALL_SCOPES']
+        v.scopes = descopeOn && path.startsWith('primitive/') ? [] : ['ALL_SCOPES']
         return v
       }
       // Pole-aliasing (owner 2026-07-27): the on-fill leaves and the neutral anchor
-      // are exact poles by construction — alias them to the system/abs-* rows so the
+      // are exact poles by construction — alias them to the primitive/system/abs-* rows so the
       // chip READS as the pole and the poles stay single-source. Emit-layer
       // representation only: a non-pole value (an outline secondary's on-cta rides
       // its ink-9) falls back to a raw write, so the alias never constrains the
@@ -542,7 +612,7 @@ figma.ui.onmessage = async (msg) => {
       // (highlight/on dropped from this list 2026-07-29 with the token; the neutral
       // anchor is ink/12 — C49 restored its pre-collapse number.)
       const POLE_LEAVES = (path: string) =>
-        path.endsWith('/cta/on') || path === 'neutral/ink/12'
+        path.endsWith('/cta/on') || path === 'primitive/neutral/ink/12'
       // EXACT poles only (per-channel EPS): the engine emits true 0/1 poles, so a
       // loose band buys nothing — and the conversion pass below must never snap a
       // hand-edited near-pole value (#FFFFF8) onto the abs row (review-caught
@@ -554,10 +624,10 @@ figma.ui.onmessage = async (msg) => {
         return w || k
       }
       const absFor = (t: { r: number; g: number; b: number }) =>
-        baseVars.get(t.r + t.g + t.b > 1.5 ? 'system/abs-white' : 'system/abs-black')
+        baseVars.get(t.r + t.g + t.b > 1.5 ? 'primitive/system/abs-white' : 'primitive/system/abs-black')
       // CTA-BORDER ALIASING (owner 2026-07-29: *"the rest of them should get aliased to the
       // transparent variable instead of being raw"*). BOTH states are aliases, never raw writes:
-      // alpha 0 → system/alpha/transparent, the decorative stroke → its rung row (offset-06/08/16). So
+      // alpha 0 → primitive/system/alpha/transparent, the decorative stroke → its rung row (offset-06/08/16). So
       // the panel reads the token rather than a raw swatch, and the stroke stays single-source.
       // isPole() deliberately rejects alpha≠1, so the poles path can never claim either of these
       // — this is its own rule with its own targets.
@@ -571,19 +641,19 @@ figma.ui.onmessage = async (msg) => {
       // router is a value lookup — no family table to keep in sync with cssRender.ctaBorderRung.
       const strokeFor = (path: string, t: { a?: number }) => {
         if (!path.endsWith('/cta/border')) return undefined
-        if (t.a === 0) return baseVars.get('system/alpha/transparent')
+        if (t.a === 0) return baseVars.get('primitive/system/alpha/transparent')
         const rung = RUNG_FOR_ALPHA(t.a)
-        return rung ? baseVars.get(`system/alpha/offset-${rung}`) : undefined
+        return rung ? baseVars.get(`primitive/system/alpha/offset-${rung}`) : undefined
       }
       // the SOFT ON-CTA (C43 follow-up, owner-named 2026-08-03): a cta/on leaf carrying a
       // POLE AT PARTIAL ALPHA is the default-model secondary's soft text — alias it onto
-      // the system/alpha/ink primitive. isPole() rejects alpha≠1 by design, so before this
+      // the primitive/system/alpha/ink primitive. isPole() rejects alpha≠1 by design, so before this
       // router these leaves fell through to RAW writes (owner-caught: "you did not make a
       // variable for it").
       const softInkFor = (path: string, t: { r: number; g: number; b: number; a?: number }) => {
         if (!path.endsWith('/cta/on')) return undefined
         if (t.a === undefined || t.a >= 1 - EPS || t.a <= EPS) return undefined
-        return isPole({ r: t.r, g: t.g, b: t.b }) ? baseVars.get('system/alpha/ink') : undefined
+        return isPole({ r: t.r, g: t.g, b: t.b }) ? baseVars.get('primitive/system/alpha/ink') : undefined
       }
       // TEXT-CTA SIBLING ALIASING (owner 2026-08-04; C49 completed it): the cta-ink trio
       // is the ink band read as states — enabled ≡ ink/9, hover ≡ ink/10 (the between
@@ -608,7 +678,15 @@ figma.ui.onmessage = async (msg) => {
       const inkSiblingFor = (path: string, t: { r: number; g: number; b: number; a?: number }, toks: Map<string, FlatTok>) => {
         const hit = INK_SIBLING.find(([suf]) => path.endsWith(suf))
         if (!hit) return undefined
-        const sibPath = path.slice(0, path.length - hit[0].length) + hit[1]
+        // the register split (A1): a cta-ink row lives under semantic/ but its /ink/N
+        // sibling lives under primitive/ — a plain suffix swap would derive a
+        // semantic/<fam>/ink/N path no row answers to (adversarial-audit-caught
+        // 2026-08-07: 23 of 24 sibling aliases silently fell to raw writes). The
+        // cta-ink-strong→cta-ink/hover entry stays same-register.
+        const base = path.slice(0, path.length - hit[0].length)
+        const sibPath = hit[1].startsWith('/ink/') && base.startsWith('semantic/')
+          ? 'primitive/' + base.slice('semantic/'.length) + hit[1]
+          : base + hit[1]
         return chEq(t, toks.get(sibPath)) ? baseVars.get(sibPath) : undefined
       }
       const seedValue = (v: figma.Variable, colId: string, t: FlatTok, col: Column) => {
@@ -642,28 +720,31 @@ figma.ui.onmessage = async (msg) => {
       // rebuildBase (the "redo the main theme" action): seedFresh runs for EVERY base row,
       // not only freshly created ones — the one sanctioned overwrite of base values, taking
       // each row back to what a fresh seed would write today (values AND alias idioms)
-      for (const path of ['system/abs-black', 'system/abs-white', 'system/alpha/transparent', 'system/alpha/ink',
-        ...Object.keys(RUNG_ALPHAS).map(r => `system/alpha/offset-${r}`)]) {
+      for (const path of ['primitive/system/abs-black', 'primitive/system/abs-white', 'primitive/system/alpha/transparent', 'primitive/system/alpha/ink',
+        ...Object.keys(RUNG_ALPHAS).map(r => `primitive/system/alpha/offset-${r}`)]) {
         const before = createdVars
         const v = ensure(path)
         if (createdVars > before || rebuildBase) seedFresh(v, path)
       }
-      ensure('system/surface/sink')
-      ensure('system/surface/base')
-      ensure('system/surface/lift')
-      ensure('system/surface/pop')
+      ensure('semantic/surface/sink')
+      ensure('semantic/surface/base')
+      ensure('semantic/surface/lift')
+      ensure('semantic/surface/pop')
       // identity re-homes to the system absolutes — bespoke in-place migration
       // (a leaf entry can't express two divergent homes for the same 'identity'
-      // leaf); the renamed var keeps its id, bindings and overrides survive.
+      // leaf); the renamed var keeps its id, bindings and overrides survive. SOURCES
+      // stay the old bare spelling ('brand-primary/identity' never carried a register —
+      // it is retired by this very migration, not renamed by A1); only the TARGETS gain
+      // the primitive/system/ prefix.
       for (const [oldPath, newPath] of [
-        ['brand-primary/identity', 'system/abs-primary'],
-        ['brand-secondary/identity', 'system/abs-secondary'],
+        ['brand-primary/identity', 'primitive/system/abs-primary'],
+        ['brand-secondary/identity', 'primitive/system/abs-secondary'],
       ] as const) {
         const v = baseVars.get(oldPath)
         if (v && !baseVars.has(newPath)) { v.name = newPath; baseVars.set(newPath, v); baseVars.delete(oldPath) }
       }
       for (const t of baseTokens[activeCols[0]]) { // all columns share the path set
-        if (!withSecondary && (t.path.startsWith('brand-secondary/') || t.path === 'system/abs-secondary')) continue
+        if (!withSecondary && (isBrandSecondary(t.path) || t.path === 'primitive/system/abs-secondary')) continue
         const before = createdVars
         const v = ensure(t.path)
         if (createdVars > before || rebuildBase) seedFresh(v, t.path) // fresh variable (or a rebuild) → seed every active column
@@ -725,12 +806,12 @@ figma.ui.onmessage = async (msg) => {
             // cta/on seeded PRE-C43 was pole-aliased onto abs-black/abs-white, and an alias
             // is otherwise never touched — so the base kept reading the SOLID pole after the
             // payload went soft. OUR abs alias on a path whose seed is soft is exactly the
-            // stale half of that migration: re-point it to system/alpha/ink. An alias to any
-            // OTHER target is a designer's own wiring and is left alone.
+            // stale half of that migration: re-point it to primitive/system/alpha/ink. An
+            // alias to any OTHER target is a designer's own wiring and is left alone.
             const seed = seedByCol.get(activeCols[i])!.get(path)
             const soft = seed ? softInkFor(path, seed) : undefined
-            const isOurAbs = cur.id === baseVars.get('system/abs-black')?.id
-              || cur.id === baseVars.get('system/abs-white')?.id
+            const isOurAbs = cur.id === baseVars.get('primitive/system/abs-black')?.id
+              || cur.id === baseVars.get('primitive/system/abs-white')?.id
             if (soft && isOurAbs && soft.id !== v.id) v.setValueForMode(colIds[i], figma.variables.createVariableAlias(soft))
             continue
           }
@@ -761,7 +842,7 @@ figma.ui.onmessage = async (msg) => {
       // Conservative in the same way strokeTargetFor is: only a value that is EXACTLY one of our
       // own rung alphas at a pure pole is rewritten. A designer who re-valued the row keeps it.
       for (const rung of Object.keys(RUNG_ALPHAS)) {
-        const v = baseVars.get(`system/alpha/offset-${rung}`)
+        const v = baseVars.get(`primitive/system/alpha/offset-${rung}`)
         if (!v) continue
         for (let i = 0; i < activeCols.length; i++) {
           const cur = v.valuesByMode[colIds[i]]
@@ -771,7 +852,7 @@ figma.ui.onmessage = async (msg) => {
           if (!isPole({ r: rgba.r, g: rgba.g, b: rgba.b })) continue
           const isOurs = RUNG_FOR_ALPHA(a) !== undefined || Math.abs(a - RETIRED_RUNG_ALPHA) < EPS
           if (!isOurs || Math.abs(a - RUNG_ALPHAS[rung]) < EPS) continue
-          const seed = seedByCol.get(activeCols[i])!.get(`system/alpha/offset-${rung}`)
+          const seed = seedByCol.get(activeCols[i])!.get(`primitive/system/alpha/offset-${rung}`)
           if (seed) v.setValueForMode(colIds[i], toRGBA(seed))
         }
       }
@@ -796,8 +877,8 @@ figma.ui.onmessage = async (msg) => {
       let orphaned = 0
       if (addedCols.length) {
         const known = new Set(baseTokens[activeCols[0]].map(t => t.path))
-        known.add('system/surface/sink'); known.add('system/surface/base')
-        known.add('system/surface/lift'); known.add('system/surface/pop')
+        known.add('semantic/surface/sink'); known.add('semantic/surface/base')
+        known.add('semantic/surface/lift'); known.add('semantic/surface/pop')
         for (const p of baseVars.keys()) if (!known.has(p)) orphaned++
         for (const c of addedCols) {
           const idx = activeCols.indexOf(c)
@@ -815,14 +896,14 @@ figma.ui.onmessage = async (msg) => {
       //   base → neutral/paper-2 light · neutral/paper-1 dark
       //   lift → neutral/paper-1 light · neutral/paper-2 dark
       //   pop  → neutral/paper-0 light · neutral/paper-3 dark
-      const p0 = baseVars.get('neutral/paper/0')
-      const p1 = baseVars.get('neutral/paper/1')
-      const p2 = baseVars.get('neutral/paper/2')
-      const p3 = baseVars.get('neutral/paper/3')
+      const p0 = baseVars.get('primitive/neutral/paper/0')
+      const p1 = baseVars.get('primitive/neutral/paper/1')
+      const p2 = baseVars.get('primitive/neutral/paper/2')
+      const p3 = baseVars.get('primitive/neutral/paper/3')
       if (p0 && p1 && p2 && p3) {
         const planes: Array<[string, figma.Variable, figma.Variable]> = [
-          ['system/surface/sink', p3, p0], ['system/surface/base', p2, p1],
-          ['system/surface/lift', p1, p2], ['system/surface/pop', p0, p3],
+          ['semantic/surface/sink', p3, p0], ['semantic/surface/base', p2, p1],
+          ['semantic/surface/lift', p1, p2], ['semantic/surface/pop', p0, p3],
         ]
         for (const [path, light, darkVar] of planes) {
           const v = baseVars.get(path)!
@@ -865,7 +946,7 @@ figma.ui.onmessage = async (msg) => {
       // ── overrides: diff every brand token against the LIVE base value, per column ──
       // Equal → ensure NO override (inherit; the blue-highlight story stays honest).
       // Different → setValueForMode routed by the extension's modeId for that column.
-      // system/* is contract-invariant and skipped outright (the sink/base/lift/pop
+      // primitive/system/* is contract-invariant and skipped outright (the sink/base/lift/pop
       // planes are aliases; the rest are poles every brand shares). The payload always CARRIES a
       // brand-secondary (real or derived from the primary); it is WRITTEN only when the
       // file's posture is on — secondary stays opt-in, and once on, every brand derives.
@@ -874,12 +955,14 @@ figma.ui.onmessage = async (msg) => {
         activeCols.map(c => [c, new Map(brandTokens[c].map(t => [t.path, t]))]))
       const work: string[] = []
       for (const t of brandTokens[activeCols[0]]) {
-        // system/* is contract-invariant and skipped — EXCEPT the system link trio
-        // (Phase 4, owner: "link is a system level color. It can still be extended"):
-        // each brand's extension overrides system/link* with its own resolved values
-        // (its primary's cta-ink, or its custom link seed's register)
-        if (t.path.startsWith('system/') && !OVERRIDABLE_SYSTEM(t.path)) continue
-        if (secondaryMode === 'none' && (t.path.startsWith('brand-secondary/') || t.path === 'system/abs-secondary')) continue
+        // primitive/system/* is contract-invariant and skipped — EXCEPT the system link
+        // trio (Phase 4, owner: "link is a system level color. It can still be extended"):
+        // each brand's extension overrides semantic/link/* with its own resolved values
+        // (its primary's cta-ink, or its custom link seed's register). semantic/link/*
+        // is NEVER skipped here — it doesn't start with primitive/system/, so it falls
+        // straight to work.push below; OVERRIDABLE_SYSTEM only gates the abs rows now.
+        if (t.path.startsWith('primitive/system/') && !OVERRIDABLE_SYSTEM(t.path)) continue
+        if (secondaryMode === 'none' && (isBrandSecondary(t.path) || t.path === 'primitive/system/abs-secondary')) continue
         work.push(t.path)
       }
       // The pole aliases resolve through ONE hop (they point at the raw abs rows) —
@@ -914,7 +997,7 @@ figma.ui.onmessage = async (msg) => {
             // the soft on-cta reads "alpha/ink"). strokeFor/softInkFor come FIRST for the same
             // reason they do at the base seeding: isPole rejects alpha≠1, so the poles rule can
             // never claim an alpha-carrying leaf. ⚠️ THIS is the write path the APPLIED theme
-            // shows — brand-secondary/cta/on is an OVERRIDE row (the base posture is the
+            // shows — semantic/brand-secondary/cta/on is an OVERRIDE row (the base posture is the
             // mirror's solid pole), so a router missing HERE ships raw even when the base
             // seeding and the conversion pass both carry it (owner-caught 2026-08-03: "not
             // seeing these changes come through in the top level theme").

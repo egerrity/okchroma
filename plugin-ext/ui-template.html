@@ -364,6 +364,11 @@ body {
 <button class="roster-btn" id="roster-btn" title="Applies the edge-case brand set — one extension per roster entry, all solve columns. Ignores the fields above.">Apply test roster</button>
 <div class="status" id="status"></div>
 
+<label class="check-line" for="descope-primitives" style="margin-top:10px;justify-content:center" title="Hides primitive/* base variables from every Figma picker, so designers bind the semantic/* names instead. File-wide (not per brand) and re-stamped on every apply, including re-apply and rebuild. Turn off to expose primitive/* again.">
+  <input type="checkbox" id="descope-primitives" checked />
+  <span>Hide primitive scale from pickers</span>
+</label>
+
 <div style="margin-top:10px;text-align:center;display:flex;gap:14px;justify-content:center;align-items:center">
   <button class="smoke-link" id="smoke-btn" title="Runs the extended-collections API probes on scratch collections, then removes them">Run Enterprise smoke test</button>
   <button class="smoke-link" id="reapply-btn" title="Rebuilds every brand extension from the recipe stamped at its last apply">Re-apply all brands</button>
