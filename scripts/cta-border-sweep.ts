@@ -13,7 +13,7 @@
 //     requirement to pass 3:1." APCA is authorized HERE, as a taste instrument, because its
 //     perceptual rules are better. Bars quoted from her: Lc 15 (below which APCA says treat as
 //     invisible for non-text) and Lc 30.
-//   · Reference plane = THE PAGE: neutral paper-2 in light, neutral paper-1 in dark.
+//   · Reference plane = THE PAGE: neutral paper-97 in light, neutral paper-99 in dark.
 //   · Scope = all cta families INCLUDING signals; nothing beyond the existing cta/border token.
 //   · Custom secondary "should always be lighter, but we don't have to move it a lot."
 //
@@ -448,14 +448,14 @@ const html = `<!doctype html><meta charset="utf-8"><title>CTA border — gate, l
   .tlab.dark { color:#cfcfcf; }
 </style>
 <div class="note"><b>CTA border — Stage A. Measurement only; the engine is untouched.</b><br>
-Lane <b>wcag</b> (build.ts SHIPPED_PROFILE), so counts compare to shipped <code>dist/</code>. Plane = <b>the page</b>: neutral paper-2 in light, neutral paper-1 in dark. Seeds are agnostic hue × lightness × chroma-share sweeps, not named brands — ${HUES.length}×${LS.length}×${CSHARE.length} = ${HUES.length * LS.length * CSHARE.length} themes.<br><br>
+Lane <b>wcag</b> (build.ts SHIPPED_PROFILE), so counts compare to shipped <code>dist/</code>. Plane = <b>the page</b>: neutral paper-97 in light, neutral paper-99 in dark. Seeds are agnostic hue × lightness × chroma-share sweeps, not named brands — ${HUES.length}×${LS.length}×${CSHARE.length} = ${HUES.length * LS.length * CSHARE.length} themes.<br><br>
 <b>APCA is used here as a taste instrument, on your ruling</b> — these buttons carry no contrast requirement. <b>The 1.5px caveat:</b> the Lc 15 / 30 levels you quoted are specified for non-text elements <i>no less than 5px in the smallest dimension</i>; this stroke is 1.5px, and APCA wants more contrast for thin lines. <b>Lc 45 is not an APCA level</b> — it is headroom on the ladder to read against, since 15 is likely too lenient for a hairline.<br><br>
 Strokes are rendered as the real component renders them: <code>border: 1.5px solid rgba(…)</code> over the fill, which composites in exactly the space measured. Ladder = <code>${LADDER.map(r => `offset-${String(r).padStart(2, '0')}`).join(' · ')}</code> — an extension of the shadow-04/08/12 convention offset-12 was named into. Each rung is one brand-independent base row: <b>zero per-brand overrides</b>, which is why C39 chose an alpha over a family-relative stop, and why a 6-rung ladder is still cheap.</div>
 
 <div class="stitle">1 · THE GATE — how many fire, today vs each bar</div>
 <div class="note" style="margin:0"><b>A <code>0.0</code> in the range column is APCA's own black-level clamp, not a bug.</b> The formula floors any <code>sapc &lt; 0.1</code> to exactly zero, so everything below <b>Lc 7.3</b> reports as 0 — it means "under the reporting floor", i.e. indistinguishable. The neutral's cta sits there against the page at every seed, which is the same thing C39 found by hand (<i>"the neutral button as is falls in this category"</i>) and why 62 of 62 shipped neutrals fire today.<br>
 Signal counts land on exact multiples of 120 (= one mode × 120 seeds) because the signal ramps are canonical and brand-independent — which pre-confirms block 6 before you read it.</div>
-<table><tr><th>family</th><th>samples</th><th>today (wash-5)</th>${BARS.map(b => `<th>Lc &lt; ${b}</th>`).join('')}<th>|Lc| range vs page</th></tr>
+<table><tr><th>family</th><th>samples</th><th>today (wash-89)</th>${BARS.map(b => `<th>Lc &lt; ${b}</th>`).join('')}<th>|Lc| range vs page</th></tr>
 ${gateRows}
 <tr style="border-top:2px solid #999"><td class="fam">ALL</td><td class="n">${totN}</td><td class="n hit">${totToday}</td>${BARS.map(b => `<td class="n hit">${totBar(b)}</td>`).join('')}<td class="n dim">shipped dist = 62 of 220</td></tr></table>
 

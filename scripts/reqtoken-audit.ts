@@ -51,7 +51,7 @@ for (const H of HUES) for (const C of CHROMAS) {
         const got = Math.abs(apcaLc(apcaYAt(st.L, clampChromaToGamut(st.L, st.C, st.H), st.H), p2ApcaY))
         if (got < sp.require.targetLc - APCA_TOL_LC) fails.push({ seed: id, mode, check: `require-stop${sp.stop}`, detail: `|Lc| ${got.toFixed(1)} < ${sp.require.targetLc}`, sev: (sp.require.targetLc - got) / 10 })
       } else if (sp.require.metric === 'min-separation') {
-        const ref = byStop(sp.require.against === 'paper-1' ? 1 : sp.stop - 1)!
+        const ref = byStop(sp.require.against === 'paper-99' ? 1 : sp.stop - 1)!
         const rad = (h: number) => (h * Math.PI) / 180
         const got = Math.sqrt((st.L - ref.L) ** 2
           + (st.C * Math.cos(rad(st.H)) - ref.C * Math.cos(rad(ref.H))) ** 2
@@ -59,7 +59,7 @@ for (const H of HUES) for (const C of CHROMAS) {
         if (got < sp.require.target - 1e-4) fails.push({ seed: id, mode, check: `separation-stop${sp.stop}`, detail: `ΔE ${got.toFixed(4)} < ${sp.require.target}`, sev: 10 })
       }
     }
-    // 3. monotonic L where the system guarantees it: stops 1–8 (paper→highlight-8).
+    // 3. monotonic L where the system guarantees it: stops 1–8 (paper→mark-74-r300).
     const ladder = [1, 2, 3, 4, 5, 6, 7, 8].map(n => byStop(n)!).filter(Boolean)
     for (let i = 1; i < ladder.length; i++) {
       const bad = mode === 'light' ? ladder[i].L > ladder[i - 1].L + 1e-6 : ladder[i].L < ladder[i - 1].L - 1e-6
@@ -69,7 +69,7 @@ for (const H of HUES) for (const C of CHROMAS) {
     //    highlight-9 drift onto ink-10 unnoticed (drift handoff 2026-07-29). The old
     //    check here was `dark-8<9`, an L-comparison against a stop that no longer
     //    exists. Its successor is stated as CONTRAST against the shared plane both
-    //    stops sit on (paper-3), because contrast is what the two requires are about:
+    //    stops sit on (paper-95 (paper-3 pre-Stage-B)), because contrast is what the two requires are about:
     //    the emphasis fill must read further off the page than the focus ring does.
     //    Both modes now, not just dark. Margin declared in highlight-audit
     //    (BAND_ORDER_MARGIN 1.0); this gate asserts the ORDER, the sweep gate asserts
@@ -78,13 +78,13 @@ for (const H of HUES) for (const C of CHROMAS) {
     const p3Y = wcagY(p3b.L, clampChromaToGamut(p3b.L, p3b.C, p3b.H), p3b.H)
     const vsP3 = (st: typeof s8b) => contrastRatio(wcagY(st.L, clampChromaToGamut(st.L, st.C, st.H), st.H), p3Y)
     if (vsP3(i9) <= vsP3(s8b) + 1e-6)
-      fails.push({ seed: id, mode, check: 'band-order', detail: `ink-9 ${vsP3(i9).toFixed(2)} !> highlight-8 ${vsP3(s8b).toFixed(2)} vs paper-3`, sev: 12 })
+      fails.push({ seed: id, mode, check: 'band-order', detail: `ink-53-r450 ${vsP3(i9).toFixed(2)} !> mark-74-r300 ${vsP3(s8b).toFixed(2)} vs paper-95`, sev: 12 })
     // the ink band is strictly monotonic — darker per stop in light, lighter in dark
     // (three stops since C49: 9 the first text, 10 the between, 11 the strong)
     for (const [lo, hi] of [[9, 10], [10, 11]] as const) {
       const a = byStop(lo)!, b = byStop(hi)!
       const inkBad = mode === 'light' ? b.L > a.L + 1e-6 : b.L < a.L - 1e-6
-      if (inkBad) fails.push({ seed: id, mode, check: 'ink-order', detail: `ink-${lo} L${a.L.toFixed(3)} vs ink-${hi} L${b.L.toFixed(3)}`, sev: 10 })
+      if (inkBad) fails.push({ seed: id, mode, check: 'ink-order', detail: `stop${lo} L${a.L.toFixed(3)} vs stop${hi} L${b.L.toFixed(3)}`, sev: 10 })
     }
     // 4. in-gamut + valid rgb for every stop
     for (const st of s) {
@@ -120,8 +120,9 @@ for (const H of HUES) for (const C of CHROMAS) {
     if ((ctaPressed.L > cta.L) !== hoverUp || Math.abs(ctaPressed.L - cta.L) < Math.abs(ctaHover.L - cta.L) - 1e-9)
       fails.push({ seed: id, mode, check: 'pressed-travel', detail: `cta L${cta.L.toFixed(3)} hover L${ctaHover.L.toFixed(3)} pressed L${ctaPressed.L.toFixed(3)}`, sev: 10 })
     // 5c. the cta-ink trio is PURE STOP REFERENCES (C49, owner 2026-08-05): enabled ≡
-    //    ink-9, hover ≡ ink-10 (the between text stop — the retired role-side state-step
-    //    law's successor), pressed ≡ ink-11. Exact-match all three; each stop's own
+    //    ink-53-r450 (ink-9 pre-Stage-B), hover ≡ ink-42-r650 (ink-10 pre-Stage-B, the
+    //    between text stop — the retired role-side state-step law's successor), pressed ≡
+    //    ink-30-r700 (ink-11 pre-Stage-B). Exact-match all three; each stop's own
     //    require (T9/T10/T11) carries the legibility law, and the per-state floor checks
     //    below assert the states still read at their referenced stops' bars.
     const refs: Array<[string, { L: number; C: number; H: number }, number]> = [

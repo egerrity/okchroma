@@ -38,6 +38,12 @@ for (const p of [...paths]) {
   if (c.startsWith('brand-primary/')) paths.push('brand/primary/' + c.slice('brand-primary/'.length))
   if (c.startsWith('brand-secondary/')) paths.push('brand/secondary/' + c.slice('brand-secondary/'.length))
 }
+// community-only shapes: paths that exist ONLY under the community plugin's flat
+// system/ namespace (plugin/code.ts STATIC_UTILS) with no ext equivalent for
+// canonicalize to derive them from — the ext anchor lives banded at neutral/ink/0
+// (covered above via NEUTRAL_ONLY), the community anchor lives flat at system/ink-0
+// (adversarial-audit-caught 2026-08-07: this hole let it resolve title-only).
+paths.push('system/ink-0')
 
 let bad = 0
 const fail = (p: string, why: string) => { console.error(`FAIL ${p}: ${why}`); bad++ }

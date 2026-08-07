@@ -16,13 +16,13 @@
 //
 // Token shape: the operative `brand-` CATEGORY stays in the token name (brand-primary/*,
 // brand-secondary/*), the brand's NAME lives on the extension, so a designer reads
-// kirby → primitive/brand-primary/paper/1. Neutral + signals keep their identity names.
+// kirby → primitive/brand-primary/paper/99. Neutral + signals keep their identity names.
 // Every path also carries a REGISTER prefix (primitive/ or semantic/, added 2026-08-07 —
 // see registerPath below): the FAMILY segment is unchanged, so this line's shape still
 // holds one hop in.
 
 import { resolveTheme, signalScalesFor, SOFT_ON_CTA_ALPHA, type ResolvedTheme } from '../src/engine/resolve'
-import { themeToFigma, type FigmaGroup, type FigmaColorToken } from '../src/engine/figmaRender'
+import { themeToFigma, groupEntries, type FigmaGroup, type FigmaColorToken } from '../src/engine/figmaRender'
 import { SIGNALS } from '../src/engine/signals'
 import { OFFSET_ALPHAS, offsetTokenPath, type OffsetRung } from '../src/engine/cssRender'
 import { neutralTintHue, type ContrastProfile, type NeutralLevel } from '../src/engine/colorEngine'
@@ -88,7 +88,10 @@ export const BASE_SEED_HEX = '#E93D82'
 const isLeaf = (n: FigmaColorToken | FigmaGroup): n is FigmaColorToken => '$type' in n
 
 function flatten(node: FigmaGroup, prefix: string, out: FlatTok[]): void {
-  for (const [k, v] of Object.entries(node)) {
+  // groupEntries (figmaRender.ts), not Object.entries: paper/wash's bare-digit leaves
+  // are JS integer keys and get silently re-sorted ascending otherwise, reversing the
+  // TOKEN_ORDER panel contract (adversarial-audit-caught 2026-08-07).
+  for (const [k, v] of groupEntries(node)) {
     const path = prefix ? `${prefix}/${k}` : k
     if (isLeaf(v)) {
       const [r, g, b] = v.$value.components
@@ -101,11 +104,13 @@ function flatten(node: FigmaGroup, prefix: string, out: FlatTok[]): void {
 // system root, then surface/, then alpha/): system → neutral → brand-primary →
 // brand-secondary → signals. The semantic/surface/sink|base|lift|pop planes are NOT here —
 // they are scheme-divergent aliases the plugin creates after the abs rows (ordering) and
-// wires once the neutral exists. neutral/ink/12 (the OFF-SCALE anchor — pure black in
+// wires once the neutral exists. neutral/ink/0 (the OFF-SCALE anchor — pure black in
 // light, pure white in dark) is injected right after the last real ink stop, in ladder
-// order. ⚠️ Its trigger is the LAST SCALE INK, so a stop renumber moves it: it fired on
-// ink/11 → emitted ink/12 pre-collapse, ink/10 → ink/11 through the C33 era, and C49
-// restored the original pairing. The alpha/shadow ladder (owner
+// order. ⚠️ Its trigger is the LAST SCALE INK, so a stop renumber (or a Stage B relabel of
+// that stop's leaf) moves it: it fired on ink/11 → emitted ink/12 pre-collapse, ink/10 →
+// ink/11 through the C33 era, C49 restored the original pairing (ink/11 → ink/12), and
+// Stage B (owner 2026-08-07, names only) relabeled the pair to ink/30-r700 → ink/0 — same
+// stop index, same trigger position, new strings. The alpha/shadow ladder (owner
 // 2026-07-27) is pure black at 4/8/12% light; dark is heavier by necessity — near black
 // a light-mode alpha vanishes — at 32/48/64%.
 function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boolean): FlatTok[] {
@@ -141,7 +146,9 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
   flatten(g.neutral as FigmaGroup, 'neutral', neutral)
   for (const t of neutral) {
     out.push(t)
-    if (t.path === 'neutral/ink/11') out.push({ path: 'neutral/ink/12', ...(scheme === 'light' ? K : W) })
+    // Stage B leaf: stop 11 (strong ink) is now 'ink/30-r700'; the anchor it triggers
+    // is now 'ink/0' (was 'ink/11' → 'ink/12' pre-Stage-B). Stop index unchanged.
+    if (t.path === 'neutral/ink/30-r700') out.push({ path: 'neutral/ink/0', ...(scheme === 'light' ? K : W) })
   }
   // identity rows re-home to the system ABSOLUTES (owner 2026-07-27: the
   // unprocessed inputs sit with the poles — abs-primary/abs-secondary; the

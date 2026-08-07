@@ -38,13 +38,13 @@ export type ResolvedRamp = {
   seed: Seed
   stops: ResolvedStop[]
   // the six-token cta family (owner respec 2026-07-16): the fill trio + the ink trio
-  // (cta-ink = the family's 4.5 text-register cta, anchored at the resolved ink-9)
+  // (cta-ink = the family's 4.5 text-register cta, anchored at the resolved ink-53-r450)
   roles: {
     cta: ResolvedRole; ctaHover: ResolvedRole; ctaPressed: ResolvedRole
     ctaInk: ResolvedRole; ctaInkHover: ResolvedRole; ctaInkPressed: ResolvedRole
   }
   // one on-color left: the cta's own text pole. onHighlightIsWhite died with the
-  // highlight band (owner 2026-07-29) — ink-9's on-color is a paper token now.
+  // highlight band (owner 2026-07-29) — ink-53-r450's on-color is a paper token now.
   ons: { onFillIsWhite: boolean }
 }
 export type { ResolveOpts }
@@ -88,37 +88,38 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     const ref = refOf(stopNum, forWhom)
     return wcagY(ref.L, ref.C, ref.H)
   }
-  // the apca reference Y: paper-2's emitted (gamut-clamped) color through the APCA screen-luminance model
+  // the apca reference Y: paper-97's (paper-2's) emitted (gamut-clamped) color through the APCA screen-luminance model
   const refApcaYOf = (stopNum: number, forWhom: number): number => {
     const ref = refOf(stopNum, forWhom)
     return apcaYAt(ref.L, ref.C, ref.H)
   }
   // THE DECLARED ANCHOR (owner 2026-07-28): `require.against` is now AUTHORITATIVE —
-  // it used to be documentation while the resolver hardcoded paper-2 here and in the
+  // it used to be documentation while the resolver hardcoded paper-97 (paper-2) here and in the
   // apca path, so moving a require's anchor meant editing the engine rather than the
   // declaration. spec.ts is the portable artifact; the anchor belongs in it.
-  const AGAINST_STOP: Record<string, number> = { 'paper-1': 1, 'paper-2': 2, 'paper-3': 3 }
+  const AGAINST_STOP: Record<string, number> = { 'paper-99': 1, 'paper-97': 2, 'paper-95': 3 }
   const declaredAnchor = (req: Require): number =>
     req.metric === 'min-separation' ? 1 : AGAINST_STOP[req.against] ?? 2
   // THE INK ANCHOR (owner rule 2026-07-28: "ink-10 can only be used on papers" — and it
   // must PASS on all of them): in the WCAG lane the ink requires (the ink stops
-  // 9–11) anchor at paper-3, the NEAREST paper (light's darkest, dark's
+  // 9–11) anchor at paper-95 (paper-3), the NEAREST paper (light's darkest, dark's
   // lightest), so clearing the bar there clears every paper. The apca lane keeps its
-  // paper-2 anchor — its Lc solve already clears paper-3 with margin everywhere
+  // paper-97 (paper-2) anchor — its Lc solve already clears paper-95 with margin everywhere
   // (agnostic sweep worst 5.28 wcag-ratio, 0/216 under 4.5) and stays byte-identical.
   // Lane-specific, so it stays an override on top of the declaration rather than in it.
   // Threshold moved 10 → 9 with the 2026-07-29 renumber: the ink band starts at 9 now.
-  // This IS why the collapse is visually cheap — it is the rule that made ink-9 (then
-  // ink-10) land on top of highlight-9, both solving 4.5 against paper-3.
+  // This IS why the collapse is visually cheap — it is the rule that made ink-53-r450 (then
+  // ink-10) land on top of highlight-9, both solving 4.5 against paper-95 (paper-3).
   const wcagAnchorStop = (req: Require, stop: number) => (stop >= 9 ? 3 : declaredAnchor(req))
   // the CROSS-FAMILY paper bound (owner defect 2026-08-03 — her measured pair was the
-  // brand ink-9 on the NEUTRAL paper-3, 4.479:1; her follow-up caught highlight-8 the same
-  // way, 26/72 under 3:1): "usable on every paper" includes the per-brand NEUTRAL's papers,
-  // and the own-family paper-3 is NOT the nearest paper for green-band brands — their
-  // tinted paper carries more Y than the near-gray neutral at the same L. Covers every
-  // contrast-required stop from 8 up: the inks are text on any paper, and highlight-8 is
-  // the focus-ring/border register that sits on neutral surfaces (WCAG 1.4.11).
-  // The bound is the worst SHIPPED neutral paper-3 Y over hue 0..350 × every NeutralLevel:
+  // brand ink-53-r450 (ink-9) on the NEUTRAL paper-95 (paper-3), 4.479:1; her follow-up
+  // caught mark-74-r300 (highlight-8) the same way, 26/72 under 3:1): "usable on every
+  // paper" includes the per-brand NEUTRAL's papers, and the own-family paper-95 (paper-3)
+  // is NOT the nearest paper for green-band brands — their tinted paper carries more Y
+  // than the near-gray neutral at the same L. Covers every contrast-required stop from 8
+  // up: the inks are text on any paper, and mark-74-r300 (highlight-8) is the focus-
+  // ring/border register that sits on neutral surfaces (WCAG 1.4.11).
+  // The bound is the worst SHIPPED neutral paper-95 (paper-3) Y over hue 0..350 × every NeutralLevel:
   // light min 0.845015 (H260 branded #e8edf8) · dark max 0.014247 (H300 default #211f23),
   // measured 2026-08-03 via generateNeutralScale → stopHex. A per-theme neutral is not in
   // scope here (the ramp resolves per family), so the floor clears the worst neutral any
@@ -166,7 +167,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         placed = placeLightScale(ctx, sp.rootL, chromaAt, contrastReq ? maxLForOf(contrastReq, sp.stop, true) : undefined)
         clamped = !!contrastReq
         if (sp.require?.metric === 'min-separation') {
-          const refStop = sp.require.against === 'paper-1' ? 1 : sp.stop - 1
+          const refStop = sp.require.against === 'paper-99' ? 1 : sp.stop - 1
           const ref = stops.find(s => s.stop === refStop)
           if (!ref) throw new Error(`stop ${sp.stop}: min-separation against stop ${refStop} but it is not resolved yet`)
           const before = placed.L
@@ -189,7 +190,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
           // 2026-07-10 trap). A portable spec without the field falls back to the ladder law at the
           // stop's own depth, which is what an index-less spec means.
           ? (inkTwin ? ((_L: number) => inkTwin.C) : darkInkChromaAt(ctx, d, sp.chromaFloor ?? chromaFloorBase(sp.stop), sp.chromaMult ?? 1, sp.inkMaxC))
-        // chroma-floor index clamps at 0: stop 0 shares paper-1's tint treatment
+        // chroma-floor index clamps at 0: stop 0 shares paper-99's (paper-1's) tint treatment
         : darkScaleChromaAt(ctx, d, Math.max(0, sp.stop - 1), sp.satFraction ?? 1)
       // DELTA-KEYED: derive dark from the resolved light twin for the SURFACE stops 1–8 (papers, washes,
       // focus ring). INKS 9–11 are dark-native (owner 2026-07-09): text INVERTS across modes — there is
@@ -209,8 +210,8 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         // tried and REJECTED — the curves are keyed to the OLD dark's L geography, so the delta's paper L's
         // landed in their wash-tint region and tinted the papers 8×, owner-caught). Lightness re-referenced
         // to the dark ground in APPARENT space (deltaDarkTargetL).
-        // REQUIREMENT stops (s8) carry their RECIPE, not a parity: light places s8 BY the 3:1-vs-paper-2
-        // clamp, so dark re-solves that same law against the dark paper-2 exactly (the require block below
+        // REQUIREMENT stops (s8) carry their RECIPE, not a parity: light places s8 BY the 3:1-vs-paper-97
+        // (paper-2) clamp, so dark re-solves that same law against the dark paper-97 (paper-2) exactly (the require block below
         // does the solve from the ground up). appL parity would land off-law and the floor's hue-dependent
         // correction was the residual sRGB-shaped wobble (fired 84/108; whole-band 6.90 vs 0.72 for 1–7).
         // C24 DARK BAND LIFT (owner marks 2026-07-27): stops 2–7's virtual twin sits
@@ -305,26 +306,26 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         }
       }
       // (The C24 8-vs-7 BAND-ORDER FLOOR is DELETED — owner 2026-07-29. It floored stop 8 at
-      // wash-7's apparent plus light's own 7→8 apparent gap, written when the C24 lift was
-      // ×1.75 and a lifted wash-7 could overshoot an achromatic ramp's low-riding 3:1 solve.
+      // wash-80's (wash-7's) apparent plus light's own 7→8 apparent gap, written when the C24 lift was
+      // ×1.75 and a lifted wash-80 (wash-7) could overshoot an achromatic ramp's low-riding 3:1 solve.
       // C28 then halved the lift and the guard was never re-checked. Measured at the shipped
       // lift: it fired on 366/366 ramps — not a guard but THE placement rule for dark stop 8,
       // supplying 0.056–0.157 of its L and every bit of the gap between its law (3.05 vs
-      // paper-2) and where it shipped (4.65). The inversion it was written for cannot occur:
-      // without it stop 8 still sits 5.35–6.85 apparent-L above wash-7 on every ramp, 0 of 366
+      // paper-97/paper-2) and where it shipped (4.65). The inversion it was written for cannot occur:
+      // without it stop 8 still sits 5.35–6.85 apparent-L above wash-80 (wash-7) on every ramp, 0 of 366
       // inverting. It also chained an ACCESSIBILITY BORDER to an ILLUSTRATION STOP — moving
-      // wash-7 for an illustration silently repositioned the stop carrying WCAG 1.4.11. Stop 8
-      // is now placed by its own require, anchored at paper-3 in both modes; see spec.ts S8.)
+      // wash-80 (wash-7) for an illustration silently repositioned the stop carrying WCAG 1.4.11. Stop 8
+      // is now placed by its own require, anchored at paper-95 (paper-3) in both modes; see spec.ts S8.)
     }
 
     // verify any declared require against the emitted (gamut-clamped) values — total, fail loud
     if (sp.require?.metric === 'wcag') {
-      // THE SHIPPED-PAIR FLOOR (owner defect 2026-08-03 — #43B02A ink-9 read 4.44:1 on
-      // paper-3): the analytic solve lands exactly on the bar, and the sRGB encode plus
-      // 8-bit hex quantization of BOTH sides then eats up to ~0.08 of ratio. legalRatio
-      // covers the fill's renditions, but its reference side is the ANALYTIC anchor Y —
-      // whose "near-neutral, sub-tolerance" assumption broke when the ink anchor moved
-      // to the chromatic paper-3, on a solve that carries no margin. The law is the pair
+      // THE SHIPPED-PAIR FLOOR (owner defect 2026-08-03 — #43B02A ink-53-r450 (ink-9) read
+      // 4.44:1 on paper-95 (paper-3)): the analytic solve lands exactly on the bar, and the
+      // sRGB encode plus 8-bit hex quantization of BOTH sides then eats up to ~0.08 of ratio.
+      // legalRatio covers the fill's renditions, but its reference side is the ANALYTIC
+      // anchor Y — whose "near-neutral, sub-tolerance" assumption broke when the ink anchor
+      // moved to the chromatic paper-95 (paper-3), on a solve that carries no margin. The law is the pair
       // that ships: if the 8-bit sRGB rendition of stop-vs-anchor reads under target,
       // walk L away from the anchor (chroma re-clamps inside shippedY; C/H otherwise
       // held — the dark floor's delta-purity idiom, and the moves are ≤ ~0.01 L) until
@@ -356,7 +357,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       const got = Math.abs(apcaLc(apcaYAt(placed.L, clampChromaToGamut(placed.L, placed.C, placed.H), placed.H), refA))
       if (got < sp.require.targetLc - APCA_TOL_LC) unresolvable = `stop ${sp.stop}: |Lc| ${got.toFixed(1)} < required ${sp.require.targetLc}`
     } else if (sp.require?.metric === 'min-separation') {
-      const ref = stops.find(s => s.stop === (sp.require!.against === 'paper-1' ? 1 : sp.stop - 1))!
+      const ref = stops.find(s => s.stop === (sp.require!.against === 'paper-99' ? 1 : sp.stop - 1))!
       const rad = (h: number) => (h * Math.PI) / 180
       const gC = clampChromaToGamut(placed.L, placed.C, placed.H)
       const got = Math.sqrt((placed.L - ref.L) ** 2
@@ -565,10 +566,10 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
 
   // ---- the CTA-INK trio: PURE STOP REFERENCES (C49, owner 2026-08-05). The family's
   // 4.5 text-register cta — the link-color escape — is the ink band read as states:
-  // enabled ≡ ink-9 (the family's text stop IS its 4.5 rendition, owner 2026-07-16),
-  // hover ≡ ink-10 (the between text stop — until C49 a bespoke state-step value
+  // enabled ≡ ink-53-r450 (ink-9) (the family's text stop IS its 4.5 rendition, owner 2026-07-16),
+  // hover ≡ ink-42-r650 (ink-10) (the between text stop — until C49 a bespoke state-step value
   // generated HERE; promoted to a normal scale stop the family aliases), pressed ≡
-  // ink-11 (the strong register). Monotonic darker in light / brighter in dark by the
+  // ink-30-r700 (ink-11) (the strong register). Monotonic darker in light / brighter in dark by the
   // scaffold's shape; every legibility guarantee rides the stops' own requires
   // (T9/T10/T11) — there is no role-side law left.
   const inkStop = (n: number) => {
@@ -584,7 +585,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   // (on-highlight DELETED, owner 2026-07-29. It was solved here, judged at the emitted
   // highlight-9 and never fed back into the fill. C31 had already reduced it to a
   // per-mode constant; the collapse removes the fill it named. The successor is a
-  // declaration in the semantic layer, `-fg-on-emphasis` → --paper-0.)
+  // declaration in the semantic layer, `-fg-on-emphasis` → --paper-100 (--paper-0 pre-Stage-B).)
 
   return { mode, seed, stops, roles: { cta, ctaHover, ctaPressed, ctaInk, ctaInkHover, ctaInkPressed }, ons: { onFillIsWhite } }
 }

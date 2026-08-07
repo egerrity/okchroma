@@ -13,7 +13,7 @@
 //   C. dark-L apparent wave  REPORT-ONLY: per-hue apparent-lightness spread,
 //      (REPORT)              light (≈flat) vs dark (waves). The fix is a separate
 //                            effort; this ships its gate.
-//   D. dark text contrast    REPORT: dark stop 8/10/11 vs paper-2, both modes,
+//   D. dark text contrast    REPORT: dark stop 8/10/11 vs paper-97, both modes,
 //      (REPORT)              swept agnostically. Drives the W2 decision.
 //
 // Failures print worst-first with the input. `--bless` records the matrix after
@@ -148,11 +148,11 @@ console.log(`  worst dark vivid-stop wave ${f1(worstDark)} L*  ·  dark CTA wave
 // ── D. dark text-stop contrast (REPORT) — drives the W2 decision ──────────────
 // Light clamps stop 8 to 3:1, the inks 9/10 to 4.5/7. Sweep agnostically; report the worst
 // dark ratio so W2 decides whether a dark clamp is needed or the scaffold already clears.
-// ⚠️ This section reads PAPER-2, which is no longer stop 8's anchor: since 2026-07-29 stop 8
-// declares 3:1 against PAPER-3 in both modes (spec.ts S8) and is placed by that require, not
-// by the scaffold. Paper-2 is the EASIER plane in dark, so the stop-8 row below reads high by
-// the paper-2→paper-3 offset and is NOT the compliance number — highlight-audit §1b owns that.
-// The ink rows are still on their declared anchor and unaffected. Left reading paper-2 so the
+// ⚠️ This section reads PAPER-97, which is no longer stop 8's anchor: since 2026-07-29 stop 8
+// declares 3:1 against PAPER-95 in both modes (spec.ts S8) and is placed by that require, not
+// by the scaffold. Paper-97 is the EASIER plane in dark, so the stop-8 row below reads high by
+// the paper-97→paper-95 offset and is NOT the compliance number — highlight-audit §1b owns that.
+// The ink rows are still on their declared anchor and unaffected. Left reading paper-97 so the
 // series stays comparable to its own history; read the label, not the bare ratio.
 // find by STOP number — the arrays are contiguous stops 1..10 (highlight-9 deleted and
 // the inks renumbered down 2026-07-29)
@@ -169,10 +169,10 @@ for (let H = 0; H < 360; H += 15) for (const C of [0.04, 0.10, 0.16, 0.22]) for 
   if (c10 < dark.s10) { dark.s10 = c10; dark.s10at = `H${H} C${C} L${L}` }
   if (c11 < dark.s11) { dark.s11 = c11; dark.s11at = `H${H} C${C} L${L}` }
 }
-console.log(`\n=== D. dark text contrast vs paper-2 (agnostic worst) — REPORT ===`)
-console.log(`  stop 8  worst ${dark.s8.toFixed(2)}:1 (${dark.s8at})  [floor 3.0 — but vs PAPER-3, not this plane]`)
-console.log(`  ink-9   worst ${dark.s10.toFixed(2)}:1 (${dark.s10at})  [light floor 4.5]`)
-console.log(`  ink-10  worst ${dark.s11.toFixed(2)}:1 (${dark.s11at})  [light floor 7.0]`)
+console.log(`\n=== D. dark text contrast vs paper-97 (agnostic worst) — REPORT ===`)
+console.log(`  stop 8  worst ${dark.s8.toFixed(2)}:1 (${dark.s8at})  [floor 3.0 — but vs PAPER-95, not this plane]`)
+console.log(`  ink-53-r450   worst ${dark.s10.toFixed(2)}:1 (${dark.s10at})  [light floor 4.5]`)
+console.log(`  ink-42-r650  worst ${dark.s11.toFixed(2)}:1 (${dark.s11at})  [light floor 7.0]`)
 
 // ── Snapshot — full family × mode × stop L/C/H (the regression + provenance gate)
 const SNAP_PATH = path.join(process.cwd(), 'scripts', 'divergence-snapshot.json')

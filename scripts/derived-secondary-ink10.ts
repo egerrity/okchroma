@@ -35,7 +35,7 @@ const secOpts = {
 const hx = (s: ColorStop) => toHex(s.r, s.g, s.b)
 
 type Mode = 'light' | 'dark'
-// stops 1..10 at index stop-1: paper-1 [0] · wash-5 [4] · highlight-8 [7] · ink-9 [8] · ink-10 [9]
+// stops 1..10 at index stop-1: paper-99 [0] · wash-89 [4] · mark-74-r300 [7] · ink-53-r450 [8] · ink-42-r650 [9]
 const card = (p: ReturnType<typeof resolveBrand>['scale'], s: ReturnType<typeof resolveBrand>['scale'], mode: Mode, secText: string): string => {
   const ss = mode === 'light' ? s.light : s.dark
   const pCta = mode === 'light' ? p.cta : p.ctaDark

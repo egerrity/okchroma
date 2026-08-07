@@ -48,7 +48,7 @@ for (const hex of SEEDS) for (const mode of ['light', 'dark'] as const) {
   const group: DtcgRampGroup = JSON.parse(JSON.stringify(emitDtcgRamp(hex, 'light', 'brand-light')))
   const t8 = group['8'] as DtcgRequirementToken
   const before = resolveDtcgRamp(group)
-  ;(t8.$extensions[EXT_KEY] as any).require = { metric: 'wcag', against: 'paper-2', target: 4.5, level: 'AA' }
+  ;(t8.$extensions[EXT_KEY] as any).require = { metric: 'wcag', against: 'paper-97', target: 4.5, level: 'AA' }
   const after = resolveDtcgRamp(group)
   const s8 = after.stops.find(s => s.stop === 8)!, p2 = after.stops.find(s => s.stop === 2)!
   const got = contrastRatio(wcagY(s8.L, s8.C, s8.H), wcagY(p2.L, p2.C, p2.H))

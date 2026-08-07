@@ -61,35 +61,67 @@ const profileStamp = (profile: Profile) =>
 // renumber must keep that ascending order.
 const RENAMED_LEAVES: Array<[string, string]> = [
   // ── BAND GROUPING (owner 2026-07-27): every family nests into paper/ wash/
-  // highlight/ ink/ (bare-number leaves) + cta/ cta-ink/ (state leaves, the
-  // system/link idiom) with the on-colors riding their carrier (cta/on,
-  // highlight/on). These CURRENT-name entries MUST precede the historical
-  // retargets below: legacyCandidates tries entries in table order, and a
-  // current file holds BOTH ink-11 (scale) and ink-12 (anchor) — resolving
-  // ink/11 must consume ink-11 before the pre-renumber ['ink-12','ink/11']
-  // entry can capture the anchor. Ascending processing + self-deleting
-  // consumed keys keep the chains sound, exactly as the renumber round.
-  ['paper-0', 'paper/0'],
-  ['paper-1', 'paper/1'],
-  ['paper-2', 'paper/2'],
-  ['paper-3', 'paper/3'],
-  ['wash-4', 'wash/4'],
-  ['wash-5', 'wash/5'],
-  ['wash-6', 'wash/6'],
-  ['wash-7', 'wash/7'],
-  ['highlight-8', 'highlight/8'],
+  // mark/ ink/ (Stage B leaf shapes — was bare-number leaves under highlight/
+  // ink/ pre-2026-08-07) + cta/ cta-ink/ (state leaves, the system/link idiom)
+  // with the on-colors riding their carrier (cta/on, highlight/on). These
+  // CURRENT-name entries MUST precede the historical retargets below:
+  // legacyCandidates tries entries in table order, and a 07-10-vintage file
+  // holds BOTH ink-11 (scale, hyphen flat) and ink-12 (anchor, hyphen flat) —
+  // resolving ink/30-r700 must consume ink-11 before the pre-renumber
+  // ['ink-12','ink/30-r700'] entry can capture the anchor. Ascending
+  // processing + self-deleting consumed keys keep the chains sound, exactly
+  // as the renumber round.
+  ['paper-0', 'paper/100'],
+  ['paper-1', 'paper/99'],
+  ['paper-2', 'paper/97'],
+  ['paper-3', 'paper/95'],
+  ['wash-4', 'wash/92'],
+  ['wash-5', 'wash/89'],
+  ['wash-6', 'wash/85'],
+  ['wash-7', 'wash/80'],
+  ['highlight-8', 'mark/74-r300'],
+  // highlight-9 / on-highlight are DEAD (the 2026-07-29 collapse orphaned them; no
+  // current token answers to either) — kept only so an old file's row is still
+  // FOUND (renamed to its retired banded home, then reported as an orphan) rather
+  // than silently left under its ancient flat name. No Stage B target: retired
+  // before Stage B, no leaf of theirs survives to relabel.
   ['highlight-9', 'highlight/9'],
   // ── ink flats under C49 numbering (mirrors plugin-ext; the 07-10-era flat vintage
   // maps number-true now that the strong ink and anchor have their old numbers back).
+  // Targets carry the Stage B leaf (owner 2026-08-07, names only) — same stop, new
+  // string.
   // ⚠️ UNSUPPORTED SURFACE NOTE (C49): the upward renumber pre-pass (banded ink/10 →
   // ink/11 on C33-era files, freeing ink/10 for the between stop) is implemented in
   // plugin-ext ONLY. A C33-era community file re-applied here will hand its old
   // strong-ink row to the new stop. Community is currently unsupported; port the
   // inkUpshifts idiom from plugin-ext/code.ts before re-listing.
-  ['ink-9', 'ink/9'],
-  ['ink-10', 'ink/9'],
-  ['ink-11', 'ink/11'],
-  ['ink-12', 'ink/12'],
+  ['ink-9', 'ink/53-r450'],
+  ['ink-10', 'ink/53-r450'],
+  ['ink-11', 'ink/30-r700'],
+  ['ink-12', 'ink/0'],
+  // ── STAGE B CURRENT-NAME ENTRIES (owner 2026-08-07, names only): every path this
+  // plugin itself last wrote (pre-Stage-B) becomes a "legacy" spelling the instant this
+  // build ships — MUST precede the older historical retargets below for the same
+  // reason the batch above precedes them: legacyCandidates tries entries in table
+  // order, and a CURRENT file holds both ink/9 (first text) and ink/10 (the between
+  // stop) as two DIFFERENT real variables sharing a leaf-string family with the OLD-KEY
+  // 'ink/10' the collapse-era entry further down ALSO targets (that entry used to read
+  // ['ink/10','ink/9'] pre-Stage-B; it now reads ['ink/10','ink/53-r450']). Resolving
+  // ink/53-r450 (stop 9) must consume this batch's ink/9 BEFORE the collapse-era ink/10
+  // entry ever gets a chance to (wrongly) claim a current file's real between-stop row.
+  ['paper/0', 'paper/100'],
+  ['paper/1', 'paper/99'],
+  ['paper/2', 'paper/97'],
+  ['paper/3', 'paper/95'],
+  ['wash/4', 'wash/92'],
+  ['wash/5', 'wash/89'],
+  ['wash/6', 'wash/85'],
+  ['wash/7', 'wash/80'],
+  ['highlight/8', 'mark/74-r300'],
+  ['ink/9', 'ink/53-r450'],
+  ['ink/10', 'ink/42-r650'],
+  ['ink/11', 'ink/30-r700'],
+  ['ink/12', 'ink/0'],
   ['cta', 'cta/enabled'],
   ['cta-hover', 'cta/hover'],
   ['cta-pressed', 'cta/pressed'],
@@ -103,12 +135,16 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // one-hop rule — legacyCandidates never chains). The ink renumber entries
   // shift names DOWN; safe because tokens process in ladder (ascending) order
   // and each migration self-deletes its consumed key — new ink/10 eats old
-  // ink-11 BEFORE ink/11 is looked up.
+  // ink-11 BEFORE ink/11 is looked up. This entry catches a pre-C33 file's ink/10
+  // (that vintage's FIRST TEXT stop) — a DIFFERENT thing than a current file's
+  // ink/10 (the between stop, C49); the STAGE B CURRENT-NAME batch above resolves
+  // ink/53-r450 off a current file's own ink/9 FIRST, so this entry only fires once
+  // that candidate is absent — it never steals a current file's between-stop row.
   ['cta-stroke', 'cta/border'],
-  ['ink/10', 'ink/9'],
-  ['ink-11', 'ink/9'],
-  ['ink-12', 'ink/11'],
-  ['ink-13', 'ink/12'],
+  ['ink/10', 'ink/53-r450'],
+  ['ink-11', 'ink/53-r450'],
+  ['ink-12', 'ink/30-r700'],
+  ['ink-13', 'ink/0'],
   // blue-signal variant relabels (2026-07-13, info-color → blue): the variant leaf is
   // label + resolved light-cta hex (variantKey), so the relabel needs per-lane entries.
   ['magenta-de8df6', 'magenta-side-de8df6'],
@@ -119,14 +155,20 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // the banded state homes; cta/pressed + the cta-ink trio are newer tokens.
   ['cta-1', 'cta/enabled'],
   ['cta-2', 'cta/hover'],
-  // stop-3 rename (owner 2026-07-24, elevation round) retargeted to paper/3 — it
-  // is a surface plane in both themes. Pure relabel, same color.
-  ['wash-3', 'paper/3'],
-  // the PRIM anchor keeps its FLAT home (system/ink-12 lives at the system root,
-  // not in a band) — a pre-renumber file's system/ink-13 prim still needs its
-  // rescue entry, or STATIC_UTILS orphans it (review-caught 2026-07-27). newLeaf
-  // 'ink-12' collides with nothing: every banded target ends in ink/12.
-  ['ink-13', 'ink-12'],
+  // stop-3 rename (owner 2026-07-24, elevation round) retargeted to paper/95 (Stage B
+  // leaf) — it is a surface plane in both themes. Pure relabel, same color.
+  ['wash-3', 'paper/95'],
+  // the PRIM anchor keeps its FLAT home (system/ink-0 lives at the system root, not
+  // in a band — Stage B relabeled it from system/ink-12) — a pre-renumber file's
+  // system/ink-13 prim still needs its rescue entry, or STATIC_UTILS orphans it
+  // (review-caught 2026-07-27). newLeaf 'ink-0' collides with nothing: every banded
+  // target ends in ink/0, never bare ink-0.
+  ['ink-13', 'ink-0'],
+  // the immediately-pre-Stage-B vintage of the same flat home: Stage B (owner
+  // 2026-08-07, names only) relabeled system/ink-12 → system/ink-0 directly (one hop,
+  // no band change — it was never a banded leaf). A file saved in that window needs
+  // its own rescue entry or it orphans exactly like the ink-13 vintage above.
+  ['ink-12', 'ink-0'],
   // elevation planes go 2 → 4 (owner spec + sink/base/lift/pop naming, 2026-07-24):
   // the old pair migrates to its closest role IN PLACE (bindings survive; their light
   // stop shifts one rung per the new ladder — raised p0→p1, sunken p2→p3). These
@@ -167,7 +209,7 @@ const RENAMED_GROUPS: Array<[string, string]> = [
 ]
 // Every legacy spelling of `path` under the rename tables: old leaf, old group, and
 // old group + old leaf together (a file untouched since before BOTH renames needs the
-// composed lookup — e.g. system/info-color/ink-11 → system/blue/ink/9).
+// composed lookup — e.g. system/info-color/ink-11 → system/blue/ink/53-r450).
 function legacyCandidates(path: string): string[] {
   const out: string[] = []
   const leafVariants = [path]
@@ -199,14 +241,31 @@ function getOrMigrate(map: Map<string, figma.Variable>, path: string): figma.Var
   return undefined
 }
 
+// Order-aware entries, mirroring figmaRender.ts's groupEntries (NOT imported — code.ts
+// stays engine-import-free to keep the sandbox bundle lean, see the header comment; this
+// is a small hand-duplicated leaf, same rule as the one payload.ts's flatten() uses).
+// JS enumerates integer-index string keys ascending, before any string keys, REGARDLESS
+// of insertion order (ECMA-262 OrdinaryOwnPropertyKeys) — paper's bare-digit leaves
+// (95/97/99/100) and wash's (80/85/89/92) get silently re-sorted ascending by a plain
+// Object.entries, reversing the TOKEN_ORDER-derived descending panel order with no color
+// changing (adversarial-audit-caught 2026-08-07). mark/ink's -rNNN-suffixed leaves aren't
+// canonical integer keys so are unaffected either way; non-digit-leading siblings (band
+// names, cta states, …) keep Object.entries' order, already correct for them.
+function orderedEntries(node: TokenNode): Array<[string, TokenNode]> {
+  const entries = Object.entries(node) as Array<[string, TokenNode]>
+  const digitLeading = (k: string) => /^\d/.test(k)
+  if (entries.length > 1 && entries.every(([k]) => digitLeading(k)))
+    return entries.sort((a, b) => parseInt(b[0], 10) - parseInt(a[0], 10))
+  return entries
+}
 function flatten(node: TokenNode, prefix = ''): Array<{ path: string; r: number; g: number; b: number; a?: number }> {
   if ('$type' in node) {
     const leaf = node as TokenLeaf
     const [r, g, b] = leaf.$value.components
     return [{ path: prefix, r, g, b, a: leaf.$value.alpha }]
   }
-  return Object.entries(node).flatMap(([k, v]) =>
-    flatten(v as TokenNode, prefix ? `${prefix}/${k}` : k)
+  return orderedEntries(node).flatMap(([k, v]) =>
+    flatten(v, prefix ? `${prefix}/${k}` : k)
   )
 }
 
@@ -269,11 +328,12 @@ figma.ui.onmessage = async (msg) => {
       const existingTheme = themeMatch
       const existingThemeVars = existingTheme ? await varsByName(existingTheme.id) : new Map<string, figma.Variable>()
       // posture detection reads through the rename history — a pre-banding file
-      // still spells the probe paper-1 (read-only .some, no getOrMigrate writes)
+      // still spells the probe paper-1 (read-only .some, no getOrMigrate writes).
+      // Stage B (owner 2026-08-07, names only) relabeled the live leaf to paper/99.
       const hasThemePath = (path: string) =>
         existingThemeVars.has(path) || legacyCandidates(path).some(p => existingThemeVars.has(p))
-      const fileHasSecondary = hasThemePath('brand/secondary/paper/1')
-      const brandsExist = hasThemePath('brand/primary/paper/1')
+      const fileHasSecondary = hasThemePath('brand/secondary/paper/99')
+      const brandsExist = hasThemePath('brand/primary/paper/99')
 
       // Nudge before surprising changes: overwriting an existing brand, flipping
       // the pair's secondary posture, or forking the file's contrast profile.
@@ -365,10 +425,12 @@ figma.ui.onmessage = async (msg) => {
       //   - abs-white / abs-black — mode-INVARIANT poles; on-fill tokens alias
       //     one PER MODE (a flipping on-fill = abs-white in light, abs-black in
       //     dark), so text stays a true pole regardless of the ladder.
-      //   - ink-12 — the literal ink extreme beyond ink-11 (black→white).
-      //   - paper-0 is NOT static anymore: the engine resolves it (white in
-      //     light; one seam below paper-1 in dark, neutral-tinted) and it rides
-      //     the neutral ramp at system/neutral/<tint>/paper-0.
+      //   - ink-0 (Stage B leaf; was ink-12) — the literal ink extreme beyond the
+      //     strong stop (black→white).
+      //   - paper-100 (Stage B leaf; was paper-0) is NOT static anymore: the engine
+      //     resolves it (white in light; one seam below paper-99 in dark,
+      //     neutral-tinted) and it rides the neutral ramp at
+      //     system/neutral/<tint>/paper-100.
       const W = { r: 1, g: 1, b: 1 }
       const K = { r: 0, g: 0, b: 0 }
       // The list order IS the display order in Figma (variables list in creation
@@ -377,14 +439,14 @@ figma.ui.onmessage = async (msg) => {
       // are mode-divergent aliases set later — once the theme's neutral papers exist.
       // `elevation` = "create now for ordering, alias below". (Role names, not ladder
       // numbers — each plane aliases a DIFFERENT ladder position per mode: elevation
-      // climbs paper-3→paper-0 in light, paper-0→paper-3 in dark, so a number would
-      // lie.) The alpha/shadow ladder (owner 2026-07-27) is pure black at 4/8/12%
-      // light; dark is heavier by necessity — near black a light-mode alpha vanishes —
-      // at 32/48/64%.
+      // climbs paper-95→paper-100 in light, paper-100→paper-95 in dark, so a number
+      // would lie.) The alpha/shadow ladder (owner 2026-07-27) is pure black at
+      // 4/8/12% light; dark is heavier by necessity — near black a light-mode alpha
+      // vanishes — at 32/48/64%.
       const STATIC_UTILS: Array<{ path: string; light?: figma.RGBA; dark?: figma.RGBA; elevation?: boolean }> = [
         { path: 'system/abs-black', light: K, dark: K },
         { path: 'system/abs-white', light: W, dark: W },
-        { path: 'system/ink-12', light: K, dark: W },
+        { path: 'system/ink-0', light: K, dark: W },
         { path: 'system/surface/sink', elevation: true },
         { path: 'system/surface/base', elevation: true },
         { path: 'system/surface/lift', elevation: true },
@@ -400,8 +462,9 @@ figma.ui.onmessage = async (msg) => {
         { path: 'system/alpha/shadow-12', light: { r: 0, g: 0, b: 0, a: 0.12 }, dark: { r: 0, g: 0, b: 0, a: 0.64 } },
       ]
       for (const u of STATIC_UTILS) {
-        // getOrMigrate (not .get): the anchor was renamed ink-13→ink-12 — existing
-        // files' system/ink-13 primitive is renamed in place instead of orphaned
+        // getOrMigrate (not .get): the anchor was renamed ink-13→ink-0 (ink-12 pre-
+        // Stage B) — existing files' system/ink-13 primitive is renamed in place
+        // instead of orphaned
         const existing = getOrMigrate(primByName, u.path)
         if (existing) { existing.scopes = [] ; continue } // already seeded — just enforce the scope rule
         const v = figma.variables.createVariable(u.path, p.coll, 'COLOR')
@@ -421,29 +484,31 @@ figma.ui.onmessage = async (msg) => {
       // on-cta: the pole at partial alpha, which aliases system/alpha/ink instead.
       // Solid poles alias PER MODE to abs-white/abs-black
       // (mode-divergent alias, like the elevation pair) instead of duplicating a
-      // value. Decoupled from the paper-0/ink-12 anchors on purpose: paper-0 is a
-      // RESOLVED color now (near-black, tinted, in dark) — text must stay a pole.
+      // value. Decoupled from the paper-100/ink-0 anchors on purpose (Stage B leaves;
+      // were paper-0/ink-12): paper-100 is a RESOLVED color now (near-black, tinted,
+      // in dark) — text must stay a pole.
       const isWhite = (c: { r: number; g: number; b: number }) => c.r + c.g + c.b > 1.5
       const absPole = (white: boolean) => primByName.get(white ? 'system/abs-white' : 'system/abs-black')
 
       // Write a primitive. on-fill leaves ALIAS a shared invariant (always, so
       // pre-existing raw on-fills get converted on re-apply); cta-border leaves ALIAS
       // per mode — system/alpha/transparent when the fill passes the boundary gate, the
-      // family's own highlight-8 when it doesn't (alpha 0 in the payload = transparent);
+      // family's own mark-74-r300 when it doesn't (alpha 0 in the payload = transparent);
       // every other leaf is a raw color, written on create or when `refresh` is set
       // (per-brand ramps).
       // payload-space value equality (8-bit tolerance) — used to decide alias-vs-raw
       const leafEq = (a?: { r: number; g: number; b: number }, b?: { r: number; g: number; b: number }): boolean =>
         !!a && !!b && Math.abs(a.r - b.r) < 1 / 255 && Math.abs(a.g - b.g) < 1 / 255 && Math.abs(a.b - b.b) < 1 / 255
       // the text-cta REFERENCE targets (owner 2026-08-04): leaf-relative path → sibling.
-      // See the alias branch in writeRaw for the law and the C33 staleness story.
+      // See the alias branch in writeRaw for the law and the C33 staleness story. Stage B
+      // (owner 2026-08-07, names only) relabeled the ink leaves; stop indices unchanged.
       const INK_SIBLING: Record<string, string> = {
-        'cta-ink/enabled': 'ink/9',
-        'cta-ink/hover': 'ink/10',
-        'cta-ink/pressed': 'ink/11',
-        'cta-ink-strong/enabled': 'ink/11',
+        'cta-ink/enabled': 'ink/53-r450',
+        'cta-ink/hover': 'ink/42-r650',
+        'cta-ink/pressed': 'ink/30-r700',
+        'cta-ink-strong/enabled': 'ink/30-r700',
         'cta-ink-strong/hover': 'cta-ink/hover',
-        'cta-ink-strong/pressed': 'ink/9',
+        'cta-ink-strong/pressed': 'ink/53-r450',
       }
       const writeRaw = (
         path: string,
@@ -459,15 +524,16 @@ figma.ui.onmessage = async (msg) => {
         v.scopes = [] // primitives hidden from every picker (re-applies fix older files too)
         const dk = darkMap.get(t.path)
         // a TRUE pole (the engine's on-fills are exactly white or black); an outline
-        // secondary's on-cta is the family's ink-9 instead — alias the sibling, not a pole
-        // (C33 renumbered the inks; the old ink/10 target aliased the WRONG stop for a
-        // post-renumber outline — fixed 2026-08-04 with the cta-ink retargeting below)
+        // secondary's on-cta is the family's ink-53-r450 instead — alias the sibling, not
+        // a pole (C33 renumbered the inks; the old ink/10 target aliased the WRONG stop
+        // for a post-renumber outline — fixed 2026-08-04 with the cta-ink retargeting
+        // below; Stage B, owner 2026-08-07, names only, relabeled the leaf)
         const isPole = (c: { r: number; g: number; b: number }) => {
           const sum = c.r + c.g + c.b
           return sum > 2.97 || sum < 0.03
         }
         if (t.path === 'cta/on' || t.path === 'highlight/on') {
-          const sibling9 = primByName.get(path.replace(/(?:cta\/on|highlight\/on)$/, 'ink/9'))
+          const sibling9 = primByName.get(path.replace(/(?:cta\/on|highlight\/on)$/, 'ink/53-r450'))
           // the SOFT ON-CTA (C43 follow-up, owner 2026-08-03): a POLE AT PARTIAL ALPHA is
           // the default-model secondary's soft text → alias system/alpha/ink. Checked
           // BEFORE the solid-pole case — isPole ignores alpha here, so without this the
@@ -493,11 +559,12 @@ figma.ui.onmessage = async (msg) => {
         } else if (INK_SIBLING[t.path]
           && leafEq(t, lightMap?.get(INK_SIBLING[t.path])) && leafEq(dk, darkMap.get(INK_SIBLING[t.path]))) {
           // the text-cta trios are REFERENCES over the family's own ink registers
-          // (C49 numbering): cta-ink = the ink band as states (enabled ≡ ink/9,
-          // hover ≡ ink/10 — the between stop, a real scale stop since C49 —
-          // pressed ≡ ink/11), and the neutral-only strong mirror descends the
-          // same three stops (11 → the shared hover → 9).
-          // Alias the sibling so the relationship stays live in Figma (the cta/on→ink/9
+          // (C49 numbering): cta-ink = the ink band as states (enabled ≡ ink/53-r450,
+          // hover ≡ ink/42-r650 — the between stop, a real scale stop since C49 —
+          // pressed ≡ ink/30-r700), and the neutral-only strong mirror descends the
+          // same three stops (strong → the shared hover → first-text). Stage B (owner
+          // 2026-08-07, names only) relabeled the leaves; stop indices unchanged.
+          // Alias the sibling so the relationship stays live in Figma (the cta/on→ink
           // idiom). ⚠️ C33 renumbered the inks and this block sat DEAD on the stale
           // ink/10-and-ink/11 targets until 2026-08-04 — the value guard failed and every
           // trio shipped raw. VALUE-GUARDED (owner amendment: the neutral escape swaps a
@@ -513,7 +580,7 @@ figma.ui.onmessage = async (msg) => {
             if (dk) v.setValueForMode(pDark, { r: dk.r, g: dk.g, b: dk.b })
           }
         } else if (t.path === 'cta/border') {
-          const sibling8 = primByName.get(path.replace(/cta\/border$/, 'highlight/8'))
+          const sibling8 = primByName.get(path.replace(/cta\/border$/, 'mark/74-r300'))
           const transparent = primByName.get('system/alpha/transparent')
           const target = (leaf?: { a?: number }) =>
             leaf?.a === 0 ? transparent : (sibling8 ?? transparent)
@@ -545,14 +612,16 @@ figma.ui.onmessage = async (msg) => {
       if (primaryRamp) writeRamp('primary', primaryRamp)
       if (secondaryMode === 'real' && secondaryRamp) writeRamp('secondary', secondaryRamp)
       // shared neutral + signals → grown on demand, recorded as alias targets.
-      // lightMap rides along (review-caught 2026-07-16): the cta-ink→ink-10 alias branch
-      // is value-guarded against BOTH maps — starving it here shipped shared cta-inks raw.
+      // lightMap rides along (review-caught 2026-07-16): the cta-ink→ink/42-r650 alias
+      // branch is value-guarded against BOTH maps — starving it here shipped shared
+      // cta-inks raw.
       // The LINK prim refreshes (review-caught 2026-07-16): it is seed-keyed, so the
       // path survives an engine retune while its six values move — a stale reuse would
       // serve old hover/pressed/dark values under every theme alias. Same seed ⇒ same
       // engine output, so the refresh is idempotent across brands sharing the prim.
-      // The SIGNAL prims join that rule (owner report 2026-08-03: a stale warning ink-9
-      // failing on papers — the create-once base stranded C42/C44 canonical moves): their
+      // The SIGNAL prims join that rule (owner report 2026-08-03: a stale warning
+      // ink-53-r450 failing on papers — the create-once base stranded C42/C44 canonical
+      // moves): their
       // identity/variant paths survive engine retunes exactly as link's does, and the
       // same idempotence argument holds. Only the neutral stays grow-on-demand.
       for (const grp of shared) {
@@ -567,15 +636,16 @@ figma.ui.onmessage = async (msg) => {
       }
 
       // NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): the escaped cta REST anchors at
-      // the brand-neutral's ink-11 by construction, so the primitive ALIASES the neutral's
-      // own ink-11 (the on-cta→ink-10 idiom — the relationship stays live in Figma; one
-      // mode-invariant alias resolves per mode through the neutral prim's Light/Dark).
+      // the brand-neutral's ink-30-r700 (strong; was ink-11 pre-Stage-B) by construction,
+      // so the primitive ALIASES the neutral's own strong ink (the on-cta→ink idiom — the
+      // relationship stays live in Figma; one mode-invariant alias resolves per mode
+      // through the neutral prim's Light/Dark).
       // Runs AFTER the shared groups so the target exists. hover/pressed are derived
       // values and stay raw. Escape OFF on a later re-apply: writeRamp's refresh write
       // replaces the alias with the brand's raw cta again — fully reversible.
-      // GUARD (review-caught 2026-07-16): shared prims dedup with refresh=false, so an
-      // ink-11 written by an OLDER engine build keeps its stale value — aliasing the rest
-      // onto it while hover/pressed derive from TODAY's solve would mismatch the trio.
+      // GUARD (review-caught 2026-07-16): shared prims dedup with refresh=false, so a
+      // strong ink written by an OLDER engine build keeps its stale value — aliasing the
+      // rest onto it while hover/pressed derive from TODAY's solve would mismatch the trio.
       // Alias only when the target's live values equal the freshly written escape cta
       // (both modes); otherwise the raw write already carries the correct values.
       if (ctaEscape) {
@@ -587,10 +657,12 @@ figma.ui.onmessage = async (msg) => {
         }
         const neutralPrim = shared.find(g => g.theme === 'neutral')?.prim
         // the whole escape family aliases the neutral's own registers (owner amendment:
-        // the escape covers cta AND cta-ink): fill rest → neutral ink-11; text rest →
-        // neutral ink-10; text pressed → neutral ink-11 (the 2026-07-16 restrengthening).
-        // Hover stays a raw derived value.
-        const pairs: Array<[string, string]> = [['cta/enabled', 'ink/11'], ['cta-ink/enabled', 'ink/10'], ['cta-ink/pressed', 'ink/11']]
+        // the escape covers cta AND cta-ink): fill rest → neutral ink-30-r700 (strong);
+        // text rest → neutral ink-42-r650 (between); text pressed → neutral ink-30-r700
+        // (the 2026-07-16 restrengthening). Stage B (owner 2026-08-07, names only)
+        // relabeled the leaves — were ink-11/ink-10/ink-11. Hover stays a raw derived
+        // value.
+        const pairs: Array<[string, string]> = [['cta/enabled', 'ink/30-r700'], ['cta-ink/enabled', 'ink/42-r650'], ['cta-ink/pressed', 'ink/30-r700']]
         for (const [leaf, neutralLeaf] of pairs) {
           const target = neutralPrim ? (primVar.get(`${neutralPrim}/${neutralLeaf}`) ?? primByName.get(`${neutralPrim}/${neutralLeaf}`)) : undefined
           const v = primByName.get(`brand/${brand}/primary/${leaf}`)
@@ -626,14 +698,15 @@ figma.ui.onmessage = async (msg) => {
 
       // migration: the anchor used to live under theme system/ink-13 — RENAME moves it
       // into the neutral group with every user binding intact. It parks on the OLD name
-      // neutral/ink-13, NOT the final ink-12: on a pre-renumber file that final name is
-      // still occupied by the not-yet-migrated old SCALE ink-12, and jumping the anchor
-      // there clobbers that map entry — the neutral ladder then hijacks the anchor into
-      // scale ink-11 (mode-flipping #000/#fff bindings turn brand-tinted) and orphans
-      // the real scale variable. Parking on ink-13 keeps the ascending RENAMED_LEAVES
-      // discipline: the ladder frees ink-12 first, then its ['ink-13','ink-12'] entry
-      // finishes the anchor's move — the same path files already on neutral/ink-13 take
-      // via aliasInto's getOrMigrate. (Guard: never clobber an existing neutral/ink-13.)
+      // neutral/ink-13, NOT the final ink-0 (ink-12 pre-Stage-B): on a pre-renumber file
+      // that final name is still occupied by the not-yet-migrated old SCALE ink-12, and
+      // jumping the anchor there clobbers that map entry — the neutral ladder then
+      // hijacks the anchor into scale ink-11 (mode-flipping #000/#fff bindings turn
+      // brand-tinted) and orphans the real scale variable. Parking on ink-13 keeps the
+      // ascending RENAMED_LEAVES discipline: the ladder frees ink-12 first, then its
+      // ['ink-13','ink-0'] entry finishes the anchor's move — the same path files
+      // already on neutral/ink-13 take via aliasInto's getOrMigrate. (Guard: never
+      // clobber an existing neutral/ink-13.)
       const staleInk = themeByName.get('system/ink-13')
       if (staleInk && !themeByName.has('neutral/ink-13')) {
         staleInk.name = 'neutral/ink-13'
@@ -651,15 +724,17 @@ figma.ui.onmessage = async (msg) => {
         for (const m of th.coll.modes) aliasInto(path, path, m.modeId)
       }
 
-      // ② neutral (+ ink-12 the anchor, folded into the neutral group like paper-0 — its
-      // seed stays the system/ink-12 pole in the mode collection)
+      // ② neutral (+ ink-0 the anchor, folded into the neutral group like paper-100 —
+      // its seed stays the system/ink-0 pole in the mode collection). Stage B (owner
+      // 2026-08-07, names only) relabeled the trigger/anchor leaves — were ink/11 and
+      // neutral/ink/12 · system/ink-12; same stop index, same trigger position.
       const neutralGrp = shared.find(g => g.theme === 'neutral')
       if (neutralGrp) {
         for (const t of flatten(neutralGrp.light)) {
           aliasInto(`neutral/${t.path}`, `${neutralGrp.prim}/${t.path}`)
-          if (t.path === 'ink/11') {
-            // the anchor slots DIRECTLY after ink/11 — ladder order, before the cta tokens
-            for (const m of th.coll.modes) aliasInto('neutral/ink/12', 'system/ink-12', m.modeId)
+          if (t.path === 'ink/30-r700') {
+            // the anchor slots DIRECTLY after the strong ink — ladder order, before the cta tokens
+            for (const m of th.coll.modes) aliasInto('neutral/ink/0', 'system/ink-0', m.modeId)
           }
         }
       }
@@ -742,8 +817,8 @@ figma.ui.onmessage = async (msg) => {
       // ⑤ the SYSTEM LINK trio (Phase 4, owner 2026-07-16: "link is a system level color…
       // a primitive that internally aliases the primary ink 10 unless it's being
       // deconflicted"). ONE trio per theme, per brand mode: DEFAULT aliases this brand's
-      // cta-ink family (which is ink-10 by construction — states ride along, and the
-      // neutral escape re-points it automatically through the same chain); CUSTOM (the
+      // cta-ink family (built off the ink band by construction — states ride along, and
+      // the neutral escape re-points it automatically through the same chain); CUSTOM (the
       // link payload group, dedup'd by seed hex like signal variants) aliases the shared
       // link primitive instead.
       const linkGrp = shared.find(g => g.theme === 'link')
@@ -767,9 +842,10 @@ figma.ui.onmessage = async (msg) => {
       // backfillSecondary idiom. Each pre-existing mode gets its own brand's DEFAULT
       // posture (its cta-ink family; the custom seed belongs to the applying brand only,
       // matching the ext model where each extension overrides with its own). Brands
-      // applied pre-C19 lack cta-ink prims → their ink-10 carries the rest until a
-      // re-apply mints the family (states ride the same fallback: better a static link
-      // than black). Later brand applies set their own mode and win over this.
+      // applied pre-C19 lack cta-ink prims → their ink-42-r650 (was ink-10 pre-Stage-B)
+      // carries the rest until a re-apply mints the family (states ride the same
+      // fallback: better a static link than black). Later brand applies set their own
+      // mode and win over this.
       if (linkIsNew) {
         // resolve prims READ-ONLY through the rename history: an untouched brand's prims
         // still carry pre-renumber leaf names (in-place migration only runs for families
@@ -792,7 +868,7 @@ figma.ui.onmessage = async (msg) => {
             const themeVar = themeByName.get(`system/${themeLeaf}`)
             const cur = themeVar?.valuesByMode[m.modeId]
             if (cur && typeof cur === 'object' && 'type' in cur) continue
-            const target = findPrim(primary + brandLeaf) ?? findPrim(primary + 'ink/10')
+            const target = findPrim(primary + brandLeaf) ?? findPrim(primary + 'ink/42-r650')
             if (target) aliasInto(`system/${themeLeaf}`, target.name, m.modeId)
           }
         }
@@ -801,19 +877,21 @@ figma.ui.onmessage = async (msg) => {
       // Elevation planes — mode-DIVERGENT aliases (owner spec 2026-07-24): both
       // themes use the SAME four neutral stops in REVERSED order, so each plane
       // points at a different stop per mode. Every end is the brand-aware THEME
-      // neutral (paper-0 is the engine's RESOLVED anchor — white in light, one seam
-      // below paper-1 in dark, never absolute black):
-      //   sink → neutral/paper-3 in light · neutral/paper-0 (deep) in dark
-      //   base → neutral/paper-2 in light · neutral/paper-1 in dark
-      //   lift → neutral/paper-1 in light · neutral/paper-2 in dark
-      //   pop  → neutral/paper-0 (white) in light · neutral/paper-3 in dark
+      // neutral (paper-100 is the engine's RESOLVED anchor — white in light, one seam
+      // below paper-99 in dark, never absolute black). Stage B (owner 2026-08-07,
+      // names only) relabeled the four leaves; the wiring is unchanged — same stop
+      // index maps to the same JS variable, only the lookup string moved:
+      //   sink → neutral/paper-95 in light · neutral/paper-100 (deep) in dark    (was paper-3/paper-0)
+      //   base → neutral/paper-97 in light · neutral/paper-99 in dark           (was paper-2/paper-1)
+      //   lift → neutral/paper-99 in light · neutral/paper-97 in dark           (was paper-1/paper-2)
+      //   pop  → neutral/paper-100 (white) in light · neutral/paper-95 in dark  (was paper-0/paper-3)
       // The vars were CREATED in order above; aliases are set HERE because the
       // theme's neutral vars only exist after the alias loop ("the wait"). This
       // mirrors the CSS semantic layer's surface-sink/base/lift/pop exactly.
-      const themeNeutralP0 = themeByName.get('neutral/paper/0')
-      const themeNeutralP1 = themeByName.get('neutral/paper/1')
-      const themeNeutralP2 = themeByName.get('neutral/paper/2')
-      const themeNeutralP3 = themeByName.get('neutral/paper/3')
+      const themeNeutralP0 = themeByName.get('neutral/paper/100')
+      const themeNeutralP1 = themeByName.get('neutral/paper/99')
+      const themeNeutralP2 = themeByName.get('neutral/paper/97')
+      const themeNeutralP3 = themeByName.get('neutral/paper/95')
       if (themeNeutralP0 && themeNeutralP1 && themeNeutralP2 && themeNeutralP3) {
         const aliasElev = (path: string, light: figma.Variable, dark: figma.Variable) => {
           const v = primByName.get(path) // pre-created in STATIC_UTILS for ordering

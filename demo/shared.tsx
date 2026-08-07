@@ -22,23 +22,23 @@ export const FONT_STACK = "'Inter', -apple-system, system-ui, sans-serif"
 //   accented-inverse primary: accent  subtle: brand
 // The "accent" Family is emitted as the `secondary` primitive prefix (the role
 // was renamed in the token rename); prim() maps Family → primitive prefix.
-// Stops are the emitted token names: scale paper/wash, the highlight-8 ring, the
-// cta/cta-hover/cta-pressed fill trio (+ the cta-ink link trio), ink-9/10/11 text,
+// Stops are the emitted token names: scale paper/wash, the mark-74-r300 ring, the
+// cta/cta-hover/cta-pressed fill trio (+ the cta-ink link trio), ink-53-r450/42-r650/30-r700 text,
 // on-cta on-fill text. (on-highlight died with highlight-9, owner 2026-07-29 — the
-// on-emphasis text is --paper-0 in the semantic layer now.)
+// on-emphasis text is --paper-100 in the semantic layer now.)
 type Family = 'brand' | 'accent'
 function accentModeCss(mode: AccentMode, primary: Family, subtle: Family): string {
   const other = (f: Family): Family => (f === 'brand' ? 'accent' : 'brand')
   const prim = (f: Family): string => (f === 'brand' ? 'brand' : 'secondary')
   const PRIMARY_ROLES: Array<[string, string]> = [
-    ['fg', 'ink-11'], ['fg-hover', 'ink-9'], ['fg-alt', 'ink-9'], ['fg-alt-hover', 'ink-11'], ['fg-on-emphasis', 'on-cta'],
+    ['fg', 'ink-30-r700'], ['fg-hover', 'ink-53-r450'], ['fg-alt', 'ink-53-r450'], ['fg-alt-hover', 'ink-30-r700'], ['fg-on-emphasis', 'on-cta'],
     ['bg-emphasis', 'cta'], ['bg-emphasis-hover', 'cta-hover'], ['bg-emphasis-pressed', 'cta-pressed'],
-    ['border-default', 'wash-6'], ['border-default-hover', 'highlight-8'],
+    ['border-default', 'wash-85'], ['border-default-hover', 'mark-74-r300'],
     ['border-emphasis', 'cta'], ['border-emphasis-hover', 'cta-hover'],
   ]
   const SUBTLE_ROLES: Array<[string, string]> = [
-    ['bg-faint', 'paper-2'], ['bg-subtle', 'wash-5'], ['bg-subtle-hover', 'wash-6'],
-    ['border-subtle', 'wash-4'], ['border-subtle-hover', 'wash-5'],
+    ['bg-faint', 'paper-97'], ['bg-subtle', 'wash-89'], ['bg-subtle-hover', 'wash-85'],
+    ['border-subtle', 'wash-92'], ['border-subtle-hover', 'wash-89'],
   ]
   const lines: string[] = [`[data-accent-mode="${mode}"][data-brand] {`]
   for (const [suffix, tok] of PRIMARY_ROLES) {
@@ -53,8 +53,8 @@ function accentModeCss(mode: AccentMode, primary: Family, subtle: Family): strin
   // not re-point them): --fg-link rides --link from semantic.css, no per-mode override
   lines.push(`}`)
   if (subtle !== primary) {
-    lines.push(`[data-accent-mode="${mode}"] .u-btn-subtle { color: var(--${prim(subtle)}-ink-11); }`)
-    lines.push(`[data-accent-mode="${mode}"] .u-btn-ghost:hover { color: var(--${prim(subtle)}-ink-11); }`)
+    lines.push(`[data-accent-mode="${mode}"] .u-btn-subtle { color: var(--${prim(subtle)}-ink-30-r700); }`)
+    lines.push(`[data-accent-mode="${mode}"] .u-btn-ghost:hover { color: var(--${prim(subtle)}-ink-30-r700); }`)
   }
   return lines.join('\n')
 }
@@ -119,16 +119,16 @@ export const COMPONENT_CSS = `
 .u-link:active { color: var(--fg-link-pressed); }
 /* Stop 8 IS the ramp's focus-ring role — never the OS default accent */
 [data-brand] :is(input, select, textarea, button, a):focus-visible {
-  outline: 2px solid var(--brand-highlight-8);
+  outline: 2px solid var(--brand-mark-74-r300);
   outline-offset: 1px;
 }
 /* The app-chrome scope is brandless — it carries only the generated neutral
-   (App.tsx neutralCss), so --brand-highlight-8 doesn't exist there and the
+   (App.tsx neutralCss), so --brand-mark-74-r300 doesn't exist there and the
    rule above would go invalid at computed-value time (no ring at all on the
    footer controls). Alias the ring source to the chrome's own neutral
-   highlight-8 — stop 8 of whichever ramp owns the scope. */
+   mark-74-r300 — stop 8 of whichever ramp owns the scope. */
 [data-brand="chrome"] {
-  --brand-highlight-8: var(--neutral-highlight-8);
+  --brand-mark-74-r300: var(--neutral-mark-74-r300);
 }
 /* Elevation — demo-layer shadow recipes composing the --shadow-* transparencies
    (tokens/semantic.css; mirrors the plugin's system/alpha/shadow rows). The
@@ -399,10 +399,10 @@ export function Showcase(props: {
         <section>
           <SectionLabel>Typography</SectionLabel>
           <p style={{ margin: 0, lineHeight: 1.6, color: 'var(--fg-default)' }}>
-            Default body text uses <strong>neutral-ink-11</strong> for maximum readability.{' '}
-            <a href="#" className="u-link">Link text uses brand-ink-9</a>,
+            Default body text uses <strong>neutral-ink-30-r700</strong> for maximum readability.{' '}
+            <a href="#" className="u-link">Link text uses brand-ink-53-r450</a>,
             which meets 4.5:1 AA contrast.{' '}
-            <span style={{ color: 'var(--fg-subtle)' }}>Subtle text uses neutral-ink-9 for secondary information.</span>
+            <span style={{ color: 'var(--fg-subtle)' }}>Subtle text uses neutral-ink-53-r450 for secondary information.</span>
           </p>
         </section>
 
@@ -434,12 +434,12 @@ export function Readout({ r }: { r: ResolvedBrand }) {
   )
 }
 
-// The emitted scale — the NAMED stops (paper/wash/highlight/ink, contiguous 1–10
+// The emitted scale — the NAMED stops (paper/wash/mark/ink, contiguous 1–10
 // since the 2026-07-29 highlight collapse; the engine emits no numeric
 // --{prefix}-N vars). Kept in emit order; cta stays off-scale and out of the strip.
 export const SCALE_STOP_NAMES = [
-  'paper-1', 'paper-2', 'paper-3', 'wash-4', 'wash-5', 'wash-6', 'wash-7',
-  'highlight-8', 'ink-9', 'ink-10', 'ink-11',
+  'paper-99', 'paper-97', 'paper-95', 'wash-92', 'wash-89', 'wash-85', 'wash-80',
+  'mark-74-r300', 'ink-53-r450', 'ink-42-r650', 'ink-30-r700',
 ] as const
 
 // Labeled single-row scale strip — used where multiple scales stack tight
@@ -514,7 +514,7 @@ export function IllustrationLegend() {
     ['#9DC4FF', 'Primary soft', 'brand tint (slot 2)', 'var(--illus-primary-soft)'],
     ['#FF7A00', 'Alt', 'brand deep (slot 4) mono → secondary mid two-color', 'var(--illus-alt)'],
     ['#FFD6A8', 'Alt soft', 'brand tint (slot 2) mono → secondary tint two-color', 'var(--illus-alt-soft)'],
-    ['#1A1A1A', 'Ink', 'neutral ink-11', 'var(--illus-ink)'],
+    ['#1A1A1A', 'Ink', 'neutral ink-30-r700', 'var(--illus-ink)'],
     ['#9E9E9E', 'Muted', 'neutral-8 — never branded', 'var(--illus-muted)'],
     ['#FFFFFF', 'Paper', 'neutral-1 — flips correctly in dark mode', 'var(--illus-paper)'],
   ]

@@ -46,7 +46,7 @@ the scaffold itself:
 
 - meanBoost: unchanged below C 0.05 (< 0.005 L*); **+0.3 to +0.72 L\* at C 0.13–0.17**.
 - perceptualRungL: **< 0.004 ΔL at wash chroma** (C ≤ 0.06 — paper/wash rungs hold);
-  **up to ±0.015 ΔL at highlight/cta chroma** (worst: rootL .95 C .13 H330 −0.0149;
+  **up to ±0.015 ΔL at mark/cta chroma** (worst: rootL .95 C .13 H330 −0.0149;
   blue H250 rungs land darker, warm hues lighter).
 - perceptualDarkC: dark stops gain +0.005–0.014 C, and — the structural win — **the
   solve CONVERGES where it saturates today**: (L .30, H60 brown) and (L .30–.55, H150
@@ -66,7 +66,7 @@ the scaffold itself:
   That is ≈ 1–1.5 Lc on unchanged colors. A basis switch therefore re-blesses
   everything — planned anyway, but it rules out "swap the implementation silently."
 - At FULL P3 headroom on pinned stops: |ΔLc| ≤ ~1.2 typical; **~60 WCAG 4.5:1
-  boundary crossings, concentrated at light ctas (27 signal + 10 brand) and highlight
+  boundary crossings, concentrated at light ctas (27 signal + 10 brand) and mark
   stops (16 light + 9 dark)**; only 2 on-text pole flips (brand cta H220, both profiles).
   Direction matters: for the green ctas the exact-P3 read is LOWER than the
   sRGB-clamp read (2.50 → 2.44 vs white) — **an enforcement solved only on the sRGB
@@ -239,5 +239,5 @@ evidence + rejected alternatives in §3). Original framing kept below for the re
 
 Gold-boost brand-side amplitude (yellow ramp un-truncates, §1b), fired-mute corridor
 geometry (moves with the gamut), green-light boost headroom (green washes gain the
-most, §1a), yellow vividness boundary, paper-1/2 split, and the dark ID-relative
+most, §1a), yellow vividness boundary, paper-99/97 split, and the dark ID-relative
 counterpart — which §1c shows becomes a convergent solve instead of a pinned ceiling.

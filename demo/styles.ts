@@ -18,10 +18,10 @@ export const STYLE_CSS = /* css */ `
    different clothes; the dashboard is a DESKTOP OF WINDOWS. THREE-LEVEL LADDER
    (owner's 2026-07-27 Figma card set — one 4px flat offset everywhere, the
    SHADOW COLOR fades down the ladder and the stroke fades with it):
-     +2 hero    titlebar + brand-black shadow + ink-9 stroke → Customers (pop plane)
-     +1 cards   wash-7 grey shadow + highlight-8 stroke            → Get started, Activity, sidebar
-     −1 metrics surface-pop shadow (punched in) + wash-4 stroke    → metric tiles (compact)
-     ctas       ink-12 border + ink-9 shadow                      → primary/secondary cta buttons
+     +2 hero    titlebar + brand-black shadow + ink-53-r450 stroke → Customers (pop plane)
+     +1 cards   wash-80 grey shadow + mark-74-r300 stroke            → Get started, Activity, sidebar
+     −1 metrics surface-pop shadow (punched in) + wash-92 stroke    → metric tiles (compact)
+     ctas       ink-0 border + ink-53-r450 shadow                      → primary/secondary cta buttons
    Every shadow color is a token (or the brand mix), so DARK FALLS OUT of the
    swap — no bespoke dark block (owner ruling 2026-07-27). */
 [data-style="retro"] .dash {
@@ -29,7 +29,7 @@ export const STYLE_CSS = /* css */ `
   font-variant-numeric: tabular-nums;
   --rt-line: var(--border-default);
   --rt-shadow: color-mix(in srgb, var(--brand-cta) 45%, black);
-  --elev-card: 4px 4px 0 var(--neutral-wash-7);
+  --elev-card: 4px 4px 0 var(--neutral-wash-80);
   --elev-pop: 4px 4px 0 var(--rt-shadow);
   --elev-float: 7px 7px 0 var(--rt-shadow);
   background-image: repeating-linear-gradient(0deg, rgba(0,0,0,.02) 0 1px, transparent 1px 3px);
@@ -42,7 +42,7 @@ export const STYLE_CSS = /* css */ `
 /* +1 default: chunky keyline (one stop lighter than the hero's) + grey flat shadow */
 [data-style="retro"] .dash .dash-card,
 [data-style="retro"] .dash .dash-side {
-  border: 2.5px solid var(--neutral-highlight-8) !important;
+  border: 2.5px solid var(--neutral-mark-74-r300) !important;
   box-shadow: var(--elev-card) !important;
 }
 /* +2 hero: the full-strength keyline + the brand-black shadow */
@@ -50,18 +50,18 @@ export const STYLE_CSS = /* css */ `
   border: 2.5px solid var(--rt-line) !important;
   box-shadow: var(--elev-pop) !important;
 }
-/* +2 hero ONLY: the action titlebar — BRAND ink-11 fill (owner: bar is a brand
+/* +2 hero ONLY: the action titlebar — BRAND ink-30-r700 fill (owner: bar is a brand
    color), control squares in its wash partner (the active-nav pair, swapped);
    slimmed to 24px in the owner's 2026-07-27 set */
 [data-style="retro"] .dash .dash-card-customers { position: relative; padding-top: 24px !important; }
 [data-style="retro"] .dash .dash-card-customers::before {
   content: ""; position: absolute; top: 0; left: 0; right: 0; height: 24px;
-  background-color: var(--brand-ink-11);
+  background-color: var(--brand-ink-30-r700);
   border-bottom: 2.5px solid var(--rt-line);
   background-image:
-    linear-gradient(var(--brand-wash-5), var(--brand-wash-5)),
-    linear-gradient(var(--brand-wash-5), var(--brand-wash-5)),
-    linear-gradient(var(--brand-wash-5), var(--brand-wash-5));
+    linear-gradient(var(--brand-wash-89), var(--brand-wash-89)),
+    linear-gradient(var(--brand-wash-89), var(--brand-wash-89)),
+    linear-gradient(var(--brand-wash-89), var(--brand-wash-89));
   background-size: 7px 7px;
   background-position: right 9px center, right 22px center, right 35px center;
   background-repeat: no-repeat;
@@ -71,14 +71,14 @@ export const STYLE_CSS = /* css */ `
 [data-style="retro"] .dash .dash-hero-head > div > div:first-child {
   position: absolute; top: 0; left: 14px; height: 24px; z-index: 1;
   display: flex; align-items: center;
-  color: var(--brand-wash-5);
+  color: var(--brand-wash-89);
   font-size: 11px !important; font-weight: 700 !important;
   text-transform: uppercase; letter-spacing: .14em;
 }
 /* −1: metric tiles PUNCH IN — faint stroke + a surface-pop flat shadow (paper
    token, so it stays a knockout in light and falls out correctly in dark) */
 [data-style="retro"] .dash .dash-metric {
-  border: 2.5px solid var(--neutral-wash-4) !important;
+  border: 2.5px solid var(--neutral-wash-92) !important;
   box-shadow: 4px 4px 0 var(--surface-pop) !important;
   padding: 10px 12px !important;
 }
@@ -86,23 +86,23 @@ export const STYLE_CSS = /* css */ `
   font-size: 18px !important; font-weight: 700 !important; margin: 2px 0 !important;
 }
 [data-style="retro"] .dash .dash-metrics { gap: 10px; margin-bottom: 12px; }
-/* buttons: L4 stroke by default; L5 for the cta tiers — ink-12 border, ink-9
+/* buttons: L4 stroke by default; L5 for the cta tiers — ink-0 border, ink-53-r450
    flat shadow (owner spec), press collapses into the surface */
 [data-style="retro"] .dash button { border: 2px solid var(--rt-line); }
 [data-style="retro"] .dash .u-btn-primary,
 [data-style="retro"] .dash .u-btn-secondary {
-  border: 2px solid var(--ink-12) !important;
-  box-shadow: 3px 3px 0 var(--brand-ink-9);
+  border: 2px solid var(--ink-0) !important;
+  box-shadow: 3px 3px 0 var(--brand-ink-53-r450);
   transition: transform 90ms ease, box-shadow 90ms ease;
 }
 [data-style="retro"] .dash .u-btn-primary:active,
 [data-style="retro"] .dash .u-btn-secondary:active {
-  transform: translate(3px, 3px); box-shadow: 0 0 0 var(--brand-ink-9);
+  transform: translate(3px, 3px); box-shadow: 0 0 0 var(--brand-ink-53-r450);
 }
 /* INVERTED SELECTION — the active item swaps its own fill/text pair */
 [data-style="retro"] .dash .dash-navitem.active {
-  background: var(--brand-ink-11) !important;
-  color: var(--brand-wash-5) !important;
+  background: var(--brand-ink-30-r700) !important;
+  color: var(--brand-wash-89) !important;
 }
 /* terminal grammar */
 [data-style="retro"] .dash .dash-navitem {
@@ -119,7 +119,7 @@ export const STYLE_CSS = /* css */ `
 }
 /* the customers table reads as a LEDGER — the inset header bar keeps its own
    sink color (owner: don't recolor it), dashed rules, letterspaced heads */
-[data-style="retro"] .dash .dash-table td { border-bottom: 2px dashed var(--neutral-wash-5) !important; }
+[data-style="retro"] .dash .dash-table td { border-bottom: 2px dashed var(--neutral-wash-89) !important; }
 [data-style="retro"] .dash .dash-table th { letter-spacing: .12em; }
 /* honest links — underlined, chunky */
 [data-style="retro"] .dash a { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
@@ -163,8 +163,8 @@ export const STYLE_CSS = /* css */ `
   /* −1 — her level=−1 variant: the inners ride the wash TOKENS, so the recess
      colors fall out per theme */
   --bb-recess:
-    inset 0 0 10.6px -1px var(--neutral-wash-4),
-    inset 0 2px 2px -2px var(--neutral-wash-6),
+    inset 0 0 10.6px -1px var(--neutral-wash-92),
+    inset 0 2px 2px -2px var(--neutral-wash-85),
     0 0 24px 24px rgba(255,255,255,.1),
     0 1px 0 rgba(255,255,255,.7);
   /* recessed physics for the SMALL wells (search, illo, hover) — unchanged:
@@ -228,8 +228,8 @@ export const STYLE_CSS = /* css */ `
    light catching only the outer bottom lip). */
 [data-style="bubble"] [data-theme="dark"] .dash .dash-metric {
   box-shadow:
-    inset 0 0 10.6px -1px color-mix(in srgb, var(--neutral-wash-4) 25%, rgba(0,0,0,.72)),
-    inset 0 2px 2px -2px color-mix(in srgb, var(--neutral-wash-6) 25%, rgba(0,0,0,.85)),
+    inset 0 0 10.6px -1px color-mix(in srgb, var(--neutral-wash-92) 25%, rgba(0,0,0,.72)),
+    inset 0 2px 2px -2px color-mix(in srgb, var(--neutral-wash-85) 25%, rgba(0,0,0,.85)),
     0 1px 0 rgba(255,255,255,.05) !important;
 }
 /* selection physics (owner): the SELECTED item pops UP (pillow, keeps its own

@@ -366,9 +366,9 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   // the chip TINTS with the selection (Figma spec): the family's own wash/ink; outline gets
   // the outline treatment; exact reads neutral-grey "hands off"
   const chipTone: Record<string, React.CSSProperties> = {
-    brand: { background: 'var(--brand-wash-4)', color: 'var(--brand-ink-11)' },
-    secondary: { background: 'var(--secondary-wash-6)', color: 'var(--secondary-ink-11)' },
-    outline: { background: 'transparent', color: 'var(--secondary-ink-9)', border: '1px solid var(--secondary-highlight-8)' },
+    brand: { background: 'var(--brand-wash-92)', color: 'var(--brand-ink-30-r700)' },
+    secondary: { background: 'var(--secondary-wash-85)', color: 'var(--secondary-ink-30-r700)' },
+    outline: { background: 'transparent', color: 'var(--secondary-ink-53-r450)', border: '1px solid var(--secondary-mark-74-r300)' },
     grey: { background: 'var(--surface-sink)', color: 'var(--fg-subtle)' },
   }
   const styleLabel: Record<SecondaryStyle, string> = { default: 'Custom', outline: 'Outline', exact: 'Exact' }
@@ -430,7 +430,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
             <label className="ct-swatch-btn" title="Open color picker">
               {/* the swatch always shows the RESOLVED secondary — in derived mode that's
                   the subtle tint the engine produced, not the primary hex in the input */}
-              <span className="ct-swatch" style={{ background: derived ? 'var(--secondary-cta)' : (secondary ?? 'var(--neutral-wash-5)') }} />
+              <span className="ct-swatch" style={{ background: derived ? 'var(--secondary-cta)' : (secondary ?? 'var(--neutral-wash-89)') }} />
               <input type="color" value={secondary ?? primary} onChange={e => { setSecState('custom'); setSecondaryInput(e.target.value.toUpperCase()) }} />
             </label>
             {/* derived: the input TRACKS the primary live (that's what derived means) and is
@@ -476,7 +476,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
               otherwise swallow the click. */}
           <label className="ct-swatch-btn" title="Pick a custom neutral hue" style={{ zIndex: 1 }}
             onClick={e => e.stopPropagation()}>
-            <span className="ct-swatch" style={{ background: 'var(--neutral-ink-9)' }} />
+            <span className="ct-swatch" style={{ background: 'var(--neutral-ink-53-r450)' }} />
             <input type="color" value={normalizeHex(neutralHexInput) ?? primary}
               onChange={e => { setNeutralChoice('custom'); setNeutralHexInput(e.target.value.toUpperCase()) }} />
           </label>
@@ -617,9 +617,9 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   // eyeballing the ladder. cta / cta-ink live in the deconfliction card below, not
   // here (owner 2026-07-17: keep the top card to the 0–12 scale, reserve the second
   // card for cta + cta-ink). Each cell shows the token representatively: surfaces as
-  // plain swatches, highlight-8 as a ring (its role IS a stroke), ink as "Aa" text,
+  // plain swatches, mark-74-r300 as a ring (its role IS a stroke), ink as "Aa" text,
   // identity as an "ID" chip. Themes with the page toggle.
-  const SWATCH_STOPS = ['paper-1', 'paper-2', 'paper-3', 'wash-4', 'wash-5', 'wash-6', 'wash-7', 'highlight-8', 'ink-9', 'ink-10', 'ink-11']
+  const SWATCH_STOPS = ['paper-99', 'paper-97', 'paper-95', 'wash-92', 'wash-89', 'wash-85', 'wash-80', 'mark-74-r300', 'ink-53-r450', 'ink-42-r650', 'ink-30-r700']
   // neutral rides on top — it carries the stop numbering + the global 0/12 anchors
   // for the whole matrix (owner 2026-07-24)
   const swatchRamps: Array<[string, string]> = [
@@ -630,24 +630,24 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   ]
   const swatchCell = (prefix: string, stop: string) => {
     const cv = (t: string) => `var(--${prefix}-${t})`
-    // chip "Aa" (highlight/cta) carries its on-color at a slightly lighter weight;
+    // chip "Aa" (mark/cta) carries its on-color at a slightly lighter weight;
     // ink "Aa" is a big, heavy glyph so it reads as a text swatch, not a chip label.
     const aa: React.CSSProperties = { height: 36, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600 }
-    // highlight-8 is the 3:1 NON-TEXT stop (boundaries/strokes) — it carries no on-text, so it
+    // mark-74-r300 is the 3:1 NON-TEXT stop (boundaries/strokes) — it carries no on-text, so it
     // renders AS a stroke: a ring of the color, not a fill.
     // …and it's icon-grade at the same 3:1 (owner 2026-07-24): the ring carries a
-    // plus glyph painted IN highlight-8 — non-text contrast serves icons, unlike the
+    // plus glyph painted IN mark-74-r300 — non-text contrast serves icons, unlike the
     // ink text stops.
-    if (stop === 'highlight-8') return (
+    if (stop === 'mark-74-r300') return (
       <div style={{ height: 36, borderRadius: 6, boxSizing: 'border-box', border: `2px solid ${cv(stop)}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Plus size={18} strokeWidth={2.5} color={cv(stop)} />
       </div>
     )
-    // ink-9 is BOTH the emphasis fill and a text stop since the 2026-07-29 collapse: it
+    // ink-53-r450 is BOTH the emphasis fill and a text stop since the 2026-07-29 collapse: it
     // took over highlight-9's fill role. Render it AS a fill, carrying the on-emphasis
-    // paper the semantic layer gives it (--paper-0, the mode-flipping paper extreme),
+    // paper the semantic layer gives it (--paper-100, the mode-flipping paper extreme),
     // so this slot still reads as the filled chip it always was.
-    if (stop === 'ink-9') return <div style={{ ...aa, background: cv(stop), color: 'var(--paper-0)' }}>Aa</div>
+    if (stop === 'ink-53-r450') return <div style={{ ...aa, background: cv(stop), color: 'var(--paper-100)' }}>Aa</div>
     // cta-ink trio renders as TEXT (the text-STYLE cta — a text button, never a
     // hyperlink, so no underline) — checked before the fill branch so the 'cta' prefix
     // doesn't swallow it
@@ -658,9 +658,9 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
       const ring = prefix === 'secondary' && computed.t.secondary?.style === 'outline'
       return <div style={{ ...aa, boxSizing: 'border-box', background: cv(stop), color: cv('on-cta'), border: ring ? `1.5px solid ${cv('cta-border')}` : undefined }}>Aa</div>
     }
-    // ink cells get the family's paper-3 stroke (owner 2026-07-24: the "non-visible"
-    // cells — no fill of their own — read as cells, matching the paper-0/ink-12 anchors)
-    if (stop.startsWith('ink')) return <div style={{ ...aa, fontSize: 18, fontWeight: 900, color: cv(stop), boxSizing: 'border-box', border: `1px solid ${cv('paper-3')}` }}>Aa</div>
+    // ink cells get the family's paper-95 stroke (owner 2026-07-24: the "non-visible"
+    // cells — no fill of their own — read as cells, matching the paper-100/ink-0 anchors)
+    if (stop.startsWith('ink')) return <div style={{ ...aa, fontSize: 18, fontWeight: 900, color: cv(stop), boxSizing: 'border-box', border: `1px solid ${cv('paper-95')}` }}>Aa</div>
     return <div style={{ height: 36, borderRadius: 6, background: cv(stop) }} />
   }
   // "ID" label legible on the identity swatch (which can be light, e.g. a yellow
@@ -671,12 +671,12 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     const [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16))
     return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6 ? '#000' : '#fff'
   }
-  // The end caps are the two GLOBAL anchors (--paper-0 / --ink-12, unprefixed —
+  // The end caps are the two GLOBAL anchors (--paper-100 / --ink-0, unprefixed —
   // resolved off the neutral, one per theme). They render on the neutral row only;
   // other rows carry spacers so the 1–10 stops stay column-aligned. The identity
   // chip moved to its own card in the side column (owner 2026-07-24).
   // The matrix rides the POP plane (owner 2026-07-24) so the extremes have a surface
-  // to stand off of. paper-0 / ink-12 render as plain swatches with a neutral paper-3
+  // to stand off of. paper-100 / ink-0 render as plain swatches with a neutral paper-95
   // stroke — one value for ALL families (unprefixed anchors), unlike the per-family 1–10.
   // Secondary tab falls back to overview if the secondary is removed while selected.
   const paletteTabSafe = paletteTab === 'secondary' && !(secondary || derived) ? 'overview' : paletteTab
@@ -687,18 +687,18 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     ['neutral', 'neutral'],
     ['critical', 'critical'], ['warning', 'warning'], ['positive', 'positive'], ['info', 'info'],
   ]
-  const anchorStroke = '1px solid var(--neutral-paper-3)'
+  const anchorStroke = '1px solid var(--neutral-paper-95)'
   // corner stop numbers — NEUTRAL row only (it indexes the whole matrix); the 0/12
   // anchors carry a * pointing at the "0, 12 = global" footnote on the label line
   const numBadge = (color: string): React.CSSProperties => ({
     position: 'absolute', top: 3, right: 6, fontSize: 9, fontWeight: 600, color, pointerEvents: 'none',
   })
   const numColor = (stop: string) =>
-    stop === 'ink-9' ? 'var(--paper-0)' : 'var(--neutral-ink-9)'
+    stop === 'ink-53-r450' ? 'var(--paper-100)' : 'var(--neutral-ink-53-r450)'
   // Row layout per the owner's Figma spec (node 72:38, 2026-07-24): the anchor/ID
   // mini-swatch (24px) and the family label SHARE the first column — label
   // right-aligned beneath — so no separate label line pads the rows. The footnote
-  // rides under the 12 anchor. Family labels are tinted with the family's ink-9.
+  // rides under the 12 anchor. Family labels are tinted with the family's ink-53-r450.
   const miniSwatch = (bg: string, badge: string, badgeColor: string, stroked: boolean) => (
     <div style={{ position: 'relative' }}>
       <div style={{ height: 24, borderRadius: 6, boxSizing: 'border-box', background: bg, border: stroked ? anchorStroke : undefined }} />
@@ -712,18 +712,18 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
       {swatchRamps.map(([prefix, label], ri) => (
         <div key={prefix} style={{ marginTop: ri === 0 ? 0 : 10 }}>
           <div style={{ display: 'grid', gridTemplateColumns: `repeat(${SWATCH_STOPS.length + 2}, minmax(0, 1fr))`, gap: 4 }}>
-            <div title={prefix === 'neutral' ? '--paper-0' : undefined}>
-              {prefix === 'neutral' && <div style={{ height: 22, borderRadius: 5, boxSizing: 'border-box', background: 'var(--paper-0)', border: anchorStroke }} />}
+            <div title={prefix === 'neutral' ? '--paper-100' : undefined}>
+              {prefix === 'neutral' && <div style={{ height: 22, borderRadius: 5, boxSizing: 'border-box', background: 'var(--paper-100)', border: anchorStroke }} />}
               {(prefix === 'brand' || prefix === 'secondary') && <div style={{ height: 22, borderRadius: 5, background: `var(--${prefix}-identity)` }} />}
             </div>
             {SWATCH_STOPS.map(s => (
               <div key={s} style={{ height: 22, borderRadius: 5, background: `var(--${prefix}-${s})` }} title={`--${prefix}-${s}`} />
             ))}
-            <div title={prefix === 'neutral' ? '--ink-12' : undefined}>
-              {prefix === 'neutral' && <div style={{ height: 22, borderRadius: 5, background: 'var(--ink-12)' }} />}
+            <div title={prefix === 'neutral' ? '--ink-0' : undefined}>
+              {prefix === 'neutral' && <div style={{ height: 22, borderRadius: 5, background: 'var(--ink-0)' }} />}
             </div>
           </div>
-          <div style={{ fontSize: 11, fontWeight: 700, lineHeight: 1, color: `var(--${prefix}-ink-9)`, marginTop: 4 }}>{label}</div>
+          <div style={{ fontSize: 11, fontWeight: 700, lineHeight: 1, color: `var(--${prefix}-ink-53-r450)`, marginTop: 4 }}>{label}</div>
         </div>
       ))}
     </div>
@@ -734,24 +734,26 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
           {/* first column matches the row height exactly: mini-swatch pinned top,
               label pinned to the row's bottom edge (owner 2026-07-24 alignment fix) */}
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: 36 }}
-            title={prefix === 'neutral' ? '--paper-0' : (prefix === 'brand' || prefix === 'secondary') ? `--${prefix}-identity` : undefined}>
-            {prefix === 'neutral' ? miniSwatch('var(--paper-0)', '0*', 'var(--neutral-ink-9)', true)
+            title={prefix === 'neutral' ? '--paper-100' : (prefix === 'brand' || prefix === 'secondary') ? `--${prefix}-identity` : undefined}>
+            {prefix === 'neutral' ? miniSwatch('var(--paper-100)', '0*', 'var(--neutral-ink-53-r450)', true)
               : (prefix === 'brand' || prefix === 'secondary') ? miniSwatch(`var(--${prefix}-identity)`, 'ID',
                   idTextOn(prefix === 'brand' ? computed.r.scale.identityHex : computed.accent?.identityHex), false)
               : <span />}
-            <div style={{ fontSize: 11, lineHeight: 1, fontWeight: 700, color: `var(--${prefix}-ink-9)`, textAlign: 'right' }}>{label}</div>
+            <div style={{ fontSize: 11, lineHeight: 1, fontWeight: 700, color: `var(--${prefix}-ink-53-r450)`, textAlign: 'right' }}>{label}</div>
           </div>
-          {SWATCH_STOPS.map(s => (
+          {SWATCH_STOPS.map((s, si) => (
             <div key={s} style={{ position: 'relative' }} title={`--${prefix}-${s}`}>
               {swatchCell(prefix, s)}
-              {prefix === 'neutral' && <span style={numBadge(numColor(s))}>{s.split('-')[1]}</span>}
+              {/* badge number is the STOP POSITION (1-indexed), not parsed from the name —
+                  Stage B names (paper-99, mark-74-r300…) no longer end in the stop number */}
+              {prefix === 'neutral' && <span style={numBadge(numColor(s))}>{si + 1}</span>}
             </div>
           ))}
-          <div style={{ position: 'relative' }} title={prefix === 'neutral' ? '--ink-12' : undefined}>
+          <div style={{ position: 'relative' }} title={prefix === 'neutral' ? '--ink-0' : undefined}>
             {prefix === 'neutral' && (
               <>
-                <div style={{ height: 36, borderRadius: 6, boxSizing: 'border-box', background: 'var(--ink-12)', border: anchorStroke }} />
-                <span style={numBadge('var(--neutral-paper-1)')}>12*</span>
+                <div style={{ height: 36, borderRadius: 6, boxSizing: 'border-box', background: 'var(--ink-0)', border: anchorStroke }} />
+                <span style={numBadge('var(--neutral-paper-99)')}>12*</span>
               </>
             )}
           </div>
@@ -848,9 +850,9 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
             <div className="ct-colorblock">
               <div className="ct-label" style={{ marginBottom: 8 }}>Elevation planes — sink · base · lift · pop</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-                {([['sink', 'paper-3', 'paper-0'], ['base', 'paper-2', 'paper-1'], ['lift', 'paper-1', 'paper-2'], ['pop', 'paper-0', 'paper-3']] as const).map(([role, lightStop, darkStop]) => (
+                {([['sink', 'paper-95', 'paper-100'], ['base', 'paper-97', 'paper-99'], ['lift', 'paper-99', 'paper-97'], ['pop', 'paper-100', 'paper-95']] as const).map(([role, lightStop, darkStop]) => (
                   <div key={role}>
-                    <div style={{ background: `var(--surface-${role})`, height: 54, borderRadius: 12, border: '1px solid var(--neutral-paper-3)', boxShadow: 'var(--elev-card)' }} />
+                    <div style={{ background: `var(--surface-${role})`, height: 54, borderRadius: 12, border: '1px solid var(--neutral-paper-95)', boxShadow: 'var(--elev-card)' }} />
                     <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-default)', marginTop: 6 }}>{role}</div>
                     <div style={{ fontSize: 11.5, color: 'var(--fg-subtle)' }}>neutral {dark ? darkStop : lightStop}</div>
                   </div>
@@ -1006,10 +1008,10 @@ function checklistRows(rRec: ResolvedBrand, rung: RungMode, primaryHex: string, 
 
 const TONE_META: Record<CheckTone, { Icon: typeof Check; color: string }> = {
   pass: { Icon: Check, color: 'var(--positive-fg)' },
-  // BRAND register (brand-ink-9, i.e. brand-fg-alt): an engine decision reads as
+  // BRAND register (brand-ink-53-r450, i.e. brand-fg-alt): an engine decision reads as
   // "on-brand", never as a link (--link is reserved for real anchors) and never as
   // the info-blue it used to borrow (owner 2026-07-17).
-  adjusted: { Icon: Sparkles, color: 'var(--brand-ink-9)' },
+  adjusted: { Icon: Sparkles, color: 'var(--brand-ink-53-r450)' },
   standard: { Icon: ArrowRight, color: 'var(--fg-subtle)' },
   fail: { Icon: TriangleAlert, color: 'var(--warning-fg)' },
 }
@@ -1061,7 +1063,7 @@ const dashCard: React.CSSProperties = {
   borderRadius: 12, padding: 18,
 }
 const dashMetric: React.CSSProperties = {
-  background: 'var(--surface-sink)', border: '1px solid var(--neutral-wash-4)',
+  background: 'var(--surface-sink)', border: '1px solid var(--neutral-wash-92)',
   borderRadius: 12, padding: 16,
 }
 
@@ -1175,16 +1177,16 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
 
 // ─── Collision check — 2×2 grid, one form card per signal ───────────────────
 // Owner spec (2026-07-09): four form cards, one per signal — on the raised plane
-// as of the 2026-07-17 redesign (was literal paper-0, which collapses to the darkest
+// as of the 2026-07-17 redesign (was literal paper-100, which collapses to the darkest
 // plane in dark; the raised plane lifts correctly in both modes)
 // (critical / warning / positive / info — role names), each combining:
-//   ink-9 title + brand chip + the card signal's chip
-//   ink-11 short body
+//   ink-53-r450 title + brand chip + the card signal's chip
+//   ink-30-r700 short body
 //   focused input + resting input
 //   input with the signal's helper + an error (red) input
 //   the signal's alert message (its cta register)
-//   button row: primary wash-5 · primary cta · red cta
-//   button row: secondary wash-5 · secondary cta · neutral cta
+//   button row: primary wash-89 · primary cta · red cta
+//   button row: secondary wash-89 · secondary cta · neutral cta
 // All live vars — re-solves with the pickers, profile, and mode.
 const SIGNAL_CARDS: Array<{ sig: string; Icon: typeof Info; alert: string }> = [
   { sig: 'critical', Icon: AlertCircle, alert: 'We couldn\'t process the request. Try again.' },
@@ -1195,45 +1197,45 @@ const SIGNAL_CARDS: Array<{ sig: string; Icon: typeof Info; alert: string }> = [
 
 function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typeof Info; alert: string; hasSecondary: boolean }) {
   const v = (t: string) => `var(--${sig}-${t})`
-  // the canonical chip recipe (owner 2026-07-28): paper-3 · wash-6 · ink-9
+  // the canonical chip recipe (owner 2026-07-28): paper-95 · wash-85 · ink-53-r450
   const chip = (prefix: string, label: string) => (
     <span style={{
       display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 6,
       fontSize: 12, fontWeight: 500,
-      background: `var(--${prefix}-paper-3)`, color: `var(--${prefix}-ink-9)`,
-      border: `1px solid var(--${prefix}-wash-6)`,
+      background: `var(--${prefix}-paper-95)`, color: `var(--${prefix}-ink-53-r450)`,
+      border: `1px solid var(--${prefix}-wash-85)`,
     }}>{label}</span>
   )
   const fieldLabel: React.CSSProperties = { fontSize: 11, fontWeight: 600, color: 'var(--fg-subtle)', marginBottom: 4 }
   // the focused state, held statically (mirror of .ct-field:focus-within) so all
   // four cards can show it at once
-  const focusRing: React.CSSProperties = { borderColor: 'var(--brand-highlight-8)', boxShadow: '0 0 0 3px var(--brand-wash-5)' }
+  const focusRing: React.CSSProperties = { borderColor: 'var(--brand-mark-74-r300)', boxShadow: '0 0 0 3px var(--brand-wash-89)' }
   const btn: React.CSSProperties = { padding: '8px 16px', borderRadius: 999, border: '1.5px solid transparent', cursor: 'pointer', fontSize: 13, fontWeight: 500, fontFamily: 'inherit' }
   return (
     <section className="dash-card" style={{ background: 'var(--surface-lift)', boxShadow: 'var(--elev-card)', borderRadius: 12, padding: 18 }}>
-      {/* title row shows the ink-9 RANGE: signal ink vs neutral ink vs brand ink;
-          the subtitle (only when a secondary exists) adds secondary ink-9. Wraps so
+      {/* title row shows the ink-53-r450 RANGE: signal ink vs neutral ink vs brand ink;
+          the subtitle (only when a secondary exists) adds secondary ink-53-r450. Wraps so
           the chips drop below the title on narrow cards instead of clipping. */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
         <div style={{ fontSize: 15, fontWeight: 700, marginRight: 'auto' }}>
-          <span style={{ color: v('ink-9') }}>{sig}</span>
-          <span style={{ color: 'var(--neutral-ink-9)', fontWeight: 500 }}> vs </span>
-          <span style={{ color: 'var(--brand-ink-9)' }}>Brand-primary</span>
+          <span style={{ color: v('ink-53-r450') }}>{sig}</span>
+          <span style={{ color: 'var(--neutral-ink-53-r450)', fontWeight: 500 }}> vs </span>
+          <span style={{ color: 'var(--brand-ink-53-r450)' }}>Brand-primary</span>
         </div>
         {chip('brand', 'brand')}
         {chip(sig, sig)}
       </div>
       {hasSecondary && (
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--secondary-ink-9)', marginBottom: 6 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--secondary-ink-53-r450)', marginBottom: 6 }}>
           This is a subtitle in Brand-secondary
         </div>
       )}
-      {/* body shows the ink-11 range, one sentence per family */}
+      {/* body shows the ink-30-r700 range, one sentence per family */}
       <p style={{ fontSize: 12.5, lineHeight: 1.45, margin: '0 0 12px' }}>
-        <span style={{ color: v('ink-11') }}>This body copy is in {sig}'s ink-11. </span>
-        <span style={{ color: 'var(--brand-ink-11)' }}>This body copy is in brand-primary's ink-11. </span>
-        {hasSecondary && <span style={{ color: 'var(--secondary-ink-11)' }}>This body copy is in brand-secondary's ink-11. </span>}
-        <span style={{ color: 'var(--neutral-ink-11)' }}>This body copy is in neutral's ink-11.</span>
+        <span style={{ color: v('ink-30-r700') }}>This body copy is in {sig}'s ink-30-r700. </span>
+        <span style={{ color: 'var(--brand-ink-30-r700)' }}>This body copy is in brand-primary's ink-30-r700. </span>
+        {hasSecondary && <span style={{ color: 'var(--secondary-ink-30-r700)' }}>This body copy is in brand-secondary's ink-30-r700. </span>}
+        <span style={{ color: 'var(--neutral-ink-30-r700)' }}>This body copy is in neutral's ink-30-r700.</span>
       </p>
 
       {/* inputs: focused + resting / signal helper + error */}
@@ -1249,7 +1251,7 @@ function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typ
         <div>
           <div style={fieldLabel}>With helper</div>
           <div className="ct-field"><input defaultValue="Value" spellCheck={false} /></div>
-          <div style={{ fontSize: 11, color: v('ink-9'), marginTop: 5 }}>Helper text in the {sig} register.</div>
+          <div style={{ fontSize: 11, color: v('ink-53-r450'), marginTop: 5 }}>Helper text in the {sig} register.</div>
         </div>
         <div>
           <div style={fieldLabel}>Error</div>
@@ -1268,16 +1270,16 @@ function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typ
         <span>{alert}</span>
       </div>
 
-      {/* button rows: primary wash-5 · primary cta · red cta, then
-          secondary wash-5 · secondary cta · neutral cta */}
+      {/* button rows: primary wash-89 · primary cta · red cta, then
+          secondary wash-89 · secondary cta · neutral cta */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
-        <button style={{ ...btn, background: 'var(--brand-wash-5)', color: 'var(--brand-ink-11)' }}>Wash 5</button>
+        <button style={{ ...btn, background: 'var(--brand-wash-89)', color: 'var(--brand-ink-30-r700)' }}>Wash 89</button>
         <button style={{ ...btn, background: 'var(--brand-cta)', color: 'var(--brand-on-cta)' }}>Primary cta</button>
         <button style={{ ...btn, background: 'var(--critical-cta)', color: 'var(--critical-on-cta)' }}>Critical cta</button>
       </div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {hasSecondary && <>
-          <button style={{ ...btn, background: 'var(--secondary-wash-5)', color: 'var(--secondary-ink-11)' }}>Wash 5</button>
+          <button style={{ ...btn, background: 'var(--secondary-wash-89)', color: 'var(--secondary-ink-30-r700)' }}>Wash 89</button>
           <button style={{ ...btn, background: 'var(--secondary-cta)', color: 'var(--secondary-on-cta)', borderColor: 'var(--secondary-cta-border)' }}>Secondary cta</button>
         </>}
         <button style={{ ...btn, background: 'var(--neutral-cta)', color: 'var(--neutral-on-cta)' }}>Neutral cta</button>
@@ -1305,13 +1307,13 @@ function SettingsStress({ hasSecondary }: { hasSecondary: boolean }) {
 
 function Metric({ label, value, delta, tone }: { label: string; value: string; delta: string; tone: string }) {
   // RECESSED tile — the −1 level of the owner's 2026-07-27 hierarchy (sink plane
-  // + wash-4 hairline, no shadow): the metrics settle INTO the page while the
+  // + wash-92 hairline, no shadow): the metrics settle INTO the page while the
   // content cards lift off it. Fill stays neutral; the signal reads through the
   // value + delta text alone. --mtone still publishes the tone for style layers.
   return (
     <div className="dash-card dash-metric" style={{ ...dashMetric, ['--mtone' as string]: `var(--${tone}-bg-emphasis)` } as React.CSSProperties}>
       <div style={{ fontSize: 12, color: 'var(--fg-subtle)' }}>{label}</div>
-      {/* the value carries its signal's ink-9 (owner 2026-07-24, revising the
+      {/* the value carries its signal's ink-53-r450 (owner 2026-07-24, revising the
           2026-07-17 neutralization: the number holds the signal, not just the delta) */}
       <div className="dash-metric-value" style={{ fontSize: 26, fontWeight: 700, margin: '4px 0 4px', color: `var(--${tone}-fg-alt)` }}>{value}</div>
       <span style={{ fontSize: 11, fontWeight: 600, color: `var(--${tone}-fg)` }}>{delta}</span>
@@ -1351,19 +1353,19 @@ function CustomersTable({ hasSecondary }: { hasSecondary: boolean }) {
           const premium = c.plan !== 'Starter'
           // Premium plans carry the accent when a secondary exists, else the brand.
           // THE canonical chip recipe (owner 2026-07-28, matching the unify-compare
-          // exhibit): paper-3 fill · wash-6 stroke · ink-9 text, family = the only
+          // exhibit): paper-95 fill · wash-85 stroke · ink-53-r450 text, family = the only
           // variable. Chips are color-family recipes, never surface planes. NOTE:
-          // dark chips on the POP plane (= paper-3) show the fill collision honestly —
+          // dark chips on the POP plane (= paper-95) show the fill collision honestly —
           // that's the context the pop-plane decision is being judged in.
           const planFam = premium ? (hasSecondary ? 'secondary' : 'brand') : 'neutral'
-          const planBg = `var(--${planFam}-paper-3)`
-          const planFg = `var(--${planFam}-ink-9)`
-          const planBorder = `var(--${planFam}-wash-6)`
+          const planBg = `var(--${planFam}-paper-95)`
+          const planFg = `var(--${planFam}-ink-53-r450)`
+          const planBorder = `var(--${planFam}-wash-85)`
           return (
             <tr key={c.name}>
               <td>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span className="dash-avatar" style={{ width: 28, height: 28, fontSize: 11, background: 'var(--surface-sink)', color: 'var(--fg-default)', border: '1px solid var(--neutral-wash-5)' }}>{c.name[0]}</span>
+                  <span className="dash-avatar" style={{ width: 28, height: 28, fontSize: 11, background: 'var(--surface-sink)', color: 'var(--fg-default)', border: '1px solid var(--neutral-wash-89)' }}>{c.name[0]}</span>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500 }}>{c.name}</div>
                     <div style={{ fontSize: 11, color: 'var(--fg-subtle)' }}>{c.email}</div>
@@ -1371,7 +1373,7 @@ function CustomersTable({ hasSecondary }: { hasSecondary: boolean }) {
                 </div>
               </td>
               <td><span className="dash-pill" style={{ background: planBg, color: planFg, border: `1px solid ${planBorder}` }}>{c.plan}</span></td>
-              <td><span className="dash-pill" style={{ background: `var(--${tone}-paper-3)`, color: `var(--${tone}-ink-9)`, border: `1px solid var(--${tone}-wash-6)` }}>{label}</span></td>
+              <td><span className="dash-pill" style={{ background: `var(--${tone}-paper-95)`, color: `var(--${tone}-ink-53-r450)`, border: `1px solid var(--${tone}-wash-85)` }}>{label}</span></td>
               <td style={{ fontWeight: 500 }}>{c.mrr}</td>
               <td style={{ color: 'var(--fg-subtle)' }}>{c.seen}</td>
             </tr>
@@ -1384,7 +1386,7 @@ function CustomersTable({ hasSecondary }: { hasSecondary: boolean }) {
 
 function Feed({ who, what, when, tone }: { who: string; what: string; when: string; tone: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid var(--neutral-wash-5)' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid var(--neutral-wash-89)' }}>
       <span className="dash-dot" style={{ width: 8, height: 8, borderRadius: 999, flexShrink: 0, background: `var(--${tone}-bg-emphasis)` }} />
       <div style={{ flex: 1, fontSize: 12 }}><span style={{ fontWeight: 600 }}>{who}</span> {what}</div>
       <span style={{ fontSize: 11, color: 'var(--fg-subtle)', flexShrink: 0 }}>{when}</span>
@@ -1403,23 +1405,23 @@ const PAGE_CSS = `
   padding: 18px 14px; display: flex; flex-direction: column; gap: 18px;
 }
 /* wordmark (logoipsum placeholder) — the two svg groups' fills wire to the live
-   palette: the mark to brand-ink-9 (darkest highlight stop — keeps the mark
+   palette: the mark to brand-ink-53-r450 (darkest highlight stop — keeps the mark
    COLOURED yet legible on the light neutral sidebar; ~2.9:1 worst-case for a bright
-   yellow brand, and a logo mark is WCAG-exempt so 3:1 isn't required. cta/highlight-8
-   wash out for bright brands here), the wordmark to brand-ink-9. A fully-robust
+   yellow brand, and a logo mark is WCAG-exempt so 3:1 isn't required. cta/mark-74-r300
+   wash out for bright brands here), the wordmark to brand-ink-53-r450. A fully-robust
    colour-AND-contrast mark would need an engine-emitted contrast-clamped stop. */
 .dash-logo { display: flex; align-items: center; }
 .dash-logo svg { height: 22px; width: auto; display: block; }
-.dash-logo .bl-mark path { fill: var(--brand-ink-9); }
-.dash-logo .bl-type path { fill: var(--brand-ink-9); }
+.dash-logo .bl-mark path { fill: var(--brand-ink-53-r450); }
+.dash-logo .bl-type path { fill: var(--brand-ink-53-r450); }
 .dash-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
 .dash-navitem {
   display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px;
   font-size: 13px; color: var(--fg-default); text-decoration: none;
 }
 .dash-navitem:hover { background: var(--surface-lift); }
-.dash-navitem.active { background: var(--brand-wash-5); color: var(--brand-ink-11); font-weight: 600; }
-.dash-user { display: flex; align-items: center; gap: 10px; padding-top: 14px; border-top: 1px solid var(--neutral-wash-5); }
+.dash-navitem.active { background: var(--brand-wash-89); color: var(--brand-ink-30-r700); font-weight: 600; }
+.dash-user { display: flex; align-items: center; gap: 10px; padding-top: 14px; border-top: 1px solid var(--neutral-wash-89); }
 .dash-avatar {
   width: 30px; height: 30px; border-radius: 999px; flex-shrink: 0;
   background: var(--brand-cta); color: var(--brand-on-cta);
@@ -1429,7 +1431,7 @@ const PAGE_CSS = `
 .dash-topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
 .dash-search {
   display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--fg-subtle);
-  background: var(--surface-sink); border: 1px solid var(--neutral-wash-5); border-radius: 999px; padding: 7px 14px; min-width: 200px;
+  background: var(--surface-sink); border: 1px solid var(--neutral-wash-89); border-radius: 999px; padding: 7px 14px; min-width: 200px;
 }
 /* trial banner — a filled tinted chip; the fill carries it, no stroke needed. */
 .dash-info {
@@ -1448,9 +1450,9 @@ const PAGE_CSS = `
 /* dense table keeps hairline row dividers — small/functional, legibility earns them */
 .dash-table th {
   text-align: left; font-size: 11px; font-weight: 600; color: var(--fg-subtle);
-  padding: 8px 18px; border-bottom: 1px solid var(--neutral-wash-5); white-space: nowrap;
+  padding: 8px 18px; border-bottom: 1px solid var(--neutral-wash-89); white-space: nowrap;
 }
-.dash-table td { padding: 10px 18px; border-bottom: 1px solid var(--neutral-wash-5); }
+.dash-table td { padding: 10px 18px; border-bottom: 1px solid var(--neutral-wash-89); }
 .dash-table tbody tr:last-child td { border-bottom: none; }
 .dash-table tbody tr:hover { background: var(--surface-sink); }
 .dash-table th:nth-child(n+4), .dash-table td:nth-child(n+4) { text-align: right; }
@@ -1492,14 +1494,14 @@ const PAGE_CSS = `
   background: var(--surface-sink); color: var(--fg-subtle); font-size: 13px;
   position: relative; overflow: hidden; font-family: inherit;
 }
-.ct-iconbtn:hover { background: var(--brand-paper-2); color: var(--fg-default); }
+.ct-iconbtn:hover { background: var(--brand-paper-97); color: var(--fg-default); }
 .ct-iconbtn input[type="color"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .ct-swatch-btn { position: relative; display: inline-flex; flex-shrink: 0; cursor: pointer; }
 .ct-swatch-btn input[type="color"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
 .ct-alert-warn {
   display: flex; gap: 8px; align-items: flex-start; margin-top: 8px;
   padding: 8px 10px; border-radius: 10px; font-size: 12px; line-height: 1.45;
-  background: var(--warning-wash-4); border: 1px solid var(--warning-highlight-8); color: var(--warning-ink-11);
+  background: var(--warning-wash-92); border: 1px solid var(--warning-mark-74-r300); color: var(--warning-ink-30-r700);
 }
 .ct-alert-warn a { color: inherit; font-weight: 600; }
 .ct-alert-text {
@@ -1523,7 +1525,7 @@ const PAGE_CSS = `
   width: 26px; height: 26px; border-radius: 8px; border: none; cursor: pointer;
   background: var(--surface-sink); color: var(--fg-subtle); font-family: inherit;
 }
-.ct-bar-toggle:hover { color: var(--fg-default); background: var(--brand-paper-2); }
+.ct-bar-toggle:hover { color: var(--fg-default); background: var(--brand-paper-97); }
 .ct-bar-min-label { display: none; align-items: center; gap: 8px; height: 26px; font-size: 13px; font-weight: 600; color: var(--fg-default); }
 .ct-bar.min { padding-top: 10px; padding-bottom: 10px; }
 .ct-bar.min > *:not(.ct-bar-min-label):not(.ct-bar-toggle) { display: none !important; }
@@ -1542,9 +1544,9 @@ const PAGE_CSS = `
   display: inline-flex; align-items: center; gap: 6px; box-sizing: border-box; height: 40px;
   padding: 0 14px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600;
   color: var(--fg-subtle); background: transparent;
-  border: 1.5px dashed var(--neutral-ink-9); border-radius: 12px;
+  border: 1.5px dashed var(--neutral-ink-53-r450); border-radius: 12px;
 }
-.ct-add:hover { color: var(--fg-default); border-color: var(--brand-highlight-8); background: var(--brand-paper-2); }
+.ct-add:hover { color: var(--fg-default); border-color: var(--brand-mark-74-r300); background: var(--brand-paper-97); }
 /* STATIC FRAME (owner 2026-07-24): the palette page never scrolls as a page. The
    pane fills the viewport from the measured controls-bar bottom (--ct-dock, set by
    a ResizeObserver — the bar's height varies) down to the bottom bar (54px). The
@@ -1589,7 +1591,7 @@ const PAGE_CSS = `
 /* Fills the column and stays put — sticky + viewport-tall so it doesn't scroll,
    holding a fixed margin below the nav/controls (top) and above the bottom bar. */
 .ct-illus {
-  background: var(--brand-paper-3); border-radius: 16px;
+  background: var(--brand-paper-95); border-radius: 16px;
   flex: 1; min-height: 0;
   display: flex; align-items: center; justify-content: center; padding: 32px;
 }
@@ -1621,7 +1623,7 @@ const PAGE_CSS = `
 .ct-check:hover { background: var(--surface-sink); border-radius: 8px; }
 .ct-tip {
   display: none; position: absolute; left: 0; bottom: calc(100% + 6px); z-index: 70;
-  width: 290px; background: var(--neutral-ink-11); color: var(--neutral-paper-1);
+  width: 290px; background: var(--neutral-ink-30-r700); color: var(--neutral-paper-99);
   border-radius: 8px; padding: 9px 11px; font-size: 11px; line-height: 1.5;
   box-shadow: var(--elev-float); pointer-events: none;
 }
@@ -1643,10 +1645,10 @@ const PAGE_CSS = `
 .ct-label { font-size: 12px; font-weight: 600; color: var(--fg-default); margin-bottom: 5px; }
 .ct-field {
   display: flex; align-items: center; gap: 8px; box-sizing: border-box; width: 100%;
-  background: var(--surface-lift); border: 1px solid var(--neutral-ink-9); border-radius: 12px;
+  background: var(--surface-lift); border: 1px solid var(--neutral-ink-53-r450); border-radius: 12px;
   padding: 9px 12px;
 }
-.ct-field:focus-within { border-color: var(--brand-highlight-8); box-shadow: 0 0 0 3px var(--brand-wash-5); }
+.ct-field:focus-within { border-color: var(--brand-mark-74-r300); box-shadow: 0 0 0 3px var(--brand-wash-89); }
 .ct-field input, .ct-field select {
   border: none; outline: none; background: transparent; color: var(--fg-default);
   font-family: inherit; font-size: 14px; flex: 1; min-width: 0;
@@ -1655,7 +1657,7 @@ const PAGE_CSS = `
 .ct-field.err { border-color: var(--critical-border-emphasis); background: var(--critical-bg-faint); }
 .ct-field.err:focus-within { border-color: var(--critical-border-emphasis); box-shadow: 0 0 0 3px var(--critical-bg-subtle); }
 .ct-err-note { font-size: 11px; color: var(--critical-fg-alt); margin-top: 5px; }
-.ct-swatch { width: 20px; height: 20px; border-radius: 5px; flex-shrink: 0; border: 1px solid var(--neutral-wash-5); }
+.ct-swatch { width: 20px; height: 20px; border-radius: 5px; flex-shrink: 0; border: 1px solid var(--neutral-wash-89); }
 .ct-swatch.sm { width: 13px; height: 13px; }
 .ct-popover {
   position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; width: 230px;
@@ -1665,10 +1667,10 @@ const PAGE_CSS = `
 }
 .ct-suggest {
   display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-family: inherit;
-  background: var(--surface-sink); border: 1px solid var(--neutral-wash-5); border-radius: 10px;
+  background: var(--surface-sink); border: 1px solid var(--neutral-wash-89); border-radius: 10px;
   padding: 4px 10px; font-size: 12px; color: var(--fg-default);
 }
-.ct-suggest:hover { background: var(--brand-paper-2); }
+.ct-suggest:hover { background: var(--brand-paper-97); }
 .ct-remove {
   display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-family: inherit;
   background: var(--surface-lift); border: 1px solid var(--critical-border-default); border-radius: 10px;

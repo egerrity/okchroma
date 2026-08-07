@@ -72,8 +72,9 @@ const onColor = (white: boolean) => (white ? '#ffffff' : '#000000')
 // pop." So: a fill under Lc 15 against the page earns a stroke, and the stroke lands inside 15-30.
 // This does not reopen the wcag lane; see the C39 entry and the wcag-only standing rule.
 //
-// THE REFERENCE IS THE PAGE, not the family's own paper: neutral paper-2 in light, paper-1 in
-// dark (the demo's --surface-base, which swaps between modes). One ruler for every family.
+// THE REFERENCE IS THE PAGE, not the family's own paper: neutral paper-97 (paper-2) in light,
+// paper-99 (paper-1) in dark (the demo's --surface-base, which swaps between modes). One ruler
+// for every family.
 // The light/dark branch C39 hand-wrote is GONE — |Lc| is absolute, so mirroring falls out.
 export const CTA_BORDER_LC_FLOOR = 15
 const CTA_BORDER_PAGE_STOP = { light: 2, dark: 1 } as const
@@ -165,8 +166,8 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
   const f = ctaFamilyOf(s, mode)
   const onCta = mode === 'light' ? s.onFillTextIsWhite : s.onFillTextIsWhiteDark
   // cta-border: the gated stroke at THIS family's rung, else the transparent variable. The
-  // OUTLINE secondary keeps its own unconditional highlight-8 override at the emitter — there the
-  // border is the button's identity, not a safety. Renamed from cta-stroke (owner 2026-07-09);
+  // OUTLINE secondary keeps its own unconditional mark-74-r300 override at the emitter — there
+  // the border is the button's identity, not a safety. Renamed from cta-stroke (owner 2026-07-09);
   // the Figma side renamed with it — plugins migrate existing variables in place.
   // cta family SEMANTIC-named (owner ruling 2026-07-16): cta/cta-hover/cta-pressed +
   // the cta-ink trio (the 4.5 text-register link escape; stops 9/10/11 as states — C49).
@@ -180,16 +181,16 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
     // 9/10/11 read as states; hover was the last raw between value). The cta-border
     // var() idiom, so P3 overrides of the referenced stops ride along for free; the
     // ESCAPE and custom-link postures still override these raw, after this body.
-    `  --${prefix}-cta-ink: var(--${prefix}-ink-9);`,
-    `  --${prefix}-cta-ink-hover: var(--${prefix}-ink-10);`,
-    `  --${prefix}-cta-ink-pressed: var(--${prefix}-ink-11);`,
+    `  --${prefix}-cta-ink: var(--${prefix}-ink-53-r450);`,
+    `  --${prefix}-cta-ink-hover: var(--${prefix}-ink-42-r650);`,
+    `  --${prefix}-cta-ink-pressed: var(--${prefix}-ink-30-r700);`,
     // the STRONG text-cta (neutral only, owner 2026-08-04): the mirror trio over the
     // same three stops cta-ink ascends (11 → 10 → 9); hover shares the between stop
     // through the cta-ink chain
     ...(prefix === 'neutral' ? [
-      `  --neutral-cta-ink-strong: var(--neutral-ink-11);`,
+      `  --neutral-cta-ink-strong: var(--neutral-ink-30-r700);`,
       `  --neutral-cta-ink-strong-hover: var(--neutral-cta-ink-hover);`,
-      `  --neutral-cta-ink-strong-pressed: var(--neutral-ink-9);`,
+      `  --neutral-cta-ink-strong-pressed: var(--neutral-ink-53-r450);`,
     ] : []),
     `  --${prefix}-cta-border: var(${border ? offsetVarName(ctaBorderRung(prefix)) : TRANSPARENT_VAR});`,
     // the SOFT on-cta (owner 2026-08-04: "neutral cta on's should also be the alpha"): the
@@ -235,23 +236,23 @@ export function brandKindP3Body(prefix: string, s: GeneratedScale, mode: 'light'
 export function neutralCss(selector: string, brandH: number, level: NeutralLevel = 'default', contrastProfile?: ContrastProfile, ctaBorder = true): string {
   const s = generateNeutralScale(brandH, level, contrastProfile)
   const nPage = (mode: 'light' | 'dark') => ctaBorder ? pageStopFor(s, mode) : undefined
-  // The universal paper-0/ink-12 anchors ride along: any scope that carries the
-  // ladder must also carry its mode-flipping extremes (semantic aliases like
-  // --surface-pop resolve through them). paper-0 = the neutral's resolved
-  // stop 0 (white in light; one seam below paper-1 in dark, never absolute black).
+  // The universal paper-100/ink-0 anchors ride along (paper-0/ink-12 pre-Stage-B): any scope
+  // that carries the ladder must also carry its mode-flipping extremes (semantic aliases like
+  // --surface-pop resolve through them). paper-100 = the neutral's resolved
+  // stop 0 (white in light; one seam below paper-99 in dark, never absolute black).
   const p0 = (st: ColorStop | undefined, fallback: string) => (st ? stopHex(st) : fallback)
   const p3Light = brandKindP3Body('neutral', s, 'light')
   const p3Dark = brandKindP3Body('neutral', s, 'dark')
   return [
     `${selector} {`,
-    `  --paper-0: ${p0(s.paper0, '#ffffff')};`,
-    `  --ink-12: #000000;`,
+    `  --paper-100: ${p0(s.paper0, '#ffffff')};`,
+    `  --ink-0: #000000;`,
     // the neutral IS the page, so it is judged against its own paper stop
     ...brandKindBody('neutral', s, 'light', nPage('light')),
     `}`,
     `${selector}[data-theme="dark"] {`,
-    `  --paper-0: ${p0(s.paper0Dark, '#000000')};`,
-    `  --ink-12: #ffffff;`,
+    `  --paper-100: ${p0(s.paper0Dark, '#000000')};`,
+    `  --ink-0: #ffffff;`,
     ...brandKindBody('neutral', s, 'dark', nPage('dark')),
     `}`,
     ...(p3Light.length || p3Dark.length ? [
@@ -360,8 +361,8 @@ export function brandCss(
   // scales inside `r` were already resolved under it by resolveBrand)
   contrastProfile?: ContrastProfile,
   // the secondary's mode chip: 'outline' re-resolves the fill trio — cta transparent, cta-hover the
-  // cta color at OUTLINE_HOVER_ALPHA (the tinted hover), on-cta ink-9, cta-border ALWAYS the
-  // gated highlight-8. Same tokens, different resolution — no component changes needed.
+  // cta color at OUTLINE_HOVER_ALPHA (the tinted hover), on-cta ink-53-r450, cta-border ALWAYS the
+  // gated mark-74-r300. Same tokens, different resolution — no component changes needed.
   secondaryStyle?: SecondaryStyle,
   // the NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): the brand's cta FILL trio + on-cta
   // re-resolve from the brand-neutral's ink register (near-black light / near-white dark) —
@@ -457,17 +458,18 @@ export function brandCss(
     : `  --secondary-identity: var(--brand-identity);`
 
   // Universal scale anchors — the two off-scale ends that extend the paper→ink
-  // ladder past its generated stops, flipping with the mode. paper-0 is now a
-  // RESOLVED stop of the neutral ramp (white in light; one seam below paper-1
-  // in dark — never absolute black). ink-12 (the anchor) stays the literal ink
-  // extreme — its pre-collapse number, restored by C49 (it spent 2026-07-29 →
-  // 2026-08-05 as ink-11). Emitted per mode block so each resolves to the right pole.
+  // ladder past its generated stops, flipping with the mode. paper-100 (paper-0
+  // pre-Stage-B) is now a RESOLVED stop of the neutral ramp (white in light; one
+  // seam below paper-99 in dark — never absolute black). ink-0 (ink-12 pre-Stage-B,
+  // the anchor) stays the literal ink extreme — its pre-collapse number, restored by
+  // C49 (it spent 2026-07-29 → 2026-08-05 as stop-index 11). Emitted per mode block
+  // so each resolves to the right pole.
   const p0hex = (s: ColorStop | undefined, fallback: string) => (s ? stopHex(s) : fallback)
-  const lightAnchors = [`  --paper-0: ${p0hex(nScale.paper0, '#ffffff')};`, `  --ink-12: #000000;`]
-  const darkAnchors = [`  --paper-0: ${p0hex(nScale.paper0Dark, '#000000')};`, `  --ink-12: #ffffff;`]
+  const lightAnchors = [`  --paper-100: ${p0hex(nScale.paper0, '#ffffff')};`, `  --ink-0: #000000;`]
+  const darkAnchors = [`  --paper-100: ${p0hex(nScale.paper0Dark, '#000000')};`, `  --ink-0: #ffffff;`]
 
   // outline re-resolution: emitted AFTER the secondary body so the cascade takes these values.
-  // cta-hover = highlight-8 at OUTLINE_HOVER_ALPHA (pressed doubles it) — the STABLE contrast-gated stop, the same one
+  // cta-hover = mark-74-r300 at OUTLINE_HOVER_ALPHA (pressed doubles it) — the STABLE contrast-gated stop, the same one
   // the ring aliases (owner: 9% of the generated subtle cta was imperceptible — it's a very
   // light/dark color; the hover must reference a stable value).
   // the SYSTEM LINK trio: default aliases the primary's cta-ink (mode-blind — the var
@@ -522,7 +524,7 @@ export function brandCss(
   // construction), and the EXACT-style secondary — including the absent-style case, which
   // resolve normalizes to exact — wherever softOnCtaPasses says the composite stays over
   // WCAG 4.5 on every fill state. A failing exact fill keeps the solid pole. Outline keeps
-  // its ink-9 and the no-secondary mirror keeps the brand's.
+  // its ink-53-r450 and the no-secondary mirror keeps the brand's.
   const softOnCta = (mode: 'light' | 'dark'): string[] => {
     if (!secondary || secondaryStyle === 'outline') return []
     if (secondaryStyle !== 'default' && !softOnCtaPasses(secondary, mode)) return []
@@ -543,8 +545,8 @@ export function brandCss(
         `  --secondary-cta-hover: rgba(${c(s8e.r)}, ${c(s8e.g)}, ${c(s8e.b)}, ${OUTLINE_HOVER_ALPHA});`,
         `  --secondary-cta-pressed: rgba(${c(s8e.r)}, ${c(s8e.g)}, ${c(s8e.b)}, ${OUTLINE_PRESSED_ALPHA});`,
       ] : []),
-      `  --secondary-cta-border: var(--secondary-highlight-8);`,
-      `  --secondary-on-cta: var(--secondary-ink-9);`,
+      `  --secondary-cta-border: var(--secondary-mark-74-r300);`,
+      `  --secondary-on-cta: var(--secondary-ink-53-r450);`,
     ]
   }
 

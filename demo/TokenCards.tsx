@@ -7,13 +7,13 @@ import { AlertCircle, AlertTriangle, CheckCircle, Info } from 'lucide-react'
 // --surface-lift plane), so it lifts off the page consistently in both modes.
 //
 // Roles demonstrated in context, not as abstract chips:
-//   ink     → the heading + body copy ("ink family" called out in ink-9)
+//   ink     → the heading + body copy ("ink family" called out in ink-53-r450)
 //   wash    → the inset surface(s)
 //   cta     → the full-round pill button (brand/secondary/neutral) OR, on signals,
 //             the ALERT callout (alerts use cta in signals; the pill is hidden)
-//   scale   → the numbered 1–11 ladder with paper/wash/highlight/ink labels
+//   scale   → the numbered 1–11 ladder with paper/wash/mark/ink labels
 //
-// The universal paper-0/ink-12 anchors are NOT shown here — they're one shared
+// The universal paper-100/ink-0 anchors are NOT shown here — they're one shared
 // white/black pair at the system level, not a per-ramp token.
 export type RampKind = 'brand' | 'neutral' | 'signal'
 
@@ -109,28 +109,28 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
   const hasIdentity = prefix === 'brand' || prefix === 'secondary'
 
   // The 1–11 scale. Number text stays legible in BOTH modes by leaning on tokens that
-  // invert with the mode: ink-11 (high-contrast text) on the surface rungs, --paper-0
-  // (the mode-flipping paper extreme) on the emphasis fill, paper-1 (inverse of ink) on
-  // the remaining ink rungs. ink-9 is BOTH the emphasis fill and a text stop since the
+  // invert with the mode: ink-30-r700 (high-contrast text) on the surface rungs, --paper-100
+  // (the mode-flipping paper extreme) on the emphasis fill, paper-99 (inverse of ink) on
+  // the remaining ink rungs. ink-53-r450 is BOTH the emphasis fill and a text stop since the
   // 2026-07-29 collapse, so it renders as a FILL here — the role highlight-9 used to
-  // hold — and carries the same on-color the semantic layer gives it. ink-10 is the
+  // hold — and carries the same on-color the semantic layer gives it. ink-42-r650 is the
   // between text stop (C49 — the promoted cta-ink-hover value).
   const scale: Array<{ n: number; tok: string; fg: string }> = [
-    { n: 1, tok: 'paper-1', fg: v('ink-11') },
-    { n: 2, tok: 'paper-2', fg: v('ink-11') },
-    { n: 3, tok: 'paper-3', fg: v('ink-11') },
-    { n: 4, tok: 'wash-4', fg: v('ink-11') },
-    { n: 5, tok: 'wash-5', fg: v('ink-11') },
-    { n: 6, tok: 'wash-6', fg: v('ink-11') },
-    { n: 7, tok: 'wash-7', fg: v('ink-11') },
-    { n: 8, tok: 'highlight-8', fg: v('ink-11') },
-    { n: 9, tok: 'ink-9', fg: 'var(--paper-0)' },
-    { n: 10, tok: 'ink-10', fg: v('paper-1') },
-    { n: 11, tok: 'ink-11', fg: v('paper-1') },
+    { n: 1, tok: 'paper-99', fg: v('ink-30-r700') },
+    { n: 2, tok: 'paper-97', fg: v('ink-30-r700') },
+    { n: 3, tok: 'paper-95', fg: v('ink-30-r700') },
+    { n: 4, tok: 'wash-92', fg: v('ink-30-r700') },
+    { n: 5, tok: 'wash-89', fg: v('ink-30-r700') },
+    { n: 6, tok: 'wash-85', fg: v('ink-30-r700') },
+    { n: 7, tok: 'wash-80', fg: v('ink-30-r700') },
+    { n: 8, tok: 'mark-74-r300', fg: v('ink-30-r700') },
+    { n: 9, tok: 'ink-53-r450', fg: 'var(--paper-100)' },
+    { n: 10, tok: 'ink-42-r650', fg: v('paper-99') },
+    { n: 11, tok: 'ink-30-r700', fg: v('paper-99') },
   ]
   const groups = [
     { label: 'paper', span: 3 }, { label: 'wash', span: 4 },
-    { label: 'highlight', span: 1 }, { label: 'ink', span: 3 },
+    { label: 'mark', span: 1 }, { label: 'ink', span: 3 },
   ]
   // the brackets below share the scale's grid, so their spans have to add up to it
   if (groups.reduce((a, g) => a + g.span, 0) !== scale.length)
@@ -148,14 +148,14 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
       {hasIdentity && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 14 }}>
           <span style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0, background: v('identity') }} />
-          <span style={{ fontSize: 13, fontWeight: 600, color: v('ink-9') }}>identity</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: v('ink-53-r450') }}>identity</span>
         </div>
       )}
 
-      {/* ink in context — heading + body, "ink family" called out in ink-9 */}
-      <div style={{ fontSize: 24, fontWeight: 700, color: v('ink-11'), lineHeight: 1.15, marginBottom: 8 }}>Aa Heading</div>
-      <p style={{ fontSize: 15, lineHeight: 1.5, color: v('ink-11'), margin: '0 0 16px' }}>
-        The <span style={{ color: v('ink-9') }}>ink family</span> is designed to contrast with the paper and wash stops and is perfect for text. It can also be used as an inverted fill.
+      {/* ink in context — heading + body, "ink family" called out in ink-53-r450 */}
+      <div style={{ fontSize: 24, fontWeight: 700, color: v('ink-30-r700'), lineHeight: 1.15, marginBottom: 8 }}>Aa Heading</div>
+      <p style={{ fontSize: 15, lineHeight: 1.5, color: v('ink-30-r700'), margin: '0 0 16px' }}>
+        The <span style={{ color: v('ink-53-r450') }}>ink family</span> is designed to contrast with the paper and wash stops and is perfect for text. It can also be used as an inverted fill.
       </p>
 
       {/* cta in context — the pill (hidden on signals, where cta lives in the alert).
@@ -196,9 +196,9 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
       {/* in context — the wash inset, plus the signal alert (signals), the chip +
           focus-ring controls box (insetControls), or the highlight inset (default) */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 18 }}>
-        <div style={{ ...box, background: v('wash-4') }}>
-          <div style={{ ...boxLabel, color: v('ink-9') }}>inset &middot; wash</div>
-          <div style={{ ...boxBody, color: v('ink-11') }}>Body copy in ink on a wash fill.</div>
+        <div style={{ ...box, background: v('wash-92') }}>
+          <div style={{ ...boxLabel, color: v('ink-53-r450') }}>inset &middot; wash</div>
+          <div style={{ ...boxBody, color: v('ink-30-r700') }}>Body copy in ink on a wash fill.</div>
         </div>
         {isSignal ? (
           <div style={{ ...box, background: v('cta'), display: 'flex', gap: 10, alignItems: 'flex-start' }}>
@@ -210,31 +210,31 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
           </div>
         ) : insetControls ? (
           /* the controls box (owner 2026-07-28, unify-compare section 3): chip +
-             focused input, so the stops' JOBS read directly — chip = paper-3 fill ·
-             wash-6 border · ink-9 text; the ring is highlight-8 with a wash-5 halo
+             focused input, so the stops' JOBS read directly — chip = paper-95 fill ·
+             wash-85 border · ink-53-r450 text; the ring is mark-74-r300 with a wash-89 halo
              (the collision demo's held-focus idiom) */
-          <div style={{ ...box, background: v('paper-2') }}>
-            <div style={{ ...boxLabel, color: v('ink-9') }}>chip &middot; focus ring</div>
+          <div style={{ ...box, background: v('paper-97') }}>
+            <div style={{ ...boxLabel, color: v('ink-53-r450') }}>chip &middot; focus ring</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{
                 display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 6,
                 fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap',
-                background: v('paper-3'), color: v('ink-9'), border: `1px solid ${v('wash-6')}`,
+                background: v('paper-95'), color: v('ink-53-r450'), border: `1px solid ${v('wash-85')}`,
               }}>chip</span>
               <input readOnly value="Focused input" style={{
                 flex: 1, minWidth: 0, boxSizing: 'border-box', padding: '7px 11px', borderRadius: 8,
-                fontSize: 13, fontFamily: 'inherit', background: v('paper-1'), color: v('ink-11'),
-                border: `1.5px solid ${v('highlight-8')}`, boxShadow: `0 0 0 3px ${v('wash-5')}`, outline: 'none',
+                fontSize: 13, fontFamily: 'inherit', background: v('paper-99'), color: v('ink-30-r700'),
+                border: `1.5px solid ${v('mark-74-r300')}`, boxShadow: `0 0 0 3px ${v('wash-89')}`, outline: 'none',
               }} />
             </div>
           </div>
         ) : (
-          <div style={{ ...box, background: v('ink-9') }}>
-            <div style={{ ...boxLabel, color: 'var(--paper-0)' }}>inset &middot; emphasis</div>
-            {/* the emphasis inset is the INVERTED fill: ink-9 (the emphasis fill since the
-                2026-07-29 collapse) carrying --paper-0, over an ink-11 panel with paper-1 text */}
-            <div style={{ background: v('ink-11'), borderRadius: 8, padding: '10px 12px' }}>
-              <div style={{ ...boxBody, color: v('paper-1') }}>Emphasis copy in paper-1 text.</div>
+          <div style={{ ...box, background: v('ink-53-r450') }}>
+            <div style={{ ...boxLabel, color: 'var(--paper-100)' }}>inset &middot; emphasis</div>
+            {/* the emphasis inset is the INVERTED fill: ink-53-r450 (the emphasis fill since the
+                2026-07-29 collapse) carrying --paper-100, over an ink-30-r700 panel with paper-99 text */}
+            <div style={{ background: v('ink-30-r700'), borderRadius: 8, padding: '10px 12px' }}>
+              <div style={{ ...boxBody, color: v('paper-99') }}>Emphasis copy in paper-99 text.</div>
             </div>
           </div>
         )}
@@ -250,7 +250,7 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
         ))}
       </div>
       {/* Bracketed group labels — each bracket spans its stops so the
-          paper/wash/highlight/ink grouping reads unambiguously.
+          paper/wash/mark/ink grouping reads unambiguously.
           The column count is DERIVED from the scale, never written down: it was a
           hardcoded 11 and the 2026-07-29 collapse took the scale to 10, which left every
           bracket a column short and drifting left of the stops it labelled. A stop change

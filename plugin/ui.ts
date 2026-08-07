@@ -5,6 +5,7 @@ import { generateNeutralScale, neutralTintHue, type GeneratedScale, type ColorSt
 import { themeToFigma } from '../src/engine/figmaRender'
 import { SIGNALS } from '../src/engine/signals'
 import { toHex } from '../src/engine/cssRender'
+import { stopTokenName } from '../src/engine/tokenNames'
 
 // ─── State ───────────────────────────────────────────────────────────────────
 
@@ -233,19 +234,23 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     for (const s of row.scale.light) {
       const n = s.stop
       const h = hx(s)
-      // ink-9 is BOTH the emphasis fill and a text stop (owner 2026-07-29) — this cell was
-      // stale on the dead highlight-9 name and the DELETED onHighlightIsWhite field until
-      // 2026-08-04; it now mirrors the ext plugin's rendition (on-emphasis = the paper)
-      if (n === 8) cells.push(`<div class="mx-cell" style="border:2px solid ${h}" title="highlight-8"></div>`)
-      else if (n === 9) cells.push(`<div class="mx-aa" style="background:${h};color:${hx(nScale.light[0])}" title="ink-9 (emphasis fill)">Aa</div>`)
-      else if (n >= 10) cells.push(`<div class="mx-aa" style="color:${h};font-size:15px;font-weight:800" title="ink-${n}">Aa</div>`)
-      else cells.push(`<div class="mx-cell" style="background:${h};box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)" title="${n <= 2 ? 'paper' : 'wash'}-${n}"></div>`)
+      // stop 9 (ink-53-r450) is BOTH the emphasis fill and a text stop (owner
+      // 2026-07-29) — this cell was stale on the dead highlight-9 name and the
+      // DELETED onHighlightIsWhite field until 2026-08-04; it now mirrors the ext
+      // plugin's rendition (on-emphasis = the paper). Titles read the live name off
+      // stopTokenName (the engine's SSOT) so a future rename never drifts this
+      // preview — Stage B (owner 2026-08-07, names only) relabeled every stop;
+      // nothing here is hardcoded any more.
+      if (n === 8) cells.push(`<div class="mx-cell" style="border:2px solid ${h}" title="${stopTokenName(8)}"></div>`)
+      else if (n === 9) cells.push(`<div class="mx-aa" style="background:${h};color:${hx(nScale.light[0])}" title="${stopTokenName(9)} (emphasis fill)">Aa</div>`)
+      else if (n >= 10) cells.push(`<div class="mx-aa" style="color:${h};font-size:15px;font-weight:800" title="${stopTokenName(n)}">Aa</div>`)
+      else cells.push(`<div class="mx-cell" style="background:${h};box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)" title="${stopTokenName(n)}"></div>`)
     }
     const s8 = hx(st(8))
     if (row.outline) {
-      // outline's re-expressed fill trio: transparent + ring + ink-9 label (the stop the
-      // emitted on-cta rides — st(10) was stale post-C33); hover/pressed = the STABLE
-      // highlight-8 at 9%/18% (the same stop the ring uses; pressed doubles hover)
+      // outline's re-expressed fill trio: transparent + ring + the stop-9 label (the
+      // stop the emitted on-cta rides — st(10) was stale post-C33); hover/pressed =
+      // the STABLE stop-8 at 9%/18% (the same stop the ring uses; pressed doubles hover)
       const ink9 = hx(st(9))
       const c8 = st(8)
       const rgb = `${Math.round(c8.r * 255)},${Math.round(c8.g * 255)},${Math.round(c8.b * 255)}`
@@ -276,9 +281,9 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     for (const [name, c] of inkTrio)
       cells.push(`<div class="mx-aa" style="color:${hx(c)};font-size:15px;font-weight:800" title="${name}">Aa</div>`)
     // the neutral-only STRONG text-cta mirror (owner 2026-08-04): descends the same three
-    // stops cta-ink ascends — enabled ≡ ink-11, hover ≡ ink-10 (shared through
-    // cta-ink/hover), pressed ≡ ink-9 (C49 numbering). Non-neutral rows carry blank
-    // cells so the derived grid stays rectangular.
+    // stops cta-ink ascends — enabled ≡ stop 11 (ink-30-r700), hover ≡ stop 10 (shared
+    // through cta-ink/hover), pressed ≡ stop 9 (ink-53-r450) (C49 numbering). Non-neutral
+    // rows carry blank cells so the derived grid stays rectangular.
     if (row.strong) {
       const strongTrio = [
         ['cta-ink-strong/enabled', st(11)],
@@ -363,8 +368,9 @@ function updatePreview() {
 
     renderMatrix(t, nScale)
 
-    // the bar's live swatches: neutral shows its highlight-9; a derived secondary shows the
-    // RESOLVED default secondary (the input tracks the primary hex — that's the source, not the result)
+    // the bar's live swatches: neutral shows its stop 9 (ink-53-r450, the emphasis
+    // fill); a derived secondary shows the RESOLVED default secondary (the input
+    // tracks the primary hex — that's the source, not the result)
     const n9 = nScale.light.find(s => s.stop === 9)
     if (n9) neutralSwatch.style.background = toHex(n9.r, n9.g, n9.b)
     // the neutral picker seeds from the custom hue when set, else the primary — the

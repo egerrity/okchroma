@@ -2,33 +2,33 @@
 // the first ink stop, plus the off-scale cta family.
 //
 // THE BAND COLLAPSED (owner 2026-07-29): highlight-9 and on-highlight are deleted and
-// ink-9 (the old ink-10) carries the emphasis fill as well as the first text register.
-// The two checks that named them are REPLACED, not dropped — a deleted solve leaves a
-// property that now has to be asserted instead of computed:
+// ink-53-r450 (ink-9 pre-Stage-B, the old ink-10) carries the emphasis fill as well as
+// the first text register. The two checks that named them are REPLACED, not dropped —
+// a deleted solve leaves a property that now has to be asserted instead of computed:
 //
 // What it gates (all code-grounded, verified against the real pipeline):
 //   1. BAND ORDER + the on-emphasis guarantee, agnostic hue×chroma×L:
-//      (a) ink-9 clears highlight-8 by BAND_ORDER_MARGIN against the shared paper-3
-//          anchor, both modes. This invariant NEVER EXISTED — the ordering was held by
-//          incidental spacing, which is exactly how highlight-9 drifted onto ink-10
-//          unnoticed (drift handoff 2026-07-29). Baseline at the collapse: worst 1.41
-//          light / 3.18 dark.
-//      (b) --paper-0 clears 4.5 against ink-9, both modes — the property the deleted
-//          on-highlight solve used to guarantee, now that semantic.css declares the
-//          on-emphasis text as a paper token. Baseline: worst 4.96 light / 8.04 dark.
+//      (a) ink-53-r450 clears mark-74-r300 by BAND_ORDER_MARGIN against the shared
+//          paper-95 anchor, both modes. This invariant NEVER EXISTED — the ordering was
+//          held by incidental spacing, which is exactly how highlight-9 drifted onto
+//          ink-10 unnoticed (drift handoff 2026-07-29). Baseline at the collapse: worst
+//          1.41 light / 3.18 dark.
+//      (b) --paper-100 clears 4.5 against ink-53-r450, both modes — the property the
+//          deleted on-highlight solve used to guarantee, now that semantic.css declares
+//          the on-emphasis text as a paper token. Baseline: worst 4.96 light / 8.04 dark.
 //   2. structure on the real fleet — identity === input hex.
-//   2b. non-text contrast — stop 8 (highlight-8) clears WCAG 1.4.11 3:1 against PAPER-3
+//   2b. non-text contrast — stop 8 (mark-74-r300) clears WCAG 1.4.11 3:1 against PAPER-95
 //      IN BOTH MODES (spec.ts S8 — one declaration since 2026-07-29), swept agnostically
 //      (worst-case hue×chroma×L is the bar).
 //   3. neutral cta is LOW-HIERARCHY — its REST tracks the scale's own stop 4, so it
 //      FLIPS per mode (near-white wash in light, dark wash in dark) and on-cta stays
 //      legible. DARK additionally lifts the rest to clear NEUTRAL_CTA_DARK_POP_CLEARANCE
-//      vs the resolved dark paper-3 (the POP plane — owner 2026-07-27: clearance reads
+//      vs the resolved dark paper-95 (the POP plane — owner 2026-07-27: clearance reads
 //      against pop, never black). Hover/pressed ride the shared fill-state law
 //      (owner 2026-07-28): ΔL = k/(nearness-to-ground+0.1) mode-mirrored, pressed 2×,
 //      light darkens / dark lightens with the archetype override at the terminal bands.
 //   4. signal cta legible + clean 12-stop scale.
-//   5. blessed-snapshot regression on ink-9 + off-scale cta (L,C,H).
+//   5. blessed-snapshot regression on ink-53-r450 + off-scale cta (L,C,H).
 
 import { BRANDS } from '../src/brands'
 import { SECONDARIES } from '../src/secondaries'
@@ -101,25 +101,25 @@ for (let H = 0; H < 360; H += 15) for (const C of [0.04, 0.08, 0.12, 0.16, 0.20]
       const margin = ratioOf(ink9, p3) - ratioOf(hl8, p3)
       if (margin < bandWorst[mode]) { bandWorst[mode] = margin; bandWorst[mode === 'light' ? 'lAt' : 'dAt'] = at }
       ok(margin >= BAND_ORDER_MARGIN,
-        `agnostic ${at} ${mode}: ink-9 clears highlight-8 by only ${margin.toFixed(2)} (< ${BAND_ORDER_MARGIN})`)
+        `agnostic ${at} ${mode}: ink-53-r450 clears mark-74-r300 by only ${margin.toFixed(2)} (< ${BAND_ORDER_MARGIN})`)
       // (b) the on-emphasis text token must read on the emphasis fill
       const p0 = mode === 'light' ? sc.paper0 : sc.paper0Dark
       if (p0) {
         const r = ratioOf(ink9, p0)
         if (r < emphWorst[mode]) { emphWorst[mode] = r; emphWorst[mode === 'light' ? 'lAt' : 'dAt'] = at }
         ok(r >= ON_EMPHASIS_BAR,
-          `agnostic ${at} ${mode}: paper-0 on ink-9 reads ${r.toFixed(2)} (< ${ON_EMPHASIS_BAR}) — -fg-on-emphasis is unusable`)
+          `agnostic ${at} ${mode}: paper-100 on ink-53-r450 reads ${r.toFixed(2)} (< ${ON_EMPHASIS_BAR}) — -fg-on-emphasis is unusable`)
       }
     }
     bandN++
   }
 }
 console.log(`=== agnostic band order + on-emphasis: ${bandN} scales (hue×chroma×L × both lanes) ===`)
-console.log(`  ink-9 over highlight-8 (vs paper-3, floor ${BAND_ORDER_MARGIN}) worst — light ${bandWorst.light.toFixed(2)} (${bandWorst.lAt}) | dark ${bandWorst.dark.toFixed(2)} (${bandWorst.dAt})`)
-console.log(`  paper-0 on ink-9 (floor ${ON_EMPHASIS_BAR}) worst        — light ${emphWorst.light.toFixed(2)} (${emphWorst.lAt}) | dark ${emphWorst.dark.toFixed(2)} (${emphWorst.dAt})`)
+console.log(`  ink-53-r450 over mark-74-r300 (vs paper-95, floor ${BAND_ORDER_MARGIN}) worst — light ${bandWorst.light.toFixed(2)} (${bandWorst.lAt}) | dark ${bandWorst.dark.toFixed(2)} (${bandWorst.dAt})`)
+console.log(`  paper-100 on ink-53-r450 (floor ${ON_EMPHASIS_BAR}) worst        — light ${emphWorst.light.toFixed(2)} (${emphWorst.lAt}) | dark ${emphWorst.dark.toFixed(2)} (${emphWorst.dAt})`)
 
-// ── 1b. Agnostic non-text contrast — stop 8 (highlight-8) clears WCAG 1.4.11 3:1
-// against PAPER-3 IN BOTH MODES (spec.ts S8, one declaration since 2026-07-29). Owner:
+// ── 1b. Agnostic non-text contrast — stop 8 (mark-74-r300) clears WCAG 1.4.11 3:1
+// against PAPER-95 IN BOTH MODES (spec.ts S8, one declaration since 2026-07-29). Owner:
 // *"dark stop 8 has the same requirements as light, it is a 3:1 contrast require on
 // paper 3 so inputs can be placed on any paper."* This check read paper-2 for dark until
 // then, mirroring the old S8_DARK — and paper-2 is the EASIER anchor in dark (the ring
@@ -139,13 +139,13 @@ for (let H = 0; H < 360; H += 15) for (const C of [0.04, 0.08, 0.12, 0.16, 0.20,
   const cl = vsDeclaredPaper(s, 'light'), cd = vsDeclaredPaper(s, 'dark')
   if (cl < s8c.light) { s8c.light = cl; s8c.lAt = `H${H} C${C} L${L}` }
   if (cd < s8c.dark) { s8c.dark = cd; s8c.dAt = `H${H} C${C} L${L}` }
-  ok(cl >= NONTEXT, `agnostic H${H} C${C} L${L} light stop-8 below 3:1 vs paper-3 (${cl.toFixed(2)})`)
-  ok(cd >= NONTEXT, `agnostic H${H} C${C} L${L} dark stop-8 below 3:1 vs paper-3 (${cd.toFixed(2)})`)
+  ok(cl >= NONTEXT, `agnostic H${H} C${C} L${L} light stop-8 below 3:1 vs paper-95 (${cl.toFixed(2)})`)
+  ok(cd >= NONTEXT, `agnostic H${H} C${C} L${L} dark stop-8 below 3:1 vs paper-95 (${cd.toFixed(2)})`)
   s8n++
 }
-console.log(`=== agnostic non-text 3:1 (stop 8 vs paper-3, both modes): ${s8n} points · worst light ${s8c.light.toFixed(2)}:1 (${s8c.lAt}) · dark ${s8c.dark.toFixed(2)}:1 (${s8c.dAt}) ===`)
+console.log(`=== agnostic non-text 3:1 (stop 8 vs paper-95, both modes): ${s8n} points · worst light ${s8c.light.toFixed(2)}:1 (${s8c.lAt}) · dark ${s8c.dark.toFixed(2)}:1 (${s8c.dAt}) ===`)
 
-// ── 2. Real fleet — structure (identity) + printout of the emphasis fill (ink-9) ──
+// ── 2. Real fleet — structure (identity) + printout of the emphasis fill (ink-53-r450) ──
 interface Item { name: string; hex: string; scale: GeneratedScale }
 const items: Item[] = []
 for (const b of BRANDS) items.push({ name: b.name, hex: b.hex, scale: resolveBrand(b.hex, b.slug, { exact: b.exact, archetypeOverride: b.archetypeOverride, style: b.style, contrastProfile: SHIPPED_PROFILE }).scale })
@@ -155,10 +155,10 @@ for (const slug of Object.keys(SECONDARIES)) {
 }
 
 console.log(`\n=== emphasis-fill structure across ${items.length} brand+secondary ramps ===`)
-console.log('  ramp                    H     yel | LIGHT ink-9          | DARK  ink-9')
+console.log('  ramp                    H     yel | LIGHT ink-53-r450    | DARK  ink-53-r450')
 for (const { name, hex, scale } of items) {
   const l9 = scale.light[8], d9 = scale.dark[8]
-  if (!l9 || !d9) { fails.push(`${name}: missing ink-9 stop`); continue }
+  if (!l9 || !d9) { fails.push(`${name}: missing ink-53-r450 stop`); continue }
   ok(scale.identityHex === hex.toUpperCase(), `${name}: identity ${scale.identityHex} != input ${hex.toUpperCase()}`)
   console.log(`  ${name.padEnd(22)} ${scale.brandH.toFixed(0).padStart(3)}   ${isYellow(scale) ? 'Y' : '·'}  | ${hx(l9)} L${f(l9.L)} w${whiteWcag(l9).toFixed(1)} | ${hx(d9)} L${f(d9.L)} w${whiteWcag(d9).toFixed(1)}`)
 }
@@ -166,7 +166,7 @@ for (const { name, hex, scale } of items) {
 // ── 3. Neutral — low-hierarchy cta REST tracks the scale's own stop 4, flips per
 // mode. DARK POP CLEARANCE (owner 2026-07-27): the dark rest is stop-FED then
 // lifted until the cta clears NEUTRAL_CTA_DARK_POP_CLEARANCE vs the resolved
-// dark paper-3 (the POP plane its buttons sit on — never black). Light stays
+// dark paper-95 (the POP plane its buttons sit on — never black). Light stays
 // exactly stop-fed (already ~1.25 vs its white pop). STATES (owner 2026-07-28,
 // "same delta, every family" + the magnitude correction): hover/pressed ride the
 // shared stateFillL law — ΔL = k/(nearness-to-ground+0.1) mode-mirrored, pressed
@@ -186,7 +186,7 @@ for (const { h, s } of neutralByHue) {
   ok(Math.abs((ctaL.L - s.ctaPressed.L) - stateStepL(ctaL.L, 'light', 2)) < 1e-6, `neutral h${h} light pressed step off the law (${f(ctaL.L - s.ctaPressed.L)})`)
   // DARK: fed + uniform pop-clearance lift — clears the bar, never sinks below
   // its fed stop, minimal (no over-lift), and the state STEPS stay the stops'.
-  const p3D = s.dark[2] // paper-3 — the POP plane (generated-pop candidate retired, owner 2026-07-28)
+  const p3D = s.dark[2] // paper-95 — the POP plane (generated-pop candidate retired, owner 2026-07-28)
   const popRatio = contrastRatio(wcagY(ctaD.L, ctaD.C, ctaD.H), wcagY(p3D.L, p3D.C, p3D.H))
   ok(popRatio >= NEUTRAL_CTA_DARK_POP_CLEARANCE - 0.005, `neutral h${h} cta dark below pop clearance (${popRatio.toFixed(3)} vs ${NEUTRAL_CTA_DARK_POP_CLEARANCE})`)
   ok(ctaD.L >= s.dark[3].L - 1e-6, `neutral h${h} cta dark sank below its fed stop4`)
@@ -254,12 +254,12 @@ for (const sig of SIGNALS) {
   }
 }
 
-// ── 5. Blessed-snapshot regression — the emphasis fill (ink-9) + off-scale cta ──
+// ── 5. Blessed-snapshot regression — the emphasis fill (ink-53-r450) + off-scale cta ──
 // --bless records L,C,H per ramp (both modes) after visual approval; the default run
 // diffs against it so future engine changes can't silently move these tokens. The
 // slot is `light[8]`/`dark[8]` — an ARRAY POSITION, which held highlight-9 before the
-// collapse and holds ink-9 after it: same index, successor token. (The rest of the
-// scale is guarded separately by dark-audit.)
+// collapse and holds ink-53-r450 after it: same index, successor token. (The rest of
+// the scale is guarded separately by dark-audit.)
 const SNAP_PATH = path.join(process.cwd(), 'scripts', 'highlight-snapshot.json')
 const TOL = 0.015
 const rungAndCta = (s: GeneratedScale) =>
@@ -307,4 +307,4 @@ if (process.argv.includes('--bless')) {
 
 console.log()
 if (fails.length) { console.error(`FAIL: ${fails.length}\n` + fails.map(s => '  - ' + s).join('\n')); process.exit(1) }
-console.log('PASS — agnostic band order (ink-9 over highlight-8) + on-emphasis (paper-0 on ink-9) · stop-8 3:1 vs its declared paper · structure · neutral cta rest=stop4 + state law + the SOFT on-cta composite at 4.5 on every state · signals (both lanes) · snapshot (shipped=apca).')
+console.log('PASS — agnostic band order (ink-53-r450 over mark-74-r300) + on-emphasis (paper-100 on ink-53-r450) · stop-8 3:1 vs its declared paper · structure · neutral cta rest=stop4 + state law + the SOFT on-cta composite at 4.5 on every state · signals (both lanes) · snapshot (shipped=apca).')

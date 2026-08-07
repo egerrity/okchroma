@@ -32,7 +32,7 @@ brand.light
 └─ "cta-pressed"
 ```
 
-## Example — a scale stop (light highlight-8, seed #3060C0)
+## Example — a scale stop (light mark-74-r300, seed #3060C0)
 
 ```json
 {
@@ -49,14 +49,14 @@ brand.light
       "produce": { "hue": "warm-drift", "L": "perceptual", "chroma": "ladder" },
       "satFraction": 0.78,
       "baseC": 0.142,
-      "require": { "metric": "wcag", "against": "paper-3", "target": 3, "level": "AA" }
+      "require": { "metric": "wcag", "against": "paper-95", "target": 3, "level": "AA" }
     }
   }
 }
 ```
 
 Most stops carry no `require` at all — the paper/wash seams are guaranteed by the ladder's
-shape, not by declared floors. The declared requires today: highlight-8 (above) and the
+shape, not by declared floors. The declared requires today: mark-74-r300 (above) and the
 three ink stops.
 
 ## Example — an off-scale role (dark cta)
@@ -106,7 +106,7 @@ three ink stops.
 
 | field | type | meaning |
 |---|---|---|
-| `stop` | number | Scale position, 0–11. `0` = the paper anchor beyond paper-1 (white in light; one seam below paper-1 in dark). Roles are never stops. |
+| `stop` | number | Scale position, 0–11. `0` = the paper anchor beyond paper-99 (white in light; one seam below paper-99 in dark). Roles are never stops. |
 | `rootL` | number | The producer's lightness target (the scaffold). For `anchor` roles it is the floor instead. |
 | `group` | `paper` \| `wash` \| `highlight` \| `ink` | The stop's band. |
 | `produce` | object | Named producers — see below. |
@@ -133,7 +133,7 @@ three ink stops.
 | | `constant` | The seed's own hue (roles). |
 | `L` | `perceptual` | Nayatani apparent-lightness solve toward `rootL`. |
 | | `perceptual-lift` | The same solve **floored at `rootL`** — lift, never sink (the dark scale; the blue-recede rule). |
-| | `fixed` | Exactly `rootL` (hand-placed bands, the light paper-0 extreme). |
+| | `fixed` | Exactly `rootL` (hand-placed bands, the light paper-100 extreme). |
 | | `anchor` / `hover` | Roles only: the seed's own lightness (floored) / the hover derivation of the resolved cta. |
 | `chroma` | `ladder` | baseC/envelope blend (light) or the multiplier ladder with the chroma floor (dark). |
 | | `brand` | `chromaMult` × the seed's chroma. |
@@ -147,9 +147,9 @@ be fake portability. Changing producer behavior requires a resolver version bump
 
 | variant | fields | meaning |
 |---|---|---|
-| WCAG contrast | `{ "metric": "wcag", "against": "paper-1" \| "paper-2" \| "paper-3", "target": n, "level": "AA" \| "AAA" }` | The stop must hold `target`:1 against the RESOLVED reference stop. Declared in both modes: light clamps lightness down; dark raises a failing hue off the paper. In use: highlight-8 → 3.0 vs paper-3; ink-9 → 4.5, ink-10 → 6.5, ink-11 → 7.0 vs paper-2. |
+| WCAG contrast | `{ "metric": "wcag", "against": "paper-99" \| "paper-97" \| "paper-95", "target": n, "level": "AA" \| "AAA" }` | The stop must hold `target`:1 against the RESOLVED reference stop. Declared in both modes: light clamps lightness down; dark raises a failing hue off the paper. In use: mark-74-r300 → 3.0 vs paper-95; ink-53-r450 → 4.5, ink-42-r650 → 6.5, ink-30-r700 → 7.0 vs paper-97. |
 | APCA contrast | `{ "metric": "apca", "against": …, "targetLc": n }` | The stop must read \|APCA Lc\| ≥ `targetLc` against the RESOLVED reference stop. Same solve shape as wcag. Never hand-declared in the built-in specs — produced by the contrast-profile compiler (below). |
-| Min separation | `{ "metric": "min-separation", "against": "paper-1" \| "prev", "target": n }` | OKLab ΔE floor from the resolved reference stop (`prev` = the stop's predecessor). Supported for portable specs; **the shipped spec no longer declares any** — the identity-curve paper/wash shape guarantees the seams instead (`spec.ts:188`). |
+| Min separation | `{ "metric": "min-separation", "against": "paper-99" \| "prev", "target": n }` | OKLab ΔE floor from the resolved reference stop (`prev` = the stop's predecessor). Supported for portable specs; **the shipped spec no longer declares any** — the identity-curve paper/wash shape guarantees the seams instead (`spec.ts:188`). |
 
 ### Contrast profiles (opt-in)
 

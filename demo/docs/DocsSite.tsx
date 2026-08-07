@@ -38,13 +38,13 @@ const Table = ({ head, rows }: { head: React.ReactNode[]; rows: React.ReactNode[
 )
 
 // ── Live example: real generated ramps, computed by the engine ───────────────
-// The shipped bands: paper 1-3, wash 4-7, highlight 8, ink 9-11. Band labels and
+// The shipped bands: paper 1-3, wash 4-7, mark 8, ink 9-11. Band labels and
 // stop numbers render ONCE, on top; the hue rows stack under them. Column count
 // derives from the scale (--cols) and the spans are asserted against it, so a
 // band change breaks loudly here instead of drifting.
 const RAMP_GROUPS: Array<{ label: string; span: number }> = [
   { label: 'paper', span: 3 }, { label: 'wash', span: 4 },
-  { label: 'highlight', span: 1 }, { label: 'ink', span: 3 },
+  { label: 'mark', span: 1 }, { label: 'ink', span: 3 },
 ]
 const RAMP_SET_HEXES = ['#E93D82', '#C61D1B', '#E08A1E', '#E3B505', '#2E9E3F', '#0BA5C0', '#2C5FC9']
 function RampSet() {
@@ -130,18 +130,18 @@ const overview: Article = {
       <Table
         head={['Tokens', 'Role', 'Guarantee']}
         rows={[
-          [<Code>paper-1 … paper-3</Code>, 'the page and card planes', ''],
-          [<Code>wash-4 … wash-7</Code>, 'quiet fills and borders', ''],
-          [<Code>highlight-8</Code>, 'non-text emphasis: borders, UI elements', 'WCAG 3:1 vs paper-3'],
-          [<Code>ink-9</Code>, 'emphasis fill and first text stop', 'WCAG 4.5:1 vs paper-2'],
-          [<Code>ink-10</Code>, 'mid text', 'WCAG 6.5:1 vs paper-2'],
-          [<Code>ink-11</Code>, 'strong text', 'WCAG 7:1 vs paper-2'],
+          [<Code>paper-99 … paper-95</Code>, 'the page and card planes', ''],
+          [<Code>wash-92 … wash-80</Code>, 'quiet fills and borders', ''],
+          [<Code>mark-74-r300</Code>, 'non-text emphasis: borders, UI elements', 'WCAG 3:1 vs paper-95'],
+          [<Code>ink-53-r450</Code>, 'emphasis fill and first text stop', 'WCAG 4.5:1 vs paper-97'],
+          [<Code>ink-42-r650</Code>, 'mid text', 'WCAG 6.5:1 vs paper-97'],
+          [<Code>ink-30-r700</Code>, 'strong text', 'WCAG 7:1 vs paper-97'],
           [<Code>cta · cta-hover · cta-pressed</Code>, "the solid button fill and its states, at the seed's own lightness", 'on-text passes WCAG 4.5; the fill clears APCA Lc 65 (critical 50)'],
-          [<Code>cta-ink (+hover / pressed)</Code>, 'the text-style cta', 'aliases ink-9/10/11'],
+          [<Code>cta-ink (+hover / pressed)</Code>, 'the text-style cta', 'aliases ink-53-r450/42-r650/30-r700'],
           [<Code>cta-border</Code>, 'low-visibility stroke; transparent above the gate', 'appears below APCA |Lc| 15 vs the page'],
           [<Code>on-cta</Code>, 'computed black or white button text', 'chosen by passing; at alpha on quiet fills'],
           [<Code>identity</Code>, 'the exact input hex, for logos', 'never adjusted'],
-          [<Code>paper-0 · ink-12</Code>, 'scheme anchors past the scale ends', 'mode-flipped extremes'],
+          [<Code>paper-100 · ink-0</Code>, 'scheme anchors past the scale ends', 'mode-flipped extremes'],
         ]}
       />
     </>
@@ -209,8 +209,8 @@ const generation: Article = {
         is a flat calibrated ladder (apparent-lightness solving in dark makes blue recede; the flat
         ladder is deliberate). Chroma is trimmed so light-mode loudness carries over. A fill that
         lands too dark is floored upward: it lifts, never sinks.</LI>
-        <LI><b>Requirements.</b> Declared floors bind after placement, in both modes: highlight-8
-        at WCAG 3:1 vs paper-3, ink-9/10/11 at 4.5 / 6.5 / 7:1 vs paper-2. A placement that
+        <LI><b>Requirements.</b> Declared floors bind after placement, in both modes: mark-74-r300
+        at WCAG 3:1 vs paper-95, ink-53-r450/42-r650/30-r700 at 4.5 / 6.5 / 7:1 vs paper-97. A placement that
         already clears does not move. An unmeetable floor marks the stop{' '}
         <Code>unresolvable</Code> instead of fudging.</LI>
         <LI>The cta-related values are generated.
@@ -224,7 +224,7 @@ const generation: Article = {
             secondary 6%, neutral 8%).</LI>
             <LI>A quiet fill (derived secondary, neutral) carries its text at 75/80% alpha, only
             where the composite clears 4.5 on rest, hover, and pressed.</LI>
-            <LI><Code>cta-ink</Code>, the text-style cta, aliases ink-9/10/11 as its states.</LI>
+            <LI><Code>cta-ink</Code>, the text-style cta, aliases ink-53-r450/42-r650/30-r700 as its states.</LI>
           </UL>
         </LI>
         <LI><b>Collision checks.</b> The result is compared to the four signals: red, yellow,
@@ -276,8 +276,8 @@ const tokenSchema: Article = {
         file (raise a contrast target) and the resolver honors the edit.
       </P>
       <P>
-        This is a real token, emitted by the engine right now: light <Code>highlight-8</Code>,
-        carrying its declared WCAG 3:1 require against paper-3:
+        This is a real token, emitted by the engine right now: light <Code>mark-74-r300</Code>,
+        carrying its declared WCAG 3:1 require against paper-95:
       </P>
       <LiveToken hex="#3060C0" tokenKey="8" mode="light"
         caption={<>Live output of <Code>emitDtcgRamp('#3060C0', 'light')</Code>. The <Code>produce</Code> block names the producers; <Code>require</Code> is the declared floor.</>} />
@@ -292,7 +292,7 @@ const tokenSchema: Article = {
       <H2>The rules in one breath</H2>
       <UL>
         <LI><b>A requirement is a floor.</b> A placement that already clears it doesn't move, byte for byte.</LI>
-        <LI><b>Requirements reference resolved stops.</b> Push paper-2 darker and the floors declared against it re-solve automatically.</LI>
+        <LI><b>Requirements reference resolved stops.</b> Push paper-97 darker and the floors declared against it re-solve automatically.</LI>
         <LI><b>Fail loud.</b> An unmeetable requirement marks the stop <Code>unresolvable</Code>; a foreign resolver id is rejected, never guessed at.</LI>
         <LI><b>Producers are names, not formulas.</b> The math lives behind the versioned <Code>resolver</Code> id; the token file stays pure intent.</LI>
       </UL>
@@ -365,7 +365,7 @@ const DOCS2_CSS = `
   padding: 16px 18px; overflow-x: auto; margin: 0 0 18px;
 }
 .d2-pre code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; line-height: 1.6; color: var(--fg-default); white-space: pre; }
-.d2-note { font-size: 13.5px; line-height: 1.6; color: var(--fg-subtle); background: var(--surface-sink); border: 1px solid var(--border-subtle); border-left: 3px solid var(--brand-ink-9); border-radius: 8px; padding: 12px 14px; margin: 18px 0; }
+.d2-note { font-size: 13.5px; line-height: 1.6; color: var(--fg-subtle); background: var(--surface-sink); border: 1px solid var(--border-subtle); border-left: 3px solid var(--brand-ink-53-r450); border-radius: 8px; padding: 12px 14px; margin: 18px 0; }
 .d2-ramp { margin: 22px 0 26px; }
 .d2-ramp-nums { font-size: 10px; color: var(--fg-subtle); margin: 4px 0; }
 .d2-ramp-nums span { text-align: center; }

@@ -62,6 +62,32 @@ type Snap = { base: Record<string, number>; brands: Record<string, Record<string
 const snap: Snap = { base: {}, brands: {}, roster: {} }
 for (const col of COLUMNS) snap.base[col] = base[col].length
 
+// LADDER-ORDER ASSERTION (adversarial-audit-caught 2026-08-07): paper's bare-digit
+// leaves (95/97/99/100) and wash's (80/85/89/92) are JS integer-index keys, so a plain
+// Object.entries over the FigmaGroup silently re-sorts them ascending regardless of
+// insertion order — reversing the TOKEN_ORDER panel contract (descending LL, lightest
+// first) with no color changing, so nothing else in this file would ever catch it. Guards
+// figmaRender.ts's groupEntries + its two consumers (payload.ts flatten(), plugin/code.ts's
+// orderedEntries). The shape is structural, not per-brand-value-dependent — every brand
+// shares the same band layout — so checking the base seed's two columns is enough.
+const LADDER_FAMILIES = ['neutral', 'brand-primary', 'brand-secondary', 'critical', 'warning', 'positive', 'info']
+function assertLadderOrder(tokens: FlatTok[], label: string): void {
+  for (const fam of LADDER_FAMILIES) {
+    const nums: number[] = []
+    for (const t of tokens) {
+      const m = new RegExp(`/${fam}/(?:paper|wash|mark|ink)/(\\d+)`).exec(t.path)
+      if (m) nums.push(parseInt(m[1], 10))
+    }
+    for (let i = 1; i < nums.length; i++) {
+      if (nums[i] >= nums[i - 1]) {
+        fails.push(`${label} ${fam}: ladder order broken at index ${i} (${nums[i - 1]} → ${nums[i]}, expected strictly descending)`)
+        break
+      }
+    }
+  }
+}
+for (const col of COLUMNS) assertLadderOrder(base[col], `base ${col}`)
+
 for (const b of BRANDS) {
   const secondaryHex = SECONDARIES[b.slug] ?? null
   const tokens = buildBrandColumns({

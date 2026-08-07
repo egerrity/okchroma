@@ -1,5 +1,5 @@
 // reqtoken-render.ts — EYE-CHECK page generator. Renders the reqtoken ramp for the documented edge seeds
-// (plus a mid-blue control), light + dark side by side, each panel on ITS OWN resolved paper-1 background
+// (plus a mid-blue control), light + dark side by side, each panel on ITS OWN resolved paper-99 background
 // (dark is never judged on white). Static HTML, no client JS: node resolves, writes render/index.html.
 import { writeFileSync, mkdirSync } from 'fs'
 import { resolveRamp, type ResolvedRamp, type ResolvedStop } from '../src/reqtoken/resolve'
@@ -32,7 +32,7 @@ function panel(r: ResolvedRamp): string {
         <span style="color:${ink11.hex};font-size:21px">Aa</span>
         <span style="color:${ink.hex};font-size:21px;font-weight:700">Aa</span>
       </div>
-      <div class="lbl" style="align-self:center">ink 11 / 12 on paper-2</div>
+      <div class="lbl" style="align-self:center">ink 11 / 12 on paper-97</div>
     </div>
   </div>`
 }
@@ -56,7 +56,7 @@ const html = `<!doctype html><meta charset="utf-8"><title>reqtoken eye-check</ti
   .chip{display:flex;gap:14px;align-items:center;padding:10px 18px;border-radius:8px;height:36px}
 </style>
 <h1>reqtoken ramps — scale stops 1–10 + off-scale cta + ink text (parity-shaped declaration)</h1>
-<div style="opacity:.65;font-size:12px">paper 1–2 · wash 3–7 · highlight 8–9 · cta = off-scale role with on-cta text · ink 10/11 as Aa on paper-2 · "·req" = the require clamp bound</div>
+<div style="opacity:.65;font-size:12px">paper 1–2 · wash 3–7 · mark 8–9 · cta = off-scale role with on-cta text · ink 10/11 as Aa on paper-97 · "·req" = the require clamp bound</div>
 ${sections}`
 
 mkdirSync('render', { recursive: true })

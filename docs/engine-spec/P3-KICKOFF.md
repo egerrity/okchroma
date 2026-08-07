@@ -35,13 +35,13 @@ only saturated stops differ.
   can only be tuned once the sRGB ceiling stops truncating the amplitude.
 - **Fired mute remedy**: corridor solve — muted wash chroma at t ≈ 0.4 between the
   derived secondary's C and the signal's C, per stop, per mode; paper stops included,
-  highlights half-reduction, cta untouched. Corridor geometry shifts with the gamut.
+  mark half-reduction, cta untouched. Corridor geometry shifts with the gamut.
 - **Green-light signal boost**: green's light washes sit at 0.33–0.53 of sRGB gamut
   (pastel register — no corridor for the mute); the boost headroom question re-opens in P3.
 - **Yellow vividness boundary**: the gate's qualifier threshold (currently v ≥ 0.5);
   owner leaned "F (C 0.08) probably shouldn't fire" — re-ask once the remedy is the mute.
-- **Paper-1/paper-2 split** (owner 2026-07-07, re-flagged after the boost removal made it
-  read WORSE — the paper stops lost their share of the lift too): paper-2 needs more
+- **Paper-99/paper-97 split** (owner 2026-07-07, re-flagged after the boost removal made it
+  read WORSE — the paper stops lost their share of the lift too): paper-97 needs more
   chroma ("I was mistaken about paper-1"); measured geometry: light p1 L≈.993/C≈.004,
   p2 L≈.965 at ~2.5× that chroma, and the p1→p2 L gap (.028) exceeds p2→wash-3 (.022) so
   p2 groups with the washes. Owner: wrap this INTO the post-P3 round, not before.
@@ -67,7 +67,7 @@ it (two-phase parameterize-then-flip, owner decisions D1–D5) is **P3-DESIGN.md
   qualified holes, secondary annotation coverage, swap lane-invariance). Run it after
   every P3 step; it is the regression net for the collision machinery.
 - `npm run lab:calibration` — emits dist/calibration-lab.html: the mute corridor solve
-  (t sweep), the yellow vividness boundary strip, and the paper-1/2 diagnostics — the
+  (t sweep), the yellow vividness boundary strip, and the paper-99/97 diagnostics — the
   eye-check material for the post-P3 round, regenerated against whatever gamut is live.
 
 ## Measurement artifacts

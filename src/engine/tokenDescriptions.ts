@@ -60,17 +60,17 @@ const solved = (f: Family) => `${TINT[f]}; re-solved to clear its floor`
 const TEXT_CTA = 'aliases the family’s reading stops'
 
 const SCALE: Record<string, Body> = {
-  'paper/1': PAPER,
-  'paper/2': PAPER,
-  'paper/3': { req: 'backgrounds, inverted text', theming: f => `${TINT[f]}. Worst background text stops must clear.`, collides: true },
-  'wash/4': WASH,
-  'wash/5': WASH,
-  'wash/6': WASH,
-  'wash/7': WASH,
-  'highlight/8': { req: 'focus rings, icons, large text', contrast: AA_LARGE, theming: solved, collides: true },
-  'ink/9': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
-  'ink/10': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
-  'ink/11': { req: 'high-emphasis text, inverted backgrounds', contrast: AAA_BODY, theming: solved, collides: true },
+  'paper/99': PAPER,
+  'paper/97': PAPER,
+  'paper/95': { req: 'backgrounds, inverted text', theming: f => `${TINT[f]}. Worst background text stops must clear.`, collides: true },
+  'wash/92': WASH,
+  'wash/89': WASH,
+  'wash/85': WASH,
+  'wash/80': WASH,
+  'mark/74-r300': { req: 'focus rings, icons, large text', contrast: AA_LARGE, theming: solved, collides: true },
+  'ink/53-r450': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
+  'ink/42-r650': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
+  'ink/30-r700': { req: 'high-emphasis text, inverted backgrounds', contrast: AAA_BODY, theming: solved, collides: true },
   'cta/enabled': { req: 'CTAs', theming: 'fully re-solved per theme and family' },
   'cta/hover': { req: 'CTA pointer-over state', theming: 'follows its rest fill' },
   'cta/pressed': { req: 'CTA pressed state', theming: 'follows its rest fill' },
@@ -84,8 +84,8 @@ const SCALE: Record<string, Body> = {
 // ── rows only the neutral carries ────────────────────────────────────────────
 const STRONG = 'descending mirror of the text CTA'
 const NEUTRAL_ONLY: Record<string, Body> = {
-  'paper/0': { req: 'backgrounds, inverted text', theming: f => TINT[f] },
-  'ink/12': { req: 'max-emphasis text', contrast: AAA_BODY },
+  'paper/100': { req: 'backgrounds, inverted text', theming: f => TINT[f] },
+  'ink/0': { req: 'max-emphasis text', contrast: AAA_BODY },
   'cta-ink-strong/enabled': { req: 'heavier text CTA', contrast: AAA_BODY, theming: STRONG },
   'cta-ink-strong/hover': { req: 'heavier text CTA pointer-over', contrast: AA_BODY, theming: STRONG },
   'cta-ink-strong/pressed': { req: 'heavier text CTA pressed', contrast: AA_BODY, theming: STRONG },
@@ -105,6 +105,11 @@ const LINK = (state: string, contrast: string): Body => ({
 const SYSTEM: Record<string, Body> = {
   'system/abs-black': ABS,
   'system/abs-white': ABS,
+  // the community plugin's FLAT anchor home (plugin/code.ts STATIC_UTILS) — the ext
+  // plugin's equivalent is banded at neutral/ink/0 (NEUTRAL_ONLY below); this is the
+  // same stop under community's system-root spelling, so the body matches its voice.
+  'system/ink-0': { req: 'max-emphasis text anchor', contrast: AAA_BODY },
+
   'system/abs-primary': { req: 'identity seed reference', theming: 'the theme’s own input, as given' },
   'system/abs-secondary': { req: 'identity seed reference', theming: 'the theme’s companion input, as given' },
   'system/alpha/transparent': { req: 'aliased off-states' },

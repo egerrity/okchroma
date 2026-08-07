@@ -10,8 +10,8 @@
 //      in sRGB — re-measure the corridor in P3).
 //   §2 yellow vividness boundary strip — gold→brown seeds, which fire the gate today
 //      (HUE_COLLISION_MIN_V); the owner letter is still owed.
-//   §3 paper-1/2 diagnostics — stops 1–3 across hues with L/C values (the split the
-//      owner flagged; paper-2 wants more chroma).
+//   §3 paper-99/97 diagnostics — stops 1–3 across hues with L/C values (the split the
+//      owner flagged; paper-97 wants more chroma).
 // npm run lab:calibration
 
 import { resolveTheme, signalScalesFor } from '../src/engine/resolve'
@@ -110,7 +110,7 @@ for (const c of MUTE_CASES) {
     const st = (n: number) => { const x = t.primary.scale.light.find(y => y.stop === n)!; return `<div class="pchip"><div class="psw" style="background:${toHex(x.r, x.g, x.b)}"></div><div class="pm">s${n} L${x.L.toFixed(3)} C${x.C.toFixed(3)}</div></div>` }
     return `<div class="prow"><span class="ph">H${H}</span>${st(1)}${st(2)}${st(3)}</div>`
   }).join('')
-  cards.push(`<section class="card"><h2>§3 paper-1/2 split (owner: p2 wants more chroma)</h2><div class="ppanel">${prows}</div></section>`)
+  cards.push(`<section class="card"><h2>§3 paper-99/97 split (owner: p2 wants more chroma)</h2><div class="ppanel">${prows}</div></section>`)
 }
 
 const html = `<title>calibration lab</title>
