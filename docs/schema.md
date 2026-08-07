@@ -26,33 +26,38 @@ A **ramp group** per mode:
 brand.light
 ├─ seed            plain color token — the brand input
 ├─ $extensions     group-level: resolver id + the on-color rules (ons)
-├─ "0" … "12"      scale stop tokens, keyed by stop NUMBER
+├─ "0" … "11"      scale stop tokens, keyed by stop NUMBER
 ├─ "cta"           off-scale role tokens, keyed by role NAME
-└─ "cta-hover"     (roles are never numbered — cta is not "stop 9")
+├─ "cta-hover"     (roles are never numbered — cta is not a stop)
+└─ "cta-pressed"
 ```
 
-## Example — a scale stop (light paper-2)
+## Example — a scale stop (light highlight-8, seed #3060C0)
 
 ```json
 {
   "$type": "color",
-  "$value": { "colorSpace": "srgb", "components": [0.941, 0.953, 0.980], "alpha": 1, "hex": "#f0f3fa" },
+  "$value": { "colorSpace": "srgb", "components": [0.345, 0.525, 0.867], "alpha": 1, "hex": "#5886dd" },
   "$extensions": {
     "org.okchroma.requirement": {
       "resolver": "okchroma-reqtoken@2",
       "seed": "{brand.light.seed}",
       "mode": "light",
-      "stop": 2,
-      "rootL": 0.982,
-      "group": "paper",
+      "stop": 8,
+      "rootL": 0.738,
+      "group": "highlight",
       "produce": { "hue": "warm-drift", "L": "perceptual", "chroma": "ladder" },
-      "satFraction": 0.85,
-      "baseC": 0.01,
-      "require": { "metric": "min-separation", "against": "paper-1", "target": 0.028 }
+      "satFraction": 0.78,
+      "baseC": 0.142,
+      "require": { "metric": "wcag", "against": "paper-3", "target": 3, "level": "AA" }
     }
   }
 }
 ```
+
+Most stops carry no `require` at all — the paper/wash seams are guaranteed by the ladder's
+shape, not by declared floors. The declared requires today: highlight-8 (above) and the
+three ink stops.
 
 ## Example — an off-scale role (dark cta)
 
@@ -81,8 +86,7 @@ brand.light
   "org.okchroma.requirement": {
     "resolver": "okchroma-reqtoken@2",
     "ons": {
-      "onFill":      { "metric": "apca-pole", "enforce": true },
-      "onHighlight": { "metric": "apca-pole", "enforce": false }
+      "onFill": { "metric": "apca-pole", "enforce": true, "ratioFloor": 4.5, "coEnforceLc": 65 }
     }
   }
 }
@@ -102,7 +106,7 @@ brand.light
 
 | field | type | meaning |
 |---|---|---|
-| `stop` | number | Scale position, 0–12. `0` = the paper anchor beyond paper-1 (white in light; one seam below paper-1 in dark). Roles are never stops. |
+| `stop` | number | Scale position, 0–11. `0` = the paper anchor beyond paper-1 (white in light; one seam below paper-1 in dark). Roles are never stops. |
 | `rootL` | number | The producer's lightness target (the scaffold). For `anchor` roles it is the floor instead. |
 | `group` | `paper` \| `wash` \| `highlight` \| `ink` | The stop's band. |
 | `produce` | object | Named producers — see below. |
@@ -115,8 +119,8 @@ brand.light
 
 | field | type | meaning |
 |---|---|---|
-| `role` | `cta` \| `cta-hover` | The role name. Off the numbered scale by design. |
-| `produce` | object | `{ hue: "constant", L: "anchor" \| "hover", chroma: "brand" }` — the fill carries the seed's own hue and lightness; `hover` derives from the resolved cta. |
+| `role` | `cta` \| `cta-hover` \| `cta-pressed` | The role name. Off the numbered scale by design. |
+| `produce` | object | `{ hue: "constant", L: "anchor" \| "hover" \| "pressed", chroma: "brand" }` — the fill carries the seed's own hue and lightness; `hover`/`pressed` derive from the resolved cta. |
 | `floorL` | number | The anchor floor (0 = none). Dark fills must not sink. The on-fill enforcement re-solve may legitimately pass it — the floor governs the anchor, not the enforced result. |
 | `chromaMult` | number | Multiplier on the seed's chroma. |
 
@@ -124,7 +128,7 @@ brand.light
 
 | axis | values | meaning |
 |---|---|---|
-| `hue` | `warm-drift` | The light path: gold-spine drift with a dynamic cap, minus the red-cool. |
+| `hue` | `warm-drift` | The light path: warm spine drift with a dynamic cap, plus the signed nearest-side red repel. |
 | | `warm-torsion` | The dark path: spine torsion anchored at the dark fill rung. |
 | | `constant` | The seed's own hue (roles). |
 | `L` | `perceptual` | Nayatani apparent-lightness solve toward `rootL`. |
@@ -143,35 +147,35 @@ be fake portability. Changing producer behavior requires a resolver version bump
 
 | variant | fields | meaning |
 |---|---|---|
-| WCAG contrast | `{ "metric": "wcag", "against": "paper-2", "target": n, "level": "AA" \| "AAA" }` | The stop must hold `target`:1 against the RESOLVED paper-2. Declared in both modes: light clamps lightness down; dark raises a failing hue off the paper. In use: highlight-8 → 3.0, ink-9 → 4.5, ink-10 → 6.5, ink-11 → 7.0. |
-| APCA contrast | `{ "metric": "apca", "against": "paper-2", "targetLc": n }` | The stop must read \|APCA Lc\| ≥ `targetLc` against the RESOLVED paper-2. Same solve shape as wcag (light clamps down, dark raises off the paper). Never hand-declared in the built-in specs — produced by the contrast-profile compiler (below). |
-| Min separation | `{ "metric": "min-separation", "against": "paper-1" \| "prev", "target": n }` | OKLab ΔE floor from the resolved reference stop (`prev` = the stop's predecessor). In use: paper-2 ≥ 0.028 off paper-1; every wash seam ≥ 0.012 off `prev`. |
+| WCAG contrast | `{ "metric": "wcag", "against": "paper-1" \| "paper-2" \| "paper-3", "target": n, "level": "AA" \| "AAA" }` | The stop must hold `target`:1 against the RESOLVED reference stop. Declared in both modes: light clamps lightness down; dark raises a failing hue off the paper. In use: highlight-8 → 3.0 vs paper-3; ink-9 → 4.5, ink-10 → 6.5, ink-11 → 7.0 vs paper-2. |
+| APCA contrast | `{ "metric": "apca", "against": …, "targetLc": n }` | The stop must read \|APCA Lc\| ≥ `targetLc` against the RESOLVED reference stop. Same solve shape as wcag. Never hand-declared in the built-in specs — produced by the contrast-profile compiler (below). |
+| Min separation | `{ "metric": "min-separation", "against": "paper-1" \| "prev", "target": n }` | OKLab ΔE floor from the resolved reference stop (`prev` = the stop's predecessor). Supported for portable specs; **the shipped spec no longer declares any** — the identity-curve paper/wash shape guarantees the seams instead (`spec.ts:188`). |
 
 ### Contrast profiles (opt-in)
 
 `withProfile(spec, 'apca')` (`src/reqtoken/profiles.ts`) rewrites every declared wcag require
 onto its APCA equivalent — the same declaration re-solved against a different constraint — and
-sets `ons.onFill.enforceLc` so the on-text/cta enforcement judges Lc too (measured bridge fact:
-the shipped WCAG 4.5-white cta enforcement lands at Lc ≈ 76–78, so a map's 4.5 slot chooses
-between releasing fills lighter at Lc 60 or reproducing the shipped ctas at Lc 75).
-Exposed as `contrastProfile: 'wcag' | 'apca'` on `GenerateOptions`; the default `'wcag'` is the
-identity (byte-identical shipped output). The Lc map (currently 3:1 → Lc 30, 4.5 → 60, 7 → 90)
-and any adoption/exposure are pending an owner decision — see `docs/engine-spec/rounds-archive/apca-sweep.ts` →
-`docs/engine-spec/rounds-archive/apca-sweep.ts` renders the candidate comparison (a local-only page).
+sets `ons.onFill.enforceLc` so the on-text/cta enforcement judges Lc instead. Exposed as
+`contrastProfile: 'wcag' | 'apca'` on `GenerateOptions`; the default `'wcag'` is the identity.
+**WCAG is the shipped lane** (`SHIPPED_PROFILE`, `src/build.ts`, owner 2026-07-29); the apca
+lane exists in code, nothing ships through it. The Lc map is `DEFAULT_APCA_LC_MAP`
+(`profiles.ts`: 3:1 → Lc 30, 4.5 → 75, 6.5 → 85, 7 → 90).
 
 ### On-color rules (`ons`, group level)
 
 | field | meaning |
 |---|---|
 | `metric: "apca-pole"` | The on-text color is whichever pole (white/black) has the larger \|APCA Lc\| on the fill. |
-| `enforce` | If true, add the legibility fallback: flip the pole only if the chosen one fails 4.5:1 while the other clears it with \|Lc\| ≥ 45. On-text never moves a fill; a fill only moves when *neither* pole passes (the enforcement re-solve). |
-| `enforceLc` | Set by the apca profile compiler (from the map's 4.5 slot): the pole is judged pure apca-pole (the wcag flip is metric-mixing and a no-op under one metric) and the cta enforcement re-solve darkens the fill until the white pole reads ≥ this Lc, replacing the WCAG-4.5 re-solve. Absent under the shipped wcag profile. |
+| `enforce` | If true, the legibility law binds: the chosen pole must pass `ratioFloor`, else the pole flips; a fill only moves when *neither* pole passes (the enforcement re-solve). On-text itself never moves a fill. |
+| `ratioFloor` | The wcag-lane law (4.5): the WCAG ratio the chosen pole must clear. Read only in the wcag lane (`enforceLc` undefined). |
+| `coEnforceLc` | The C42 co-clearance: alongside the 4.5 floor, the cta fill re-solves until the pole reads ≥ this Lc (65; the critical signal rides 50 via `apcaClearanceLc`). Rides in the wcag lane. |
+| `enforceLc` | Set by the apca profile compiler (from the map's 4.5 slot): the apca lane's sole bar — the cta enforcement re-solve moves the fill until the pole reads ≥ this Lc, replacing the WCAG-4.5 re-solve. Absent under the shipped wcag profile; never active together with `ratioFloor`. |
 
 ## Resolution semantics
 
 1. **Order matters and is total.** Stops resolve in declared order; a `require` may
-   reference any *already-resolved* stop (never a cached value), so a pushed stop
-   automatically re-solves everything downstream of it — the seam chain, then 8/10/11.
+   reference any *already-resolved* stop (never a cached value), so a pushed paper
+   automatically re-solves everything declared against it (8, then 9/10/11).
 2. **A requirement is a floor, not a re-placement.** A placement that already clears its
    requirement does not move, byte-for-byte.
 3. **Fail loud.** A requirement the resolver cannot meet yields an explicit
