@@ -1,5 +1,7 @@
-// GENERATED from the owner's Unify Figma variable export (extract 2026-07-13,
-// distilled 2026-07-27 by scratchpad/distill_unify.py — edit the script, not this file).
+// Distilled from the owner's Unify Figma variable export (extract 2026-07-13).
+// The generating script (scratchpad/distill_unify.py) no longer exists — this
+// file is edited directly now. Theme names must stay family hue words; client
+// brand names never ship in the public bundle.
 // Structure mirrors the Unify file: Color modes (Light/Dark primitives), Color
 // themes (per-brand aliases: Primary / Primary Highlight / Primary Accent), and
 // the Color palettes semantic collection (Signal palette etc.).
@@ -17,7 +19,7 @@ export interface UnifySignalToken { name: string; family: string; stop: number; 
 
 export const UNIFY_THEMES: UnifyTheme[] = [
   {
-    "name": "Atelio (archived)",
+    "name": "Violet (archived)",
     "archived": true,
     "primary": {
       "hex": "#4F46E5",
@@ -83,7 +85,7 @@ export const UNIFY_THEMES: UnifyTheme[] = [
     }
   },
   {
-    "name": "FIS",
+    "name": "Eggplant",
     "archived": false,
     "primary": {
       "hex": "#532371",

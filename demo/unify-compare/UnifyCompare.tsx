@@ -617,7 +617,7 @@ export default function UnifyCompare() {
   const OK_CHIP_PREFIXES = ['brand', 'neutral', 'positive', 'warning', 'critical'] as const
 
   // ── section 3 data ──
-  const [focusSlug, setFocusSlug] = useState(slugOf(themes.find(t => t.name === 'FIS')!))
+  const [focusSlug, setFocusSlug] = useState(slugOf(themes.find(t => t.name === 'Eggplant')!))
   const focus = resolved.find(x => x.slug === focusSlug)!
   // every custom property the engine mints for this one seed (ramp × 2 modes,
   // ctas, inks, on-*, neutral, illustration, shifted signals)
