@@ -142,9 +142,9 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   const isArchetype = (v: string): v is Archetype => ARCHETYPES.some(a => a.name === v)
   // legacy shape for the checklist/toast logic: anchors count as recommended machinery
   const rung: RungMode = primaryMode === 'exact' ? 'exact' : 'recommended'
-  // APCA is the DEFAULT (owner 2026-07-04, the true split): the perceptually-solved look ships;
-  // WCAG is the opt-in legal mode — every on-text pole ratio-passing, highlights flip to black
-  // where white fails 4.5.
+  // WCAG is the DEFAULT (owner 2026-07-29, the true split): the strict legal mode ships,
+  // every on-text pole ratio-passing, ink-53-aa (the emphasis fill) flips to black where
+  // white fails 4.5. APCA is the opt-in extra-legibility lane, the perceptually-solved look.
   const [profile, setProfile] = useState<ContrastProfile>('wcag')
   // Neutral offering (owner 2026-08-04): one 5-entry choice — three strengths of the
   // primary's hue, or an alternate hue source (Match secondary / Custom hex) at the
@@ -494,11 +494,11 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
             <span className="ct-info">
               ⓘ
               <span className="ct-tip">
-                The same requirements solved under two contrast metrics. APCA (the default) is the
-                perceptual model — Lc 30 / 75 / 90, the better read of what's actually legible.
-                WCAG is the strict legal mode — the 2.x ratios (3:1 / 4.5 / 7), every text color
-                guaranteed to pass its ratio; highlight text flips to black where white reads
-                under 4.5:1.
+                The same requirements solved under two contrast metrics. WCAG (the default) is
+                the strict legal mode: the 2.x ratios (3:1 / 4.5 / 7), every text color
+                guaranteed to pass its ratio, ink-53-aa (the emphasis fill) flipping to black
+                where white reads under 4.5:1. APCA is the opt-in extra-legibility lane: the
+                perceptual model, Lc 30 / 75 / 90, a closer read of what's actually legible.
               </span>
             </span>
           </div>
