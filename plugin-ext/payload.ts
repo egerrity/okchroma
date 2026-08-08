@@ -109,7 +109,7 @@ function flatten(node: FigmaGroup, prefix: string, out: FlatTok[]): void {
 // order. ⚠️ Its trigger is the LAST SCALE INK, so a stop renumber (or a Stage B relabel of
 // that stop's leaf) moves it: it fired on ink/11 → emitted ink/12 pre-collapse, ink/10 →
 // ink/11 through the C33 era, C49 restored the original pairing (ink/11 → ink/12), and
-// Stage B (owner 2026-08-07, names only) relabeled the pair to ink/30-r700 → ink/0 — same
+// Stage B (owner 2026-08-07, names only) relabeled the pair to ink/30-aaa → ink/0 — same
 // stop index, same trigger position, new strings. The alpha/shadow ladder (owner
 // 2026-07-27) is pure black at 4/8/12% light; dark is heavier by necessity — near black
 // a light-mode alpha vanishes — at 32/48/64%.
@@ -146,9 +146,9 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
   flatten(g.neutral as FigmaGroup, 'neutral', neutral)
   for (const t of neutral) {
     out.push(t)
-    // Stage B leaf: stop 11 (strong ink) is now 'ink/30-r700'; the anchor it triggers
+    // Stage B leaf: stop 11 (strong ink) is now 'ink/30-aaa'; the anchor it triggers
     // is now 'ink/0' (was 'ink/11' → 'ink/12' pre-Stage-B). Stop index unchanged.
-    if (t.path === 'neutral/ink/30-r700') out.push({ path: 'neutral/ink/0', ...(scheme === 'light' ? K : W) })
+    if (t.path === 'neutral/ink/30-aaa') out.push({ path: 'neutral/ink/0', ...(scheme === 'light' ? K : W) })
   }
   // identity rows re-home to the system ABSOLUTES (owner 2026-07-27: the
   // unprocessed inputs sit with the poles — abs-primary/abs-secondary; the

@@ -234,7 +234,7 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     for (const s of row.scale.light) {
       const n = s.stop
       const h = hx(s)
-      // stop 9 (ink-53-r450) is BOTH the emphasis fill and a text stop (owner
+      // stop 9 (ink-53-aa) is BOTH the emphasis fill and a text stop (owner
       // 2026-07-29) — this cell was stale on the dead highlight-9 name and the
       // DELETED onHighlightIsWhite field until 2026-08-04; it now mirrors the ext
       // plugin's rendition (on-emphasis = the paper). Titles read the live name off
@@ -281,8 +281,8 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     for (const [name, c] of inkTrio)
       cells.push(`<div class="mx-aa" style="color:${hx(c)};font-size:15px;font-weight:800" title="${name}">Aa</div>`)
     // the neutral-only STRONG text-cta mirror (owner 2026-08-04): descends the same three
-    // stops cta-ink ascends — enabled ≡ stop 11 (ink-30-r700), hover ≡ stop 10 (shared
-    // through cta-ink/hover), pressed ≡ stop 9 (ink-53-r450) (C49 numbering). Non-neutral
+    // stops cta-ink ascends — enabled ≡ stop 11 (ink-30-aaa), hover ≡ stop 10 (shared
+    // through cta-ink/hover), pressed ≡ stop 9 (ink-53-aa) (C49 numbering). Non-neutral
     // rows carry blank cells so the derived grid stays rectangular.
     if (row.strong) {
       const strongTrio = [
@@ -368,7 +368,7 @@ function updatePreview() {
 
     renderMatrix(t, nScale)
 
-    // the bar's live swatches: neutral shows its stop 9 (ink-53-r450, the emphasis
+    // the bar's live swatches: neutral shows its stop 9 (ink-53-aa, the emphasis
     // fill); a derived secondary shows the RESOLVED default secondary (the input
     // tracks the primary hex — that's the source, not the result)
     const n9 = nScale.light.find(s => s.stop === 9)

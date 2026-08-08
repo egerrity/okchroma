@@ -67,7 +67,7 @@ const card = (p: ReturnType<typeof resolveBrand>['scale'], s: ReturnType<typeof 
   const pOn = (mode === 'light' ? p.onFillTextIsWhite : p.onFillTextIsWhiteDark) ? '#fff' : '#000'
   const sOn = (mode === 'light' ? s.onFillTextIsWhite : s.onFillTextIsWhiteDark) ? '#fff' : '#000'
   const sInk = mode === 'light' ? s.ctaInk : s.ctaInkDark
-  // arrays hold stops 1..10 at index stop-1: paper-99 [0] · wash-89 [4] · mark-74-r300 [7] · ink-53-r450 [8] · ink-42-r650 [9]
+  // arrays hold stops 1..10 at index stop-1: paper-99 [0] · wash-89 [4] · mark-74-aa [7] · ink-53-aa [8] · ink-42-aa [9]
   return `<div class="card" style="background:${hx(ss[0])}">
     <div class="ttl" style="color:${hx(ss[9])}">Account overview</div>
     <div class="chip" style="background:${hx(ss[4])};color:${hx(ss[8])};border:1px solid ${hx(ss[7])}">Savings · 4.2%</div>

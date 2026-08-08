@@ -18,10 +18,10 @@ export const STYLE_CSS = /* css */ `
    different clothes; the dashboard is a DESKTOP OF WINDOWS. THREE-LEVEL LADDER
    (owner's 2026-07-27 Figma card set — one 4px flat offset everywhere, the
    SHADOW COLOR fades down the ladder and the stroke fades with it):
-     +2 hero    titlebar + brand-black shadow + ink-53-r450 stroke → Customers (pop plane)
-     +1 cards   wash-80 grey shadow + mark-74-r300 stroke            → Get started, Activity, sidebar
+     +2 hero    titlebar + brand-black shadow + ink-53-aa stroke → Customers (pop plane)
+     +1 cards   wash-80 grey shadow + mark-74-aa stroke            → Get started, Activity, sidebar
      −1 metrics surface-pop shadow (punched in) + wash-92 stroke    → metric tiles (compact)
-     ctas       ink-0 border + ink-53-r450 shadow                      → primary/secondary cta buttons
+     ctas       ink-0 border + ink-53-aa shadow                      → primary/secondary cta buttons
    Every shadow color is a token (or the brand mix), so DARK FALLS OUT of the
    swap — no bespoke dark block (owner ruling 2026-07-27). */
 [data-style="retro"] .dash {
@@ -42,7 +42,7 @@ export const STYLE_CSS = /* css */ `
 /* +1 default: chunky keyline (one stop lighter than the hero's) + grey flat shadow */
 [data-style="retro"] .dash .dash-card,
 [data-style="retro"] .dash .dash-side {
-  border: 2.5px solid var(--neutral-mark-74-r300) !important;
+  border: 2.5px solid var(--neutral-mark-74-aa) !important;
   box-shadow: var(--elev-card) !important;
 }
 /* +2 hero: the full-strength keyline + the brand-black shadow */
@@ -50,13 +50,13 @@ export const STYLE_CSS = /* css */ `
   border: 2.5px solid var(--rt-line) !important;
   box-shadow: var(--elev-pop) !important;
 }
-/* +2 hero ONLY: the action titlebar — BRAND ink-30-r700 fill (owner: bar is a brand
+/* +2 hero ONLY: the action titlebar — BRAND ink-30-aaa fill (owner: bar is a brand
    color), control squares in its wash partner (the active-nav pair, swapped);
    slimmed to 24px in the owner's 2026-07-27 set */
 [data-style="retro"] .dash .dash-card-customers { position: relative; padding-top: 24px !important; }
 [data-style="retro"] .dash .dash-card-customers::before {
   content: ""; position: absolute; top: 0; left: 0; right: 0; height: 24px;
-  background-color: var(--brand-ink-30-r700);
+  background-color: var(--brand-ink-30-aaa);
   border-bottom: 2.5px solid var(--rt-line);
   background-image:
     linear-gradient(var(--brand-wash-89), var(--brand-wash-89)),
@@ -86,22 +86,22 @@ export const STYLE_CSS = /* css */ `
   font-size: 18px !important; font-weight: 700 !important; margin: 2px 0 !important;
 }
 [data-style="retro"] .dash .dash-metrics { gap: 10px; margin-bottom: 12px; }
-/* buttons: L4 stroke by default; L5 for the cta tiers — ink-0 border, ink-53-r450
+/* buttons: L4 stroke by default; L5 for the cta tiers — ink-0 border, ink-53-aa
    flat shadow (owner spec), press collapses into the surface */
 [data-style="retro"] .dash button { border: 2px solid var(--rt-line); }
 [data-style="retro"] .dash .u-btn-primary,
 [data-style="retro"] .dash .u-btn-secondary {
   border: 2px solid var(--ink-0) !important;
-  box-shadow: 3px 3px 0 var(--brand-ink-53-r450);
+  box-shadow: 3px 3px 0 var(--brand-ink-53-aa);
   transition: transform 90ms ease, box-shadow 90ms ease;
 }
 [data-style="retro"] .dash .u-btn-primary:active,
 [data-style="retro"] .dash .u-btn-secondary:active {
-  transform: translate(3px, 3px); box-shadow: 0 0 0 var(--brand-ink-53-r450);
+  transform: translate(3px, 3px); box-shadow: 0 0 0 var(--brand-ink-53-aa);
 }
 /* INVERTED SELECTION — the active item swaps its own fill/text pair */
 [data-style="retro"] .dash .dash-navitem.active {
-  background: var(--brand-ink-30-r700) !important;
+  background: var(--brand-ink-30-aaa) !important;
   color: var(--brand-wash-89) !important;
 }
 /* terminal grammar */

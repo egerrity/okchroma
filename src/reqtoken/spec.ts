@@ -7,7 +7,7 @@
 // highlight (mark) 8, ink 9–10 (contiguous). THE HIGHLIGHT BAND COLLAPSED 2026-07-29: highlight-9 is
 // deleted and the inks renumbered down onto it (old 10/11 → 9/10). highlight-9 and old ink-10 both
 // solved 4.5 against paper-95 (paper-3) — the same bar against the same anchor — so they landed on
-// top of each other (145 of 360 agnostic seeds within 0.01). ink-53-r450 (ink-9) now carries both
+// top of each other (145 of 360 agnostic seeds within 0.01). ink-53-aa (ink-9) now carries both
 // jobs: the emphasis fill AND the first text stop. The cta is NOT a scale stop: it is an OFF-SCALE
 // ROLE (cta / cta-hover), exactly like GeneratedScale.cta/ctaHover. The old prototype's "stop 9 = cta"
 // pairing is dead.
@@ -66,9 +66,9 @@ export type StopReq = {
 // carries brand identity, no torsion); hover = hoverL() of the resolved cta, pressed =
 // pressedL() (hover's direction, doubled).
 // The INK trio (cta-ink / -hover / -pressed) is NOT produced any more (C49, owner
-// 2026-08-05): it is the ink band read as states — enabled ≡ ink-53-r450 (ink-9), hover ≡
-// ink-42-r650 (ink-10) (the between stop, formerly a bespoke state-step value generated at
-// the role), pressed ≡ ink-30-r700 (ink-11) — so it carries no declaration here; the resolver references the resolved stops
+// 2026-08-05): it is the ink band read as states — enabled ≡ ink-53-aa (ink-9), hover ≡
+// ink-42-aa (ink-10) (the between stop, formerly a bespoke state-step value generated at
+// the role), pressed ≡ ink-30-aaa (ink-11) — so it carries no declaration here; the resolver references the resolved stops
 // and every guarantee rides the stops' own requires (T9/T10/T11).
 export type RoleName = 'cta' | 'cta-hover' | 'cta-pressed' | 'cta-ink' | 'cta-ink-hover' | 'cta-ink-pressed'
 export type RoleReq = {
@@ -94,7 +94,7 @@ export type RoleReq = {
 // ENFORCEMENT itself (the fill re-solves to 4.5-white).
 // withProfile('apca') strips the ratio floor; the apca law is the Lc bar.
 // (The second on-color, `onHighlight`, is GONE — owner 2026-07-29. It solved the text pole for the
-// highlight-9 fill; that fill is now ink-53-r450 (ink-9), whose on-color is a declared paper token, not a solve.)
+// highlight-9 fill; that fill is now ink-53-aa (ink-9), whose on-color is a declared paper token, not a solve.)
 // `coEnforceLc` (the APCA legibility CLEARANCE, default-ON since C18): a SECOND on-fill contrast requirement
 // that rides ALONGSIDE the wcag lane's 4.5 floor — read only in the wcag lane (enforceLc undefined);
 // opts.apcaClearance=false opts out (instruments). Where wcag and APCA disagree on whether the chosen pole reads, the fill
@@ -157,7 +157,7 @@ const P_TEXT: Producer = { hue: 'warm-torsion', L: 'perceptual', chroma: 'brand'
 const S8: Require = { metric: 'wcag', against: 'paper-95', target: STOP_8_NONTEXT_CONTRAST, level: 'AA' }
 // INK ANCHOR NOTE (owner 2026-07-28): in the WCAG lane the resolver anchors ink
 // requires (the ink stops 9–11) at paper-95 (paper-3) — the nearest paper —
-// so "ink-53-r450 is usable on every paper" is a law, not a hope (resolve.ts
+// so "ink-53-aa is usable on every paper" is a law, not a hope (resolve.ts
 // wcagAnchorStop). That override is LANE-SPECIFIC, so it stays in the resolver; the
 // apca lane keeps paper-97 (paper-2) (clears paper-95 with margin, byte-identical) and
 // reads it from the declaration below.
@@ -176,7 +176,7 @@ const T11: Require = { metric: 'wcag', against: 'paper-97', target: INK_11_CONTR
 // by forcing hl-9 to clear 4.5 against paper-95 (paper-3), so it was an emitted token that no
 // longer carried a solved value. Its successor is a declaration in the semantic layer —
 // `-fg-on-emphasis` → --paper-100 (--paper-0 pre-Stage-B) — measured at worst 4.96 (light) /
-// 8.04 (dark) against ink-53-r450 (ink-9) over the 360-seed agnostic sweep. Only the cta still
+// 8.04 (dark) against ink-53-aa (ink-9) over the 360-seed agnostic sweep. Only the cta still
 // solves its own text pole.
 // onFill CARRIES THE POLE FLOOR (owner 2026-07-29). It was the one requirement without a
 // `ratioFloor`, on the reasoning recorded above — "onFill's floor is the ENFORCEMENT itself
@@ -204,7 +204,7 @@ export const LIGHT: ModeSpec = {
   stops: [
     // paper-100 (paper-0 pre-Stage-B): the resolved ladder extreme — in light it genuinely is white (rootL 1.0, zero chroma)
     { stop: 0, rootL: 1.0, group: 'paper', produce: { hue: 'warm-drift', L: 'fixed', chroma: 'ladder' }, satFraction: SCALE_C_LIGHT[0].sat, baseC: SCALE_C_LIGHT[0].base },
-    // paper/wash/mark-74-r300: perceptual ladder/envelope blend on the geometric ROOT_L_LIGHT scaffold. Separation
+    // paper/wash/mark-74-aa: perceptual ladder/envelope blend on the geometric ROOT_L_LIGHT scaffold. Separation
     // falls out of the shape (see above) — no min-separation require. Only stop 8 carries a require: the WCAG
     // 3:1 vs the resolved paper-97 (paper-2) (re-solves automatically since it references paper-97 (paper-2)).
     ...[1, 2, 3, 4, 5, 6, 7, 8].map((stop): StopReq => ({
@@ -212,8 +212,8 @@ export const LIGHT: ModeSpec = {
       satFraction: SCALE_C_LIGHT[stop].sat, baseC: SCALE_C_LIGHT[stop].base,
       require: stop === 8 ? S8 : undefined,
     })),
-    // ink text: perceptual + contrast-required. ink-53-r450 (ink-9) is ALSO the emphasis fill (the
-    // highlight-9 collapse, owner 2026-07-29). ink-42-r650 (ink-10) is the between text stop (C49) —
+    // ink text: perceptual + contrast-required. ink-53-aa (ink-9) is ALSO the emphasis fill (the
+    // highlight-9 collapse, owner 2026-07-29). ink-42-aa (ink-10) is the between text stop (C49) —
     // a normal stop like its neighbors; the cta-ink trio references all three as states.
     { stop: 9, rootL: ROOT_L_LIGHT[9], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[9].inkMult, inkMaxC: SCALE_C_LIGHT[9].inkMaxC, chromaFloor: SCALE_C_LIGHT[9].chromaFloor, require: T9 },
     { stop: 10, rootL: ROOT_L_LIGHT[10], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[10].inkMult, inkMaxC: SCALE_C_LIGHT[10].inkMaxC, chromaFloor: SCALE_C_LIGHT[10].chromaFloor, require: T10 },

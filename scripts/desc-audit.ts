@@ -69,8 +69,13 @@ for (const p of paths) {
 // The vocabulary is derived from the real paths, so a future token name joins the ban
 // automatically. "cta" is the one allowed crossover: the owner's own lines say "max
 // contrast on CTAs" / "low contrast CTAs" on the poles and the offset rungs, and a search
-// for it wants the action rows anyway.
-const ALLOWED_FOREIGN = new Set(['cta'])
+// for it wants the action rows anyway. "aaa" joined it (owner 2026-08-07, requirement-code
+// rename): ink/30-aaa's own leaf now collides with "AAA", the WCAG conformance-level word
+// AA_BODY/AAA_BODY (tokenDescriptions.ts) use verbatim in the Contrast line of every other
+// AA/AAA text-register row (PHRASES enforces those exact strings, rule 4) — same class of
+// crossover as "cta", a real word every text-contrast row legitimately carries, not a
+// pointer at ink/30-aaa specifically.
+const ALLOWED_FOREIGN = new Set(['cta', 'aaa'])
 const vocab = new Set<string>()
 for (const p of paths) for (const w of p.toLowerCase().split(/[/-]/)) if (/^[a-z]{3,}$/.test(w)) vocab.add(w)
 for (const p of paths) {

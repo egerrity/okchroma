@@ -22,8 +22,8 @@ export const FONT_STACK = "'Inter', -apple-system, system-ui, sans-serif"
 //   accented-inverse primary: accent  subtle: brand
 // The "accent" Family is emitted as the `secondary` primitive prefix (the role
 // was renamed in the token rename); prim() maps Family → primitive prefix.
-// Stops are the emitted token names: scale paper/wash, the mark-74-r300 ring, the
-// cta/cta-hover/cta-pressed fill trio (+ the cta-ink link trio), ink-53-r450/42-r650/30-r700 text,
+// Stops are the emitted token names: scale paper/wash, the mark-74-aa ring, the
+// cta/cta-hover/cta-pressed fill trio (+ the cta-ink link trio), ink-53-aa/42-aa/30-aaa text,
 // on-cta on-fill text. (on-highlight died with highlight-9, owner 2026-07-29 — the
 // on-emphasis text is --paper-100 in the semantic layer now.)
 type Family = 'brand' | 'accent'
@@ -31,9 +31,9 @@ function accentModeCss(mode: AccentMode, primary: Family, subtle: Family): strin
   const other = (f: Family): Family => (f === 'brand' ? 'accent' : 'brand')
   const prim = (f: Family): string => (f === 'brand' ? 'brand' : 'secondary')
   const PRIMARY_ROLES: Array<[string, string]> = [
-    ['fg', 'ink-30-r700'], ['fg-hover', 'ink-53-r450'], ['fg-alt', 'ink-53-r450'], ['fg-alt-hover', 'ink-30-r700'], ['fg-on-emphasis', 'on-cta'],
+    ['fg', 'ink-30-aaa'], ['fg-hover', 'ink-53-aa'], ['fg-alt', 'ink-53-aa'], ['fg-alt-hover', 'ink-30-aaa'], ['fg-on-emphasis', 'on-cta'],
     ['bg-emphasis', 'cta'], ['bg-emphasis-hover', 'cta-hover'], ['bg-emphasis-pressed', 'cta-pressed'],
-    ['border-default', 'wash-85'], ['border-default-hover', 'mark-74-r300'],
+    ['border-default', 'wash-85'], ['border-default-hover', 'mark-74-aa'],
     ['border-emphasis', 'cta'], ['border-emphasis-hover', 'cta-hover'],
   ]
   const SUBTLE_ROLES: Array<[string, string]> = [
@@ -53,8 +53,8 @@ function accentModeCss(mode: AccentMode, primary: Family, subtle: Family): strin
   // not re-point them): --fg-link rides --link from semantic.css, no per-mode override
   lines.push(`}`)
   if (subtle !== primary) {
-    lines.push(`[data-accent-mode="${mode}"] .u-btn-subtle { color: var(--${prim(subtle)}-ink-30-r700); }`)
-    lines.push(`[data-accent-mode="${mode}"] .u-btn-ghost:hover { color: var(--${prim(subtle)}-ink-30-r700); }`)
+    lines.push(`[data-accent-mode="${mode}"] .u-btn-subtle { color: var(--${prim(subtle)}-ink-30-aaa); }`)
+    lines.push(`[data-accent-mode="${mode}"] .u-btn-ghost:hover { color: var(--${prim(subtle)}-ink-30-aaa); }`)
   }
   return lines.join('\n')
 }
@@ -119,16 +119,16 @@ export const COMPONENT_CSS = `
 .u-link:active { color: var(--fg-link-pressed); }
 /* Stop 8 IS the ramp's focus-ring role — never the OS default accent */
 [data-brand] :is(input, select, textarea, button, a):focus-visible {
-  outline: 2px solid var(--brand-mark-74-r300);
+  outline: 2px solid var(--brand-mark-74-aa);
   outline-offset: 1px;
 }
 /* The app-chrome scope is brandless — it carries only the generated neutral
-   (App.tsx neutralCss), so --brand-mark-74-r300 doesn't exist there and the
+   (App.tsx neutralCss), so --brand-mark-74-aa doesn't exist there and the
    rule above would go invalid at computed-value time (no ring at all on the
    footer controls). Alias the ring source to the chrome's own neutral
-   mark-74-r300 — stop 8 of whichever ramp owns the scope. */
+   mark-74-aa — stop 8 of whichever ramp owns the scope. */
 [data-brand="chrome"] {
-  --brand-mark-74-r300: var(--neutral-mark-74-r300);
+  --brand-mark-74-aa: var(--neutral-mark-74-aa);
 }
 /* Elevation — demo-layer shadow recipes composing the --shadow-* transparencies
    (tokens/semantic.css; mirrors the plugin's system/alpha/shadow rows). The
@@ -399,10 +399,10 @@ export function Showcase(props: {
         <section>
           <SectionLabel>Typography</SectionLabel>
           <p style={{ margin: 0, lineHeight: 1.6, color: 'var(--fg-default)' }}>
-            Default body text uses <strong>neutral-ink-30-r700</strong> for maximum readability.{' '}
-            <a href="#" className="u-link">Link text uses brand-ink-53-r450</a>,
+            Default body text uses <strong>neutral-ink-30-aaa</strong> for maximum readability.{' '}
+            <a href="#" className="u-link">Link text uses brand-ink-53-aa</a>,
             which meets 4.5:1 AA contrast.{' '}
-            <span style={{ color: 'var(--fg-subtle)' }}>Subtle text uses neutral-ink-53-r450 for secondary information.</span>
+            <span style={{ color: 'var(--fg-subtle)' }}>Subtle text uses neutral-ink-53-aa for secondary information.</span>
           </p>
         </section>
 
@@ -439,7 +439,7 @@ export function Readout({ r }: { r: ResolvedBrand }) {
 // --{prefix}-N vars). Kept in emit order; cta stays off-scale and out of the strip.
 export const SCALE_STOP_NAMES = [
   'paper-99', 'paper-97', 'paper-95', 'wash-92', 'wash-89', 'wash-85', 'wash-80',
-  'mark-74-r300', 'ink-53-r450', 'ink-42-r650', 'ink-30-r700',
+  'mark-74-aa', 'ink-53-aa', 'ink-42-aa', 'ink-30-aaa',
 ] as const
 
 // Labeled single-row scale strip — used where multiple scales stack tight
@@ -514,7 +514,7 @@ export function IllustrationLegend() {
     ['#9DC4FF', 'Primary soft', 'brand tint (slot 2)', 'var(--illus-primary-soft)'],
     ['#FF7A00', 'Alt', 'brand deep (slot 4) mono → secondary mid two-color', 'var(--illus-alt)'],
     ['#FFD6A8', 'Alt soft', 'brand tint (slot 2) mono → secondary tint two-color', 'var(--illus-alt-soft)'],
-    ['#1A1A1A', 'Ink', 'neutral ink-30-r700', 'var(--illus-ink)'],
+    ['#1A1A1A', 'Ink', 'neutral ink-30-aaa', 'var(--illus-ink)'],
     ['#9E9E9E', 'Muted', 'neutral-8 — never branded', 'var(--illus-muted)'],
     ['#FFFFFF', 'Paper', 'neutral-1 — flips correctly in dark mode', 'var(--illus-paper)'],
   ]

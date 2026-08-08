@@ -67,8 +67,8 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // CURRENT-name entries MUST precede the historical retargets below:
   // legacyCandidates tries entries in table order, and a 07-10-vintage file
   // holds BOTH ink-11 (scale, hyphen flat) and ink-12 (anchor, hyphen flat) —
-  // resolving ink/30-r700 must consume ink-11 before the pre-renumber
-  // ['ink-12','ink/30-r700'] entry can capture the anchor. Ascending
+  // resolving ink/30-aaa must consume ink-11 before the pre-renumber
+  // ['ink-12','ink/30-aaa'] entry can capture the anchor. Ascending
   // processing + self-deleting consumed keys keep the chains sound, exactly
   // as the renumber round.
   ['paper-0', 'paper/100'],
@@ -79,7 +79,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['wash-5', 'wash/89'],
   ['wash-6', 'wash/85'],
   ['wash-7', 'wash/80'],
-  ['highlight-8', 'mark/74-r300'],
+  ['highlight-8', 'mark/74-aa'],
   // highlight-9 / on-highlight are DEAD (the 2026-07-29 collapse orphaned them; no
   // current token answers to either) — kept only so an old file's row is still
   // FOUND (renamed to its retired banded home, then reported as an orphan) rather
@@ -95,9 +95,9 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // plugin-ext ONLY. A C33-era community file re-applied here will hand its old
   // strong-ink row to the new stop. Community is currently unsupported; port the
   // inkUpshifts idiom from plugin-ext/code.ts before re-listing.
-  ['ink-9', 'ink/53-r450'],
-  ['ink-10', 'ink/53-r450'],
-  ['ink-11', 'ink/30-r700'],
+  ['ink-9', 'ink/53-aa'],
+  ['ink-10', 'ink/53-aa'],
+  ['ink-11', 'ink/30-aaa'],
   ['ink-12', 'ink/0'],
   // ── STAGE B CURRENT-NAME ENTRIES (owner 2026-08-07, names only): every path this
   // plugin itself last wrote (pre-Stage-B) becomes a "legacy" spelling the instant this
@@ -106,8 +106,8 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // order, and a CURRENT file holds both ink/9 (first text) and ink/10 (the between
   // stop) as two DIFFERENT real variables sharing a leaf-string family with the OLD-KEY
   // 'ink/10' the collapse-era entry further down ALSO targets (that entry used to read
-  // ['ink/10','ink/9'] pre-Stage-B; it now reads ['ink/10','ink/53-r450']). Resolving
-  // ink/53-r450 (stop 9) must consume this batch's ink/9 BEFORE the collapse-era ink/10
+  // ['ink/10','ink/9'] pre-Stage-B; it now reads ['ink/10','ink/53-aa']). Resolving
+  // ink/53-aa (stop 9) must consume this batch's ink/9 BEFORE the collapse-era ink/10
   // entry ever gets a chance to (wrongly) claim a current file's real between-stop row.
   ['paper/0', 'paper/100'],
   ['paper/1', 'paper/99'],
@@ -117,11 +117,22 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['wash/5', 'wash/89'],
   ['wash/6', 'wash/85'],
   ['wash/7', 'wash/80'],
-  ['highlight/8', 'mark/74-r300'],
-  ['ink/9', 'ink/53-r450'],
-  ['ink/10', 'ink/42-r650'],
-  ['ink/11', 'ink/30-r700'],
+  ['highlight/8', 'mark/74-aa'],
+  ['ink/9', 'ink/53-aa'],
+  ['ink/10', 'ink/42-aa'],
+  ['ink/11', 'ink/30-aaa'],
   ['ink/12', 'ink/0'],
+  // ── REQUIREMENT-CODE HEAL (owner 2026-08-07, names only): C54 shipped the banded
+  // r-floor leaves (mark/74-r300, ink/53-r450, ink/42-r650, ink/30-r700) EARLIER
+  // TODAY and deployed — a file applied under that build already carries these as
+  // its CURRENT names. This build retires them for the WCAG conformance letters
+  // (aa/aaa) the same day, so the r-floor spelling is a legacy vintage the instant
+  // this ships, same as every other "current becomes legacy" batch in this table.
+  // One-hop, no chaining: these were never anything but this file's own C54 output.
+  ['mark/74-r300', 'mark/74-aa'],
+  ['ink/53-r450', 'ink/53-aa'],
+  ['ink/42-r650', 'ink/42-aa'],
+  ['ink/30-r700', 'ink/30-aaa'],
   ['cta', 'cta/enabled'],
   ['cta-hover', 'cta/hover'],
   ['cta-pressed', 'cta/pressed'],
@@ -138,12 +149,12 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // ink-11 BEFORE ink/11 is looked up. This entry catches a pre-C33 file's ink/10
   // (that vintage's FIRST TEXT stop) — a DIFFERENT thing than a current file's
   // ink/10 (the between stop, C49); the STAGE B CURRENT-NAME batch above resolves
-  // ink/53-r450 off a current file's own ink/9 FIRST, so this entry only fires once
+  // ink/53-aa off a current file's own ink/9 FIRST, so this entry only fires once
   // that candidate is absent — it never steals a current file's between-stop row.
   ['cta-stroke', 'cta/border'],
-  ['ink/10', 'ink/53-r450'],
-  ['ink-11', 'ink/53-r450'],
-  ['ink-12', 'ink/30-r700'],
+  ['ink/10', 'ink/53-aa'],
+  ['ink-11', 'ink/53-aa'],
+  ['ink-12', 'ink/30-aaa'],
   ['ink-13', 'ink/0'],
   // blue-signal variant relabels (2026-07-13, info-color → blue): the variant leaf is
   // label + resolved light-cta hex (variantKey), so the relabel needs per-lane entries.
@@ -209,7 +220,7 @@ const RENAMED_GROUPS: Array<[string, string]> = [
 ]
 // Every legacy spelling of `path` under the rename tables: old leaf, old group, and
 // old group + old leaf together (a file untouched since before BOTH renames needs the
-// composed lookup — e.g. system/info-color/ink-11 → system/blue/ink/53-r450).
+// composed lookup — e.g. system/info-color/ink-11 → system/blue/ink/53-aa).
 function legacyCandidates(path: string): string[] {
   const out: string[] = []
   const leafVariants = [path]
@@ -493,7 +504,7 @@ figma.ui.onmessage = async (msg) => {
       // Write a primitive. on-fill leaves ALIAS a shared invariant (always, so
       // pre-existing raw on-fills get converted on re-apply); cta-border leaves ALIAS
       // per mode — system/alpha/transparent when the fill passes the boundary gate, the
-      // family's own mark-74-r300 when it doesn't (alpha 0 in the payload = transparent);
+      // family's own mark-74-aa when it doesn't (alpha 0 in the payload = transparent);
       // every other leaf is a raw color, written on create or when `refresh` is set
       // (per-brand ramps).
       // payload-space value equality (8-bit tolerance) — used to decide alias-vs-raw
@@ -503,12 +514,12 @@ figma.ui.onmessage = async (msg) => {
       // See the alias branch in writeRaw for the law and the C33 staleness story. Stage B
       // (owner 2026-08-07, names only) relabeled the ink leaves; stop indices unchanged.
       const INK_SIBLING: Record<string, string> = {
-        'cta-ink/enabled': 'ink/53-r450',
-        'cta-ink/hover': 'ink/42-r650',
-        'cta-ink/pressed': 'ink/30-r700',
-        'cta-ink-strong/enabled': 'ink/30-r700',
+        'cta-ink/enabled': 'ink/53-aa',
+        'cta-ink/hover': 'ink/42-aa',
+        'cta-ink/pressed': 'ink/30-aaa',
+        'cta-ink-strong/enabled': 'ink/30-aaa',
         'cta-ink-strong/hover': 'cta-ink/hover',
-        'cta-ink-strong/pressed': 'ink/53-r450',
+        'cta-ink-strong/pressed': 'ink/53-aa',
       }
       const writeRaw = (
         path: string,
@@ -524,7 +535,7 @@ figma.ui.onmessage = async (msg) => {
         v.scopes = [] // primitives hidden from every picker (re-applies fix older files too)
         const dk = darkMap.get(t.path)
         // a TRUE pole (the engine's on-fills are exactly white or black); an outline
-        // secondary's on-cta is the family's ink-53-r450 instead — alias the sibling, not
+        // secondary's on-cta is the family's ink-53-aa instead — alias the sibling, not
         // a pole (C33 renumbered the inks; the old ink/10 target aliased the WRONG stop
         // for a post-renumber outline — fixed 2026-08-04 with the cta-ink retargeting
         // below; Stage B, owner 2026-08-07, names only, relabeled the leaf)
@@ -533,7 +544,7 @@ figma.ui.onmessage = async (msg) => {
           return sum > 2.97 || sum < 0.03
         }
         if (t.path === 'cta/on' || t.path === 'highlight/on') {
-          const sibling9 = primByName.get(path.replace(/(?:cta\/on|highlight\/on)$/, 'ink/53-r450'))
+          const sibling9 = primByName.get(path.replace(/(?:cta\/on|highlight\/on)$/, 'ink/53-aa'))
           // the SOFT ON-CTA (C43 follow-up, owner 2026-08-03): a POLE AT PARTIAL ALPHA is
           // the default-model secondary's soft text → alias system/alpha/ink. Checked
           // BEFORE the solid-pole case — isPole ignores alpha here, so without this the
@@ -559,9 +570,9 @@ figma.ui.onmessage = async (msg) => {
         } else if (INK_SIBLING[t.path]
           && leafEq(t, lightMap?.get(INK_SIBLING[t.path])) && leafEq(dk, darkMap.get(INK_SIBLING[t.path]))) {
           // the text-cta trios are REFERENCES over the family's own ink registers
-          // (C49 numbering): cta-ink = the ink band as states (enabled ≡ ink/53-r450,
-          // hover ≡ ink/42-r650 — the between stop, a real scale stop since C49 —
-          // pressed ≡ ink/30-r700), and the neutral-only strong mirror descends the
+          // (C49 numbering): cta-ink = the ink band as states (enabled ≡ ink/53-aa,
+          // hover ≡ ink/42-aa — the between stop, a real scale stop since C49 —
+          // pressed ≡ ink/30-aaa), and the neutral-only strong mirror descends the
           // same three stops (strong → the shared hover → first-text). Stage B (owner
           // 2026-08-07, names only) relabeled the leaves; stop indices unchanged.
           // Alias the sibling so the relationship stays live in Figma (the cta/on→ink
@@ -580,7 +591,7 @@ figma.ui.onmessage = async (msg) => {
             if (dk) v.setValueForMode(pDark, { r: dk.r, g: dk.g, b: dk.b })
           }
         } else if (t.path === 'cta/border') {
-          const sibling8 = primByName.get(path.replace(/cta\/border$/, 'mark/74-r300'))
+          const sibling8 = primByName.get(path.replace(/cta\/border$/, 'mark/74-aa'))
           const transparent = primByName.get('system/alpha/transparent')
           const target = (leaf?: { a?: number }) =>
             leaf?.a === 0 ? transparent : (sibling8 ?? transparent)
@@ -612,7 +623,7 @@ figma.ui.onmessage = async (msg) => {
       if (primaryRamp) writeRamp('primary', primaryRamp)
       if (secondaryMode === 'real' && secondaryRamp) writeRamp('secondary', secondaryRamp)
       // shared neutral + signals → grown on demand, recorded as alias targets.
-      // lightMap rides along (review-caught 2026-07-16): the cta-ink→ink/42-r650 alias
+      // lightMap rides along (review-caught 2026-07-16): the cta-ink→ink/42-aa alias
       // branch is value-guarded against BOTH maps — starving it here shipped shared
       // cta-inks raw.
       // The LINK prim refreshes (review-caught 2026-07-16): it is seed-keyed, so the
@@ -620,7 +631,7 @@ figma.ui.onmessage = async (msg) => {
       // serve old hover/pressed/dark values under every theme alias. Same seed ⇒ same
       // engine output, so the refresh is idempotent across brands sharing the prim.
       // The SIGNAL prims join that rule (owner report 2026-08-03: a stale warning
-      // ink-53-r450 failing on papers — the create-once base stranded C42/C44 canonical
+      // ink-53-aa failing on papers — the create-once base stranded C42/C44 canonical
       // moves): their
       // identity/variant paths survive engine retunes exactly as link's does, and the
       // same idempotence argument holds. Only the neutral stays grow-on-demand.
@@ -636,7 +647,7 @@ figma.ui.onmessage = async (msg) => {
       }
 
       // NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): the escaped cta REST anchors at
-      // the brand-neutral's ink-30-r700 (strong; was ink-11 pre-Stage-B) by construction,
+      // the brand-neutral's ink-30-aaa (strong; was ink-11 pre-Stage-B) by construction,
       // so the primitive ALIASES the neutral's own strong ink (the on-cta→ink idiom — the
       // relationship stays live in Figma; one mode-invariant alias resolves per mode
       // through the neutral prim's Light/Dark).
@@ -657,12 +668,12 @@ figma.ui.onmessage = async (msg) => {
         }
         const neutralPrim = shared.find(g => g.theme === 'neutral')?.prim
         // the whole escape family aliases the neutral's own registers (owner amendment:
-        // the escape covers cta AND cta-ink): fill rest → neutral ink-30-r700 (strong);
-        // text rest → neutral ink-42-r650 (between); text pressed → neutral ink-30-r700
+        // the escape covers cta AND cta-ink): fill rest → neutral ink-30-aaa (strong);
+        // text rest → neutral ink-42-aa (between); text pressed → neutral ink-30-aaa
         // (the 2026-07-16 restrengthening). Stage B (owner 2026-08-07, names only)
         // relabeled the leaves — were ink-11/ink-10/ink-11. Hover stays a raw derived
         // value.
-        const pairs: Array<[string, string]> = [['cta/enabled', 'ink/30-r700'], ['cta-ink/enabled', 'ink/42-r650'], ['cta-ink/pressed', 'ink/30-r700']]
+        const pairs: Array<[string, string]> = [['cta/enabled', 'ink/30-aaa'], ['cta-ink/enabled', 'ink/42-aa'], ['cta-ink/pressed', 'ink/30-aaa']]
         for (const [leaf, neutralLeaf] of pairs) {
           const target = neutralPrim ? (primVar.get(`${neutralPrim}/${neutralLeaf}`) ?? primByName.get(`${neutralPrim}/${neutralLeaf}`)) : undefined
           const v = primByName.get(`brand/${brand}/primary/${leaf}`)
@@ -732,7 +743,7 @@ figma.ui.onmessage = async (msg) => {
       if (neutralGrp) {
         for (const t of flatten(neutralGrp.light)) {
           aliasInto(`neutral/${t.path}`, `${neutralGrp.prim}/${t.path}`)
-          if (t.path === 'ink/30-r700') {
+          if (t.path === 'ink/30-aaa') {
             // the anchor slots DIRECTLY after the strong ink — ladder order, before the cta tokens
             for (const m of th.coll.modes) aliasInto('neutral/ink/0', 'system/ink-0', m.modeId)
           }
@@ -842,7 +853,7 @@ figma.ui.onmessage = async (msg) => {
       // backfillSecondary idiom. Each pre-existing mode gets its own brand's DEFAULT
       // posture (its cta-ink family; the custom seed belongs to the applying brand only,
       // matching the ext model where each extension overrides with its own). Brands
-      // applied pre-C19 lack cta-ink prims → their ink-42-r650 (was ink-10 pre-Stage-B)
+      // applied pre-C19 lack cta-ink prims → their ink-42-aa (was ink-10 pre-Stage-B)
       // carries the rest until a re-apply mints the family (states ride the same
       // fallback: better a static link than black). Later brand applies set their own
       // mode and win over this.
@@ -868,7 +879,7 @@ figma.ui.onmessage = async (msg) => {
             const themeVar = themeByName.get(`system/${themeLeaf}`)
             const cur = themeVar?.valuesByMode[m.modeId]
             if (cur && typeof cur === 'object' && 'type' in cur) continue
-            const target = findPrim(primary + brandLeaf) ?? findPrim(primary + 'ink/42-r650')
+            const target = findPrim(primary + brandLeaf) ?? findPrim(primary + 'ink/42-aa')
             if (target) aliasInto(`system/${themeLeaf}`, target.name, m.modeId)
           }
         }

@@ -76,7 +76,7 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
     //        regression back to transforming the whole ramp.
     //   iii. the CTA is NOT the exact posture's — it is the tint, and it must actually differ,
     //        or the posture has silently collapsed into exact.
-    //   iv.  cta-ink is NOT tinted (owner ruling): it stays the own ramp's, matching ink-53-r450/ink-42-r650.
+    //   iv.  cta-ink is NOT tinted (owner ruling): it stays the own ramp's, matching ink-53-aa/ink-42-aa.
     const tf = resolveTheme({ primaryHex: pHex, secondaryHex: sHex, secondaryStyle: 'default', contrastProfile: cp })
     const secF = tf.secondary!
     const secX = resolveTheme({ primaryHex: pHex, secondaryHex: sHex, secondaryStyle: 'exact', contrastProfile: cp }).secondary!
@@ -91,7 +91,7 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
     if (JSON.stringify(secF.scale.cta) === JSON.stringify(secX.scale.cta))
       fails.push({ theme: id, check: 'custom-cta-tinted', detail: 'custom cta equals the exact cta — the tint did not apply' })
     if (JSON.stringify(secF.scale.ctaInk) !== JSON.stringify(secX.scale.ctaInk))
-      fails.push({ theme: id, check: 'custom-ctaink-untinted', detail: 'cta-ink was tinted; it must stay the user colour (matches ink-53-r450/ink-42-r650)' })
+      fails.push({ theme: id, check: 'custom-ctaink-untinted', detail: 'cta-ink was tinted; it must stay the user colour (matches ink-53-aa/ink-42-aa)' })
 
     // LANE 2 — the EXACT style (the owner model: standard IS exact — user's color ships as a
     // full ramp, hands off): the invariant is ADVICE — every signal collision must be annotated,

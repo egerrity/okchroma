@@ -45,7 +45,7 @@ const leaf = (g: any, flat: string): any =>
 
 // Same families/modes — every family is emitted UNIFORMLY now: the scale runs 1–10
 // (highlight-9 + on-highlight deleted and the inks renumbered down, owner 2026-07-29 —
-// so ink-53-r450 is the emphasis fill AND the first text stop), and the cta is the off-scale
+// so ink-53-aa is the emphasis fill AND the first text stop), and the cta is the off-scale
 // SIX-token family (cta/cta-hover/cta-pressed + the cta-ink trio + on-cta, semantic
 // names — owner 2026-07-16). ONE on-color per family now.
 const CTA_FAMILY = ['cta', 'cta-hover', 'cta-pressed', 'cta-ink', 'cta-ink-hover', 'cta-ink-pressed']
@@ -60,22 +60,22 @@ for (const mode of ['light', 'dark'] as const) {
     // regressed the collapse.
     const isBrand = fam === 'brand' || fam === 'secondary'
     const tokens = isBrand
-      ? ['paper-99', ...CTA_FAMILY, 'mark-74-r300', 'ink-53-r450', 'ink-42-r650', 'ink-30-r700', 'on-cta', 'identity']
-      : ['paper-99', 'mark-74-r300', ...CTA_FAMILY, 'ink-30-r700', 'on-cta']
+      ? ['paper-99', ...CTA_FAMILY, 'mark-74-aa', 'ink-53-aa', 'ink-42-aa', 'ink-30-aaa', 'on-cta', 'identity']
+      : ['paper-99', 'mark-74-aa', ...CTA_FAMILY, 'ink-30-aaa', 'on-cta']
     for (const t of tokens) ok(!!leaf(m[fam], t), `${mode}.${fam}.${t} missing`)
     for (const gone of ['highlight-9', 'on-highlight'])
       ok(!leaf(m[fam], gone), `${mode}.${fam}.${gone} is still emitted — the highlight collapse regressed`)
-    // the cta-ink trio is the ink band as states (C49): enabled ≡ ink-53-r450, hover ≡
-    // ink-42-r650 (the between text stop — the retired raw value's successor), pressed ≡
-    // ink-30-r700
-    for (const [state, sib] of [['cta-ink', 'ink-53-r450'], ['cta-ink-hover', 'ink-42-r650'], ['cta-ink-pressed', 'ink-30-r700']] as const)
+    // the cta-ink trio is the ink band as states (C49): enabled ≡ ink-53-aa, hover ≡
+    // ink-42-aa (the between text stop — the retired raw value's successor), pressed ≡
+    // ink-30-aaa
+    for (const [state, sib] of [['cta-ink', 'ink-53-aa'], ['cta-ink-hover', 'ink-42-aa'], ['cta-ink-pressed', 'ink-30-aaa']] as const)
       ok(leaf(m[fam], state).$value.hex === leaf(m[fam], sib).$value.hex,
         `${mode}.${fam} ${state} ${leaf(m[fam], state).$value.hex} != ${sib} ${leaf(m[fam], sib).$value.hex}`)
     // the STRONG text-cta mirror (owner 2026-08-04) is NEUTRAL-ONLY: it descends the same
-    // three stops cta-ink ascends — enabled ≡ ink-30-r700, hover ≡ ink-42-r650 (shared
-    // through cta-ink-hover), pressed ≡ ink-53-r450 (C49). Any other family emitting it is a regression.
+    // three stops cta-ink ascends — enabled ≡ ink-30-aaa, hover ≡ ink-42-aa (shared
+    // through cta-ink-hover), pressed ≡ ink-53-aa (C49). Any other family emitting it is a regression.
     if (fam === 'neutral') {
-      for (const [strong, sib] of [['cta-ink-strong', 'ink-30-r700'], ['cta-ink-strong-hover', 'cta-ink-hover'], ['cta-ink-strong-pressed', 'ink-53-r450']] as const)
+      for (const [strong, sib] of [['cta-ink-strong', 'ink-30-aaa'], ['cta-ink-strong-hover', 'cta-ink-hover'], ['cta-ink-strong-pressed', 'ink-53-aa']] as const)
         ok(leaf(m[fam], strong)?.$value.hex === leaf(m[fam], sib).$value.hex,
           `${mode}.${fam} ${strong} ${leaf(m[fam], strong)?.$value.hex} != ${sib} ${leaf(m[fam], sib).$value.hex}`)
     } else {
@@ -95,8 +95,8 @@ for (const mode of ['light', 'dark'] as const) {
     // Signals carry a DISTINCT loud cta (diverged from the emphasis fill, F1);
     // they still have no identity (no user-input hex).
     if (!isBrand && fam !== 'neutral') {
-      ok(leaf(m[fam], 'cta').$value.hex !== leaf(m[fam], 'ink-53-r450').$value.hex,
-        `${mode}.${fam} cta should DIVERGE from ink-53-r450 (F1 — signals routed through the scale)`)
+      ok(leaf(m[fam], 'cta').$value.hex !== leaf(m[fam], 'ink-53-aa').$value.hex,
+        `${mode}.${fam} cta should DIVERGE from ink-53-aa (F1 — signals routed through the scale)`)
       ok(!m[fam]['identity'], `${mode}.${fam} should not have identity`)
     }
   }
@@ -118,8 +118,8 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
 
 // NEUTRAL CTA ESCAPE (Phase 3 + the ALL-ctas amendment): with the flag on, the brand's
 // fill trio re-resolves from the brand-neutral's ink register (cta anchors at neutral
-// ink-30-r700 exactly; near-black light / near-white dark; on-cta flips) AND the text-style
-// cta trio swaps to the NEUTRAL's cta-ink (its ink-53-r450 register); the ramp stays the
+// ink-30-aaa exactly; near-black light / near-white dark; on-cta flips) AND the text-style
+// cta trio swaps to the NEUTRAL's cta-ink (its ink-53-aa register); the ramp stays the
 // brand's own; the default link follows the escaped cta-ink; flag OFF is unchanged.
 {
   const red = resolveBrand('#EA3E3E', 'escape-probe')
@@ -142,15 +142,15 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
   const canon = themeToFigma(red, { secondary: null, neutralLevel: 'default', signals: canonSignals })
   for (const mode of ['light', 'dark'] as const) {
     const b = (esc[mode] as any).brand, n = (esc[mode] as any).neutral, p = (plain[mode] as any).brand
-    ok(leaf(b, 'cta').$value.hex === leaf(n, 'ink-30-r700').$value.hex, `${mode} escape cta ${leaf(b, 'cta').$value.hex} != neutral ink-30-r700 ${leaf(n, 'ink-30-r700').$value.hex}`)
+    ok(leaf(b, 'cta').$value.hex === leaf(n, 'ink-30-aaa').$value.hex, `${mode} escape cta ${leaf(b, 'cta').$value.hex} != neutral ink-30-aaa ${leaf(n, 'ink-30-aaa').$value.hex}`)
     ok(leaf(b, 'cta').$value.hex !== leaf(p, 'cta').$value.hex, `${mode} escape cta did not move off the brand cta`)
-    ok(leaf(b, 'cta-ink').$value.hex === leaf(n, 'ink-53-r450').$value.hex, `${mode} escape cta-ink ${leaf(b, 'cta-ink').$value.hex} != neutral ink-53-r450 ${leaf(n, 'ink-53-r450').$value.hex} (ALL the ctas de-red)`)
-    ok(leaf(b, 'cta-ink-pressed').$value.hex === leaf(n, 'ink-30-r700').$value.hex, `${mode} escape cta-ink-pressed ${leaf(b, 'cta-ink-pressed').$value.hex} != neutral ink-30-r700 ${leaf(n, 'ink-30-r700').$value.hex}`)
+    ok(leaf(b, 'cta-ink').$value.hex === leaf(n, 'ink-53-aa').$value.hex, `${mode} escape cta-ink ${leaf(b, 'cta-ink').$value.hex} != neutral ink-53-aa ${leaf(n, 'ink-53-aa').$value.hex} (ALL the ctas de-red)`)
+    ok(leaf(b, 'cta-ink-pressed').$value.hex === leaf(n, 'ink-30-aaa').$value.hex, `${mode} escape cta-ink-pressed ${leaf(b, 'cta-ink-pressed').$value.hex} != neutral ink-30-aaa ${leaf(n, 'ink-30-aaa').$value.hex}`)
     ok(leaf(b, 'paper-99').$value.hex === leaf(p, 'paper-99').$value.hex, `${mode} escape touched the ramp`)
     ok((esc[mode] as any).link['link'].$value.hex === leaf(b, 'cta-ink').$value.hex, `${mode} default link does not follow the escaped cta-ink`)
     // the RED RESET (owner amendment): under the escape the red group ships CANONICAL —
     // byte-equal to the canonical emit, different from this brand's variant
-    for (const leafName of ['cta', 'cta-hover', 'cta-pressed', 'mark-74-r300', 'ink-53-r450']) {
+    for (const leafName of ['cta', 'cta-hover', 'cta-pressed', 'mark-74-aa', 'ink-53-aa']) {
       ok(leaf((esc[mode] as any).red, leafName).$value.hex === leaf((canon[mode] as any).red, leafName).$value.hex,
         `${mode} escape red/${leafName} ${leaf((esc[mode] as any).red, leafName).$value.hex} != canonical ${leaf((canon[mode] as any).red, leafName).$value.hex} (the escape must reset red)`)
     }
@@ -160,7 +160,7 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
   }
   ok(leaf((esc.light as any).brand, 'on-cta').$value.hex === '#ffffff', `escape light on-cta should be white on the near-black fill (got ${leaf((esc.light as any).brand, 'on-cta').$value.hex})`)
   ok(leaf((esc.dark as any).brand, 'on-cta').$value.hex === '#000000', `escape dark on-cta should be black on the near-white fill (got ${leaf((esc.dark as any).brand, 'on-cta').$value.hex})`)
-  // the escape's fill is the neutral's LOUD ink-42-r650 register, not the quiet wash cta, so it
+  // the escape's fill is the neutral's LOUD ink-42-aa register, not the quiet wash cta, so it
   // keeps the SOLID pole (owner-confirmed 2026-08-04). The hex assertions above check the
   // pole but not its opacity — a soft-on-cta leak would slip past them.
   for (const mode of ['light', 'dark'] as const)
@@ -241,9 +241,9 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
   for (const mode of ['light', 'dark'] as const) {
     const sg = (outline[mode] as any).secondary
     ok(leaf(sg, 'cta').$value.alpha === 0, `${mode} outline cta/enabled should be transparent`)
-    ok(!!leaf(sg, 'cta-border') && leaf(sg, 'cta-border').$value.alpha === 1, `${mode} outline cta/border should carry mark/74-r300 (opaque)`)
-    ok(leaf(sg, 'cta-border').$value.hex === leaf(sg, 'mark-74-r300').$value.hex, `${mode} outline cta/border != its mark/74-r300`)
-    ok(leaf(sg, 'on-cta').$value.hex === leaf(sg, 'ink-53-r450').$value.hex, `${mode} outline cta/on should be the family ink/53-r450`)
+    ok(!!leaf(sg, 'cta-border') && leaf(sg, 'cta-border').$value.alpha === 1, `${mode} outline cta/border should carry mark/74-aa (opaque)`)
+    ok(leaf(sg, 'cta-border').$value.hex === leaf(sg, 'mark-74-aa').$value.hex, `${mode} outline cta/border != its mark/74-aa`)
+    ok(leaf(sg, 'on-cta').$value.hex === leaf(sg, 'ink-53-aa').$value.hex, `${mode} outline cta/on should be the family ink/53-aa`)
     ok(!sg['cta'] || !sg['cta'].$type, `${mode} outline left a FLAT cta leaf (band regression)`)
   }
 }

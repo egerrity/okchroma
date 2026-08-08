@@ -132,12 +132,12 @@ const overview: Article = {
         rows={[
           [<Code>paper-99 … paper-95</Code>, 'the page and card planes', ''],
           [<Code>wash-92 … wash-80</Code>, 'quiet fills and borders', ''],
-          [<Code>mark-74-r300</Code>, 'non-text emphasis: borders, UI elements', 'WCAG 3:1 vs paper-95'],
-          [<Code>ink-53-r450</Code>, 'emphasis fill and first text stop', 'WCAG 4.5:1 vs paper-97'],
-          [<Code>ink-42-r650</Code>, 'mid text', 'WCAG 6.5:1 vs paper-97'],
-          [<Code>ink-30-r700</Code>, 'strong text', 'WCAG 7:1 vs paper-97'],
+          [<Code>mark-74-aa</Code>, 'non-text emphasis: borders, UI elements', 'WCAG 3:1 vs paper-95'],
+          [<Code>ink-53-aa</Code>, 'emphasis fill and first text stop', 'WCAG 4.5:1 vs paper-97'],
+          [<Code>ink-42-aa</Code>, 'mid text', 'WCAG 6.5:1 vs paper-97'],
+          [<Code>ink-30-aaa</Code>, 'strong text', 'WCAG 7:1 vs paper-97'],
           [<Code>cta · cta-hover · cta-pressed</Code>, "the solid button fill and its states, at the seed's own lightness", 'on-text passes WCAG 4.5; the fill clears APCA Lc 65 (critical 50)'],
-          [<Code>cta-ink (+hover / pressed)</Code>, 'the text-style cta', 'aliases ink-53-r450/42-r650/30-r700'],
+          [<Code>cta-ink (+hover / pressed)</Code>, 'the text-style cta', 'aliases ink-53-aa/42-aa/30-aaa'],
           [<Code>cta-border</Code>, 'low-visibility stroke; transparent above the gate', 'appears below APCA |Lc| 15 vs the page'],
           [<Code>on-cta</Code>, 'computed black or white button text', 'chosen by passing; at alpha on quiet fills'],
           [<Code>identity</Code>, 'the exact input hex, for logos', 'never adjusted'],
@@ -209,8 +209,8 @@ const generation: Article = {
         is a flat calibrated ladder (apparent-lightness solving in dark makes blue recede; the flat
         ladder is deliberate). Chroma is trimmed so light-mode loudness carries over. A fill that
         lands too dark is floored upward: it lifts, never sinks.</LI>
-        <LI><b>Requirements.</b> Declared floors bind after placement, in both modes: mark-74-r300
-        at WCAG 3:1 vs paper-95, ink-53-r450/42-r650/30-r700 at 4.5 / 6.5 / 7:1 vs paper-97. A placement that
+        <LI><b>Requirements.</b> Declared floors bind after placement, in both modes: mark-74-aa
+        at WCAG 3:1 vs paper-95, ink-53-aa/42-aa/30-aaa at 4.5 / 6.5 / 7:1 vs paper-97. A placement that
         already clears does not move. An unmeetable floor marks the stop{' '}
         <Code>unresolvable</Code> instead of fudging.</LI>
         <LI>The cta-related values are generated.
@@ -224,7 +224,7 @@ const generation: Article = {
             secondary 6%, neutral 8%).</LI>
             <LI>A quiet fill (derived secondary, neutral) carries its text at 75/80% alpha, only
             where the composite clears 4.5 on rest, hover, and pressed.</LI>
-            <LI><Code>cta-ink</Code>, the text-style cta, aliases ink-53-r450/42-r650/30-r700 as its states.</LI>
+            <LI><Code>cta-ink</Code>, the text-style cta, aliases ink-53-aa/42-aa/30-aaa as its states.</LI>
           </UL>
         </LI>
         <LI><b>Collision checks.</b> The result is compared to the four signals: red, yellow,
@@ -276,7 +276,7 @@ const tokenSchema: Article = {
         file (raise a contrast target) and the resolver honors the edit.
       </P>
       <P>
-        This is a real token, emitted by the engine right now: light <Code>mark-74-r300</Code>,
+        This is a real token, emitted by the engine right now: light <Code>mark-74-aa</Code>,
         carrying its declared WCAG 3:1 require against paper-95:
       </P>
       <LiveToken hex="#3060C0" tokenKey="8" mode="light"
@@ -365,7 +365,7 @@ const DOCS2_CSS = `
   padding: 16px 18px; overflow-x: auto; margin: 0 0 18px;
 }
 .d2-pre code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; line-height: 1.6; color: var(--fg-default); white-space: pre; }
-.d2-note { font-size: 13.5px; line-height: 1.6; color: var(--fg-subtle); background: var(--surface-sink); border: 1px solid var(--border-subtle); border-left: 3px solid var(--brand-ink-53-r450); border-radius: 8px; padding: 12px 14px; margin: 18px 0; }
+.d2-note { font-size: 13.5px; line-height: 1.6; color: var(--fg-subtle); background: var(--surface-sink); border: 1px solid var(--border-subtle); border-left: 3px solid var(--brand-ink-53-aa); border-radius: 8px; padding: 12px 14px; margin: 18px 0; }
 .d2-ramp { margin: 22px 0 26px; }
 .d2-ramp-nums { font-size: 10px; color: var(--fg-subtle); margin: 4px 0; }
 .d2-ramp-nums span { text-align: center; }

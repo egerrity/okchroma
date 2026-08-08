@@ -5,12 +5,18 @@ Lightness comes from a declared ladder; chroma is saturation-preserving (a fract
 gamut the step allows, scaled by how saturated the brand is). Names fall in four groups
 — `paper`, `wash`, `mark`, `ink` — plus the off-scale `cta` roles.
 
-Stage B (2026-08-07, names only, no color changed): every name carries its own placement.
-A bare number is the stop's light rootL times 100, rounded (`paper-99` sits at rootL ≈
-0.99). A stop whose usage keys on a declared WCAG floor also carries `-rNNN`, the floor
-times 100 (`mark-74-r300` is the rootL-74 stop with a declared 3.0 floor; `ink-53-r450` is
-rootL-53 with a 4.5 floor). The floor suffix is present only where a requirement is central
-to the stop's job, not on every stop that happens to declare one.
+Stage B (2026-08-07, names only, no color changed) gave every name its own placement: a
+bare number is the stop's light rootL times 100, rounded (`paper-99` sits at rootL ≈
+0.99). A same-day follow-up (2026-08-07, also names only) replaced the mark/ink stops'
+ratio-coded suffix with a WCAG conformance letter. A stop whose job is a certified WCAG
+floor carries the suffix `-aa` or `-aaa`: `mark-74-aa` is the rootL-74 stop, its non-text
+1.4.11 gate carried by the band word `mark` itself, certified AA at 3:1; `ink-53-aa` is
+rootL-53, certified AA at 4.5:1 text contrast; `ink-42-aa` is rootL-42, certified against
+a 6.5:1 house floor, stricter than the AA text minimum but short of AAA, so the name
+states the conformance level it clears rather than its own ratio; `ink-30-aaa` is rootL-30,
+certified AAA at 7:1. The exact ratio each stop targets is engine mechanism (`spec.ts` /
+`stopTable.ts`), not part of the name. The conformance suffix is present only where a
+requirement is central to the stop's job, not on every stop that happens to declare one.
 
 Code: the **declaration** is [`spec.ts`](../src/reqtoken/spec.ts) (per-stop rootL,
 producers, and requirements — the edit surface); the base ladders it draws from are in
@@ -32,10 +38,10 @@ accessibility category it carries.
 | `wash-89`           | 0.892  | 0.313 | ΔE ≥ 0.012 off `wash-92` (light) | low-hierarchy fill, interaction, decorative |
 | `wash-85`           | 0.852  | 0.348 | ΔE ≥ 0.012 off `wash-89` (light) | decorative |
 | `wash-80`           | 0.801  | 0.420 | ΔE ≥ 0.012 off `wash-85` (light) | decorative |
-| `mark-74-r300`      | 0.738  | 0.550 | 3:1 vs `paper-97` (both modes) | WCAG 1.4.11 non-text: boundaries, UI elements |
-| `ink-53-r450`       | 0.530  | 0.767 | 4.5:1 vs `paper-97` (both modes) | first text stop AND emphasis fill (the 2026-07-29 highlight collapse) |
-| `ink-42-r650`       | 0.415  | 0.843 | 6.5:1 vs `paper-97` (both modes) | the between text stop (C49 — the promoted cta-ink-hover value) |
-| `ink-30-r700`       | 0.300  | 0.919 | 7:1 vs `paper-97` (both modes) | strong text, inverted fill |
+| `mark-74-aa`      | 0.738  | 0.550 | 3:1 vs `paper-97` (both modes) | WCAG 1.4.11 non-text: boundaries, UI elements |
+| `ink-53-aa`       | 0.530  | 0.767 | 4.5:1 vs `paper-97` (both modes) | first text stop AND emphasis fill (the 2026-07-29 highlight collapse) |
+| `ink-42-aa`       | 0.415  | 0.843 | 6.5:1 vs `paper-97` (both modes) | the between text stop (C49 — the promoted cta-ink-hover value) |
+| `ink-30-aaa`       | 0.300  | 0.919 | 7:1 vs `paper-97` (both modes) | strong text, inverted fill |
 
 ¹ `paper-97`'s rootL is the producer target; the separation requirement pushes the resolved
 stop darker per seed (typically to L ≈ 0.967) until it stands ΔE ≥ 0.028 off `paper-99`.
@@ -53,12 +59,12 @@ collapse two adjacent steps.
 - Off the scale: the `cta` state family (`cta`/`cta-hover`/`cta-pressed`) are **roles**,
   not stops — the pulled-out button fill and its states. Fills that carry text ship
   `on-cta` — see [On-fill text](#on-fill-text). The `cta-ink` trio is the ink band read
-  as states (enabled ≡ ink-53-r450, hover ≡ ink-42-r650, pressed ≡ ink-30-r700 — C49).
+  as states (enabled ≡ ink-53-aa, hover ≡ ink-42-aa, pressed ≡ ink-30-aaa — C49).
 - Also off the scale despite the contiguous number: `ink-0` is the **universal anchor**
   (literal #000000 light / #ffffff dark, paired with `paper-100`) — a mode-flipping constant,
   not a per-brand resolved stop.
 - **Target vs emitted:** stops are H-K-solved from their rootL target (emitted L shifts by
-  hue — see below), then the declared requirements bind: for luminous hues `mark-74-r300`
+  hue — see below), then the declared requirements bind: for luminous hues `mark-74-aa`
   lands well below its 0.738 target.
 
 ## On-fill text
@@ -78,7 +84,7 @@ mode as the `ons` block of the spec; the pole choice is `onTextIsWhite`
 At equal measured luminance, a saturated color looks *brighter* than a gray — the
 Helmholtz–Kohlrausch effect. The size of that boost depends on hue: large for blue,
 red, and violet; small for yellow-green, which is already luminous. Left uncorrected,
-`ink-53-r450` would read as a different lightness on every brand.
+`ink-53-aa` would read as a different lightness on every brand.
 
 So the light stops don't use their target lightness directly. For each stop the engine
 solves the measured L at which the color's **apparent** (H-K-corrected) lightness equals
@@ -94,7 +100,7 @@ A high-boost hue is placed at a *lower* measured L to compensate; a low-boost hu
 placed *higher*. They differ in measured L but match in apparent lightness, so the step
 reads the same across brands.
 
-Example — `ink-53-r450` (target 0.600):
+Example — `ink-53-aa` (target 0.600):
 - **blue** (large boost) emits at L ≈ 0.560 — placed darker
 - **yellow-green** (small boost) emits at L ≈ 0.631 — placed lighter
 - on screen, both read as the same step
@@ -103,7 +109,7 @@ Dark mode runs the same solve, but only where uniform apparent lightness is the 
 job: the paper/wash **surfaces** (1–7) and the ink **text** stops (9/10/11) are H-K-solved
 like light, so they read at one perceived lightness on every brand. The **mark stop**
 (8) is the exception: it stays placed at its `DARK_L` target, because it carries a 3:1
-border (`mark-74-r300`) and is hand-tuned for legibility; solving it would push some hues
+border (`mark-74-aa`) and is hand-tuned for legibility; solving it would push some hues
 into the APCA body-text dead zone (and ride a solved surface up past the placed stop). So
 the mark stop keeps a small per-hue apparent-lightness *wave* by design, legibility over
 uniformity, and `divergence-audit` reports that residual so it stays visible. (The

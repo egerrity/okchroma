@@ -19,7 +19,7 @@ const SHARED_NAMES: Record<number, string> = {
   5: 'wash-89',
   6: 'wash-85',
   7: 'wash-80',
-  8: 'mark-74-r300',
+  8: 'mark-74-aa',
   // THE INK BAND (C49, owner 2026-08-05): the first text stop + emphasis fill (the
   // 2026-07-29 highlight collapse — the old highlight-9 and on-highlight are
   // deleted; this stop carries both jobs, its on-color a paper token), the between
@@ -29,9 +29,9 @@ const SHARED_NAMES: Record<number, string> = {
   // literal in cssRender, not through this table) with the between stop taking the
   // vacated index 10. Stage B (owner 2026-08-07, names only) relabeled all three to
   // their banded LL-r-floor form; the indices (9/10/11) are unchanged.
-  9: 'ink-53-r450',
-  10: 'ink-42-r650',
-  11: 'ink-30-r700',
+  9: 'ink-53-aa',
+  10: 'ink-42-aa',
+  11: 'ink-30-aaa',
 }
 
 // How many stops a ramp array carries — DERIVED from the name table, so a band collapse or a
@@ -47,9 +47,9 @@ export function stopTokenName(stop: number): string {
 
 // Canonical emit order, uniform across every ramp (the white-label remap shape,
 // an explicit requirement of the original concept). Paper (1–3) / wash (4–7) then
-// the focus ring (mark-74-r300 — clamped to WCAG 1.4.11 3:1 non-text contrast vs
-// paper-95) read as one contiguous ladder, then the text stops (ink-53-r450 /
-// ink-42-r650 / ink-30-r700 — the first doubles as the emphasis fill), then the
+// the focus ring (mark-74-aa — clamped to WCAG 1.4.11 3:1 non-text contrast vs
+// paper-95) read as one contiguous ladder, then the text stops (ink-53-aa /
+// ink-42-aa / ink-30-aaa — the first doubles as the emphasis fill), then the
 // pulled-out off-scale cta family + on-cta, then identity. A ramp skips tokens it
 // doesn't have. Emitters sort by this, not by stop number.
 // The cta family is SEMANTIC-named (owner ruling 2026-07-16: states, never options —
@@ -57,8 +57,8 @@ export function stopTokenName(stop: number): string {
 // pressed + the cta-ink trio, the 4.5 text-register link escape, added with it).
 const TOKEN_ORDER = [
   'paper-99', 'paper-97', 'paper-95', 'wash-92', 'wash-89', 'wash-85', 'wash-80',
-  'mark-74-r300',
-  'ink-53-r450', 'ink-42-r650', 'ink-30-r700',
+  'mark-74-aa',
+  'ink-53-aa', 'ink-42-aa', 'ink-30-aaa',
   'cta', 'cta-hover', 'cta-pressed',
   'cta-ink', 'cta-ink-hover', 'cta-ink-pressed',
   'cta-ink-strong', 'cta-ink-strong-hover', 'cta-ink-strong-pressed',

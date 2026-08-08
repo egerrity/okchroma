@@ -155,7 +155,7 @@ The same modules as a table — each piece, where it lives, what it does. Groupe
 |---|---|---|
 | CSS emitter | `cssRender.ts` | `brandCss`/`signalsCss` — custom properties per family and mode: the scale stops, the cta state trios (`cta`/`cta-hover`/`cta-pressed`, the `cta-ink` text trio), `on-cta` (solid pole or the soft pole-at-alpha), the gated `cta-border` alias onto the system alpha ladder, P3 `@supports` override blocks, the outline secondary's cta shape. Signals emit under their **role names** (`--critical-*`/`--warning-*`/`--positive-*`/`--info-*`); identity names stay engine-internal. |
 | Figma emitter | `figmaRender.ts` | `themeToFigma` — the same theme as Figma variable collections (both plugins consume it). |
-| Token vocabulary | `tokenNames.ts` | The shared naming — paper-99/97/95, wash-92–80, mark-74-r300, ink-53-r450/42-r650/30-r700, the cta state families, ons — one vocabulary across CSS and Figma. |
+| Token vocabulary | `tokenNames.ts` | The shared naming — paper-99/97/95, wash-92–80, mark-74-aa, ink-53-aa/42-aa/30-aaa, the cta state families, ons — one vocabulary across CSS and Figma. |
 | Public API | `index.ts` | The entry point: `resolveBrand`/`resolveTheme`. |
 
 **Product data & pipelines (`src/`)**
@@ -222,12 +222,12 @@ ResolvedBrand  = { scale, shearDeg, redRepel: {light,dark}|null,
 | 1–2 | `paper-99`, `paper-97` | the page and card planes |
 | 3 | `paper-95` | surface plane (light sink / dark pop) — renamed from wash-3, owner 2026-07-24 |
 | 4–7 | `wash-92` … `wash-80` | low-hierarchy fills, borders, decorative |
-| 8 | `mark-74-r300` | WCAG 1.4.11 **3:1** non-text step (borders, UI elements) |
-| 9 | `ink-53-r450` | emphasis fill AND first text stop (4.5:1 — the 2026-07-29 highlight collapse) |
-| 10 | `ink-42-r650` | the between text stop (6.5:1 — C49, the promoted cta-ink-hover value) |
-| 11 | `ink-30-r700` | strong text (7:1) |
+| 8 | `mark-74-aa` | WCAG 1.4.11 **3:1** non-text step (borders, UI elements) |
+| 9 | `ink-53-aa` | emphasis fill AND first text stop (4.5:1 — the 2026-07-29 highlight collapse) |
+| 10 | `ink-42-aa` | the between text stop (6.5:1 — C49, the promoted cta-ink-hover value) |
+| 11 | `ink-30-aaa` | strong text (7:1) |
 | off-scale roles | `cta`, `cta-hover`, `cta-pressed` | the pulled-out solid button fill and its states |
-| aliases | `cta-ink`(+hover/pressed) · `cta-ink-strong` (neutral only) · `cta-border` | the text-register trio onto ink-53-r450/42-r650/30-r700; the descending neutral mirror; the gated border onto the system alpha ladder |
+| aliases | `cta-ink`(+hover/pressed) · `cta-ink-strong` (neutral only) · `cta-border` | the text-register trio onto ink-53-aa/42-aa/30-aaa; the descending neutral mirror; the gated border onto the system alpha ladder |
 | computed | `on-cta` | black/white text for the fill (solid pole, or the soft pole-at-alpha on quiet fills) |
 | literal | `identity` | the exact input hex (brand / secondary only) |
 | anchors | `paper-100`, `ink-0` | universal per-scheme extremes (paper-100 = the neutral's resolved stop 0; ink-0 = literal black/white, flipped per mode) |
@@ -254,8 +254,8 @@ it. Three phases per stop, in order:
   `okchroma-reqtoken@2` — they are the house style *of this resolver*, not portable data.
 - **require** — declared floors, checked and enforced against **resolved** stops (never a
   cached value, so a pushed stop automatically re-solves everything referencing it):
-  - `{ metric: 'wcag', against, target }` — `mark-74-r300` 3:1 vs `paper-95`; `ink-53-r450` 4.5,
-    `ink-42-r650` 6.5, `ink-30-r700` 7.0 vs `paper-97`; declared in **both modes** (light clamps
+  - `{ metric: 'wcag', against, target }` — `mark-74-aa` 3:1 vs `paper-95`; `ink-53-aa` 4.5,
+    `ink-42-aa` 6.5, `ink-30-aaa` 7.0 vs `paper-97`; declared in **both modes** (light clamps
     down; dark raises off the paper; a placement that already clears doesn't move).
   - `{ metric: 'min-separation', against, target }` — supported by the resolver for
     portable specs; **the shipped spec no longer declares any** (the identity-curve
@@ -346,8 +346,8 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
 - **Stop-8 = WCAG 1.4.11 3:1, declared in both modes** — `STOP_8_NONTEXT_CONTRAST = 3.0`,
   a requirement on the declared stop (`spec.ts`) against `paper-95`: light iterates a
   fixed-point clamp down; dark raises a failing hue off the near-black paper.
-- **Text-stop contrast floors, declared in both modes** — `ink-53-r450` → 4.5:1, `ink-42-r650` →
-  6.5:1, `ink-30-r700` → 7:1 against `paper-97`.
+- **Text-stop contrast floors, declared in both modes** — `ink-53-aa` → 4.5:1, `ink-42-aa` →
+  6.5:1, `ink-30-aaa` → 7:1 against `paper-97`.
 - **Seams by construction** — the paper/wash ladder rides an identity-curve shape that
   keeps every seam open for any seed (low-chroma grays and muted warms were the failure
   cases); the resolver still supports declared `min-separation` floors for portable specs,

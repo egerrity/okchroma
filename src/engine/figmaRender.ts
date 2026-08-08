@@ -64,9 +64,9 @@ function colorFromHexString(hex: string): FigmaColorToken {
 // surfaces to system/abs-primary|abs-secondary. Both plugins migrate every old
 // flat name in place via RENAMED_LEAVES.
 // Stage B (owner 2026-08-07, names only): the flat names carry a banded leaf shape
-// of their own now (paper-99, mark-74-r300, ink-53-r450 …) — the split moved from
+// of their own now (paper-99, mark-74-aa, ink-53-aa …) — the split moved from
 // "band word + one digit group" to "band word + everything after the FIRST hyphen",
-// so a floor suffix like -r450 rides inside the leaf rather than breaking the match.
+// so a conformance suffix like -aa rides inside the leaf rather than breaking the match.
 // `highlight` LEFT the band-word set with the C53 collapse (nothing names a stop
 // highlight-N any more); `mark` joined in its place, same regex slot.
 function bandedLeaf(flat: string): string {
@@ -87,7 +87,7 @@ function bandedLeaf(flat: string): string {
 // wash's (80/85/89/92) are bare-digit keys, so a plain Object.entries silently reverses
 // them to ascending — defeating the TOKEN_ORDER-derived insertion order rampGroup builds
 // (descending LL, lightest first) without any COLOR changing. mark/ink leaves carry a
-// -rNNN suffix (e.g. '74-r300') so they are not canonical integer keys and are unaffected;
+// a conformance suffix (e.g. '74-aa') so they are not canonical integer keys and are unaffected;
 // this walker treats them the same way anyway so the rule doesn't depend on that
 // incidental shape. Non-digit-leading siblings (band names, cta states, …) keep
 // Object.entries' order, which is already correct for them. Exported so every consumer
@@ -123,8 +123,8 @@ function rampGroup(
     cta?: ColorStop; ctaHover?: ColorStop; ctaPressed?: ColorStop
     ctaInk?: ColorStop; ctaInkHover?: ColorStop; ctaInkPressed?: ColorStop
     // the STRONG text-cta (neutral only, owner 2026-08-04): the mirror trio over the same
-    // three stops cta-ink ascends — enabled ≡ ink-30-r700, hover ≡ ink-42-r650 (shared
-    // through cta-ink/hover), pressed ≡ ink-53-r450 (C49 numbering). Emitted as raw values here; both
+    // three stops cta-ink ascends — enabled ≡ ink-30-aaa, hover ≡ ink-42-aa (shared
+    // through cta-ink/hover), pressed ≡ ink-53-aa (C49 numbering). Emitted as raw values here; both
     // plugins re-express all three as aliases (the cta-border idiom).
     ctaInkStrong?: ColorStop; ctaInkStrongHover?: ColorStop; ctaInkStrongPressed?: ColorStop
     // the already-resolved border token — the decorative alpha stroke when this cta vibrates,
@@ -145,7 +145,7 @@ function rampGroup(
   if (extra?.ctaHover) putLeaf(g, 'cta-hover', colorFromStop(extra.ctaHover))
   if (extra?.ctaPressed) putLeaf(g, 'cta-pressed', colorFromStop(extra.ctaPressed))
   // cta-ink trio: the family's 4.5 text-register cta (link escape) — the ink band read
-  // as states (enabled ≡ ink/53-r450, hover ≡ ink/42-r650, pressed ≡ ink/30-r700; C49)
+  // as states (enabled ≡ ink/53-aa, hover ≡ ink/42-aa, pressed ≡ ink/30-aaa; C49)
   if (extra?.ctaInk) putLeaf(g, 'cta-ink', colorFromStop(extra.ctaInk))
   if (extra?.ctaInkHover) putLeaf(g, 'cta-ink-hover', colorFromStop(extra.ctaInkHover))
   if (extra?.ctaInkPressed) putLeaf(g, 'cta-ink-pressed', colorFromStop(extra.ctaInkPressed))
@@ -156,7 +156,7 @@ function rampGroup(
   // the background rather than sit on it (owner 2026-07-29, superseding the 2026-07-04 "filled is
   // filled" removal), else transparent. The rule lives in cssRender.ctaNeedsBorder — |Lc| of the
   // cta against the page under 15 — so both emitters decide identically, and the rung comes from
-  // cssRender.ctaBorderRung. The outline secondary still overrides this with its own mark/74-r300
+  // cssRender.ctaBorderRung. The outline secondary still overrides this with its own mark/74-aa
   // unconditionally — there the border is the button's identity, not a safety.
   if (extra?.cta) putLeaf(g, 'cta-border', extra.ctaBorder ?? TRANSPARENT_TOKEN)
   putLeaf(g, 'on-cta', colorFromHex(onFillWhite))
@@ -170,7 +170,7 @@ export interface ThemeInput {
 
   // the secondary's mode chip — 'outline' re-expresses the cta pair (mirrors cssRender's
   // outline override): cta transparent, cta-hover/-pressed the cta color at OUTLINE alphas,
-  // cta-border ALWAYS the secondary's own mark-74-r300, on-cta the secondary's ink-53-r450.
+  // cta-border ALWAYS the secondary's own mark-74-aa, on-cta the secondary's ink-53-aa.
   secondaryStyle?: SecondaryStyle
 
   neutralLevel?: NeutralLevel
@@ -234,7 +234,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
   const lt = input.linkHex ? resolveLinkTrio(input.linkHex, input.contrastProfile) : null
   // the neutral carries the STRONG text-cta mirror on top of the shared family shape:
   // no new solved values — the mirror descends the same three stops cta-ink ascends
-  // (enabled ≡ ink-30-r700, hover ≡ ink-42-r650 through the family's hover field, pressed ≡ ink-53-r450;
+  // (enabled ≡ ink-30-aaa, hover ≡ ink-42-aa through the family's hover field, pressed ≡ ink-53-aa;
   // the hover stopped being a raw between value with C49)
   const neutralExtra = (mode: 'light' | 'dark') => {
     const at = (n: number) => nScale[mode].find(s => s.stop === n)
@@ -255,7 +255,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     if (p0) putLeaf(neutralGroup, 'paper-100', colorFromStop(p0))
     const secondaryGroup = rampGroup(secondary[mode], mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark, brandExtra(secondary, mode, 'secondary'))
     // outline re-expression (only a real secondary can be outline) — same values cssRender
-    // emits. The hover = mark-74-r300 at OUTLINE_HOVER_ALPHA (the STABLE gated stop the ring
+    // emits. The hover = mark-74-aa at OUTLINE_HOVER_ALPHA (the STABLE gated stop the ring
     // uses — 9% of the generated subtle cta was imperceptible).
     if (input.secondaryStyle === 'outline' && input.secondary) {
       const s8 = secondary[mode].find(s => s.stop === 8)
@@ -274,7 +274,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
       if (s8) putLeaf(secondaryGroup, 'cta-border', colorFromStop(s8))
       // cta-ink trio untouched: outline re-expresses the FILL trio only — links keep the
       // exact ramp's text-register values already emitted by rampGroup
-      // cta/on = the family's ink/53-r450, NOT a pole — the plugin aliases non-pole on-fills to the sibling ink/53-r450
+      // cta/on = the family's ink/53-aa, NOT a pole — the plugin aliases non-pole on-fills to the sibling ink/53-aa
       if (s9) putLeaf(secondaryGroup, 'on-cta', colorFromStop(s9))
     }
     // the SOFT on-cta — THE QUIET-FILL RULE: a low-hierarchy cta's button text is the
@@ -288,7 +288,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     //  · the EXACT-style secondary, including the absent-style case resolve normalizes to
     //    exact (owner 2026-08-06) — per mode, wherever softOnCtaPasses keeps the composite
     //    over WCAG 4.5 on every fill state; a failing fill keeps the solid pole.
-    // Outline took its ink/53-r450 above; the no-secondary mirror keeps the brand's. Loud fills —
+    // Outline took its ink/53-aa above; the no-secondary mirror keeps the brand's. Loud fills —
     // brand, the signals, and the cta ESCAPE below — keep the solid pole.
     const softOnCta = (g: FigmaGroup, white: boolean) => {
       const p = white ? 1 : 0

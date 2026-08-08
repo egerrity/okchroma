@@ -32,7 +32,7 @@ brand.light
 └─ "cta-pressed"
 ```
 
-## Example — a scale stop (light mark-74-r300, seed #3060C0)
+## Example — a scale stop (light mark-74-aa, seed #3060C0)
 
 ```json
 {
@@ -56,7 +56,7 @@ brand.light
 ```
 
 Most stops carry no `require` at all — the paper/wash seams are guaranteed by the ladder's
-shape, not by declared floors. The declared requires today: mark-74-r300 (above) and the
+shape, not by declared floors. The declared requires today: mark-74-aa (above) and the
 three ink stops.
 
 ## Example — an off-scale role (dark cta)
@@ -147,7 +147,7 @@ be fake portability. Changing producer behavior requires a resolver version bump
 
 | variant | fields | meaning |
 |---|---|---|
-| WCAG contrast | `{ "metric": "wcag", "against": "paper-99" \| "paper-97" \| "paper-95", "target": n, "level": "AA" \| "AAA" }` | The stop must hold `target`:1 against the RESOLVED reference stop. Declared in both modes: light clamps lightness down; dark raises a failing hue off the paper. In use: mark-74-r300 → 3.0 vs paper-95; ink-53-r450 → 4.5, ink-42-r650 → 6.5, ink-30-r700 → 7.0 vs paper-97. |
+| WCAG contrast | `{ "metric": "wcag", "against": "paper-99" \| "paper-97" \| "paper-95", "target": n, "level": "AA" \| "AAA" }` | The stop must hold `target`:1 against the RESOLVED reference stop. Declared in both modes: light clamps lightness down; dark raises a failing hue off the paper. In use: mark-74-aa → 3.0 vs paper-95; ink-53-aa → 4.5, ink-42-aa → 6.5, ink-30-aaa → 7.0 vs paper-97. |
 | APCA contrast | `{ "metric": "apca", "against": …, "targetLc": n }` | The stop must read \|APCA Lc\| ≥ `targetLc` against the RESOLVED reference stop. Same solve shape as wcag. Never hand-declared in the built-in specs — produced by the contrast-profile compiler (below). |
 | Min separation | `{ "metric": "min-separation", "against": "paper-99" \| "prev", "target": n }` | OKLab ΔE floor from the resolved reference stop (`prev` = the stop's predecessor). Supported for portable specs; **the shipped spec no longer declares any** — the identity-curve paper/wash shape guarantees the seams instead (`spec.ts:188`). |
 
