@@ -6,7 +6,7 @@ import { emitDtcgRamp } from '../../src/reqtoken/dtcg'
 // Real Unify export data, borrowed for the Motivation page's evidence figures.
 // Labels on anything rendered from it use FAMILY hue words only, never theme
 // names (owner 2026-08-08: the export's theme names carry brand identities).
-import { UNIFY_SIGNALS, UNIFY_THEMES } from '../unify-compare/unifyData'
+import { UNIFY_SIGNALS, UNIFY_THEMES, UNIFY_GRAY } from '../unify-compare/unifyData'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // In-app documentation: a sidebar docs site. Each article is a React component,
@@ -551,28 +551,44 @@ function ChipCompare() {
   )
 }
 
-// The same role across themes: each theme's highlight alias, every one a 200.
-// Labels are FAMILY hue words from the export, never theme names.
-function BrandHighlightRow() {
-  const seen = new Set<string>()
-  const rows = UNIFY_THEMES.filter(t => {
-    if (seen.has(t.highlight.family)) return false
-    seen.add(t.highlight.family)
-    return true
-  })
+// The real system's chip exhibit, borrowed from the unify comparison page
+// (section 2's Unify card): one indicator-chip recipe (Accent fill, Highlight
+// border, Primary text), re-aliased per theme. Light values. Row labels derive
+// from each theme's primary family and stop, never theme names.
+const lstar = (hex: string): number => {
+  const lin = (c: number) => (c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4))
+  const n = parseInt(hex.slice(1), 16)
+  const Y = 0.2126 * lin(((n >> 16) & 255) / 255) + 0.7152 * lin(((n >> 8) & 255) / 255) + 0.0722 * lin((n & 255) / 255)
+  return 116 * (Y > 0.008856 ? Math.cbrt(Y) : (903.3 * Y + 16) / 116) - 16
+}
+function UnifyChipGrid() {
+  const sigPart = (fam: string, part: '' | ' Highlight' | ' Accent') =>
+    UNIFY_SIGNALS.find(s => s.name === `Signal ${fam}${part}`)!.light
+  const gray = (stop: number) => UNIFY_GRAY.find(x => x.stop === stop)!.light
+  const chipRow = (t: (typeof UNIFY_THEMES)[number]) => [
+    ...(['Error', 'Warning', 'Success'] as const).map(fam => ({ bg: sigPart(fam, ' Accent'), border: sigPart(fam, ' Highlight'), fg: sigPart(fam, '') })),
+    { bg: gray(25), border: gray(100), fg: gray(600) },
+    { bg: t.accent.hex, border: t.highlight.hex, fg: t.primary.hex },
+  ]
+  const primL = UNIFY_THEMES.map(t => lstar(t.primary.hex))
+  const span = Math.round(Math.max(...primL) - Math.min(...primL))
   return (
-    <figure className="d2-fig" role="img" aria-label={`The highlight alias of ${rows.length} real themes, each the 200 stop of its own family, each reading a different visual weight.`}>
-      <div className="d2-chips">
-        {rows.map(t => (
-          <div key={t.highlight.family} className="d2-chip-col">
-            <div className="d2-chip" style={{ background: t.highlight.hex }}>{t.highlight.family}</div>
-            <code className="d2-code">stop {t.highlight.stop}</code>
+    <figure className="d2-fig" role="img" aria-label={`One indicator chip recipe across ${UNIFY_THEMES.length} real themes. Each row shows the three signal chips and a neutral chip, which never change, beside the brand chip, whose fill, border, and lightness jump from theme to theme.`}>
+      <div className="d2-chipgrid">
+        {UNIFY_THEMES.map(t => (
+          <div key={t.name} className="d2-chipgrid-row">
+            <span className="d2-chipgrid-label">{t.primary.family} {t.primary.stop}</span>
+            {chipRow(t).map((c, i) => (
+              <span key={i} className="d2-chipx" style={{ background: c.bg, borderColor: c.border, color: c.fg }}>chip</span>
+            ))}
           </div>
         ))}
       </div>
       <figcaption className="d2-ramp-cap">
-        One role across {rows.length} real themes, every value the 200 of its family,
-        each reading a different visual weight from the same stop number.
+        A real system's indicator chip: Accent fill, Highlight border, Primary text, all
+        three re-aliased per theme (light values). The signal and neutral chips never
+        move; the brand chip's text alone spans {span} L* across these themes, and in the
+        Green 500 row the brand chip reads as the success chip.
       </figcaption>
     </figure>
   )
@@ -664,7 +680,7 @@ const motivation: Article = {
         a role 95% of the time, because we've accepted that primitives have to be
         open-ended just in case.
       </P>
-      <BrandHighlightRow />
+      <UnifyChipGrid />
       <H2>The number records where, not why</H2>
       <P>
         The standard structure treats primitives as options: a field of values you draw
@@ -783,6 +799,7 @@ const motivation: Article = {
         you the token's contractual obligation in plain terms. The rules stop living in
         our heads: the name itself declares what the stop owes.
       </P>
+      <NamingAnatomy />
       <P>
         To prove the requirement-first version was buildable, I built okchroma, an
         engine that takes a brand hex (or two) and returns a full set of accessible,
@@ -959,6 +976,10 @@ const DOCS2_CSS = `
 .d2-chips { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-start; }
 .d2-chip-col { display: flex; flex-direction: column; gap: 6px; align-items: center; }
 .d2-chip { min-width: 108px; padding: 18px 20px; border-radius: 10px; border: 1px solid var(--border-subtle); font-weight: 600; font-size: 14px; color: #202020; text-align: center; }
+.d2-chipgrid { background: #fdfcfc; border: 1px solid var(--border-subtle); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.d2-chipgrid-row { display: flex; align-items: center; gap: 6px; }
+.d2-chipgrid-label { margin-right: auto; padding-right: 8px; font-size: 11px; font-weight: 600; color: #4a4749; }
+.d2-chipx { display: inline-flex; align-items: center; border: 1px solid; border-radius: 8px; padding: 5px 14px; font-size: 12px; font-weight: 600; white-space: nowrap; }
 @media (max-width: 860px) {
   .d2 { grid-template-columns: 1fr; }
   .d2-side { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border-subtle); display: flex; gap: 16px; overflow-x: auto; padding: 16px; }
