@@ -74,5 +74,6 @@ declare namespace figma {
     removeOverrideForMode(modeId: string): void
     /** Inherited + overridden values as seen through `collection` (extension modeId keys). */
     valuesByModeForCollectionAsync(collection: VariableCollection): Promise<{ [modeId: string]: RGBA | VariableAlias }>
+    setVariableCodeSyntax(platform: 'WEB' | 'ANDROID' | 'iOS', value: string): void
   }
 }

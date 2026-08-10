@@ -38,5 +38,6 @@ declare namespace figma {
     scopes: VariableScope[]
     readonly variableCollectionId: string
     setValueForMode(modeId: string, value: RGBA | VariableAlias): void
+    setVariableCodeSyntax(platform: 'WEB' | 'ANDROID' | 'iOS', value: string): void
   }
 }

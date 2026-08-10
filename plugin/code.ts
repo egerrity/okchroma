@@ -408,6 +408,9 @@ figma.ui.onmessage = async (msg) => {
       // Per-variable descriptions in the WCAG lane (the digit-free search fix); a legacy
       // APCA pair keeps the old posture stamp — WCAG conformance phrases would lie there.
       const descFor = (path: string) => (profile === 'apca' ? stamp : describeToken(path))
+      // Web code syntax = the hyphenated variable path (owner 2026-08-10) — the raw
+      // kebab name, no var(--…) wrapper; restamped every apply like the description
+      const codeSyntaxFor = (path: string) => path.toLowerCase().replace(/[\s/]+/g, '-')
       let storedModes: { light?: string; dark?: string } = {}
       try { storedModes = JSON.parse(p.coll.getPluginData(MODE_IDS_KEY) || '{}') } catch { /* unstamped */ }
       const modeIds = new Set(p.coll.modes.map(m => m.modeId))
@@ -480,6 +483,7 @@ figma.ui.onmessage = async (msg) => {
         if (existing) { existing.scopes = [] ; continue } // already seeded — just enforce the scope rule
         const v = figma.variables.createVariable(u.path, p.coll, 'COLOR')
         v.description = descFor(u.path)
+        v.setVariableCodeSyntax('WEB', codeSyntaxFor(u.path))
         // primitives are NEVER bound directly — hidden from every property picker
         // (the theme aliases carry the scopes); the mode collection is the value store
         v.scopes = []
@@ -532,6 +536,7 @@ figma.ui.onmessage = async (msg) => {
         const created = !v
         if (!v) { v = figma.variables.createVariable(path, p.coll, 'COLOR'); primByName.set(path, v) }
         v.description = descFor(path) // restamped every apply — regenerated, never hand-kept
+        v.setVariableCodeSyntax('WEB', codeSyntaxFor(path))
         v.scopes = [] // primitives hidden from every picker (re-applies fix older files too)
         const dk = darkMap.get(t.path)
         // a TRUE pole (the engine's on-fills are exactly white or black); an outline
@@ -695,6 +700,7 @@ figma.ui.onmessage = async (msg) => {
         let v = getOrMigrate(themeByName, themePath)
         if (!v) { v = figma.variables.createVariable(themePath, th.coll, 'COLOR'); themeByName.set(themePath, v) }
         v.description = descFor(themePath)
+        v.setVariableCodeSyntax('WEB', codeSyntaxFor(themePath))
         // the THEME aliases are what users bind — visible in every supported property
         // (the mode primitives underneath carry scope NOTHING)
         v.scopes = ['ALL_SCOPES']

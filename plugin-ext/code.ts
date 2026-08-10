@@ -668,6 +668,8 @@ figma.ui.onmessage = async (msg) => {
         }
         if (!v) { v = figma.variables.createVariable(path, base, 'COLOR'); baseVars.set(path, v); createdVars++ }
         v.description = describeToken(path) // restamped every apply — regenerated, never hand-kept
+        // Web code syntax = the hyphenated variable path (owner 2026-08-10) — raw kebab, no var(--…)
+        v.setVariableCodeSyntax('WEB', path.toLowerCase().replace(/[\s/]+/g, '-'))
         v.scopes = descopeOn && path.startsWith('primitive/') ? [] : ['ALL_SCOPES']
         return v
       }
