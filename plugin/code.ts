@@ -41,6 +41,10 @@ const PROFILE_KEY = 'okchroma-profile'
 // modes' rename-proofing (owner 2026-07-27): display names are the user's to
 // change, the stored ids are the contract (the collections' tag idiom).
 const MODE_IDS_KEY = 'okchroma-mode-ids'
+// Variable identity (owner 2026-08-10): the canonical path lives in plugin data — the
+// NAME is display, free for the user to edit in the variables panel; every lookup
+// resolves the stamp first (the modes' rename-proof idiom, applied to variables).
+const PATH_KEY = 'okchroma-path'
 type Profile = 'wcag' | 'apca'
 const profileOf = (c: figma.VariableCollection): Profile => (c.getPluginData(PROFILE_KEY) === 'apca' ? 'apca' : 'wcag')
 const pairName = (role: string, profile: Profile) => `${role}-${profile}`
@@ -235,15 +239,18 @@ function legacyCandidates(path: string): string[] {
   }
   return out
 }
-// Look up `path` in `map`, first as-is, then under each legacy spelling — renaming the
-// found variable to `path` in place (Figma keeps the variable id, so bindings survive).
+// Look up `path` in `map`, first as-is, then under each legacy spelling. Every hit is
+// (re)stamped with PATH_KEY — that heals unstamped rows found by their name. A legacy
+// hit migrates in place (Figma keeps the variable id, so bindings survive); its display
+// name follows only while it still spells the legacy path — a user-custom name stays.
 function getOrMigrate(map: Map<string, figma.Variable>, path: string): figma.Variable | undefined {
   const v = map.get(path)
-  if (v) return v
+  if (v) { v.setPluginData(PATH_KEY, path); return v }
   for (const legacyPath of legacyCandidates(path)) {
     const legacy = map.get(legacyPath)
     if (legacy) {
-      legacy.name = path
+      if (legacy.name === legacyPath) legacy.name = path
+      legacy.setPluginData(PATH_KEY, path)
       map.delete(legacyPath)
       map.set(path, legacy)
       return legacy
@@ -305,9 +312,17 @@ function resolveOwned(collections: figma.VariableCollection[], role: string, pro
   return { coll, created }
 }
 
+// Map canonical path → variable. Identity = the PATH_KEY stamp; an unstamped row
+// (a pre-stamp file) keys by its name — the fallback that finds and heals it. A
+// stamped row always wins a key collision, so the stale duplicate a pre-stamp apply
+// created next to a hand-renamed variable can never shadow the real one.
 async function varsByName(collectionId: string): Promise<Map<string, figma.Variable>> {
   const all = await figma.variables.getLocalVariablesAsync()
-  return new Map(all.filter(v => v.variableCollectionId === collectionId).map(v => [v.name, v]))
+  const mine = all.filter(v => v.variableCollectionId === collectionId)
+  const map = new Map<string, figma.Variable>()
+  for (const v of mine) { const p = v.getPluginData(PATH_KEY); if (p) map.set(p, v) }
+  for (const v of mine) { if (!v.getPluginData(PATH_KEY) && !map.has(v.name)) map.set(v.name, v) }
+  return map
 }
 
 figma.ui.onmessage = async (msg) => {
@@ -408,9 +423,9 @@ figma.ui.onmessage = async (msg) => {
       // Per-variable descriptions in the WCAG lane (the digit-free search fix); a legacy
       // APCA pair keeps the old posture stamp — WCAG conformance phrases would lie there.
       const descFor = (path: string) => (profile === 'apca' ? stamp : describeToken(path))
-      // Web code syntax = the hyphenated variable path (owner 2026-08-10) — the raw
-      // kebab name, no var(--…) wrapper; restamped every apply like the description
-      const codeSyntaxFor = (path: string) => path.toLowerCase().replace(/[\s/]+/g, '-')
+      // Web code syntax = the hyphenated CURRENT name (owner 2026-08-10) — raw kebab,
+      // no var(--…) wrapper; restamped every apply, so it follows a user's panel rename
+      const codeSyntaxFor = (name: string) => name.toLowerCase().replace(/[\s/]+/g, '-')
       let storedModes: { light?: string; dark?: string } = {}
       try { storedModes = JSON.parse(p.coll.getPluginData(MODE_IDS_KEY) || '{}') } catch { /* unstamped */ }
       const modeIds = new Set(p.coll.modes.map(m => m.modeId))
@@ -480,10 +495,12 @@ figma.ui.onmessage = async (msg) => {
         // Stage B) — existing files' system/ink-13 primitive is renamed in place
         // instead of orphaned
         const existing = getOrMigrate(primByName, u.path)
-        if (existing) { existing.scopes = [] ; continue } // already seeded — just enforce the scope rule
+        // already seeded — enforce the scope rule + restamp the code syntax
+        if (existing) { existing.scopes = [] ; existing.setVariableCodeSyntax('WEB', codeSyntaxFor(existing.name)); continue }
         const v = figma.variables.createVariable(u.path, p.coll, 'COLOR')
+        v.setPluginData(PATH_KEY, u.path)
         v.description = descFor(u.path)
-        v.setVariableCodeSyntax('WEB', codeSyntaxFor(u.path))
+        v.setVariableCodeSyntax('WEB', codeSyntaxFor(v.name))
         // primitives are NEVER bound directly — hidden from every property picker
         // (the theme aliases carry the scopes); the mode collection is the value store
         v.scopes = []
@@ -534,9 +551,9 @@ figma.ui.onmessage = async (msg) => {
       ): { v: figma.Variable; created: boolean } => {
         let v = getOrMigrate(primByName, path)
         const created = !v
-        if (!v) { v = figma.variables.createVariable(path, p.coll, 'COLOR'); primByName.set(path, v) }
+        if (!v) { v = figma.variables.createVariable(path, p.coll, 'COLOR'); v.setPluginData(PATH_KEY, path); primByName.set(path, v) }
         v.description = descFor(path) // restamped every apply — regenerated, never hand-kept
-        v.setVariableCodeSyntax('WEB', codeSyntaxFor(path))
+        v.setVariableCodeSyntax('WEB', codeSyntaxFor(v.name))
         v.scopes = [] // primitives hidden from every picker (re-applies fix older files too)
         const dk = darkMap.get(t.path)
         // a TRUE pole (the engine's on-fills are exactly white or black); an outline
@@ -694,13 +711,15 @@ figma.ui.onmessage = async (msg) => {
       // ── theme collection: aliases, modes = brands (resolved above, before mode) ──
       const themeByName = await varsByName(th.coll.id)
       let aliasCount = 0
-      const aliasInto = (themePath: string, primPath: string, modeId: string = brandMode) => {
-        const target = primVar.get(primPath) ?? primByName.get(primPath)
+      // primTarget accepts a resolved Variable directly — a caller that already holds
+      // one must not round-trip through its NAME (custom names aren't map keys)
+      const aliasInto = (themePath: string, primTarget: string | figma.Variable, modeId: string = brandMode) => {
+        const target = typeof primTarget === 'string' ? (primVar.get(primTarget) ?? primByName.get(primTarget)) : primTarget
         if (!target) return
         let v = getOrMigrate(themeByName, themePath)
-        if (!v) { v = figma.variables.createVariable(themePath, th.coll, 'COLOR'); themeByName.set(themePath, v) }
+        if (!v) { v = figma.variables.createVariable(themePath, th.coll, 'COLOR'); v.setPluginData(PATH_KEY, themePath); themeByName.set(themePath, v) }
         v.description = descFor(themePath)
-        v.setVariableCodeSyntax('WEB', codeSyntaxFor(themePath))
+        v.setVariableCodeSyntax('WEB', codeSyntaxFor(v.name))
         // the THEME aliases are what users bind — visible in every supported property
         // (the mode primitives underneath carry scope NOTHING)
         v.scopes = ['ALL_SCOPES']
@@ -726,7 +745,8 @@ figma.ui.onmessage = async (msg) => {
       // clobber an existing neutral/ink-13.)
       const staleInk = themeByName.get('system/ink-13')
       if (staleInk && !themeByName.has('neutral/ink-13')) {
-        staleInk.name = 'neutral/ink-13'
+        if (staleInk.name === 'system/ink-13') staleInk.name = 'neutral/ink-13' // custom names stay
+        staleInk.setPluginData(PATH_KEY, 'neutral/ink-13')
         themeByName.set('neutral/ink-13', staleInk)
         themeByName.delete('system/ink-13')
       }
@@ -793,7 +813,8 @@ figma.ui.onmessage = async (msg) => {
       ] as const) {
         const v = themeByName.get(oldPath)
         if (v && !themeByName.has(newPath)) {
-          v.name = newPath
+          if (v.name === oldPath) v.name = newPath // custom names stay
+          v.setPluginData(PATH_KEY, newPath)
           themeByName.set(newPath, v)
           themeByName.delete(oldPath)
         }
@@ -819,7 +840,7 @@ figma.ui.onmessage = async (msg) => {
             const target = absPath === 'system/abs-secondary'
               ? (primByName.get(`brand/${m.name}/secondary/identity`) ?? primByName.get(`brand/${m.name}/primary/identity`))
               : primByName.get(`brand/${m.name}/primary/identity`)
-            if (target) aliasInto(absPath, target.name, m.modeId)
+            if (target) aliasInto(absPath, target, m.modeId)
           }
         }
       }
@@ -886,7 +907,7 @@ figma.ui.onmessage = async (msg) => {
             const cur = themeVar?.valuesByMode[m.modeId]
             if (cur && typeof cur === 'object' && 'type' in cur) continue
             const target = findPrim(primary + brandLeaf) ?? findPrim(primary + 'ink/42-aa')
-            if (target) aliasInto(`system/${themeLeaf}`, target.name, m.modeId)
+            if (target) aliasInto(`system/${themeLeaf}`, target, m.modeId)
           }
         }
       }

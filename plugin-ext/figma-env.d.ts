@@ -65,6 +65,8 @@ declare namespace figma {
     readonly id: string
     name: string
     description: string
+    getPluginData(key: string): string
+    setPluginData(key: string, value: string): void
     scopes: VariableScope[]
     readonly variableCollectionId: string
     /** Values keyed by the OWNING collection's modeIds (the base pair for base variables). */

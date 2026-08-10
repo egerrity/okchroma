@@ -32,6 +32,10 @@ const BRAND_KEY = 'okchroma-ext-brand'
 // Each apply stamps its input recipe here (JSON) — what powers the automatic
 // collection-wide secondary check and the manual "Re-apply all brands" action.
 const SPEC_KEY = 'okchroma-ext-spec'
+// Variable identity (owner 2026-08-10): the canonical path lives in plugin data — the
+// NAME is display, free for the user to edit in the variables panel; every lookup
+// resolves the stamp first (the collections' rename-proof idiom, applied to variables).
+const PATH_KEY = 'okchroma-ext-path'
 // The base's solve-column → modeId map (JSON), stamped every apply — the modes'
 // rename-proofing (owner 2026-07-27): display names are the user's to change,
 // the stored ids are the contract (the collections' tag idiom, extended to modes).
@@ -330,9 +334,35 @@ const ENTERPRISE_MSG =
 
 const isExtension = (c: figma.VariableCollection): c is figma.ExtendedVariableCollection => c.isExtension === true
 
+// Map canonical path → variable. Identity = the PATH_KEY stamp; an unstamped row
+// (a pre-stamp file) keys by its name — the fallback that finds and heals it. A
+// stamped row always wins a key collision, so the stale duplicate a pre-stamp apply
+// created next to a hand-renamed variable can never shadow the real one.
 async function varsByName(collectionId: string): Promise<Map<string, figma.Variable>> {
   const all = await figma.variables.getLocalVariablesAsync()
-  return new Map(all.filter(v => v.variableCollectionId === collectionId).map(v => [v.name, v]))
+  const mine = all.filter(v => v.variableCollectionId === collectionId)
+  const map = new Map<string, figma.Variable>()
+  for (const v of mine) { const p = v.getPluginData(PATH_KEY); if (p) map.set(p, v) }
+  for (const v of mine) { if (!v.getPluginData(PATH_KEY) && !map.has(v.name)) map.set(v.name, v) }
+  return map
+}
+
+// Parse an extension's stored recipe, resyncing its brand to the collection's LIVE
+// name (owner 2026-08-10: a rename in the variables panel wins — the picker lists the
+// new name, and BRAND_KEY follows so an edit updates this extension instead of
+// forking a duplicate). Returns undefined when no recipe is stored or it won't parse.
+function recipeOf(e: figma.VariableCollection): unknown | undefined {
+  const raw = e.getPluginData(SPEC_KEY)
+  if (!raw) return undefined
+  try {
+    const spec = JSON.parse(raw) as { brand?: unknown }
+    if (spec && typeof spec === 'object' && spec.brand !== e.name) {
+      spec.brand = e.name
+      e.setPluginData(SPEC_KEY, JSON.stringify(spec))
+      e.setPluginData(BRAND_KEY, e.name)
+    }
+    return spec
+  } catch { return undefined }
 }
 
 // Diff tolerance: values round-trip through Figma's color storage; 1/1024 is far below
@@ -664,12 +694,15 @@ figma.ui.onmessage = async (msg) => {
         let v = baseVars.get(path)
         if (!v) for (const legacyPath of legacyCandidates(path)) {
           const legacy = baseVars.get(legacyPath)
-          if (legacy) { legacy.name = path; baseVars.delete(legacyPath); baseVars.set(path, legacy); v = legacy; break }
+          // display follows only while it still spells the legacy path — a user-custom
+          // name stays; the stamp below carries identity either way
+          if (legacy) { if (legacy.name === legacyPath) legacy.name = path; baseVars.delete(legacyPath); baseVars.set(path, legacy); v = legacy; break }
         }
         if (!v) { v = figma.variables.createVariable(path, base, 'COLOR'); baseVars.set(path, v); createdVars++ }
+        v.setPluginData(PATH_KEY, path) // identity stamp — a panel rename survives future lookups
         v.description = describeToken(path) // restamped every apply — regenerated, never hand-kept
-        // Web code syntax = the hyphenated variable path (owner 2026-08-10) — raw kebab, no var(--…)
-        v.setVariableCodeSyntax('WEB', path.toLowerCase().replace(/[\s/]+/g, '-'))
+        // Web code syntax = the hyphenated CURRENT name (owner 2026-08-10) — follows a rename; raw kebab, no var(--…)
+        v.setVariableCodeSyntax('WEB', v.name.toLowerCase().replace(/[\s/]+/g, '-'))
         v.scopes = descopeOn && path.startsWith('primitive/') ? [] : ['ALL_SCOPES']
         return v
       }
@@ -779,7 +812,11 @@ figma.ui.onmessage = async (msg) => {
       // vacated ink/10 is created fresh below with the between stop's value.
       for (const [from, to] of inkUpshifts) {
         const v = baseVars.get(from)
-        if (v && !baseVars.has(to)) { v.name = to; baseVars.set(to, v); baseVars.delete(from) }
+        if (v && !baseVars.has(to)) {
+          if (v.name === from) v.name = to // custom display names stay; the stamp moves identity
+          v.setPluginData(PATH_KEY, to)
+          baseVars.set(to, v); baseVars.delete(from)
+        }
       }
       // The abs poles are created FIRST (they are alias targets and the owner's panel
       // layout leads with them), then the elevation planes (aliased below once the
@@ -813,7 +850,11 @@ figma.ui.onmessage = async (msg) => {
         ['brand-secondary/identity', 'primitive/system/abs-secondary'],
       ] as const) {
         const v = baseVars.get(oldPath)
-        if (v && !baseVars.has(newPath)) { v.name = newPath; baseVars.set(newPath, v); baseVars.delete(oldPath) }
+        if (v && !baseVars.has(newPath)) {
+          if (v.name === oldPath) v.name = newPath // custom display names stay; the stamp moves identity
+          v.setPluginData(PATH_KEY, newPath)
+          baseVars.set(newPath, v); baseVars.delete(oldPath)
+        }
       }
       for (const t of baseTokens[activeCols[0]]) { // all columns share the path set
         if (!withSecondary && (isBrandSecondary(t.path) || t.path === 'primitive/system/abs-secondary')) continue
@@ -1100,9 +1141,9 @@ figma.ui.onmessage = async (msg) => {
       if (secondaryAdded || addedCols.length || rowsAdded) {
         for (const e of extsOfBase) {
           if (e.id === ext.id) continue
-          const raw = e.getPluginData(SPEC_KEY)
-          if (!raw) { unstamped.push(e.name); continue }
-          try { backfill.push(JSON.parse(raw)) } catch { unstamped.push(e.name) }
+          const spec = recipeOf(e)
+          if (spec === undefined) { unstamped.push(e.name); continue }
+          backfill.push(spec)
         }
       }
 
@@ -1120,9 +1161,9 @@ figma.ui.onmessage = async (msg) => {
       const specs: unknown[] = []
       const unstamped: string[] = []
       for (const e of exts) {
-        const raw = e.getPluginData(SPEC_KEY)
-        if (!raw) { unstamped.push(e.name); continue }
-        try { specs.push(JSON.parse(raw)) } catch { unstamped.push(e.name) }
+        const spec = recipeOf(e)
+        if (spec === undefined) { unstamped.push(e.name); continue }
+        specs.push(spec)
       }
       // the reason echoes back verbatim: the UI routes a 'list' reply to the edit-picker
       // cache and everything else into the batch flows — without the tag, the picker's
