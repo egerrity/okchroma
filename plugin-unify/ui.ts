@@ -1,63 +1,60 @@
-// The Mapper's UI thread — Stage 1 (inspect). Receives the sandbox's grouped
-// inventory, badges what looks like Unify (collection-name match for bound
-// variables, exact hex match for detached fills — the distilled export is the
-// reference), renders Organizer-style rows, and builds the copyable report
-// that seeds the Stage-2 mapping table.
-import {
-  UNIFY_THEMES, UNIFY_RAMPS, UNIFY_SIGNALS, UNIFY_SIGNAL_RAMPS, UNIFY_GRAY,
-  UNIFY_SEMANTIC_CENSUS,
-} from '../demo/unify-compare/unifyData'
+// The Mapper's UI — v1.2, the review-and-apply surface. Groups every matched Unify
+// token into CLUSTERS of similar elements (usage kind x nearest component/element
+// ancestor); each cluster gets its own candidate pick and its own apply (owner
+// 2026-08-11: per-element groups, never per file — too many subjective decisions).
+// Candidate chips show the FILE's real okchroma values (sandbox-resolved); a missing
+// target means the okchroma theme needs one re-apply with the extended plugin.
+import { matchBound, matchDetached, UNIFY_COLLECTIONS, IGNORE_COLLECTIONS, type Rule } from './mapping'
 
 type UsageKind = 'text' | 'fill' | 'stroke'
-interface Usage { nodeId: string; nodeName: string; kind: UsageKind; pageId: string; pageName: string }
+interface Usage {
+  nodeId: string; nodeName: string; kind: UsageKind; pageId: string; pageName: string
+  anc: string; slot: 'fills' | 'strokes' | 'seg'; index: number; start?: number; end?: number
+}
 interface BoundGroup {
   varId: string; name: string; collection: string; remote: boolean; key: string
-  values?: Record<string, { hex: string; a?: number }>
+  values: Record<string, { hex: string; a?: number }>
   usages: Usage[]
 }
 interface DetachedGroup { hex: string; alpha: number; usages: Usage[] }
+interface OkTarget { path: string; light?: string; dark?: string }
 interface ScanResults {
   type: 'scan-results'; scope: string; nodesScanned: number; currentPageId: string
-  bound: BoundGroup[]; detached: DetachedGroup[]
+  bound: BoundGroup[]; detached: DetachedGroup[]; okTargets: OkTarget[]
 }
 
-// ── the Unify reference sets (from the distilled export) ────────────────────────
-// Collections: the semantic palettes (census keys) + the structural collections the
-// export mirrors. A bound variable whose collection matches is badged Unify.
-const UNIFY_COLLECTIONS = new Set([
-  ...Object.keys(UNIFY_SEMANTIC_CENSUS),
-  'Color modes', 'Color themes', 'Color palettes',
-])
-// Values: every known Unify hex, both modes. A detached fill matching is badged.
-const UNIFY_HEXES = new Set<string>()
-const addHex = (h?: string) => { if (h) UNIFY_HEXES.add(h.toUpperCase()) }
-for (const ramps of [UNIFY_RAMPS, UNIFY_SIGNAL_RAMPS]) {
-  for (const stops of Object.values(ramps)) for (const s of stops) { addHex(s.light); addHex(s.dark) }
+interface Cluster { id: string; kind: UsageKind; anc: string; usages: Usage[] }
+interface TokenBucket {
+  key: string; label: string; sub: string; previewHex: string; previewAlpha?: number
+  rule: Rule; suggested: boolean
+  clusters: Cluster[]
+  total: number
 }
-for (const s of UNIFY_GRAY) { addHex(s.light); addHex(s.dark) }
-for (const s of UNIFY_SIGNALS) { addHex(s.light); addHex(s.dark) }
-for (const t of UNIFY_THEMES) for (const a of [t.primary, t.highlight, t.accent]) { addHex(a.hex); addHex(a.darkHex) }
 
 // ── DOM ─────────────────────────────────────────────────────────────────────────
 const $ = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T
 const scopeSeg = $('scope-seg')
 const scanBtn = $<HTMLButtonElement>('scan-btn')
+const applyAllBtn = $<HTMLButtonElement>('apply-all-btn')
 const copyBtn = $<HTMLButtonElement>('copy-btn')
 const statusEl = $('status')
 const resultsEl = $('results')
 const summaryEl = $('summary')
-const boundRowsEl = $('bound-rows')
-const detachedRowsEl = $('detached-rows')
+const matchedEl = $('matched-rows')
+const restEl = $('rest-rows')
 const reportBuf = $<HTMLTextAreaElement>('report-buf')
 
 let scope: 'selection' | 'page' | 'file' = 'page'
 let lastResults: ScanResults | null = null
+let okValues = new Map<string, OkTarget>()
+let buckets: TokenBucket[] = []
+const picks = new Map<string, string>() // clusterId -> chosen path
 
 scopeSeg.addEventListener('click', (e) => {
-  const b = (e.target as HTMLElement).closest('button')
-  if (!b) return
-  scope = b.dataset.scope as typeof scope
-  scopeSeg.querySelectorAll('button').forEach(btn => btn.classList.toggle('on', btn === b))
+  const btn = (e.target as HTMLElement).closest('button')
+  if (!btn) return
+  scope = btn.dataset.scope as typeof scope
+  scopeSeg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === btn))
 })
 
 scanBtn.addEventListener('click', () => {
@@ -67,117 +64,182 @@ scanBtn.addEventListener('click', () => {
   parent.postMessage({ pluginMessage: { type: 'scan', scope } }, '*')
 })
 
-const USAGE_SHOWN = 12
 const esc = (s: string): string =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
-const kindCounts = (usages: Usage[]): Record<UsageKind, number> => {
-  const k: Record<UsageKind, number> = { text: 0, fill: 0, stroke: 0 }
-  for (const u of usages) k[u.kind]++
-  return k
+// ── model ───────────────────────────────────────────────────────────────────────
+const clustersOf = (usages: Usage[], bucketKey: string): Cluster[] => {
+  const m = new Map<string, Cluster>()
+  for (const u of usages) {
+    const id = `${bucketKey}|${u.kind}|${u.anc}`
+    const c = m.get(id) ?? { id, kind: u.kind, anc: u.anc, usages: [] }
+    c.usages.push(u); m.set(id, c)
+  }
+  return [...m.values()].sort((a, b) => b.usages.length - a.usages.length)
 }
 
-function usageBody(usages: Usage[]): string {
-  const shown = usages.slice(0, USAGE_SHOWN)
-  const lines = shown.map(u => `
-    <div class="usage-line"><span class="k">${u.kind}</span><span class="n">${esc(u.nodeName)}</span><span class="k">${esc(u.pageName)}</span></div>`).join('')
-  const more = usages.length > USAGE_SHOWN ? `<div class="more">+ ${usages.length - USAGE_SHOWN} more</div>` : ''
-  return `${lines}${more}<div class="usage-line"><button class="sel" data-select>Select on current page</button></div>`
+const dist = (a: string, b: string): number => {
+  const ch = (h: string, i: number) => parseInt(h.slice(i, i + 2), 16)
+  return Math.abs(ch(a, 1) - ch(b, 1)) + Math.abs(ch(a, 3) - ch(b, 3)) + Math.abs(ch(a, 5) - ch(b, 5))
+}
+const nearestPaths = (hex: string, count: number): string[] =>
+  [...okValues.values()].filter(t => t.light)
+    .sort((a, b) => dist(hex, a.light!) - dist(hex, b.light!))
+    .slice(0, count).map(t => t.path)
+
+function buildModel(r: ScanResults): { ignored: number; other: number } {
+  okValues = new Map(r.okTargets.map(t => [t.path, t]))
+  const byKey = new Map<string, { label: string; sub: string; hex: string; alpha?: number; rule: Rule; suggested: boolean; usages: Usage[] }>()
+  let ignored = 0, other = 0
+
+  for (const g of r.bound) {
+    if (IGNORE_COLLECTIONS.has(g.collection)) { ignored += g.usages.length; continue }
+    if (!UNIFY_COLLECTIONS.has(g.collection)) { other += g.usages.length; continue }
+    const m = matchBound(g.name)
+    if (m === 'ignore') { ignored += g.usages.length; continue }
+    const firstVal = Object.values(g.values)[0]
+    const rule: Rule = m ?? { candidates: firstVal ? nearestPaths(firstVal.hex, 2) : [] }
+    // merge VINTAGES: same display name = one bucket, keys differ underneath
+    const key = `tok:${g.name}`
+    const b = byKey.get(key) ?? { label: g.name, sub: g.collection, hex: firstVal?.hex ?? '#888888', alpha: firstVal?.a, rule, suggested: m === null, usages: [] }
+    b.usages.push(...g.usages); byKey.set(key, b)
+  }
+  for (const d of r.detached) {
+    const m = matchDetached(d.hex, d.alpha)
+    if (m === 'ignore') { ignored += d.usages.length; continue }
+    if (m === null) { other += d.usages.length; continue }
+    const key = `hex:${d.hex}@${d.alpha.toFixed(2)}`
+    const alphaLabel = d.alpha < 1 ? ` @ ${Math.round(d.alpha * 100)}%` : ''
+    const b = byKey.get(key) ?? { label: `${d.hex}${alphaLabel} (detached)`, sub: 'raw value', hex: d.hex, alpha: d.alpha, rule: m, suggested: false, usages: [] }
+    b.usages.push(...d.usages); byKey.set(key, b)
+  }
+
+  buckets = [...byKey.entries()].map(([key, b]) => ({
+    key, label: b.label, sub: b.sub, previewHex: b.hex, previewAlpha: b.alpha,
+    rule: b.rule, suggested: b.suggested,
+    clusters: clustersOf(b.usages, key), total: b.usages.length,
+  })).sort((a, b) => b.total - a.total)
+
+  // auto rules pre-pick their single candidate on every cluster
+  picks.clear()
+  for (const b of buckets) if (b.rule.auto && b.rule.candidates.length === 1) {
+    for (const c of b.clusters) picks.set(c.id, b.rule.candidates[0])
+  }
+  return { ignored, other }
 }
 
-function wireRow(row: HTMLElement, usages: Usage[]): void {
-  row.querySelector('.row-head')!.addEventListener('click', () => row.classList.toggle('open'))
-  row.querySelector('[data-select]')?.addEventListener('click', (e) => {
-    e.stopPropagation()
-    parent.postMessage({ pluginMessage: {
-      type: 'select-nodes',
-      ids: usages.map(u => u.nodeId),
-      pageIds: usages.map(u => u.pageId),
-    } }, '*')
-  })
+// ── render ──────────────────────────────────────────────────────────────────────
+const chipHtml = (clusterId: string, path: string, picked: boolean): string => {
+  const t = okValues.get(path)
+  const short = path.replace('primitive/', '')
+  if (!t || !t.light) return `<span class="okchip miss" title="target missing — re-apply the okchroma theme once">${esc(short)}</span>`
+  return `<button class="okchip${picked ? ' sel' : ''}" data-cluster="${esc(clusterId)}" data-path="${esc(path)}">
+    <span class="pair"><span style="background:${t.light}"></span><span style="background:${t.dark ?? '#111'}"></span></span>${esc(short)}</button>`
 }
+
+const clusterHtml = (b: TokenBucket, c: Cluster): string => `
+  <div class="cluster" data-cluster="${esc(c.id)}">
+    <span class="ck">${c.kind}</span>
+    <span class="ca" title="${esc(c.anc)}">${esc(c.anc)}</span>
+    <span class="cn">${c.usages.length}</span>
+    <button class="sel" data-select="${esc(c.id)}">Select</button>
+    <span class="chips">${b.rule.candidates.map(p => chipHtml(c.id, p, picks.get(c.id) === p)).join('')}</span>
+    <button class="apply" data-apply="${esc(c.id)}" ${picks.has(c.id) ? '' : 'disabled'}>Apply</button>
+  </div>`
 
 function render(r: ScanResults): void {
-  const boundSorted = [...r.bound].sort((a, b) => b.usages.length - a.usages.length)
-  const detachedUnify = r.detached.filter(d => UNIFY_HEXES.has(d.hex))
-  const detachedOther = r.detached.filter(d => !UNIFY_HEXES.has(d.hex))
-  const unifyBoundCount = boundSorted.filter(g => UNIFY_COLLECTIONS.has(g.collection)).length
-
+  const { ignored, other } = buildModel(r)
+  const matched = buckets.reduce((s, b) => s + b.total, 0)
   summaryEl.innerHTML = `
     <span><b>${r.nodesScanned}</b> nodes</span>
-    <span><b>${boundSorted.length}</b> bound variables (<b>${unifyBoundCount}</b> Unify)</span>
-    <span><b>${detachedUnify.length}</b> detached Unify values</span>
-    <span><b>${detachedOther.length}</b> other detached</span>`
+    <span><b>${matched}</b> matched usages in <b>${buckets.length}</b> tokens</span>
+    <span><b>${ignored}</b> ignored</span>
+    <span><b>${other}</b> out of scope</span>`
 
-  boundRowsEl.innerHTML = ''
-  for (const g of boundSorted) {
-    const unify = UNIFY_COLLECTIONS.has(g.collection)
+  matchedEl.innerHTML = ''
+  for (const b of buckets) {
     const row = document.createElement('div')
-    row.className = 'row'
-    // per-mode value swatches (v1.1) — the owning collection's mode order, capped at 2
-    const swatches = Object.values(g.values ?? {}).slice(0, 2)
-      .map(v => `<span class="sw" style="background:${v.hex}"></span>`).join('')
+    row.className = 'trow'
+    const preview = b.previewAlpha !== undefined && b.previewAlpha < 1
+      ? `rgba(${parseInt(b.previewHex.slice(1, 3), 16)},${parseInt(b.previewHex.slice(3, 5), 16)},${parseInt(b.previewHex.slice(5, 7), 16)},${b.previewAlpha})`
+      : b.previewHex
     row.innerHTML = `
-      <div class="row-head">
-        ${swatches}
-        <span class="row-name">${esc(g.name)}</span>
-        ${g.collection ? `<span class="tag coll">${esc(g.collection)}</span>` : ''}
-        ${g.remote ? '<span class="tag lib">library</span>' : ''}
-        ${unify ? '<span class="tag unify">Unify</span>' : ''}
-        <span class="count">${g.usages.length}</span>
+      <div class="thead">
+        <span class="usw" style="background:${preview}"></span>
+        <span class="tname">${esc(b.label)}</span>
+        ${b.suggested ? '<span class="tag sug">suggested</span>' : ''}
+        ${b.rule.candidates.length === 0 ? '<span class="tag miss">no candidates — punch list</span>' : ''}
+        <span class="count">${b.total}</span>
       </div>
-      <div class="row-body">${usageBody(g.usages)}</div>`
-    wireRow(row, g.usages)
-    boundRowsEl.appendChild(row)
+      <div class="tbody">${b.clusters.map(c => clusterHtml(b, c)).join('')}</div>`
+    matchedEl.appendChild(row)
   }
-  if (!boundSorted.length) boundRowsEl.innerHTML = '<div class="row"><div class="row-head"><span class="row-name" style="color:#999;font-weight:400">none found</span></div></div>'
-
-  detachedRowsEl.innerHTML = ''
-  for (const d of [...detachedUnify, ...detachedOther].sort((a, b) => b.usages.length - a.usages.length)) {
-    const unify = UNIFY_HEXES.has(d.hex)
-    const row = document.createElement('div')
-    row.className = 'row'
-    const alpha = d.alpha < 1 ? ` · ${Math.round(d.alpha * 100)}%` : ''
-    row.innerHTML = `
-      <div class="row-head">
-        <span class="sw" style="background:${d.hex}"></span>
-        <span class="row-name">${d.hex}${alpha}</span>
-        ${unify ? '<span class="tag unify">Unify</span>' : ''}
-        <span class="count">${d.usages.length}</span>
-      </div>
-      <div class="row-body">${usageBody(d.usages)}</div>`
-    wireRow(row, d.usages)
-    detachedRowsEl.appendChild(row)
-  }
-  if (!r.detached.length) detachedRowsEl.innerHTML = '<div class="row"><div class="row-head"><span class="row-name" style="color:#999;font-weight:400">none found</span></div></div>'
-
+  if (!buckets.length) matchedEl.innerHTML = '<div class="empty">nothing matched</div>'
+  restEl.textContent = `${ignored} usages ignored (doc scaffolding, Figma purple, debug) · ${other} out of scope`
   resultsEl.style.display = ''
+  syncApplyAll()
 }
 
-// The copyable report — the Stage-2 mapping table's input. Identities and counts,
-// not node lists: what tokens exist, where from, how used.
-function buildReport(r: ScanResults): string {
-  const pagesOf = (usages: Usage[]) => [...new Set(usages.map(u => u.pageName))]
-  return JSON.stringify({
-    mapper: 'stage-1 inventory',
-    scope: r.scope,
-    nodesScanned: r.nodesScanned,
-    bound: [...r.bound].sort((a, b) => b.usages.length - a.usages.length).map(g => ({
-      name: g.name, collection: g.collection, remote: g.remote, key: g.key,
-      unify: UNIFY_COLLECTIONS.has(g.collection),
-      values: g.values ?? {},
-      count: g.usages.length, kinds: kindCounts(g.usages), pages: pagesOf(g.usages),
-    })),
-    detached: r.detached.map(d => ({
-      hex: d.hex, alpha: d.alpha, unify: UNIFY_HEXES.has(d.hex),
-      count: d.usages.length, kinds: kindCounts(d.usages), pages: pagesOf(d.usages),
-    })),
-  }, null, 2)
+function syncApplyAll(): void {
+  applyAllBtn.disabled = picks.size === 0
+  applyAllBtn.textContent = picks.size ? `Apply all picked (${picks.size})` : 'Apply all picked'
 }
 
+const clusterById = (id: string): Cluster | undefined => {
+  for (const b of buckets) for (const c of b.clusters) if (c.id === id) return c
+  return undefined
+}
+
+resultsEl.addEventListener('click', (e) => {
+  const el = e.target as HTMLElement
+  const chip = el.closest('.okchip') as HTMLElement | null
+  if (chip && chip.dataset.path && chip.dataset.cluster) {
+    const id = chip.dataset.cluster
+    picks.set(id, chip.dataset.path)
+    const holder = resultsEl.querySelector(`.cluster[data-cluster="${CSS.escape(id)}"]`)!
+    holder.querySelectorAll('.okchip').forEach(x => x.classList.toggle('sel', x === chip))
+    ;(holder.querySelector('[data-apply]') as HTMLButtonElement).disabled = false
+    syncApplyAll()
+    return
+  }
+  const sel = el.closest('[data-select]') as HTMLElement | null
+  if (sel) {
+    const c = clusterById(sel.dataset.select!)
+    if (c) parent.postMessage({ pluginMessage: { type: 'select-nodes', ids: c.usages.map(u => u.nodeId), pageIds: c.usages.map(u => u.pageId) } }, '*')
+    return
+  }
+  const ap = el.closest('[data-apply]') as HTMLButtonElement | null
+  if (ap && !ap.disabled) {
+    const c = clusterById(ap.dataset.apply!)
+    const path = c && picks.get(c.id)
+    if (c && path) {
+      statusEl.textContent = `Applying ${c.usages.length}…`
+      parent.postMessage({ pluginMessage: { type: 'apply-picks', picks: [{ path, usages: c.usages }] } }, '*')
+    }
+  }
+})
+
+applyAllBtn.addEventListener('click', () => {
+  const batch: Array<{ path: string; usages: Usage[] }> = []
+  for (const [id, path] of picks) {
+    const c = clusterById(id)
+    if (c) batch.push({ path, usages: c.usages })
+  }
+  if (!batch.length) return
+  statusEl.textContent = `Applying ${batch.reduce((s, p) => s + p.usages.length, 0)} usages in ${batch.length} groups…`
+  parent.postMessage({ pluginMessage: { type: 'apply-picks', picks: batch } }, '*')
+})
+
+// ── report (unchanged shape + anc clusters) ─────────────────────────────────────
 copyBtn.addEventListener('click', () => {
   if (!lastResults) return
-  reportBuf.value = buildReport(lastResults)
+  reportBuf.value = JSON.stringify({
+    mapper: 'v1.2 inventory', scope: lastResults.scope, nodesScanned: lastResults.nodesScanned,
+    tokens: buckets.map(b => ({
+      label: b.label, total: b.total, suggested: b.suggested, candidates: b.rule.candidates,
+      clusters: b.clusters.map(c => ({ kind: c.kind, anc: c.anc, count: c.usages.length })),
+    })),
+  }, null, 2)
   reportBuf.select()
   document.execCommand('copy')
   statusEl.textContent = 'Report copied to clipboard.'
@@ -192,6 +254,9 @@ window.onmessage = (event: MessageEvent) => {
     copyBtn.disabled = false
     statusEl.textContent = `Scanned ${msg.nodesScanned} nodes (${msg.scope}).`
     render(lastResults)
+  } else if (msg.type === 'apply-result') {
+    statusEl.textContent = `Applied ${msg.applied}, skipped ${msg.skipped}${msg.missing?.length ? ` — ${msg.missing.length} targets missing (re-apply the okchroma theme once)` : ''}. Re-scanning…`
+    parent.postMessage({ pluginMessage: { type: 'scan', scope } }, '*')
   } else if (msg.type === 'error') {
     scanBtn.disabled = false
     statusEl.textContent = String(msg.message)

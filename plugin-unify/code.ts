@@ -1,33 +1,40 @@
 /// <reference path="./figma-env.d.ts" />
 
-// The Mapper's sandbox — Stage 1 is INSPECT-ONLY: no writes, ever. Walks the chosen
-// scope, collects every solid paint's binding (bound variable or detached value) across
-// fills, strokes, and per-segment text fills, resolves variable identities, and hands
-// the UI a grouped inventory. The UI does the Unify matching (it bundles unifyData);
-// the sandbox stays data-shaped and dumb.
+// The Mapper's sandbox — v1.2. Scan stays read-only and now records, per usage, the
+// nearest named ancestor (main component / instance name, else the nearest named
+// frame) and the exact paint slot, so the UI can cluster "similar elements with
+// similar fills" and the apply can rebind precisely. Apply is the ONLY writer and
+// touches exactly the usages the UI sends — per cluster, never per file (owner
+// 2026-08-11: too many subjective decisions for anything coarser).
 
-figma.showUI(__html__, { width: 480, height: 640, themeColors: true })
+import { allCandidatePaths } from './mapping'
+
+figma.showUI(__html__, { width: 520, height: 680, themeColors: true })
 
 type UsageKind = 'text' | 'fill' | 'stroke'
-interface Usage { nodeId: string; nodeName: string; kind: UsageKind; pageId: string; pageName: string }
+interface Usage {
+  nodeId: string; nodeName: string; kind: UsageKind; pageId: string; pageName: string
+  /** nearest named ancestor: instance/component name, else nearest named frame, else page */
+  anc: string
+  /** exact paint location for the rebind */
+  slot: 'fills' | 'strokes' | 'seg'
+  index: number
+  start?: number; end?: number
+}
 interface BoundGroup {
   varId: string; name: string; collection: string; remote: boolean; key: string
-  /** resolved per-mode colors (v1.1), keyed by the owning collection's mode NAME */
   values: Record<string, { hex: string; a?: number }>
   usages: Usage[]
 }
-interface DetachedGroup { hex: string; alpha: number; usages: Usage[] }
 
 const toHex = (c: figma.RGB): string => {
   const ch = (v: number) => Math.round(Math.min(1, Math.max(0, v)) * 255).toString(16).padStart(2, '0')
   return `#${ch(c.r)}${ch(c.g)}${ch(c.b)}`.toUpperCase()
 }
 
-// ── value resolution (v1.1) ─────────────────────────────────────────────────────
-// A variable's value in a mode may alias a variable in ANOTHER collection whose
-// modeIds differ — cross-collection hops re-select the target's mode BY NAME
-// (Light->Light, Dark->Dark; single-mode targets use their only mode; else first).
-// Depth-capped; unresolvable ends return undefined and the report ships without.
+const isSolid = (p: figma.Paint): p is figma.SolidPaint => p.type === 'SOLID' && p.visible !== false
+
+// ── variable/collection caches ─────────────────────────────────────────────────
 const varCache = new Map<string, figma.Variable | null>()
 const collCache = new Map<string, figma.VariableCollection | null>()
 const varById = async (id: string): Promise<figma.Variable | null> => {
@@ -50,7 +57,6 @@ const pickMode = (coll: figma.VariableCollection, wantName: string): string | un
 
 async function resolveColor(v: figma.Variable, modeName: string, depth = 0): Promise<figma.RGBA | undefined> {
   if (depth > 8) return undefined
-  // un-imported remote handles carry no values — import by key makes them readable
   let vv = v
   if (!vv.valuesByMode || !Object.keys(vv.valuesByMode).length) {
     try { vv = await figma.variables.importVariableByKeyAsync(v.key) } catch { return undefined }
@@ -68,7 +74,6 @@ async function resolveColor(v: figma.Variable, modeName: string, depth = 0): Pro
   return val as figma.RGBA
 }
 
-// The group's per-mode values, keyed by the OWNING collection's mode names.
 async function resolveValues(v: figma.Variable): Promise<Record<string, { hex: string; a?: number }>> {
   const out: Record<string, { hex: string; a?: number }> = {}
   let vv = v
@@ -84,39 +89,52 @@ async function resolveValues(v: figma.Variable): Promise<Record<string, { hex: s
   return out
 }
 
-const isSolid = (p: figma.Paint): p is figma.SolidPaint => p.type === 'SOLID' && p.visible !== false
+// ── okchroma target lookup (shared stamp first, default-spelled name fallback) ──
+const SHARED_NS = 'okchroma'
+const SHARED_KEY = 'okchroma-ext-path'
+async function buildTargetMap(): Promise<Map<string, figma.Variable>> {
+  const map = new Map<string, figma.Variable>()
+  const all = await figma.variables.getLocalVariablesAsync()
+  for (const v of all) {
+    let stamped = ''
+    try { stamped = v.getSharedPluginData(SHARED_NS, SHARED_KEY) } catch { /* older builds */ }
+    if (stamped) { map.set(stamped, v); continue }
+    if (v.name.startsWith('primitive/') && !map.has(v.name)) map.set(v.name, v)
+  }
+  return map
+}
 
+// ── scan ────────────────────────────────────────────────────────────────────────
 function collectPaints(
-  node: figma.SceneNode, page: figma.PageNode,
+  node: figma.SceneNode, page: figma.PageNode, anc: string,
   bound: Map<string, Usage[]>, detached: Map<string, { hex: string; alpha: number; usages: Usage[] }>,
 ): void {
-  const usage = (kind: UsageKind): Usage =>
-    ({ nodeId: node.id, nodeName: node.name, kind, pageId: page.id, pageName: page.name })
-  const record = (paint: figma.Paint, alias: figma.VariableAlias | null | undefined, kind: UsageKind) => {
+  const usage = (kind: UsageKind, slot: Usage['slot'], index: number, start?: number, end?: number): Usage =>
+    ({ nodeId: node.id, nodeName: node.name, kind, pageId: page.id, pageName: page.name, anc, slot, index, start, end })
+  const record = (paint: figma.Paint, alias: figma.VariableAlias | null | undefined, u: Usage) => {
     if (!isSolid(paint)) return
     const a = alias ?? paint.boundVariables?.color
     if (a) {
       const list = bound.get(a.id) ?? []
-      list.push(usage(kind)); bound.set(a.id, list)
+      list.push(u); bound.set(a.id, list)
     } else {
       const hex = toHex(paint.color)
       const alpha = paint.opacity ?? 1
       const k = `${hex}@${alpha.toFixed(3)}`
       const g = detached.get(k) ?? { hex, alpha, usages: [] }
-      g.usages.push(usage(kind)); detached.set(k, g)
+      g.usages.push(u); detached.set(k, g)
     }
   }
 
   const fillKind: UsageKind = node.type === 'TEXT' ? 'text' : 'fill'
   const fills = node.fills
   if (fills === figma.mixed) {
-    // mixed text fills: the segments carry their own paints (+ per-paint aliases)
     const segs = node.getStyledTextSegments?.(['fills']) ?? []
-    for (const seg of segs) for (const p of seg.fills) record(p, undefined, 'text')
+    for (const seg of segs) seg.fills.forEach((p, i) => record(p, undefined, usage('text', 'seg', i, seg.start, seg.end)))
   } else if (fills) {
-    fills.forEach((p, i) => record(p, node.boundVariables?.fills?.[i], fillKind))
+    fills.forEach((p, i) => record(p, node.boundVariables?.fills?.[i], usage(fillKind, 'fills', i)))
   }
-  node.strokes?.forEach((p, i) => record(p, node.boundVariables?.strokes?.[i], 'stroke'))
+  node.strokes?.forEach((p, i) => record(p, node.boundVariables?.strokes?.[i], usage('stroke', 'strokes', i)))
 }
 
 async function scan(scope: 'selection' | 'page' | 'file'): Promise<void> {
@@ -125,13 +143,17 @@ async function scan(scope: 'selection' | 'page' | 'file'): Promise<void> {
   let nodesScanned = 0
 
   const walk = (root: figma.SceneNode, page: figma.PageNode) => {
-    const stack: figma.SceneNode[] = [root]
+    // ancestor label rides the stack: instance/component name wins, else nearest
+    // named frame, else the page
+    const stack: Array<{ n: figma.SceneNode; anc: string }> = [{ n: root, anc: page.name }]
     while (stack.length) {
-      const n = stack.pop()!
+      const { n, anc } = stack.pop()!
       if (n.removed) continue
       nodesScanned++
-      collectPaints(n, page, bound, detached)
-      if (n.children) for (const c of n.children) stack.push(c)
+      collectPaints(n, page, anc, bound, detached)
+      const nextAnc = (n.type === 'INSTANCE' || n.type === 'COMPONENT' || n.type === 'COMPONENT_SET') ? n.name
+        : (n.type === 'FRAME' && anc === page.name && n.name ? n.name : anc)
+      if (n.children) for (const c of n.children) stack.push({ n: c, anc: nextAnc })
     }
   }
 
@@ -144,8 +166,6 @@ async function scan(scope: 'selection' | 'page' | 'file'): Promise<void> {
     for (const n of figma.currentPage.selection) walk(n, figma.currentPage)
   }
 
-  // resolve variable identities — remote (library) variables resolve fine from a bound
-  // alias id; a failed lookup still ships as a group so nothing silently vanishes
   const groups: BoundGroup[] = []
   for (const [varId, usages] of bound) {
     let name = '(unresolvable)', collection = '', remote = false, key = ''
@@ -160,6 +180,18 @@ async function scan(scope: 'selection' | 'page' | 'file'): Promise<void> {
     groups.push({ varId, name, collection, remote, key, values, usages })
   }
 
+  // the file's okchroma targets — the candidate chips show the FILE's real values
+  const targetMap = await buildTargetMap()
+  const okTargets: Array<{ path: string; light?: string; dark?: string }> = []
+  for (const path of allCandidatePaths()) {
+    const v = targetMap.get(path)
+    if (!v) continue
+    const vals = await resolveValues(v)
+    const light = vals['light'] ?? vals['Light']
+    const dark = vals['dark'] ?? vals['Dark']
+    okTargets.push({ path, light: light?.hex, dark: dark?.hex })
+  }
+
   figma.ui.postMessage({
     type: 'scan-results',
     scope,
@@ -167,15 +199,55 @@ async function scan(scope: 'selection' | 'page' | 'file'): Promise<void> {
     currentPageId: figma.currentPage.id,
     bound: groups,
     detached: [...detached.values()],
+    okTargets,
   })
+}
+
+// ── apply (the only writer; exactly the usages the UI sent) ─────────────────────
+async function applyPicks(picks: Array<{ path: string; usages: Usage[] }>): Promise<void> {
+  const targetMap = await buildTargetMap()
+  let applied = 0, skipped = 0
+  const missing: string[] = []
+  for (const pick of picks) {
+    const target = targetMap.get(pick.path)
+    if (!target) { missing.push(pick.path); skipped += pick.usages.length; continue }
+    for (const u of pick.usages) {
+      try {
+        const node = await figma.getNodeByIdAsync(u.nodeId)
+        if (!node || node.removed) { skipped++; continue }
+        if (u.slot === 'seg') {
+          // re-read the segment: text may have shifted since the scan — a mismatch skips
+          const segs = node.getStyledTextSegments?.(['fills']) ?? []
+          const seg = segs.find(s => s.start === u.start && s.end === u.end)
+          const paint = seg?.fills[u.index]
+          if (!seg || !paint || !isSolid(paint)) { skipped++; continue }
+          const fills = [...seg.fills]
+          fills[u.index] = figma.variables.setBoundVariableForPaint(paint, 'color', target)
+          node.setRangeFills!(seg.start, seg.end, fills)
+        } else {
+          const arr = node[u.slot]
+          if (!arr || arr === figma.mixed) { skipped++; continue }
+          const paint = arr[u.index]
+          if (!paint || !isSolid(paint)) { skipped++; continue }
+          const next = [...arr]
+          next[u.index] = figma.variables.setBoundVariableForPaint(paint, 'color', target)
+          ;(node as { fills?: unknown; strokes?: unknown })[u.slot] = next
+        }
+        applied++
+      } catch { skipped++ }
+    }
+  }
+  figma.ui.postMessage({ type: 'apply-result', applied, skipped, missing })
+  if (missing.length) figma.notify(`${missing.length} okchroma targets missing — re-apply the theme with the extended plugin once`, { timeout: 5000 })
 }
 
 figma.ui.onmessage = async (msg) => {
   try {
     if (msg.type === 'scan') {
       await scan(msg.scope as 'selection' | 'page' | 'file')
+    } else if (msg.type === 'apply-picks') {
+      await applyPicks(msg.picks as Array<{ path: string; usages: Usage[] }>)
     } else if (msg.type === 'select-nodes') {
-      // selection is a current-page concept: select what lives here, count the rest
       const ids = msg.ids as string[]
       const pageIds = msg.pageIds as string[]
       const here: figma.SceneNode[] = []

@@ -29,6 +29,9 @@ declare namespace figma {
     /** Imports a library variable so its valuesByMode become readable. Throws when the
         library is unavailable — always try/catch. */
     function importVariableByKeyAsync(key: string): Promise<Variable>
+    function getLocalVariablesAsync(): Promise<Variable[]>
+    /** Returns a COPY of the paint with its color bound to the variable. */
+    function setBoundVariableForPaint(paint: SolidPaint, field: 'color', variable: Variable): SolidPaint
   }
 
   type RGB = { r: number; g: number; b: number }
@@ -60,8 +63,9 @@ declare namespace figma {
     readonly visible?: boolean
     readonly removed?: boolean
     readonly children?: ReadonlyArray<SceneNode>
-    readonly fills?: ReadonlyArray<Paint> | typeof mixed
-    readonly strokes?: ReadonlyArray<Paint>
+    /** writable: the apply path re-assigns a cloned array with one rebound paint */
+    fills?: ReadonlyArray<Paint> | typeof mixed
+    strokes?: ReadonlyArray<Paint>
     /** Index-aligned with fills/strokes; null holes for unbound paints. */
     readonly boundVariables?: {
       readonly fills?: ReadonlyArray<VariableAlias | null>
@@ -69,6 +73,8 @@ declare namespace figma {
     }
     /** TEXT nodes only. */
     getStyledTextSegments?(fields: ReadonlyArray<'fills'>): ReadonlyArray<StyledTextSegment>
+    /** TEXT nodes only — fills changes need no font load. */
+    setRangeFills?(start: number, end: number, fills: ReadonlyArray<Paint>): void
   }
 
   interface PageNode extends SceneNode {
@@ -90,5 +96,7 @@ declare namespace figma {
     readonly variableCollectionId: string
     /** Keyed by the OWNING collection's modeIds; empty on un-imported remote handles. */
     readonly valuesByMode: { readonly [modeId: string]: RGBA | VariableAlias }
+    /** Cross-plugin identity — plugin-ext stamps its PATH_KEY here since 2026-08-11. */
+    getSharedPluginData(namespace: string, key: string): string
   }
 }
