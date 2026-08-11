@@ -74,7 +74,7 @@ export function matchBound(name: string): Rule | 'ignore' | null {
   }
   if (s.includes('stroke')) {
     if (s.includes('inverse')) return { candidates: [PAPER_100], auto: true }
-    if (s.includes('quaternary') || s.includes('quarternary')) return { candidates: n(['wash-85', 'wash-80', 'mark-74-aa']) }
+    if (s.includes('quaternary') || s.includes('quarternary')) return { candidates: n(['wash-92', 'wash-85', 'wash-80', 'mark-74-aa']) } // wash-92 first: nearest value (owner 2026-08-11)
     if (s.includes('tertiary')) return { candidates: n(['mark-74-aa', 'wash-80']) }
     if (s.includes('secondary')) return { candidates: n(['ink-53-aa', 'mark-74-aa']) }
     return { candidates: n(['ink-30-aaa', 'ink-42-aa', 'ink-53-aa', 'mark-74-aa']) }

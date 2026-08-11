@@ -137,15 +137,39 @@ const chipHtml = (clusterId: string, path: string, picked: boolean): string => {
     <span class="pair"><span style="background:${t.light}"></span><span style="background:${t.dark ?? '#111'}"></span></span>${esc(short)}</button>`
 }
 
-const clusterHtml = (b: TokenBucket, c: Cluster): string => `
+const clusterHtml = (b: TokenBucket, c: Cluster): string => {
+  // a pick made through "Other…" may sit outside the shortlist — always render it
+  const picked = picks.get(c.id)
+  const chips = picked && !b.rule.candidates.includes(picked)
+    ? [...b.rule.candidates, picked] : b.rule.candidates
+  return `
   <div class="cluster" data-cluster="${esc(c.id)}">
     <span class="ck">${c.kind}</span>
     <span class="ca" title="${esc(c.anc)}">${esc(c.anc)}</span>
     <span class="cn">${c.usages.length}</span>
     <button class="sel" data-select="${esc(c.id)}">Select</button>
-    <span class="chips">${b.rule.candidates.map(p => chipHtml(c.id, p, picks.get(c.id) === p)).join('')}</span>
+    <span class="chips">${chips.map(p => chipHtml(c.id, p, picked === p)).join('')}
+      <button class="okchip more" data-more="${esc(c.id)}">Other…</button></span>
     <button class="apply" data-apply="${esc(c.id)}" ${picks.has(c.id) ? '' : 'disabled'}>Apply</button>
+    <div class="morepanel" data-panel="${esc(c.id)}" style="display:none"></div>
   </div>`
+}
+
+// the full target list, grouped by family — the escape hatch when the shortlist
+// doesn't carry the right answer (owner 2026-08-11: "stroke quaternary is closest
+// to wash 92 but i can't select that")
+function morePanelHtml(clusterId: string): string {
+  const fams = new Map<string, OkTarget[]>()
+  for (const t of okValues.values()) {
+    const famName = t.path.replace('primitive/', '').split('/')[0]
+    const list = fams.get(famName) ?? []
+    list.push(t); fams.set(famName, list)
+  }
+  return [...fams.entries()].map(([famName, list]) => `
+    <div class="mf"><span class="mfn">${esc(famName)}</span>${
+      list.map(t => chipHtml(clusterId, t.path, picks.get(clusterId) === t.path)).join('')
+    }</div>`).join('')
+}
 
 function render(r: ScanResults): void {
   const { ignored, other } = buildModel(r)
@@ -190,15 +214,28 @@ const clusterById = (id: string): Cluster | undefined => {
   return undefined
 }
 
+const bucketOf = (clusterId: string): TokenBucket | undefined =>
+  buckets.find(b => b.clusters.some(c => c.id === clusterId))
+
 resultsEl.addEventListener('click', (e) => {
   const el = e.target as HTMLElement
+  const more = el.closest('[data-more]') as HTMLElement | null
+  if (more) {
+    const id = more.dataset.more!
+    const panel = resultsEl.querySelector(`[data-panel="${CSS.escape(id)}"]`) as HTMLElement
+    if (panel.style.display === 'none') { panel.innerHTML = morePanelHtml(id); panel.style.display = '' }
+    else panel.style.display = 'none'
+    return
+  }
   const chip = el.closest('.okchip') as HTMLElement | null
   if (chip && chip.dataset.path && chip.dataset.cluster) {
     const id = chip.dataset.cluster
     picks.set(id, chip.dataset.path)
-    const holder = resultsEl.querySelector(`.cluster[data-cluster="${CSS.escape(id)}"]`)!
-    holder.querySelectorAll('.okchip').forEach(x => x.classList.toggle('sel', x === chip))
-    ;(holder.querySelector('[data-apply]') as HTMLButtonElement).disabled = false
+    // re-render the cluster row so an off-shortlist pick shows as its own chip
+    const b = bucketOf(id)
+    const c = clusterById(id)
+    const holder = resultsEl.querySelector(`.cluster[data-cluster="${CSS.escape(id)}"]`) as HTMLElement
+    if (b && c && holder) holder.outerHTML = clusterHtml(b, c)
     syncApplyAll()
     return
   }

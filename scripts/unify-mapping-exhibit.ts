@@ -81,7 +81,7 @@ const SECTIONS: Section[] = [
     { token: 'Stroke Tertiary', hex: '#CBCFD7', count: '~4.2k', kinds: 'fill + stroke', cls: 'pick',
       cands: [n('mark-74-aa'), n('wash-80')] },
     { token: 'Stroke Quaternary', hex: '#E2E4E9', count: '~21.7k', kinds: 'stroke (the workhorse border)', cls: 'pick',
-      cands: [n('wash-85'), n('wash-80'), n('mark-74-aa')],
+      cands: [n('wash-92'), n('wash-85'), n('wash-80'), n('mark-74-aa')],
       note: 'Unify quaternary is lighter than okchroma’s 3:1 border register (mark-74-aa); washes keep the decorative read, mark upgrades it to compliant.' },
     { token: 'Stroke Primary Inverse', hex: '#FFFFFF', count: '~1.4k', kinds: 'stroke', cls: 'auto',
       cands: [paper100] },
