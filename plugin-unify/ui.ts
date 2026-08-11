@@ -151,15 +151,21 @@ const clusterHtml = (b: TokenBucket, c: Cluster): string => {
   // a pick made through "Other…" may sit outside the shortlist — always render it
   const picked = picks.get(c.id)
   const chips = picked && !base.includes(picked) ? [...base, picked] : base
+  // stacked layout (owner 2026-08-11): identity line on top, chips + Apply beneath —
+  // the name never gets crushed by the chips
   return `
   <div class="cluster" data-cluster="${esc(c.id)}">
-    <span class="ck">${c.kind}</span>
-    <span class="ca" title="${esc(c.anc)}">${esc(c.anc)}</span>
-    <span class="cn">${c.usages.length}</span>
-    <button class="sel" data-select="${esc(c.id)}">Select</button>
-    <span class="chips">${chips.map(p => chipHtml(c.id, p, picked === p)).join('')}
-      <button class="okchip more" data-more="${esc(c.id)}">Other…</button></span>
-    <button class="apply" data-apply="${esc(c.id)}" ${picks.has(c.id) ? '' : 'disabled'}>Apply</button>
+    <div class="row-top">
+      <span class="ck">${c.kind}</span>
+      <span class="ca" title="${esc(c.anc)}">${esc(c.anc)}</span>
+      <span class="cn">${c.usages.length}</span>
+      <button class="sel" data-select="${esc(c.id)}">Select</button>
+    </div>
+    <div class="row-chips">
+      <span class="chips">${chips.map(p => chipHtml(c.id, p, picked === p)).join('')}
+        <button class="okchip more" data-more="${esc(c.id)}">Other…</button></span>
+      <button class="apply" data-apply="${esc(c.id)}" ${picks.has(c.id) ? '' : 'disabled'}>Apply</button>
+    </div>
     <div class="morepanel" data-panel="${esc(c.id)}" style="display:none"></div>
   </div>`
 }
@@ -202,14 +208,18 @@ const bucketRow = (b: TokenBucket): string => {
   const headBase = uniform && !b.rule.candidates.includes(uniform) ? [...b.rule.candidates, uniform] : b.rule.candidates
   return `
     <div class="thead">
-      <span class="usw" style="background:${preview}"></span>
-      <span class="tname" title="${esc(b.full)}">${esc(b.label)}</span>
-      ${b.suggested ? '<span class="tag sug">suggested</span>' : ''}
-      ${b.rule.candidates.length === 0 ? '<span class="tag miss">no candidates — punch list</span>' : ''}
-      <span class="count">${b.total}</span>
-      <span class="chips">${headBase.map(p => headerChipHtml(b, p)).join('')}
-        <button class="okchip more" data-more-bucket="${esc(b.key)}">Other…</button></span>
-      <button class="apply" data-apply-bucket="${esc(b.key)}" ${pickedCount ? '' : 'disabled'}>Apply all ${b.total}</button>
+      <div class="row-top">
+        <span class="usw" style="background:${preview}"></span>
+        <span class="tname" title="${esc(b.full)}">${esc(b.label)}</span>
+        ${b.suggested ? '<span class="tag sug">suggested</span>' : ''}
+        ${b.rule.candidates.length === 0 ? '<span class="tag miss">no candidates — punch list</span>' : ''}
+        <span class="count">${b.total}</span>
+      </div>
+      <div class="row-chips">
+        <span class="chips">${headBase.map(p => headerChipHtml(b, p)).join('')}
+          <button class="okchip more" data-more-bucket="${esc(b.key)}">Other…</button></span>
+        <button class="apply" data-apply-bucket="${esc(b.key)}" ${pickedCount ? '' : 'disabled'}>Apply all ${b.total}</button>
+      </div>
       <div class="morepanel" data-panel-bucket="${esc(b.key)}" style="display:none"></div>
     </div>
     <div class="tbody">${b.clusters.map(c => clusterHtml(b, c)).join('')}</div>`

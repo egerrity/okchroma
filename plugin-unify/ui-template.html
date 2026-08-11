@@ -51,9 +51,11 @@ h1 { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
 
 /* token buckets */
 .trow { border: 1px solid #ececef; border-radius: 10px; margin-bottom: 8px; overflow: hidden; }
-.thead { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #fafafb; border-bottom: 1px solid #ececef; flex-wrap: wrap; }
-.thead .chips { flex: 0 1 auto; min-width: 0; }
-.thead .apply { margin-left: auto; }
+.thead { padding: 8px 10px; background: #fafafb; border-bottom: 1px solid #ececef; }
+.row-top { display: flex; align-items: center; gap: 8px; }
+.row-chips { display: flex; align-items: flex-start; gap: 8px; margin-top: 6px; }
+.row-chips .chips { flex: 1; min-width: 0; }
+.row-chips .apply { flex-shrink: 0; }
 .tname { font-weight: 650; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .usw { width: 18px; height: 18px; border-radius: 5px; border: 1px solid rgba(0,0,0,.12); flex-shrink: 0; }
 .count { color: #888; font-weight: 650; flex-shrink: 0; }
@@ -62,13 +64,10 @@ h1 { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
 .tag.miss { background: #fdeaea; color: #b3373b; }
 
 /* clusters: kind · ancestor · count · select · chips · apply */
-.cluster {
-  display: flex; align-items: center; gap: 8px; padding: 7px 10px;
-  border-bottom: 1px solid #f2f2f4; flex-wrap: wrap;
-}
+.cluster { padding: 7px 10px; border-bottom: 1px solid #f2f2f4; }
 .cluster:last-child { border-bottom: none; }
 .ck { font-size: 10px; font-weight: 700; color: #999; text-transform: uppercase; width: 42px; flex-shrink: 0; }
-.ca { font-weight: 600; color: #444; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ca { font-weight: 600; color: #444; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cn { color: #999; font-weight: 650; flex-shrink: 0; }
 .cluster .sel {
   border: none; background: none; color: #5d51a8; font: inherit; font-size: 11px;

@@ -9,7 +9,7 @@
 
 import { allCandidatePaths } from './mapping'
 
-figma.showUI(__html__, { width: 520, height: 680, themeColors: true })
+figma.showUI(__html__, { width: 720, height: 720, themeColors: true })
 
 type UsageKind = 'text' | 'fill' | 'stroke'
 interface Usage {
