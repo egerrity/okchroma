@@ -44,7 +44,8 @@ const matchedEl = $('matched-rows')
 const restEl = $('rest-rows')
 const reportBuf = $<HTMLTextAreaElement>('report-buf')
 
-let scope: 'selection' | 'page' | 'file' = 'page'
+// Selection is the DEFAULT scope (owner 2026-08-11: no accidental hangs on a big scan)
+let scope: 'selection' | 'page' | 'file' = 'selection'
 let lastResults: ScanResults | null = null
 let okValues = new Map<string, OkTarget>()
 let buckets: TokenBucket[] = []
@@ -296,8 +297,9 @@ window.onmessage = (event: MessageEvent) => {
     lastResults = msg as ScanResults
     scanBtn.disabled = false
     copyBtn.disabled = false
-    statusEl.textContent = `Scanned ${msg.nodesScanned} nodes (${msg.scope}).`
     render(lastResults)
+    statusEl.textContent = `Scanned ${msg.nodesScanned} nodes (${msg.scope}).`
+      + (picks.size ? ` ${picks.size} groups pre-picked — "Apply all picked" handles them in one click.` : '')
   } else if (msg.type === 'apply-result') {
     statusEl.textContent = `Applied ${msg.applied}, skipped ${msg.skipped}${msg.missing?.length ? ` — ${msg.missing.length} targets missing (re-apply the okchroma theme once)` : ''}. Re-scanning…`
     parent.postMessage({ pluginMessage: { type: 'scan', scope } }, '*')
