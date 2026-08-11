@@ -51,7 +51,9 @@ h1 { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
 
 /* token buckets */
 .trow { border: 1px solid #ececef; border-radius: 10px; margin-bottom: 8px; overflow: hidden; }
-.thead { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #fafafb; border-bottom: 1px solid #ececef; }
+.thead { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #fafafb; border-bottom: 1px solid #ececef; flex-wrap: wrap; }
+.thead .chips { flex: 0 1 auto; min-width: 0; }
+.thead .apply { margin-left: auto; }
 .tname { font-weight: 650; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .usw { width: 18px; height: 18px; border-radius: 5px; border: 1px solid rgba(0,0,0,.12); flex-shrink: 0; }
 .count { color: #888; font-weight: 650; flex-shrink: 0; }
