@@ -124,10 +124,11 @@ function SwatchCell({ color, label }: { color: string; label: string }) {
 type TokRow = { token: string; role: string; guarantee: string; light: React.ReactNode; dark: React.ReactNode }
 type TokGroup = { register: string; caption: string; rows: TokRow[] }
 
-// Everything a family ships, grouped the way the extended plugin's picker groups it
-// (architecture.md §2d): primitive rows are single resolved colors; semantic rows are
-// state-carrying roles or usage decisions. Computed once from TOKEN_REF_HEX, so a value
-// here is exactly what `emitDtcgRamp`/`stopHex` would produce for this seed today.
+// Everything a family ships, grouped by the descope posture's visibility line
+// (architecture.md §2d): ramp/plumbing rows are single resolved colors, hidden by
+// default; role rows are state-carrying usage decisions, always bindable. Computed once
+// from TOKEN_REF_HEX, so a value here is exactly what `emitDtcgRamp`/`stopHex` would
+// produce for this seed today.
 function buildTokenGroups(): TokGroup[] {
   const scale = generateScale(TOKEN_REF_HEX, 'docs', undefined, {})
   const neutral = generateNeutralScale(scale.brandH, 'default')
@@ -152,7 +153,7 @@ function buildTokenGroups(): TokGroup[] {
 
   return [
     {
-      register: 'primitive/', caption: 'One resolved color, no state. Hidden from the picker by default (the descope posture, §2d): the worded semantic/ names are what a designer binds to.',
+      register: 'primitive/', caption: 'One resolved color, no state: the ramp stops and the system plumbing. Hidden from the picker by default (the descope posture, §2d): the role rows below are what a designer binds to.',
       rows: [
         { token: 'paper-100', role: "the ladder's universal floor (always the neutral's own stop 0, every family)", guarantee: '–', light: swatch(hex(neutral.paper0!)), dark: swatch(hex(neutral.paper0Dark!)) },
         { token: 'paper-99', role: 'app background, inverted text', guarantee: '–', light: swatch(hex(stopAt(L, 1))), dark: swatch(hex(stopAt(D, 1))) },
@@ -183,7 +184,7 @@ function buildTokenGroups(): TokGroup[] {
       ],
     },
     {
-      register: 'semantic/', caption: 'A state-carrying role or a usage decision, never a raw value a designer should need to re-derive. Always visible in the picker.',
+      register: 'cta · link · surface', caption: 'A state-carrying role or a usage decision, never a raw value a designer should need to re-derive. The cta bands sit inside their own family group; link and the surfaces under system. Always visible in the picker.',
       rows: [
         { token: 'cta/enabled', role: "the pulled-out button fill, at the seed's own lightness", guarantee: "on-text passes WCAG 4.5; the fill clears APCA Lc 65 (critical 50)", light: swatch(hex(scale.cta)), dark: swatch(hex(scale.ctaDark)) },
         { token: 'cta/hover', role: 'hover state', guarantee: 'same law as cta/enabled', light: swatch(hex(scale.ctaHover)), dark: swatch(hex(scale.ctaHoverDark)) },
@@ -242,7 +243,7 @@ function TokenTable() {
 // ── Naming anatomy: primitive/neutral/ink/53-aa, segment by segment ──────────
 function NamingAnatomy() {
   const cols = [
-    { seg: 'primitive', title: 'REGISTER', lines: ['panel grouping:', 'raw coded row', 'or worded row'] },
+    { seg: 'primitive', title: 'REGISTER', lines: ['the extended', "plugin's wrapper,", 'every row'] },
     { seg: 'neutral', title: 'FAMILY', lines: ['which color', 'family this is'] },
     { seg: 'ink', title: 'BAND', lines: ['which law the', 'stop serves'] },
     { seg: '53', title: 'VISIBILITY', lines: ['light rootL', '× 100, rounded'] },
@@ -330,22 +331,23 @@ const overview: Article = {
         path adds two more segments in front:
       </P>
       <NamingAnatomy />
-      <H2>The extended plugin's two groups</H2>
+      <H2>Which rows a designer sees</H2>
       <P>
-        The extended plugin (Enterprise Figma) splits every variable into one of two
-        groups in the picker:
+        Every variable the extended plugin (Enterprise Figma) writes lives under
+        one <Code>primitive/</Code> wrapper, grouped by family. Two kinds of rows share it:
       </P>
       <UL>
-        <LI><b>primitive/</b>: one resolved color, no state, e.g. <Code>primitive/neutral/paper/99</Code>. Hidden from the color picker by default.</LI>
-        <LI><b>semantic/</b>: a usage decision, e.g. <Code>semantic/brand-primary/cta/hover</Code> or <Code>semantic/surface/sink</Code>. Always visible.</LI>
+        <LI><b>ramp stops and plumbing</b>: one resolved color, no state, e.g. <Code>primitive/neutral/paper/99</Code>. Hidden from the color picker by default.</LI>
+        <LI><b>roles</b>: a state-carrying usage decision, kept where it belongs: the cta bands inside their family, e.g. <Code>primitive/brand-primary/cta/hover</Code>, and link and the surfaces under system, e.g. <Code>primitive/system/surface/sink</Code>. Always visible.</LI>
       </UL>
       <P>
-        A checkbox in the plugin ("Hide primitive variables") controls whether primitive/
-        rows are hidden from every color picker in the file; semantic/ rows are always
-        visible, since those are the names a designer should actually bind to. The setting
-        is stored on the file and re-applied on every apply, so a hand-edited scope always
-        reverts on the next run. See <Code>architecture.md</Code> §2d for the full
-        mechanism, including how an older file's paths heal onto the new register.
+        A checkbox in the plugin ("Hide primitive scale from pickers") controls whether
+        the ramp and plumbing rows are hidden from every color picker in the file; the
+        role rows are always visible, since those are the names a designer should
+        actually bind to. The setting is stored on the file and re-applied on every
+        apply, so a hand-edited scope always reverts on the next run. See
+        <Code>architecture.md</Code> §2d for the full mechanism, including how an older
+        file's paths heal onto the current spelling.
       </P>
       <P>Each family ships this token set, in both modes. Every swatch below is computed live:</P>
       <TokenTable />

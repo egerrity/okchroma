@@ -39,13 +39,11 @@ function overridesFor(brand: TokenColumns, base: TokenColumns, label: string): R
     for (const t of brand[col]) {
       const b = baseMap.get(t.path)
       // primitive/system/* is contract-invariant — EXCEPT the identity absolutes (owner
-      // 2026-07-27, abs-primary / abs-secondary). The system link trio is BRAND-VARYING
+      // 2026-07-27, abs-primary / abs-secondary) and the system link trio, BRAND-VARYING
       // too (Phase 4, owner: "link is a system level color. It can still be extended"),
-      // but since the A1 regroup (2026-08-07) it lives in the semantic register
-      // (semantic/link/*) — it never matches this primitive/system/ prefix, so no
-      // explicit exclusion is needed here any more. Mirrors plugin-ext/code.ts
-      // OVERRIDABLE_SYSTEM.
-      if (t.path.startsWith('primitive/system/')
+      // back under primitive/system/link/ since the 2026-08-11 flatten. Mirrors
+      // plugin-ext/code.ts OVERRIDABLE_SYSTEM.
+      if (t.path.startsWith('primitive/system/') && !t.path.startsWith('primitive/system/link/')
         && t.path !== 'primitive/system/abs-primary' && t.path !== 'primitive/system/abs-secondary') {
         if (!b || !eq(t, b)) fails.push(`${label} ${col}: system token diverges from base — ${t.path}`)
         continue

@@ -24,10 +24,10 @@ const PHRASES = [
   'Level AAA enhanced contrast for standard body text',
 ]
 
-// ext emits register-prefixed paths (primitive/*, semantic/* — the A1 regroup); the
-// elevation planes are code.ts's own rows at semantic/surface/*
+// ext emits register-prefixed paths (primitive/* — one register since the 2026-08-11
+// flatten); the elevation planes are code.ts's own rows at primitive/system/surface/*
 const paths = buildBaseColumns().light.map(t => t.path)
-paths.push('semantic/surface/sink', 'semantic/surface/base', 'semantic/surface/lift', 'semantic/surface/pop')
+paths.push('primitive/system/surface/sink', 'primitive/system/surface/base', 'primitive/system/surface/lift', 'primitive/system/surface/pop')
 // the community plugin's spellings carry no register prefix and spell the brand families
 // differently — same rows, so the same rules must hold on those spellings too. Derived
 // from the CANONICAL form (adversarial-audit-caught 2026-08-07: matching the raw

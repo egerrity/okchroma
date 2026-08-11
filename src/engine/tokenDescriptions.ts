@@ -138,22 +138,17 @@ const PREFIXES: Array<[string, Family]> = [
   ['brand/secondary/', 'brand-secondary'],
 ]
 
-// CANONICALIZE (A1 regroup, owner-dated 2026-08-07): the ext plugin's paths now carry a
-// primitive/ or semantic/ REGISTER prefix (plugin-ext/payload.ts registerPath) that this
-// module must never see — the register is a Figma-panel organizing axis, not part of a
-// row's identity, and letting register words into a description would flood Figma's
-// picker search exactly like the old ratio-digit stamp did (see the file header). Strip
-// it, then restore the two leaves that only ever existed AS system-pathed (link/surface
-// lost their system/ prefix along with the register, since code.ts homes them under
-// semantic/surface/* — see plugin-ext/code.ts's header). The community plugin's paths
-// (plugin/code.ts) never carried a register to begin with, so this is a no-op for them —
-// they already arrive system-pathed.
+// CANONICALIZE (A1 regroup 2026-08-07, flattened to one register 2026-08-11): the ext
+// plugin's paths carry the primitive/ REGISTER prefix (plugin-ext/payload.ts
+// registerPath) that this module must never see — the register is a Figma-panel
+// organizing axis, not part of a row's identity, and letting register words into a
+// description would flood Figma's picker search exactly like the old ratio-digit stamp
+// did (see the file header). Strip it; everything underneath (system/link/*,
+// system/surface/*, the families) already spells the identity this module keys on. The
+// community plugin's paths (plugin/code.ts) never carried a register to begin with, so
+// this is a no-op for them.
 export function canonicalize(path: string): string {
-  let p = path
-  if (p.startsWith('primitive/')) p = p.slice('primitive/'.length)
-  else if (p.startsWith('semantic/')) p = p.slice('semantic/'.length)
-  if (p.startsWith('link/') || p.startsWith('surface/')) p = 'system/' + p
-  return p
+  return path.startsWith('primitive/') ? path.slice('primitive/'.length) : path
 }
 
 function bodyFor(path: string): { body: Body; fam: Family } | undefined {

@@ -21,20 +21,21 @@ On any other plan the plugin detects the missing API and reports it instead of w
 
 ## What it writes
 
-- **One base collection `theme`** — the full semantic token set, flat names,
-  `ALL_SCOPES` (the base is what users bind — no hidden seed collection):
+- **One base collection `theme`** — the full token set, flat names (the base is what
+  users bind — no hidden seed collection). With the default descope posture on, the
+  state-carrying roles (cta bands, link, surfaces) are bindable in every picker and the
+  raw ramp/plumbing rows are hidden; turning it off exposes everything:
   - `primitive/brand-primary/*`, `primitive/brand-secondary/*` (only if the file uses a
-    secondary) plus their `semantic/brand-primary/{cta,cta-ink}/*` states — the operative
-    `brand-` category is in the token name; the brand's NAME lives on the extension, so a
-    designer reads `kirby → primitive/brand-primary/paper/1`. Every path carries a
-    `primitive/` or `semantic/` register prefix (A1 regroup, owner-dated 2026-08-07) —
-    primitive = a single color, semantic = a state-carrying role (cta/cta-ink/
-    cta-ink-strong, the system link trio).
-  - `primitive/neutral/*` (paper/0 … ink/12 in ladder order), `primitive/critical/*
-    primitive/warning/* primitive/positive/* primitive/info/*` plus their `semantic/`
-    cta states, `primitive/system/*` (abs poles, transparent, scrim) and
-    `semantic/surface/*` (the scheme-divergent sink/base/lift/pop elevation-plane
-    aliases — base-only, never overridden) and `semantic/link/*`.
+    secondary) including their `{cta,cta-ink}/*` states in the same family group — the
+    operative `brand-` category is in the token name; the brand's NAME lives on the
+    extension, so a designer reads `kirby → primitive/brand-primary/paper/99`. Every
+    path carries the single `primitive/` register prefix (A1 regroup 2026-08-07,
+    flattened to one register 2026-08-11).
+  - `primitive/neutral/*` (paper/100 … ink/0 in ladder order), `primitive/critical/*
+    primitive/warning/* primitive/positive/* primitive/info/*` with their cta states in
+    the family, and `primitive/system/*`: abs poles, transparent, scrim,
+    `system/surface/*` (the scheme-divergent sink/base/lift/pop elevation-plane
+    aliases — base-only, never overridden) and `system/link/*`.
   - Values = the documented default seed: okchroma pink `#E93D82`, recommended mode,
     derived-pastel secondary, default neutral, CANONICAL signal ramps — solved per
     column. The base is populated **once**; later applies only add missing variables

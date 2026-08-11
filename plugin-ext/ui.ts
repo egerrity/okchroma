@@ -58,9 +58,10 @@ let fullChroma = false
 // spec stores it as `false | undefined` rather than `true | false` so that ABSENT means ON —
 // every recipe written before this flag existed replays with its strokes intact.
 let ctaBorder = true
-// THE DESCOPE POSTURE (owner 2026-08-07): FILE state, not per-brand — unlike every flag
-// above this never rides themeInput/the recipe. Default ON (primitive/* hidden from every
-// Figma picker; semantic/* always stays bindable). Initialized from the file-state
+// THE DESCOPE POSTURE (owner 2026-08-07; role-based since the 2026-08-11 flatten): FILE
+// state, not per-brand — unlike every flag above this never rides themeInput/the recipe.
+// Default ON (ramp stops + alpha/abs plumbing hidden from every Figma picker; the cta
+// bands, link trio and surface planes always stay bindable). Initialized from the file-state
 // handshake on load, then carried on every apply message so a re-apply/rebuild/roster
 // batch always re-stamps the SAME posture the checkbox currently shows.
 let descopePrimitives = true

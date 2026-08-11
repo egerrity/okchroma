@@ -35,7 +35,7 @@ word: the register (which panel a row lives in) and the family. Read left to rig
 
 | segment | example | meaning |
 |---|---|---|
-| register | `primitive` | panel grouping in the extended plugin: a raw coded row (`primitive`) or a worded usage row (`semantic`) |
+| register | `primitive` | the extended plugin's wrapper, carried by every row |
 | family | `neutral` | which color family the stop belongs to: neutral, brand-primary, brand-secondary, or a signal |
 | band | `ink` | which law the stop serves: `paper`, `wash`, `mark`, or `ink` |
 | visibility | `53` | the stop's light rootL times 100, rounded |

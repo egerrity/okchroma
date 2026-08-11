@@ -417,64 +417,70 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
   stop 5 (hover) so it **flips per mode**: a near-white wash in light, a dark wash in
   dark, with `on-cta` recomputed for legibility in each (shipped soft, at alpha).
 
-### 2d. The extended plugin's register split
+### 2d. The extended plugin's register and descope posture
 
-The extended Figma plugin (`plugin-ext/`, Enterprise-only) sorts every emitted variable
-path into one of two registers, added 2026-08-07 (the "A1 regroup"). This is a
-plugin-side concern only: the CSS build and the community plugin (`plugin/`) have no
-notion of it.
+The extended Figma plugin (`plugin-ext/`, Enterprise-only) prefixes every emitted
+variable path with the single `primitive/` register (added 2026-08-07 as a two-register
+split, flattened to one register 2026-08-11: the semantic/ grouping confused designers,
+so the old grouping is back). This is a plugin-side concern only: the CSS build and the
+community plugin (`plugin/`) have no notion of it. Two kinds of rows share the wrapper:
 
-- **`primitive/`**: a single resolved color, no state. The scale stops
+- **ramp stops and plumbing**: a single resolved color, no state. The scale stops
   (`primitive/neutral/paper/99`, `primitive/brand-primary/ink/53-aa`, …), the system
   poles and alpha ladder (`primitive/system/abs-black`, `primitive/system/alpha/offset-16`,
   …).
-- **`semantic/`**: a state-carrying role, or a usage decision rather than a raw color.
-  The cta family (`semantic/brand-primary/cta/hover`), the text-cta trio
-  (`semantic/*/cta-ink/*`, `semantic/*/cta-ink-strong/*`, neutral only), and the system
-  rows `semantic/link/*` and `semantic/surface/sink|base|lift|pop`.
+- **roles**: a state-carrying usage decision, kept in its natural group. The cta family
+  inside its own family group (`primitive/brand-primary/cta/hover`), the text-cta trio
+  (`primitive/*/cta-ink/*`, `primitive/*/cta-ink-strong/*`, neutral only), and the
+  system rows `primitive/system/link/*` and
+  `primitive/system/surface/sink|base|lift|pop`.
 
 **The seam.** `payload.registerPath(path)` (`plugin-ext/payload.ts`) is the one function
-that decides a path's register, applied as the FINAL step of `toFlat()`, after every
-other rename (identity re-homing, link-state remapping) has already settled the path. It
-reads two lists: `FAMILY_PREFIXES` (which color family a path belongs to) and
-`SEMANTIC_BANDS` (`cta/`, `cta-ink/`, `cta-ink-strong/`, checked against the remainder
-after the family prefix), plus a direct case sending `system/link/*` to `semantic/link/*`
-and every other `system/*` row to `primitive/system/*`. Coded names (a stop number, a
-role state) land in primitive; worded usage names land in semantic. One function, one
-seam: nothing else in the payload or the plugin decides a path's register.
+that applies the prefix, as the FINAL step of `toFlat()`, after every other rename
+(identity re-homing, link-state remapping) has already settled the path. It prefixes
+`system/*` rows and every path matching `FAMILY_PREFIXES` (which color family a path
+belongs to), and leaves anything unknown untouched. One function, one seam: nothing else
+in the payload or the plugin decides a path's spelling at this level. `ROLE_BANDS`
+(`cta/`, `cta-ink/`, `cta-ink-strong/`) survives beside it as the descope posture's
+visibility line, mirrored in `code.ts` as `isRoleRow`.
 
-**Healing old files.** A file saved before 2026-08-07 has none of this: every path is
-missing its register prefix. `code.ts`'s `legacyCandidates()` recovers it: `RENAMED_GROUPS`
-carries universal one-hop strips (`'' → 'primitive/'`, `'' → 'semantic/'`, and
-`'system/' → 'semantic/'` for the link/surface rows), composed with the existing per-role
+**Healing old files.** A file saved before 2026-08-07 has no register prefix, and a file
+from the 2026-08-07..11 window carries the retired two-register spellings
+(`semantic/<family>/cta/*`, `semantic/link/*`, `semantic/surface/*`). `code.ts`'s
+`legacyCandidates()` recovers both: `RENAMED_GROUPS` carries the universal strip
+(`'' → 'primitive/'`), the system-root strip (`'' → 'primitive/system/'`), the
+register swap (`'semantic/' → 'primitive/'`) and exact entries re-homing the semantic-era
+link/surface rows (`'semantic/link/' → 'primitive/system/link/'`,
+`'semantic/surface/' → 'primitive/system/surface/'`), composed with the existing per-role
 and per-leaf rename tables (`RENAMED_LEAVES`, the signal role renames) so a file untouched
-since before the role rename, the Stage B leaf relabel, and the register split can still
+since before the role rename, the Stage B leaf relabel, or the register era can still
 resolve to its current path in one `ensure()` call. The rule stays one-hop: a chained
 old→mid→new table would strand a file on the middle name, so every table points straight
 at the final spelling.
 
-**Descope posture.** `primitive/*` rows are implementation detail; a designer should bind
-to the worded `semantic/*` names instead. The base collection stores this as file state
-(`okchroma-ext-descope` plugin data on the base collection, not per-brand): when on (the
-default; absent reads as on), `ensure()` sets every `primitive/*` variable's `scopes` to
-`[]`, hiding it from every Figma color picker, while `semantic/*` always keeps
-`ALL_SCOPES`. The UI's checkbox reads this on load (the `file-state` handshake) and every
-apply, single or roster, re-stamps it and re-applies the scopes, so a scope a designer
-hand-edited in Figma's own panel always reverts on the next apply.
+**Descope posture.** The ramp stops and plumbing rows are implementation detail; a
+designer should bind to the role names instead. The base collection stores this as file
+state (`okchroma-ext-descope` plugin data on the base collection, not per-brand): when on
+(the default; absent reads as on), `ensure()` sets every non-role variable's `scopes` to
+`[]`, hiding it from every Figma color picker, while the role rows (`isRoleRow`: the cta
+bands, `system/link/*`, `system/surface/*`) always keep `ALL_SCOPES`. The UI's checkbox
+reads this on load (the `file-state` handshake) and every apply, single or roster,
+re-stamps it and re-applies the scopes, so a scope a designer hand-edited in Figma's own
+panel always reverts on the next apply.
 
-**Hand-authored rows.** Nearly everything under `semantic/` is generated the same way as
-`primitive/`, from the resolved theme via `payload.toFlat()`. The one exception is the
-four elevation planes, `semantic/surface/sink|base|lift|pop`: `code.ts` creates these
-itself (`ensure('semantic/surface/sink')`, etc.), outside the payload token stream, then
+**Hand-authored rows.** Nearly every row is generated from the resolved theme via
+`payload.toFlat()`. The one exception is the four elevation planes,
+`primitive/system/surface/sink|base|lift|pop`: `code.ts` creates these itself
+(`ensure('primitive/system/surface/sink')`, etc.), outside the payload token stream, then
 wires each as a scheme-divergent alias onto the NEUTRAL's own resolved paper stops
 (`primitive/neutral/paper/*`), never onto the family being themed:
 
 | plane | light aliases | dark aliases |
 |---|---|---|
-| `semantic/surface/sink` | `neutral/paper/95` | `neutral/paper/100` |
-| `semantic/surface/base` | `neutral/paper/97` | `neutral/paper/99` |
-| `semantic/surface/lift` | `neutral/paper/99` | `neutral/paper/97` |
-| `semantic/surface/pop`  | `neutral/paper/100` | `neutral/paper/95` |
+| `system/surface/sink` | `neutral/paper/95` | `neutral/paper/100` |
+| `system/surface/base` | `neutral/paper/97` | `neutral/paper/99` |
+| `system/surface/lift` | `neutral/paper/99` | `neutral/paper/97` |
+| `system/surface/pop`  | `neutral/paper/100` | `neutral/paper/95` |
 
 **Apply never deletes.** A path in an existing base file that the current payload no
 longer emits (an orphan, left behind by a deleted or renamed token) is counted and
