@@ -11,13 +11,77 @@ figma.showUI(__html__, { width: 480, height: 640, themeColors: true })
 type UsageKind = 'text' | 'fill' | 'stroke'
 interface Usage { nodeId: string; nodeName: string; kind: UsageKind; pageId: string; pageName: string }
 interface BoundGroup {
-  varId: string; name: string; collection: string; remote: boolean; key: string; usages: Usage[]
+  varId: string; name: string; collection: string; remote: boolean; key: string
+  /** resolved per-mode colors (v1.1), keyed by the owning collection's mode NAME */
+  values: Record<string, { hex: string; a?: number }>
+  usages: Usage[]
 }
 interface DetachedGroup { hex: string; alpha: number; usages: Usage[] }
 
 const toHex = (c: figma.RGB): string => {
   const ch = (v: number) => Math.round(Math.min(1, Math.max(0, v)) * 255).toString(16).padStart(2, '0')
   return `#${ch(c.r)}${ch(c.g)}${ch(c.b)}`.toUpperCase()
+}
+
+// ── value resolution (v1.1) ─────────────────────────────────────────────────────
+// A variable's value in a mode may alias a variable in ANOTHER collection whose
+// modeIds differ — cross-collection hops re-select the target's mode BY NAME
+// (Light->Light, Dark->Dark; single-mode targets use their only mode; else first).
+// Depth-capped; unresolvable ends return undefined and the report ships without.
+const varCache = new Map<string, figma.Variable | null>()
+const collCache = new Map<string, figma.VariableCollection | null>()
+const varById = async (id: string): Promise<figma.Variable | null> => {
+  if (!varCache.has(id)) {
+    try { varCache.set(id, await figma.variables.getVariableByIdAsync(id)) } catch { varCache.set(id, null) }
+  }
+  return varCache.get(id)!
+}
+const collById = async (id: string): Promise<figma.VariableCollection | null> => {
+  if (!collCache.has(id)) {
+    try { collCache.set(id, await figma.variables.getVariableCollectionByIdAsync(id)) } catch { collCache.set(id, null) }
+  }
+  return collCache.get(id)!
+}
+
+const pickMode = (coll: figma.VariableCollection, wantName: string): string | undefined => {
+  const m = coll.modes.find(x => x.name.toLowerCase() === wantName.toLowerCase()) ?? coll.modes[0]
+  return m?.modeId
+}
+
+async function resolveColor(v: figma.Variable, modeName: string, depth = 0): Promise<figma.RGBA | undefined> {
+  if (depth > 8) return undefined
+  // un-imported remote handles carry no values — import by key makes them readable
+  let vv = v
+  if (!vv.valuesByMode || !Object.keys(vv.valuesByMode).length) {
+    try { vv = await figma.variables.importVariableByKeyAsync(v.key) } catch { return undefined }
+  }
+  const coll = await collById(vv.variableCollectionId)
+  if (!coll) return undefined
+  const modeId = pickMode(coll, modeName)
+  if (!modeId) return undefined
+  const val = vv.valuesByMode[modeId]
+  if (!val) return undefined
+  if ((val as figma.VariableAlias).type === 'VARIABLE_ALIAS') {
+    const inner = await varById((val as figma.VariableAlias).id)
+    return inner ? resolveColor(inner, modeName, depth + 1) : undefined
+  }
+  return val as figma.RGBA
+}
+
+// The group's per-mode values, keyed by the OWNING collection's mode names.
+async function resolveValues(v: figma.Variable): Promise<Record<string, { hex: string; a?: number }>> {
+  const out: Record<string, { hex: string; a?: number }> = {}
+  let vv = v
+  if (!vv.valuesByMode || !Object.keys(vv.valuesByMode).length) {
+    try { vv = await figma.variables.importVariableByKeyAsync(v.key) } catch { return out }
+  }
+  const coll = await collById(vv.variableCollectionId)
+  if (!coll) return out
+  for (const mode of coll.modes) {
+    const c = await resolveColor(vv, mode.name)
+    if (c) out[mode.name] = c.a !== undefined && c.a < 1 ? { hex: toHex(c), a: c.a } : { hex: toHex(c) }
+  }
+  return out
 }
 
 const isSolid = (p: figma.Paint): p is figma.SolidPaint => p.type === 'SOLID' && p.visible !== false
@@ -85,17 +149,15 @@ async function scan(scope: 'selection' | 'page' | 'file'): Promise<void> {
   const groups: BoundGroup[] = []
   for (const [varId, usages] of bound) {
     let name = '(unresolvable)', collection = '', remote = false, key = ''
-    try {
-      const v = await figma.variables.getVariableByIdAsync(varId)
-      if (v) {
-        name = v.name; remote = v.remote; key = v.key
-        try {
-          const c = await figma.variables.getVariableCollectionByIdAsync(v.variableCollectionId)
-          if (c) collection = c.name
-        } catch { /* remote collection not resolvable on this plan — name stands alone */ }
-      }
-    } catch { /* keep the unresolvable group */ }
-    groups.push({ varId, name, collection, remote, key, usages })
+    let values: Record<string, { hex: string; a?: number }> = {}
+    const v = await varById(varId)
+    if (v) {
+      name = v.name; remote = v.remote; key = v.key
+      const c = await collById(v.variableCollectionId)
+      if (c) collection = c.name
+      values = await resolveValues(v)
+    }
+    groups.push({ varId, name, collection, remote, key, values, usages })
   }
 
   figma.ui.postMessage({

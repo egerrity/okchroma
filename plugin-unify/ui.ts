@@ -10,7 +10,11 @@ import {
 
 type UsageKind = 'text' | 'fill' | 'stroke'
 interface Usage { nodeId: string; nodeName: string; kind: UsageKind; pageId: string; pageName: string }
-interface BoundGroup { varId: string; name: string; collection: string; remote: boolean; key: string; usages: Usage[] }
+interface BoundGroup {
+  varId: string; name: string; collection: string; remote: boolean; key: string
+  values?: Record<string, { hex: string; a?: number }>
+  usages: Usage[]
+}
 interface DetachedGroup { hex: string; alpha: number; usages: Usage[] }
 interface ScanResults {
   type: 'scan-results'; scope: string; nodesScanned: number; currentPageId: string
@@ -110,8 +114,12 @@ function render(r: ScanResults): void {
     const unify = UNIFY_COLLECTIONS.has(g.collection)
     const row = document.createElement('div')
     row.className = 'row'
+    // per-mode value swatches (v1.1) — the owning collection's mode order, capped at 2
+    const swatches = Object.values(g.values ?? {}).slice(0, 2)
+      .map(v => `<span class="sw" style="background:${v.hex}"></span>`).join('')
     row.innerHTML = `
       <div class="row-head">
+        ${swatches}
         <span class="row-name">${esc(g.name)}</span>
         ${g.collection ? `<span class="tag coll">${esc(g.collection)}</span>` : ''}
         ${g.remote ? '<span class="tag lib">library</span>' : ''}
@@ -157,6 +165,7 @@ function buildReport(r: ScanResults): string {
     bound: [...r.bound].sort((a, b) => b.usages.length - a.usages.length).map(g => ({
       name: g.name, collection: g.collection, remote: g.remote, key: g.key,
       unify: UNIFY_COLLECTIONS.has(g.collection),
+      values: g.values ?? {},
       count: g.usages.length, kinds: kindCounts(g.usages), pages: pagesOf(g.usages),
     })),
     detached: r.detached.map(d => ({

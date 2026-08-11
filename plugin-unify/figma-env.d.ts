@@ -26,9 +26,13 @@ declare namespace figma {
   namespace variables {
     function getVariableByIdAsync(id: string): Promise<Variable | null>
     function getVariableCollectionByIdAsync(id: string): Promise<VariableCollection | null>
+    /** Imports a library variable so its valuesByMode become readable. Throws when the
+        library is unavailable — always try/catch. */
+    function importVariableByKeyAsync(key: string): Promise<Variable>
   }
 
   type RGB = { r: number; g: number; b: number }
+  type RGBA = { r: number; g: number; b: number; a?: number }
   interface VariableAlias { type: 'VARIABLE_ALIAS'; id: string }
 
   interface SolidPaint {
@@ -71,7 +75,11 @@ declare namespace figma {
     selection: ReadonlyArray<SceneNode>
   }
 
-  interface VariableCollection { readonly id: string; readonly name: string }
+  interface VariableCollection {
+    readonly id: string
+    readonly name: string
+    readonly modes: ReadonlyArray<{ readonly modeId: string; readonly name: string }>
+  }
 
   interface Variable {
     readonly id: string
@@ -80,5 +88,7 @@ declare namespace figma {
     readonly remote: boolean
     readonly resolvedType: string
     readonly variableCollectionId: string
+    /** Keyed by the OWNING collection's modeIds; empty on un-imported remote handles. */
+    readonly valuesByMode: { readonly [modeId: string]: RGBA | VariableAlias }
   }
 }
