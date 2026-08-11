@@ -42,6 +42,10 @@ jobs:
       # beside v1 so an Enterprise seat can install it by download alone.
       - run: npm run plugin-ext:build
 
+      # Builds the Mapper (Unify -> okchroma converter, stage 1 = inspect) — zipped
+      # below, reachable only via the quiet "mapper" link on the install page.
+      - run: npm run plugin-unify:build
+
       # The demo entry (demo/index.html) references ../dist and ../tokens.
       # Flatten into a Pages root: index.html at top, assets beside it, with
       # the ../ rewritten to plain relative paths so it works under the
@@ -75,6 +79,15 @@ jobs:
           cp plugin-ext/dist/plugin-ext-code.js plugin-ext/dist/plugin-ext-ui.html stage/okchroma-extended/dist/
           (cd stage && zip -rq ../_site/okchroma-extended.zip okchroma-extended)
           cp plugin-ext/install.html _site/install.html
+
+      # The Mapper's zip, same import-from-manifest shape. Unadvertised: only the
+      # "mapper" link at the bottom corner of install.html points here.
+      - name: Package the Mapper for manual install
+        run: |
+          mkdir -p stage/okchroma-mapper/dist
+          cp plugin-unify/manifest.json stage/okchroma-mapper/
+          cp plugin-unify/dist/plugin-unify-code.js plugin-unify/dist/plugin-unify-ui.html stage/okchroma-mapper/dist/
+          (cd stage && zip -rq ../_site/okchroma-mapper.zip okchroma-mapper)
 
       - uses: actions/upload-pages-artifact@v3
         with:

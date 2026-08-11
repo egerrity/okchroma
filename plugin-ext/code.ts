@@ -713,6 +713,10 @@ figma.ui.onmessage = async (msg) => {
         }
         if (!v) { v = figma.variables.createVariable(path, base, 'COLOR'); baseVars.set(path, v); createdVars++ }
         v.setPluginData(PATH_KEY, path) // identity stamp — a panel rename survives future lookups
+        // the CROSS-PLUGIN stamp (owner 2026-08-11): pluginData is namespaced per plugin,
+        // so the Mapper (plugin-unify) can't read the private stamp above. Same identity,
+        // shared namespace; restamped every apply exactly like the private one.
+        v.setSharedPluginData('okchroma', PATH_KEY, path)
         v.description = describeToken(path) // restamped every apply — regenerated, never hand-kept
         // Web code syntax = the hyphenated CURRENT name (owner 2026-08-10) — follows a rename; raw kebab, no var(--…)
         v.setVariableCodeSyntax('WEB', v.name.toLowerCase().replace(/[\s/]+/g, '-'))

@@ -23,6 +23,7 @@
     "req:audit": "esbuild scripts/reqtoken-audit.ts --bundle --platform=node --outfile=dist/reqtoken-audit.js && node dist/reqtoken-audit.js",
     "audit:secondary": "esbuild scripts/secondary-audit.ts --bundle --platform=node --outfile=dist/secondary-audit.js && node dist/secondary-audit.js",
     "plugin:build": "node esbuild.config.js --plugin",
+    "plugin-unify:build": "node esbuild.config.js --plugin-unify",
     "plugin-ext:build": "node esbuild.config.js --plugin-ext",
     "audit:register": "esbuild scripts/register-audit.ts --bundle --platform=node --outfile=dist/register-audit.js && node dist/register-audit.js",
     "audit:ext": "esbuild scripts/ext-override-audit.ts --bundle --platform=node --outfile=dist/ext-override-audit.js && node dist/ext-override-audit.js",

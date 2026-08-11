@@ -1,0 +1,11 @@
+{
+  "name": "OKChroma Mapper",
+  "api": "1.0.0",
+  "main": "dist/plugin-unify-code.js",
+  "ui": "dist/plugin-unify-ui.html",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": ["none"]
+  }
+}
