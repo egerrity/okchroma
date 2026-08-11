@@ -85,7 +85,7 @@ then Figma → Plugins → Development → **Import plugin from manifest** →
 - **Secondary color** — "+ Add secondary" starts on *From primary* (a pastel derived from
   your primary); type any hex for a custom secondary in **Tint / Pastel / Outline / Exact**
   style.
-- **Neutral color** — *Default* (a touch of primary hue), *Intense*, or *True grey*.
+- **Neutral color** — *Default* (a touch of primary hue), *Medium* (slightly more tint), *Intense*, or *True grey*.
 - **Contrast standard** — **APCA** (default) or **WCAG**. One profile per collection pair:
   applying the other profile to an existing file forks a clearly-labeled second pair
   (`theme-wcag`/`mode-wcag`) instead of ever mixing values.

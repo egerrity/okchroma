@@ -656,13 +656,16 @@ figma.ui.onmessage = async (msg) => {
       // ink-53-aa failing on papers — the create-once base stranded C42/C44 canonical
       // moves): their
       // identity/variant paths survive engine retunes exactly as link's does, and the
-      // same idempotence argument holds. Only the neutral stays grow-on-demand.
+      // same idempotence argument holds. The NEUTRAL joined last (owner 2026-08-11, the
+      // default-tint retune: a grow-on-demand system/neutral/default-h* would serve the
+      // old 1x values forever): its values derive entirely from the level+hue in its
+      // key, so the refresh is idempotent for the same reason.
       for (const grp of shared) {
         const darkMap = new Map(flatten(grp.dark).map(t => [t.path, t]))
         const lightMap = new Map(flatten(grp.light).map(t => [t.path, t]))
         for (const t of flatten(grp.light)) {
           const path = `${grp.prim}/${t.path}`
-          const { v, created } = writeRaw(path, t, darkMap, grp.theme !== 'neutral', lightMap)
+          const { v, created } = writeRaw(path, t, darkMap, true, lightMap)
           if (created) createdShared++
           primVar.set(path, v)
         }
@@ -676,11 +679,11 @@ figma.ui.onmessage = async (msg) => {
       // Runs AFTER the shared groups so the target exists. hover/pressed are derived
       // values and stay raw. Escape OFF on a later re-apply: writeRamp's refresh write
       // replaces the alias with the brand's raw cta again — fully reversible.
-      // GUARD (review-caught 2026-07-16): shared prims dedup with refresh=false, so a
-      // strong ink written by an OLDER engine build keeps its stale value — aliasing the
-      // rest onto it while hover/pressed derive from TODAY's solve would mismatch the trio.
-      // Alias only when the target's live values equal the freshly written escape cta
-      // (both modes); otherwise the raw write already carries the correct values.
+      // GUARD (review-caught 2026-07-16): alias only when the target's live values equal
+      // the freshly written escape cta (both modes); otherwise the raw write already
+      // carries the correct values. Since 2026-08-11 the neutral refreshes on every
+      // apply, so the stale-strong-ink case this guarded against no longer arises — the
+      // value check stays as the cheap invariant it always was.
       if (ctaEscape) {
         const eq = (a: unknown, b: unknown): boolean => {
           const ca = a as figma.RGBA | undefined, cb = b as figma.RGBA | undefined

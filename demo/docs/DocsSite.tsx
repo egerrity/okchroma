@@ -460,7 +460,7 @@ const generation: Article = {
         above the dark page). A supplied hex takes the same transform, or ships exact as a full
         standard ramp, or outline. The neutral: a near-gray at a tint hue (primary by default;
         secondary or a custom hex, stored as a source) through the same generator with its own
-        chroma curve, at three strengths.</LI>
+        chroma curve, at four strengths.</LI>
         <LI><b>Your levers.</b> <Code>exact</Code> (fill and identity ship untouched; the ramps
         and signals still compute), archetype override, style (<Code>deeper</Code> /{' '}
         <Code>full-chroma</Code>), secondary style, neutral tint source and strength.</LI>

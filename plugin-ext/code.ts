@@ -383,8 +383,12 @@ const toRGBA = (t: FlatTok): figma.RGBA =>
 
 figma.ui.onmessage = async (msg) => {
   if (msg.type === 'apply') {
-    const { brand, brandTokens, baseTokens, hasSecondary, confirmed, confirmedToken, spec, rebuildBase, baseSeedHex, renameFrom, descopePrimitives } = msg as unknown as {
+    const { brand, brandTokens, baseTokens, retiredNeutral, hasSecondary, confirmed, confirmedToken, spec, rebuildBase, baseSeedHex, renameFrom, descopePrimitives } = msg as unknown as {
       type: 'apply'; brand: string; brandTokens: TokenColumns; baseTokens: TokenColumns
+      // the OLD default-strength neutral rows for this base seed (the 2026-08-11 tint
+      // retune, = the 'medium' rung, computed live UI-side) — the value-matched heal's
+      // "OUR value" reference; optional so an older UI's message still applies
+      retiredNeutral?: TokenColumns
       hasSecondary: boolean; confirmed?: boolean; confirmedToken?: string; spec?: unknown
       // the REBUILD flag (owner 2026-08-03): force-reseed every base row from this
       // payload — the explicit "redo the main theme" action; rides the armed batch (its
@@ -914,6 +918,8 @@ figma.ui.onmessage = async (msg) => {
         if (!seed || !chEq(cur, seed)) return undefined
         return inkSiblingFor(path, seed, seedByCol.get(col)!)
       }
+      const retiredNeutralByCol = retiredNeutral && new Map<Column, Map<string, FlatTok>>(
+        activeCols.map(c => [c, new Map(retiredNeutral[c].map(t => [t.path, t]))]))
       for (const [path, v] of baseVars) {
         for (let i = 0; i < activeCols.length; i++) {
           const cur = v.valuesByMode[colIds[i]]
@@ -938,6 +944,20 @@ figma.ui.onmessage = async (msg) => {
           if (retired) {
             const seed = seedByCol.get(activeCols[i])!.get(path)
             if (seed && retired.some(h => rgbaMatchesHex(cur, h))) {
+              v.setValueForMode(colIds[i], toRGBA(seed))
+              continue
+            }
+          }
+          // the retired-DEFAULT neutral refresh (owner 2026-08-11, adopt-on-re-apply): a
+          // base neutral row still holding exactly the OLD default-strength value (shipped
+          // as retiredNeutral, = today's 'medium' output for this seed) takes the payload's
+          // current value. Same conservatism as the signal refresh: any other value is a
+          // designer's own and is left alone. Rows applied before the 2026-07-17 tint round
+          // hold earlier-era values, don't match, and stay — the explicit rebuild covers them.
+          if (retiredNeutralByCol && path.startsWith('primitive/neutral/')) {
+            const old = retiredNeutralByCol.get(activeCols[i])!.get(path)
+            const seed = seedByCol.get(activeCols[i])!.get(path)
+            if (old && seed && chEq(cur, old) && !chEq(cur, seed)) {
               v.setValueForMode(colIds[i], toRGBA(seed))
               continue
             }

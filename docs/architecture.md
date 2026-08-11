@@ -128,7 +128,7 @@ The same modules as a table: each piece, where it lives, what it does. Grouped b
 | Dark chroma policy | `darkChromaCurve.ts` | `darkChromaCurve` (the H-K fill equalizer) and `darkCtaTrim` (the brand dark-cta trim, computed from `DARK_CTA_C`). |
 | Signal identities | `signals.ts` | The four signals by identity: red, yellow, green, blue (renamed from info-color 2026-07-13), seed hexes + per-signal dark floors. |
 | Archetypes | `archetypes.ts` | The six lightness anchors (near-black → light), `classifyArchetype`, the hover rule (`hoverL`). |
-| Neutral curve | `neutralCurve.ts` | The neutral's chroma shape: the neutral is generated from a tint hue at three tint levels. |
+| Neutral curve | `neutralCurve.ts` | The neutral's chroma shape: the neutral is generated from a tint hue at four tint levels. |
 
 **The requirement-token resolver (`src/reqtoken/`)**
 
@@ -412,7 +412,8 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
   (C ≈ 0.006) at the tint hue, run back through `generateScale` with a `neutralChromaCurve`.
   The tint hue is a **stored source, never a frozen value** (C48, `neutralTintHue`):
   primary by default, the secondary's seed hue followed live, or a custom hex's hue.
-  Tint levels `pure` / `default` / `branded` scale the tint at every stop in both modes.
+  Tint levels `pure` / `default` / `medium` / `branded` scale the tint at every stop in
+  both modes (`medium` keeps the pre-2026-08-11 default strength; `default` is 0.75x of it).
   Its `cta` is intentionally **low-hierarchy**, tracking the scale's own stop 4 (cta) /
   stop 5 (hover) so it **flips per mode**: a near-white wash in light, a dark wash in
   dark, with `on-cta` recomputed for legibility in each (shipped soft, at alpha).

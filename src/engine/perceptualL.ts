@@ -72,8 +72,13 @@ const boostCache = new Map<string, number>()
 
 // exported for the instruments (docs/engine-spec/rounds-archive/p3-math.ts) — one recipe, no script-side copies
 export function meanBoost(rootL: number, C: number, gamut: Gamut = MASTER_GAMUT): number {
-  // instruments run both gamuts in one process — the key must carry the gamut
-  const key = `${rootL.toFixed(4)}|${C.toFixed(4)}|${gamut}`
+  // instruments run both gamuts in one process — the key must carry the gamut.
+  // EXACT key (2026-08-11): the old 4-decimal rounding let two near-identical chromas
+  // share one entry, so the first caller's full-precision boost was served to the
+  // second — output then depended on generation ORDER across levels in one process
+  // (caught by the neutral 0.75x/1x parity proof: 0.007057 and 0.007125 both keyed
+  // '0.0071'). A pure function's cache only ever hits on identical inputs.
+  const key = `${rootL}|${C}|${gamut}`
   const hit = boostCache.get(key)
   if (hit !== undefined) return hit
   const gray = grayApparentL(rootL, gamut)

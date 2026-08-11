@@ -272,7 +272,7 @@ export function generateIllustrationScale(scale: GeneratedScale): IllustrationSc
 // tints the generated near-grey; strength stays the declared curve — not a custom ramp
 // seed). ONE resolution rule for every surface, fallbacks INSIDE: no secondary in scope or
 // no/invalid custom hex → the primary's hue. New sources tint at the DEFAULT level (the
-// 5-entry dropdown collapses source × strength; Intense variants are a later ask).
+// 6-entry dropdown collapses source × strength; Intense variants are a later ask).
 export type NeutralSource = 'secondary' | 'custom'
 export function neutralTintHue(
   primaryH: number,

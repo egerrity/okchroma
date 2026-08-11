@@ -5,17 +5,18 @@ import { generateNeutralScale, neutralTintHue, type GeneratedScale, type ColorSt
 import { SIGNALS } from '../src/engine/signals'
 import { toHex } from '../src/engine/cssRender'
 import { stopTokenName } from '../src/engine/tokenNames'
-import { buildBrandColumns, buildBaseColumns, BASE_SEED_HEX, type ThemeSpec } from './payload'
+import { buildBrandColumns, buildBaseColumns, buildRetiredNeutralRows, BASE_SEED_HEX, type ThemeSpec } from './payload'
 import { ROSTER, rosterSpec } from './roster'
 
 // ─── State ───────────────────────────────────────────────────────────────────
 
 let primaryHex = '#E93D82'
 let secondaryHex: string | null = null
-// the neutral offering is ONE 5-entry choice (owner 2026-08-04): three strengths of the
-// PRIMARY's hue, or an alternate hue SOURCE at the Default strength — Match secondary
-// (follows the current secondary live; the recipe stores the SOURCE, never a frozen hue)
-// or Custom (the hex's hue tints the grey). Level + source derive from the one choice.
+// the neutral offering is ONE 6-entry choice (owner 2026-08-04; Medium joined 2026-08-11):
+// four strengths of the PRIMARY's hue, or an alternate hue SOURCE at the Default strength
+// — Match secondary (follows the current secondary live; the recipe stores the SOURCE,
+// never a frozen hue) or Custom (the hex's hue tints the grey). Level + source derive
+// from the one choice.
 type NeutralChoice = NeutralLevel | 'secondary' | 'custom'
 let neutralChoice: NeutralChoice = 'default'
 const neutralSourceOf = () => (neutralChoice === 'secondary' || neutralChoice === 'custom' ? neutralChoice : undefined)
@@ -164,11 +165,12 @@ const STYLE_INFO: Record<SecondaryStyle, string> = {
   exact: 'Your hex ships untouched',
 }
 const NEUTRAL_LABEL: Record<NeutralChoice, string> = {
-  default: 'Default', branded: 'Intense', pure: 'True grey',
+  default: 'Default', medium: 'Medium', branded: 'Intense', pure: 'True grey',
   secondary: 'Match secondary', custom: 'Custom…',
 }
 const NEUTRAL_INFO: Record<NeutralChoice, string> = {
   default: 'Adds a touch of primary hue',
+  medium: 'Slightly more tint than Default',
   branded: 'Adds a noticeable tint to neutral',
   pure: 'Neutrals are pure grey',
   secondary: 'Adds a touch of the secondary hue',
@@ -519,6 +521,7 @@ function buildAndSend() {
     const recipe: Recipe = { brand: name, theme, neutralLevel: neutralLevelOf(), hasSecondary: secondaryMode !== 'off' }
     const brandTokens = buildBrandColumns(theme, neutralLevelOf())
     const baseTokens = buildBaseColumns(fileBaseSeed)
+    const retiredNeutral = buildRetiredNeutralRows(fileBaseSeed) // heals pre-retune base rows (2026-08-11)
 
     // reason-scoped confirm: echo back the exact token the confirm was armed with —
     // the plugin re-derives the reasons and only proceeds if they still match
@@ -527,7 +530,7 @@ function buildAndSend() {
     // matching the sandbox's identity rule) — same-name edits ride the normal update path
     const renameFrom = loadedBrand && loadedBrand.trim().toLowerCase() !== name.trim().toLowerCase()
       ? loadedBrand : undefined
-    parent.postMessage({ pluginMessage: { type: 'apply', brand: name, brandTokens, baseTokens, hasSecondary: recipe.hasSecondary, confirmedToken, spec: recipe, renameFrom, descopePrimitives } }, '*')
+    parent.postMessage({ pluginMessage: { type: 'apply', brand: name, brandTokens, baseTokens, retiredNeutral, hasSecondary: recipe.hasSecondary, confirmedToken, spec: recipe, renameFrom, descopePrimitives } }, '*')
   } catch (err) {
     applyBtn.disabled = false
     setStatus(String(err), 'err')
@@ -881,11 +884,12 @@ function sendQueueItem() {
   setStatus(`${qLabel} ${qi + 1}/${queue!.length} — ${it.brand}…`)
   const brandTokens = buildBrandColumns(it.theme, it.neutralLevel)
   const baseTokens = buildBaseColumns(fileBaseSeed)
+  const retiredNeutral = buildRetiredNeutralRows(fileBaseSeed) // heals pre-retune base rows (2026-08-11)
   // a rebuild batch: the FIRST item carries the force-reseed flag (the base rebuilds once,
   // then every following item's diff runs against the fresh base)
   const rebuild = qi === 0 && queueRebuildSeed
     ? { rebuildBase: true, baseSeedHex: queueRebuildSeed } : {}
-  parent.postMessage({ pluginMessage: { type: 'apply', brand: it.brand, brandTokens, baseTokens, hasSecondary: it.hasSecondary, confirmed: true, spec: it, descopePrimitives, ...rebuild } }, '*')
+  parent.postMessage({ pluginMessage: { type: 'apply', brand: it.brand, brandTokens, baseTokens, retiredNeutral, hasSecondary: it.hasSecondary, confirmed: true, spec: it, descopePrimitives, ...rebuild } }, '*')
 }
 
 // (the apcaPosture parameter died with the Include-APCA toggle, 2026-07-29: there is one

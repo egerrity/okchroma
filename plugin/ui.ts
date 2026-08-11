@@ -11,9 +11,10 @@ import { stopTokenName } from '../src/engine/tokenNames'
 
 let primaryHex = '#E93D82'
 let secondaryHex: string | null = null
-// the neutral offering is ONE 5-entry choice (owner 2026-08-04): three strengths of the
-// PRIMARY's hue, or an alternate hue SOURCE at the Default strength — Match secondary
-// (follows the current secondary live) or Custom (the hex's hue tints the grey).
+// the neutral offering is ONE 6-entry choice (owner 2026-08-04; Medium joined 2026-08-11):
+// four strengths of the PRIMARY's hue, or an alternate hue SOURCE at the Default
+// strength — Match secondary (follows the current secondary live) or Custom (the hex's
+// hue tints the grey).
 type NeutralChoice = NeutralLevel | 'secondary' | 'custom'
 let neutralChoice: NeutralChoice = 'default'
 const neutralSourceOf = () => (neutralChoice === 'secondary' || neutralChoice === 'custom' ? neutralChoice : undefined)
@@ -126,11 +127,12 @@ const STYLE_INFO: Record<SecondaryStyle, string> = {
   exact: 'Your hex ships untouched',
 }
 const NEUTRAL_LABEL: Record<NeutralChoice, string> = {
-  default: 'Default', branded: 'Intense', pure: 'True grey',
+  default: 'Default', medium: 'Medium', branded: 'Intense', pure: 'True grey',
   secondary: 'Match secondary', custom: 'Custom…',
 }
 const NEUTRAL_INFO: Record<NeutralChoice, string> = {
   default: 'Adds a touch of primary hue',
+  medium: 'Slightly more tint than Default',
   branded: 'Adds a noticeable tint to neutral',
   pure: 'Neutrals are pure grey',
   secondary: 'Adds a touch of the secondary hue',
@@ -466,12 +468,13 @@ function buildAndSend() {
     const r = t.themed
     const secondary = t.secondary?.scale ?? null
 
-    // The neutral's shared-primitive key. 'pure' is a true grey (C=0), identical
+    // The neutral's shared-primitive key. Same-key re-applies REFRESH values in place
+    // since 2026-08-11 (the default-tint retune heals old files); the key still dedups
+    // identical ramps across brands. 'pure' is a true grey (C=0), identical
     // for every brand — so it's keyed hue-INDEPENDENTLY as one shared
-    // system/neutral/pure that the plugin reuses across brands (the backend
-    // writes shared prims refresh=false ⇒ an existing path is reused, never
-    // recreated) instead of duplicating an identical grey ramp per brand (heavy
-    // in Figma). The tinted levels genuinely vary by hue, so they key by level +
+    // system/neutral/pure that the plugin reuses across brands (an existing path
+    // is reused, never recreated) instead of duplicating an identical grey ramp
+    // per brand (heavy in Figma). The tinted levels genuinely vary by hue, so they key by level +
     // hue (same-hue brands still dedup onto one primitive).
     // NOTE: apca-solved values are DIFFERENT from wcag ones, but paths carry no
     // profile suffix — the file keeps ONE profile per collection pair (code.ts

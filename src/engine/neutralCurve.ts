@@ -1,6 +1,6 @@
 
 
-export type NeutralLevel = 'pure' | 'default' | 'branded'
+export type NeutralLevel = 'pure' | 'default' | 'medium' | 'branded'
 
 // ── TINT-CURVE CONTROL POINTS ──────────────────────────────────────────────────────────
 // The tint curves are declared as their own (L, share) control points, one set per mode
@@ -37,7 +37,10 @@ const PEAK = [
   { h: 301, light: 0.0193, dark: 0.0172 },
 ]
 
-const LEVEL: Record<NeutralLevel, number> = { pure: 0, default: 1, branded: 1.75 }
+// 'medium' is the pre-2026-08-11 default strength, kept as the middle rung; the owner's
+// retune made the shipped default 25% quieter (0.75x of the same curve). Stored recipes
+// and engine fallbacks say 'default' and adopt the new strength with no migration.
+const LEVEL: Record<NeutralLevel, number> = { pure: 0, default: 0.75, medium: 1, branded: 1.75 }
 
 // ── THE NEUTRAL'S TINT CURVE (owner round 2026-07-17) ────────────────────────────────
 // The neutral is a grey carrying a touch of the brand's hue. Two owner laws set its shape,

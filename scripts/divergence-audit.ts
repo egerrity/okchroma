@@ -72,7 +72,7 @@ const ok = (cond: boolean, msg: string) => { if (!cond) fails.push(msg) }
 // audit, which is its own round.
 const PARITY_TOL = 0.005
 const NEUTRAL_HUES = [30, 90, 143, 210, 270, 320]
-const LEVELS: NeutralLevel[] = ['pure', 'default', 'branded']
+const LEVELS: NeutralLevel[] = ['pure', 'default', 'medium', 'branded']
 const worstParity = { gap: 0, at: '' }
 for (const level of LEVELS) {
   if (level === 'pure') continue // pure = 0 tint everywhere; nothing to track

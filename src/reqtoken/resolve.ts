@@ -120,8 +120,10 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   // up: the inks are text on any paper, and mark-74-aa (highlight-8) is the focus-
   // ring/border register that sits on neutral surfaces (WCAG 1.4.11).
   // The bound is the worst SHIPPED neutral paper-95 (paper-3) Y over hue 0..350 × every NeutralLevel:
-  // light min 0.845015 (H260 branded #e8edf8) · dark max 0.014247 (H300 default #211f23),
-  // measured 2026-08-03 via generateNeutralScale → stopHex. A per-theme neutral is not in
+  // light min 0.845015 (H260 branded #e8edf8) · dark max 0.014247 (H300 medium #211f23),
+  // measured 2026-08-03 via generateNeutralScale → stopHex; re-derived 2026-08-11 for the
+  // default-tint retune (default 0.75x + the medium rung) — both worsts UNCHANGED, the dark
+  // worst simply renamed with its level (medium = the old default). A per-theme neutral is not in
   // scope here (the ramp resolves per family), so the floor clears the worst neutral any
   // theme can generate. RE-DERIVE if the neutral curve or the paper ladder moves.
   const NEUTRAL_P3_WORST_SHIP_Y = { light: 0.845015, dark: 0.014247 } as const

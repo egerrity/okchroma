@@ -245,3 +245,20 @@ export function buildBaseColumns(seedHex: string = BASE_SEED_HEX): TokenColumns 
     'default', true, true,
   )
 }
+
+// The RETIRED-DEFAULT neutral rows (the 2026-08-11 default-tint retune, owner: adopt the
+// new default on re-apply): the base's create-once neutral rows were seeded at the old
+// default strength, which lives on as the 'medium' rung — so "what the old engine wrote"
+// is computable live from the same seed, no frozen value table. code.ts heals a base
+// neutral row to the current payload only while its value still EXACTLY matches this
+// column set (OUR value); a designer's re-valued row never matches and is left alone.
+export function buildRetiredNeutralRows(seedHex: string = BASE_SEED_HEX): TokenColumns {
+  const cols = columns(
+    { primaryHex: seedHex, name: 'okchroma', primaryMode: 'recommended', secondaryHex: null, deriveSecondary: true },
+    'medium', true, true,
+  )
+  return {
+    light: cols.light.filter(t => t.path.startsWith('primitive/neutral/')),
+    dark: cols.dark.filter(t => t.path.startsWith('primitive/neutral/')),
+  }
+}

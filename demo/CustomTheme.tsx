@@ -62,14 +62,15 @@ function InfoLine({ text }: { text: string }) {
   )
 }
 
-// The neutral offering is ONE 5-entry dropdown (owner 2026-08-04): three strengths of the
-// PRIMARY's hue, plus two alternate hue SOURCES at the Default strength — Match secondary
-// (follows the current secondary live) and Custom (the hex's hue tints the grey; strength
-// stays the declared curve). Source × strength stays collapsed; Intense variants of the
-// sources are a later ask.
+// The neutral offering is ONE 6-entry dropdown (owner 2026-08-04; the Medium rung joined
+// 2026-08-11): four strengths of the PRIMARY's hue, plus two alternate hue SOURCES at the
+// Default strength — Match secondary (follows the current secondary live) and Custom (the
+// hex's hue tints the grey; strength stays the declared curve). Source × strength stays
+// collapsed; Intense variants of the sources are a later ask.
 type NeutralChoice = NeutralLevel | 'secondary' | 'custom'
 const NEUTRAL_LABELS: Array<[NeutralChoice, string]> = [
   ['default', 'Default'],
+  ['medium', 'Medium'],
   ['branded', 'Intense'],
   ['pure', 'True grey'],
   ['secondary', 'Match secondary'],
@@ -386,6 +387,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   const neutralInfo = neutralChoice === 'secondary' ? 'Adds a touch of the secondary hue'
     : neutralChoice === 'custom' ? 'Adds a touch of your custom hue'
     : neutralChoice === 'default' ? 'Adds a touch of primary hue'
+    : neutralChoice === 'medium' ? 'Slightly more tint than Default'
     : neutralChoice === 'branded' ? 'Adds a noticeable tint to neutral'
     : 'Neutrals are pure grey'
 
