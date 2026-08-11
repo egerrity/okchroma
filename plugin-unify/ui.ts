@@ -25,7 +25,7 @@ interface ScanResults {
 
 interface Cluster { id: string; kind: UsageKind; anc: string; usages: Usage[] }
 interface TokenBucket {
-  key: string; label: string; sub: string; previewHex: string; previewAlpha?: number
+  key: string; label: string; full: string; sub: string; previewHex: string; previewAlpha?: number
   rule: Rule; suggested: boolean
   clusters: Cluster[]
   total: number
@@ -90,7 +90,7 @@ const nearestPaths = (hex: string, count: number): string[] =>
 
 function buildModel(r: ScanResults): { ignored: number; other: number } {
   okValues = new Map(r.okTargets.map(t => [t.path, t]))
-  const byKey = new Map<string, { label: string; sub: string; hex: string; alpha?: number; rule: Rule; suggested: boolean; usages: Usage[] }>()
+  const byKey = new Map<string, { label: string; full: string; sub: string; hex: string; alpha?: number; rule: Rule; suggested: boolean; usages: Usage[] }>()
   let ignored = 0, other = 0
 
   for (const g of r.bound) {
@@ -102,7 +102,8 @@ function buildModel(r: ScanResults): { ignored: number; other: number } {
     const rule: Rule = m ?? { candidates: firstVal ? nearestPaths(firstVal.hex, 2) : [] }
     // merge VINTAGES: same display name = one bucket, keys differ underneath
     const key = `tok:${g.name}`
-    const b = byKey.get(key) ?? { label: g.name, sub: g.collection, hex: firstVal?.hex ?? '#888888', alpha: firstVal?.a, rule, suggested: m === null, usages: [] }
+    // display = the final name segment (owner 2026-08-11); the full path stays as the tooltip
+    const b = byKey.get(key) ?? { label: g.name.split('/').pop() ?? g.name, full: g.name, sub: g.collection, hex: firstVal?.hex ?? '#888888', alpha: firstVal?.a, rule, suggested: m === null, usages: [] }
     b.usages.push(...g.usages); byKey.set(key, b)
   }
   for (const d of r.detached) {
@@ -111,12 +112,12 @@ function buildModel(r: ScanResults): { ignored: number; other: number } {
     if (m === null) { other += d.usages.length; continue }
     const key = `hex:${d.hex}@${d.alpha.toFixed(2)}`
     const alphaLabel = d.alpha < 1 ? ` @ ${Math.round(d.alpha * 100)}%` : ''
-    const b = byKey.get(key) ?? { label: `${d.hex}${alphaLabel} (detached)`, sub: 'raw value', hex: d.hex, alpha: d.alpha, rule: m, suggested: false, usages: [] }
+    const b = byKey.get(key) ?? { label: `${d.hex}${alphaLabel} (detached)`, full: `${d.hex}${alphaLabel} (detached)`, sub: 'raw value', hex: d.hex, alpha: d.alpha, rule: m, suggested: false, usages: [] }
     b.usages.push(...d.usages); byKey.set(key, b)
   }
 
   buckets = [...byKey.entries()].map(([key, b]) => ({
-    key, label: b.label, sub: b.sub, previewHex: b.hex, previewAlpha: b.alpha,
+    key, label: b.label, full: b.full, sub: b.sub, previewHex: b.hex, previewAlpha: b.alpha,
     rule: b.rule, suggested: b.suggested,
     clusters: clustersOf(b.usages, key), total: b.usages.length,
   })).sort((a, b) => b.total - a.total)
@@ -202,7 +203,7 @@ const bucketRow = (b: TokenBucket): string => {
   return `
     <div class="thead">
       <span class="usw" style="background:${preview}"></span>
-      <span class="tname">${esc(b.label)}</span>
+      <span class="tname" title="${esc(b.full)}">${esc(b.label)}</span>
       ${b.suggested ? '<span class="tag sug">suggested</span>' : ''}
       ${b.rule.candidates.length === 0 ? '<span class="tag miss">no candidates — punch list</span>' : ''}
       <span class="count">${b.total}</span>
