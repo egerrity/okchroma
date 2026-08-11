@@ -4,7 +4,7 @@
 // 2026-08-11: per-element groups, never per file — too many subjective decisions).
 // Candidate chips show the FILE's real okchroma values (sandbox-resolved); a missing
 // target means the okchroma theme needs one re-apply with the extended plugin.
-import { matchBound, matchDetached, UNIFY_COLLECTIONS, IGNORE_COLLECTIONS, type Rule } from './mapping'
+import { matchBound, matchDetached, UNIFY_COLLECTIONS, IGNORE_COLLECTIONS, BRAND_CTA_ON, isCtaContext, type Rule } from './mapping'
 
 type UsageKind = 'text' | 'fill' | 'stroke'
 interface Usage {
@@ -120,10 +120,15 @@ function buildModel(r: ScanResults): { ignored: number; other: number } {
     clusters: clustersOf(b.usages, key), total: b.usages.length,
   })).sort((a, b) => b.total - a.total)
 
-  // auto rules pre-pick their single candidate on every cluster
+  // auto rules pre-pick their single candidate on every cluster; the on-cta
+  // exception routes button-ish clusters to cta/on instead (owner 2026-08-11:
+  // Content Primary/Secondary are ALWAYS 30/53, EXCEPT on cta buttons -> cta/on)
   picks.clear()
   for (const b of buckets) if (b.rule.auto && b.rule.candidates.length === 1) {
-    for (const c of b.clusters) picks.set(c.id, b.rule.candidates[0])
+    for (const c of b.clusters) {
+      picks.set(c.id, b.rule.onCtaException && isCtaContext(c.anc) && okValues.has(BRAND_CTA_ON)
+        ? BRAND_CTA_ON : b.rule.candidates[0])
+    }
   }
   return { ignored, other }
 }
@@ -138,10 +143,12 @@ const chipHtml = (clusterId: string, path: string, picked: boolean): string => {
 }
 
 const clusterHtml = (b: TokenBucket, c: Cluster): string => {
+  // button-ish clusters of on-cta-exception tokens lead with cta/on
+  const base = b.rule.onCtaException && isCtaContext(c.anc)
+    ? [BRAND_CTA_ON, ...b.rule.candidates] : b.rule.candidates
   // a pick made through "Other…" may sit outside the shortlist — always render it
   const picked = picks.get(c.id)
-  const chips = picked && !b.rule.candidates.includes(picked)
-    ? [...b.rule.candidates, picked] : b.rule.candidates
+  const chips = picked && !base.includes(picked) ? [...base, picked] : base
   return `
   <div class="cluster" data-cluster="${esc(c.id)}">
     <span class="ck">${c.kind}</span>

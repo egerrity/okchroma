@@ -28,6 +28,15 @@ const famStop = (s: GeneratedScale, fam: string, name: string): Cand => ({
   label: `${fam}/${name}`, light: at(s.light, NAME_TO_STOP[name]), dark: at(s.dark, NAME_TO_STOP[name]),
 })
 const paper100: Cand = { label: 'neutral/paper-100', light: stopHex(neutral.paper0!), dark: stopHex(neutral.paper0Dark!) }
+// the elevation planes (scheme-divergent aliases): sink 95/100 · base 97/99 · lift 99/97 · pop 100/95
+const surface = (plane: 'sink' | 'base' | 'lift' | 'pop'): Cand => {
+  const m: Record<string, [Cand, Cand]> = {
+    sink: [n('paper-95'), paper100], base: [n('paper-97'), n('paper-99')],
+    lift: [n('paper-99'), n('paper-97')], pop: [paper100, n('paper-95')],
+  }
+  return { label: `system/surface/${plane}`, light: m[plane][0].light, dark: m[plane][1].dark }
+}
+const ctaOn: Cand = { label: 'brand/cta/on', light: 'rgba(255,255,255,.95)', dark: 'rgba(255,255,255,.95)', why: 'the on-cta register (aliases the pole/soft row)' }
 const offset = (rung: 8 | 16): Cand => ({
   label: `system/alpha/offset-${String(rung).padStart(2, '0')}`,
   light: `rgba(0,0,0,${OFFSET_ALPHAS[rung]})`, dark: `rgba(255,255,255,${OFFSET_ALPHAS[rung]})`,
@@ -47,11 +56,12 @@ const b = (name: string) => famStop(brand, 'brand', name)
 
 const SECTIONS: Section[] = [
   { title: 'Content palette', rows: [
-    { token: 'Content Primary', hex: '#0E0F10', count: '~59.6k', kinds: 'text 34.9k · icon/fill 24.6k', cls: 'pick',
-      cands: [n('ink-30-aaa'), n('ink-42-aa'), n('ink-53-aa'), n('mark-74-aa')],
-      note: 'The fan-out token. Text (flat hierarchy) → the inks; icons can take mark-74-aa. Picks land per similar-element group, never per file.' },
-    { token: 'Content Secondary', hex: '#515767', count: '~26.9k', kinds: 'text', cls: 'pick',
-      cands: [n('ink-53-aa'), n('ink-42-aa')] },
+    { token: 'Content Primary', hex: '#0E0F10', count: '~59.6k', kinds: 'text 34.9k · icon/fill 24.6k', cls: 'auto',
+      cands: [n('ink-30-aaa'), ctaOn],
+      note: 'ALWAYS ink-30-aaa (owner) — except on cta buttons, where it is always the on-cta. Button-ancestor clusters pre-pick cta/on.' },
+    { token: 'Content Secondary', hex: '#515767', count: '~26.9k', kinds: 'text', cls: 'auto',
+      cands: [n('ink-53-aa'), ctaOn],
+      note: 'ALWAYS ink-53-aa (owner) — same cta-button exception.' },
     { token: 'Content Tertiary', hex: '#868FA2', count: '~2.4k', kinds: 'text', cls: 'pick',
       cands: [n('ink-53-aa')],
       note: 'Fails 4.5 on white; okchroma has no sub-compliant text rung by design, so tertiary text maps UP.' },
@@ -59,12 +69,15 @@ const SECTIONS: Section[] = [
       cands: [paper100] },
   ]},
   { title: 'Background palette', rows: [
-    { token: 'Background Primary', hex: '#FFFFFF', count: '~5.3k', kinds: 'fill', cls: 'pick',
-      cands: [paper100, n('paper-99')] },
-    { token: 'Background Secondary', hex: '#F9FAFB', count: '~21.3k', kinds: 'fill', cls: 'pick',
-      cands: [n('paper-99'), n('paper-97')] },
+    { token: 'Background Primary', hex: '#FFFFFF', count: '~5.3k', kinds: 'fill', cls: 'auto',
+      cands: [surface('pop')],
+      note: 'Backgrounds are the SURFACE PLANES, never raw papers (owner): primary is always pop.' },
+    { token: 'Background Secondary', hex: '#F9FAFB', count: '~21.3k', kinds: 'fill', cls: 'auto',
+      cands: [surface('lift')],
+      note: 'Always lift.' },
     { token: 'Background Tertiary', hex: '#EEEFF2', count: '~4.7k', kinds: 'fill', cls: 'pick',
-      cands: [n('paper-95'), n('wash-92')] },
+      cands: [surface('sink'), surface('base')],
+      note: 'Sink or base — the one background judgment call.' },
     { token: 'Background Primary Inverse', hex: '#0E0F10', count: '~0.5k', kinds: 'fill', cls: 'pick',
       cands: [n('ink-30-aaa'), n('ink-42-aa')],
       note: 'The dark plane used as a fill in light mode.' },

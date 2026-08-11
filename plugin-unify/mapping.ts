@@ -11,7 +11,18 @@ export interface Rule {
   candidates: string[]
   /** exactly one candidate AND no judgment needed */
   auto?: boolean
+  /** owner 2026-08-11: on cta buttons these tokens are ALWAYS the on-cta — clusters
+      with a button-ish ancestor pre-pick cta/on instead of the ink */
+  onCtaException?: boolean
 }
+
+/** the elevation planes (scheme-divergent aliases in the ext register) */
+export const SURFACE = (plane: 'sink' | 'base' | 'lift' | 'pop') => `primitive/system/surface/${plane}`
+
+/** the on-cta register per family (an ALIAS row in the ext register — resolves live) */
+export const CTA_ON = (family: string) => `primitive/${family}/cta/on`
+export const BRAND_CTA_ON = CTA_ON('brand-primary')
+export const isCtaContext = (anc: string): boolean => /button|btn|cta/i.test(anc)
 
 const leaf = (tok: string) => tok.replace('-', '/') // 'ink-53-aa' -> 'ink/53-aa', 'paper-99' -> 'paper/99'
 const fam = (family: string) => (toks: string[]) => toks.map(t => `primitive/${family}/${leaf(t)}`)
@@ -63,14 +74,18 @@ export function matchBound(name: string): Rule | 'ignore' | null {
   if (s.includes('content')) {
     if (s.includes('inverse')) return { candidates: [PAPER_100], auto: true }
     if (s.includes('tertiary')) return { candidates: n(['ink-53-aa']) }
-    if (s.includes('secondary')) return { candidates: n(['ink-53-aa', 'ink-42-aa']) }
-    return { candidates: n(['ink-30-aaa', 'ink-42-aa', 'ink-53-aa', 'mark-74-aa']) }
+    // owner 2026-08-11: Content Primary/Secondary are ALWAYS 30/53 — auto, with the
+    // one exception: on cta buttons they are always the on-cta (handled per cluster)
+    if (s.includes('secondary')) return { candidates: n(['ink-53-aa']), auto: true, onCtaException: true }
+    return { candidates: n(['ink-30-aaa']), auto: true, onCtaException: true }
   }
+  // owner 2026-08-11: backgrounds are the SURFACE PLANES, never raw papers —
+  // primary is always pop, secondary always lift, tertiary is sink or base
   if (s.includes('background')) {
     if (s.includes('inverse')) return { candidates: n(['ink-30-aaa', 'ink-42-aa']) }
-    if (s.includes('tertiary')) return { candidates: n(['paper-95', 'wash-92']) }
-    if (s.includes('secondary')) return { candidates: n(['paper-99', 'paper-97']) }
-    return { candidates: [PAPER_100, ...n(['paper-99'])] }
+    if (s.includes('tertiary')) return { candidates: [SURFACE('sink'), SURFACE('base')] }
+    if (s.includes('secondary')) return { candidates: [SURFACE('lift')], auto: true }
+    return { candidates: [SURFACE('pop')], auto: true }
   }
   if (s.includes('stroke')) {
     if (s.includes('inverse')) return { candidates: [PAPER_100], auto: true }
@@ -108,8 +123,8 @@ export function matchDetached(hex: string, alpha: number): Rule | 'ignore' | nul
     '#868FA2': { candidates: n(['ink-53-aa']) },
     '#95979D': { candidates: n(['ink-53-aa']) },
     '#FFFFFF': { candidates: [PAPER_100], auto: true },
-    '#F9FAFB': { candidates: n(['paper-99', 'paper-97']) },
-    '#EEEFF2': { candidates: n(['paper-95', 'wash-92']) },
+    '#F9FAFB': { candidates: [SURFACE('lift')], auto: true },
+    '#EEEFF2': { candidates: [SURFACE('sink'), SURFACE('base')] },
     '#CBCFD7': { candidates: n(['mark-74-aa', 'wash-80']) },
     '#E2E4E9': { candidates: n(['wash-85', 'wash-80', 'mark-74-aa']) },
     '#044BAF': { candidates: fam('brand-primary')(PRIMARY_BAND) },
@@ -136,10 +151,12 @@ export function matchDetached(hex: string, alpha: number): Rule | 'ignore' | nul
 
 /** Every path any rule can emit — the sandbox inventories these targets per scan. */
 export function allCandidatePaths(): string[] {
-  const out = new Set<string>([PAPER_100, OFFSET_08, OFFSET_16])
+  const out = new Set<string>([PAPER_100, OFFSET_08, OFFSET_16,
+    SURFACE('sink'), SURFACE('base'), SURFACE('lift'), SURFACE('pop')])
   for (const family of ['neutral', 'brand-primary', 'critical', 'positive', 'warning']) {
     const f = fam(family)
     for (const t of [...PRIMARY_BAND, ...WASHES, ...PAPERS]) for (const p of f([t])) out.add(p)
+    out.add(CTA_ON(family))
   }
   return [...out]
 }
