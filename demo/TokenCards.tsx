@@ -30,7 +30,8 @@ const SIGNAL_ICON: Record<string, typeof AlertCircle> = {
 // single glance: the brand cta pair, the secondary cta pair (when one exists),
 // the quiet neutral cta, and all four signal ctas (critical / warning /
 // positive / info). Each family renders its cta | cta-hover | cta-pressed trio as one seamed
-// pill in on-cta text, with the cta-ink (text-style cta) rest/hover/pressed right
+// pill in on-cta text, with the text-style cta (the ink stops read as rest/hover/pressed
+// — cta-ink until its 2026-08-12 deletion) right
 // beneath it. Reads the live vars, so the per-brand signal overrides the
 // resolved theme carries show up here automatically; names the theme shifted
 // off-canonical get a "shifted" tag. The cta-border border is always SET (so layout never
@@ -56,10 +57,9 @@ export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; 
       border: `1.5px solid var(--${prefix}-cta-border)`,
     }}>Aa</div>
   )
-  // the TEXT-style cta (cta-ink — the action color's 4.5 text rendition) rendered on
-  // the card, so its rest / hover / pressed sit right under the fill cta trio
-  const inkCell = (prefix: string, tok: 'cta-ink' | 'cta-ink-hover' | 'cta-ink-pressed'
-    | 'cta-ink-strong' | 'cta-ink-strong-hover' | 'cta-ink-strong-pressed') => (
+  // the TEXT-style cta (the ink stops — the action color's 4.5 text rendition) rendered
+  // on the card, so its rest / hover / pressed sit right under the fill cta trio
+  const inkCell = (prefix: string, tok: 'ink-53-aa' | 'ink-42-aa' | 'ink-30-aaa') => (
     <div title={`--${prefix}-${tok}`} style={{
       flex: 1, textAlign: 'center', fontSize: 15, fontWeight: 800, color: `var(--${prefix}-${tok})`,
     }}>Aa</div>
@@ -74,19 +74,9 @@ export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; 
             {cell(f.prefix, 'cta-pressed')}
           </div>
           <div style={{ display: 'flex', marginTop: 7 }}>
-            {inkCell(f.prefix, 'cta-ink')}
-            {inkCell(f.prefix, 'cta-ink-hover')}
-            {inkCell(f.prefix, 'cta-ink-pressed')}
-          </div>
-          {/* the neutral-only STRONG text-cta mirror (owner 2026-08-04): descends the same
-              three values cta-ink ascends. Every card carries the row's height so the
-              family labels stay aligned across the deconfliction row. */}
-          <div style={{ display: 'flex', marginTop: 5, minHeight: 18 }}>
-            {f.prefix === 'neutral' && <>
-              {inkCell(f.prefix, 'cta-ink-strong')}
-              {inkCell(f.prefix, 'cta-ink-strong-hover')}
-              {inkCell(f.prefix, 'cta-ink-strong-pressed')}
-            </>}
+            {inkCell(f.prefix, 'ink-53-aa')}
+            {inkCell(f.prefix, 'ink-42-aa')}
+            {inkCell(f.prefix, 'ink-30-aaa')}
           </div>
           <div style={{ marginTop: 6, fontSize: 11, textAlign: 'center', color: 'var(--fg-default)', fontWeight: 600 }}>
             {f.label}
@@ -150,8 +140,9 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
 
       {/* cta in context — the pill (hidden on signals, where cta lives in the alert).
           Hover swaps cta → cta-hover; holding the button shows cta-pressed. Beside it,
-          the TEXT-STYLE cta (cta-ink — the action color's 4.5 text rendition, a text
-          button; never underlined, never a hyperlink — links are the SYSTEM --link). */}
+          the TEXT-STYLE cta (the ink stops as states — the action color's 4.5 text
+          rendition, a text button; never underlined, never a hyperlink — links are the
+          SYSTEM --link). */}
       {!isSignal && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
           <button
@@ -174,11 +165,11 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
             onMouseLeave={() => setLinkState('rest')}
             onMouseDown={() => setLinkState('pressed')}
             onMouseUp={() => setLinkState('hover')}
-            title={`--${prefix}-cta-ink${linkState === 'rest' ? '' : `-${linkState}`}`}
+            title={`--${prefix}-${linkState === 'pressed' ? 'ink-30-aaa' : linkState === 'hover' ? 'ink-42-aa' : 'ink-53-aa'}`}
             style={{
               background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
               fontSize: 15, fontWeight: 600, padding: '12px 10px',
-              color: linkState === 'pressed' ? v('cta-ink-pressed') : linkState === 'hover' ? v('cta-ink-hover') : v('cta-ink'),
+              color: linkState === 'pressed' ? v('ink-30-aaa') : linkState === 'hover' ? v('ink-42-aa') : v('ink-53-aa'),
             }}>Text action</button>
         </div>
       )}

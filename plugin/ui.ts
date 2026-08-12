@@ -35,9 +35,9 @@ let ctaEscape = false
 let inRedRange = false        // EFFECTIVE gate: the CURRENT posture's red range
 let inRedRangeOffer = false   // OFFER gate: union of both clamp postures (row visibility)
 // the SYSTEM LINK (Phase 4, owner 2026-07-16): ONE link trio per theme — hyperlinks, not
-// per-family. Default aliases the primary's cta-ink (the ink band as states, 9/10/11
-// since C49; follows the escape). Custom = the seed below through the ink register (#0B57D0 default when
-// toggled on — the red de-conflict for links).
+// per-family. Default aliases the primary's ink stops (9/10/11 as states; was cta-ink
+// until its 2026-08-12 deletion; follows the escape). Custom = the seed below through
+// the ink register (#0B57D0 default when toggled on — the red de-conflict for links).
 let linkCustom = false
 // the escape BUNDLE (owner 2026-07-16): ticking "Use neutral primary cta" auto-enables
 // the custom link (#0B57D0) — overridable; unticking reverts ONLY an untouched bundle
@@ -211,11 +211,11 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
       ? sigScales.get('red')!.scale
       : t.themed.signalOverrides.find(o => o.name === n)?.scale ?? sigScales.get(n)!.scale
 
-  type Row = { label: string; scale: GeneratedScale; idHex?: string; outline?: boolean; escape?: boolean; strong?: boolean }
+  type Row = { label: string; scale: GeneratedScale; idHex?: string; outline?: boolean; escape?: boolean }
   const rows: Row[] = [
     { label: 'primary', scale: t.themed.scale, idHex: t.themed.scale.identityHex, escape: ctaEscape && inRedRange },
     ...(t.secondary ? [{ label: 'secondary', scale: t.secondary.scale, idHex: t.secondary.scale.identityHex, outline: t.secondary.style === 'outline' }] : []),
-    { label: 'neutral', scale: nScale, strong: true },
+    { label: 'neutral', scale: nScale },
     ...SIGNALS.map(s => ({ label: s.emitName, scale: effective(s.name) })),
   ]
 
@@ -233,7 +233,12 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     cells.push(row.idHex
       ? `<div class="mx-aa" style="background:${row.idHex};color:${idText(row.idHex)};font-weight:700;font-size:10px" title="identity">ID</div>`
       : `<div class="mx-cell"></div>`)
-    for (const s of row.scale.light) {
+    // under the escape the brand's INK STOPS ride the neutral's register (owner
+    // 2026-08-12, with the cta-ink deletion) — the preview mirrors the shipped values
+    const effStop = (s: ColorStop): ColorStop =>
+      row.escape && s.stop >= 9 ? (nScale.light.find(x => x.stop === s.stop) ?? s) : s
+    for (const raw of row.scale.light) {
+      const s = effStop(raw)
       const n = s.stop
       const h = hx(s)
       // stop 9 (ink-53-aa) is BOTH the emphasis fill and a text stop (owner
@@ -274,35 +279,15 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
       cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaHover)};color:${on}" title="cta/hover">Aa</div>`)
       cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaPressed)};color:${on}" title="cta/pressed">Aa</div>`)
     }
-    // cta-ink trio: the TEXT-STYLE cta (the action color's 4.5 text rendition — owner:
-    // a text button, never a hyperlink, so no underline). Under the escape it swaps to
-    // the neutral's register with the fills.
-    const inkTrio = row.escape
-      ? (() => { const e = escapeCtaFamily(nScale, 'light', contrastProfile === 'apca' ? 'apca' : undefined); return [['cta-ink/enabled', e.ctaInk], ['cta-ink/hover', e.ctaInkHover], ['cta-ink/pressed', e.ctaInkPressed]] as const })()
-      : ([['cta-ink/enabled', row.scale.ctaInk], ['cta-ink/hover', row.scale.ctaInkHover], ['cta-ink/pressed', row.scale.ctaInkPressed]] as const)
-    for (const [name, c] of inkTrio)
-      cells.push(`<div class="mx-aa" style="color:${hx(c)};font-size:15px;font-weight:800" title="${name}">Aa</div>`)
-    // the neutral-only STRONG text-cta mirror (owner 2026-08-04): descends the same three
-    // stops cta-ink ascends — enabled ≡ stop 11 (ink-30-aaa), hover ≡ stop 10 (shared
-    // through cta-ink/hover), pressed ≡ stop 9 (ink-53-aa) (C49 numbering). Non-neutral
-    // rows carry blank cells so the derived grid stays rectangular.
-    if (row.strong) {
-      const strongTrio = [
-        ['cta-ink-strong/enabled', st(11)],
-        ['cta-ink-strong/hover', row.scale.ctaInkHover],
-        ['cta-ink-strong/pressed', st(9)],
-      ] as const
-      for (const [name, c] of strongTrio)
-        cells.push(`<div class="mx-aa" style="color:${hx(c)};font-size:15px;font-weight:800" title="${name}">Aa</div>`)
-    } else {
-      for (let i = 0; i < 3; i++) cells.push('<div class="mx-cell"></div>')
-    }
+    // (the cta-ink + cta-ink-strong preview columns DELETED with their tokens, owner
+    // 2026-08-12: the text-style cta is the ink stops, already rendered as scale cells
+    // above — escaped values included via effStop.)
     return cells.join('')
   }
 
   // the grid's column count FOLLOWS THE SCALE (see .matrix in ui-template.html): one ID
-  // cell, one per stop, then the cta / cta-ink / cta-ink-strong trios. Derived, never written down.
-  matrixEl.style.setProperty('--mx-cols', String(1 + nScale.light.length + 3 + 3 + 3))
+  // cell, one per stop, then the cta fill trio. Derived, never written down.
+  matrixEl.style.setProperty('--mx-cols', String(1 + nScale.light.length + 3))
   matrixEl.innerHTML = rows.map(rowHtml).join('')
 }
 
@@ -348,10 +333,10 @@ function updatePreview() {
     }
 
     // the link FIELD previews the RESOLVED system link: custom seed through the ink
-    // register, else the primary's cta-ink (escaped when the escape is active). The
-    // from-primary posture shows the resolved hex GREYED + read-only; clicking the hex
-    // takes it over (owner Advanced-menu spec 2026-07-16).
-    const fromPrimaryStop = ctaEscape && inRedRange ? escapeCtaFamily(nScale, 'light', cp).ctaInk : t.themed.scale.ctaInk
+    // register, else the primary's ink-53-aa (which rides the neutral's register when
+    // the escape is active). The from-primary posture shows the resolved hex GREYED +
+    // read-only; clicking the hex takes it over (owner Advanced-menu spec 2026-07-16).
+    const fromPrimaryStop = (ctaEscape && inRedRange ? nScale : t.themed.scale).light.find(s => s.stop === 9)!
     const linkStop = linkCustom && normalizeHex(linkHexInput.value)
       ? resolveLinkTrio(normalizeHex(linkHexInput.value)!, cp).link
       : fromPrimaryStop
@@ -532,7 +517,7 @@ function buildAndSend() {
       // Seed-keyed, the path is stable per input and the write path refreshes its values
       // every apply (idempotent: same seed ⇒ same engine output). Old light-hex prims
       // orphan harmlessly (scopes=[], unbindable — the red-variant class). Default
-      // posture sends nothing: the plugin aliases the brand's own cta-ink family.
+      // posture sends nothing: the plugin aliases the brand's own ink stops.
       ...(customLink ? [{
         theme: 'link',
         prim: `system/link/${customLink.slice(1)}`,

@@ -189,18 +189,12 @@ function buildTokenGroups(): TokGroup[] {
         { token: 'cta/enabled', role: "the pulled-out button fill, at the seed's own lightness", guarantee: "on-text passes WCAG 4.5; the fill clears APCA Lc 65 (critical 50)", light: swatch(hex(scale.cta)), dark: swatch(hex(scale.ctaDark)) },
         { token: 'cta/hover', role: 'hover state', guarantee: 'same law as cta/enabled', light: swatch(hex(scale.ctaHover)), dark: swatch(hex(scale.ctaHoverDark)) },
         { token: 'cta/pressed', role: 'pressed state', guarantee: 'same law as cta/enabled', light: swatch(hex(scale.ctaPressed)), dark: swatch(hex(scale.ctaPressedDark)) },
-        { token: 'cta-ink/enabled', role: 'the text-style cta; pure alias → ink-53-aa', guarantee: '4.5:1, on every paper', light: swatch(hex(scale.ctaInk)), dark: swatch(hex(scale.ctaInkDark)) },
-        { token: 'cta-ink/hover', role: 'alias → ink-42-aa', guarantee: '6.5:1, on every paper', light: swatch(hex(scale.ctaInkHover)), dark: swatch(hex(scale.ctaInkHoverDark)) },
-        { token: 'cta-ink/pressed', role: 'alias → ink-30-aaa', guarantee: '7:1, on every paper', light: swatch(hex(scale.ctaInkPressed)), dark: swatch(hex(scale.ctaInkPressedDark)) },
-        { token: 'cta-ink-strong/enabled', role: 'neutral only; the descending mirror, alias → ink-30-aaa', guarantee: '7:1, on every paper', light: alias(hex(stopAt(NL, 11)), '→ neutral ink-30-aaa'), dark: alias(hex(stopAt(ND, 11)), '→ neutral ink-30-aaa') },
-        { token: 'cta-ink-strong/hover', role: 'neutral only; shares the between stop, alias → ink-42-aa', guarantee: '6.5:1, on every paper', light: alias(hex(stopAt(NL, 10)), '→ neutral ink-42-aa'), dark: alias(hex(stopAt(ND, 10)), '→ neutral ink-42-aa') },
-        { token: 'cta-ink-strong/pressed', role: 'neutral only; alias → ink-53-aa', guarantee: '4.5:1, on every paper', light: alias(hex(stopAt(NL, 9)), '→ neutral ink-53-aa'), dark: alias(hex(stopAt(ND, 9)), '→ neutral ink-53-aa') },
         { token: 'cta/on', role: 'computed button text: solid pole on loud fills, pole-at-alpha .75/.80 on quiet fills (derived secondary, neutral)', guarantee: 'chosen by passing', light: swatch(onCtaColor(scale.onFillTextIsWhite)), dark: swatch(onCtaColor(scale.onFillTextIsWhiteDark)) },
         { token: 'cta/border', role: 'low-visibility stroke; transparent above the gate', guarantee: 'appears below APCA |Lc| 15 vs the page (taste, not accessibility)', light: borderCell('light'), dark: borderCell('dark') },
         { token: 'identity', role: 'the exact input hex, for logos', guarantee: 'never adjusted', light: swatch(scale.identityHex!), dark: swatch(scale.identityHex!) },
-        { token: 'link/enabled', role: "hyperlinks; default (no custom seed) aliases the primary's cta-ink", guarantee: '4.5:1, on every paper', light: alias(hex(scale.ctaInk), '→ cta-ink'), dark: alias(hex(scale.ctaInkDark), '→ cta-ink') },
-        { token: 'link/hover', role: 'default alias → cta-ink-hover', guarantee: '6.5:1, on every paper', light: alias(hex(scale.ctaInkHover), '→ cta-ink-hover'), dark: alias(hex(scale.ctaInkHoverDark), '→ cta-ink-hover') },
-        { token: 'link/pressed', role: 'default alias → cta-ink-pressed', guarantee: '7:1, on every paper', light: alias(hex(scale.ctaInkPressed), '→ cta-ink-pressed'), dark: alias(hex(scale.ctaInkPressedDark), '→ cta-ink-pressed') },
+        { token: 'link/enabled', role: "hyperlinks; default (no custom seed) aliases the primary's ink-53-aa", guarantee: '4.5:1, on every paper', light: alias(hex(stopAt(L, 9)), '→ ink-53-aa'), dark: alias(hex(stopAt(D, 9)), '→ ink-53-aa') },
+        { token: 'link/hover', role: 'default alias → ink-42-aa', guarantee: '6.5:1, on every paper', light: alias(hex(stopAt(L, 10)), '→ ink-42-aa'), dark: alias(hex(stopAt(D, 10)), '→ ink-42-aa') },
+        { token: 'link/pressed', role: 'default alias → ink-30-aaa', guarantee: '7:1, on every paper', light: alias(hex(stopAt(L, 11)), '→ ink-30-aaa'), dark: alias(hex(stopAt(D, 11)), '→ ink-30-aaa') },
         { token: 'surface/sink', role: 'the lowest elevation; always the NEUTRAL, never the themed family', guarantee: '–', light: alias(hex(stopAt(NL, 3)), '→ neutral paper-95'), dark: alias(hex(neutral.paper0Dark!), '→ neutral paper-100') },
         { token: 'surface/base', role: 'the page plane; always the NEUTRAL', guarantee: '–', light: alias(hex(stopAt(NL, 2)), '→ neutral paper-97'), dark: alias(hex(stopAt(ND, 1)), '→ neutral paper-99') },
         { token: 'surface/lift', role: 'raised (cards); always the NEUTRAL', guarantee: '–', light: alias(hex(stopAt(NL, 1)), '→ neutral paper-99'), dark: alias(hex(stopAt(ND, 2)), '→ neutral paper-97') },
@@ -240,7 +234,7 @@ function TokenTable() {
   )
 }
 
-// ── Naming anatomy: primitive/neutral/ink/53-aa, segment by segment ──────────
+// ── Naming anatomy: primitive/neutral/ink-53-aa, segment by segment ──────────
 function NamingAnatomy() {
   const cols = [
     { seg: 'primitive', title: 'REGISTER', lines: ['the extended', "plugin's wrapper,", 'every row'] },
@@ -254,14 +248,16 @@ function NamingAnatomy() {
   const width = cols.length * colW + (cols.length - 1) * gap
   return (
     <figure className="d2-ramp">
-      <svg viewBox={`0 0 ${width} 190`} className="d2-anatomy" role="img" aria-label="Token path anatomy: primitive/neutral/ink/53-aa">
+      <svg viewBox={`0 0 ${width} 190`} className="d2-anatomy" role="img" aria-label="Token path anatomy: primitive/neutral/ink-53-aa">
         {cols.map((c, i) => (
           <g key={c.seg}>
             <rect x={x(i)} y={boxY} width={colW} height={boxH} rx={8} className="d2-anatomy-box" />
             <text x={x(i) + colW / 2} y={boxY + boxH / 2 + 5} textAnchor="middle" className="d2-anatomy-seg">{c.seg}</text>
             {i < cols.length - 1 && (
               <text x={x(i) + colW + gap / 2} y={boxY + boxH / 2 + 5} textAnchor="middle" className="d2-anatomy-sep">
-                {i === cols.length - 2 ? '-' : '/'}
+                {/* band flattening (owner 2026-08-12): the band joins its leaf with
+                    hyphens — slashes stop at the family group */}
+                {i <= 1 ? '/' : '-'}
               </text>
             )}
             <line x1={x(i) + colW / 2} y1={boxY + boxH} x2={x(i) + colW / 2} y2={boxY + boxH + 18} className="d2-anatomy-leader" />
@@ -337,7 +333,7 @@ const overview: Article = {
         one <Code>primitive/</Code> wrapper, grouped by family. Two kinds of rows share it:
       </P>
       <UL>
-        <LI><b>ramp stops and plumbing</b>: one resolved color, no state, e.g. <Code>primitive/neutral/paper/99</Code>. Hidden from the color picker by default.</LI>
+        <LI><b>ramp stops and plumbing</b>: one resolved color, no state, e.g. <Code>primitive/neutral/paper-99</Code>. Hidden from the color picker by default.</LI>
         <LI><b>roles</b>: a state-carrying usage decision, kept where it belongs: the cta bands inside their family, e.g. <Code>primitive/brand-primary/cta/hover</Code>, and link and the surfaces under system, e.g. <Code>primitive/system/surface/sink</Code>. Always visible.</LI>
       </UL>
       <P>

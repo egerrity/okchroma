@@ -173,7 +173,7 @@ function redComplementVariant(
   // pinned mints skip the producer's enforce-darken, so the wcag conformance floor rides
   // the pole judge (a light coral variant must flip to black text, not ship white sub-4.5)
   const onFillTextIsWhite = onFillIsWhiteDarkAt(cta.L, cta.C, cta.H, true, contrastProfile === 'apca' ? undefined : 4.5)
-  // cta-ink rides the canonical red ramp's ink-9 (the spread) — the variant moves only the fill trio
+  // the text register rides the canonical red ramp's ink stops — the variant moves only the fill trio
   return {
     scale: { ...red.scale, cta, ctaHover, ctaPressed, onFillTextIsWhite },
     // naming candidates only — the identity name is the owner's call at bless. No hue suffix:
@@ -480,18 +480,20 @@ export function softOnCtaPasses(s: GeneratedScale, mode: 'light' | 'dark'): bool
 // 0.03–0.09 L move is imperceptible and the curve closure is gone post-generation), hue
 // constant. on-cta re-judges at the escaped fill under the same law as the neutral's own
 // quiet cta (judgment-only — the anchor is pinned): wcag = mixing flip + the 4.5
-// conformance floor; apca = pure apca-pole. The cta-ink trio is NOT touched — link
-// de-confliction is the phase-4 custom link color's job. UI gates the toggle to brands
+// conformance floor; apca = pure apca-pole. The brand's INK STOPS de-red with the fills
+// (owner 2026-08-12, superseding the cta-ink swap — the trio is deleted): the emitters
+// re-express ink 9/10/11 from the neutral's ink register, unless the advanced vivid-inks
+// opt-out keeps them at the brand hue. UI gates the toggle to brands
 // whose cta sits in red's register (redGateDist ≤ RED_GATE.G — the exact-mode advice
 // check above), but the emitters honor the flag for any brand: the gate is guidance,
 // not law, and a stakeholder override must not silently no-op.
 // ── the SYSTEM LINK token (Phase 4, owner spec 2026-07-16: "link is a system level
 // color… a primitive that internally aliases the primary ink 10 unless it's being
 // deconflicted from red"). ONE link trio per theme — link / link-hover / link-pressed:
-//   DEFAULT (no custom color): aliases the primary's cta-ink trio (the ink band 9/10/11
-//   by construction, C19 — states ride the alias).
+//   DEFAULT (no custom color): aliases the primary's ink stops 9/10/11 (states ride
+//   the alias — same values the deleted cta-ink trio carried, C49 construction).
 //   CUSTOM (the de-conflict): the user's hex runs through the SAME ink register — it is
-//   the SEED of a throwaway resolve and the shipped trio is that resolve's cta-ink family
+//   the SEED of a throwaway resolve and the shipped trio is that resolve's ink stops
 //   (hue kept, L floor-solved per lane and mode by the ink stops' own laws, dark solved
 //   dark-native, states + floors free — owner-picked treatment). Default seed when the
 //   toggle turns on: #0B57D0, the conventional link blue (owner-picked; ships light
@@ -502,11 +504,16 @@ export function resolveLinkTrio(
   contrastProfile?: ContrastProfile,
 ): { link: ColorStop; linkHover: ColorStop; linkPressed: ColorStop; linkDark: ColorStop; linkHoverDark: ColorStop; linkPressedDark: ColorStop } {
   // skipCollisionRules: the link seed is not a brand — no signal machinery, no repel;
-  // just the ramp solve that produces its cta-ink family
+  // just the ramp solve that produces its ink register
   const s = resolveBrand(linkHex, 'link', { skipCollisionRules: true, contrastProfile }).scale
+  const at = (arr: ColorStop[], n: number) => {
+    const st = arr.find(x => x.stop === n)
+    if (!st) throw new Error(`resolveLinkTrio: the link resolve has no ink stop ${n}`)
+    return st
+  }
   return {
-    link: s.ctaInk, linkHover: s.ctaInkHover, linkPressed: s.ctaInkPressed,
-    linkDark: s.ctaInkDark, linkHoverDark: s.ctaInkHoverDark, linkPressedDark: s.ctaInkPressedDark,
+    link: at(s.light, 9), linkHover: at(s.light, 10), linkPressed: at(s.light, 11),
+    linkDark: at(s.dark, 9), linkHoverDark: at(s.dark, 10), linkPressedDark: at(s.dark, 11),
   }
 }
 
@@ -516,7 +523,6 @@ export function escapeCtaFamily(
   contrastProfile?: ContrastProfile,
 ): {
   cta: ColorStop; ctaHover: ColorStop; ctaPressed: ColorStop; onFillIsWhite: boolean
-  ctaInk: ColorStop; ctaInkHover: ColorStop; ctaInkPressed: ColorStop
 } {
   // the escape fill anchors on the neutral's STRONG ink — ink-11 since C49 restored
   // its number (the C33-era spelling was ink-10; the stop lookup must follow the VALUE)
@@ -532,14 +538,13 @@ export function escapeCtaFamily(
   const onFloor = contrastProfile === 'apca' ? undefined : 4.5
   const onFillIsWhite = onTextIsWhite(apcaY(cta.r, cta.g, cta.b), cta.L, cta.C, cta.H, onEnforce, onFloor)
   // the escape covers ALL the ctas (owner amendment 2026-07-16: "it applies to cta and
-  // cta ink") — the text-style CTA trio swaps to the NEUTRAL's own cta-ink family (its
-  // ink-9 register + floored states, resolver-minted on the neutral scale), so a red
-  // brand's text actions de-red with its fills. The system link, which aliases the
-  // primary's cta-ink by default, follows automatically unless a custom link is set.
-  const [ctaInk, ctaInkHover, ctaInkPressed] = mode === 'light'
-    ? [nScale.ctaInk, nScale.ctaInkHover, nScale.ctaInkPressed]
-    : [nScale.ctaInkDark, nScale.ctaInkHoverDark, nScale.ctaInkPressedDark]
-  return { cta, ctaHover, ctaPressed, onFillIsWhite, ctaInk, ctaInkHover, ctaInkPressed }
+  // cta ink"; re-specified 2026-08-12 with the cta-ink deletion): the EMITTERS swap the
+  // brand's ink stops 9/10/11 to the neutral's ink register — text set in the brand ink
+  // de-reds with the fills, everywhere it appears. The system link, which aliases the
+  // primary's ink stops by default, follows automatically unless a custom link is set.
+  // The advanced vivid-inks opt-out (escapeInksVivid, ext plugin) suppresses only the
+  // ink swap; this fill trio always escapes.
+  return { cta, ctaHover, ctaPressed, onFillIsWhite }
 }
 
 export interface ResolvedSecondary {
@@ -758,10 +763,10 @@ export function resolveTheme(input: {
   // untinted cta is the SAME BUTTON (cta ΔE vs primary 0.000); the tint lifts that to 0.39
   // light / 0.24 dark, clear of SECONDARY_DISTINCT_DELTA_E.
   //
-  // cta-ink is deliberately NOT tinted (owner ruling 2026-07-29): it is the text-register cta,
-  // its states are the ink stops (9/10/11 — C49), and under this model those are the user's colour. A
-  // tinted cta-ink would be a pale link on a pale surface, and would stop matching the ink it
-  // is specified to match.
+  // the ink stops (the text-register cta, 9/10/11) are deliberately NOT tinted (owner
+  // ruling 2026-07-29, phrased for cta-ink before its 2026-08-12 deletion): under this
+  // model they are the user's colour — a tinted text register would be a pale link on a
+  // pale surface, and would stop matching the ink it is specified to match.
   //
   // onFillTextIsWhite comes across WITH the cta because it is computed FROM it
   // (colorEngine.ts: onTextIsWhite(…scale.cta…)) and is consumed only as the on-cta token —

@@ -337,9 +337,13 @@ body {
           </div>
           <div class="info-line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span id="link-hint">From primary — click the hex to customize</span></div>
         </div>
-        <label class="check-line" id="cta-escape-row" for="cta-escape" style="display:none;margin-top:22px" title="Change the primary cta to neutral for max red signal collision avoidance">
+        <label class="check-line" id="cta-escape-row" for="cta-escape" style="display:none;margin-top:22px" title="Change the primary cta to neutral for max red signal collision avoidance. The brand's ink text stops follow it (they are the text-style cta), so brand-colored text quiets too.">
           <input type="checkbox" id="cta-escape" />
           <span>Use neutral primary cta</span>
+        </label>
+        <label class="check-line" id="escape-inks-row" for="escape-inks-vivid" style="display:none;margin-top:10px" title="With the neutral cta on, the brand's ink text stops normally go neutral with the buttons. Turn this on to keep the ink text at the brand color anyway.">
+          <input type="checkbox" id="escape-inks-vivid" />
+          <span>Keep brand inks vivid</span>
         </label>
         <label class="check-line" for="full-chroma" style="margin-top:22px" title="Non-cta brand colors are dampened by default to maximize the impact of primary cta and signal messaging. Turn this on for a more vibrant interpretation of the brand color.">
           <input type="checkbox" id="full-chroma" />
@@ -371,14 +375,14 @@ body {
 </label>
 
 <div style="margin-top:10px;text-align:center;display:flex;gap:14px;justify-content:center;align-items:center">
-  <button class="smoke-link" id="smoke-btn" title="Runs the extended-collections API probes on scratch collections, then removes them">Run Enterprise smoke test</button>
+  <button class="smoke-link" id="heal-btn" title="One-time converter: finds everything in the file still using the retired cta-ink variables and re-binds it to the matching ramp ink (ink-53-aa / ink-42-aa / ink-30-aaa). Safe to run again — a second pass finds nothing.">Convert cta-ink uses</button>
   <button class="smoke-link" id="reapply-btn" title="Rebuilds every brand extension from the recipe stamped at its last apply">Re-apply all brands</button>
   <span style="display:inline-flex;gap:6px;align-items:center">
     <button class="smoke-link" id="rebuild-btn" title="Re-seeds every base 'theme' row from the current engine at the seed color (overwrites base-row edits), then re-applies every brand against the new base">Rebuild base theme</button>
     <input id="rebuild-hex" placeholder="#E93D82" title="The base theme's seed color — leave empty to refresh the current color onto today's engine" style="width:72px;font:inherit;padding:2px 4px">
   </span>
 </div>
-<pre class="smoke-log" id="smoke-log" style="display:none"></pre>
+<pre class="smoke-log" id="heal-log" style="display:none"></pre>
 
 <script>__BUNDLE__</script>
 </body>

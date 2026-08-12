@@ -24,8 +24,9 @@ export const CTA_ON = (family: string) => `primitive/${family}/cta/on`
 export const BRAND_CTA_ON = CTA_ON('brand-primary')
 export const isCtaContext = (anc: string): boolean => /button|btn|cta/i.test(anc)
 
-const leaf = (tok: string) => tok.replace('-', '/') // 'ink-53-aa' -> 'ink/53-aa', 'paper-99' -> 'paper/99'
-const fam = (family: string) => (toks: string[]) => toks.map(t => `primitive/${family}/${leaf(t)}`)
+// leaves are FLAT since the band flattening (owner 2026-08-12): the engine token name
+// IS the leaf ('ink-53-aa', 'paper-99'), no dash→slash transform any more
+const fam = (family: string) => (toks: string[]) => toks.map(t => `primitive/${family}/${t}`)
 
 const PRIMARY_BAND = ['mark-74-aa', 'ink-53-aa', 'ink-42-aa', 'ink-30-aaa']
 const SPOTLIGHT_BAND = ['mark-74-aa', 'ink-53-aa']
@@ -33,7 +34,7 @@ const WASHES = ['wash-92', 'wash-89', 'wash-85', 'wash-80']
 const PAPERS = ['paper-99', 'paper-97', 'paper-95']
 const OFFSET_08 = 'primitive/system/alpha/offset-08'
 const OFFSET_16 = 'primitive/system/alpha/offset-16'
-const PAPER_100 = 'primitive/neutral/paper/100'
+const PAPER_100 = 'primitive/neutral/paper-100'
 
 const n = fam('neutral')
 // signal identities live under their ROLE prefixes in the ext register

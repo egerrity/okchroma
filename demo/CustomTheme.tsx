@@ -182,7 +182,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   // leaving the range clears it (a stale hidden escape must never apply silently)
   const [ctaEscape, setCtaEscape] = useState(false)
   // the SYSTEM LINK (Phase 4): ONE link trio per theme — default follows the primary's
-  // cta-ink; custom = the seed through the ink register (#0B57D0 prefill)
+  // ink stops; custom = the seed through the ink register (#0B57D0 prefill)
   const [linkCustom, setLinkCustom] = useState(false)
   const [linkInput, setLinkInput] = useState(DEFAULT_LINK_HEX)
   // the escape BUNDLE (owner 2026-07-16): ticking "Use neutral primary cta" auto-enables
@@ -257,10 +257,12 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     const nH = neutralTintHue(t.themed.scale.brandH, neutralSource, t.secondary?.scale.brandH, normalizeHex(neutralHexInput) || null)
     const css = brandCss('custom', 'Custom brand', t.themed, t.secondary?.scale ?? null, '', neutralLevel, cp, t.secondary?.style, ctaEscape && inRedRangeNow, linkHex, ctaBorder, nH)
       + '\n' + signalsCss(cp)
-    // the Advanced link field's from-primary display hex (escaped when the escape is on)
-    const linkFromPrimaryHex = stopHex(ctaEscape && inRedRangeNow
-      ? escapeCtaFamily(generateNeutralScale(nH, neutralLevel, cp), 'light', cp).ctaInk
-      : t.themed.scale.ctaInk).toUpperCase()
+    // the Advanced link field's from-primary display hex — the default link aliases the
+    // primary's ink-53-aa (stop 9; was cta-ink until its 2026-08-12 deletion), and under
+    // the escape the ink stops ride the neutral's register
+    const linkFromPrimaryHex = stopHex((ctaEscape && inRedRangeNow
+      ? generateNeutralScale(nH, neutralLevel, cp).light.find(s => s.stop === 9)!
+      : t.themed.scale.light.find(s => s.stop === 9)!)).toUpperCase()
     return { t, r: t.themed, accent: t.secondary?.scale ?? null, css, inRedRange, escapeOn: ctaEscape && inRedRangeNow, linkFromPrimaryHex }
   }, [primary, secondary, derived, primaryMode, secondaryStyle, secondaryArchetype, neutralChoice, neutralHexInput, profile, ctaEscape, linkCustom, linkInput, fullChroma, ctaBorder])
 
@@ -616,9 +618,9 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   }
 
   // Flat compare grid of the generated SCALE (all ramps × the scale stops), for
-  // eyeballing the ladder. cta / cta-ink live in the deconfliction card below, not
+  // eyeballing the ladder. The cta family lives in the deconfliction card below, not
   // here (owner 2026-07-17: keep the top card to the 0–12 scale, reserve the second
-  // card for cta + cta-ink). Each cell shows the token representatively: surfaces as
+  // card for the ctas). Each cell shows the token representatively: surfaces as
   // plain swatches, mark-74-aa as a ring (its role IS a stroke), ink as "Aa" text,
   // identity as an "ID" chip. Themes with the page toggle.
   const SWATCH_STOPS = ['paper-99', 'paper-97', 'paper-95', 'wash-92', 'wash-89', 'wash-85', 'wash-80', 'mark-74-aa', 'ink-53-aa', 'ink-42-aa', 'ink-30-aaa']
@@ -653,10 +655,6 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     // paper the semantic layer gives it (--paper-100, the mode-flipping paper extreme),
     // so this slot still reads as the filled chip it always was.
     if (stop === 'ink-53-aa') return <div style={{ ...aa, background: cv(stop), color: 'var(--paper-100)' }}>Aa</div>
-    // cta-ink trio renders as TEXT (the text-STYLE cta — a text button, never a
-    // hyperlink, so no underline) — checked before the fill branch so the 'cta' prefix
-    // doesn't swallow it
-    if (stop.startsWith('cta-ink')) return <div style={{ ...aa, fontSize: 18, fontWeight: 900, color: cv(stop) }}>Aa</div>
     // filled cta cells carry NO stroke (filled is filled — same call as the buttons);
     // only the OUTLINE secondary shows its ring, where the boundary IS the component
     if (stop.startsWith('cta')) {

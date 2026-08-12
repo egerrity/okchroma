@@ -85,7 +85,7 @@
   --brand-border-emphasis:       var(--brand-cta);
   --brand-border-emphasis-hover: var(--brand-cta-hover);
 
-  /* the SYSTEM LINK (one trio per theme — aliases the primary's cta-ink unless a custom
+  /* the SYSTEM LINK (one trio per theme — aliases the primary's ink stops unless a custom
      link color de-conflicts it; --link/-hover/-pressed are emitted per brand) */
   --fg-link:         var(--link);
   --fg-link-hover:   var(--link-hover);

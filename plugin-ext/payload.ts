@@ -16,7 +16,7 @@
 //
 // Token shape: the operative `brand-` CATEGORY stays in the token name (brand-primary/*,
 // brand-secondary/*), the brand's NAME lives on the extension, so a designer reads
-// kirby → primitive/brand-primary/paper/99. Neutral + signals keep their identity names.
+// kirby → primitive/brand-primary/paper-99. Neutral + signals keep their identity names.
 // Every path also carries the primitive/ REGISTER prefix (added 2026-08-07, flattened
 // to one register 2026-08-11 — see registerPath below): the FAMILY segment is
 // unchanged, so this line's shape still holds one hop in.
@@ -37,8 +37,9 @@ export interface FlatTok { path: string; r: number; g: number; b: number; a?: nu
 // this function only prefixes the settled path, it never renames.
 // ROLE_BANDS survives the flatten as the descope posture's VISIBLE set (a state-
 // carrying role a designer binds; everything else hides when descope is on).
+// (cta-ink and cta-ink-strong left the set with their tokens, owner 2026-08-12.)
 const FAMILY_PREFIXES = ['neutral/', 'brand-primary/', 'brand-secondary/', 'critical/', 'warning/', 'positive/', 'info/']
-export const ROLE_BANDS = ['cta/', 'cta-ink/', 'cta-ink-strong/']
+export const ROLE_BANDS = ['cta/']
 export function registerPath(p: string): string {
   if (p.startsWith('system/')) return 'primitive/' + p            // link/*, alpha/*, abs-*
   const fam = FAMILY_PREFIXES.find(f => p.startsWith(f))
@@ -65,11 +66,16 @@ export type TokenColumns = Record<Column, FlatTok[]>
 // re-applies preserve a brand's escape posture.
 export type ThemeSpec = Omit<Parameters<typeof resolveTheme>[0], 'contrastProfile'> & {
   ctaEscape?: boolean
+  // THE VIVID-INKS OPT-OUT (owner 2026-08-12, advanced): with the escape on, keep the
+  // brand's ink stops at the brand hue instead of the neutral register. ABSENT = OFF
+  // (the escape de-chromas the inks — the new default semantic); stored in the recipe
+  // so re-applies/backfills preserve the posture.
+  escapeInksVivid?: boolean
   // THE CTA-BORDER OPT-OUT (owner 2026-07-31: "on by default but optional"). ABSENT = ON, so
   // every recipe stored before this flag existed keeps its strokes on re-apply/backfill.
   ctaBorder?: boolean
   // the SYSTEM LINK's custom seed (Phase 4) — one link per theme; absent = the link rows
-  // carry the primary's cta-ink values (extensions override them per brand)
+  // carry the primary's ink-stop values (extensions override them per brand)
   linkHex?: string | null
   // the NEUTRAL's tint-hue source (owner 2026-08-04): absent = the primary's hue (every
   // stored recipe replays byte-identical). 'secondary' stores the SOURCE, never a frozen
@@ -89,9 +95,10 @@ export const BASE_SEED_HEX = '#E93D82'
 const isLeaf = (n: FigmaColorToken | FigmaGroup): n is FigmaColorToken => '$type' in n
 
 function flatten(node: FigmaGroup, prefix: string, out: FlatTok[]): void {
-  // groupEntries (figmaRender.ts), not Object.entries: paper/wash's bare-digit leaves
-  // are JS integer keys and get silently re-sorted ascending otherwise, reversing the
-  // TOKEN_ORDER panel contract (adversarial-audit-caught 2026-08-07).
+  // groupEntries (figmaRender.ts), not Object.entries: a group of bare-digit leaves is
+  // JS integer keys and gets silently re-sorted ascending otherwise, reversing the
+  // TOKEN_ORDER panel contract (adversarial-audit-caught 2026-08-07, when paper/wash
+  // leaves WERE bare digits; flat band leaves aren't, but the rule stays cheap).
   for (const [k, v] of groupEntries(node)) {
     const path = prefix ? `${prefix}/${k}` : k
     if (isLeaf(v)) {
@@ -105,13 +112,14 @@ function flatten(node: FigmaGroup, prefix: string, out: FlatTok[]): void {
 // system root, then surface/, then alpha/): system → neutral → brand-primary →
 // brand-secondary → signals. The system/surface/sink|base|lift|pop planes are NOT here —
 // they are scheme-divergent aliases the plugin creates after the abs rows (ordering) and
-// wires once the neutral exists. neutral/ink/0 (the OFF-SCALE anchor — pure black in
+// wires once the neutral exists. neutral/ink-0 (the OFF-SCALE anchor — pure black in
 // light, pure white in dark) is injected right after the last real ink stop, in ladder
-// order. ⚠️ Its trigger is the LAST SCALE INK, so a stop renumber (or a Stage B relabel of
+// order. ⚠️ Its trigger is the LAST SCALE INK, so a stop renumber (or a relabel of
 // that stop's leaf) moves it: it fired on ink/11 → emitted ink/12 pre-collapse, ink/10 →
-// ink/11 through the C33 era, C49 restored the original pairing (ink/11 → ink/12), and
-// Stage B (owner 2026-08-07, names only) relabeled the pair to ink/30-aaa → ink/0 — same
-// stop index, same trigger position, new strings. The alpha/shadow ladder (owner
+// ink/11 through the C33 era, C49 restored the original pairing (ink/11 → ink/12), Stage
+// B relabeled the pair to ink/30-aaa → ink/0, and the band flattening (owner 2026-08-12)
+// flattened it to ink-30-aaa → ink-0 — same stop index, same trigger position, new
+// strings. The alpha/shadow ladder (owner
 // 2026-07-27) is pure black at 4/8/12% light; dark is heavier by necessity — near black
 // a light-mode alpha vanishes — at 32/48/64%.
 function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boolean): FlatTok[] {
@@ -147,9 +155,9 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
   flatten(g.neutral as FigmaGroup, 'neutral', neutral)
   for (const t of neutral) {
     out.push(t)
-    // Stage B leaf: stop 11 (strong ink) is now 'ink/30-aaa'; the anchor it triggers
-    // is now 'ink/0' (was 'ink/11' → 'ink/12' pre-Stage-B). Stop index unchanged.
-    if (t.path === 'neutral/ink/30-aaa') out.push({ path: 'neutral/ink/0', ...(scheme === 'light' ? K : W) })
+    // Flat leaves since the band flattening (owner 2026-08-12): stop 11 (strong ink)
+    // is 'ink-30-aaa'; the anchor it triggers is 'ink-0'. Stop index unchanged.
+    if (t.path === 'neutral/ink-30-aaa') out.push({ path: 'neutral/ink-0', ...(scheme === 'light' ? K : W) })
   }
   // identity rows re-home to the system ABSOLUTES (owner 2026-07-27: the
   // unprocessed inputs sit with the poles — abs-primary/abs-secondary; the
@@ -167,7 +175,7 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
   for (const s of SIGNALS) flatten(g[s.name] as FigmaGroup, s.emitName, out)
   // the SYSTEM LINK trio (Phase 4): system-pathed but BRAND-OVERRIDABLE (unlike the
   // contract-invariant system/* poles — code.ts carves it out of the override skip);
-  // rows carry the resolved values (primary's cta-ink, or the custom seed's register).
+  // rows carry the resolved values (primary's ink stops, or the custom seed's register).
   // The engine group's link/link-hover/link-pressed leaves are remapped to the
   // system/link/* STATE names (owner regroup 2026-07-27).
   const linkRows: FlatTok[] = []
@@ -208,6 +216,7 @@ function lane(
     signals,
     contrastProfile: profile,
     ctaEscape: input.ctaEscape,
+    escapeInksVivid: input.escapeInksVivid,
     linkHex: input.linkHex,
     ctaBorder: input.ctaBorder,
   })

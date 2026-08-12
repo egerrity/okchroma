@@ -11,11 +11,17 @@ declare namespace figma {
   function showUI(html: string, options?: { width?: number; height?: number; title?: string }): void
   function closePlugin(message?: string): void
   function notify(message: string, options?: { error?: boolean; timeout?: number }): void
+  /** heal.ts walks every page (dynamic-page manifests load lazily). */
+  function loadAllPagesAsync(): Promise<void>
 
   const ui: {
     onmessage: ((msg: Record<string, unknown>) => void) | null
     postMessage(msg: unknown): void
   }
+
+  /** Sentinel for mixed-valued properties (mixed text fills etc.) — heal.ts. */
+  const mixed: unique symbol
+  const root: { readonly children: ReadonlyArray<PageNode> }
 
   namespace variables {
     function getLocalVariableCollectionsAsync(): Promise<VariableCollection[]>
@@ -23,8 +29,52 @@ declare namespace figma {
     function createVariableCollection(name: string): VariableCollection
     function createVariable(name: string, collection: VariableCollection, type: 'COLOR'): Variable
     function createVariableAlias(variable: Variable): VariableAlias
+    /** Returns a COPY of the paint with its color bound to the variable — heal.ts. */
+    function setBoundVariableForPaint(paint: SolidPaint, field: 'color', variable: Variable): SolidPaint
     /** Library-parent variant of extend() — same Enterprise gate. */
     function extendLibraryCollectionByKeyAsync(key: string, name: string): Promise<ExtendedVariableCollection>
+  }
+
+  // ── the node read/rebind surface heal.ts walks (mirrors plugin-unify's shim) ──
+  interface SolidPaint {
+    readonly type: 'SOLID'
+    readonly color: { r: number; g: number; b: number }
+    readonly opacity?: number
+    readonly visible?: boolean
+    readonly boundVariables?: { readonly color?: VariableAlias }
+  }
+  /** Non-solid paints only need the discriminant here. */
+  interface OtherPaint { readonly type: string; readonly visible?: boolean }
+  type Paint = SolidPaint | OtherPaint
+
+  interface StyledTextSegment {
+    readonly start: number
+    readonly end: number
+    readonly fills: ReadonlyArray<Paint>
+  }
+
+  interface SceneNode {
+    readonly id: string
+    readonly name: string
+    readonly type: string
+    readonly removed?: boolean
+    readonly children?: ReadonlyArray<SceneNode>
+    /** writable: the heal re-assigns a cloned array with one rebound paint */
+    fills?: ReadonlyArray<Paint> | typeof mixed
+    strokes?: ReadonlyArray<Paint>
+    /** Index-aligned with fills/strokes; null holes for unbound paints. */
+    readonly boundVariables?: {
+      readonly fills?: ReadonlyArray<VariableAlias | null>
+      readonly strokes?: ReadonlyArray<VariableAlias | null>
+    }
+    /** TEXT nodes only. */
+    getStyledTextSegments?(fields: ReadonlyArray<'fills'>): ReadonlyArray<StyledTextSegment>
+    /** TEXT nodes only — fills changes need no font load. */
+    setRangeFills?(start: number, end: number, fills: ReadonlyArray<Paint>): void
+  }
+
+  interface PageNode extends SceneNode {
+    selection: ReadonlyArray<SceneNode>
   }
 
   type RGBA = { r: number; g: number; b: number; a?: number }
@@ -68,6 +118,7 @@ declare namespace figma {
     getPluginData(key: string): string
     setPluginData(key: string, value: string): void
     setSharedPluginData(namespace: string, key: string, value: string): void
+    getSharedPluginData(namespace: string, key: string): string
     scopes: VariableScope[]
     readonly variableCollectionId: string
     /** Values keyed by the OWNING collection's modeIds (the base pair for base variables). */

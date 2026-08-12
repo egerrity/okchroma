@@ -49,7 +49,6 @@ export function emitDtcgRamp(hex: string, mode: 'light' | 'dark', groupName: str
   }
   const roleVal = {
     'cta': ramp.roles.cta, 'cta-hover': ramp.roles.ctaHover, 'cta-pressed': ramp.roles.ctaPressed,
-    'cta-ink': ramp.roles.ctaInk, 'cta-ink-hover': ramp.roles.ctaInkHover, 'cta-ink-pressed': ramp.roles.ctaInkPressed,
   } as const
   for (const rr of spec.roles) {
     const rv = roleVal[rr.role]

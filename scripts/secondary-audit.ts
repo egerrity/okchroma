@@ -90,8 +90,9 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
     }
     if (JSON.stringify(secF.scale.cta) === JSON.stringify(secX.scale.cta))
       fails.push({ theme: id, check: 'custom-cta-tinted', detail: 'custom cta equals the exact cta — the tint did not apply' })
-    if (JSON.stringify(secF.scale.ctaInk) !== JSON.stringify(secX.scale.ctaInk))
-      fails.push({ theme: id, check: 'custom-ctaink-untinted', detail: 'cta-ink was tinted; it must stay the user colour (matches ink-53-aa/ink-42-aa)' })
+    // (the custom-ctaink-untinted check DELETED with the cta-ink fields, owner 2026-08-12:
+    // the text register is the ink stops, and the ramp-preserved check above already
+    // asserts every stop — inks included — matches the exact posture)
 
     // LANE 2 — the EXACT style (the owner model: standard IS exact — user's color ships as a
     // full ramp, hands off): the invariant is ADVICE — every signal collision must be annotated,
@@ -155,8 +156,7 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
     //    LINEAR rgb ≈ ±1.3e-3 gamma-encoded (the space ColorStop carries) — true of ALL production
     //    scales; every emitter clamps at emit. Gate tolerance = 2e-3 encoded.
     for (const st of [...sec.scale.light, ...sec.scale.dark,
-      sec.scale.cta, sec.scale.ctaPressed, sec.scale.ctaDark, sec.scale.ctaPressedDark,
-      sec.scale.ctaInk, sec.scale.ctaInkPressed, sec.scale.ctaInkDark, sec.scale.ctaInkPressedDark])
+      sec.scale.cta, sec.scale.ctaPressed, sec.scale.ctaDark, sec.scale.ctaPressedDark])
       if (![st.r, st.g, st.b].every(v => v >= -2e-3 && v <= 1 + 2e-3 && Number.isFinite(v)))
         fails.push({ theme: id, check: 'rgb', detail: `secondary stop ${st.stop} out of range` })
   }

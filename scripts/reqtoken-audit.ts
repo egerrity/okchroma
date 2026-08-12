@@ -111,38 +111,17 @@ for (const H of HUES) for (const C of CHROMAS) {
       }
     }
     if (Math.abs(cta.H - r.seed.H) > 1e-6) fails.push({ seed: id, mode, check: 'cta-hue', detail: `H${cta.H.toFixed(1)} vs seed ${r.seed.H.toFixed(1)}`, sev: 5 })
-    const { ctaPressed, ctaInk, ctaInkHover, ctaInkPressed } = r.roles
-    for (const role of [cta, ctaHover, ctaPressed, ctaInk, ctaInkHover, ctaInkPressed])
+    const { ctaPressed } = r.roles
+    for (const role of [cta, ctaHover, ctaPressed])
       if (!/^#[0-9a-f]{6}$/.test(role.hex)) fails.push({ seed: id, mode, check: 'role-rgb', detail: `${role.role} ${role.hex}`, sev: 20 })
     // 5b. the cta family's states (owner respec 2026-07-16). Pressed = hover's direction
     //    doubled — same side of the cta, monotonic travel.
     const hoverUp = ctaHover.L > cta.L
     if ((ctaPressed.L > cta.L) !== hoverUp || Math.abs(ctaPressed.L - cta.L) < Math.abs(ctaHover.L - cta.L) - 1e-9)
       fails.push({ seed: id, mode, check: 'pressed-travel', detail: `cta L${cta.L.toFixed(3)} hover L${ctaHover.L.toFixed(3)} pressed L${ctaPressed.L.toFixed(3)}`, sev: 10 })
-    // 5c. the cta-ink trio is PURE STOP REFERENCES (C49, owner 2026-08-05): enabled ≡
-    //    ink-53-aa (ink-9 pre-Stage-B), hover ≡ ink-42-aa (ink-10 pre-Stage-B, the
-    //    between text stop — the retired role-side state-step law's successor), pressed ≡
-    //    ink-30-aaa (ink-11 pre-Stage-B). Exact-match all three; each stop's own
-    //    require (T9/T10/T11) carries the legibility law, and the per-state floor checks
-    //    below assert the states still read at their referenced stops' bars.
-    const refs: Array<[string, { L: number; C: number; H: number }, number]> = [
-      ['cta-ink-anchor', ctaInk, 9], ['cta-ink-hover-anchor', ctaInkHover, 10], ['cta-ink-pressed-anchor', ctaInkPressed, 11],
-    ]
-    for (const [check, role, stopN] of refs) {
-      const st = byStop(stopN)!
-      if (Math.abs(role.L - st.L) > 1e-9 || Math.abs(role.C - st.C) > 1e-9 || Math.abs(role.H - st.H) > 1e-9)
-        fails.push({ seed: id, mode, check, detail: `L${role.L.toFixed(4)} != ink-${stopN} L${st.L.toFixed(4)}`, sev: 20 })
-    }
-    for (const [nm, st, reqStop] of [['cta-ink-hover', ctaInkHover, 10], ['cta-ink-pressed', ctaInkPressed, 11]] as const) {
-      const req = spec.stops.find(x => x.stop === reqStop)!.require
-      if (req?.metric === 'wcag') {
-        const got = contrastRatio(wcagY(st.L, clampChromaToGamut(st.L, st.C, st.H), st.H), p2Y)
-        if (got < req.target - 1e-3) fails.push({ seed: id, mode, check: `${nm}-floor`, detail: `got ${got.toFixed(2)} < ${req.target}`, sev: 15 })
-      } else if (req?.metric === 'apca') {
-        const got = Math.abs(apcaLc(apcaYAt(st.L, clampChromaToGamut(st.L, st.C, st.H), st.H), p2ApcaY))
-        if (got < req.targetLc - APCA_TOL_LC) fails.push({ seed: id, mode, check: `${nm}-floor`, detail: `|Lc| ${got.toFixed(1)} < ${req.targetLc}`, sev: 15 })
-      }
-    }
+    // (5c DELETED with the cta-ink roles, owner 2026-08-12: it asserted the roles matched
+    //    stops 9/10/11 and re-checked those stops' requires — check #2 above already
+    //    verifies every declared stop require, and the roles no longer exist.)
     // 5d. REPORT-ONLY — the on-cta pole chosen at rest, read on the PRESSED fill (pressed
     //    travels 2× hover; hover has never re-judged the pole, so this measures the new
     //    worst case rather than legislating one mid-round — owner reads the count).

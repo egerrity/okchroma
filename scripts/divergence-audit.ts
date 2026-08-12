@@ -177,9 +177,12 @@ console.log(`  ink-42-aa  worst ${dark.s11.toFixed(2)}:1 (${dark.s11at})  [light
 const SNAP_PATH = path.join(process.cwd(), 'scripts', 'divergence-snapshot.json')
 const TOL = 0.015
 const matrix = (s: GeneratedScale): number[] =>
+  // the last six triples were the cta-ink fields (deleted 2026-08-12); they were pure
+  // references onto ink stops 9/10/11 so the SAME VALUES are read from the arrays —
+  // blessed snapshots stay byte-comparable, no re-bless
   [...s.light.slice(0, 11), ...s.dark.slice(0, 11),
     s.cta, s.ctaHover, s.ctaPressed, s.ctaDark, s.ctaHoverDark, s.ctaPressedDark,
-    s.ctaInk, s.ctaInkHover, s.ctaInkPressed, s.ctaInkDark, s.ctaInkHoverDark, s.ctaInkPressedDark,
+    s.light[8], s.light[9], s.light[10], s.dark[8], s.dark[9], s.dark[10],
   ].flatMap(c => [c.L, c.C, c.H])
 function snapshotOf(): Record<string, number[]> {
   const o: Record<string, number[]> = {}

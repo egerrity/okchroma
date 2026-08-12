@@ -37,11 +37,10 @@ export type ResolvedRamp = {
   mode: 'light' | 'dark'
   seed: Seed
   stops: ResolvedStop[]
-  // the six-token cta family (owner respec 2026-07-16): the fill trio + the ink trio
-  // (cta-ink = the family's 4.5 text-register cta, anchored at the resolved ink-53-aa)
+  // the cta FILL trio. (The ink trio DELETED, owner 2026-08-12 — the text-register
+  // cta is the ink stops 9/10/11 read directly from `stops`.)
   roles: {
     cta: ResolvedRole; ctaHover: ResolvedRole; ctaPressed: ResolvedRole
-    ctaInk: ResolvedRole; ctaInkHover: ResolvedRole; ctaInkPressed: ResolvedRole
   }
   // one on-color left: the cta's own text pole. onHighlightIsWhite died with the
   // highlight band (owner 2026-07-29) — ink-53-aa's on-color is a paper token now.
@@ -566,28 +565,14 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     if (chosen < onFloor && other >= onFloor) onFillIsWhite = !onFillIsWhite
   }
 
-  // ---- the CTA-INK trio: PURE STOP REFERENCES (C49, owner 2026-08-05). The family's
-  // 4.5 text-register cta — the link-color escape — is the ink band read as states:
-  // enabled ≡ ink-53-aa (ink-9) (the family's text stop IS its 4.5 rendition, owner 2026-07-16),
-  // hover ≡ ink-42-aa (ink-10) (the between text stop — until C49 a bespoke state-step value
-  // generated HERE; promoted to a normal scale stop the family aliases), pressed ≡
-  // ink-30-aaa (ink-11) (the strong register). Monotonic darker in light / brighter in dark by the
-  // scaffold's shape; every legibility guarantee rides the stops' own requires
-  // (T9/T10/T11) — there is no role-side law left.
-  const inkStop = (n: number) => {
-    const s = stops.find(x => x.stop === n)
-    if (!s) throw new Error(`spec has no ink stop ${n} — the cta-ink trio references it`)
-    return s
-  }
-  const ink9 = inkStop(9), ink10 = inkStop(10), ink11 = inkStop(11)
-  const ctaInk = emitRole('cta-ink', ink9.L, ink9.C, ink9.H)
-  const ctaInkHover = emitRole('cta-ink-hover', ink10.L, ink10.C, ink10.H)
-  const ctaInkPressed = emitRole('cta-ink-pressed', ink11.L, ink11.C, ink11.H)
+  // (the cta-ink trio DELETED, owner 2026-08-12. C49 had already reduced it to pure
+  // references onto stops 9/10/11 — every legibility guarantee rides the stops' own
+  // requires (T9/T10/T11); the text-register cta is the ink stops read directly.)
 
   // (on-highlight DELETED, owner 2026-07-29. It was solved here, judged at the emitted
   // highlight-9 and never fed back into the fill. C31 had already reduced it to a
   // per-mode constant; the collapse removes the fill it named. The successor is a
   // declaration in the semantic layer, `-fg-on-emphasis` → --paper-100 (--paper-0 pre-Stage-B).)
 
-  return { mode, seed, stops, roles: { cta, ctaHover, ctaPressed, ctaInk, ctaInkHover, ctaInkPressed }, ons: { onFillIsWhite } }
+  return { mode, seed, stops, roles: { cta, ctaHover, ctaPressed }, ons: { onFillIsWhite } }
 }

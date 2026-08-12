@@ -65,12 +65,10 @@ export type StopReq = {
 // (product intent: dark fills must not sink; light has no floor); hue constant (the cta
 // carries brand identity, no torsion); hover = hoverL() of the resolved cta, pressed =
 // pressedL() (hover's direction, doubled).
-// The INK trio (cta-ink / -hover / -pressed) is NOT produced any more (C49, owner
-// 2026-08-05): it is the ink band read as states — enabled ≡ ink-53-aa (ink-9), hover ≡
-// ink-42-aa (ink-10) (the between stop, formerly a bespoke state-step value generated at
-// the role), pressed ≡ ink-30-aaa (ink-11) — so it carries no declaration here; the resolver references the resolved stops
-// and every guarantee rides the stops' own requires (T9/T10/T11).
-export type RoleName = 'cta' | 'cta-hover' | 'cta-pressed' | 'cta-ink' | 'cta-ink-hover' | 'cta-ink-pressed'
+// (The INK trio DELETED, owner 2026-08-12: C49 had already reduced it to references
+// onto stops 9/10/11 with no declaration here; the token itself is gone now — the
+// text-register cta is the ink stops, whose guarantees ride their own requires.)
+export type RoleName = 'cta' | 'cta-hover' | 'cta-pressed'
 export type RoleReq = {
   role: RoleName
   produce: {
@@ -214,14 +212,12 @@ export const LIGHT: ModeSpec = {
     })),
     // ink text: perceptual + contrast-required. ink-53-aa (ink-9) is ALSO the emphasis fill (the
     // highlight-9 collapse, owner 2026-07-29). ink-42-aa (ink-10) is the between text stop (C49) —
-    // a normal stop like its neighbors; the cta-ink trio references all three as states.
+    // a normal stop like its neighbors; the three together are the text-register cta.
     { stop: 9, rootL: ROOT_L_LIGHT[9], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[9].inkMult, inkMaxC: SCALE_C_LIGHT[9].inkMaxC, chromaFloor: SCALE_C_LIGHT[9].chromaFloor, require: T9 },
     { stop: 10, rootL: ROOT_L_LIGHT[10], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[10].inkMult, inkMaxC: SCALE_C_LIGHT[10].inkMaxC, chromaFloor: SCALE_C_LIGHT[10].chromaFloor, require: T10 },
     { stop: 11, rootL: ROOT_L_LIGHT[11], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[11].inkMult, inkMaxC: SCALE_C_LIGHT[11].inkMaxC, chromaFloor: SCALE_C_LIGHT[11].chromaFloor, require: T11 },
   ],
   roles: [
-    // (the cta-ink trio carries no role declarations — it references the resolved ink
-    // stops 9/10/11 as states; see the RoleReq banner above)
     { role: 'cta', produce: { hue: 'constant', L: 'anchor', chroma: 'brand' }, floorL: 0, chromaMult: 1 },
     { role: 'cta-hover', produce: { hue: 'constant', L: 'hover', chroma: 'brand' }, floorL: 0, chromaMult: 1 },
     { role: 'cta-pressed', produce: { hue: 'constant', L: 'pressed', chroma: 'brand' }, floorL: 0, chromaMult: 1 },
@@ -251,7 +247,6 @@ export const DARK: ModeSpec = {
     { stop: 11, rootL: ROOT_L_DARK[11], group: 'ink', produce: P_TEXT, chromaMult: SCALE_C_DARK[11].inkMult, inkMaxC: SCALE_C_DARK[11].inkMaxC, chromaFloor: SCALE_C_DARK[11].chromaFloor, require: T11 },
   ],
   roles: [
-    // (the cta-ink trio: stop references 9/10/11, no declarations — see the light spec)
     { role: 'cta', produce: { hue: 'constant', L: 'anchor', chroma: 'brand' }, floorL: DARK_CTA_MIN_L, chromaMult: 1 },
     { role: 'cta-hover', produce: { hue: 'constant', L: 'hover', chroma: 'brand' }, floorL: DARK_CTA_MIN_L, chromaMult: 1 },
     { role: 'cta-pressed', produce: { hue: 'constant', L: 'pressed', chroma: 'brand' }, floorL: DARK_CTA_MIN_L, chromaMult: 1 },

@@ -46,8 +46,13 @@ const isArchetype = (v: string): v is Archetype => ARCHETYPES.some(a => a.name =
 let ctaEscape = false
 let inRedRange = false        // EFFECTIVE gate: the CURRENT posture's red range
 let inRedRangeOffer = false   // OFFER gate: union of both clamp postures (row visibility)
+// THE VIVID-INKS OPT-OUT (owner 2026-08-12, advanced): with the escape on, the brand's
+// ink stops normally ride the neutral's register (text de-reds with the fills, the
+// cta-ink deletion's semantic); this keeps them at the brand hue. Default OFF; inert
+// without the escape (the row only shows while the escape row does).
+let escapeInksVivid = false
 // the SYSTEM LINK (Phase 4, owner 2026-07-16): ONE link trio per theme — hyperlinks, not
-// per-family. Default = the primary's cta-ink values (extensions carry their own; follows
+// per-family. Default = the primary's ink-stop values (extensions carry their own; follows
 // the escape). Custom = the seed through the ink register (#0B57D0 default when toggled).
 let linkCustom = false
 // the escape BUNDLE (owner 2026-07-16): ticking "Use neutral primary cta" auto-enables
@@ -109,6 +114,8 @@ const linkPicker      = $<HTMLInputElement>('link-picker')
 const neutralOptSecondary = $<HTMLOptionElement>('neutral-opt-secondary')
 const ctaEscapeRow    = $<HTMLElement>('cta-escape-row')
 const ctaEscapeBox    = $<HTMLInputElement>('cta-escape')
+const escInksRow      = $<HTMLElement>('escape-inks-row')
+const escInksBox      = $<HTMLInputElement>('escape-inks-vivid')
 const linkHexInput    = $<HTMLInputElement>('link-hex')
 const linkField       = $<HTMLElement>('link-field')
 const linkResetBtn    = $<HTMLButtonElement>('link-reset')
@@ -120,8 +127,8 @@ const linkSwatch      = $<HTMLElement>('link-swatch')
 const matrixEl        = $<HTMLElement>('matrix')
 const applyBtn        = $<HTMLButtonElement>('apply-btn')
 const statusEl        = $<HTMLElement>('status')
-const smokeBtn        = $<HTMLButtonElement>('smoke-btn')
-const smokeLog        = $<HTMLElement>('smoke-log')
+const healBtn         = $<HTMLButtonElement>('heal-btn')
+const healLog         = $<HTMLElement>('heal-log')
 const rosterBtn       = $<HTMLButtonElement>('roster-btn')
 const reapplyBtn      = $<HTMLButtonElement>('reapply-btn')
 const rebuildBtn      = $<HTMLButtonElement>('rebuild-btn')
@@ -240,6 +247,9 @@ function themeInput(name: string) {
     // themeToFigma and the recipe stores the EFFECTIVE values, so a stale checkbox
     // can't ride a recipe replay
     ctaEscape: (ctaEscape && inRedRange) || undefined,
+    // the vivid-inks opt-out rides ONLY with an effective escape (it means nothing
+    // without one); stored as undefined when off so pre-flag recipes replay unchanged
+    escapeInksVivid: (ctaEscape && inRedRange && escapeInksVivid) || undefined,
     linkHex: (linkCustom && normalizeHex(linkHexInput.value)) || undefined,
     // the neutral's hue SOURCE (owner 2026-08-04) — 'secondary' stores the source so
     // re-applies/backfills follow the brand's CURRENT secondary; custom stores its hex.
@@ -268,11 +278,11 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
       ? sigScales.get('red')!.scale
       : t.themed.signalOverrides.find(o => o.name === n)?.scale ?? sigScales.get(n)!.scale
 
-  type Row = { label: string; scale: GeneratedScale; idHex?: string; outline?: boolean; escape?: boolean; strong?: boolean }
+  type Row = { label: string; scale: GeneratedScale; idHex?: string; outline?: boolean; escape?: boolean }
   const rows: Row[] = [
     { label: 'primary', scale: t.themed.scale, idHex: t.themed.scale.identityHex, escape: ctaEscape && inRedRange },
     ...(t.secondary ? [{ label: 'secondary', scale: t.secondary.scale, idHex: t.secondary.scale.identityHex, outline: t.secondary.style === 'outline' }] : []),
-    { label: 'neutral', scale: nScale, strong: true },
+    { label: 'neutral', scale: nScale },
     ...SIGNALS.map(s => ({ label: s.emitName, scale: effective(s.name) })),
   ]
 
@@ -290,7 +300,13 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     cells.push(row.idHex
       ? `<div class="mx-aa" style="background:${row.idHex};color:${idText(row.idHex)};font-weight:700;font-size:10px" title="identity">ID</div>`
       : `<div class="mx-cell"></div>`)
-    for (const s of row.scale.light) {
+    // under the escape the brand's INK STOPS ride the neutral's register (owner
+    // 2026-08-12, with the cta-ink deletion) unless the vivid-inks opt-out keeps them —
+    // the preview mirrors the shipped values
+    const effStop = (s: ColorStop): ColorStop =>
+      row.escape && !escapeInksVivid && s.stop >= 9 ? (nScale.light.find(x => x.stop === s.stop) ?? s) : s
+    for (const raw of row.scale.light) {
+      const s = effStop(raw)
       const n = s.stop
       const h = hx(s)
       // stop 9 (ink-53-aa) is BOTH the emphasis fill and a text stop (owner
@@ -328,36 +344,16 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
       cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaHover)};color:${on}" title="cta/hover">Aa</div>`)
       cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaPressed)};color:${on}" title="cta/pressed">Aa</div>`)
     }
-    // cta-ink trio: the TEXT-STYLE cta (the action color's 4.5 text rendition — owner:
-    // a text button, never a hyperlink, so no underline). Under the escape it swaps to
-    // the neutral's register with the fills.
-    const inkTrio = row.escape
-      ? (() => { const e = escapeCtaFamily(nScale, 'light', undefined); return [['cta-ink/enabled', e.ctaInk], ['cta-ink/hover', e.ctaInkHover], ['cta-ink/pressed', e.ctaInkPressed]] as const })()
-      : ([['cta-ink/enabled', row.scale.ctaInk], ['cta-ink/hover', row.scale.ctaInkHover], ['cta-ink/pressed', row.scale.ctaInkPressed]] as const)
-    for (const [name, c] of inkTrio)
-      cells.push(`<div class="mx-aa" style="color:${hx(c)};font-size:15px;font-weight:800" title="${name}">Aa</div>`)
-    // the neutral-only STRONG text-cta mirror (owner 2026-08-04): descends the same three
-    // stops cta-ink ascends — enabled ≡ stop 11 (ink-30-aaa), hover ≡ stop 10 (shared
-    // through cta-ink/hover), pressed ≡ stop 9 (ink-53-aa) (C49 numbering). Non-neutral
-    // rows carry blank cells so the derived grid stays rectangular.
-    if (row.strong) {
-      const strongTrio = [
-        ['cta-ink-strong/enabled', st(11)],
-        ['cta-ink-strong/hover', row.scale.ctaInkHover],
-        ['cta-ink-strong/pressed', st(9)],
-      ] as const
-      for (const [name, c] of strongTrio)
-        cells.push(`<div class="mx-aa" style="color:${hx(c)};font-size:15px;font-weight:800" title="${name}">Aa</div>`)
-    } else {
-      for (let i = 0; i < 3; i++) cells.push('<div class="mx-cell"></div>')
-    }
+    // (the cta-ink + cta-ink-strong preview columns DELETED with their tokens, owner
+    // 2026-08-12: the text-style cta is the ink stops, already rendered as scale cells
+    // above — escaped values included via effStop.)
     return cells.join('')
   }
 
   // the grid's column count FOLLOWS THE SCALE (see .matrix in ui-template.html): one ID
-  // cell, one per stop, then the cta / cta-ink / cta-ink-strong trios. Derived, never
+  // cell, one per stop, then the cta fill trio. Derived, never
   // written down — a stop change must not be able to knock the rows out of alignment again.
-  matrixEl.style.setProperty('--mx-cols', String(1 + nScale.light.length + 3 + 3 + 3))
+  matrixEl.style.setProperty('--mx-cols', String(1 + nScale.light.length + 3))
   matrixEl.innerHTML = rows.map(rowHtml).join('')
 }
 
@@ -390,6 +386,9 @@ function updatePreview() {
       archetypeOverride: primaryMode !== 'recommended' && primaryMode !== 'exact' ? primaryMode : undefined,
     }))
     ctaEscapeRow.style.display = inRedRangeOffer ? '' : 'none'
+    // the vivid-inks opt-out shows only while the escape is offered AND ticked — it
+    // qualifies the escape's ink swap, nothing else
+    escInksRow.style.display = inRedRangeOffer && ctaEscape ? '' : 'none'
     // BUNDLE HYGIENE (review-caught): an untouched bundle auto-reverts the moment the
     // escape stops being effective — the frozen default blue must not outlive the escape
     // it was bundled with, nor BAKE INTO THE RECIPE for a non-red brand (batch re-applies
@@ -401,10 +400,11 @@ function updatePreview() {
     }
 
     // the link FIELD previews the RESOLVED system link: custom seed through the ink
-    // register, else the primary's cta-ink (escaped when the escape is active). The
-    // from-primary posture shows the resolved hex GREYED + read-only; clicking the hex
-    // takes it over (owner Advanced-menu spec 2026-07-16).
-    const fromPrimaryStop = ctaEscape && inRedRange ? escapeCtaFamily(nScale, 'light', undefined).ctaInk : t.themed.scale.ctaInk
+    // register, else the primary's ink-53-aa (which rides the neutral's register when
+    // the escape is active and the vivid opt-out is off). The from-primary posture shows
+    // the resolved hex GREYED + read-only; clicking the hex takes it over (owner
+    // Advanced-menu spec 2026-07-16).
+    const fromPrimaryStop = (ctaEscape && inRedRange && !escapeInksVivid ? nScale : t.themed.scale).light.find(s => s.stop === 9)!
     const linkStop = linkCustom && normalizeHex(linkHexInput.value)
       ? resolveLinkTrio(normalizeHex(linkHexInput.value)!, undefined).link
       : fromPrimaryStop
@@ -675,6 +675,11 @@ ctaEscapeBox.addEventListener('change', () => {
   updatePreview()
 })
 
+escInksBox.addEventListener('change', () => {
+  escapeInksVivid = escInksBox.checked
+  updatePreview()
+})
+
 fullChromaBox.addEventListener('change', () => {
   fullChroma = fullChromaBox.checked
   updatePreview()
@@ -837,18 +842,19 @@ window.addEventListener('message', e => {
     rebuildHexInput.placeholder = fileBaseSeed
     descopePrimitives = msg.descopePrimitives !== false
     descopeBox.checked = descopePrimitives
-  } else if (msg.type === 'smoke-result') {
-    smokeLog.style.display = ''
-    smokeLog.textContent = (msg.lines ?? []).join('\n')
+  } else if (msg.type === 'heal-result') {
+    healLog.style.display = ''
+    healLog.textContent = (msg.lines ?? []).join('\n')
   }
 })
 
-// ─── Enterprise smoke test (the plan-§2 verify-first probes, on scratch collections) ──
+// ─── The cta-ink heal (owner 2026-08-12; replaced the Enterprise smoke test):
+// converts node applications of the deleted cta-ink trios to the regular ramp inks ──
 
-smokeBtn.addEventListener('click', () => {
-  smokeLog.style.display = ''
-  smokeLog.textContent = 'running…'
-  parent.postMessage({ pluginMessage: { type: 'smoke' } }, '*')
+healBtn.addEventListener('click', () => {
+  healLog.style.display = ''
+  healLog.textContent = 'scanning…'
+  parent.postMessage({ pluginMessage: { type: 'heal-cta-ink' } }, '*')
 })
 
 // ─── The batch queue — serves the roster, the automatic secondary check, and
@@ -1038,6 +1044,8 @@ function populateForm(r: Recipe) {
   ctaBorderBox.checked = ctaBorder
   ctaEscape = !!t.ctaEscape // the stored flag is the EFFECTIVE one — red range re-derives in updatePreview
   ctaEscapeBox.checked = ctaEscape
+  escapeInksVivid = !!t.escapeInksVivid
+  escInksBox.checked = escapeInksVivid
   linkBundled = false // a loaded link posture is the recipe's own, never an auto-bundle
   linkCustom = !!t.linkHex
   if (t.linkHex) { linkHexInput.value = t.linkHex; linkHexInput.classList.remove('invalid') }
@@ -1079,6 +1087,7 @@ function resetForm() {
   fullChroma = false; fullChromaBox.checked = false
   ctaBorder = true; ctaBorderBox.checked = true
   ctaEscape = false; ctaEscapeBox.checked = false
+  escapeInksVivid = false; escInksBox.checked = false
   linkCustom = false; linkBundled = false
   linkHexInput.classList.remove('invalid')
   secondaryArchetype = null

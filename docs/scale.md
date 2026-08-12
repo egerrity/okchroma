@@ -30,8 +30,10 @@ requirement is central to the stop's job, not on every stop that happens to decl
 ### Reading a name
 
 In the extended Figma plugin, a full path adds two more segments in front of the band
-word: the register (which panel a row lives in) and the family. Read left to right,
-`primitive/neutral/ink/53-aa`:
+word: the register (which panel a row lives in) and the family. The register and family
+are groups (slash-separated); the band joins its visibility and conformance with
+hyphens, so the token name itself is one flat leaf. Read left to right,
+`primitive/neutral/ink-53-aa`:
 
 | segment | example | meaning |
 |---|---|---|
@@ -67,7 +69,7 @@ one exists), and the accessibility category it carries.
 | `wash-80`           | 0.801  | 0.420 | – | decorative |
 | `mark-74-aa`      | 0.738  | 0.550 | 3:1, on every paper | WCAG 1.4.11 non-text: boundaries, UI elements |
 | `ink-53-aa`       | 0.530  | 0.767 | 4.5:1, on every paper | first text stop AND emphasis fill (the 2026-07-29 highlight collapse) |
-| `ink-42-aa`       | 0.415  | 0.843 | 6.5:1, on every paper | the between text stop (C49, the promoted cta-ink-hover value) |
+| `ink-42-aa`       | 0.415  | 0.843 | 6.5:1, on every paper | the between text stop (C49, promoted from the retired text-cta hover state) |
 | `ink-30-aaa`       | 0.300  | 0.919 | 7:1, on every paper | strong text, inverted fill |
 
 Paper and wash carry no declared requirement: their seam distinctness is a property of
@@ -95,8 +97,9 @@ documented in [architecture.md](architecture.md)'s requirement section.
   (`npm run req:audit`) instead of shipping.
 - Off the scale: the `cta` state family (`cta`/`cta-hover`/`cta-pressed`) are **roles**,
   not stops: the pulled-out button fill and its states. Fills that carry text ship
-  `on-cta` (see [On-fill text](#on-fill-text)). The `cta-ink` trio is the ink band read
-  as states (enabled ≡ ink-53-aa, hover ≡ ink-42-aa, pressed ≡ ink-30-aaa, C49).
+  `on-cta` (see [On-fill text](#on-fill-text)). The text-style cta is the ink stops
+  read directly (rest ≡ ink-53-aa, hover ≡ ink-42-aa, pressed ≡ ink-30-aaa); the
+  separate `cta-ink` alias trio was deleted 2026-08-12.
 - Also off the scale despite sitting at the ink band's zero end: `ink-0` is the
   **universal anchor** (literal #000000 light / #ffffff dark, paired with `paper-100`), a
   mode-flipping constant, not a per-brand resolved stop.

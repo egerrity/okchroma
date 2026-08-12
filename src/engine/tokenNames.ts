@@ -53,15 +53,14 @@ export function stopTokenName(stop: number): string {
 // pulled-out off-scale cta family + on-cta, then identity. A ramp skips tokens it
 // doesn't have. Emitters sort by this, not by stop number.
 // The cta family is SEMANTIC-named (owner ruling 2026-07-16: states, never options —
-// cta-1/cta-2 renamed in place to cta/cta-hover via both plugins' RENAMED_LEAVES;
-// pressed + the cta-ink trio, the 4.5 text-register link escape, added with it).
+// cta-1/cta-2 renamed in place to cta/cta-hover via both plugins' RENAMED_LEAVES).
+// (The cta-ink + cta-ink-strong trios DELETED, owner 2026-08-12: they were pure
+// aliases onto the ink stops; the text-register cta is the ink stops read directly.)
 const TOKEN_ORDER = [
   'paper-99', 'paper-97', 'paper-95', 'wash-92', 'wash-89', 'wash-85', 'wash-80',
   'mark-74-aa',
   'ink-53-aa', 'ink-42-aa', 'ink-30-aaa',
   'cta', 'cta-hover', 'cta-pressed',
-  'cta-ink', 'cta-ink-hover', 'cta-ink-pressed',
-  'cta-ink-strong', 'cta-ink-strong-hover', 'cta-ink-strong-pressed',
   'on-cta',
   'identity',
 ]

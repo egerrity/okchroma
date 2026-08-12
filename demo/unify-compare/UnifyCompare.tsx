@@ -865,7 +865,7 @@ export default function UnifyCompare() {
               </div>
               <div style={STAT}>
                 <b>{focusVarCount} variables</b> generated from the single seed {focus.t.primary.hex.toUpperCase()} —
-                the full scale in both modes, cta and cta-ink trios with states, on-text picked per fill, a
+                the full scale in both modes, the cta trio with states, the ink text register, on-text picked per fill, a
                 brand-tinted neutral, illustration slots, and per-brand signal resolutions. No stop hand-picked, none missing.
               </div>
             </div>
@@ -895,7 +895,7 @@ export default function UnifyCompare() {
               <ForkComposition
                 page={DIST_PAGE[distMode]} heading="var(--brand-ink-53-aa)" body="var(--brand-ink-30-aaa)"
                 ring="var(--brand-mark-74-aa)" fill="var(--brand-cta)" onFill="var(--brand-on-cta)"
-                linkC="var(--link)" textBtn="var(--brand-cta-ink)" />
+                linkC="var(--link)" textBtn="var(--brand-ink-53-aa)" />
             </div>
           </div>
         </section>

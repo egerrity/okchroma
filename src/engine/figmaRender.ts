@@ -55,31 +55,21 @@ function colorFromHexString(hex: string): FigmaColorToken {
   return { $type: 'color', $value: { colorSpace: 'srgb', components: [r, g, b], alpha: 1, hex: hex.toLowerCase() } }
 }
 
-// BAND GROUPING (owner 2026-07-27): the emitted shape nests each family into its
-// bands — paper/ wash/ mark/ ink/ with LL(-rNNN) leaves, cta/ + cta-ink/
-// with STATE leaves (enabled/hover/pressed, matching system/link), and the
-// on-colors riding their carrier group (cta/on — highlight/on died with the
-// highlight band, 2026-07-29). `identity` stays
-// a flat leaf here (the primitive lanes keep it); the plugins re-home the BIND
-// surfaces to system/abs-primary|abs-secondary. Both plugins migrate every old
-// flat name in place via RENAMED_LEAVES.
-// Stage B (owner 2026-08-07, names only): the flat names carry a banded leaf shape
-// of their own now (paper-99, mark-74-aa, ink-53-aa …) — the split moved from
-// "band word + one digit group" to "band word + everything after the FIRST hyphen",
-// so a conformance suffix like -aa rides inside the leaf rather than breaking the match.
-// `highlight` LEFT the band-word set with the C53 collapse (nothing names a stop
-// highlight-N any more); `mark` joined in its place, same regex slot.
+// LEAF SHAPE (owner 2026-08-12, band flattening): ramp tokens sit FLAT in the family
+// group — paper-99, wash-92, mark-74-aa, ink-53-aa … (the 2026-07-27 band nesting
+// paper/99 etc. is retired; the band word stays in the leaf, the slash between band
+// and level became a hyphen). ONLY the cta family still nests, into STATE leaves
+// (enabled/hover/pressed, matching system/link) with the on-color riding its carrier
+// (cta/on). `identity` stays a flat leaf; the plugins re-home the BIND surfaces to
+// system/abs-primary|abs-secondary. Both plugins migrate every old
+// spelling in place via RENAMED_LEAVES.
+// (The cta-ink + cta-ink-strong state groups DELETED with their tokens, owner 2026-08-12.)
 function bandedLeaf(flat: string): string {
   const STATE: Record<string, string> = {
     'cta': 'cta/enabled', 'cta-hover': 'cta/hover', 'cta-pressed': 'cta/pressed',
     'cta-border': 'cta/border', 'on-cta': 'cta/on',
-    'cta-ink': 'cta-ink/enabled', 'cta-ink-hover': 'cta-ink/hover', 'cta-ink-pressed': 'cta-ink/pressed',
-    'cta-ink-strong': 'cta-ink-strong/enabled', 'cta-ink-strong-hover': 'cta-ink-strong/hover', 'cta-ink-strong-pressed': 'cta-ink-strong/pressed',
   }
-  const mapped = STATE[flat]
-  if (mapped) return mapped
-  const m = /^(paper|wash|mark|ink)-(.+)$/.exec(flat)
-  return m ? `${m[1]}/${m[2]}` : flat
+  return STATE[flat] ?? flat
 }
 // Order-aware entries for a FigmaGroup (adversarial-audit-caught 2026-08-07): JS
 // enumerates integer-index string keys ascending, before any string keys, REGARDLESS of
@@ -121,12 +111,6 @@ function rampGroup(
   extra?: {
     identityHex?: string
     cta?: ColorStop; ctaHover?: ColorStop; ctaPressed?: ColorStop
-    ctaInk?: ColorStop; ctaInkHover?: ColorStop; ctaInkPressed?: ColorStop
-    // the STRONG text-cta (neutral only, owner 2026-08-04): the mirror trio over the same
-    // three stops cta-ink ascends — enabled ≡ ink-30-aaa, hover ≡ ink-42-aa (shared
-    // through cta-ink/hover), pressed ≡ ink-53-aa (C49 numbering). Emitted as raw values here; both
-    // plugins re-express all three as aliases (the cta-border idiom).
-    ctaInkStrong?: ColorStop; ctaInkStrongHover?: ColorStop; ctaInkStrongPressed?: ColorStop
     // the already-resolved border token — the decorative alpha stroke when this cta vibrates,
     // else transparent. Resolved by the caller because the choice is mode-dependent and
     // rampGroup has no mode. Both outcomes are ALIAS targets on the plugin side
@@ -144,14 +128,6 @@ function rampGroup(
   if (extra?.cta) putLeaf(g, 'cta', colorFromStop(extra.cta))
   if (extra?.ctaHover) putLeaf(g, 'cta-hover', colorFromStop(extra.ctaHover))
   if (extra?.ctaPressed) putLeaf(g, 'cta-pressed', colorFromStop(extra.ctaPressed))
-  // cta-ink trio: the family's 4.5 text-register cta (link escape) — the ink band read
-  // as states (enabled ≡ ink/53-aa, hover ≡ ink/42-aa, pressed ≡ ink/30-aaa; C49)
-  if (extra?.ctaInk) putLeaf(g, 'cta-ink', colorFromStop(extra.ctaInk))
-  if (extra?.ctaInkHover) putLeaf(g, 'cta-ink-hover', colorFromStop(extra.ctaInkHover))
-  if (extra?.ctaInkPressed) putLeaf(g, 'cta-ink-pressed', colorFromStop(extra.ctaInkPressed))
-  if (extra?.ctaInkStrong) putLeaf(g, 'cta-ink-strong', colorFromStop(extra.ctaInkStrong))
-  if (extra?.ctaInkStrongHover) putLeaf(g, 'cta-ink-strong-hover', colorFromStop(extra.ctaInkStrongHover))
-  if (extra?.ctaInkStrongPressed) putLeaf(g, 'cta-ink-strong-pressed', colorFromStop(extra.ctaInkStrongPressed))
   // cta/border pairs with the cta family: the SAFETY STROKE when the fill would vibrate against
   // the background rather than sit on it (owner 2026-07-29, superseding the 2026-07-04 "filled is
   // filled" removal), else transparent. The rule lives in cssRender.ctaNeedsBorder — |Lc| of the
@@ -190,12 +166,18 @@ export interface ThemeInput {
   // the NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): the brand's cta FILL trio +
   // on-cta re-resolve from the brand-neutral's ink register (near-black light /
   // near-white dark) — the red-collision de-conflict. Same tokens, different values
-  // (the outline idiom); default off = byte-identical. cta-ink untouched.
+  // (the outline idiom); default off = byte-identical. The brand's INK STOPS de-red
+  // with the fills (owner 2026-08-12, superseding the deleted cta-ink swap).
   ctaEscape?: boolean
+
+  // THE VIVID-INKS OPT-OUT (owner 2026-08-12, advanced — ext plugin): with the escape
+  // on, keep the brand's ink stops at the brand hue instead of the neutral register.
+  // Meaningless without ctaEscape; default off.
+  escapeInksVivid?: boolean
 
   // the SYSTEM LINK (Phase 4, owner 2026-07-16): a custom link seed — when set, the
   // emitted link group carries ITS ink-register resolution (the red de-conflict);
-  // absent = the link group carries the primary's cta-ink trio (the plugins alias it).
+  // absent = the link group carries the primary's ink stops (the plugins alias them).
   linkHex?: string | null
 
   // THE CTA-BORDER OPT-OUT (owner 2026-07-31: "on by default but optional"). DEFAULT ON —
@@ -220,8 +202,8 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
   const ctaFamily = (s: GeneratedScale, mode: 'light' | 'dark', prefix: string) => ({
     ctaBorder: ctaNeedsBorder(s, mode, borderPage(mode)) ? OFFSET_TOKEN(ctaBorderRung(prefix), mode) : TRANSPARENT_TOKEN,
     ...(mode === 'light'
-      ? { cta: s.cta, ctaHover: s.ctaHover, ctaPressed: s.ctaPressed, ctaInk: s.ctaInk, ctaInkHover: s.ctaInkHover, ctaInkPressed: s.ctaInkPressed }
-      : { cta: s.ctaDark, ctaHover: s.ctaHoverDark, ctaPressed: s.ctaPressedDark, ctaInk: s.ctaInkDark, ctaInkHover: s.ctaInkHoverDark, ctaInkPressed: s.ctaInkPressedDark }),
+      ? { cta: s.cta, ctaHover: s.ctaHover, ctaPressed: s.ctaPressed }
+      : { cta: s.ctaDark, ctaHover: s.ctaHoverDark, ctaPressed: s.ctaPressedDark }),
   })
 
   const brandExtra = (s: GeneratedScale, mode: 'light' | 'dark', prefix: string) => ({
@@ -232,27 +214,19 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
   const nScale = generateNeutralScale(input.neutralH ?? scale.brandH, input.neutralLevel ?? 'default', input.contrastProfile)
   // custom link seed resolved ONCE (both modes read it)
   const lt = input.linkHex ? resolveLinkTrio(input.linkHex, input.contrastProfile) : null
-  // the neutral carries the STRONG text-cta mirror on top of the shared family shape:
-  // no new solved values — the mirror descends the same three stops cta-ink ascends
-  // (enabled ≡ ink-30-aaa, hover ≡ ink-42-aa through the family's hover field, pressed ≡ ink-53-aa;
-  // the hover stopped being a raw between value with C49)
-  const neutralExtra = (mode: 'light' | 'dark') => {
-    const at = (n: number) => nScale[mode].find(s => s.stop === n)
-    return {
-      ...ctaFamily(nScale, mode, 'neutral'),
-      ctaInkStrong: at(11),
-      ctaInkStrongHover: mode === 'light' ? nScale.ctaInkHover : nScale.ctaInkHoverDark,
-      ctaInkStrongPressed: at(9),
-    }
-  }
+  // (the neutral's STRONG text-cta mirror DELETED with the cta-ink register, owner
+  // 2026-08-12 — it was the same three ink stops descending; consumers read them directly)
+  const neutralExtra = (mode: 'light' | 'dark') => ctaFamily(nScale, mode, 'neutral')
   const build = (mode: 'light' | 'dark'): FigmaGroup => {
-    // paper-100 (paper-0 pre-Stage-B) rides WITH the neutral ramp at paper/100 (its dark value is
+    // paper-100 (paper-0 pre-Stage-B) rides WITH the neutral ramp at paper-100 (its dark value is
     // neutral-tinted, so it dedups and aliases through the same per-tint
-    // machinery as the rest of the neutral — never a global absolute); JS
-    // integer-key enumeration keeps 0 ahead of 1 regardless of insertion order.
+    // machinery as the rest of the neutral — never a global absolute). It leads the
+    // group — the ladder is descending LL, lightest first — by INSERTION now: flat
+    // leaves are not integer keys, so enumeration follows insertion order (the banded
+    // era leaned on integer-key enumeration putting 100 ahead of 99 inside paper/).
     const p0 = mode === 'light' ? nScale.paper0 : nScale.paper0Dark
-    const neutralGroup: FigmaGroup = rampGroup(nScale[mode], mode === 'light' ? nScale.onFillTextIsWhite : nScale.onFillTextIsWhiteDark, neutralExtra(mode))
-    if (p0) putLeaf(neutralGroup, 'paper-100', colorFromStop(p0))
+    const ramp = rampGroup(nScale[mode], mode === 'light' ? nScale.onFillTextIsWhite : nScale.onFillTextIsWhiteDark, neutralExtra(mode))
+    const neutralGroup: FigmaGroup = p0 ? { 'paper-100': colorFromStop(p0), ...ramp } : ramp
     const secondaryGroup = rampGroup(secondary[mode], mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark, brandExtra(secondary, mode, 'secondary'))
     // outline re-expression (only a real secondary can be outline) — same values cssRender
     // emits. The hover = mark-74-aa at OUTLINE_HOVER_ALPHA (the STABLE gated stop the ring
@@ -272,9 +246,9 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
         putLeaf(secondaryGroup, 'cta-pressed', alphaTint(OUTLINE_PRESSED_ALPHA))
       }
       if (s8) putLeaf(secondaryGroup, 'cta-border', colorFromStop(s8))
-      // cta-ink trio untouched: outline re-expresses the FILL trio only — links keep the
-      // exact ramp's text-register values already emitted by rampGroup
-      // cta/on = the family's ink/53-aa, NOT a pole — the plugin aliases non-pole on-fills to the sibling ink/53-aa
+      // outline re-expresses the FILL trio only — the ramp's ink stops (the text register)
+      // are already emitted by rampGroup and stay untouched
+      // cta/on = the family's ink-53-aa, NOT a pole — the plugin aliases non-pole on-fills to the sibling ink-53-aa
       if (s9) putLeaf(secondaryGroup, 'on-cta', colorFromStop(s9))
     }
     // the SOFT on-cta — THE QUIET-FILL RULE: a low-hierarchy cta's button text is the
@@ -303,36 +277,49 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
       softOnCta(secondaryGroup, mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark)
     const brandGroup = rampGroup(scale[mode], mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark, brandExtra(scale, mode, 'brand'))
     // neutral cta escape re-expression (mirrors the outline block above): the brand's
-    // FILL trio + on-cta swap to the brand-neutral's ink register; cta-ink + the ramp
-    // stay the brand's own. With NO real secondary the secondary group MIRRORS the brand
-    // (secondary = scale above), so the escape applies there too — the un-escaped raw
-    // trio must not survive in the mirror (review-caught latent divergence).
+    // FILL trio + on-cta swap to the brand-neutral's ink register, and the brand's INK
+    // STOPS ride the neutral's (owner 2026-08-12 — text de-reds with the fills; the
+    // vivid-inks opt-out suppresses only the ink swap). With NO real secondary the
+    // secondary group MIRRORS the brand (secondary = scale above), so the escape applies
+    // there too — the un-escaped raw trio must not survive in the mirror (review-caught
+    // latent divergence).
     const esc = input.ctaEscape ? escapeCtaFamily(nScale, mode, input.contrastProfile) : null
+    const escInks = esc && !input.escapeInksVivid
+    const nInkAt = (n: number) => {
+      const s = nScale[mode].find(x => x.stop === n)
+      if (!s) throw new Error(`themeToFigma escape: the neutral scale has no ink stop ${n}`)
+      return s
+    }
     if (esc) {
       for (const g of input.secondary ? [brandGroup] : [brandGroup, secondaryGroup]) {
         putLeaf(g, 'cta', colorFromStop(esc.cta))
         putLeaf(g, 'cta-hover', colorFromStop(esc.ctaHover))
         putLeaf(g, 'cta-pressed', colorFromStop(esc.ctaPressed))
-        // ALL the ctas (owner amendment): the text-style cta trio de-reds too
-        putLeaf(g, 'cta-ink', colorFromStop(esc.ctaInk))
-        putLeaf(g, 'cta-ink-hover', colorFromStop(esc.ctaInkHover))
-        putLeaf(g, 'cta-ink-pressed', colorFromStop(esc.ctaInkPressed))
+        if (escInks) {
+          putLeaf(g, 'ink-53-aa', colorFromStop(nInkAt(9)))
+          putLeaf(g, 'ink-42-aa', colorFromStop(nInkAt(10)))
+          putLeaf(g, 'ink-30-aaa', colorFromStop(nInkAt(11)))
+        }
         putLeaf(g, 'on-cta', colorFromHex(esc.onFillIsWhite))
       }
     }
     // the SYSTEM LINK trio (Phase 4): ONE per theme. Custom seed → its ink-register
-    // resolution; default → the primary's cta-ink trio verbatim (value-equal to what the
+    // resolution; default → the primary's ink stops verbatim (value-equal to what the
     // plugins alias, so the emitted structure never lies about the shipped color) — and
-    // under the ESCAPE the default follows the escaped cta-ink (the alias chain would)
+    // under the ESCAPE the default follows the escaped ink stops (the alias chain
+    // would), staying with the brand's when the vivid opt-out keeps them.
+    const scaleInkAt = (n: number) => {
+      const s = scale[mode].find(x => x.stop === n)
+      if (!s) throw new Error(`themeToFigma link: the brand scale has no ink stop ${n}`)
+      return s
+    }
     const linkGroup: FigmaGroup = lt
       ? (mode === 'light'
         ? { 'link': colorFromStop(lt.link), 'link-hover': colorFromStop(lt.linkHover), 'link-pressed': colorFromStop(lt.linkPressed) }
         : { 'link': colorFromStop(lt.linkDark), 'link-hover': colorFromStop(lt.linkHoverDark), 'link-pressed': colorFromStop(lt.linkPressedDark) })
-      : esc
-      ? { 'link': colorFromStop(esc.ctaInk), 'link-hover': colorFromStop(esc.ctaInkHover), 'link-pressed': colorFromStop(esc.ctaInkPressed) }
-      : (mode === 'light'
-        ? { 'link': colorFromStop(scale.ctaInk), 'link-hover': colorFromStop(scale.ctaInkHover), 'link-pressed': colorFromStop(scale.ctaInkPressed) }
-        : { 'link': colorFromStop(scale.ctaInkDark), 'link-hover': colorFromStop(scale.ctaInkHoverDark), 'link-pressed': colorFromStop(scale.ctaInkPressedDark) })
+      : escInks
+      ? { 'link': colorFromStop(nInkAt(9)), 'link-hover': colorFromStop(nInkAt(10)), 'link-pressed': colorFromStop(nInkAt(11)) }
+      : { 'link': colorFromStop(scaleInkAt(9)), 'link-hover': colorFromStop(scaleInkAt(10)), 'link-pressed': colorFromStop(scaleInkAt(11)) }
     const g: FigmaGroup = {
       brand: brandGroup,
       secondary: secondaryGroup,

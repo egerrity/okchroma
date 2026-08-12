@@ -19,7 +19,8 @@ export const FONT_STACK = "'Inter', -apple-system, system-ui, sans-serif"
 // The "accent" Family is emitted as the `secondary` primitive prefix (the role
 // was renamed in the token rename); prim() maps Family → primitive prefix.
 // Stops are the emitted token names: scale paper/wash, the mark-74-aa ring, the
-// cta/cta-hover/cta-pressed fill trio (+ the cta-ink link trio), ink-53-aa/42-aa/30-aaa text,
+// cta/cta-hover/cta-pressed fill trio, ink-53-aa/42-aa/30-aaa text (doubling as the
+// text-style cta — the cta-ink aliases died 2026-08-12),
 // on-cta on-fill text. (on-highlight died with highlight-9, owner 2026-07-29 — the
 // on-emphasis text is --paper-100 in the semantic layer now.)
 type Family = 'brand' | 'accent'

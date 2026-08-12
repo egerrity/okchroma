@@ -262,9 +262,12 @@ for (const sig of SIGNALS) {
 const SNAP_PATH = path.join(process.cwd(), 'scripts', 'highlight-snapshot.json')
 const TOL = 0.015
 const rungAndCta = (s: GeneratedScale) =>
+  // the last six triples were the cta-ink fields (deleted 2026-08-12); they were pure
+  // references onto ink stops 9/10/11 so the SAME VALUES are read from the arrays —
+  // blessed snapshots stay byte-comparable, no re-bless
   [s.light[8], s.dark[8],
     s.cta, s.ctaHover, s.ctaPressed, s.ctaDark, s.ctaHoverDark, s.ctaPressedDark,
-    s.ctaInk, s.ctaInkHover, s.ctaInkPressed, s.ctaInkDark, s.ctaInkHoverDark, s.ctaInkPressedDark,
+    s.light[8], s.light[9], s.light[10], s.dark[8], s.dark[9], s.dark[10],
   ].flatMap(c => [c.L, c.C, c.H])
 // …and what each triple IS, so a drift line names the token instead of an index (2026-07-29:
 // diagnosing an unblessed snapshot meant hand-decoding "token 5" back to ctaDark). Order must
@@ -272,7 +275,7 @@ const rungAndCta = (s: GeneratedScale) =>
 const RUNG_CTA_NAMES = [
   'light stop-9', 'dark stop-9',
   'cta', 'cta-hover', 'cta-pressed', 'cta-dark', 'cta-hover-dark', 'cta-pressed-dark',
-  'cta-ink', 'cta-ink-hover', 'cta-ink-pressed', 'cta-ink-dark', 'cta-ink-hover-dark', 'cta-ink-pressed-dark',
+  'ink-53-aa', 'ink-42-aa', 'ink-30-aaa', 'ink-53-aa-dark', 'ink-42-aa-dark', 'ink-30-aaa-dark',
 ]
 const snapshot = (): Record<string, number[]> => {
   const o: Record<string, number[]> = {}

@@ -156,7 +156,7 @@ The same modules as a table: each piece, where it lives, what it does. Grouped b
 
 | Piece | Location | What it does |
 |---|---|---|
-| CSS emitter | `cssRender.ts` | `brandCss`/`signalsCss`, custom properties per family and mode: the scale stops, the cta state trios (`cta`/`cta-hover`/`cta-pressed`, the `cta-ink` text trio), `on-cta` (solid pole or the soft pole-at-alpha), the gated `cta-border` alias onto the system alpha ladder, P3 `@supports` override blocks, the outline secondary's cta shape. Signals emit under their **role names** (`--critical-*`/`--warning-*`/`--positive-*`/`--info-*`); identity names stay engine-internal. |
+| CSS emitter | `cssRender.ts` | `brandCss`/`signalsCss`, custom properties per family and mode: the scale stops, the cta fill trio (`cta`/`cta-hover`/`cta-pressed`; the text-style cta is the ink stops themselves since the 2026-08-12 cta-ink deletion), `on-cta` (solid pole or the soft pole-at-alpha), the gated `cta-border` alias onto the system alpha ladder, P3 `@supports` override blocks, the outline secondary's cta shape. Signals emit under their **role names** (`--critical-*`/`--warning-*`/`--positive-*`/`--info-*`); identity names stay engine-internal. |
 | Figma emitter | `figmaRender.ts` | `themeToFigma`, the same theme as Figma variable collections (both plugins consume it). |
 | Token vocabulary | `tokenNames.ts` | The shared naming: paper-99/97/95, wash-92–80, mark-74-aa, ink-53-aa/42-aa/30-aaa, the cta state families, ons; one vocabulary across CSS and Figma. |
 | Public API | `index.ts` | The entry point: `resolveBrand`/`resolveTheme`. |
@@ -221,7 +221,7 @@ ColorStop      = { stop, L, C, H, r, g, b }
 GeneratedScale = { name, archetype, brandL/C/H,
                    onFillTextIsWhite(+Dark), light[], dark[],
                    cta, ctaHover, ctaPressed (+Dark ×3),
-                   ctaInk…, identityHex? }
+                   identityHex? }
 ResolvedBrand  = { scale, shearDeg, redRepel: {light,dark}|null,
                    warningVariant, pending[], signalOverrides[] }
 ```
@@ -235,10 +235,10 @@ ResolvedBrand  = { scale, shearDeg, redRepel: {light,dark}|null,
 | 4–7 | `wash-92` … `wash-80` | low-hierarchy fills, borders, decorative |
 | 8 | `mark-74-aa` | WCAG 1.4.11 **3:1** non-text step (borders, UI elements) |
 | 9 | `ink-53-aa` | emphasis fill AND first text stop (4.5:1, the 2026-07-29 highlight collapse) |
-| 10 | `ink-42-aa` | the between text stop (6.5:1, C49, the promoted cta-ink-hover value) |
-| 11 | `ink-30-aaa` | strong text (7:1) |
+| 10 | `ink-42-aa` | the between text stop (6.5:1, C49, promoted from the retired text-cta hover state) |
+| 11 | `ink-30-aaa` | strong text (7:1). The three ink stops read as states ARE the text-style cta (rest 53 / hover 42 / pressed 30); the separate `cta-ink` + `cta-ink-strong` alias trios were deleted 2026-08-12 |
 | off-scale roles | `cta`, `cta-hover`, `cta-pressed` | the pulled-out solid button fill and its states |
-| aliases | `cta-ink`(+hover/pressed) · `cta-ink-strong` (neutral only) · `cta-border` | the text-register trio onto ink-53-aa/42-aa/30-aaa; the descending neutral mirror; the gated border onto the system alpha ladder |
+| aliases | `cta-border` | the gated border onto the system alpha ladder |
 | computed | `on-cta` | black/white text for the fill (solid pole, or the soft pole-at-alpha on quiet fills) |
 | literal | `identity` | the exact input hex (brand / secondary only) |
 | anchors | `paper-100`, `ink-0` | universal per-scheme extremes (paper-100 = the neutral's resolved stop 0; ink-0 = literal black/white, flipped per mode) |
@@ -440,12 +440,12 @@ so the old grouping is back). This is a plugin-side concern only: the CSS build 
 community plugin (`plugin/`) have no notion of it. Two kinds of rows share the wrapper:
 
 - **ramp stops and plumbing**: a single resolved color, no state. The scale stops
-  (`primitive/neutral/paper/99`, `primitive/brand-primary/ink/53-aa`, …), the system
+  (`primitive/neutral/paper-99`, `primitive/brand-primary/ink-53-aa`, … — flat leaves,
+  band flattening 2026-08-12), the system
   poles and alpha ladder (`primitive/system/abs-black`, `primitive/system/alpha/offset-16`,
   …).
 - **roles**: a state-carrying usage decision, kept in its natural group. The cta family
-  inside its own family group (`primitive/brand-primary/cta/hover`), the text-cta trio
-  (`primitive/*/cta-ink/*`, `primitive/*/cta-ink-strong/*`, neutral only), and the
+  inside its own family group (`primitive/brand-primary/cta/hover`) and the
   system rows `primitive/system/link/*` and
   `primitive/system/surface/sink|base|lift|pop`.
 
@@ -455,7 +455,7 @@ that applies the prefix, as the FINAL step of `toFlat()`, after every other rena
 `system/*` rows and every path matching `FAMILY_PREFIXES` (which color family a path
 belongs to), and leaves anything unknown untouched. One function, one seam: nothing else
 in the payload or the plugin decides a path's spelling at this level. `ROLE_BANDS`
-(`cta/`, `cta-ink/`, `cta-ink-strong/`) survives beside it as the descope posture's
+(`cta/`) survives beside it as the descope posture's
 visibility line, mirrored in `code.ts` as `isRoleRow`.
 
 **Healing old files.** A file saved before 2026-08-07 has no register prefix, and a file
@@ -491,10 +491,10 @@ wires each as a scheme-divergent alias onto the NEUTRAL's own resolved paper sto
 
 | plane | light aliases | dark aliases |
 |---|---|---|
-| `system/surface/sink` | `neutral/paper/95` | `neutral/paper/100` |
-| `system/surface/base` | `neutral/paper/97` | `neutral/paper/99` |
-| `system/surface/lift` | `neutral/paper/99` | `neutral/paper/97` |
-| `system/surface/pop`  | `neutral/paper/100` | `neutral/paper/95` |
+| `system/surface/sink` | `neutral/paper-95` | `neutral/paper-100` |
+| `system/surface/base` | `neutral/paper-97` | `neutral/paper-99` |
+| `system/surface/lift` | `neutral/paper-99` | `neutral/paper-97` |
+| `system/surface/pop`  | `neutral/paper-100` | `neutral/paper-95` |
 
 **Apply never deletes.** A path in an existing base file that the current payload no
 longer emits (an orphan, left behind by a deleted or renamed token) is counted and

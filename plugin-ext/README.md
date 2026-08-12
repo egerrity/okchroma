@@ -26,12 +26,13 @@ On any other plan the plugin detects the missing API and reports it instead of w
   state-carrying roles (cta bands, link, surfaces) are bindable in every picker and the
   raw ramp/plumbing rows are hidden; turning it off exposes everything:
   - `primitive/brand-primary/*`, `primitive/brand-secondary/*` (only if the file uses a
-    secondary) including their `{cta,cta-ink}/*` states in the same family group — the
+    secondary) including their `cta/*` states in the same family group — the
     operative `brand-` category is in the token name; the brand's NAME lives on the
-    extension, so a designer reads `kirby → primitive/brand-primary/paper/99`. Every
+    extension, so a designer reads `kirby → primitive/brand-primary/paper-99` (ramp
+    leaves are flat since the band flattening 2026-08-12). Every
     path carries the single `primitive/` register prefix (A1 regroup 2026-08-07,
     flattened to one register 2026-08-11).
-  - `primitive/neutral/*` (paper/100 … ink/0 in ladder order), `primitive/critical/*
+  - `primitive/neutral/*` (paper-100 … ink-0 in ladder order), `primitive/critical/*
     primitive/warning/* primitive/positive/* primitive/info/*` with their cta states in
     the family, and `primitive/system/*`: abs poles, transparent, scrim,
     `system/surface/*` (the scheme-divergent sink/base/lift/pop elevation-plane

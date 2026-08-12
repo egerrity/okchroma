@@ -52,15 +52,10 @@ export interface GeneratedScale {
   ctaHoverDark: ColorStop
   ctaPressedDark: ColorStop
 
-  // the cta-ink trio (owner respec 2026-07-16): the family's 4.5 text-register cta — the
-  // link-color escape. The ink band as states — 9/10/11 since C49; floored
-  // at the stop-10 contrast require.
-  ctaInk: ColorStop
-  ctaInkHover: ColorStop
-  ctaInkPressed: ColorStop
-  ctaInkDark: ColorStop
-  ctaInkHoverDark: ColorStop
-  ctaInkPressedDark: ColorStop
+  // (the cta-ink trio DELETED, owner 2026-08-12: it was pure references onto stops
+  // 9/10/11 since C49 — the text-register cta IS the ink stops; consumers read them
+  // from light[]/dark[]. Under the neutral-cta escape the emitters de-chroma the
+  // ink stops themselves instead of swapping a separate register.)
 
   // C12 value repel: per-mode fired flags (the cta exited red's register) — annotation/audit data
   ctaRepelled?: { light: boolean; dark: boolean }
@@ -221,14 +216,6 @@ export function generateScale(
     ctaDark,
     ctaHoverDark: roleStop(darkRamp.roles.ctaHover, 10),
     ctaPressedDark: roleStop(darkRamp.roles.ctaPressed, 11),
-    // the ink trio IS stops 9/10/11 (C49 — pure references in the resolver), so the
-    // stop numbers here are the real ones, not off-scale pseudo-slots
-    ctaInk: roleStop(lightRamp.roles.ctaInk, 9),
-    ctaInkHover: roleStop(lightRamp.roles.ctaInkHover, 10),
-    ctaInkPressed: roleStop(lightRamp.roles.ctaInkPressed, 11),
-    ctaInkDark: roleStop(darkRamp.roles.ctaInk, 9),
-    ctaInkHoverDark: roleStop(darkRamp.roles.ctaInkHover, 10),
-    ctaInkPressedDark: roleStop(darkRamp.roles.ctaInkPressed, 11),
     ctaRepelled: { light: !!lightRamp.roles.cta.repelled, dark: !!darkRamp.roles.cta.repelled },
     identityHex: hex.toUpperCase(),
     paper0: p0Light ? makeStop(0, p0Light.L, p0Light.C, p0Light.H) : undefined,
@@ -317,8 +304,8 @@ export function generateNeutralScale(
   scale.ctaPressed = nState(11, 'light', scale.cta, 2)
   scale.ctaHoverDark = nState(10, 'dark', scale.ctaDark, 1)
   scale.ctaPressedDark = nState(11, 'dark', scale.ctaDark, 2)
-  // cta-ink trio stays resolver-minted (the neutral's own ink stops as states, C49) —
-  // the quiet-fill override above touches only the fill trio.
+  // the quiet-fill override above touches only the fill trio — the ink stops (the text
+  // register) stay resolver-minted.
   // the scale-fed neutral cta can't move, so on-text is judgment only: apca profile = pure
   // apca-pole (its law is the Lc bar); wcag profile = the mixing flip PLUS the conformance
   // floor — the chosen pole must pass 4.5 (the fill can't re-solve, so the pole flips).

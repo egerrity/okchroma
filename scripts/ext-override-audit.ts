@@ -59,21 +59,28 @@ type Snap = { base: Record<string, number>; brands: Record<string, Record<string
 const snap: Snap = { base: {}, brands: {}, roster: {} }
 for (const col of COLUMNS) snap.base[col] = base[col].length
 
-// LADDER-ORDER ASSERTION (adversarial-audit-caught 2026-08-07): paper's bare-digit
-// leaves (95/97/99/100) and wash's (80/85/89/92) are JS integer-index keys, so a plain
-// Object.entries over the FigmaGroup silently re-sorts them ascending regardless of
-// insertion order — reversing the TOKEN_ORDER panel contract (descending LL, lightest
-// first) with no color changing, so nothing else in this file would ever catch it. Guards
-// figmaRender.ts's groupEntries + its two consumers (payload.ts flatten(), plugin/code.ts's
-// orderedEntries). The shape is structural, not per-brand-value-dependent — every brand
-// shares the same band layout — so checking the base seed's two columns is enough.
+// LADDER-ORDER ASSERTION (adversarial-audit-caught 2026-08-07; regex follows the FLAT
+// leaves since the band flattening, owner 2026-08-12 — a shape change that dodges this
+// regex would silently disarm the gate, which is exactly how the banded-era version
+// went dead for one commit during the flatten): the panel contract is descending LL,
+// lightest first (paper-100 leads, ink-0 trails), and nothing else in this file would
+// catch a reversal because no color changes. Guards figmaRender's emit/insertion order
+// + its two consumers (payload.ts flatten(), plugin/code.ts's orderedEntries). The
+// shape is structural, not per-brand-value-dependent — every brand shares the same
+// layout — so checking the base seed's two columns is enough.
 const LADDER_FAMILIES = ['neutral', 'brand-primary', 'brand-secondary', 'critical', 'warning', 'positive', 'info']
 function assertLadderOrder(tokens: FlatTok[], label: string): void {
   for (const fam of LADDER_FAMILIES) {
     const nums: number[] = []
     for (const t of tokens) {
-      const m = new RegExp(`/${fam}/(?:paper|wash|mark|ink)/(\\d+)`).exec(t.path)
+      const m = new RegExp(`/${fam}/(?:paper|wash|mark|ink)-(\\d+)`).exec(t.path)
       if (m) nums.push(parseInt(m[1], 10))
+    }
+    // the gate must never silently disarm again: every family carries a full ladder
+    // (neutral: 100…0 = 13 rows; the rest: 99…30 = 11)
+    if (nums.length < 11) {
+      fails.push(`${label} ${fam}: ladder regex matched only ${nums.length} rows — the leaf shape moved and disarmed this gate`)
+      continue
     }
     for (let i = 1; i < nums.length; i++) {
       if (nums[i] >= nums[i - 1]) {

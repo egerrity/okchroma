@@ -43,7 +43,7 @@ export function stopsToVars(stops: ColorStop[], prefix: string): string {
 const onColor = (white: boolean) => (white ? '#ffffff' : '#000000')
 
 // A ramp body for one mode: the scale + ring + text stops (from the scale array,
-// sorted by token order), the off-scale cta family (cta/cta-hover/cta-pressed + the cta-ink trio),
+// sorted by token order), the off-scale cta fill trio (cta/cta-hover/cta-pressed),
 // and the on-cta text token. identity is mode-invariant — the caller emits
 // it once (the neutral has none). Used for the brand, the (real) secondary, AND
 // the generated neutral — every family is emitted the same way.
@@ -169,29 +169,16 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
   // OUTLINE secondary keeps its own unconditional mark-74-aa override at the emitter — there
   // the border is the button's identity, not a safety. Renamed from cta-stroke (owner 2026-07-09);
   // the Figma side renamed with it — plugins migrate existing variables in place.
-  // cta family SEMANTIC-named (owner ruling 2026-07-16): cta/cta-hover/cta-pressed +
-  // the cta-ink trio (the 4.5 text-register link escape; stops 9/10/11 as states — C49).
+  // cta family SEMANTIC-named (owner ruling 2026-07-16): cta/cta-hover/cta-pressed.
+  // (The cta-ink + cta-ink-strong trios DELETED, owner 2026-08-12: they were pure
+  // var() references onto the ink stops — the text-register cta is the ink stops
+  // themselves; the ESCAPE posture de-chromas those stops after this body.)
   const border = ctaNeedsBorder(s, mode, page)
   return [
     stopsToVars(stops, prefix),
     `  --${prefix}-cta: ${stopHex(f.cta)};`,
     `  --${prefix}-cta-hover: ${stopHex(f.ctaHover)};`,
     `  --${prefix}-cta-pressed: ${stopHex(f.ctaPressed)};`,
-    // the CTA-INK trio: pure references onto the ink band (C49 — the trio IS stops
-    // 9/10/11 read as states; hover was the last raw between value). The cta-border
-    // var() idiom, so P3 overrides of the referenced stops ride along for free; the
-    // ESCAPE and custom-link postures still override these raw, after this body.
-    `  --${prefix}-cta-ink: var(--${prefix}-ink-53-aa);`,
-    `  --${prefix}-cta-ink-hover: var(--${prefix}-ink-42-aa);`,
-    `  --${prefix}-cta-ink-pressed: var(--${prefix}-ink-30-aaa);`,
-    // the STRONG text-cta (neutral only, owner 2026-08-04): the mirror trio over the
-    // same three stops cta-ink ascends (11 → 10 → 9); hover shares the between stop
-    // through the cta-ink chain
-    ...(prefix === 'neutral' ? [
-      `  --neutral-cta-ink-strong: var(--neutral-ink-30-aaa);`,
-      `  --neutral-cta-ink-strong-hover: var(--neutral-cta-ink-hover);`,
-      `  --neutral-cta-ink-strong-pressed: var(--neutral-ink-53-aa);`,
-    ] : []),
     `  --${prefix}-cta-border: var(${border ? offsetVarName(ctaBorderRung(prefix)) : TRANSPARENT_VAR});`,
     // the SOFT on-cta (owner 2026-08-04: "neutral cta on's should also be the alpha"): the
     // neutral's cta is the scale-fed WASH-level fill, the system's other quiet cta, so its
@@ -207,11 +194,11 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
   ]
 }
 
-// the full cta family for one mode — shared by the base body and the P3 override body
+// the cta fill trio for one mode — shared by the base body and the P3 override body
 function ctaFamilyOf(s: GeneratedScale, mode: 'light' | 'dark') {
   return mode === 'light'
-    ? { cta: s.cta, ctaHover: s.ctaHover, ctaPressed: s.ctaPressed, ctaInk: s.ctaInk, ctaInkHover: s.ctaInkHover, ctaInkPressed: s.ctaInkPressed }
-    : { cta: s.ctaDark, ctaHover: s.ctaHoverDark, ctaPressed: s.ctaPressedDark, ctaInk: s.ctaInkDark, ctaInkHover: s.ctaInkHoverDark, ctaInkPressed: s.ctaInkPressedDark }
+    ? { cta: s.cta, ctaHover: s.ctaHover, ctaPressed: s.ctaPressed }
+    : { cta: s.ctaDark, ctaHover: s.ctaHoverDark, ctaPressed: s.ctaPressedDark }
 }
 
 // the P3 override body for one family+mode: only vars whose master rendition exceeds
@@ -221,8 +208,6 @@ export function brandKindP3Body(prefix: string, s: GeneratedScale, mode: 'light'
   const f = ctaFamilyOf(s, mode)
   const out: string[] = []
   for (const st of stops) if (p3Differs(st)) out.push(`  --${prefix}-${stopTokenName(st.stop)}: ${p3Value(st)};`)
-  // fill trio only: the cta-ink trio is var() references onto the ink stops (C49), so the
-  // stops' own P3 overrides above carry it — a raw override here would just shadow the chain
   for (const [name, st] of [['cta', f.cta], ['cta-hover', f.ctaHover], ['cta-pressed', f.ctaPressed]] as const)
     if (p3Differs(st)) out.push(`  --${prefix}-${name}: ${p3Value(st)};`)
   return out
@@ -382,7 +367,11 @@ export function brandCss(
   // Match-secondary/Custom via colorEngine.neutralTintHue and pass the hue; absent = the
   // primary's — every pre-source caller is byte-identical (the emitter stays dumb, like
   // figmaRender's ThemeInput.neutralH).
-  neutralH?: number
+  neutralH?: number,
+  // THE VIVID-INKS OPT-OUT (owner 2026-08-12, advanced): with the escape on, the brand's
+  // ink stops normally ride the neutral's ink register (text de-reds with the fills);
+  // this keeps them at the brand hue. Meaningless without ctaEscape; default off.
+  escapeInksVivid?: boolean
 ): string {
   const { scale } = r
   // the escape RESETS the red collision to default (owner 2026-07-16): with the brand's
@@ -416,9 +405,6 @@ export function brandCss(
       alias('cta'),
       alias('cta-hover'),
       alias('cta-pressed'),
-      alias('cta-ink'),
-      alias('cta-ink-hover'),
-      alias('cta-ink-pressed'),
       alias('cta-border'),
       alias('on-cta'),
     ]
@@ -448,22 +434,23 @@ export function brandCss(
   // cta-hover = mark-74-aa at OUTLINE_HOVER_ALPHA (pressed doubles it) — the STABLE contrast-gated stop, the same one
   // the ring aliases (owner: 9% of the generated subtle cta was imperceptible — it's a very
   // light/dark color; the hover must reference a stable value).
-  // the SYSTEM LINK trio: default aliases the primary's cta-ink (mode-blind — the var
-  // chain resolves per block); a custom seed ships its ink-register resolution raw
+  // the SYSTEM LINK trio: default aliases the primary's ink stops directly (mode-blind —
+  // the var chain resolves per block; was the cta-ink trio until its 2026-08-12 deletion,
+  // same values by C49 construction); a custom seed ships its ink-register resolution raw
   const linkTrio = linkHex ? resolveLinkTrio(linkHex, contrastProfile) : null
   const link = (mode: 'light' | 'dark'): string[] => linkTrio
     ? (mode === 'light'
       ? [`  --link: ${stopHex(linkTrio.link)};`, `  --link-hover: ${stopHex(linkTrio.linkHover)};`, `  --link-pressed: ${stopHex(linkTrio.linkPressed)};`]
       : [`  --link: ${stopHex(linkTrio.linkDark)};`, `  --link-hover: ${stopHex(linkTrio.linkHoverDark)};`, `  --link-pressed: ${stopHex(linkTrio.linkPressedDark)};`])
     : [
-      `  --link: var(--brand-cta-ink);`,
-      `  --link-hover: var(--brand-cta-ink-hover);`,
-      `  --link-pressed: var(--brand-cta-ink-pressed);`,
+      `  --link: var(--brand-ink-53-aa);`,
+      `  --link-hover: var(--brand-ink-42-aa);`,
+      `  --link-pressed: var(--brand-ink-30-aaa);`,
     ]
   // the custom trio's P3 renditions (review-caught 2026-07-16): the DEFAULT posture rides
-  // the cta-ink vars' own P3 overrides through the alias chain, but a custom trio ships
+  // the ink stops' own P3 overrides through the alias chain, but a custom trio ships
   // raw hexes — without these lines an out-of-sRGB custom link renders visibly duller
-  // than the same-register cta-ink text button beside it. --link is its own property, so
+  // than the same-register ink text beside it. --link is its own property, so
   // there is no cascade-pop hazard (the escape/outline drop classes don't apply).
   const linkP3 = (mode: 'light' | 'dark'): string[] => {
     if (!linkTrio) return []
@@ -474,20 +461,30 @@ export function brandCss(
   }
 
   // neutral cta escape re-resolution: emitted AFTER the brand body so the cascade takes
-  // these values (the outline idiom). Fill trio + on-cta only — cta-ink and the ramp stay
-  // the brand's own.
+  // these values (the outline idiom).
   const escape = (mode: 'light' | 'dark'): string[] => {
     if (!ctaEscape) return []
     const esc = escapeCtaFamily(nScale, mode, contrastProfile)
-    // ALL the ctas (owner amendment 2026-07-16): the text-style cta trio de-reds with
-    // the fills; --link's default alias follows through the cascade automatically
+    // ALL the ctas (owner amendment 2026-07-16, re-specified 2026-08-12 with the cta-ink
+    // deletion): the brand's ink STOPS de-red with the fills — they ride the neutral's
+    // ink register, so text set in the brand ink quiets wherever it appears; --link's
+    // default alias follows through the cascade automatically. escapeInksVivid is the
+    // advanced opt-out (owner 2026-08-12): fills still escape, inks keep the brand hue.
+    const nStops = mode === 'light' ? nScale.light : nScale.dark
+    const inkAt = (n: number) => {
+      const s = nStops.find(x => x.stop === n)
+      if (!s) throw new Error(`escape: the neutral scale has no ink stop ${n}`)
+      return s
+    }
     return [
       `  --brand-cta: ${stopHex(esc.cta)};`,
       `  --brand-cta-hover: ${stopHex(esc.ctaHover)};`,
       `  --brand-cta-pressed: ${stopHex(esc.ctaPressed)};`,
-      `  --brand-cta-ink: ${stopHex(esc.ctaInk)};`,
-      `  --brand-cta-ink-hover: ${stopHex(esc.ctaInkHover)};`,
-      `  --brand-cta-ink-pressed: ${stopHex(esc.ctaInkPressed)};`,
+      ...(escapeInksVivid ? [] : [
+        `  --brand-ink-53-aa: ${stopHex(inkAt(9))};`,
+        `  --brand-ink-42-aa: ${stopHex(inkAt(10))};`,
+        `  --brand-ink-30-aaa: ${stopHex(inkAt(11))};`,
+      ]),
       `  --brand-on-cta: ${onColor(esc.onFillIsWhite)};`,
     ]
   }
@@ -537,10 +534,13 @@ export function brandCss(
       : lines
   // same P3-pop class for the ESCAPE (the owner-caught outline lesson, 2026-07-11): the
   // escaped fill trio ships the neutral's whisper chroma — an out-of-sRGB BRAND cta's P3
-  // override sitting last in the cascade would pop the brand fill back in over it.
+  // override sitting last in the cascade would pop the brand fill back in over it. With
+  // the 2026-08-12 ink de-chroma the brand's escaped INK STOPS carry the same hazard,
+  // so their P3 lines drop too (unless the vivid opt-out keeps the brand inks).
   const dropEscapeCta = (lines: string[]): string[] =>
     ctaEscape
-      ? lines.filter(l => !/^  --brand-cta(-hover|-pressed|-ink|-ink-hover|-ink-pressed)?:/.test(l))
+      ? lines.filter(l => !/^  --brand-cta(-hover|-pressed)?:/.test(l)
+          && (escapeInksVivid || !/^  --brand-ink-(53-aa|42-aa|30-aaa):/.test(l)))
       : lines
   const p3Light = [
     ...dropEscapeCta(brandKindP3Body('brand', scale, 'light')),
