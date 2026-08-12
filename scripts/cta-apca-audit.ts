@@ -11,7 +11,7 @@
 // their cta is the engine's tint, "the same as the recommended" (owner 2026-08-02).
 //
 // Surfaces below the grid: brand cta light+dark, custom secondary — all via resolveTheme
-// (the real pipeline). Exhibit → render/cta-apca-audit.html. Sweeps are agnostic hue×L×C
+// (the real pipeline). Exhibit → dist/cta-apca-audit.html. Sweeps are agnostic hue×L×C
 // grids, no named brands. RUNGS keeps the historical 63/65/70 ladder for the non-signal
 // sections' cells.
 import { writeFileSync, mkdirSync } from 'fs'
@@ -277,6 +277,6 @@ ${REST_BARS.map(signalGrid).join('')}
 ${surfaces.map(sectionHtml).join('')}
 <div style="height:1rem"></div>`
 
-mkdirSync('render', { recursive: true })
-writeFileSync('render/cta-apca-audit.html', html)
-console.log('written -> render/cta-apca-audit.html')
+mkdirSync('dist', { recursive: true })
+writeFileSync('dist/cta-apca-audit.html', html)
+console.log('written -> dist/cta-apca-audit.html')
