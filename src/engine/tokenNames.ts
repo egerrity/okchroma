@@ -23,12 +23,12 @@ const SHARED_NAMES: Record<number, string> = {
   // THE INK BAND (C49, owner 2026-08-05): the first text stop + emphasis fill (the
   // 2026-07-29 highlight collapse — the old highlight-9 and on-highlight are
   // deleted; this stop carries both jobs, its on-color a paper token), the between
-  // text stop (the value cta-ink-hover used to generate bespokely, promoted to a
-  // normal stop the trio aliases), and the strong text stop. C49 restored the top
+  // text stop (a value the retired text-cta hover state used to generate bespokely,
+  // promoted to a normal stop), and the strong text stop. The three read as states
+  // ARE the text-style cta (owner 2026-08-12). C49 restored the top
   // two pre-collapse stop INDICES (11, and the off-scale anchor's 12 — emitted as a
   // literal in cssRender, not through this table) with the between stop taking the
-  // vacated index 10. Stage B (owner 2026-08-07, names only) relabeled all three to
-  // their banded LL-r-floor form; the indices (9/10/11) are unchanged.
+  // vacated index 10; the indices (9/10/11) are unchanged since.
   9: 'ink-53-aa',
   10: 'ink-42-aa',
   11: 'ink-30-aaa',

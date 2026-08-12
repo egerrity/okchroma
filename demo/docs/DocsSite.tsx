@@ -427,7 +427,8 @@ const generation: Article = {
             secondary 6%, neutral 8%).</LI>
             <LI>A quiet fill (derived secondary, neutral) carries its text at 75/80% alpha, only
             where the composite clears 4.5 on rest, hover, and pressed.</LI>
-            <LI><Code>cta-ink</Code>, the text-style cta, aliases ink-53-aa/42-aa/30-aaa as its states.</LI>
+            <LI>The text-style cta is the ink stops read as states: ink-53-aa rest,
+            ink-42-aa hover, ink-30-aaa pressed.</LI>
           </UL>
         </LI>
         <LI><b>Collision checks.</b> The result is compared to the four signals: red, yellow,
