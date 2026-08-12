@@ -35,7 +35,7 @@ On any other plan the plugin detects the missing API and reports it instead of w
   - `primitive/neutral/*` (paper-100 … ink-0 in ladder order), `primitive/critical/*
     primitive/warning/* primitive/positive/* primitive/info/*` with their cta states in
     the family, and `primitive/system/*`: abs poles, transparent, scrim,
-    `system/surface/*` (the scheme-divergent sink/base/lift/pop elevation-plane
+    `system/surface/*` (the scheme-divergent sunken/low/base/high elevation-plane
     aliases — base-only, never overridden) and `system/link/*`.
   - Values = the documented default seed: okchroma pink `#E93D82`, recommended mode,
     derived-pastel secondary, default neutral, CANONICAL signal ramps — solved per

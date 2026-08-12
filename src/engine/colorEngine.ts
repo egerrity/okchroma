@@ -275,7 +275,7 @@ export function generateNeutralScale(
   scale.cta = asCta(9, scale.light[3])
   scale.ctaDark = asCta(9, scale.dark[3])
   // DARK POP CLEARANCE (owner 2026-07-27): the fed dark washes pack near black, so
-  // the quiet fill sat ~1.07 vs the POP plane (dark paper-3 — post-C27 the one-level
+  // the quiet fill sat ~1.07 vs the HIGH plane (dark paper-3 — post-C27 the one-level
   // highest background; a generated pop candidate was tried and RETIRED, owner
   // 2026-07-28: once the papers share a photometric level, pop = paper-3 is the
   // design) — invisible on the very cards its buttons ride, while "clearing" ~1.3
@@ -285,7 +285,7 @@ export function generateNeutralScale(
   // its own white pop. Solved on the wcag ratio (a perceptual separation bar,
   // profile-agnostic; the dual-rendition legality solver is reused); chroma
   // re-clamps at the lifted L via makeStop; on-text is re-judged below.
-  const popDark = scale.dark[2] // paper-3 — the POP plane in dark
+  const popDark = scale.dark[2] // paper-3 — the HIGH plane in dark
   const popDarkY = wcagY(popDark.L, popDark.C, popDark.H)
   const clearedL = findLForContrastUp(scale.ctaDark.L, scale.ctaDark.C, scale.ctaDark.H, popDarkY, NEUTRAL_CTA_DARK_POP_CLEARANCE)
   const popLift = clearedL - scale.ctaDark.L

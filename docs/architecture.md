@@ -447,7 +447,7 @@ community plugin (`plugin/`) have no notion of it. Two kinds of rows share the w
 - **roles**: a state-carrying usage decision, kept in its natural group. The cta family
   inside its own family group (`primitive/brand-primary/cta/hover`) and the
   system rows `primitive/system/link/*` and
-  `primitive/system/surface/sink|base|lift|pop`.
+  `primitive/system/surface/sunken|low|base|high`.
 
 **The seam.** `payload.registerPath(path)` (`plugin-ext/payload.ts`) is the one function
 that applies the prefix, as the FINAL step of `toFlat()`, after every other rename
@@ -484,17 +484,17 @@ panel always reverts on the next apply.
 
 **Hand-authored rows.** Nearly every row is generated from the resolved theme via
 `payload.toFlat()`. The one exception is the four elevation planes,
-`primitive/system/surface/sink|base|lift|pop`: `code.ts` creates these itself
-(`ensure('primitive/system/surface/sink')`, etc.), outside the payload token stream, then
+`primitive/system/surface/sunken|low|base|high`: `code.ts` creates these itself
+(`ensure('primitive/system/surface/sunken')`, etc.), outside the payload token stream, then
 wires each as a scheme-divergent alias onto the NEUTRAL's own resolved paper stops
 (`primitive/neutral/paper/*`), never onto the family being themed:
 
 | plane | light aliases | dark aliases |
 |---|---|---|
-| `system/surface/sink` | `neutral/paper-95` | `neutral/paper-100` |
-| `system/surface/base` | `neutral/paper-97` | `neutral/paper-99` |
-| `system/surface/lift` | `neutral/paper-99` | `neutral/paper-97` |
-| `system/surface/pop`  | `neutral/paper-100` | `neutral/paper-95` |
+| `system/surface/sunken` | `neutral/paper-95` | `neutral/paper-100` |
+| `system/surface/low` | `neutral/paper-97` | `neutral/paper-99` |
+| `system/surface/base` | `neutral/paper-99` | `neutral/paper-97` |
+| `system/surface/high`  | `neutral/paper-100` | `neutral/paper-95` |
 
 **Apply never deletes.** A path in an existing base file that the current payload no
 longer emits (an orphan, left behind by a deleted or renamed token) is counted and

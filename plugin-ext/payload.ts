@@ -110,7 +110,7 @@ function flatten(node: FigmaGroup, prefix: string, out: FlatTok[]): void {
 
 // Panel order = creation order (v1's rule; owner layout 2026-07-27: abs poles at the
 // system root, then surface/, then alpha/): system → neutral → brand-primary →
-// brand-secondary → signals. The system/surface/sink|base|lift|pop planes are NOT here —
+// brand-secondary → signals. The system/surface/sunken|low|base|high planes are NOT here —
 // they are scheme-divergent aliases the plugin creates after the abs rows (ordering) and
 // wires once the neutral exists. neutral/ink-0 (the OFF-SCALE anchor — pure black in
 // light, pure white in dark) is injected right after the last real ink stop, in ladder

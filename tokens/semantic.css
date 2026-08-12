@@ -6,18 +6,19 @@
 /* ─── Global surface / fg / border ─────────────────────────────────────────── */
 
 [data-brand] {
-  /* Elevation planes sink → base → lift → pop (owner spec + naming, 2026-07-24 Figma
-     elevation study): both themes use the SAME four stops, in reversed order —
-     elevation always moves toward paper-100's side of the ramp (paper-0 pre-Stage-B).
-     Light descends the ramp as elevation rises (sink paper-95 → pop paper-100 white);
-     dark ascends it (sink paper-100 black → pop paper-95). paper-100 flips
-     white→black with the mode, so it is always the extreme pole: the pop in light,
-     the sink in dark. Stage B (owner 2026-08-07, names only) relabeled every leaf
-     below to its rootL-derived digit; the stops themselves did not move. */
-  --surface-sink:        var(--neutral-paper-95);
-  --surface-base:         var(--neutral-paper-97);
-  --surface-lift:       var(--neutral-paper-99);
-  --surface-pop:        var(--paper-100, #ffffff);
+  /* Elevation planes sunken → low → base → high (owner spec 2026-07-24 Figma
+     elevation study; renamed 2026-08-12 — base is the raised plane components sit
+     on, the page behind it is low, the two extremes are edge cases): both themes
+     use the SAME four stops, in reversed order — elevation always moves toward
+     paper-100's side of the ramp. Light descends the ramp as elevation rises
+     (sunken paper-95 → high paper-100 white); dark ascends it (sunken paper-100
+     black → high paper-95). paper-100 flips white→black with the mode, so it is
+     always the extreme pole: the high in light, the sunken in dark. The stops
+     themselves have never moved through any of the renames. */
+  --surface-sunken:        var(--neutral-paper-95);
+  --surface-low:         var(--neutral-paper-97);
+  --surface-base:       var(--neutral-paper-99);
+  --surface-high:        var(--paper-100, #ffffff);
 
   --fg-default:           var(--neutral-ink-30-aaa);
   --fg-subtle:            var(--neutral-ink-53-aa);
@@ -45,17 +46,16 @@
 }
 
 [data-brand][data-theme="dark"] {
-  /* Dark runs the same four stops upward: sink paper-100 (black) → base paper-99 →
-     lift paper-97 → pop paper-95 — the one-level highest background (C27: every
-     family's paper-95 shares one photometric level, so chips sit flush on pop by
-     construction; a generated-pop candidate was tried and retired, owner
-     2026-07-28). Base needs its own override here because the shared block's
-     base is paper-97 (the light value). Stage B (owner 2026-08-07, names only)
-     relabeled every leaf here; the stops themselves did not move. */
-  --surface-sink:        var(--paper-100, #000000);
-  --surface-base:         var(--neutral-paper-99);
-  --surface-lift:       var(--neutral-paper-97);
-  --surface-pop:        var(--neutral-paper-95);
+  /* Dark runs the same four stops upward: sunken paper-100 (black) → low paper-99 →
+     base paper-97 → high paper-95 — the one-level highest background (C27: every
+     family's paper-95 shares one photometric level, so chips sit flush on the high
+     plane by construction; a generated candidate for it was tried and retired,
+     owner 2026-07-28). Low needs its own override here because the shared block's
+     low is paper-97 (the light value); the stops themselves did not move. */
+  --surface-sunken:        var(--paper-100, #000000);
+  --surface-low:         var(--neutral-paper-99);
+  --surface-base:       var(--neutral-paper-97);
+  --surface-high:        var(--neutral-paper-95);
 
   --shadow-04: rgba(0, 0, 0, 0.32);
   --shadow-08: rgba(0, 0, 0, 0.48);
@@ -127,7 +127,7 @@
 
    -fg-on-emphasis rides --paper-100, NOT a solved on-color: the engine's on-highlight
    token was deleted with the highlight band (owner 2026-07-29). paper-100 is the
-   mode-flipping paper extreme — white in light, the tinted deep sink in dark — and
+   mode-flipping paper extreme — white in light, the tinted deep ground in dark — and
    it clears 4.5 against ink-53-aa everywhere (agnostic 360-seed sweep, worst 4.96
    light / 8.04 dark). -bg-emphasis / -border-emphasis moved from highlight-9 to
    ink-53-aa (ink-9 pre-Stage-B) with it; in dark that reads lighter (contrast vs

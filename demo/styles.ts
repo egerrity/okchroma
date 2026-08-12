@@ -18,9 +18,9 @@ export const STYLE_CSS = /* css */ `
    different clothes; the dashboard is a DESKTOP OF WINDOWS. THREE-LEVEL LADDER
    (owner's 2026-07-27 Figma card set — one 4px flat offset everywhere, the
    SHADOW COLOR fades down the ladder and the stroke fades with it):
-     +2 hero    titlebar + brand-black shadow + ink-53-aa stroke → Customers (pop plane)
+     +2 hero    titlebar + brand-black shadow + ink-53-aa stroke → Customers (high plane)
      +1 cards   wash-80 grey shadow + mark-74-aa stroke            → Get started, Activity, sidebar
-     −1 metrics surface-pop shadow (punched in) + wash-92 stroke    → metric tiles (compact)
+     −1 metrics surface-high shadow (punched in) + wash-92 stroke    → metric tiles (compact)
      ctas       ink-0 border + ink-53-aa shadow                      → primary/secondary cta buttons
    Every shadow color is a token (or the brand mix), so DARK FALLS OUT of the
    swap — no bespoke dark block (owner ruling 2026-07-27). */
@@ -75,11 +75,11 @@ export const STYLE_CSS = /* css */ `
   font-size: 11px !important; font-weight: 700 !important;
   text-transform: uppercase; letter-spacing: .14em;
 }
-/* −1: metric tiles PUNCH IN — faint stroke + a surface-pop flat shadow (paper
+/* −1: metric tiles PUNCH IN — faint stroke + a surface-high flat shadow (paper
    token, so it stays a knockout in light and falls out correctly in dark) */
 [data-style="retro"] .dash .dash-metric {
   border: 2.5px solid var(--neutral-wash-92) !important;
-  box-shadow: 4px 4px 0 var(--surface-pop) !important;
+  box-shadow: 4px 4px 0 var(--surface-high) !important;
   padding: 10px 12px !important;
 }
 [data-style="retro"] .dash .dash-metric-value {
@@ -199,7 +199,7 @@ export const STYLE_CSS = /* css */ `
   border: 0 !important;
   box-shadow: var(--bb-recess) !important;
   padding: 20px !important;
-  background-image: linear-gradient(109deg, var(--surface-sink) 22%, var(--surface-base)) !important;
+  background-image: linear-gradient(109deg, var(--surface-sunken) 22%, var(--surface-low)) !important;
 }
 /* the side menu FLOATS (owner): a lifted container off the ground — margins,
    big radius, the card pillow */

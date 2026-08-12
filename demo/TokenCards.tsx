@@ -4,7 +4,7 @@ import { AlertCircle, AlertTriangle, CheckCircle, Info } from 'lucide-react'
 // Stage 3 — the per-ramp token display, as a realistic SHOWCASE card. It renders
 // with the LIVE primitives, so it themes (light/dark) and picks the right on-fill
 // polarity for free. The card it sits in is `.ct-colorblock` (already on the elevated
-// --surface-lift plane), so it lifts off the page consistently in both modes.
+// --surface-base plane), so it lifts off the page consistently in both modes.
 //
 // Roles demonstrated in context, not as abstract chips:
 //   ink     → the heading + body copy ("ink family" called out in ink-53-aa)

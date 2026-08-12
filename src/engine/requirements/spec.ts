@@ -148,7 +148,7 @@ const P_TEXT: Producer = { hue: 'warm-torsion', L: 'perceptual', chroma: 'brand'
 // deleted in C33, and the paper-95 clearance was never the scaffold's doing — it was the
 // 7→8 carry floor, which fired on 366/366 ramps and has been deleted with this change.
 // Measured with the floor gone and the paper-97 anchor kept, dark stop 8 lands at 2.86
-// against paper-95 on ALL 366 ramps: an input border on the pop plane would fail 1.4.11.
+// against paper-95 on ALL 366 ramps: an input border on the high plane would fail 1.4.11.
 // The floor was masking a mis-anchored requirement. Anchored at paper-95 it lands on the
 // law — worst 3.04 over 360 agnostic seeds + 6 neutrals, clearing 3:1 on every paper in
 // both modes from one rule.

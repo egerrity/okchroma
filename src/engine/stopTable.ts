@@ -251,7 +251,7 @@ export const DARK_CTA_MIN_L = 0.63
 
 export const DARK_BRAND_FILL_MIN_L = 0.70
 
-// The neutral QUIET cta's dark clearance reads against the POP plane (dark
+// The neutral QUIET cta's dark clearance reads against the HIGH plane (dark
 // paper-3 — the lightest dark surface its buttons sit on), never against black
 // (owner 2026-07-27: the fed trio "cleared" ~1.3 on absolute black, a surface
 // nothing renders on, while sitting an invisible ~1.07 off pop). The scale-fed

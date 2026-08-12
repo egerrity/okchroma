@@ -325,7 +325,7 @@ function ForkComposition({ heading, body, page, ring, fill, onFill, linkC, textB
 
 // ─── shared section chrome ──────────────────────────────────────────────────
 const CARD: React.CSSProperties = {
-  background: 'var(--surface-lift)', borderRadius: 16, padding: '20px 22px',
+  background: 'var(--surface-base)', borderRadius: 16, padding: '20px 22px',
   boxShadow: 'var(--elev-card)', display: 'flex', flexDirection: 'column', gap: 12,
 }
 const CARD_TITLE: React.CSSProperties = { fontSize: 13, fontWeight: 700, color: 'var(--fg-default)' }
@@ -631,13 +631,13 @@ export default function UnifyCompare() {
 
   return (
     <div data-brand="chrome" data-theme={dark ? 'dark' : 'light'}
-      style={{ fontFamily: FONT_STACK, minHeight: '100vh', background: 'var(--surface-base)' }}>
+      style={{ fontFamily: FONT_STACK, minHeight: '100vh', background: 'var(--surface-low)' }}>
       <style>{neutralCss('[data-brand="chrome"]', 0, 'pure')}</style>
       <style>{allCss}</style>
 
       <header style={{
         position: 'sticky', top: 0, zIndex: 40, display: 'flex', alignItems: 'center', gap: 16,
-        height: 52, padding: '0 28px', background: 'var(--surface-lift)', boxShadow: '0 1px 2px rgba(17,18,22,0.06)',
+        height: 52, padding: '0 28px', background: 'var(--surface-base)', boxShadow: '0 1px 2px rgba(17,18,22,0.06)',
       }}>
         <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--fg-default)' }}>Unify × OKChroma</span>
         <span style={{ fontSize: 12.5, color: 'var(--fg-subtle)' }}>the seven live themes, hand-picked vs generated</span>
@@ -645,7 +645,7 @@ export default function UnifyCompare() {
         <button onClick={() => setDark(d => !d)} style={{
           display: 'inline-flex', alignItems: 'center', height: 32, padding: '0 15px', borderRadius: 999,
           border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 600,
-          background: 'var(--surface-sink)', color: 'var(--fg-default)',
+          background: 'var(--surface-sunken)', color: 'var(--fg-default)',
         }}>{dark ? '☀ Light' : '☾ Dark'}</button>
       </header>
 
@@ -837,7 +837,7 @@ export default function UnifyCompare() {
             <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--fg-default)' }}>Theme</span>
             <select value={focusSlug} onChange={e => setFocusSlug(e.target.value)} style={{
               height: 34, padding: '0 12px', borderRadius: 8, border: '1px solid var(--border-default)',
-              background: 'var(--surface-lift)', color: 'var(--fg-default)', fontFamily: 'inherit', fontSize: 12.5,
+              background: 'var(--surface-base)', color: 'var(--fg-default)', fontFamily: 'inherit', fontSize: 12.5,
             }}>
               {resolved.map(({ t, slug }) => <option key={slug} value={slug}>{shortName(t)}</option>)}
             </select>

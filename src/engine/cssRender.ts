@@ -73,7 +73,7 @@ const onColor = (white: boolean) => (white ? '#ffffff' : '#000000')
 // This does not reopen the wcag lane; see the C39 entry and the wcag-only standing rule.
 //
 // THE REFERENCE IS THE PAGE, not the family's own paper: neutral paper-97 (paper-2) in light,
-// paper-99 (paper-1) in dark (the demo's --surface-base, which swaps between modes). One ruler
+// paper-99 (paper-1) in dark (the demo's --surface-low, which swaps between modes). One ruler
 // for every family.
 // The light/dark branch C39 hand-wrote is GONE — |Lc| is absolute, so mirroring falls out.
 export const CTA_BORDER_LC_FLOOR = 15
@@ -223,7 +223,7 @@ export function neutralCss(selector: string, brandH: number, level: NeutralLevel
   const nPage = (mode: 'light' | 'dark') => ctaBorder ? pageStopFor(s, mode) : undefined
   // The universal paper-100/ink-0 anchors ride along (paper-0/ink-12 pre-Stage-B): any scope
   // that carries the ladder must also carry its mode-flipping extremes (semantic aliases like
-  // --surface-pop resolve through them). paper-100 = the neutral's resolved
+  // --surface-high resolve through them). paper-100 = the neutral's resolved
   // stop 0 (white in light; one seam below paper-99 in dark, never absolute black).
   const p0 = (st: ColorStop | undefined, fallback: string) => (st ? stopHex(st) : fallback)
   const p3Light = brandKindP3Body('neutral', s, 'light')

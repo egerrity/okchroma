@@ -195,21 +195,34 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // covered by the flattening batch at the top; its own ink-13/ink-12 flat vintages
   // ride the ['ink-13','ink-0'] entry above and ['ink-12','ink-0'] here).
   ['ink-12', 'ink-0'],
-  // elevation planes go 2 → 4 (owner spec + sink/base/lift/pop naming, 2026-07-24):
-  // the old pair migrates to its closest role IN PLACE (bindings survive; their light
-  // stop shifts one rung per the new ladder — raised p0→p1, sunken p2→p3). These
-  // entries point STRAIGHT at the final surface/ homes (owner regroup 2026-07-27):
-  // legacyCandidates expands one hop only, so a chained old→mid→new table would
-  // strand pre-elevation files on the middle name.
-  ['paper-raised', 'surface/lift'],
-  ['paper-sunken', 'surface/sink'],
+  // ── ELEVATION-PLANE RENAME (owner 2026-08-12): sink|base|lift|pop →
+  // sunken|low|base|high — the old "base" gave the PAGE plane too much semantic
+  // weight when components actually sit on the raised plane; the two darkest planes
+  // are edge cases and read as such now. ⚠️ 'base' SURVIVES BUT MOVES PLANES (the
+  // old lift — cards/menus — is the new base), so ORDER is load-bearing twice over:
+  // surface/low must be RESOLVED before surface/base wherever these rows are ensured
+  // (STATIC_UTILS + SYSTEM_GLOBALS list order below) — an exact-name hit on a file's
+  // old base row would otherwise hand the PAGE plane's variable (and its bindings)
+  // to the cards name before the low-lookup could consume it.
+  ['surface/sink', 'surface/sunken'],
+  ['surface/base', 'surface/low'],
+  ['surface/lift', 'surface/base'],
+  ['surface/pop', 'surface/high'],
+  // elevation planes went 2 → 4 (owner spec, 2026-07-24; that round's sink/base/
+  // lift/pop names retired by the 2026-08-12 rename above): the old pair migrates to
+  // its closest role IN PLACE (bindings survive; their light stop shifts one rung per
+  // the new ladder — raised p0→p1, sunken p2→p3). These entries point STRAIGHT at the
+  // final surface/ homes: legacyCandidates expands one hop only, so a chained
+  // old→mid→new table would strand pre-elevation files on the middle name.
+  ['paper-raised', 'surface/base'],
+  ['paper-sunken', 'surface/sunken'],
   // system regroup (owner 2026-07-27): planes → system/surface/*, alpha-carrying
   // utilities → system/alpha/*, link trio → system/link/* with state leaves.
   // abs-black/abs-white stay at the system root. Same-value moves, no ladder shift.
-  ['sink', 'surface/sink'],
-  ['base', 'surface/base'],
-  ['lift', 'surface/lift'],
-  ['pop', 'surface/pop'],
+  ['sink', 'surface/sunken'],
+  ['base', 'surface/low'],
+  ['lift', 'surface/base'],
+  ['pop', 'surface/high'],
   ['transparent', 'alpha/transparent'],
   ['scrim', 'alpha/scrim'],
   ['link', 'link/enabled'],
@@ -474,22 +487,24 @@ figma.ui.onmessage = async (msg) => {
       const K = { r: 0, g: 0, b: 0 }
       // The list order IS the display order in Figma (variables list in creation
       // order; owner's panel layout 2026-07-27: abs poles at the system root, then
-      // surface/, then alpha/). The four elevation planes surface/sink|base|lift|pop
+      // surface/, then alpha/). The four elevation planes surface/sunken|low|base|high
       // are mode-divergent aliases set later — once the theme's neutral papers exist.
       // `elevation` = "create now for ordering, alias below". (Role names, not ladder
       // numbers — each plane aliases a DIFFERENT ladder position per mode: elevation
       // climbs paper-95→paper-100 in light, paper-100→paper-95 in dark, so a number
-      // would lie.) The alpha/shadow ladder (owner 2026-07-27) is pure black at
+      // would lie.) ⚠️ ORDER: surface/low BEFORE surface/base — the 2026-08-12 plane
+      // rename moved 'base' onto the old lift row, and getOrMigrate must let the
+      // low-lookup consume a file's old base row first (see RENAMED_LEAVES). The alpha/shadow ladder (owner 2026-07-27) is pure black at
       // 4/8/12% light; dark is heavier by necessity — near black a light-mode alpha
       // vanishes — at 32/48/64%.
       const STATIC_UTILS: Array<{ path: string; light?: figma.RGBA; dark?: figma.RGBA; elevation?: boolean }> = [
         { path: 'system/abs-black', light: K, dark: K },
         { path: 'system/abs-white', light: W, dark: W },
         { path: 'system/ink-0', light: K, dark: W },
-        { path: 'system/surface/sink', elevation: true },
+        { path: 'system/surface/sunken', elevation: true },
+        { path: 'system/surface/low', elevation: true }, // MUST precede base (rename swap)
         { path: 'system/surface/base', elevation: true },
-        { path: 'system/surface/lift', elevation: true },
-        { path: 'system/surface/pop', elevation: true },
+        { path: 'system/surface/high', elevation: true },
         { path: 'system/alpha/transparent', light: { r: 1, g: 1, b: 1, a: 0 }, dark: { r: 1, g: 1, b: 1, a: 0 } },
         { path: 'system/alpha/scrim', light: { r: 0, g: 0, b: 0, a: 0.6 }, dark: { r: 0, g: 0, b: 0, a: 0.6 } },
         // the SOFT ON-CTA primitive (C43 follow-up, owner-named 2026-08-03): the on-text
@@ -729,7 +744,7 @@ figma.ui.onmessage = async (msg) => {
       // ① system globals (brand-independent: every theme mode aliases the same seed;
       // idempotent — backfills pre-existing brand modes the moment the globals appear)
       const SYSTEM_GLOBALS = ['system/abs-black', 'system/abs-white',
-        'system/surface/sink', 'system/surface/base', 'system/surface/lift', 'system/surface/pop',
+        'system/surface/sunken', 'system/surface/low', 'system/surface/base', 'system/surface/high',
         'system/alpha/transparent', 'system/alpha/scrim',
         'system/alpha/shadow-04', 'system/alpha/shadow-08', 'system/alpha/shadow-12']
       for (const path of SYSTEM_GLOBALS) {
@@ -900,7 +915,7 @@ figma.ui.onmessage = async (msg) => {
       //   pop  → neutral/paper-100 (white) in light · neutral/paper-95 in dark  (was paper-0/paper-3)
       // The vars were CREATED in order above; aliases are set HERE because the
       // theme's neutral vars only exist after the alias loop ("the wait"). This
-      // mirrors the CSS semantic layer's surface-sink/base/lift/pop exactly.
+      // mirrors the CSS semantic layer's surface-sunken/low/base/high exactly.
       const themeNeutralP0 = themeByName.get('neutral/paper-100')
       const themeNeutralP1 = themeByName.get('neutral/paper-99')
       const themeNeutralP2 = themeByName.get('neutral/paper-97')
@@ -912,10 +927,10 @@ figma.ui.onmessage = async (msg) => {
           v.setValueForMode(pLight, figma.variables.createVariableAlias(light))
           v.setValueForMode(pDark, figma.variables.createVariableAlias(dark))
         }
-        aliasElev('system/surface/sink', themeNeutralP3, themeNeutralP0)
-        aliasElev('system/surface/base', themeNeutralP2, themeNeutralP1)
-        aliasElev('system/surface/lift', themeNeutralP1, themeNeutralP2)
-        aliasElev('system/surface/pop', themeNeutralP0, themeNeutralP3)
+        aliasElev('system/surface/sunken', themeNeutralP3, themeNeutralP0)
+        aliasElev('system/surface/low', themeNeutralP2, themeNeutralP1)
+        aliasElev('system/surface/base', themeNeutralP1, themeNeutralP2)
+        aliasElev('system/surface/high', themeNeutralP0, themeNeutralP3)
       }
 
       figma.ui.postMessage({ type: 'done', brand, aliases: aliasCount, createdShared, secondary: secondaryMode })

@@ -275,21 +275,33 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // stop-3 rename (owner 2026-07-24) retargeted to its final flat home. Pure
   // relabel, same color.
   ['wash-3', 'paper-95'],
-  // elevation planes go 2 → 4 (owner spec + sink/base/lift/pop naming, 2026-07-24):
-  // the old pair migrates to its closest role IN PLACE (bindings survive; their light
-  // stop shifts one rung per the new ladder — raised p0→p1, sunken p2→p3). These
-  // entries point STRAIGHT at the final surface/ homes (owner regroup 2026-07-27):
-  // legacyCandidates expands one hop only, so a chained old→mid→new table would
-  // strand pre-elevation files on the middle name.
-  ['paper-raised', 'surface/lift'],
-  ['paper-sunken', 'surface/sink'],
+  // ── ELEVATION-PLANE RENAME (owner 2026-08-12): sink|base|lift|pop →
+  // sunken|low|base|high — the old "base" gave the PAGE plane too much semantic
+  // weight when components actually sit on the raised plane. ⚠️ 'base' SURVIVES BUT
+  // MOVES PLANES (the old lift — cards/menus — is the new base), so ORDER is
+  // load-bearing twice over: surface/low must be ENSURED before surface/base (the
+  // ensure() call order in the apply) — an exact-name hit on a file's old base row
+  // would otherwise hand the PAGE plane's variable (and its bindings) to the cards
+  // name before the low-lookup could consume it.
+  ['surface/sink', 'surface/sunken'],
+  ['surface/base', 'surface/low'],
+  ['surface/lift', 'surface/base'],
+  ['surface/pop', 'surface/high'],
+  // elevation planes went 2 → 4 (owner spec, 2026-07-24; that round's sink/base/
+  // lift/pop names retired by the 2026-08-12 rename above): the old pair migrates to
+  // its closest role IN PLACE (bindings survive; their light stop shifts one rung per
+  // the new ladder — raised p0→p1, sunken p2→p3). These entries point STRAIGHT at the
+  // final surface/ homes: legacyCandidates expands one hop only, so a chained
+  // old→mid→new table would strand pre-elevation files on the middle name.
+  ['paper-raised', 'surface/base'],
+  ['paper-sunken', 'surface/sunken'],
   // system regroup (owner 2026-07-27): planes → system/surface/*, alpha-carrying
   // utilities → system/alpha/*, link trio → system/link/* with state leaves.
   // abs-black/abs-white stay at the system root. Same-value moves, no ladder shift.
-  ['sink', 'surface/sink'],
-  ['base', 'surface/base'],
-  ['lift', 'surface/lift'],
-  ['pop', 'surface/pop'],
+  ['sink', 'surface/sunken'],
+  ['base', 'surface/low'],
+  ['lift', 'surface/base'],
+  ['pop', 'surface/high'],
   ['transparent', 'alpha/transparent'],
   ['scrim', 'alpha/scrim'],
   ['link', 'link/enabled'],
@@ -828,7 +840,7 @@ figma.ui.onmessage = async (msg) => {
       }
       // The abs poles are created FIRST (they are alias targets and the owner's panel
       // layout leads with them), then the elevation planes (aliased below once the
-      // neutral exists — ensure() migrates legacy sink/base/lift/pop names in place
+      // neutral exists — ensure() migrates legacy plane names in place
       // via RENAMED_LEAVES), then everything else in payload order.
       // the two alpha rows join the abs poles in this pass for the same reason: they are now
       // ALIAS TARGETS (every cta/border points at one or the other), and ensure() registers into
@@ -843,10 +855,10 @@ figma.ui.onmessage = async (msg) => {
         const v = ensure(path)
         if (createdVars > before || rebuildBase) seedFresh(v, path)
       }
-      ensure('primitive/system/surface/sink')
+      ensure('primitive/system/surface/sunken')
+      ensure('primitive/system/surface/low') // MUST precede base (the 2026-08-12 rename swap)
       ensure('primitive/system/surface/base')
-      ensure('primitive/system/surface/lift')
-      ensure('primitive/system/surface/pop')
+      ensure('primitive/system/surface/high')
       // identity re-homes to the system absolutes — bespoke in-place migration
       // (a leaf entry can't express two divergent homes for the same 'identity'
       // leaf); the renamed var keeps its id, bindings and overrides survive. SOURCES
@@ -1007,8 +1019,8 @@ figma.ui.onmessage = async (msg) => {
       let orphaned = 0
       if (addedCols.length) {
         const known = new Set(baseTokens[activeCols[0]].map(t => t.path))
-        known.add('primitive/system/surface/sink'); known.add('primitive/system/surface/base')
-        known.add('primitive/system/surface/lift'); known.add('primitive/system/surface/pop')
+        known.add('primitive/system/surface/sunken'); known.add('primitive/system/surface/low')
+        known.add('primitive/system/surface/base'); known.add('primitive/system/surface/high')
         for (const p of baseVars.keys()) if (!known.has(p)) orphaned++
         for (const c of addedCols) {
           const idx = activeCols.indexOf(c)
@@ -1035,8 +1047,8 @@ figma.ui.onmessage = async (msg) => {
       const p3 = baseVars.get('primitive/neutral/paper-95')
       if (p0 && p1 && p2 && p3) {
         const planes: Array<[string, figma.Variable, figma.Variable]> = [
-          ['primitive/system/surface/sink', p3, p0], ['primitive/system/surface/base', p2, p1],
-          ['primitive/system/surface/lift', p1, p2], ['primitive/system/surface/pop', p0, p3],
+          ['primitive/system/surface/sunken', p3, p0], ['primitive/system/surface/low', p2, p1],
+          ['primitive/system/surface/base', p1, p2], ['primitive/system/surface/high', p0, p3],
         ]
         for (const [path, light, darkVar] of planes) {
           const v = baseVars.get(path)!
@@ -1079,7 +1091,7 @@ figma.ui.onmessage = async (msg) => {
       // ── overrides: diff every brand token against the LIVE base value, per column ──
       // Equal → ensure NO override (inherit; the blue-highlight story stays honest).
       // Different → setValueForMode routed by the extension's modeId for that column.
-      // primitive/system/* is contract-invariant and skipped outright (the sink/base/lift/pop
+      // primitive/system/* is contract-invariant and skipped outright (the sunken/low/base/high
       // planes are aliases; the rest are poles every brand shares). The payload always CARRIES a
       // brand-secondary (real or derived from the primary); it is WRITTEN only when the
       // file's posture is on — secondary stays opt-in, and once on, every brand derives.

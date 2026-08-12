@@ -372,7 +372,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     brand: { background: 'var(--brand-wash-92)', color: 'var(--brand-ink-30-aaa)' },
     secondary: { background: 'var(--secondary-wash-85)', color: 'var(--secondary-ink-30-aaa)' },
     outline: { background: 'transparent', color: 'var(--secondary-ink-53-aa)', border: '1px solid var(--secondary-mark-74-aa)' },
-    grey: { background: 'var(--surface-sink)', color: 'var(--fg-subtle)' },
+    grey: { background: 'var(--surface-sunken)', color: 'var(--fg-subtle)' },
   }
   const styleLabel: Record<SecondaryStyle, string> = { default: 'Custom', outline: 'Outline', exact: 'Exact' }
   // the ⓘ copy per selection (Figma spec) — the always-visible tooltip replacement
@@ -678,7 +678,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   // resolved off the neutral, one per theme). They render on the neutral row only;
   // other rows carry spacers so the stop columns stay aligned. The identity
   // chip moved to its own card in the side column (owner 2026-07-24).
-  // The matrix rides the POP plane (owner 2026-07-24) so the extremes have a surface
+  // The matrix rides the HIGH plane (owner 2026-07-24, named pop then) so the extremes have a surface
   // to stand off of. paper-100 / ink-0 render as plain swatches with a neutral paper-95
   // stroke — one value for ALL families (unprefixed anchors), unlike the per-family stops.
   // Secondary tab falls back to overview if the secondary is removed while selected.
@@ -709,7 +709,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   // Narrow: plain fill swatches only (no glyphs/icons/labels — they don't fit),
   // family label under each row. Same 13 columns so rows stay aligned.
   const swatchMatrix = () => narrow ? (
-    <div className="ct-colorblock" style={{ background: 'var(--surface-pop)' }}>
+    <div className="ct-colorblock" style={{ background: 'var(--surface-high)' }}>
       {swatchRamps.map(([prefix, label], ri) => (
         <div key={prefix} style={{ marginTop: ri === 0 ? 0 : 10 }}>
           <div style={{ display: 'grid', gridTemplateColumns: `repeat(${SWATCH_STOPS.length + 2}, minmax(0, 1fr))`, gap: 4 }}>
@@ -729,7 +729,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
       ))}
     </div>
   ) : (
-    <div className="ct-colorblock" style={{ background: 'var(--surface-pop)' }}>
+    <div className="ct-colorblock" style={{ background: 'var(--surface-high)' }}>
       {/* stop labels ride ABOVE the columns (owner 2026-08-11) — the old corner badges
           can't hold the suffixed names. The end columns label the global anchors,
           paper-100 / ink-0, hence the * footnote. */}
@@ -820,7 +820,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   )
 
   return (
-    <div ref={frameRef} data-brand="custom" data-theme={dark ? 'dark' : 'light'} data-accent-mode={(secondary || derived) ? 'accented' : 'default'} style={{ background: 'var(--surface-base)', color: 'var(--fg-default)', minHeight: '100%', position: 'relative' }}>
+    <div ref={frameRef} data-brand="custom" data-theme={dark ? 'dark' : 'light'} data-accent-mode={(secondary || derived) ? 'accented' : 'default'} style={{ background: 'var(--surface-low)', color: 'var(--fg-default)', minHeight: '100%', position: 'relative' }}>
       <style>{overrideCss}</style>
       <style>{PAGE_CSS}</style>
 
@@ -851,9 +851,9 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
                 same four neutral stops in both themes, order reversed. Chips render the
                 LIVE planes; the stop caption tracks the active theme. */}
             <div className="ct-colorblock">
-              <div className="ct-label" style={{ marginBottom: 8 }}>Elevation planes — sink · base · lift · pop</div>
+              <div className="ct-label" style={{ marginBottom: 8 }}>Elevation planes — sunken · low · base · high</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-                {([['sink', 'paper-95', 'paper-100'], ['base', 'paper-97', 'paper-99'], ['lift', 'paper-99', 'paper-97'], ['pop', 'paper-100', 'paper-95']] as const).map(([role, lightStop, darkStop]) => (
+                {([['sunken', 'paper-95', 'paper-100'], ['low', 'paper-97', 'paper-99'], ['base', 'paper-99', 'paper-97'], ['high', 'paper-100', 'paper-95']] as const).map(([role, lightStop, darkStop]) => (
                   <div key={role}>
                     <div style={{ background: `var(--surface-${role})`, height: 54, borderRadius: 12, border: '1px solid var(--neutral-paper-95)', boxShadow: 'var(--elev-card)' }} />
                     <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-default)', marginTop: 6 }}>{role}</div>
@@ -1062,11 +1062,11 @@ function EngineChecklist({ rRec, rung, primaryHex, escapeOn }: { rRec: ResolvedB
 // plane + --elev-pop), metric tiles recede to −1 (sink plane + hairline, no
 // shadow, dashMetric below), everything else sits here.
 const dashCard: React.CSSProperties = {
-  background: 'var(--surface-lift)', boxShadow: 'var(--elev-card)',
+  background: 'var(--surface-base)', boxShadow: 'var(--elev-card)',
   borderRadius: 12, padding: 18,
 }
 const dashMetric: React.CSSProperties = {
-  background: 'var(--surface-sink)', border: '1px solid var(--neutral-wash-92)',
+  background: 'var(--surface-sunken)', border: '1px solid var(--neutral-wash-92)',
   borderRadius: 12, padding: 16,
 }
 
@@ -1144,14 +1144,14 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
               dash-card-customers (NOT dash-card: the mobile compact-padding rule
               would break this card's full-bleed table) — the style lever's hero
               hook, and the +2 (pop) level of the hierarchy. */}
-          <section className="dash-card-customers" style={{ ...dashCard, background: 'var(--surface-pop)', boxShadow: 'var(--elev-pop)', gridColumn: 'span 2', gridRow: 'span 2', padding: 0, overflow: 'hidden' }}>
+          <section className="dash-card-customers" style={{ ...dashCard, background: 'var(--surface-high)', boxShadow: 'var(--elev-pop)', gridColumn: 'span 2', gridRow: 'span 2', padding: 0, overflow: 'hidden' }}>
             <div className="dash-hero-head" style={{ padding: '18px 18px 4px' }}><Head title="Customers" sub="Latest sign-ups and account health" /></div>
             <CustomersTable hasSecondary={hasSecondary} />
           </section>
 
           <section className="dash-card dash-card-getstarted" style={dashCard}>
             <Head title="Get started" />
-            <div className="dash-illo" style={{ background: 'var(--surface-sink)', borderRadius: 12, padding: '16px 0', marginBottom: 12 }}>
+            <div className="dash-illo" style={{ background: 'var(--surface-sunken)', borderRadius: 12, padding: '16px 0', marginBottom: 12 }}>
               <div style={{ width: '78%', margin: '0 auto' }}
                 dangerouslySetInnerHTML={{ __html: HERO_ILLO }} />
             </div>
@@ -1214,7 +1214,7 @@ function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typ
   const focusRing: React.CSSProperties = { borderColor: 'var(--brand-mark-74-aa)', boxShadow: '0 0 0 3px var(--brand-wash-89)' }
   const btn: React.CSSProperties = { padding: '8px 16px', borderRadius: 999, border: '1.5px solid transparent', cursor: 'pointer', fontSize: 13, fontWeight: 500, fontFamily: 'inherit' }
   return (
-    <section className="dash-card" style={{ background: 'var(--surface-lift)', boxShadow: 'var(--elev-card)', borderRadius: 12, padding: 18 }}>
+    <section className="dash-card" style={{ background: 'var(--surface-base)', boxShadow: 'var(--elev-card)', borderRadius: 12, padding: 18 }}>
       {/* title row shows the ink-53-aa RANGE: signal ink vs neutral ink vs brand ink;
           the subtitle (only when a secondary exists) adds secondary ink-53-aa. Wraps so
           the chips drop below the title on narrow cards instead of clipping. */}
@@ -1357,7 +1357,7 @@ function CustomersTable({ hasSecondary }: { hasSecondary: boolean }) {
           // THE canonical chip recipe (owner 2026-07-28, matching the unify-compare
           // exhibit): paper-95 fill · wash-85 stroke · ink-53-aa text, family = the only
           // variable. Chips are color-family recipes, never surface planes. NOTE:
-          // dark chips on the POP plane (= paper-95) show the fill collision honestly —
+          // dark chips on the HIGH plane (= paper-95) show the fill collision honestly —
           // that's the context the pop-plane decision is being judged in.
           const planFam = premium ? (hasSecondary ? 'secondary' : 'brand') : 'neutral'
           const planBg = `var(--${planFam}-paper-95)`
@@ -1367,7 +1367,7 @@ function CustomersTable({ hasSecondary }: { hasSecondary: boolean }) {
             <tr key={c.name}>
               <td>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span className="dash-avatar" style={{ width: 28, height: 28, fontSize: 11, background: 'var(--surface-sink)', color: 'var(--fg-default)', border: '1px solid var(--neutral-wash-89)' }}>{c.name[0]}</span>
+                  <span className="dash-avatar" style={{ width: 28, height: 28, fontSize: 11, background: 'var(--surface-sunken)', color: 'var(--fg-default)', border: '1px solid var(--neutral-wash-89)' }}>{c.name[0]}</span>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500 }}>{c.name}</div>
                     <div style={{ fontSize: 11, color: 'var(--fg-subtle)' }}>{c.email}</div>
@@ -1401,9 +1401,9 @@ const PAGE_CSS = `
 /* Same static frame as the palette (owner 2026-07-24): the dashboard fills the
    viewport below the measured controls bar; the MENU is full height and pinned,
    only .dash-main scrolls. */
-.dash { display: grid; grid-template-columns: 220px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); height: calc(100vh - var(--ct-dock, 160px) - 54px); overflow: hidden; background: var(--surface-base);}
+.dash { display: grid; grid-template-columns: 220px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); height: calc(100vh - var(--ct-dock, 160px) - 54px); overflow: hidden; background: var(--surface-low);}
 .dash-side {
-  background: var(--surface-sink);
+  background: var(--surface-sunken);
   padding: 18px 14px; display: flex; flex-direction: column; gap: 18px;
 }
 /* wordmark (logoipsum placeholder) — the two svg groups' fills wire to the live
@@ -1421,7 +1421,7 @@ const PAGE_CSS = `
   display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px;
   font-size: 13px; color: var(--fg-default); text-decoration: none;
 }
-.dash-navitem:hover { background: var(--surface-lift); }
+.dash-navitem:hover { background: var(--surface-base); }
 .dash-navitem.active { background: var(--brand-wash-89); color: var(--brand-ink-30-aaa); font-weight: 600; }
 .dash-user { display: flex; align-items: center; gap: 10px; padding-top: 14px; border-top: 1px solid var(--neutral-wash-89); }
 .dash-avatar {
@@ -1433,7 +1433,7 @@ const PAGE_CSS = `
 .dash-topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
 .dash-search {
   display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--fg-subtle);
-  background: var(--surface-sink); border: 1px solid var(--neutral-wash-89); border-radius: 999px; padding: 7px 14px; min-width: 200px;
+  background: var(--surface-sunken); border: 1px solid var(--neutral-wash-89); border-radius: 999px; padding: 7px 14px; min-width: 200px;
 }
 /* trial banner — a filled tinted chip; the fill carries it, no stroke needed. */
 .dash-info {
@@ -1448,7 +1448,7 @@ const PAGE_CSS = `
 .dash-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .dash-pill { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 6px; white-space: nowrap; }
 .dash-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.dash-table thead tr { background: var(--surface-sink); }
+.dash-table thead tr { background: var(--surface-sunken); }
 /* dense table keeps hairline row dividers — small/functional, legibility earns them */
 .dash-table th {
   text-align: left; font-size: 11px; font-weight: 600; color: var(--fg-subtle);
@@ -1456,7 +1456,7 @@ const PAGE_CSS = `
 }
 .dash-table td { padding: 10px 18px; border-bottom: 1px solid var(--neutral-wash-89); }
 .dash-table tbody tr:last-child td { border-bottom: none; }
-.dash-table tbody tr:hover { background: var(--surface-sink); }
+.dash-table tbody tr:hover { background: var(--surface-sunken); }
 .dash-table th:nth-child(n+4), .dash-table td:nth-child(n+4) { text-align: right; }
 @media (max-width: 1100px) {
   .dash-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1469,7 +1469,7 @@ const PAGE_CSS = `
   display: none; border: none; background: none; cursor: pointer; padding: 6px;
   border-radius: 8px; color: var(--fg-default); font-family: inherit; line-height: 0;
 }
-.dash-burger:hover { background: var(--surface-base); }
+.dash-burger:hover { background: var(--surface-low); }
 @media (max-width: 760px) {
   .dash { grid-template-columns: 1fr; height: auto; overflow: visible; }
   .dash-main { overflow: visible; }
@@ -1493,7 +1493,7 @@ const PAGE_CSS = `
 .ct-iconbtn {
   display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
   width: 26px; height: 26px; border-radius: 8px; border: none; cursor: pointer;
-  background: var(--surface-sink); color: var(--fg-subtle); font-size: 13px;
+  background: var(--surface-sunken); color: var(--fg-subtle); font-size: 13px;
   position: relative; overflow: hidden; font-family: inherit;
 }
 .ct-iconbtn:hover { background: var(--brand-paper-97); color: var(--fg-default); }
@@ -1517,7 +1517,7 @@ const PAGE_CSS = `
 .ct-bar {
   position: sticky; top: 52px; z-index: 35;
   display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 18px;
-  padding: 12px 56px 12px 24px; background: var(--surface-lift);
+  padding: 12px 56px 12px 24px; background: var(--surface-base);
   box-shadow: 0 1px 2px rgba(17,18,22,0.06);
 }
 /* Minimize toggle — collapses the workshop controls to a slim strip. */
@@ -1525,7 +1525,7 @@ const PAGE_CSS = `
   position: absolute; top: 10px; right: 20px; z-index: 2;
   display: inline-flex; align-items: center; justify-content: center;
   width: 26px; height: 26px; border-radius: 8px; border: none; cursor: pointer;
-  background: var(--surface-sink); color: var(--fg-subtle); font-family: inherit;
+  background: var(--surface-sunken); color: var(--fg-subtle); font-family: inherit;
 }
 .ct-bar-toggle:hover { color: var(--fg-default); background: var(--brand-paper-97); }
 .ct-bar-min-label { display: none; align-items: center; gap: 8px; height: 26px; font-size: 13px; font-weight: 600; color: var(--fg-default); }
@@ -1563,7 +1563,7 @@ const PAGE_CSS = `
 .ct-tab-select {
   width: 100%; padding: 8px 12px; border-radius: 8px; font-size: 13px;
   font-family: inherit; color: var(--fg-default);
-  background: var(--surface-lift); border: 1px solid var(--border-subtle);
+  background: var(--surface-base); border: 1px solid var(--border-subtle);
 }
 .ct-scroll {
   flex: 1; min-height: 0; overflow-y: auto;
@@ -1586,7 +1586,7 @@ const PAGE_CSS = `
    planes barely separate by lightness. Scoped to the Palette workshop; the
    dashboard's dark elevation is being reworked separately. */
 .ct-colorblock {
-  background: var(--surface-lift); box-shadow: 0 0 0 1px rgba(17,18,22,0.05), var(--elev-card);
+  background: var(--surface-base); box-shadow: 0 0 0 1px rgba(17,18,22,0.05), var(--elev-card);
   border-radius: 16px; padding: 18px 20px;
 }
 [data-theme="dark"] .ct-colorblock { box-shadow: 0 0 0 1px rgba(255,255,255,0.07), 0 2px 6px -1px rgba(0,0,0,0.5); }
@@ -1609,7 +1609,7 @@ const PAGE_CSS = `
   width: 20px; height: 20px; border-radius: 999px; cursor: default;
   color: var(--fg-subtle); font-size: 13px;
 }
-.ct-info:hover { color: var(--fg-default); background: var(--surface-sink); }
+.ct-info:hover { color: var(--fg-default); background: var(--surface-sunken); }
 .ct-info .ct-tip { width: 300px; }
 .ct-info:hover .ct-tip { display: block; }
 .ct-check-header {
@@ -1617,12 +1617,12 @@ const PAGE_CSS = `
   border: none; background: none; cursor: pointer; font-family: inherit;
   font-size: 12px; padding: 5px 2px; color: var(--fg-default);
 }
-.ct-check-header:hover { background: var(--surface-sink); border-radius: 8px; }
+.ct-check-header:hover { background: var(--surface-sunken); border-radius: 8px; }
 .ct-check {
   position: relative; display: flex; align-items: center; gap: 8px;
   font-size: 12px; padding: 3px 2px 3px 8px; cursor: default;
 }
-.ct-check:hover { background: var(--surface-sink); border-radius: 8px; }
+.ct-check:hover { background: var(--surface-sunken); border-radius: 8px; }
 .ct-tip {
   display: none; position: absolute; left: 0; bottom: calc(100% + 6px); z-index: 70;
   width: 290px; background: var(--neutral-ink-30-aaa); color: var(--neutral-paper-99);
@@ -1647,7 +1647,7 @@ const PAGE_CSS = `
 .ct-label { font-size: 12px; font-weight: 600; color: var(--fg-default); margin-bottom: 5px; }
 .ct-field {
   display: flex; align-items: center; gap: 8px; box-sizing: border-box; width: 100%;
-  background: var(--surface-lift); border: 1px solid var(--neutral-ink-53-aa); border-radius: 12px;
+  background: var(--surface-base); border: 1px solid var(--neutral-ink-53-aa); border-radius: 12px;
   padding: 9px 12px;
 }
 .ct-field:focus-within { border-color: var(--brand-mark-74-aa); box-shadow: 0 0 0 3px var(--brand-wash-89); }
@@ -1663,19 +1663,19 @@ const PAGE_CSS = `
 .ct-swatch.sm { width: 13px; height: 13px; }
 .ct-popover {
   position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; width: 230px;
-  background: var(--surface-lift); border: 1.5px solid var(--brand-cta); border-radius: 12px;
+  background: var(--surface-base); border: 1.5px solid var(--brand-cta); border-radius: 12px;
   padding: 12px; box-shadow: var(--elev-float);
   display: flex; flex-direction: column; gap: 8px; align-items: flex-start;
 }
 .ct-suggest {
   display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-family: inherit;
-  background: var(--surface-sink); border: 1px solid var(--neutral-wash-89); border-radius: 10px;
+  background: var(--surface-sunken); border: 1px solid var(--neutral-wash-89); border-radius: 10px;
   padding: 4px 10px; font-size: 12px; color: var(--fg-default);
 }
 .ct-suggest:hover { background: var(--brand-paper-97); }
 .ct-remove {
   display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-family: inherit;
-  background: var(--surface-lift); border: 1px solid var(--critical-border-default); border-radius: 10px;
+  background: var(--surface-base); border: 1px solid var(--critical-border-default); border-radius: 10px;
   padding: 4px 10px; font-size: 12px; font-weight: 600; color: var(--critical-fg-alt);
 }
 .ct-remove:hover { background: var(--critical-bg-subtle); color: var(--critical-fg); border-color: var(--critical-border-default-hover); }

@@ -71,11 +71,13 @@ const SCALE: Record<string, Body> = {
   'mark-74-aa': { req: 'focus rings, icons, large text', contrast: AA_LARGE, theming: solved, collides: true },
   'ink-53-aa': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
   'ink-42-aa': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
-  'ink-30-aaa': { req: 'high-emphasis text, inverted backgrounds', contrast: AAA_BODY, theming: solved, collides: true },
+  // ("high-emphasis" reworded 2026-08-12: the surface planes took low/high as label
+  // words, and a body carrying either floods that token's picker search — the C50 law)
+  'ink-30-aaa': { req: 'strong-emphasis text, inverted backgrounds', contrast: AAA_BODY, theming: solved, collides: true },
   'cta/enabled': { req: 'CTAs', theming: 'fully re-solved per theme and family' },
   'cta/hover': { req: 'CTA pointer-over state', theming: 'follows its rest fill' },
   'cta/pressed': { req: 'CTA pressed state', theming: 'follows its rest fill' },
-  'cta/border': { req: 'min APCA visibility', theming: 'draws for low contrast CTAs; strength per family tier' },
+  'cta/border': { req: 'min APCA visibility', theming: 'draws for CTAs that sit close to the page; strength per family tier' },
   'cta/on': { req: 'text over the fill', contrast: `${AA_BODY} over its fill`, theming: 'whichever pole passes; quiet fills take the soft pole' },
 }
 
@@ -87,7 +89,7 @@ const NEUTRAL_ONLY: Record<string, Body> = {
 
 // ── system rows, keyed by full path ──────────────────────────────────────────
 const ABS: Body = { req: 'max contrast on CTAs, aliased global endpoints' }
-const OFFSET: Body = { req: 'min APCA visibility', theming: 'offsets buttons in themes with low contrast CTAs' }
+const OFFSET: Body = { req: 'min APCA visibility', theming: 'offsets buttons in themes whose CTAs sit close to the page' }
 const SHADOW: Body = { req: 'drop shadows' }
 const PLANE = (req: string): Body => ({ req, theming: 'aliased to the gray ramp' })
 const LINK = (state: string, contrast: string): Body => ({
@@ -115,10 +117,10 @@ const SYSTEM: Record<string, Body> = {
   'system/alpha/shadow-04': SHADOW,
   'system/alpha/shadow-08': SHADOW,
   'system/alpha/shadow-12': SHADOW,
-  'system/surface/sink': PLANE('recessed elevation plane'),
-  'system/surface/base': PLANE('resting page plane'),
-  'system/surface/lift': PLANE('raised plane — cards, menus'),
-  'system/surface/pop': PLANE('topmost plane — overlays'),
+  'system/surface/sunken': PLANE('recessed elevation plane'),
+  'system/surface/low': PLANE('resting page plane'),
+  'system/surface/base': PLANE('raised plane — cards, menus'),
+  'system/surface/high': PLANE('topmost plane — overlays'),
   'system/link/enabled': LINK('', AA_BODY),
   'system/link/hover': LINK(' pointer-over', AA_BODY),
   'system/link/pressed': LINK(' pressed', AAA_BODY),
