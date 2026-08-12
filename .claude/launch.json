@@ -2,24 +2,6 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "render-static",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8321", "--directory", "render"],
-      "port": 8321
-    },
-    {
-      "name": "render-static-b",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8323", "--directory", "render"],
-      "port": 8323
-    },
-    {
-      "name": "marks-server",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": ["scripts/c12-session/c12-marks-server.py"],
-      "port": 8324
-    },
-    {
       "name": "demo",
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "8322", "--directory", "."],
