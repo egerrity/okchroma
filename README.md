@@ -10,9 +10,9 @@ on-text colors, for each brand hex inputted. Alongside the brand color(s), it ge
 The point is **white-label predictability**: every ramps's stops land at the same
 perceived lightness and play the same role, so you map your design tokens to step
 **numbers** once and they hold for any color scale. Contrast is built into the math, not
-bolted on after — and the whole system re-solves under your choice of contrast law:
-**APCA** (the shipped default — the perceptual model) or **WCAG** (the strict ratios,
-every text color guaranteed to pass its ratio).
+bolted on after: the system solves against **WCAG** ratios (every text color guaranteed
+to pass), with **APCA** as an added legibility floor on CTA text (Lc 65 clearance on top
+of the 4.5:1 requirement).
 
 Output comes in two interchangeable forms carrying the same values:
 
