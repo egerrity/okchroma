@@ -615,15 +615,18 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     )
   }
 
-  // Flat compare grid of the generated SCALE (all ramps × the 1–11 stops), for
+  // Flat compare grid of the generated SCALE (all ramps × the scale stops), for
   // eyeballing the ladder. cta / cta-ink live in the deconfliction card below, not
   // here (owner 2026-07-17: keep the top card to the 0–12 scale, reserve the second
   // card for cta + cta-ink). Each cell shows the token representatively: surfaces as
   // plain swatches, mark-74-aa as a ring (its role IS a stroke), ink as "Aa" text,
   // identity as an "ID" chip. Themes with the page toggle.
   const SWATCH_STOPS = ['paper-99', 'paper-97', 'paper-95', 'wash-92', 'wash-89', 'wash-85', 'wash-80', 'mark-74-aa', 'ink-53-aa', 'ink-42-aa', 'ink-30-aaa']
-  // neutral rides on top — it carries the stop numbering + the global 0/12 anchors
-  // for the whole matrix (owner 2026-07-24)
+  // column labels = the token name minus the band word ("89", "53aa"), derived from
+  // the token strings so a rename cannot desynchronise label and column
+  const stopLabel = (s: string) => s.split('-').slice(1).join('')
+  // neutral rides on top — it carries the global paper-100/ink-0 anchors for the
+  // whole matrix (owner 2026-07-24)
   const swatchRamps: Array<[string, string]> = [
     ['neutral', 'neutral'],
     ['brand', 'primary'],
@@ -675,11 +678,11 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   }
   // The end caps are the two GLOBAL anchors (--paper-100 / --ink-0, unprefixed —
   // resolved off the neutral, one per theme). They render on the neutral row only;
-  // other rows carry spacers so the 1–10 stops stay column-aligned. The identity
+  // other rows carry spacers so the stop columns stay aligned. The identity
   // chip moved to its own card in the side column (owner 2026-07-24).
   // The matrix rides the POP plane (owner 2026-07-24) so the extremes have a surface
   // to stand off of. paper-100 / ink-0 render as plain swatches with a neutral paper-95
-  // stroke — one value for ALL families (unprefixed anchors), unlike the per-family 1–10.
+  // stroke — one value for ALL families (unprefixed anchors), unlike the per-family stops.
   // Secondary tab falls back to overview if the secondary is removed while selected.
   const paletteTabSafe = paletteTab === 'secondary' && !(secondary || derived) ? 'overview' : paletteTab
   const paletteTabOptions: Array<[typeof paletteTab, string]> = [
@@ -690,24 +693,22 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     ['critical', 'critical'], ['warning', 'warning'], ['positive', 'positive'], ['info', 'info'],
   ]
   const anchorStroke = '1px solid var(--neutral-paper-95)'
-  // corner stop numbers — NEUTRAL row only (it indexes the whole matrix); the 0/12
-  // anchors carry a * pointing at the "0, 12 = global" footnote on the label line
+  // corner badge — only the identity chip's ID tag now; the stop labels moved to the
+  // header row above the columns (owner 2026-08-11: the suffixed names need the room)
   const numBadge = (color: string): React.CSSProperties => ({
     position: 'absolute', top: 3, right: 6, fontSize: 9, fontWeight: 600, color, pointerEvents: 'none',
   })
-  const numColor = (stop: string) =>
-    stop === 'ink-53-aa' ? 'var(--paper-100)' : 'var(--neutral-ink-53-aa)'
   // Row layout per the owner's Figma spec (node 72:38, 2026-07-24): the anchor/ID
   // mini-swatch (24px) and the family label SHARE the first column — label
   // right-aligned beneath — so no separate label line pads the rows. The footnote
-  // rides under the 12 anchor. Family labels are tinted with the family's ink-53-aa.
-  const miniSwatch = (bg: string, badge: string, badgeColor: string, stroked: boolean) => (
+  // rides the card's bottom-right corner. Family labels are tinted with the family's ink-53-aa.
+  const miniSwatch = (bg: string, stroked: boolean, badge?: string, badgeColor?: string) => (
     <div style={{ position: 'relative' }}>
       <div style={{ height: 24, borderRadius: 6, boxSizing: 'border-box', background: bg, border: stroked ? anchorStroke : undefined }} />
-      <span style={numBadge(badgeColor)}>{badge}</span>
+      {badge && <span style={numBadge(badgeColor!)}>{badge}</span>}
     </div>
   )
-  // Narrow: plain fill swatches only (no glyphs/icons/badges — they don't fit),
+  // Narrow: plain fill swatches only (no glyphs/icons/labels — they don't fit),
   // family label under each row. Same 13 columns so rows stay aligned.
   const swatchMatrix = () => narrow ? (
     <div className="ct-colorblock" style={{ background: 'var(--surface-pop)' }}>
@@ -731,38 +732,40 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     </div>
   ) : (
     <div className="ct-colorblock" style={{ background: 'var(--surface-pop)' }}>
+      {/* stop labels ride ABOVE the columns (owner 2026-08-11) — the old corner badges
+          can't hold the suffixed names. The end columns label the global anchors,
+          paper-100 / ink-0, hence the * footnote. */}
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${SWATCH_STOPS.length + 2}, minmax(0, 1fr))`, gap: 6, marginBottom: 6 }}>
+        {['100*', ...SWATCH_STOPS.map(stopLabel), '0*'].map(l => (
+          <div key={l} style={{ textAlign: 'center', fontSize: 10.5, fontWeight: 600, color: 'var(--fg-default)' }}>{l}</div>
+        ))}
+      </div>
       {swatchRamps.map(([prefix, label], ri) => (
         <div key={prefix} style={{ display: 'grid', gridTemplateColumns: `repeat(${SWATCH_STOPS.length + 2}, minmax(0, 1fr))`, gap: 6, alignItems: 'start', marginTop: ri === 0 ? 0 : 8 }}>
           {/* first column matches the row height exactly: mini-swatch pinned top,
               label pinned to the row's bottom edge (owner 2026-07-24 alignment fix) */}
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: 36 }}
             title={prefix === 'neutral' ? '--paper-100' : (prefix === 'brand' || prefix === 'secondary') ? `--${prefix}-identity` : undefined}>
-            {prefix === 'neutral' ? miniSwatch('var(--paper-100)', '0*', 'var(--neutral-ink-53-aa)', true)
-              : (prefix === 'brand' || prefix === 'secondary') ? miniSwatch(`var(--${prefix}-identity)`, 'ID',
-                  idTextOn(prefix === 'brand' ? computed.r.scale.identityHex : computed.accent?.identityHex), false)
+            {prefix === 'neutral' ? miniSwatch('var(--paper-100)', true)
+              : (prefix === 'brand' || prefix === 'secondary') ? miniSwatch(`var(--${prefix}-identity)`, false, 'ID',
+                  idTextOn(prefix === 'brand' ? computed.r.scale.identityHex : computed.accent?.identityHex))
               : <span />}
             <div style={{ fontSize: 11, lineHeight: 1, fontWeight: 700, color: `var(--${prefix}-ink-53-aa)`, textAlign: 'right' }}>{label}</div>
           </div>
-          {SWATCH_STOPS.map((s, si) => (
-            <div key={s} style={{ position: 'relative' }} title={`--${prefix}-${s}`}>
+          {SWATCH_STOPS.map(s => (
+            <div key={s} title={`--${prefix}-${s}`}>
               {swatchCell(prefix, s)}
-              {/* badge number is the STOP POSITION (1-indexed), not parsed from the name —
-                  Stage B names (paper-99, mark-74-aa…) no longer end in the stop number */}
-              {prefix === 'neutral' && <span style={numBadge(numColor(s))}>{si + 1}</span>}
             </div>
           ))}
-          <div style={{ position: 'relative' }} title={prefix === 'neutral' ? '--ink-0' : undefined}>
+          <div title={prefix === 'neutral' ? '--ink-0' : undefined}>
             {prefix === 'neutral' && (
-              <>
-                <div style={{ height: 36, borderRadius: 6, boxSizing: 'border-box', background: 'var(--ink-0)', border: anchorStroke }} />
-                <span style={numBadge('var(--neutral-paper-99)')}>12*</span>
-              </>
+              <div style={{ height: 36, borderRadius: 6, boxSizing: 'border-box', background: 'var(--ink-0)', border: anchorStroke }} />
             )}
           </div>
         </div>
       ))}
       {/* the global disclaimer rides the card's bottom-right corner (owner 2026-07-24) */}
-      <div style={{ textAlign: 'right', fontSize: 9.5, color: 'var(--fg-subtle)', marginTop: 8 }}>*0, 12 = global</div>
+      <div style={{ textAlign: 'right', fontSize: 9.5, color: 'var(--fg-subtle)', marginTop: 8 }}>*100, 0 = global</div>
     </div>
   )
 

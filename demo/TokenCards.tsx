@@ -11,7 +11,7 @@ import { AlertCircle, AlertTriangle, CheckCircle, Info } from 'lucide-react'
 //   wash    → the inset surface(s)
 //   cta     → the full-round pill button (brand/secondary/neutral) OR, on signals,
 //             the ALERT callout (alerts use cta in signals; the pill is hidden)
-//   scale   → the ladder, chips labeled by visibility number, with paper/wash/mark/ink brackets
+//   scale   → the ladder, stop labels above the chips, with paper/wash/mark/ink brackets
 //
 // The universal paper-100/ink-0 anchors are NOT shown here — they're one shared
 // white/black pair at the system level, not a per-ramp token.
@@ -108,30 +108,16 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
   // signals are generated and carry none.
   const hasIdentity = prefix === 'brand' || prefix === 'secondary'
 
-  // The scale ladder. Each chip is labeled with its VISIBILITY number — the LL segment
-  // of the token's own name (light rootL ×100; Stage B killed the arbitrary 1–11
-  // indices), derived from `tok` so a rename can't desynchronise chip and token.
-  // Number text stays legible in BOTH modes by leaning on tokens that
-  // invert with the mode: ink-30-aaa (high-contrast text) on the surface rungs, --paper-100
-  // (the mode-flipping paper extreme) on the emphasis fill, paper-99 (inverse of ink) on
-  // the remaining ink rungs. ink-53-aa is BOTH the emphasis fill and a text stop since the
-  // 2026-07-29 collapse, so it renders as a FILL here — the role highlight-9 used to
-  // hold — and carries the same on-color the semantic layer gives it. ink-42-aa is the
-  // between text stop (C49 — the promoted cta-ink-hover value).
-  const scale: Array<{ tok: string; fg: string }> = [
-    { tok: 'paper-99', fg: v('ink-30-aaa') },
-    { tok: 'paper-97', fg: v('ink-30-aaa') },
-    { tok: 'paper-95', fg: v('ink-30-aaa') },
-    { tok: 'wash-92', fg: v('ink-30-aaa') },
-    { tok: 'wash-89', fg: v('ink-30-aaa') },
-    { tok: 'wash-85', fg: v('ink-30-aaa') },
-    { tok: 'wash-80', fg: v('ink-30-aaa') },
-    { tok: 'mark-74-aa', fg: v('ink-30-aaa') },
-    { tok: 'ink-53-aa', fg: 'var(--paper-100)' },
-    { tok: 'ink-42-aa', fg: v('paper-99') },
-    { tok: 'ink-30-aaa', fg: v('paper-99') },
+  // The scale ladder. Each chip's label is the token name minus the band word —
+  // visibility number plus conformance letters ("89", "53aa") — derived from `tok`
+  // so a rename can't desynchronise label and chip. Labels sit ABOVE the chips
+  // (owner 2026-08-11): the suffixed names outgrew the chip, and the swatches
+  // themselves stay clean.
+  const scale = [
+    'paper-99', 'paper-97', 'paper-95', 'wash-92', 'wash-89', 'wash-85', 'wash-80',
+    'mark-74-aa', 'ink-53-aa', 'ink-42-aa', 'ink-30-aaa',
   ]
-  const visibilityOf = (tok: string): string => tok.split('-')[1]
+  const stopLabel = (tok: string): string => tok.split('-').slice(1).join('')
   const groups = [
     { label: 'paper', span: 3 }, { label: 'wash', span: 4 },
     { label: 'mark', span: 1 }, { label: 'ink', span: 3 },
@@ -244,13 +230,15 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
         )}
       </div>
 
-      {/* the scale — the ladder, each chip labeled with its visibility number */}
-      <div style={{ display: 'flex', gap: 5 }}>
-        {scale.map(s => (
-          <div key={s.tok} title={s.tok} style={{
-            flex: 1, height: 34, borderRadius: 6, background: v(s.tok), color: s.fg,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600,
-          }}>{visibilityOf(s.tok)}</div>
+      {/* the scale — stop labels above the ladder, clean chips below */}
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${scale.length}, minmax(0, 1fr))`, gap: 5, marginBottom: 4 }}>
+        {scale.map(tok => (
+          <div key={tok} style={{ textAlign: 'center', fontSize: 12, fontWeight: 600, color: 'var(--fg-default)' }}>{stopLabel(tok)}</div>
+        ))}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${scale.length}, minmax(0, 1fr))`, gap: 5 }}>
+        {scale.map(tok => (
+          <div key={tok} title={tok} style={{ height: 34, borderRadius: 6, background: v(tok) }} />
         ))}
       </div>
       {/* Bracketed group labels — each bracket spans its stops so the
