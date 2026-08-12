@@ -109,7 +109,7 @@ and the apparent-span numbers visible) and let her mark it.
 
 ## Where the code is
 
-- `src/reqtoken/producers.ts` → `deltaDarkPlace` — the C28 placement. The gray
+- `src/engine/requirements/producers.ts` → `deltaDarkPlace` — the C28 placement. The gray
   scaffold anchor is the `grayLightL` branch; that's where a partial blend goes.
 - `src/engine/stopTable.ts` → `DARK_BAND_LIFT` (her half-lift re-mark, ×1.125→1.375)
   and the retired `DARK_SHINE_PARITY_T` (still declared, no longer read by the

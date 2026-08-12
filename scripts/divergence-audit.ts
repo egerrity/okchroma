@@ -20,8 +20,7 @@
 // visual approval; default diffs against it so a rule change can't silently move
 // a token. The bar is the AGNOSTIC hue×chroma sweep, not the brand list.
 
-import { BRANDS } from '../src/brands'
-import { SECONDARIES } from '../src/secondaries'
+import { FIXTURES, FIXTURE_SECONDARIES } from './fixture'
 import { SIGNALS } from '../src/engine/signals'
 import { resolveBrand, SIGNAL_SCALES } from '../src/engine/resolve'
 import { generateScale, generateNeutralScale, inRedBand, type GeneratedScale, type ColorStop, type NeutralLevel } from '../src/engine/colorEngine'
@@ -184,9 +183,9 @@ const matrix = (s: GeneratedScale): number[] =>
   ].flatMap(c => [c.L, c.C, c.H])
 function snapshotOf(): Record<string, number[]> {
   const o: Record<string, number[]> = {}
-  for (const b of BRANDS) {
+  for (const b of FIXTURES) {
     o[b.slug] = matrix(resolveBrand(b.hex, b.slug, { exact: b.exact, archetypeOverride: b.archetypeOverride, style: b.style }).scale)
-    const sec = SECONDARIES[b.slug]
+    const sec = FIXTURE_SECONDARIES[b.slug]
     if (sec) o[`${b.slug}-secondary`] = matrix(resolveBrand(sec, `${b.slug} accent`, { exact: b.exact, style: b.style }).scale)
   }
   for (const sig of SIGNALS) o[`signal:${sig.name}`] = matrix(SIGNAL_SCALES.get(sig.name)!.scale)

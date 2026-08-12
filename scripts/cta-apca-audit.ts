@@ -18,7 +18,7 @@ import { writeFileSync, mkdirSync } from 'fs'
 import { resolveTheme, SIGNAL_SCALES, SOFT_ON_CTA_ALPHA } from '../src/engine/resolve'
 import {
   whiteTextLcAt, blackTextLcAt, findLForWhiteTextLc, findLForBlackTextLc,
-} from '../src/reqtoken/producers'
+} from '../src/engine/requirements/producers'
 import { legalRatio, clampChromaToGamut, oklchToLinearRgb, contrastRatio, apcaY, apcaLc } from '../src/engine/constraints'
 
 const BAR = 60                 // the shipped on-cta APCA bar (non-signal surfaces)

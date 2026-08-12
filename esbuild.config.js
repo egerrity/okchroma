@@ -29,7 +29,9 @@ async function main() {
     outfile: 'dist/build-script.js',
   })
 
-  // 2. Run the generator to produce neutral.css + brands.css
+  // 2. Run the generator to produce signals.css (the only fixed CSS output left —
+  // per-brand CSS is generated live in-browser by the demo pages, and the neutral
+  // is generated per brand too, so neither is written to disk here).
   console.log('Generating tokens...')
   execSync('node dist/build-script.js', { stdio: 'inherit' })
 

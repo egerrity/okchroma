@@ -35,7 +35,7 @@ const isArchetype = (v: string): v is Archetype => ARCHETYPES.some(a => a.name =
 // are both gone: this plugin was APCA's last exposure, and the owner is not authorised to
 // use it for design decisions. Preview and Apply now read the same single lane, so the
 // class of bug where the preview showed a different band than Apply wrote goes with them.
-// The profile machinery itself stays dormant in src/reqtoken/profiles.ts (the wcag path
+// The profile machinery itself stays dormant in src/engine/requirements/profiles.ts (the wcag path
 // is a passthrough), so re-enabling is a column list, not a rebuild.
 // the NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): red-range brands can swap the cta
 // fill trio to the brand-neutral's ink register (near-black light / near-white dark).

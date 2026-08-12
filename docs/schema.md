@@ -10,13 +10,16 @@ understand, so the requirement survives any conformant pipeline.
 **The live-edit guarantee:** editing a requirement in the token file changes the
 re-resolved output. Raise a contrast target, tighten a seam separation, deepen a rootL:
 the resolver honors the file. This is verified end-to-end by
-[`scripts/reqtoken-portability.ts`](../scripts/reqtoken-portability.ts): round-trip
-bit-identity, live-edit honoring, and fail-loud on corrupted bundles.
+[`research/reqtoken/reqtoken-portability.ts`](../research/reqtoken/reqtoken-portability.ts):
+round-trip bit-identity, live-edit honoring, and fail-loud on corrupted bundles. That
+script and its sibling emitter are parked research (see [research/README.md](../research/README.md)) —
+not run by CI, kept for reference.
 
 The declaration source of truth in this repo is
-[`src/reqtoken/spec.ts`](../src/reqtoken/spec.ts) (pure data);
-[`scripts/reqtoken-emit.ts`](../scripts/reqtoken-emit.ts) serializes it to
-`out/reqtoken.tokens.json`. All examples below are real emitted tokens.
+[`src/engine/requirements/spec.ts`](../src/engine/requirements/spec.ts) (pure data);
+[`research/reqtoken/reqtoken-emit.ts`](../research/reqtoken/reqtoken-emit.ts) serializes it
+to `out/reqtoken.tokens.json` when run. All examples below are real emitted tokens, from
+the parked snapshot at [`research/reqtoken/reqtoken.tokens.json`](../research/reqtoken/reqtoken.tokens.json).
 
 ## Document shape
 
@@ -153,7 +156,7 @@ be fake portability. Changing producer behavior requires a resolver version bump
 
 ### Contrast profiles (opt-in)
 
-`withProfile(spec, 'apca')` (`src/reqtoken/profiles.ts`) rewrites every declared wcag require
+`withProfile(spec, 'apca')` (`src/engine/requirements/profiles.ts`) rewrites every declared wcag require
 onto its APCA equivalent, the same declaration re-solved against a different constraint, and
 sets `ons.onFill.enforceLc` so the on-text/cta enforcement judges Lc instead. Exposed as
 `contrastProfile: 'wcag' | 'apca'` on `GenerateOptions`; the default `'wcag'` is the identity.
@@ -189,5 +192,6 @@ lane exists in code, nothing ships through it. The Lc map is `DEFAULT_APCA_LC_MA
 
 - `npm run req:audit`, the requirement gate: resolves an agnostic hue×chroma sweep in
   both modes and verifies every **declared** requirement plus structural invariants.
-- `scripts/reqtoken-portability.ts`, the round-trip gate: emit → JSON → parse →
+- `research/reqtoken/reqtoken-portability.ts`, the round-trip gate: emit → JSON → parse →
   re-resolve is bit-identical; edited requirements are honored; corruption fails loud.
+  Parked research, not part of `npm run req:audit`.

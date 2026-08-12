@@ -1,18 +1,18 @@
-// Verifies themeToFigma end-to-end for a real brand with a secondary (Dark
-// Roast), exercising the same merge the demo handler does. Checks structure +
-// spot values against ground truth, then discards output (verification only).
+// Verifies themeToFigma end-to-end for a real fixture with a secondary
+// (near-black-indigo — same hex + secondary as the retired 'dark-roast' brand),
+// exercising the same merge the demo handler does. Checks structure + spot
+// values against ground truth, then discards output (verification only).
 
-import { BRANDS } from '../src/brands'
-import { SECONDARIES } from '../src/secondaries'
+import { FIXTURES, FIXTURE_SECONDARIES } from './fixture'
 import { SIGNALS } from '../src/engine/signals'
 import { resolveBrand, resolveTheme, SIGNAL_SCALES, SOFT_ON_CTA_ALPHA } from '../src/engine/resolve'
 import { themeToFigma } from '../src/engine/figmaRender'
 import { brandCss, signalsCss, ctaNeedsBorder, ctaPageLc, pageStopFor } from '../src/engine/cssRender'
 import { generateNeutralScale } from '../src/engine/colorEngine'
 
-const brand = BRANDS.find(b => b.slug === 'dark-roast')!
+const brand = FIXTURES.find(b => b.slug === 'near-black-indigo')!
 const r = resolveBrand(brand.hex, brand.name, { exact: brand.exact, archetypeOverride: brand.archetypeOverride, style: brand.style })
-const sec = SECONDARIES[brand.slug]
+const sec = FIXTURE_SECONDARIES[brand.slug]
 const secondary = sec ? resolveBrand(sec, `${brand.name} accent`, { exact: brand.exact, style: brand.style }).scale : null
 const signals = SIGNALS.map(s => {
   const o = r.signalOverrides.find(x => x.name === s.name)
@@ -105,7 +105,7 @@ for (const mode of ['light', 'dark'] as const) {
 const bcta = leaf((figma.light as any).brand, 'cta')
 ok(bcta.$type === 'color', 'brand/cta not type color')
 ok(bcta.$value && bcta.$value.colorSpace === 'srgb' && Array.isArray(bcta.$value.components) && bcta.$value.components.length === 3, 'brand/cta $value not srgb-components object')
-// Spot value vs known engine output (dark-roast brand cta light #07074f; dark
+// Spot value vs known engine output (near-black-indigo brand cta light #07074f; dark
 // #a4bafa — the C42 dark clearance lightens the flat-register cta until its black
 // pole clears the Lc law; before C42 this read #869cda).
 ok(leaf((figma.light as any).brand, 'cta').$value.hex === '#07074f', `brand/cta light hex ${leaf((figma.light as any).brand, 'cta').$value.hex} != #07074f`)

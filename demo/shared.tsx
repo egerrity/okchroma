@@ -1,11 +1,7 @@
 import React from 'react'
-import { BRANDS } from '../src/brands'
 import { resolveBrand, type ResolvedBrand } from '../src/engine/resolve'
 import { annotationNote, stopHex } from '../src/engine/cssRender'
-import { generateScale, generateIllustrationScale } from '../src/engine/colorEngine'
-import { remapSvg, SAMPLE_ILLUSTRATION } from '../src/illustration'
-
-export const ALL_BRANDS = BRANDS.slice().sort((a, b) => a.name.localeCompare(b.name))
+import { HERO_ILLO } from './heroIllo'
 
 export type RungMode = 'recommended' | 'exact'
 export type AccentMode = 'default' | 'accented' | 'inverse' | 'accented-inverse'
@@ -369,22 +365,15 @@ export function Showcase(props: {
 
         <section>
           <SectionLabel>Illustrations</SectionLabel>
-          <IllustrationRamp hex={hex} accentHex={props.secondaryHex ?? undefined} />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16, marginTop: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
             <div style={ctxCard}>
-              <div style={ctxCardTitle}>Mono (default)</div>
-              <div style={{ ...ctxCardBody, marginBottom: 8 }}>Everything draws from the brand's illustration ramp.</div>
-              <div dangerouslySetInnerHTML={{ __html: remapSvg(SAMPLE_ILLUSTRATION) }} />
-            </div>
-            <div style={ctxCard}>
-              <div style={ctxCardTitle}>Two-color{props.secondaryHex ? '' : ' (no secondary — falls back to mono)'}</div>
+              <div style={ctxCardTitle}>Hero</div>
               <div style={{ ...ctxCardBody, marginBottom: 8 }}>
-                Alt areas switch to the secondary's ramp. Primary areas never change.
+                Painted straight from six fixed brand stops — no ramp lookup, no secondary.
               </div>
-              <div data-illustration="two-color" dangerouslySetInnerHTML={{ __html: remapSvg(SAMPLE_ILLUSTRATION) }} />
+              <div dangerouslySetInnerHTML={{ __html: HERO_ILLO }} />
             </div>
           </div>
-          <IllustrationLegend />
         </section>
 
         <section>
@@ -463,82 +452,6 @@ export const ctxCard: React.CSSProperties = {
 }
 export const ctxCardTitle: React.CSSProperties = { fontSize: 15, fontWeight: 600 }
 export const ctxCardBody: React.CSSProperties = { fontSize: 13, color: 'var(--fg-subtle)', marginTop: 4 }
-
-// Illustration palette (PoC 2026-06-11): primary 1–4 from the brand,
-// alt 1–4 from the secondary (falls back to primary's slots when absent).
-// Fixed L targets per slot; hexes shown selectable for designer hand-off.
-const ILLUS_SLOT_NAMES = ['wash', 'tint', 'mid', 'deep']
-
-function IllusRow({ label, hex }: { label: string; hex: string }) {
-  const stops = generateIllustrationScale(generateScale(hex, 'x')).stops
-  return (
-    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-      <div style={{ fontSize: 11, color: 'var(--fg-subtle)', width: 84 }}>{label}</div>
-      {stops.map((s, i) => (
-        <div key={i} style={{ textAlign: 'center' }}>
-          <div style={{
-            width: 64, height: 40, borderRadius: 6, background: stopHex(s),
-            border: '1px solid var(--border-subtle)',
-          }} />
-          <div style={{ fontSize: 10, color: 'var(--fg-subtle)', marginTop: 4, userSelect: 'all', fontFamily: 'ui-monospace, monospace' }}>
-            {stopHex(s).toUpperCase()}
-          </div>
-          <div style={{ fontSize: 10, color: 'var(--fg-subtle)' }}>{ILLUS_SLOT_NAMES[i]} {i + 1}</div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-export function IllustrationRamp({ hex, accentHex }: { hex: string; accentHex?: string }) {
-  return (
-    <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <IllusRow label="primary" hex={hex} />
-        <IllusRow label={accentHex ? 'alt' : 'alt (= primary)'} hex={accentHex ?? hex} />
-      </div>
-      <div style={{ fontSize: 12, color: 'var(--fg-subtle)', maxWidth: 320 }}>
-        Illustration palette — fixed L targets per slot, not the UI ramp. Shapes in illustration
-        files are labeled by slot; hue follows the warm path, no UX-rule darkening. Hexes are
-        selectable for hand-off.
-      </div>
-    </div>
-  )
-}
-
-// Live slot table: legend hex the designer paints → rung rule → the color
-// it resolves to right now (current brand + mode + two-color state).
-export function IllustrationLegend() {
-  const rows: Array<[string, string, string, string]> = [
-    ['#0057FF', 'Primary', 'brand mid (slot 3) — fixed L target', 'var(--illus-primary)'],
-    ['#9DC4FF', 'Primary soft', 'brand tint (slot 2)', 'var(--illus-primary-soft)'],
-    ['#FF7A00', 'Alt', 'brand deep (slot 4) mono → secondary mid two-color', 'var(--illus-alt)'],
-    ['#FFD6A8', 'Alt soft', 'brand tint (slot 2) mono → secondary tint two-color', 'var(--illus-alt-soft)'],
-    ['#1A1A1A', 'Ink', 'neutral ink-30-aaa', 'var(--illus-ink)'],
-    ['#9E9E9E', 'Muted', 'neutral-8 — never branded', 'var(--illus-muted)'],
-    ['#FFFFFF', 'Paper', 'neutral-1 — flips correctly in dark mode', 'var(--illus-paper)'],
-  ]
-  const chip = (bg: string) => (
-    <span style={{ display: 'inline-block', width: 14, height: 14, borderRadius: 3, background: bg, border: '1px solid var(--border-subtle)', verticalAlign: -2 }} />
-  )
-  return (
-    <div style={{ marginTop: 12, fontSize: 12, color: 'var(--fg-subtle)' }}>
-      <div style={{ marginBottom: 6 }}>
-        Slot legend — paint with the placeholder, the engine does the rest (mono resolution shown):
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'auto auto auto 1fr', gap: '4px 12px', alignItems: 'center' }}>
-        {rows.map(([hex, name, rule, cssVar]) => (
-          <React.Fragment key={hex}>
-            <span>{chip(hex)} <code style={{ fontSize: 11 }}>{hex}</code></span>
-            <span style={{ color: 'var(--fg-default)' }}>{name}</span>
-            <span>→ {chip(cssVar)}</span>
-            <span>{rule}</span>
-          </React.Fragment>
-        ))}
-      </div>
-    </div>
-  )
-}
 
 // Lucide "ban" — stroke uses currentColor so it follows on-fill text polarity
 export function BanIcon({ size = 15 }: { size?: number }) {

@@ -30,8 +30,7 @@
 //   4. signal cta legible + clean 12-stop scale.
 //   5. blessed-snapshot regression on ink-53-aa + off-scale cta (L,C,H).
 
-import { BRANDS } from '../src/brands'
-import { SECONDARIES } from '../src/secondaries'
+import { FIXTURES, FIXTURE_SECONDARIES } from './fixture'
 import { SIGNALS } from '../src/engine/signals'
 import { resolveBrand, signalScalesFor, SOFT_ON_CTA_ALPHA } from '../src/engine/resolve'
 import { wcagY, contrastRatio, apcaY, apcaLc, clampChromaToGamut, oklchToLinearRgb } from '../src/engine/constraints'
@@ -39,7 +38,7 @@ import { YELLOW_BAND, DARK_BRAND_FILL_MIN_L, NEUTRAL_CTA_DARK_POP_CLEARANCE } fr
 import { SCALE_STOP_COUNT } from '../src/engine/tokenNames'
 import { generateNeutralScale, generateScale, type GeneratedScale, type ColorStop } from '../src/engine/colorEngine'
 import { darkChromaCurve } from '../src/engine/darkChromaCurve'
-import { CTA_ONFILL_ENFORCE_LC } from '../src/reqtoken/profiles'
+import { CTA_ONFILL_ENFORCE_LC } from '../src/engine/requirements/profiles'
 import { oklabDist, srgbEmitChannels } from '../src/engine/colorMath'
 import { stateStepL } from '../src/engine/archetypes'
 import * as fs from 'fs'
@@ -148,10 +147,10 @@ console.log(`=== agnostic non-text 3:1 (stop 8 vs paper-95, both modes): ${s8n} 
 // ── 2. Real fleet — structure (identity) + printout of the emphasis fill (ink-53-aa) ──
 interface Item { name: string; hex: string; scale: GeneratedScale }
 const items: Item[] = []
-for (const b of BRANDS) items.push({ name: b.name, hex: b.hex, scale: resolveBrand(b.hex, b.slug, { exact: b.exact, archetypeOverride: b.archetypeOverride, style: b.style, contrastProfile: SHIPPED_PROFILE }).scale })
-for (const slug of Object.keys(SECONDARIES)) {
-  const b = BRANDS.find(x => x.slug === slug)!
-  items.push({ name: `${slug}-secondary`, hex: SECONDARIES[slug], scale: resolveBrand(SECONDARIES[slug], `${slug} accent`, { exact: b.exact, style: b.style, contrastProfile: SHIPPED_PROFILE }).scale })
+for (const b of FIXTURES) items.push({ name: b.name, hex: b.hex, scale: resolveBrand(b.hex, b.slug, { exact: b.exact, archetypeOverride: b.archetypeOverride, style: b.style, contrastProfile: SHIPPED_PROFILE }).scale })
+for (const slug of Object.keys(FIXTURE_SECONDARIES)) {
+  const b = FIXTURES.find(x => x.slug === slug)!
+  items.push({ name: `${slug}-secondary`, hex: FIXTURE_SECONDARIES[slug], scale: resolveBrand(FIXTURE_SECONDARIES[slug], `${slug} accent`, { exact: b.exact, style: b.style, contrastProfile: SHIPPED_PROFILE }).scale })
 }
 
 console.log(`\n=== emphasis-fill structure across ${items.length} brand+secondary ramps ===`)

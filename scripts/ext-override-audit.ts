@@ -14,8 +14,7 @@
 
 import * as fs from 'fs'
 import * as path from 'path'
-import { BRANDS } from '../src/brands'
-import { SECONDARIES } from '../src/secondaries'
+import { FIXTURES, FIXTURE_SECONDARIES } from './fixture'
 import { buildBaseColumns, buildBrandColumns, COLUMNS, type FlatTok, type TokenColumns } from '../plugin-ext/payload'
 import { ROSTER, rosterSpec } from '../plugin-ext/roster'
 
@@ -86,8 +85,8 @@ function assertLadderOrder(tokens: FlatTok[], label: string): void {
 }
 for (const col of COLUMNS) assertLadderOrder(base[col], `base ${col}`)
 
-for (const b of BRANDS) {
-  const secondaryHex = SECONDARIES[b.slug] ?? null
+for (const b of FIXTURES) {
+  const secondaryHex = FIXTURE_SECONDARIES[b.slug] ?? null
   const tokens = buildBrandColumns({
     primaryHex: b.hex, name: b.name, exact: b.exact, archetypeOverride: b.archetypeOverride,
     style: b.style, secondaryHex,

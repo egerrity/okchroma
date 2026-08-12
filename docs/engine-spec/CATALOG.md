@@ -10,8 +10,9 @@ fixed holistically after owner sign-off.
 > survives (light drift + dark-scale hue), but this entry's cta half is retired — the cta
 > render cool (`applyRedRepelRender`, née `applyRedCoolRender`) is DELETED (owner: cta red
 > de-collision is C12's alone), rung-1 and the muted dark collider are gone, and the dark
-> CTA now rides identity hue (`coolRedDark` is cta-off). Current model =
-> `docs/engine-spec/c12-archive/joint-solve-model.md`. Entry kept verbatim as the find-time record.
+> CTA now rides identity hue (`coolRedDark` is cta-off). Current model = the C12 v8 joint
+> solve, entry below (its own write-up, `c12-archive/joint-solve-model.md`, was removed in
+> the research cleanup; git history has it). Entry kept verbatim as the find-time record.
 
 **Status:** FIXED on fix/red-orange-cool (owner-approved 2026-07-07 via rendered review —
 "orange shift + dark" over the light-archetype cta what-if). The fix: signed
@@ -43,9 +44,9 @@ L{.55,.65}, all four solve columns (wcag · wcag-dark · apca · apca-dark):
   `sigmoid((H−12)/2) · (1 − sigmoid((H−35.5)/3.5))`; full strength ~H16–30, tapers through
   H35.5 (= RED_TORSION_CENTER_H), ~zero by H45. `RED_COOL_DEG = 10.8` (colorMath.ts:74).
 - Applied with a FIXED direction (always minus / cooler) at three sites:
-  1. light, every stop: `lightHueAt` — src/reqtoken/producers.ts:76–79
+  1. light, every stop: `lightHueAt` — src/engine/requirements/producers.ts
      (`brandH + spine drift − RED_COOL_DEG·wRed`);
-  2. dark, every stop: `darkH` — src/reqtoken/producers.ts:81–84, gated by `coolRedDark` AND
+  2. dark, every stop: `darkH` — src/engine/requirements/producers.ts, gated by `coolRedDark` AND
      the hard `inRedBand` (12 < H ≤ 35.5) — the H35.5 cliff means an H36 brand gets NO dark
      cool and sits at natural ΔH ≈ 3 from red;
   3. light cta re-cool: `applyRedCoolRender` — src/engine/colorEngine.ts:166, called from
@@ -58,7 +59,7 @@ L{.55,.65}, all four solve columns (wcag · wcag-dark · apca · apca-dark):
   `inRedBand` (H ≤ 35.5) and move L only; H36–41 gets `errorComponentRule` (an annotation)
   while its scale sits on the signal.
 - Context pinned during reproduction: the light cta hue is raw brandH (identity —
-  src/reqtoken/resolve.ts:211); the shift reaches it only via the applyRedCoolRender post-pass
+  src/engine/requirements/resolve.ts); the shift reaches it only via the applyRedCoolRender post-pass
   (non-rung-1, in-band). The dark cta rides `darkH`. And the light collision metric
   (cta ΔE ≤ 0.16 within the 30° hue gate) fires for the WHOLE orange band — even Chai H48
   reads ΔE 0.112 vs red's cta — so rung-1 eligibility must stay value-gated by `inRedBand`,
@@ -255,7 +256,7 @@ yellow worst-vs-lemon light margin 3×'d (0.0116 → 0.0341). Snapshot drift: 19
 (all light stops, ΔE .016–.028, worst turmeric-latte wash-7) + 1 highlight-audit drift
 (lavender-latte-secondary, full-ramp demo secondary) — awaiting owner eye-check before
 bless. Affected gold-band named brands: Golden Milk, Chamomile, Honey Lemon.
-**SEQUENCING (owner): P3 master-gamut work is NEXT (docs/engine-spec/P3-KICKOFF.md);
+**SEQUENCING (owner): P3 master-gamut work is NEXT (research/p3/P3-KICKOFF.md);
 the calibration round (brand-side ID-relative boost re-tune · fired-mute corridor solve
 t≈0.4 · green-light signal boost · yellow boundary letter · dark ID-relative counterpart ·
 paper-2 chroma) queues behind it.**
@@ -263,7 +264,7 @@ paper-2 chroma) queues behind it.**
 **P3 MASTER LANDED — CALIBRATION ROUND OPEN (2026-07-08, branch worktree-p3-master-gamut).**
 The engine generates in Display-P3 (7cb2654: D1 both-renditions legality · D2 P3 apca
 basis · emit = sRGB gamut-map + color(display-p3) @supports+color-gamut overrides;
-design/evidence in P3-DESIGN.md). Owner eye-check APPROVED: signals visibly gain
+design/evidence in research/p3/P3-DESIGN.md). Owner eye-check APPROVED: signals visibly gain
 (green strongest — matches the +29–34% band headroom); D3 ruled KEEP the P3-normalized
 pastels ("incredibly similar" to the sRGB-normalized register). One-shot re-bless done
 with the sign-off. NEW OBSERVATION for the round (owner, at the eye-check): **the
@@ -619,8 +620,8 @@ CV 12% → `p2Diff`, P2). Neither metric can do the other's job (helmlab researc
 single-mechanism attempts (C6 repel, rung-1, the muted collider, the vivid-arc opposed split)
 each covered a slice and left holes.
 
-**LANDED — the v8 JOINT SOLVE (owner-settled 2026-07-10, "as close as we will ever get"; model =
-docs/engine-spec/c12-archive/joint-solve-model.md; pushed 5e440ff):**
+**LANDED — the v8 JOINT SOLVE (owner-settled 2026-07-10, "as close as we will ever get"; model
+write-up pushed at 5e440ff, removed from the tree in the research cleanup, git history has it):**
 - **Brand side (`solveBrandExit`, producers):** membership = the cta formula at the seed's own L
   inside the widened region (`redSolveDist ≤ G`, wDark .60) or the warm brick band. Exit = nearest
   release edge (region + ring .020) with a passing pole, under her direction rules: noticeably-
@@ -1602,12 +1603,14 @@ L, so hue moves ~0.2°. Per-stop hue steps at the worst seed go 0.56 0.75 1.06 3
 item. Baselines re-blessed (dark, divergence, highlight, smoothness), so this is recorded
 here rather than visible to the detector.
 
-Ten gates green. Closes Open 2 of `scripts/highlight-band-handoff-2026-07-28.md`.
+Ten gates green. Closes Open 2 of `highlight-band-handoff-2026-07-28.md` (closed-round
+handoff doc, removed in the research cleanup; git history has it).
 
 ## C33 — THE HIGHLIGHT BAND COLLAPSES: one emphasis stop, and the inks renumber
 
-Owner-led round, 2026-07-29. Planned in `scripts/highlight-collapse-plan-2026-07-29.md`,
-resting on the measurements in `scripts/stop-8-9-drift-handoff-2026-07-29.md`.
+Owner-led round, 2026-07-29. Planned in `highlight-collapse-plan-2026-07-29.md`,
+resting on the measurements in `stop-8-9-drift-handoff-2026-07-29.md` (both closed-round
+docs, removed in the research cleanup; git history has them).
 
 THE BAND CARRIED A SPLIT IT DID NOT NEED. After C31, highlight-9 required 4.5 against
 paper-3 and ink-10 required 4.5 against paper-3 as well — the same bar against the same
@@ -1677,7 +1680,7 @@ and the apply can no longer disagree. `src/build.ts SHIPPED_PROFILE` flips 'apca
 so generated CSS matches the lane in use — INDEPENDENT of the collapse and the larger
 visual change of the two: the washes are identical between lanes, the ring and the cta are
 not (critical ring #ED8368 → #D0684F). The profile machinery stays dormant in
-`reqtoken/profiles.ts`, where the wcag path is a passthrough.
+`src/engine/requirements/profiles.ts`, where the wcag path is a passthrough.
 Existing enterprise files ADOPT their old columns rather than growing new ones: resolution
 falls back to the legacy name and renames the mode in place, so modeIds — and every
 binding — survive. The retired apca pair is left for the user to delete; the plugin does
@@ -1736,8 +1739,8 @@ this path.
 ## C35 — DARK STOP 8 IS PLACED BY ITS OWN LAW, NOT BY THE STOP BELOW IT
 
 Owner-led round, 2026-07-29 — phase 2 of the dark round scoped in
-`scripts/highlight-collapse-plan-2026-07-29.md` §Sequencing, resting on
-`scripts/stop-8-9-drift-handoff-2026-07-29.md`. Owner ruling: *"dark stop 8 has the same
+`highlight-collapse-plan-2026-07-29.md` §Sequencing, resting on
+`stop-8-9-drift-handoff-2026-07-29.md` (both removed in the research cleanup). Owner ruling: *"dark stop 8 has the same
 requirements as light, it is a 3:1 contrast require on paper 3 so inputs can be placed on
 any paper."*
 
@@ -1884,7 +1887,7 @@ movement and no re-bless — the same evidence C34 rested on.
 ## C37 — THE DARK WASHES ARE DECLARED AT ONE S, AND THE OLD RAMP SLOPED THE WRONG WAY
 
 Owner-led round, 2026-07-29 — the wash third of the phase-2 dark round
-(`scripts/highlight-collapse-plan-2026-07-29.md` §Sequencing). Her framing: dark has
+(`highlight-collapse-plan-2026-07-29.md` §Sequencing, removed in the research cleanup). Her framing: dark has
 different surfaces, so its needs differ. The washes carry no contrast requirement, but they
 still have to READ ON PAPER, and flipped to dark the surfaces move the other way and the
 washes recede. *"4–7 probably do need to be higher than they are in light mode, but their
@@ -2209,7 +2212,8 @@ what fixed it.
 BLAST RADIUS: `audit:ext` only — base token count 141 → 143 (offset-12 renamed to 08, plus 06 and
 16), and 8 roster entries gaining a `cta/border` override (warning variants and roster secondaries),
 **all light-mode**. Eleven other gates needed no bless. Instruments:
-`scripts/cta-border-sweep.ts`, `cta-border-trio.ts`, `cta-border-hierarchy.ts`.
+`cta-border-sweep.ts`, `cta-border-trio.ts`, `cta-border-hierarchy.ts` (one-off, removed in
+the research cleanup; git history has them).
 
 ### C41 addendum — THE OPT-OUT
 Owner, same day: *"this should be on by default but optional. when this fires, can we add a check

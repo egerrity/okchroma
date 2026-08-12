@@ -12,8 +12,7 @@
 //
 // Failures print worst-first with the brand hex so fixes are testable.
 
-import { BRANDS } from '../src/brands'
-import { SECONDARIES } from '../src/secondaries'
+import { FIXTURES, FIXTURE_SECONDARIES } from './fixture'
 import { SIGNALS } from '../src/engine/signals'
 import { resolveBrand, signalScalesFor } from '../src/engine/resolve'
 import { RED_GATE, redGateDist, checkCollision, stopDeltaE } from '../src/engine/collision'
@@ -139,7 +138,7 @@ function audit(name: string, hex: string, scale: GeneratedScale, redRepelled = f
 }
 
 let repelCount = 0
-for (const b of BRANDS) {
+for (const b of FIXTURES) {
   const r = resolveBrand(b.hex, b.slug, { contrastProfile: SHIPPED_PROFILE })
   if (r.redRepel) repelCount++
   audit(b.name, b.hex, r.scale, !!r.redRepel)
@@ -148,8 +147,8 @@ for (const sig of SIGNALS) {
   audit(sig.name, sig.hex, SIGNAL_SCALES.get(sig.name)!.scale)
 }
 
-const auditedCount = BRANDS.length + SIGNALS.length
-console.log(`audited ${auditedCount} scales (${BRANDS.length} brands + ${SIGNALS.length} signals)`)
+const auditedCount = FIXTURES.length + SIGNALS.length
+console.log(`audited ${auditedCount} scales (${FIXTURES.length} fixtures + ${SIGNALS.length} signals)`)
 console.log(`red-repelled brand ctas: ${repelCount}\n`)
 for (const [check, list] of Object.entries(findings)) {
   list.sort((a, b) => b.severity - a.severity)
@@ -178,16 +177,16 @@ type Snap = Record<string, Array<[number, number, number]>> // name → 24×[L,C
 
 function snapshotOf(): Snap {
   const snap: Snap = {}
-  for (const b of BRANDS) {
+  for (const b of FIXTURES) {
     const r = resolveBrand(b.hex, b.slug, { contrastProfile: SHIPPED_PROFILE })
     snap[b.slug] = [...r.scale.light.slice(0, 12), ...r.scale.dark.slice(0, 12)].map(s => [s.L, s.C, s.H])
     // Accents joined the snapshot 2026-06-11 (dark pass): the near-neutral
     // pink-ladder defect lived ONLY in accents and was invisible to a
-    // primaries-only bless. Accents carry the brand's real flags, mirroring
+    // primaries-only bless. Accents carry the fixture's real flags, mirroring
     // build.ts. (Primaries above keep their historical no-opts convention —
-    // changing it would shift the 8 lever brands' light rows vs blessed;
+    // changing it would shift the lever fixtures' light rows vs blessed;
     // queued for a deliberate pass.)
-    const sec = SECONDARIES[b.slug]
+    const sec = FIXTURE_SECONDARIES[b.slug]
     if (sec) {
       const ra = resolveBrand(sec, `${b.slug} accent`, { exact: b.exact, style: b.style, contrastProfile: SHIPPED_PROFILE })
       snap[`${b.slug}-accent`] = [...ra.scale.light.slice(0, 12), ...ra.scale.dark.slice(0, 12)].map(s => [s.L, s.C, s.H])

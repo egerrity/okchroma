@@ -5,7 +5,7 @@
 // fidelity — every defect in the absolute-attractor class (near-neutral /
 // low-chroma) was caught by eye, which does not scale to the input domain
 // (ALL colors; the example fleet is a sample, not the domain). Three metrics, run on
-// light + dark + illustration ramps over the full gamut grid:
+// light + dark ramps over the full gamut grid:
 //
 //   hueStep  chroma-weighted adjacent-stop hue step: the OKLab chord of the
 //            hue change alone, 2·min(C_i,C_j)·sin(|ΔH|/2). Catches
@@ -17,11 +17,10 @@
 //            spine browning, red cool rotation) — this is a budget tracked
 //            against baseline, not a zero target.
 //   wobble   per-stop chroma shape vs the spec ladders (subtle tier):
-//            interior local minima are never spec'd anywhere; light and
-//            illustration allow one interior maximum (cream peak / illus
-//            rung-4 peak), dark allows none (chromaMultiplier strictly
-//            rises). Catches gamut-ridge chroma wobble (suspect C) and
-//            pin spikes (suspect B).
+//            interior local minima are never spec'd anywhere; light
+//            allows one interior maximum (cream peak), dark allows none
+//            (chromaMultiplier strictly rises). Catches gamut-ridge
+//            chroma wobble (suspect C) and pin spikes (suspect B).
 //
 // Grid runs twice: style unset and style 'deeper' — the lever is engine
 // surface (flag × band, any future input may carry it), so its worst case
@@ -34,14 +33,12 @@
 // fixes are measured against the current engine, not vibed.
 
 import {
-  generateIllustrationScale,
   type GeneratedScale,
   type ColorStop,
 } from '../src/engine/colorEngine'
 import { clampChromaToGamut, oklchToLinearRgb } from '../src/engine/constraints'
 import { resolveBrand } from '../src/engine/resolve'
-import { BRANDS } from '../src/brands'
-import { SECONDARIES } from '../src/secondaries'
+import { FIXTURES, FIXTURE_SECONDARIES } from './fixture'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -140,15 +137,14 @@ function measureRamp(
   return { hueStep, hueStepPair, hueStepDH, drift, driftStop, driftDH, wobble, wobbleStop }
 }
 
-type RampName = 'light' | 'dark' | 'illus'
-const RAMPS: RampName[] = ['light', 'dark', 'illus']
+type RampName = 'light' | 'dark'
+const RAMPS: RampName[] = ['light', 'dark']
 const METRICS = ['hueStep', 'drift', 'wobble'] as const
 
 function measureScale(scale: GeneratedScale): Record<RampName, RampMetrics> {
   return {
     light: measureRamp(scale.light.slice(0, 12), scale.brandH, 8, 1),
     dark: measureRamp(scale.dark.slice(0, 12), scale.brandH, 8, 0),
-    illus: measureRamp(generateIllustrationScale(scale).stops, scale.brandH, 5, 1),
   }
 }
 
@@ -182,11 +178,11 @@ function sweepGrid(style: 'deeper' | undefined): Rec[] {
 
 function sweepFleet(): Rec[] {
   const recs: Rec[] = []
-  for (const b of BRANDS) {
+  for (const b of FIXTURES) {
     const opts = { exact: b.exact, archetypeOverride: b.archetypeOverride, style: b.style }
     const r = resolveBrand(b.hex, b.slug, opts)
     recs.push({ key: b.slug, hex: b.hex, seg: segment(r.scale.brandH), m: measureScale(r.scale) })
-    const sec = SECONDARIES[b.slug]
+    const sec = FIXTURE_SECONDARIES[b.slug]
     if (sec) {
       const ra = resolveBrand(sec, `${b.slug} accent`, { exact: b.exact, style: b.style })
       recs.push({ key: `${b.slug}-accent`, hex: sec, seg: segment(ra.scale.brandH), m: measureScale(ra.scale) })
@@ -249,9 +245,9 @@ summarize('GRID style=default', gridDefault)
 summarize('GRID style=deeper (forced flag — engine worst case)', gridDeeper)
 summarize('FLEET (primaries + accents, real flags)', fleet)
 
-// Lever brands (style='deeper') — accent fidelity.
-console.log(`\n── Lever brands (style='deeper') — accents ──────────────────`)
-for (const b of BRANDS.filter(x => x.style === 'deeper')) {
+// Lever fixtures (style='deeper') — accent fidelity.
+console.log(`\n── Lever fixtures (style='deeper') — accents ──────────────────`)
+for (const b of FIXTURES.filter(x => x.style === 'deeper')) {
   const rec = fleet.find(r => r.key === `${b.slug}-accent`)
   if (!rec) continue
   const m = rec.m.light
@@ -265,7 +261,7 @@ for (const b of BRANDS.filter(x => x.style === 'deeper')) {
 const BASE_PATH = path.join(process.cwd(), 'scripts', 'smoothness-baseline.json')
 const COMPARE_TOL = 2e-4
 
-type Flat = Record<string, number[]> // key → [hs,dr,wb] × light,dark,illus
+type Flat = Record<string, number[]> // key → [hs,dr,wb] × light,dark
 const flatten = (recs: Rec[]): Flat => {
   const out: Flat = {}
   for (const r of recs)
@@ -278,7 +274,7 @@ const flatten = (recs: Rec[]): Flat => {
 const current = {
   meta: {
     grid: `${HUES.length} hues × ${LIGHTNESSES.length} L × ${CHROMAS.length} C`,
-    metrics: 'per ramp [hueStep, drift, wobble] × [light, dark, illus]',
+    metrics: 'per ramp [hueStep, drift, wobble] × [light, dark]',
     written: new Date().toISOString(),
   },
   grid: flatten(gridDefault),

@@ -20,7 +20,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import { SCALE_C_LIGHT, SCALE_C_DARK, DARK_CTA_C, chromaFloorBase } from '../src/engine/stopTable'
-import { MODE_SPECS } from '../src/reqtoken/spec'
+import { MODE_SPECS } from '../src/engine/requirements/spec'
 import { darkCtaTrim } from '../src/engine/darkChromaCurve'
 import { signalScalesFor, resolveBrand } from '../src/engine/resolve'
 
@@ -92,8 +92,7 @@ const ok = (msg: string) => console.log('  ✓ ' + msg)
 
 // ── 3. no stitched SCALE mechanism reappears in src/ ─────────────────────────
 // Bans the DELETED scale-chroma constants by name, in CODE (comments stripped —
-// prose may cite history). The illustration palette's ILLUS_STOPS keeps its own
-// declared table (a different artifact's single table — the doctrine, not a stitch).
+// prose may cite history).
 {
   const banned: [RegExp, string][] = [
     [/\bLIGHT_BASE_C\b/, 'LIGHT_BASE_C (the old 1–8 ladder)'],

@@ -288,12 +288,3 @@ export const WARM_TORSION = {
   travel: 0.55,
   capDeg: 24,
 }
-
-export const ILLUS_STOPS: StopSpec[] = [
-  { rootL: 0.97, chromaMultiplier: 0.12 },
-  { rootL: 0.88, chromaMultiplier: 0.70 },
-  { rootL: 0.63, chromaMultiplier: 1.05 },
-  { rootL: 0.47, chromaMultiplier: 0.80 },
-]
-
-export const REFERENCE_H = 245

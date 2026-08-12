@@ -3,10 +3,10 @@
 // Checks are driven FROM the declaration (MODE_SPECS): a require declared = a require verified.
 // The whole sweep runs under BOTH contrast profiles (wcag = the shipped default, apca = the opt-in
 // re-solve); the gate passes only if every declared require holds under its own metric in both.
-import { resolveRamp } from '../src/reqtoken/resolve'
-import { MODE_SPECS } from '../src/reqtoken/spec'
-import { withProfile, type ContrastProfile } from '../src/reqtoken/profiles'
-import { APCA_TOL_LC, apcaYAt } from '../src/reqtoken/producers'
+import { resolveRamp } from '../src/engine/requirements/resolve'
+import { MODE_SPECS } from '../src/engine/requirements/spec'
+import { withProfile, type ContrastProfile } from '../src/engine/requirements/profiles'
+import { APCA_TOL_LC, apcaYAt } from '../src/engine/requirements/producers'
 import { clampChromaToGamut, wcagY, contrastRatio, oklchToLinearRgb, apcaLc, apcaY } from '../src/engine/constraints'
 
 const enc = (c: number) => { c = Math.max(0, Math.min(1, c)); return c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055 }

@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { generateScale, generateNeutralScale } from '../../src/engine/colorEngine'
 import { stopHex, ctaNeedsBorder, pageStopFor, ctaBorderRung, OFFSET_ALPHAS } from '../../src/engine/cssRender'
 import { defaultSecondarySeed, SOFT_ON_CTA_ALPHA } from '../../src/engine/resolve'
-import { emitDtcgRamp } from '../../src/reqtoken/dtcg'
+import { emitDtcgRamp } from '../../src/engine/requirements/dtcg'
 // Real Unify export data, borrowed for the Motivation page's evidence figures.
 // Labels on anything rendered from it use FAMILY hue words only, never theme
 // names (owner 2026-08-08: the export's theme names carry brand identities).

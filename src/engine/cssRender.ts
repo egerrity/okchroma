@@ -1,6 +1,6 @@
 
 
-import { generateIllustrationScale, generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
+import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
 import { srgbEmitChannels, masterEmitChannels } from './colorMath'
 import { clampChromaToGamut, apcaY, apcaLc } from './constraints'
 import { stopTokenName, tokenOrder } from './tokenNames'
@@ -395,30 +395,6 @@ export function brandCss(
     + (ctaEscape ? ' · neutral cta escape active — the action colors ride the brand neutral; the red signal ships canonical' : '')
     + noteSuffix
 
-  // Illustration palette (PoC 2026-06-11): FOUR fixed-L slots per color —
-  // primary 1–4 from the brand, alt 1–4 from the secondary (falls back to
-  // the brand's own slots when no secondary exists). Shapes in
-  // illustration files are labeled by slot. Legacy semantic vars remap
-  // onto fixed slots (primary = mid 3, soft = tint 2; alt-mono = deep 4 /
-  // wash 1 so mono two-area files never collapse). Same values both
-  // modes — emitted once in the light block, vars cascade.
-  const illus = generateIllustrationScale(scale)
-  const secondaryIllus = secondary ? generateIllustrationScale(secondary) : null
-  const altStops = secondaryIllus ? secondaryIllus.stops : illus.stops
-  const illusVars = [
-    ...illus.stops.map(s => `  --illus-primary-${s.stop}: ${stopHex(s)};`),
-    ...altStops.map(s => `  --illus-alt-${s.stop}: ${stopHex(s)};`),
-    `  --illus-primary: var(--illus-primary-3);`,
-    `  --illus-primary-soft: var(--illus-primary-2);`,
-    // mono and two-color use the SAME slots (alt = deep 4, alt-soft =
-    // tint 2) — the toggle switches color family only, never depth
-    // (2026-06-11; soft moved wash→tint so it shows on the bg)
-    `  --illus-alt-mono: var(--illus-primary-4);`,
-    `  --illus-alt-soft-mono: var(--illus-primary-2);`,
-    `  --illus-alt-2c: var(--illus-alt-4);`,
-    `  --illus-alt-soft-2c: var(--illus-alt-2);`,
-  ]
-
   // The neutral is now GENERATED per brand (tinted toward the brand hue), so it
   // rides inside this brand's block as a brand-kind ramp — no longer a shared
   // global :root block.
@@ -589,7 +565,6 @@ export function brandCss(
     ...escape('light'),
     ...link('light'),
     brandIdentity,
-    ...illusVars,
     ...secondaryLight,
     ...softOnCta('light'),
     ...outline('light'),

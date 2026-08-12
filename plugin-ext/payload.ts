@@ -11,7 +11,7 @@
 // the schemes. The APCA pair is REMOVED — the owner is not authorised to use APCA for
 // design decisions, and this plugin was its last exposure. What remains is the plain
 // light/dark pair, solved in the WCAG lane. The profile machinery itself stays dormant in
-// src/reqtoken/profiles.ts (the wcag path is a passthrough), so re-enabling is a column
+// src/engine/requirements/profiles.ts (the wcag path is a passthrough), so re-enabling is a column
 // list, not a rebuild.
 //
 // Token shape: the operative `brand-` CATEGORY stays in the token name (brand-primary/*,

@@ -45,7 +45,7 @@ The plain engine/CSS name drops the first two segments (there is one register, o
 family per emitted block): `ink-53-aa`, not the full path. The register mechanism is
 documented in [architecture.md](architecture.md).
 
-Code: the **declaration** is [`spec.ts`](../src/reqtoken/spec.ts) (per-stop rootL,
+Code: the **declaration** is [`spec.ts`](../src/engine/requirements/spec.ts) (per-stop rootL,
 producers, and requirements: the edit surface); the base ladders it draws from are in
 [`stopTable.ts`](../src/engine/stopTable.ts) (`ROOT_L_LIGHT` / `ROOT_L_DARK`: the wash
 re-space is baked directly into `ROOT_L_LIGHT`'s values, not a separate constant); the
@@ -155,4 +155,4 @@ off-scale CTA isn't solved in either mode; it carries the brand fill's own light
 Code: [`perceptualL.ts`](../src/engine/perceptualL.ts): `apparentL()` is the Nayatani
 (1997) H-K model; `perceptualRungL()` is the solve. It's the `'perceptual'` lightness
 producer, applied per declared stop by the resolver
-([`producers.ts`](../src/reqtoken/producers.ts) / [`resolve.ts`](../src/reqtoken/resolve.ts)).
+([`producers.ts`](../src/engine/requirements/producers.ts) / [`resolve.ts`](../src/engine/requirements/resolve.ts)).

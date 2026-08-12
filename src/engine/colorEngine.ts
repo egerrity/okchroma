@@ -2,14 +2,12 @@ import { type Archetype, classifyArchetype, stateFillL } from './archetypes'
 import {
   wcagY,
   legalRatio,
-  findLForY,
   findLForContrast,
   findLForContrastUp,
   apcaY,
 } from './constraints'
 import {
-  ILLUS_STOPS,
-  REFERENCE_H, NEUTRAL_CTA_DARK_POP_CLEARANCE, type DarkCtaKind } from './stopTable'
+  NEUTRAL_CTA_DARK_POP_CLEARANCE, type DarkCtaKind } from './stopTable'
 import { neutralChromaCurve, subtleSecondaryChromaCurve, type NeutralLevel } from './neutralCurve'
 
 export type { NeutralLevel } from './neutralCurve'
@@ -18,7 +16,6 @@ export { SUBTLE_SECONDARY_MULT, SUBTLE_SECONDARY_MULT_CANDIDATES } from './neutr
 // Shared color math + producer constants live in colorMath.ts (hoisted verbatim; leaf module so the
 // requirement-token resolver can share them without an import cycle). Re-exported here for API compat.
 import {
-  goldSpineHue, torsionedHue, SPINE_OFFPATH_SIGMA, gauss, hueDelta,
   HUE_NOISE_C, redRepelShiftDeg,
   hexToOklch, oklchToSrgbUnclamped, maxChromaAt,
   makeStop, onTextIsWhite, type ColorStop,
@@ -29,11 +26,11 @@ export {
 } from './colorMath'
 export type { ColorStop } from './colorMath'
 
-import { resolveRamp, type ResolvedStop } from '../reqtoken/resolve'
-import { MODE_SPECS, type ModeSpec } from '../reqtoken/spec'
-import { withProfile, DEFAULT_APCA_LC_MAP, CTA_ONFILL_ENFORCE_LC, type ContrastProfile } from '../reqtoken/profiles'
-import { whiteTextLcAt, findLForWhiteTextLc, APCA_SOLVE_MARGIN_LC } from '../reqtoken/producers'
-export type { ContrastProfile } from '../reqtoken/profiles'
+import { resolveRamp, type ResolvedStop } from './requirements/resolve'
+import { MODE_SPECS, type ModeSpec } from './requirements/spec'
+import { withProfile, DEFAULT_APCA_LC_MAP, CTA_ONFILL_ENFORCE_LC, type ContrastProfile } from './requirements/profiles'
+import { whiteTextLcAt, findLForWhiteTextLc, APCA_SOLVE_MARGIN_LC } from './requirements/producers'
+export type { ContrastProfile } from './requirements/profiles'
 
 export interface GeneratedScale {
   name: string
@@ -169,11 +166,11 @@ export interface GenerateOptions {
   deltaLiftFloor?: boolean   // floor carried L at the scaffold rootL (the old "lift, never sink" recede floor)
 }
 
-// generateScale is now an ADAPTER over the requirement-token resolver (src/reqtoken): it compiles the caller
-// opts into a resolver invocation per mode and assembles the same GeneratedScale contract as before. The
-// producer/require/refine math lives in src/reqtoken/producers.ts (verbatim ports of the old body; the
-// cutover was proven byte-identical before the legacy body and its parity gates were deleted in 8b79504 —
-// today's equivalent instrument is scripts/p3-parity-dump.ts, a before/after byte-compare).
+// generateScale is now an ADAPTER over the requirement-token resolver (src/engine/requirements): it compiles
+// the caller opts into a resolver invocation per mode and assembles the same GeneratedScale contract as
+// before. The producer/require/refine math lives in src/engine/requirements/producers.ts (verbatim ports of
+// the old body; the cutover was proven byte-identical before the legacy body and its parity gates were
+// deleted in 8b79504 — the one-off before/after byte-compare that proved it has since been retired).
 export function generateScale(
   hex: string,
   scaleName: string,
@@ -244,25 +241,6 @@ export function generateScale(
 // Red cta de-collision is C12's alone (gate → split / exit / variant). The C6 register
 // (redRepelShiftDeg) survives only where the owner has not yet ruled: the dark-side
 // coolRedDark context hue (producers.ts) — flagged, awaiting her word.
-
-export interface IllustrationScale {
-  stops: ColorStop[]
-}
-
-export function generateIllustrationScale(scale: GeneratedScale): IllustrationScale {
-  const { brandL, brandC, brandH } = scale
-  const stops = ILLUS_STOPS.map((spec, i) => {
-    const C = brandC * spec.chromaMultiplier
-    const refY = wcagY(spec.rootL, C, REFERENCE_H)
-    let L = findLForY(refY, C, brandH)
-
-    const gOffPath = gauss(hueDelta(brandH, goldSpineHue(brandL)), SPINE_OFFPATH_SIGMA)
-    const H = torsionedHue(brandH, L, brandL, gOffPath)
-    if (H !== brandH) L = findLForY(refY, C, H)
-    return makeStop(i + 1, L, C, H)
-  })
-  return { stops }
-}
 
 // ── THE NEUTRAL'S TINT-HUE SOURCE (owner 2026-08-04: "use secondary and a custom") ─────
 // The neutral tint machinery is hue-parametric; the OFFERING picks which hue feeds it:

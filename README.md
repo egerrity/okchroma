@@ -16,8 +16,8 @@ of the 4.5:1 requirement).
 
 Output comes in two interchangeable forms carrying the same values:
 
-- **CSS custom properties** — `dist/brands.css` + `dist/signals.css`, via the semantic
-  layer `tokens/semantic.css`.
+- **CSS custom properties** — per-brand CSS generated live (`brandCss`) + the static
+  `dist/signals.css`, via the semantic layer `tokens/semantic.css`.
 - **Figma variables** — written into a Figma file by the bundled plugin.
 
 The live demo and the Figma plugin are previews/front-ends; the engine and its output are
@@ -41,19 +41,20 @@ then import `plugin/manifest.json` in Figma.
 ## How it works (30 seconds)
 
 Every token is a **requirement the engine solves, not a frozen value**. A pure-data
-declaration (`src/reqtoken/spec.ts`) states each stop's producer (perceptual placement,
-warm drift, chroma ladder) and its requirements (contrast floors, seam separations,
-on-text rules); a resolver executes it per seed — **produce → require → refine**.
-`resolveBrand(hex)` runs that engine, applies **policy** (status-color collisions, signal
-shifts), and an **emitter** (`cssRender` / `figmaRender`) maps the resolved stops onto
-named tokens and picks light vs dark. The declaration also round-trips to DTCG tokens
-(`$value` fallback + the live requirement in `$extensions`).
+declaration (`src/engine/requirements/spec.ts`) states each stop's producer (perceptual
+placement, warm drift, chroma ladder) and its requirements (contrast floors, seam
+separations, on-text rules); a resolver executes it per seed — **produce → require →
+refine**. `resolveBrand(hex)` runs that engine, applies **policy** (status-color
+collisions, signal shifts), and an **emitter** (`cssRender` / `figmaRender`) maps the
+resolved stops onto named tokens and picks light vs dark. The declaration also
+round-trips to DTCG tokens (`$value` fallback + the live requirement in `$extensions`).
 
-- **Engine:** `src/engine/*` + `src/reqtoken/*` — zero runtime dependencies, pure TypeScript.
+- **Engine:** `src/engine/*` — zero runtime dependencies, pure TypeScript.
 - **Entry points:** `resolveBrand` (`src/engine/resolve.ts`) and `generateScale`
   (`src/engine/colorEngine.ts`, an adapter over the resolver — same signature as always).
-- **Batch build:** `src/build.ts` runs the engine over the brand fixtures in
-  `src/brands.ts` and writes `dist/*.css`.
+- **Build:** `src/build.ts` writes the one static output, `dist/signals.css`. There is no
+  brand roster: per-brand CSS is generated live by whichever caller resolves a hex (the
+  demo's hex input, a plugin's form field).
 
 ## The Figma plugin
 

@@ -19,9 +19,9 @@
 //                                cover both escape directions; vs-green (shifts teal) is
 //                                the wcag-lane-only exemplar. The retired warmer hex
 //                                #EA603E (the red-orange cool-fix eyeball case) leaves
-//                                the roster; red-band coverage stays in the demo set
-//                                (Chili Mocha #EE3123, src/brands.ts) and the engine
-//                                audits' red-fidelity gates.
+//                                the roster; red-band coverage stays in the audit
+//                                fixture (vivid-red-collider #EE3123, scripts/fixture.ts)
+//                                and the engine audits' red-fidelity gates.
 //
 // Every hex verified through the real pipeline; the roster is snapshot-gated alongside
 // the demo set in scripts/ext-override-audit.ts (which also asserts the seed-canary

@@ -1,25 +1,18 @@
-import React, { useMemo, useState } from 'react'
-import { ChevronDown, Lock } from 'lucide-react'
-import { DEMO_BRANDS } from '../src/brands'
-import { SECONDARIES } from '../src/secondaries'
-import { resolveBrand } from '../src/engine/resolve'
-import { brandCss, neutralCss } from '../src/engine/cssRender'
+import React, { useState } from 'react'
+import { neutralCss } from '../src/engine/cssRender'
 import { STYLE_CSS, STYLE_OPTIONS, type DemoStyle } from './styles'
-import {
-  ALL_BRANDS, COMPONENT_CSS, FONT_STACK, Showcase, Segmented, rungDescription,
-  type RungMode, type AccentMode,
-} from './shared'
+import { COMPONENT_CSS, FONT_STACK } from './shared'
 import CustomTheme from './CustomTheme'
 import DocsSite from './docs/DocsSite'
 import { OkchromaLogo } from './okchroma-logo'
 
-type View = 'custom' | 'gallery' | 'docs'
-// The gallery view stays HIDDEN for now (PaletteGallery lives below; one-line
-// revert). Docs is the new sidebar docs site (demo/docs/DocsSite.tsx) — the old
-// stale Docs component was removed.
+type View = 'custom' | 'docs'
+// Docs is the sidebar docs site (demo/docs/DocsSite.tsx). The old hidden example-
+// palette gallery (PaletteGallery, DEMO_BRANDS-driven) was removed along with the
+// drink-fleet brand list it depended on — nothing linked to it (one-line nav entry,
+// commented out) and it was never the shipped surface.
 const VIEWS: Array<[View, string]> = [
   ['custom', 'Home'],
-  // ['gallery', 'Example palettes'],
   ['docs', 'Documentation'],
 ]
 
@@ -72,7 +65,6 @@ export default function App() {
 
       <div style={{ flex: 1, minHeight: 0 }}>
         {view === 'custom' && <CustomTheme dark={dark} view={paletteView} />}
-        {view === 'gallery' && <PaletteGallery dark={dark} onToggleDark={() => setDark(d => !d)} />}
         {view === 'docs' && <DocsSite dark={dark} />}
       </div>
 
@@ -114,121 +106,6 @@ export default function App() {
     </div>
   )
 }
-
-// ─── Example palettes: curated set exercising every archetype & edge case ───
-
-// Gallery controls-bar primitives — mirror the custom-theme field look so the
-// two views read the same. Inline-styled (self-contained, no shared-CSS churn).
-const GX_LABEL: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: 'var(--fg-default)', marginBottom: 5 }
-const GX_FIELD: React.CSSProperties = {
-  display: 'flex', alignItems: 'center', gap: 8, height: 38, boxSizing: 'border-box',
-  background: 'var(--surface-lift)', border: '1px solid var(--border-default)', borderRadius: 8,
-  padding: '0 12px', fontSize: 13, color: 'var(--fg-default)',
-}
-// The palette picker is the one editable control here — same field metrics as
-// the others, native arrow stripped (appearance:none) in favor of a chevron
-// that matches the rest of the UI.
-const GX_SELECT: React.CSSProperties = {
-  height: 38, boxSizing: 'border-box', padding: '0 32px 0 12px', width: '100%',
-  background: 'var(--surface-lift)', border: '1px solid var(--border-default)', borderRadius: 8,
-  fontSize: 13, color: 'var(--fg-default)', fontFamily: 'inherit', cursor: 'pointer',
-  appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none',
-}
-
-function GxControl({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div style={{ display: 'flex', flexDirection: 'column' }}><div style={GX_LABEL}>{label}</div>{children}</div>
-}
-
-// Read-only "locked" field — shows an example palette's color in the same field
-// style as custom-theme, but not editable (you change the palette via the picker).
-function LockedField({ label, swatch, text, width = 152 }: { label: string; swatch?: string; text: string; width?: number }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
-      <div style={{ ...GX_LABEL, color: 'var(--fg-subtle)' }}>{label}</div>
-      <div style={{ ...GX_FIELD, width }}>
-        {swatch && <span style={{ width: 20, height: 20, borderRadius: 5, flexShrink: 0, border: '1px solid var(--border-subtle)', background: swatch }} />}
-        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{text}</span>
-        <Lock size={13} style={{ flexShrink: 0, color: 'var(--fg-subtle)' }} aria-label="locked" />
-      </div>
-    </div>
-  )
-}
-
-function PaletteGallery({ dark, onToggleDark }: { dark: boolean; onToggleDark: () => void }) {
-  const [brandSlug, setBrandSlug] = useState(DEMO_BRANDS[0].slug)
-  const [rung, setRung] = useState<RungMode>('recommended')
-  const [accentMode, setAccentMode] = useState<AccentMode>('accented')
-
-  const current = ALL_BRANDS.find(b => b.slug === brandSlug) ?? ALL_BRANDS[0]
-  const secondary = SECONDARIES[current.slug]
-
-  // Recommended mode ships from the pre-built CSS; exact recomputes in
-  // the browser via the same engine + renderer the build uses. Every
-  // resolve here stays in the SHIPPED lane (dist/ is built with the apca
-  // profile — src/build.ts SHIPPED_PROFILE): the engine defaults an
-  // unset profile to wcag, so a profile-less recompute would silently
-  // swap the lane under the toggle (and mismatch the prebuilt apca signals).
-  const { overrideCss, resolved } = useMemo(() => {
-    const profile = 'apca' as const
-    const opts = rung === 'exact' ? { exact: true, contrastProfile: profile } : { contrastProfile: profile }
-    const r = resolveBrand(current.hex, current.name, opts)
-    if (rung === 'recommended') return { overrideCss: '', resolved: r }
-    const accent = secondary ? resolveBrand(secondary, 'accent', { exact: true, contrastProfile: profile }).scale : null
-    return { overrideCss: brandCss(current.slug, current.name, r, accent, '', 'default', profile), resolved: r }
-  }, [current, rung, secondary])
-
-  return (
-    <Showcase
-      slug={current.slug}
-      name={current.name}
-      hex={current.hex}
-      secondaryHex={secondary}
-      dark={dark}
-      onToggleDark={onToggleDark}
-      overrideCss={overrideCss}
-      accentMode={secondary ? accentMode : 'default'}
-      header={
-        <GxControl label="Example palette">
-          <div style={{ position: 'relative', width: 176 }}>
-            <select
-              value={brandSlug}
-              onChange={e => setBrandSlug(e.target.value)}
-              style={GX_SELECT}
-            >
-              <optgroup label="Featured">
-                {DEMO_BRANDS.map(b => <option key={b.slug} value={b.slug}>{b.name}</option>)}
-              </optgroup>
-              <optgroup label="All examples">
-                {ALL_BRANDS.filter(b => !b.demo).map(b => <option key={b.slug} value={b.slug}>{b.name}</option>)}
-              </optgroup>
-            </select>
-            <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--fg-subtle)' }} />
-          </div>
-        </GxControl>
-      }
-      controls={
-        <>
-          <LockedField label="Primary color" swatch={current.hex} text={current.hex.toUpperCase()} />
-          {secondary && <LockedField label="Accent color" swatch={secondary} text={secondary.toUpperCase()} />}
-          <LockedField label="Neutral color" text="Default (brand-tinted)" width={132} />
-          {/* keep preview + engine-mode together; wrap as one group, left-aligned */}
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px 18px', flexWrap: 'wrap' }}>
-            {secondary && (
-              <GxControl label="Accent preview">
-                <Segmented value={accentMode} onChange={setAccentMode} options={[['accented', 'Default'], ['accented-inverse', 'Inverse']]} />
-              </GxControl>
-            )}
-            <GxControl label="Color engine mode">
-              <Segmented value={rung} onChange={setRung} options={[['recommended', 'Recommended'], ['exact', 'Exact']]} />
-            </GxControl>
-          </div>
-        </>
-      }
-      annotation={rungDescription(rung, resolved)}
-    />
-  )
-}
-
 
 // Figma mark — owner-supplied outline glyph (lucide dropped brand icons), drawn in
 // currentColor so it inherits the nav link's text color in both light and dark.

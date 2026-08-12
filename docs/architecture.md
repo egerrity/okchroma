@@ -17,8 +17,10 @@ Compliance is built into generation (WCAG contrast targets, plus APCA boost for 
 
 **What it produces:**
 
-- **CSS custom properties:** `dist/brands.css` (one block per brand, light + dark) +
-  `dist/signals.css` which can be aliased into your semantic system or used on their own.
+- **CSS custom properties:** `brandCss`/`neutralCss` (per family, light + dark) +
+  `dist/signals.css`, the one output `build.ts` writes to disk, which can be aliased into
+  your semantic system or used on their own. Per-brand CSS has no batch step — the demo
+  and both plugins call `brandCss` live, on whatever hex they were given.
 - **Figma variables:** written directly into a Figma file by the plugin.
 
 ---
@@ -28,15 +30,16 @@ Compliance is built into generation (WCAG contrast targets, plus APCA boost for 
 ### The story in one paragraph
 
 One hex enters `resolveBrand`. That function calls `generateScale`, which is a thin
-adapter over the **requirement-token core** (`src/reqtoken/`): a pure-data **declaration**
-(`spec.ts`: per-stop producers, requirements, and roles) executed by a **resolver**
-(`resolve.ts` + `producers.ts`) in three phases per stop: **produce** (hue → chroma →
-lightness), **require** (declared floors: contrast), **refine** (chroma yields to gamut).
-`resolveBrand` then layers **policy** on top: collision checks against the four signals,
-signal shifts, the red complement. The resolved result is handed to an **emitter** (CSS or
-Figma) that maps the computed color stops onto named tokens and chooses light vs dark.
-`build.ts` drives this in a loop over the brand fixtures to write the CSS files; the demo
-and plugin drive the exact same functions live.
+adapter over the **requirement-token core** (`src/engine/requirements/`): a pure-data
+**declaration** (`spec.ts`: per-stop producers, requirements, and roles) executed by a
+**resolver** (`resolve.ts` + `producers.ts`) in three phases per stop: **produce** (hue →
+chroma → lightness), **require** (declared floors: contrast), **refine** (chroma yields to
+gamut). `resolveBrand` then layers **policy** on top: collision checks against the four
+signals, signal shifts, the red complement. The resolved result is handed to an **emitter**
+(CSS or Figma) that maps the computed color stops onto named tokens and chooses light vs
+dark. There is no batch roster: `build.ts` writes only the brand-independent
+`dist/signals.css`; the demo and both plugins call the exact same functions live, on
+whatever hex they were handed.
 
 ### 2a. Architecture details
 
@@ -44,8 +47,8 @@ and plugin drive the exact same functions live.
 
 ```mermaid
 flowchart TD
-    subgraph Inputs["Fixtures / inputs"]
-      B[brands.ts · secondaries.ts]
+    subgraph Inputs["Inputs"]
+      B[caller-supplied hex · demo input, plugin form, or scripts/fixture.ts for audits]
       SIG[signals.ts · 4 canonical hexes]
     end
 
@@ -57,15 +60,15 @@ flowchart TD
 
     subgraph Core["Requirement-token core: generateScale adapter"]
       CE[colorEngine.ts · adapter + neutral]
-      SPEC[reqtoken/spec.ts · the DECLARATION]
-      RES[reqtoken/resolve.ts · produce → require → refine]
-      PROD[reqtoken/producers.ts · named producers]
-      DTCG[reqtoken/dtcg.ts · DTCG $extensions round-trip]
+      SPEC[requirements/spec.ts · the DECLARATION]
+      RES[requirements/resolve.ts · produce → require → refine]
+      PROD[requirements/producers.ts · named producers]
+      DTCG[requirements/dtcg.ts · DTCG $extensions round-trip]
       CM[colorMath.ts · shared math + onTextIsWhite]
       CON[constraints.ts · OKLCH / gamut / WCAG / APCA]
       PL[perceptualL.ts · Helmholtz–Kohlrausch]
       P2[p2.ts · side-by-side metric]
-      PROF[reqtoken/profiles.ts · wcag→apca compiler]
+      PROF[requirements/profiles.ts · wcag→apca compiler]
       ST[stopTable.ts · L tables + constants]
       AR[archetypes.ts]
       DCC[darkChromaCurve.ts]
@@ -79,7 +82,7 @@ flowchart TD
     end
 
     subgraph Out["Outputs / consumers"]
-      BUILD[build.ts → dist/*.css]
+      BUILD[build.ts → dist/signals.css]
       SEM[tokens/semantic.css]
       DEMO[demo/* React preview]
       PLUG[plugin/* + plugin-ext/* Figma plugins]
@@ -130,7 +133,7 @@ The same modules as a table: each piece, where it lives, what it does. Grouped b
 | Archetypes | `archetypes.ts` | The six lightness anchors (near-black → light), `classifyArchetype`, the hover rule (`hoverL`). |
 | Neutral curve | `neutralCurve.ts` | The neutral's chroma shape: the neutral is generated from a tint hue at four tint levels. |
 
-**The requirement-token resolver (`src/reqtoken/`)**
+**The requirement-token resolver (`src/engine/requirements/`)**
 
 | Piece | Location | What it does |
 |---|---|---|
@@ -162,13 +165,21 @@ The same modules as a table: each piece, where it lives, what it does. Grouped b
 
 | Piece | Location | What it does |
 |---|---|---|
-| Roster | `brands.ts` · `secondaries.ts` | The representative drink-set brands + their secondaries: the demo/build input data. |
-| Token build | `build.ts` | The `npm run generate` entry: resolves the roster and writes the shipped CSS under `SHIPPED_PROFILE = 'wcag'`. |
-| Illustration pipeline | `illustration.ts` | **Demo support, not part of the engine offering** (owner 2026-08-06): recolors the demo's SVG via legend-hex swap. |
+| Token build | `build.ts` | The `npm run generate` entry: writes the one static output, `dist/signals.css`, under `SHIPPED_PROFILE = 'wcag'`. There is no brand roster in `src/` and no batch loop: per-brand CSS is generated live by whichever consumer calls `resolveBrand`/`brandCss` on a hex it was handed (the demo's hex input, a plugin's form field). |
 
-Around the engine sit the audit gates in `scripts/` (with their blessed snapshots) and the
-consumers: the demo preview, the two Figma plugins. The product boundary is the layers
-above: declaration in, resolved theme out, emitted as CSS or Figma variables.
+The old `brands.ts` / `secondaries.ts` drink-set roster and `illustration.ts` (an SVG
+legend-hex swap) are gone (owner 2026-08-11): nothing shipped consumed them, so they carried
+demo-only concerns that had no reason to live next to the engine. Their audit-fixture role is
+now `scripts/fixture.ts`, a small named color set with no display names or demo flag — it
+exists only to exercise the engine's instruments. The demo's one illustration
+(`demo/heroIllo.ts`) now themes itself directly: its SVG markup references the live CSS
+custom properties (`var(--brand-ink-53-aa)` etc.), so it re-themes with the rest of the page
+for free, no recolor step.
+
+Around the engine sit the audit gates in `scripts/` (with their blessed snapshots, driven by
+`scripts/fixture.ts`) and the consumers: the demo preview, the two Figma plugins. The product
+boundary is the layers above: declaration in, resolved theme out, emitted as CSS or Figma
+variables.
 
 #### (B) Pipeline stages
 
@@ -181,7 +192,7 @@ above: declaration in, resolved theme out, emitted as CSS or Figma variables.
 | 5 | Assemble | `colorEngine.ts` adapter | resolved ramps → the `GeneratedScale` contract (light[], dark[], the six cta state fills, on-booleans) |
 | 6 | **Policy** | `resolve.ts` (engine) · `resolveBrand` | runs collisions; may re-call the engine with new options; computes signal overrides |
 | 7 | Emit | `cssRender.ts` / `figmaRender.ts` + `tokenNames.ts` | `GeneratedScale` → named CSS vars or Figma variable tree |
-| 8 | Drive | `build.ts` (batch) / demo / plugin (live) | writes `dist/*.css` / renders preview / writes Figma |
+| 8 | Drive | `build.ts` (static) / demo / plugin (live) | writes `dist/signals.css` / renders preview / writes Figma |
 
 Structural facts worth stating plainly:
 
@@ -200,7 +211,7 @@ Structural facts worth stating plainly:
 The data structures that flow through everything:
 
 ```ts
-// the declaration (pure data, src/reqtoken/spec.ts)
+// the declaration (pure data, src/engine/requirements/spec.ts)
 ModeSpec       = { stops: StopReq[], roles: RoleReq[], ons: { onFill } }
 StopReq        = { stop, rootL, group, produce: {hue, L, chroma}, satFraction?/baseC?/chromaMult?, require? }
 RoleReq        = { role: 'cta'|'cta-hover'|'cta-pressed', produce, floorL, chromaMult }
@@ -243,7 +254,7 @@ prefixes at emit (`--critical-*` etc.); only the primitives change per brand.
 > examples, lives in **[schema.md](schema.md)**. This section is the conceptual model.
 
 The engine's core idea: **a token is a requirement the engine solves, not a frozen value.**
-The declaration (`src/reqtoken/spec.ts`) is pure, serializable data; the resolver executes
+The declaration (`src/engine/requirements/spec.ts`) is pure, serializable data; the resolver executes
 it. Three phases per stop, in order:
 
 - **produce**: the forward formula. Named producers, referenced by name in the data:
@@ -282,7 +293,8 @@ it. Three phases per stop, in order:
 per-stop chroma params, producer *names*, and every requirement are data; they serialize
 to DTCG tokens (`dtcg.ts`: frozen `$value` fallback for any DTCG tool + the live
 requirement in `$extensions['org.okchroma.requirement']`, round-trip-proven by
-`scripts/reqtoken-portability.ts`; editing a requirement in the token file changes the
+`research/reqtoken/reqtoken-portability.ts`, parked research, not run by CI; editing a
+requirement in the token file changes the
 re-resolved value). The producer implementations and their constants stay behind the
 versioned resolver id: twenty aesthetic constants in a token file would be fake
 portability.
@@ -320,8 +332,9 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
   The CTA is exempt on both sides (C12 v8: cta red de-collision belongs to the joint solve
   alone; the dark cta rides identity hue). It is **brand-only**: the red *signal* keeps its
   identity hue in both modes; signals pass `suppressRedCool: true`.
-- **Style lever** (`deeper` / `full-chroma`): set per brand at intake (`brands.ts`).
-  `deeper` pushes toward the cream/brown envelope, gated to the ambiguous semi-muted warm
+- **Style lever** (`deeper` / `full-chroma`): a `GenerateOptions` field, set directly by the
+  caller (the demo exposes `full-chroma` as a toggle; the audit fixture, `scripts/fixture.ts`,
+  carries a `deeper` case). `deeper` pushes toward the cream/brown envelope, gated to the ambiguous semi-muted warm
   band (H 55–100, mid mutedness); a no-op outside it. `full-chroma` releases the vividness
   cap for any seed (the ladder scales with the seed's true chroma; the dark cta rides the
   identity chroma policy instead of the brand trim); gamut clamps still bound the emit.
@@ -524,8 +537,8 @@ build or use it.
 # 1. Install
 npm install
 
-# 2. Build everything: bundles the generator, runs it to produce the token CSS
-#    (dist/signals.css + dist/brands.css), and bundles the demo (dist/demo.js).
+# 2. Build everything: bundles the generator, runs it to produce dist/signals.css,
+#    and bundles the demo (dist/demo.js). Per-brand CSS is generated live in-browser.
 npm run demo:build
 
 # 3. View the demo. Serve the repo ROOT (demo/index.html references ../dist and ../tokens):
@@ -554,11 +567,10 @@ npm run typecheck        # tsc --noEmit
 npm run audit            # dark-mode audit        (add :bless to update the snapshot)
 npm run highlight-audit  # highlight/on-fill audit (add :bless)
 npm run audit:divergence # light↔dark + cross-family divergence audit (add :bless)
-npm run sweep            # agnostic hue × chroma gamut sweep
 npm run req:audit        # the requirement gate: every DECLARED requirement, agnostic sweep, both modes
 npm run smooth           # ramp smoothness audit  (smooth:baseline to re-record)
 npm run figma:verify     # validates the Figma emitter output
-npm run generate         # regenerate dist/*.css only (requires a prior build)
+npm run generate         # regenerate dist/signals.css only (requires a prior build)
 ```
 
 > Note: `npm run build` and `npm run demo:build` run the exact same script

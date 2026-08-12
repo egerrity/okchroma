@@ -1,9 +1,6 @@
 import * as fs from 'fs'
 import * as path from 'path'
-import { BRANDS, type Brand } from './brands'
-import { SECONDARIES } from './secondaries'
-import { resolveBrand } from './engine/resolve'
-import { brandCss, signalsCss } from './engine/cssRender'
+import { signalsCss } from './engine/cssRender'
 
 // WCAG IS THE SHIPPED LANE (owner 2026-07-29). It was 'apca' from 2026-07-04, when the
 // two lanes were a real product choice: the page carried the perceptually-solved look and
@@ -15,46 +12,18 @@ import { brandCss, signalsCss } from './engine/cssRender'
 // still the identity for 'wcag', so the engine is unchanged — only which lane is emitted.
 const SHIPPED_PROFILE = 'wcag' as const
 
-function generateBrandCss(brand: Brand): string {
-  const { name, hex, slug } = brand
-
-  // All rules live in resolveBrand (src/engine/resolve.ts); rendering is
-  // shared with the demo's any-color tab (src/engine/cssRender.ts).
-  const r = resolveBrand(hex, name, { exact: brand.exact, archetypeOverride: brand.archetypeOverride, style: brand.style, contrastProfile: SHIPPED_PROFILE })
-
-  // Secondary runs through the SAME pipeline (a secondary red earns rung 1
-  // like a primary would). Signals follow the primary only — a secondary's
-  // own signal conflicts are annotated for review, never resolved, in v1.
-  const secondaryHex = SECONDARIES[slug]
-  let secondary = null
-  let noteSuffix = brand.archetypeOverride ? ` · archetype override → ${brand.archetypeOverride}` : ''
-  if (secondaryHex) {
-    const ra = resolveBrand(secondaryHex, `${name} accent`, { exact: brand.exact, style: brand.style, contrastProfile: SHIPPED_PROFILE })
-    secondary = ra.scale
-    if (ra.shearDeg !== 0) noteSuffix += ` · secondary shear ${ra.shearDeg > 0 ? '+' : ''}${ra.shearDeg.toFixed(1)}°`
-    if (ra.redRepel) noteSuffix += ` · secondary action color stepped clear of red`
-  }
-
-  return brandCss(slug, name, r, secondary, noteSuffix, 'default', SHIPPED_PROFILE)
-}
-
-// the signal block body moved to cssRender.signalsCss (shared with the demo's APCA override)
+// Per-brand CSS (brands.css) is gone — nothing visible ever consumed it (the demo pages
+// generate CSS live in-browser via resolveBrand + cssRender, and the old hidden gallery
+// that read it was removed alongside src/brands.ts + src/secondaries.ts). signals.css is
+// still real output: it's a fixed, brand-independent block the demo pages link directly.
 
 function run() {
   const distDir = path.join(__dirname, '..', 'dist')
   fs.mkdirSync(distDir, { recursive: true })
 
-  // The neutral is no longer a global block — it's generated per brand and
-  // emitted inside each brand's block by brandCss (brands.css below).
-
   // signals.css
   fs.writeFileSync(path.join(distDir, 'signals.css'), signalsCss(SHIPPED_PROFILE))
   console.log('  signals.css')
-
-  // one CSS block per brand, concatenated into brands.css
-  const brandBlocks = BRANDS.map(b => generateBrandCss(b))
-  fs.writeFileSync(path.join(distDir, 'brands.css'), brandBlocks.join('\n\n'))
-  console.log(`  brands.css (${BRANDS.length} brands)`)
 
   console.log('Token generation complete.')
 }

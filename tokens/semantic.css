@@ -116,33 +116,6 @@
   --secondary-border-emphasis-hover: var(--secondary-cta-hover);
 }
 
-/* ─── role.illustration ──────────────────────────────────────────────────────
-   Slots for mono / two-color brand illustrations. Vectors are painted with
-   legend placeholder hexes (see src/illustration.ts) and remapped to these
-   vars, so one illustration recolors per brand AND per mode for free.
-
-   Illustrations use a BESPOKE 4-slot palette (--illus-primary-1..4 =
-   wash/tint/mid/deep, --illus-alt-1..4), not the UI ramp — fixed L
-   targets per slot, generated into brands.css with the semantic
-   assignments (--illus-primary, --illus-alt-mono/-2c, …); this layer
-   only does the mono/two-color switch and the neutral roles. Slot
-   numbers never change on toggle (family swap only). Two-color is an
-   explicit opt-in via data-illustration="two-color" and falls back to
-   mono when no real secondary exists. */
-
-[data-brand] {
-  --illus-ink:      var(--neutral-ink-30-aaa);
-  --illus-muted:    var(--neutral-mark-74-aa);
-  --illus-paper:    var(--neutral-paper-99);
-  --illus-alt:      var(--illus-alt-mono);
-  --illus-alt-soft: var(--illus-alt-soft-mono);
-}
-
-[data-illustration="two-color"] {
-  --illus-alt:      var(--illus-alt-2c);
-  --illus-alt-soft: var(--illus-alt-soft-2c);
-}
-
 /* ─── Signal roles ──────────────────────────────────────────────────────────
    Aliases onto engine-generated signal primitives (dist/signals.css).
    Mode switching happens at the primitive layer, so one block covers both.

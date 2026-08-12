@@ -1154,8 +1154,7 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
           <section className="dash-card dash-card-getstarted" style={dashCard}>
             <Head title="Get started" />
             <div className="dash-illo" style={{ background: 'var(--surface-sink)', borderRadius: 12, padding: '16px 0', marginBottom: 12 }}>
-              <div data-illustration={hasSecondary ? 'two-color' : undefined}
-                style={{ width: '78%', margin: '0 auto' }}
+              <div style={{ width: '78%', margin: '0 auto' }}
                 dangerouslySetInnerHTML={{ __html: HERO_ILLO }} />
             </div>
             <div style={{ fontSize: 12, color: 'var(--fg-subtle)', textAlign: 'center', marginBottom: 12 }}>
