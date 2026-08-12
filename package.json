@@ -2,7 +2,28 @@
   "name": "okchroma",
   "version": "0.1.0",
   "license": "MIT",
+  "description": "Color token engine: one brand hex in, a full WCAG-enforced light+dark token system out (CSS variables, DTCG JSON, Figma variables)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/egerrity/okchroma.git"
+  },
+  "main": "./dist-lib/index.cjs",
+  "module": "./dist-lib/index.mjs",
+  "types": "./dist-lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist-lib/types/index.d.ts",
+      "import": "./dist-lib/index.mjs",
+      "require": "./dist-lib/index.cjs"
+    }
+  },
+  "files": [
+    "dist-lib"
+  ],
+  "sideEffects": false,
   "scripts": {
+    "build:lib": "node esbuild.config.js --lib && tsc -p tsconfig.lib.json",
+    "prepack": "npm run build:lib",
     "generate": "node dist/build-script.js",
     "demo:build": "node esbuild.config.js",
     "build": "node esbuild.config.js",
@@ -34,12 +55,10 @@
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "esbuild": "^0.28.1",
+    "helmlab": "^0.14.0",
+    "lucide-react": "^1.17.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "typescript": "^5.4.0"
-  },
-  "dependencies": {
-    "helmlab": "^0.14.0",
-    "lucide-react": "^1.17.0"
   }
 }

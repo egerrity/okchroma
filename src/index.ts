@@ -1,12 +1,13 @@
 // Public API for the OKChroma engine.
 //
-// The engine is dependency-free — import from here and call `resolveBrand`
-// (the recommended entry, with collision/signal policy) or `generateScale`
-// (the pure color math) to turn a hex into a full token set, then hand the
-// result to the CSS or Figma emitter.
+// Import from here and call `resolveBrand` (the recommended entry, with
+// collision/signal policy) or `generateScale` (the pure color math) to turn
+// a hex into a full token set, then hand the result to the CSS, Figma, or
+// DTCG emitter. The published bundle is self-contained: the one runtime
+// dependency (helmlab, the P2 adjacency metric) is inlined at build time.
 //
 // Example:
-//   import { resolveBrand, brandCss } from 'okchroma/src'
+//   import { resolveBrand, brandCss } from 'okchroma'
 //   const resolved = resolveBrand('#E93D82', 'Acme')
 //   const css = brandCss('acme', 'Acme', resolved)
 
@@ -48,6 +49,18 @@ export {
   type FigmaColorToken,
   type ThemeInput,
 } from './engine/figmaRender'
+export {
+  emitDtcgRamp,
+  resolveDtcgRamp,
+  parseToken,
+  EXT_KEY,
+  RESOLVER_ID,
+  type DtcgRampGroup,
+  type DtcgRequirementToken,
+  type DtcgSeedToken,
+  type DtcgColorValue,
+} from './engine/requirements/dtcg'
+export { MODE_SPECS, type ModeSpec } from './engine/requirements/spec'
 
 // ── Token vocabulary ─────────────────────────────────────────────────────────
 export { stopTokenName, tokenOrder } from './engine/tokenNames'

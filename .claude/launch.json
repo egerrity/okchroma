@@ -36,6 +36,12 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "8327", "--directory", "."],
       "port": 8327
+    },
+    {
+      "name": "portfolio",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "--prefix", "/Users/emilygerrity/emily-portfolio", "dev"],
+      "port": 5173
     }
   ]
 }

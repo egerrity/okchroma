@@ -38,6 +38,32 @@ npx serve .             # then open http://localhost:3000/demo/index.html
 Live editing: `npm run dev` (watch mode). Build the Figma plugin: `npm run plugin:build`,
 then import `plugin/manifest.json` in Figma.
 
+## Use as an npm package
+
+```bash
+npm install okchroma
+```
+
+```ts
+import { resolveTheme, brandCss, signalsCss } from 'okchroma'
+
+const t = resolveTheme({ primaryHex: '#E93D82', name: 'Acme' })
+const css = brandCss('acme', 'Acme', t.themed) + '\n' + signalsCss()
+```
+
+`resolveTheme` solves the full system for a seed (primary, optional secondary, neutral
+source, signal policy). `brandCss` emits the solved light and dark values as CSS custom
+properties scoped to `[data-brand="acme"]`, with dark values under
+`[data-brand="acme"][data-theme="dark"]`; the per-brand neutral is included in the same
+block. Variables are named `--brand-<token>`, `--neutral-<token>`, and
+`--<signal>-<token>`. Inject the string into a `<style>` tag at runtime or write it to a
+file at build time; `signalsCss()` is brand-independent and emitted once.
+
+The same resolved theme feeds the other emitters: `themeToFigma` returns the Figma
+variable payload, and `emitDtcgRamp` returns DTCG JSON carrying the live requirement in
+`$extensions`. ESM and CJS builds ship with TypeScript declarations. The package bundles
+its one runtime dependency (helmlab), so installing it adds nothing transitive.
+
 ## How it works (30 seconds)
 
 Every token is a **requirement the engine solves, not a frozen value**. A pure-data
@@ -49,7 +75,8 @@ collisions, signal shifts), and an **emitter** (`cssRender` / `figmaRender`) map
 resolved stops onto named tokens and picks light vs dark. The declaration also
 round-trips to DTCG tokens (`$value` fallback + the live requirement in `$extensions`).
 
-- **Engine:** `src/engine/*` — zero runtime dependencies, pure TypeScript.
+- **Engine:** `src/engine/*` — pure TypeScript with one runtime dependency (helmlab,
+  the P2 adjacency metric), bundled into the npm package at build time.
 - **Entry points:** `resolveBrand` (`src/engine/resolve.ts`) and `generateScale`
   (`src/engine/colorEngine.ts`, an adapter over the resolver — same signature as always).
 - **Build:** `src/build.ts` writes the one static output, `dist/signals.css`. There is no

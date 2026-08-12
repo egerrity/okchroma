@@ -5,8 +5,13 @@ const isWatch = process.argv.includes('--watch')
 const isPlugin = process.argv.includes('--plugin')
 const isPluginExt = process.argv.includes('--plugin-ext')
 const isPluginUnify = process.argv.includes('--plugin-unify')
+const isLib = process.argv.includes('--lib')
 
 async function main() {
+  if (isLib) {
+    await buildLib()
+    return
+  }
   if (isPlugin) {
     await buildPlugin()
     return
@@ -57,6 +62,22 @@ async function main() {
     await demoBuildCtx.dispose()
     console.log('Build complete.')
   }
+}
+
+// npm library target (dist-lib/). Self-contained: helmlab (the one runtime
+// dependency, P2 adjacency metric) is bundled in, so the published package
+// declares no dependencies. Declarations come from tsc -p tsconfig.lib.json
+// (run by the build:lib script after this).
+async function buildLib() {
+  const shared = {
+    entryPoints: ['src/index.ts'],
+    bundle: true,
+    platform: 'neutral',
+    target: 'es2020',
+  }
+  await esbuild.build({ ...shared, format: 'esm', outfile: 'dist-lib/index.mjs' })
+  await esbuild.build({ ...shared, format: 'cjs', outfile: 'dist-lib/index.cjs' })
+  console.log('Lib built → dist-lib/index.mjs + dist-lib/index.cjs')
 }
 
 async function buildPlugin() {
