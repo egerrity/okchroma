@@ -368,10 +368,6 @@ export function brandCss(
   // primary's — every pre-source caller is byte-identical (the emitter stays dumb, like
   // figmaRender's ThemeInput.neutralH).
   neutralH?: number,
-  // THE VIVID-INKS OPT-OUT (owner 2026-08-12, advanced): with the escape on, the brand's
-  // ink stops normally ride the neutral's ink register (text de-reds with the fills);
-  // this keeps them at the brand hue. Meaningless without ctaEscape; default off.
-  escapeInksVivid?: boolean
 ): string {
   const { scale } = r
   // the escape RESETS the red collision to default (owner 2026-07-16): with the brand's
@@ -465,26 +461,13 @@ export function brandCss(
   const escape = (mode: 'light' | 'dark'): string[] => {
     if (!ctaEscape) return []
     const esc = escapeCtaFamily(nScale, mode, contrastProfile)
-    // ALL the ctas (owner amendment 2026-07-16, re-specified 2026-08-12 with the cta-ink
-    // deletion): the brand's ink STOPS de-red with the fills — they ride the neutral's
-    // ink register, so text set in the brand ink quiets wherever it appears; --link's
-    // default alias follows through the cascade automatically. escapeInksVivid is the
-    // advanced opt-out (owner 2026-08-12): fills still escape, inks keep the brand hue.
-    const nStops = mode === 'light' ? nScale.light : nScale.dark
-    const inkAt = (n: number) => {
-      const s = nStops.find(x => x.stop === n)
-      if (!s) throw new Error(`escape: the neutral scale has no ink stop ${n}`)
-      return s
-    }
+    // FILL TRIO ONLY (owner 2026-08-13, reverting the 2026-08-12 ink de-chroma): the
+    // brand's ink stops — the text register, and --link's default alias onto them —
+    // keep the brand's own chroma under the escape.
     return [
       `  --brand-cta: ${stopHex(esc.cta)};`,
       `  --brand-cta-hover: ${stopHex(esc.ctaHover)};`,
       `  --brand-cta-pressed: ${stopHex(esc.ctaPressed)};`,
-      ...(escapeInksVivid ? [] : [
-        `  --brand-ink-53-aa: ${stopHex(inkAt(9))};`,
-        `  --brand-ink-42-aa: ${stopHex(inkAt(10))};`,
-        `  --brand-ink-30-aaa: ${stopHex(inkAt(11))};`,
-      ]),
       `  --brand-on-cta: ${onColor(esc.onFillIsWhite)};`,
     ]
   }
@@ -534,13 +517,11 @@ export function brandCss(
       : lines
   // same P3-pop class for the ESCAPE (the owner-caught outline lesson, 2026-07-11): the
   // escaped fill trio ships the neutral's whisper chroma — an out-of-sRGB BRAND cta's P3
-  // override sitting last in the cascade would pop the brand fill back in over it. With
-  // the 2026-08-12 ink de-chroma the brand's escaped INK STOPS carry the same hazard,
-  // so their P3 lines drop too (unless the vivid opt-out keeps the brand inks).
+  // override sitting last in the cascade would pop the brand fill back in over it. The
+  // ink stops keep the brand's chroma under the escape, so their P3 lines stay.
   const dropEscapeCta = (lines: string[]): string[] =>
     ctaEscape
-      ? lines.filter(l => !/^  --brand-cta(-hover|-pressed)?:/.test(l)
-          && (escapeInksVivid || !/^  --brand-ink-(53-aa|42-aa|30-aaa):/.test(l)))
+      ? lines.filter(l => !/^  --brand-cta(-hover|-pressed)?:/.test(l))
       : lines
   const p3Light = [
     ...dropEscapeCta(brandKindP3Body('brand', scale, 'light')),

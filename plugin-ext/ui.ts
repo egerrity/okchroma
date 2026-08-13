@@ -46,14 +46,9 @@ const isArchetype = (v: string): v is Archetype => ARCHETYPES.some(a => a.name =
 let ctaEscape = false
 let inRedRange = false        // EFFECTIVE gate: the CURRENT posture's red range
 let inRedRangeOffer = false   // OFFER gate: union of both clamp postures (row visibility)
-// THE VIVID-INKS OPT-OUT (owner 2026-08-12, advanced): with the escape on, the brand's
-// ink stops normally ride the neutral's register (text de-reds with the fills, the
-// cta-ink deletion's semantic); this keeps them at the brand hue. Default OFF; inert
-// without the escape (the row only shows while the escape row does).
-let escapeInksVivid = false
 // the SYSTEM LINK (Phase 4, owner 2026-07-16): ONE link trio per theme — hyperlinks, not
-// per-family. Default = the primary's ink-stop values (extensions carry their own; follows
-// the escape). Custom = the seed through the ink register (#0B57D0 default when toggled).
+// per-family. Default = the primary's ink-stop values (extensions carry their own).
+// Custom = the seed through the ink register (#0B57D0 default when toggled).
 let linkCustom = false
 // the escape BUNDLE (owner 2026-07-16): ticking "Use neutral primary cta" auto-enables
 // the custom link (#0B57D0) — overridable; unticking reverts ONLY an untouched bundle
@@ -114,8 +109,6 @@ const linkPicker      = $<HTMLInputElement>('link-picker')
 const neutralOptSecondary = $<HTMLOptionElement>('neutral-opt-secondary')
 const ctaEscapeRow    = $<HTMLElement>('cta-escape-row')
 const ctaEscapeBox    = $<HTMLInputElement>('cta-escape')
-const escInksRow      = $<HTMLElement>('escape-inks-row')
-const escInksBox      = $<HTMLInputElement>('escape-inks-vivid')
 const linkHexInput    = $<HTMLInputElement>('link-hex')
 const linkField       = $<HTMLElement>('link-field')
 const linkResetBtn    = $<HTMLButtonElement>('link-reset')
@@ -247,9 +240,6 @@ function themeInput(name: string) {
     // themeToFigma and the recipe stores the EFFECTIVE values, so a stale checkbox
     // can't ride a recipe replay
     ctaEscape: (ctaEscape && inRedRange) || undefined,
-    // the vivid-inks opt-out rides ONLY with an effective escape (it means nothing
-    // without one); stored as undefined when off so pre-flag recipes replay unchanged
-    escapeInksVivid: (ctaEscape && inRedRange && escapeInksVivid) || undefined,
     linkHex: (linkCustom && normalizeHex(linkHexInput.value)) || undefined,
     // the neutral's hue SOURCE (owner 2026-08-04) — 'secondary' stores the source so
     // re-applies/backfills follow the brand's CURRENT secondary; custom stores its hex.
@@ -300,13 +290,9 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     cells.push(row.idHex
       ? `<div class="mx-aa" style="background:${row.idHex};color:${idText(row.idHex)};font-weight:700;font-size:10px" title="identity">ID</div>`
       : `<div class="mx-cell"></div>`)
-    // under the escape the brand's INK STOPS ride the neutral's register (owner
-    // 2026-08-12, with the cta-ink deletion) unless the vivid-inks opt-out keeps them —
-    // the preview mirrors the shipped values
-    const effStop = (s: ColorStop): ColorStop =>
-      row.escape && !escapeInksVivid && s.stop >= 9 ? (nScale.light.find(x => x.stop === s.stop) ?? s) : s
-    for (const raw of row.scale.light) {
-      const s = effStop(raw)
+    // the ink stops keep the brand's own chroma under the escape (owner 2026-08-13,
+    // reverting the 2026-08-12 ink de-chroma) — the scale cells render raw
+    for (const s of row.scale.light) {
       const n = s.stop
       const h = hx(s)
       // stop 9 (ink-53-aa) is BOTH the emphasis fill and a text stop (owner
@@ -386,9 +372,6 @@ function updatePreview() {
       archetypeOverride: primaryMode !== 'recommended' && primaryMode !== 'exact' ? primaryMode : undefined,
     }))
     ctaEscapeRow.style.display = inRedRangeOffer ? '' : 'none'
-    // the vivid-inks opt-out shows only while the escape is offered AND ticked — it
-    // qualifies the escape's ink swap, nothing else
-    escInksRow.style.display = inRedRangeOffer && ctaEscape ? '' : 'none'
     // BUNDLE HYGIENE (review-caught): an untouched bundle auto-reverts the moment the
     // escape stops being effective — the frozen default blue must not outlive the escape
     // it was bundled with, nor BAKE INTO THE RECIPE for a non-red brand (batch re-applies
@@ -400,11 +383,10 @@ function updatePreview() {
     }
 
     // the link FIELD previews the RESOLVED system link: custom seed through the ink
-    // register, else the primary's ink-53-aa (which rides the neutral's register when
-    // the escape is active and the vivid opt-out is off). The from-primary posture shows
+    // register, else the primary's ink-53-aa. The from-primary posture shows
     // the resolved hex GREYED + read-only; clicking the hex takes it over (owner
     // Advanced-menu spec 2026-07-16).
-    const fromPrimaryStop = (ctaEscape && inRedRange && !escapeInksVivid ? nScale : t.themed.scale).light.find(s => s.stop === 9)!
+    const fromPrimaryStop = t.themed.scale.light.find(s => s.stop === 9)!
     const linkStop = linkCustom && normalizeHex(linkHexInput.value)
       ? resolveLinkTrio(normalizeHex(linkHexInput.value)!, undefined).link
       : fromPrimaryStop
@@ -672,11 +654,6 @@ ctaEscapeBox.addEventListener('change', () => {
     linkCustom = false
     linkBundled = false
   }
-  updatePreview()
-})
-
-escInksBox.addEventListener('change', () => {
-  escapeInksVivid = escInksBox.checked
   updatePreview()
 })
 
@@ -1044,8 +1021,6 @@ function populateForm(r: Recipe) {
   ctaBorderBox.checked = ctaBorder
   ctaEscape = !!t.ctaEscape // the stored flag is the EFFECTIVE one — red range re-derives in updatePreview
   ctaEscapeBox.checked = ctaEscape
-  escapeInksVivid = !!t.escapeInksVivid
-  escInksBox.checked = escapeInksVivid
   linkBundled = false // a loaded link posture is the recipe's own, never an auto-bundle
   linkCustom = !!t.linkHex
   if (t.linkHex) { linkHexInput.value = t.linkHex; linkHexInput.classList.remove('invalid') }
@@ -1087,7 +1062,6 @@ function resetForm() {
   fullChroma = false; fullChromaBox.checked = false
   ctaBorder = true; ctaBorderBox.checked = true
   ctaEscape = false; ctaEscapeBox.checked = false
-  escapeInksVivid = false; escInksBox.checked = false
   linkCustom = false; linkBundled = false
   linkHexInput.classList.remove('invalid')
   secondaryArchetype = null

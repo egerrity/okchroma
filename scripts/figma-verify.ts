@@ -100,13 +100,12 @@ ok(leaf((figma.dark as any).brand, 'cta').$value.hex === '#a4bafa', `brand/cta d
 const keyTree = (g: any): any => g?.$type ? 1 : Object.fromEntries(Object.keys(g ?? {}).map(k => [k, keyTree(g[k])]))
 ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTree((figma.dark as any).brand)), 'brand keys differ across modes')
 
-// NEUTRAL CTA ESCAPE (Phase 3 + the ALL-ctas amendment, re-specified 2026-08-12 with
-// the cta-ink deletion): with the flag on, the brand's fill trio re-resolves from the
-// brand-neutral's ink register (cta anchors at neutral ink-30-aaa exactly; near-black
-// light / near-white dark; on-cta flips) AND the brand's INK STOPS ride the neutral's
-// (text de-reds with the fills) unless escapeInksVivid keeps them; the rest of the
-// ramp stays the brand's own; the default link follows the ink stops; flag OFF is
-// unchanged.
+// NEUTRAL CTA ESCAPE (Phase 3; fill-trio-only since owner 2026-08-13 reverted the
+// 2026-08-12 ink de-chroma): with the flag on, the brand's fill trio re-resolves from
+// the brand-neutral's ink register (cta anchors at neutral ink-30-aaa exactly;
+// near-black light / near-white dark; on-cta flips). The brand's INK STOPS — and the
+// default link that carries them — keep the brand's own values; the rest of the ramp
+// stays the brand's own; flag OFF is unchanged.
 {
   const red = resolveBrand('#EA3E3E', 'escape-probe')
   const redSignals = SIGNALS.map(s => {
@@ -124,24 +123,17 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
   })
   const canonSignals = SIGNALS.map(s => ({ name: s.name, scale: SIGNAL_SCALES.get(s.name)!.scale }))
   const esc = themeToFigma(red, { secondary: null, neutralLevel: 'default', signals: escSignals, ctaEscape: true })
-  const escVivid = themeToFigma(red, { secondary: null, neutralLevel: 'default', signals: escSignals, ctaEscape: true, escapeInksVivid: true })
   const plain = themeToFigma(red, { secondary: null, neutralLevel: 'default', signals: redSignals })
   const canon = themeToFigma(red, { secondary: null, neutralLevel: 'default', signals: canonSignals })
   for (const mode of ['light', 'dark'] as const) {
     const b = (esc[mode] as any).brand, n = (esc[mode] as any).neutral, p = (plain[mode] as any).brand
     ok(leaf(b, 'cta').$value.hex === leaf(n, 'ink-30-aaa').$value.hex, `${mode} escape cta ${leaf(b, 'cta').$value.hex} != neutral ink-30-aaa ${leaf(n, 'ink-30-aaa').$value.hex}`)
     ok(leaf(b, 'cta').$value.hex !== leaf(p, 'cta').$value.hex, `${mode} escape cta did not move off the brand cta`)
-    // the ink-stop swap (ALL the ctas de-red — text set in the brand ink follows)
+    // the ink stops stay the brand's own (owner 2026-08-13 — the escape is fill-trio-only)
     for (const ink of ['ink-53-aa', 'ink-42-aa', 'ink-30-aaa'])
-      ok(leaf(b, ink).$value.hex === leaf(n, ink).$value.hex, `${mode} escape ${ink} ${leaf(b, ink).$value.hex} != neutral ${leaf(n, ink).$value.hex} (the ink swap)`)
+      ok(leaf(b, ink).$value.hex === leaf(p, ink).$value.hex, `${mode} escape ${ink} ${leaf(b, ink).$value.hex} != the brand's own ${leaf(p, ink).$value.hex} (the inks must stay)`)
     ok(leaf(b, 'paper-99').$value.hex === leaf(p, 'paper-99').$value.hex, `${mode} escape touched the ramp`)
-    ok((esc[mode] as any).link['link'].$value.hex === leaf(b, 'ink-53-aa').$value.hex, `${mode} default link does not follow the escaped ink stops`)
-    // the VIVID-INKS OPT-OUT (owner 2026-08-12): fills still escape, inks keep the brand hue
-    const bv = (escVivid[mode] as any).brand
-    ok(leaf(bv, 'cta').$value.hex === leaf(b, 'cta').$value.hex, `${mode} vivid opt-out moved the escaped FILL (it must only keep the inks)`)
-    for (const ink of ['ink-53-aa', 'ink-42-aa', 'ink-30-aaa'])
-      ok(leaf(bv, ink).$value.hex === leaf(p, ink).$value.hex, `${mode} vivid opt-out ${ink} != the brand's own (the inks must stay)`)
-    ok((escVivid[mode] as any).link['link'].$value.hex === leaf(p, 'ink-53-aa').$value.hex, `${mode} vivid opt-out link should stay on the brand's ink-53-aa`)
+    ok((esc[mode] as any).link['link'].$value.hex === leaf(p, 'ink-53-aa').$value.hex, `${mode} default link should stay on the brand's ink-53-aa`)
     // the RED RESET (owner amendment): under the escape the red group ships CANONICAL —
     // byte-equal to the canonical emit, different from this brand's variant
     for (const leafName of ['cta', 'cta-hover', 'cta-pressed', 'mark-74-aa', 'ink-53-aa']) {

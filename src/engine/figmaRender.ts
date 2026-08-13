@@ -166,14 +166,9 @@ export interface ThemeInput {
   // the NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): the brand's cta FILL trio +
   // on-cta re-resolve from the brand-neutral's ink register (near-black light /
   // near-white dark) — the red-collision de-conflict. Same tokens, different values
-  // (the outline idiom); default off = byte-identical. The brand's INK STOPS de-red
-  // with the fills (owner 2026-08-12, superseding the deleted cta-ink swap).
+  // (the outline idiom); default off = byte-identical. The brand's INK STOPS are NOT
+  // touched (owner 2026-08-13, reverting the 2026-08-12 ink de-chroma).
   ctaEscape?: boolean
-
-  // THE VIVID-INKS OPT-OUT (owner 2026-08-12, advanced — ext plugin): with the escape
-  // on, keep the brand's ink stops at the brand hue instead of the neutral register.
-  // Meaningless without ctaEscape; default off.
-  escapeInksVivid?: boolean
 
   // the SYSTEM LINK (Phase 4, owner 2026-07-16): a custom link seed — when set, the
   // emitted link group carries ITS ink-register resolution (the red de-conflict);
@@ -277,37 +272,23 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
       softOnCta(secondaryGroup, mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark)
     const brandGroup = rampGroup(scale[mode], mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark, brandExtra(scale, mode, 'brand'))
     // neutral cta escape re-expression (mirrors the outline block above): the brand's
-    // FILL trio + on-cta swap to the brand-neutral's ink register, and the brand's INK
-    // STOPS ride the neutral's (owner 2026-08-12 — text de-reds with the fills; the
-    // vivid-inks opt-out suppresses only the ink swap). With NO real secondary the
-    // secondary group MIRRORS the brand (secondary = scale above), so the escape applies
-    // there too — the un-escaped raw trio must not survive in the mirror (review-caught
-    // latent divergence).
+    // FILL trio + on-cta swap to the brand-neutral's ink register — the ink stops keep
+    // the brand's own chroma (owner 2026-08-13, reverting the 2026-08-12 ink de-chroma).
+    // With NO real secondary the secondary group MIRRORS the brand (secondary = scale
+    // above), so the escape applies there too — the un-escaped raw trio must not
+    // survive in the mirror (review-caught latent divergence).
     const esc = input.ctaEscape ? escapeCtaFamily(nScale, mode, input.contrastProfile) : null
-    const escInks = esc && !input.escapeInksVivid
-    const nInkAt = (n: number) => {
-      const s = nScale[mode].find(x => x.stop === n)
-      if (!s) throw new Error(`themeToFigma escape: the neutral scale has no ink stop ${n}`)
-      return s
-    }
     if (esc) {
       for (const g of input.secondary ? [brandGroup] : [brandGroup, secondaryGroup]) {
         putLeaf(g, 'cta', colorFromStop(esc.cta))
         putLeaf(g, 'cta-hover', colorFromStop(esc.ctaHover))
         putLeaf(g, 'cta-pressed', colorFromStop(esc.ctaPressed))
-        if (escInks) {
-          putLeaf(g, 'ink-53-aa', colorFromStop(nInkAt(9)))
-          putLeaf(g, 'ink-42-aa', colorFromStop(nInkAt(10)))
-          putLeaf(g, 'ink-30-aaa', colorFromStop(nInkAt(11)))
-        }
         putLeaf(g, 'on-cta', colorFromHex(esc.onFillIsWhite))
       }
     }
     // the SYSTEM LINK trio (Phase 4): ONE per theme. Custom seed → its ink-register
     // resolution; default → the primary's ink stops verbatim (value-equal to what the
-    // plugins alias, so the emitted structure never lies about the shipped color) — and
-    // under the ESCAPE the default follows the escaped ink stops (the alias chain
-    // would), staying with the brand's when the vivid opt-out keeps them.
+    // plugins alias, so the emitted structure never lies about the shipped color).
     const scaleInkAt = (n: number) => {
       const s = scale[mode].find(x => x.stop === n)
       if (!s) throw new Error(`themeToFigma link: the brand scale has no ink stop ${n}`)
@@ -317,8 +298,6 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
       ? (mode === 'light'
         ? { 'link': colorFromStop(lt.link), 'link-hover': colorFromStop(lt.linkHover), 'link-pressed': colorFromStop(lt.linkPressed) }
         : { 'link': colorFromStop(lt.linkDark), 'link-hover': colorFromStop(lt.linkHoverDark), 'link-pressed': colorFromStop(lt.linkPressedDark) })
-      : escInks
-      ? { 'link': colorFromStop(nInkAt(9)), 'link-hover': colorFromStop(nInkAt(10)), 'link-pressed': colorFromStop(nInkAt(11)) }
       : { 'link': colorFromStop(scaleInkAt(9)), 'link-hover': colorFromStop(scaleInkAt(10)), 'link-pressed': colorFromStop(scaleInkAt(11)) }
     const g: FigmaGroup = {
       brand: brandGroup,

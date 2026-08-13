@@ -66,11 +66,6 @@ export type TokenColumns = Record<Column, FlatTok[]>
 // re-applies preserve a brand's escape posture.
 export type ThemeSpec = Omit<Parameters<typeof resolveTheme>[0], 'contrastProfile'> & {
   ctaEscape?: boolean
-  // THE VIVID-INKS OPT-OUT (owner 2026-08-12, advanced): with the escape on, keep the
-  // brand's ink stops at the brand hue instead of the neutral register. ABSENT = OFF
-  // (the escape de-chromas the inks — the new default semantic); stored in the recipe
-  // so re-applies/backfills preserve the posture.
-  escapeInksVivid?: boolean
   // THE CTA-BORDER OPT-OUT (owner 2026-07-31: "on by default but optional"). ABSENT = ON, so
   // every recipe stored before this flag existed keeps its strokes on re-apply/backfill.
   ctaBorder?: boolean
@@ -216,7 +211,6 @@ function lane(
     signals,
     contrastProfile: profile,
     ctaEscape: input.ctaEscape,
-    escapeInksVivid: input.escapeInksVivid,
     linkHex: input.linkHex,
     ctaBorder: input.ctaBorder,
   })

@@ -36,7 +36,7 @@ let inRedRange = false        // EFFECTIVE gate: the CURRENT posture's red range
 let inRedRangeOffer = false   // OFFER gate: union of both clamp postures (row visibility)
 // the SYSTEM LINK (Phase 4, owner 2026-07-16): ONE link trio per theme — hyperlinks, not
 // per-family. Default aliases the primary's ink stops (9/10/11 as states; was cta-ink
-// until its 2026-08-12 deletion; follows the escape). Custom = the seed below through
+// until its 2026-08-12 deletion). Custom = the seed below through
 // the ink register (#0B57D0 default when toggled on — the red de-conflict for links).
 let linkCustom = false
 // the escape BUNDLE (owner 2026-07-16): ticking "Use neutral primary cta" auto-enables
@@ -233,12 +233,9 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     cells.push(row.idHex
       ? `<div class="mx-aa" style="background:${row.idHex};color:${idText(row.idHex)};font-weight:700;font-size:10px" title="identity">ID</div>`
       : `<div class="mx-cell"></div>`)
-    // under the escape the brand's INK STOPS ride the neutral's register (owner
-    // 2026-08-12, with the cta-ink deletion) — the preview mirrors the shipped values
-    const effStop = (s: ColorStop): ColorStop =>
-      row.escape && s.stop >= 9 ? (nScale.light.find(x => x.stop === s.stop) ?? s) : s
-    for (const raw of row.scale.light) {
-      const s = effStop(raw)
+    // the ink stops keep the brand's own chroma under the escape (owner 2026-08-13,
+    // reverting the 2026-08-12 ink de-chroma) — the scale cells render raw
+    for (const s of row.scale.light) {
       const n = s.stop
       const h = hx(s)
       // stop 9 (ink-53-aa) is BOTH the emphasis fill and a text stop (owner
@@ -281,7 +278,7 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     }
     // (the cta-ink + cta-ink-strong preview columns DELETED with their tokens, owner
     // 2026-08-12: the text-style cta is the ink stops, already rendered as scale cells
-    // above — escaped values included via effStop.)
+    // above.)
     return cells.join('')
   }
 
@@ -336,7 +333,7 @@ function updatePreview() {
     // register, else the primary's ink-53-aa (which rides the neutral's register when
     // the escape is active). The from-primary posture shows the resolved hex GREYED +
     // read-only; clicking the hex takes it over (owner Advanced-menu spec 2026-07-16).
-    const fromPrimaryStop = (ctaEscape && inRedRange ? nScale : t.themed.scale).light.find(s => s.stop === 9)!
+    const fromPrimaryStop = t.themed.scale.light.find(s => s.stop === 9)!
     const linkStop = linkCustom && normalizeHex(linkHexInput.value)
       ? resolveLinkTrio(normalizeHex(linkHexInput.value)!, cp).link
       : fromPrimaryStop

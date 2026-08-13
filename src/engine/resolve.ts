@@ -480,10 +480,10 @@ export function softOnCtaPasses(s: GeneratedScale, mode: 'light' | 'dark'): bool
 // 0.03–0.09 L move is imperceptible and the curve closure is gone post-generation), hue
 // constant. on-cta re-judges at the escaped fill under the same law as the neutral's own
 // quiet cta (judgment-only — the anchor is pinned): wcag = mixing flip + the 4.5
-// conformance floor; apca = pure apca-pole. The brand's INK STOPS de-red with the fills
-// (owner 2026-08-12, superseding the cta-ink swap — the trio is deleted): the emitters
-// re-express ink 9/10/11 from the neutral's ink register, unless the advanced vivid-inks
-// opt-out keeps them at the brand hue. UI gates the toggle to brands
+// conformance floor; apca = pure apca-pole. The brand's INK STOPS are NOT touched
+// (owner 2026-08-13, reverting the 2026-08-12 ink de-chroma — it shipped unapproved):
+// the escape moves only this fill trio; the ink register keeps the brand's own
+// chroma everywhere it appears. UI gates the toggle to brands
 // whose cta sits in red's register (redGateDist ≤ RED_GATE.G — the exact-mode advice
 // check above), but the emitters honor the flag for any brand: the gate is guidance,
 // not law, and a stakeholder override must not silently no-op.
@@ -537,13 +537,9 @@ export function escapeCtaFamily(
   const onEnforce = contrastProfile !== 'apca'
   const onFloor = contrastProfile === 'apca' ? undefined : 4.5
   const onFillIsWhite = onTextIsWhite(apcaY(cta.r, cta.g, cta.b), cta.L, cta.C, cta.H, onEnforce, onFloor)
-  // the escape covers ALL the ctas (owner amendment 2026-07-16: "it applies to cta and
-  // cta ink"; re-specified 2026-08-12 with the cta-ink deletion): the EMITTERS swap the
-  // brand's ink stops 9/10/11 to the neutral's ink register — text set in the brand ink
-  // de-reds with the fills, everywhere it appears. The system link, which aliases the
-  // primary's ink stops by default, follows automatically unless a custom link is set.
-  // The advanced vivid-inks opt-out (escapeInksVivid, ext plugin) suppresses only the
-  // ink swap; this fill trio always escapes.
+  // scope (owner 2026-08-13, reverting the 2026-08-12 ink de-chroma): the escape moves
+  // ONLY this fill trio + on-cta. The brand's ink stops 9/10/11 — the text register,
+  // and the default link that aliases them — keep the brand's own chroma.
   return { cta, ctaHover, ctaPressed, onFillIsWhite }
 }
 

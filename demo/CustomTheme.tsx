@@ -258,11 +258,9 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     const css = brandCss('custom', 'Custom brand', t.themed, t.secondary?.scale ?? null, '', neutralLevel, cp, t.secondary?.style, ctaEscape && inRedRangeNow, linkHex, ctaBorder, nH)
       + '\n' + signalsCss(cp)
     // the Advanced link field's from-primary display hex — the default link aliases the
-    // primary's ink-53-aa (stop 9; was cta-ink until its 2026-08-12 deletion), and under
-    // the escape the ink stops ride the neutral's register
-    const linkFromPrimaryHex = stopHex((ctaEscape && inRedRangeNow
-      ? generateNeutralScale(nH, neutralLevel, cp).light.find(s => s.stop === 9)!
-      : t.themed.scale.light.find(s => s.stop === 9)!)).toUpperCase()
+    // primary's ink-53-aa (stop 9; was cta-ink until its 2026-08-12 deletion); the ink
+    // stops keep the brand's own values under the escape (owner 2026-08-13)
+    const linkFromPrimaryHex = stopHex(t.themed.scale.light.find(s => s.stop === 9)!).toUpperCase()
     return { t, r: t.themed, accent: t.secondary?.scale ?? null, css, inRedRange, escapeOn: ctaEscape && inRedRangeNow, linkFromPrimaryHex }
   }, [primary, secondary, derived, primaryMode, secondaryStyle, secondaryArchetype, neutralChoice, neutralHexInput, profile, ctaEscape, linkCustom, linkInput, fullChroma, ctaBorder])
 
@@ -792,8 +790,9 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
         <div className="ct-alert-text">
           <TriangleAlert size={13} style={{ flexShrink: 0, marginTop: 1 }} />
           <span>
-            Neutral CTA escape active: every action color (fills, text actions, links) rides the
-            brand neutral, and the error signal ships canonical — no per-brand variant.
+            Neutral CTA escape active: the primary cta fill rides the brand neutral (ink text
+            stops and links keep the brand color), and the error signal ships canonical — no
+            per-brand variant.
           </span>
         </div>
       )}
@@ -950,7 +949,7 @@ function checklistRows(rRec: ResolvedBrand, rung: RungMode, primaryHex: string, 
   // the escape SUPERSEDES the red machinery (owner 2026-07-16): the checklist narrates
   // the shipped outcome, not the resolution the escape replaced
   if (escapeOn) {
-    rows.push({ key: 'hue', tone: 'adjusted', label: 'conflict with error red resolved — neutral cta escape', detail: 'Every action color (fills, text actions, links) rides the brand neutral — near-black in light, near-white in dark — so nothing can read as destructive. The error signal ships canonical, no per-brand variant.' })
+    rows.push({ key: 'hue', tone: 'adjusted', label: 'conflict with error red resolved — neutral cta escape', detail: 'The primary cta fill rides the brand neutral — near-black in light, near-white in dark — so the main button cannot read as destructive. Ink text stops and links keep the brand color. The error signal ships canonical, no per-brand variant.' })
   } else if (!rec && exRedMove) {
     rows.push({ key: 'hue', tone: 'adjusted', label: `your hex ships untouched — the error signal moves instead (${exRedMove.note})`, detail: 'This brand lives in the error signal\'s neighborhood. Exact mode never touches your color; the error signal takes a per-brand variant from the error-credible range, clearly distinct beside your buttons.' })
   } else if (rRec.redRepel) {
