@@ -6,6 +6,7 @@ import { clampChromaToGamut, apcaY, apcaLc } from './constraints'
 import { stopTokenName, tokenOrder } from './tokenNames'
 import { signalScalesFor, OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, SOFT_ON_CTA_ALPHA, softOnCtaPasses, escapeCtaFamily, resolveLinkTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
 import { SIGNALS, SIGNAL_EMIT_NAME } from './signals'
+import { alphaPapersFor, alphaSep, type AlphaPaper } from './alphaPapers'
 
 export function toHex(r: number, g: number, b: number): string {
   const ch = (v: number) => Math.round(Math.min(1, Math.max(0, v)) * 255).toString(16).padStart(2, '0')
@@ -161,7 +162,14 @@ export function ctaNeedsBorder(s: GeneratedScale, mode: 'light' | 'dark', page: 
   return ctaPageLc(s, mode, page) < CTA_BORDER_LC_FLOOR
 }
 
-export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' | 'dark', page: ColorStop | undefined): string[] {
+// the paper-overlay rgba value — Figma-style gamma-sRGB compositing basis, the
+// alpha quantized to the shipped 1% (alphaPapers.ts owns the solve)
+const overlayCssLine = (prefix: string, o: AlphaPaper): string => {
+  const [r, g, b] = [1, 3, 5].map(i => parseInt(o.overlayHex.slice(i, i + 2), 16))
+  return `  --${prefix}-${o.name}: rgba(${r}, ${g}, ${b}, ${o.alpha});`
+}
+
+export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' | 'dark', page: ColorStop | undefined, overlays?: AlphaPaper[]): string[] {
   const stops = mode === 'light' ? s.light : s.dark
   const f = ctaFamilyOf(s, mode)
   const onCta = mode === 'light' ? s.onFillTextIsWhite : s.onFillTextIsWhiteDark
@@ -174,8 +182,14 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
   // var() references onto the ink stops — the text-register cta is the ink stops
   // themselves; the ESCAPE posture de-chromas those stops after this body.)
   const border = ctaNeedsBorder(s, mode, page)
+  // the scale block: ramp stops + the paper-overlay leaves, interleaved by the
+  // canonical TOKEN_ORDER (each overlay directly after its paper — owner order call)
+  const scaleBlock = [
+    ...stops.map(x => ({ name: stopTokenName(x.stop), line: `  --${prefix}-${stopTokenName(x.stop)}: ${stopHex(x)};` })),
+    ...(overlays ?? []).map(o => ({ name: o.name, line: overlayCssLine(prefix, o) })),
+  ].sort((a, b) => tokenOrder(a.name) - tokenOrder(b.name)).map(v => v.line).join('\n')
   return [
-    stopsToVars(stops, prefix),
+    scaleBlock,
     `  --${prefix}-cta: ${stopHex(f.cta)};`,
     `  --${prefix}-cta-hover: ${stopHex(f.ctaHover)};`,
     `  --${prefix}-cta-pressed: ${stopHex(f.ctaPressed)};`,
@@ -233,12 +247,14 @@ export function neutralCss(selector: string, brandH: number, level: NeutralLevel
     `  --paper-100: ${p0(s.paper0, '#ffffff')};`,
     `  --ink-0: #000000;`,
     // the neutral IS the page, so it is judged against its own paper stop
-    ...brandKindBody('neutral', s, 'light', nPage('light')),
+    // the neutral's overlays never read the visibility bar (the exempt family), so
+    // the brandless chrome context passes 0
+    ...brandKindBody('neutral', s, 'light', nPage('light'), alphaPapersFor(s, s, 'light', 0)),
     `}`,
     `${selector}[data-theme="dark"] {`,
     `  --paper-100: ${p0(s.paper0Dark, '#000000')};`,
     `  --ink-0: #ffffff;`,
-    ...brandKindBody('neutral', s, 'dark', nPage('dark')),
+    ...brandKindBody('neutral', s, 'dark', nPage('dark'), alphaPapersFor(s, s, 'dark', 0)),
     `}`,
     ...(p3Light.length || p3Dark.length ? [
       `${P3_SUPPORTS} {`,
@@ -274,6 +290,13 @@ export function signalsCss(contrastProfile?: ContrastProfile): string {
   // either mode, the nearest being warning-light at 19.4 — but the branch needs a defined plane.
   const canonicalNeutral = generateNeutralScale(0, 'default', contrastProfile)
   const sigPage = { light: pageStopFor(canonicalNeutral, 'light'), dark: pageStopFor(canonicalNeutral, 'dark') }
+  // the paper-overlay leaves here are the BRANDLESS FALLBACK ONLY: the canonical
+  // plane does NOT hold for overlays the way it does for the border gate — the
+  // theme-vs-canonical spread measures up to 0.10 alpha (alpha-audit's canonical
+  // report), so every brand block re-emits all four signals' overlays theme-exact
+  // (brandCss.signalOverlayLines) and these values only reach a consumer with no
+  // [data-brand] scope at all
+  const sigSep = alphaSep([canonicalNeutral, ...SIGNALS.map(s => sigScales.get(s.name)!.scale)])
   const lightBlocks: string[] = []
   const darkBlocks: string[] = []
   const p3LightBlocks: string[] = []
@@ -286,8 +309,8 @@ export function signalsCss(contrastProfile?: ContrastProfile): string {
     // Emitted prefix = the ROLE name (critical/warning/positive/info, owner
     // 2026-07-27) — the signals are the re-pointable in-between tier; the
     // identity name stays engine-internal.
-    lightBlocks.push(...brandKindBody(sig.emitName, scale, 'light', sigPage.light))
-    darkBlocks.push(...brandKindBody(sig.emitName, scale, 'dark', sigPage.dark))
+    lightBlocks.push(...brandKindBody(sig.emitName, scale, 'light', sigPage.light, alphaPapersFor(scale, canonicalNeutral, 'light', sigSep)))
+    darkBlocks.push(...brandKindBody(sig.emitName, scale, 'dark', sigPage.dark, alphaPapersFor(scale, canonicalNeutral, 'dark', sigSep)))
     p3LightBlocks.push(...brandKindP3Body(sig.emitName, scale, 'light'))
     p3DarkBlocks.push(...brandKindP3Body(sig.emitName, scale, 'dark'))
   }
@@ -391,6 +414,25 @@ export function brandCss(
     ? { light: pageStopFor(nScale, 'light'), dark: pageStopFor(nScale, 'dark') }
     : { light: undefined, dark: undefined }
 
+  // paper-overlay leaves (owner round 2026-08-13): solved per family against THIS
+  // theme's neutral (the fields and K) at the theme's visibility bar — the six
+  // standard families define the bar, the prototype's own definition (port-parity
+  // gated). The secondary rides the same law and bar; the exempt neutral never
+  // reads the bar.
+  const themeSignals = SIGNALS.map(sig =>
+    effOverrides.find(o => o.name === sig.name)?.scale ?? signalScalesFor(contrastProfile).get(sig.name)!.scale)
+  const sep = alphaSep([nScale, scale, ...themeSignals])
+  const ov = (s: GeneratedScale, mode: 'light' | 'dark') => alphaPapersFor(s, nScale, mode, sep)
+  // EVERY signal's overlays emit theme-exact under the brand scope, overriding the
+  // canonical fallback in signals.css: the theme-vs-canonical spread measures up to
+  // 0.10 alpha (alpha-audit's canonical-spread report), far past the 1% quantization
+  // the canonical plane can absorb. Overridden signals carry theirs in the full body
+  // above; this covers the canonical ones.
+  const signalOverlayLines = (mode: 'light' | 'dark'): string[] =>
+    SIGNALS.filter(sig => !effOverrides.some(o => o.name === sig.name))
+      .flatMap(sig => ov(signalScalesFor(contrastProfile).get(sig.name)!.scale, mode)
+        .map(o => overlayCssLine(sig.emitName, o)))
+
   // When no secondary ramp is given, secondary mirrors brand var-for-var
   // (scale stops, off-scale cta, and the on-text token).
   const mirrorBody = (prefix: string, mode: 'light' | 'dark'): string[] => {
@@ -398,6 +440,7 @@ export function brandCss(
     const alias = (name: string) => `  --${prefix}-${name}: var(--brand-${name});`
     return [
       ...stops.map(x => alias(stopTokenName(x.stop))),
+      alias('paper-overlay-99'), alias('paper-overlay-97'), alias('paper-overlay-95'),
       alias('cta'),
       alias('cta-hover'),
       alias('cta-pressed'),
@@ -406,8 +449,8 @@ export function brandCss(
     ]
   }
 
-  const secondaryLight = secondary ? brandKindBody('secondary', secondary, 'light', page.light) : mirrorBody('secondary', 'light')
-  const secondaryDark = secondary ? brandKindBody('secondary', secondary, 'dark', page.dark) : mirrorBody('secondary', 'dark')
+  const secondaryLight = secondary ? brandKindBody('secondary', secondary, 'light', page.light, ov(secondary, 'light')) : mirrorBody('secondary', 'light')
+  const secondaryDark = secondary ? brandKindBody('secondary', secondary, 'dark', page.dark, ov(secondary, 'dark')) : mirrorBody('secondary', 'dark')
   // identity — literal input hex, mode-invariant (light block only). Secondary
   // mirrors the brand's when no secondary ramp exists.
   const brandIdentity = `  --brand-identity: ${scale.identityHex};`
@@ -542,7 +585,7 @@ export function brandCss(
     ``,
     `[data-brand="${slug}"] {`,
     ...lightAnchors,
-    ...brandKindBody('brand', scale, 'light', page.light),
+    ...brandKindBody('brand', scale, 'light', page.light, ov(scale, 'light')),
     ...escape('light'),
     ...link('light'),
     brandIdentity,
@@ -550,19 +593,21 @@ export function brandCss(
     ...softOnCta('light'),
     ...outline('light'),
     secondaryIdentity,
-    ...brandKindBody('neutral', nScale, 'light', page.light),
-    ...effOverrides.flatMap(o => brandKindBody(SIGNAL_EMIT_NAME[o.name], o.scale, 'light', page.light)),
+    ...brandKindBody('neutral', nScale, 'light', page.light, ov(nScale, 'light')),
+    ...effOverrides.flatMap(o => brandKindBody(SIGNAL_EMIT_NAME[o.name], o.scale, 'light', page.light, ov(o.scale, 'light'))),
+    ...signalOverlayLines('light'),
     `}`,
     `[data-brand="${slug}"][data-theme="dark"] {`,
     ...darkAnchors,
-    ...brandKindBody('brand', scale, 'dark', page.dark),
+    ...brandKindBody('brand', scale, 'dark', page.dark, ov(scale, 'dark')),
     ...escape('dark'),
     ...link('dark'),
     ...secondaryDark,
     ...softOnCta('dark'),
     ...outline('dark'),
-    ...brandKindBody('neutral', nScale, 'dark', page.dark),
-    ...effOverrides.flatMap(o => brandKindBody(SIGNAL_EMIT_NAME[o.name], o.scale, 'dark', page.dark)),
+    ...brandKindBody('neutral', nScale, 'dark', page.dark, ov(nScale, 'dark')),
+    ...effOverrides.flatMap(o => brandKindBody(SIGNAL_EMIT_NAME[o.name], o.scale, 'dark', page.dark, ov(o.scale, 'dark'))),
+    ...signalOverlayLines('dark'),
     `}`,
     ...(p3Light.length || p3Dark.length ? [
       `${P3_SUPPORTS} {`,

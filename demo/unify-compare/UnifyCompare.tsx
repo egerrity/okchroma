@@ -4,7 +4,7 @@ import { brandCss, neutralCss, stopHex } from '../../src/engine/cssRender'
 import { hexToOklch } from '../../src/engine/colorMath'
 import { generateNeutralScale, type GeneratedScale } from '../../src/engine/colorEngine'
 import { apparentL } from '../../src/engine/perceptualL'
-import { SCALE_STOP_COUNT } from '../../src/engine/tokenNames'
+import { SCALE_STOP_COUNT, stopTokenName } from '../../src/engine/tokenNames'
 import {
   STOP_8_NONTEXT_CONTRAST, INK_9_CONTRAST, INK_10_CONTRAST, INK_11_CONTRAST_FLOOR,
 } from '../../src/engine/stopTable'
@@ -522,7 +522,11 @@ export default function UnifyCompare() {
       points: (mode === 'light' ? r.scale.light : r.scale.dark).map(s => ({ x: (s.stop - 1) / OK_SPAN, y: appL(stopHex(s)) })),
     }))
   const unifyTicks = UNIFY_STOP_AXIS.map((s, i) => ({ x: i / (UNIFY_STOP_AXIS.length - 1), label: String(s) }))
-  const okTicks = Array.from({ length: SCALE_STOP_COUNT }, (_, i) => ({ x: i / OK_SPAN, label: String(i + 1) }))
+  // axis labels speak the band grammar's LL digits (paper-99 → 99), derived from the
+  // live name table so a rename flows through — the old internal indices 1..11 are
+  // not the shipped naming (owner catch 2026-08-13)
+  const llDigits = (stop: number) => stopTokenName(stop).replace(/[^0-9]/g, '')
+  const okTicks = Array.from({ length: SCALE_STOP_COUNT }, (_, i) => ({ x: i / OK_SPAN, label: llDigits(i + 1) }))
 
   // ── distribution roster ──
   // The NEW lane is whatever OKChroma actually ships for that family: the SIGNAL
@@ -558,9 +562,11 @@ export default function UnifyCompare() {
     return {
       name: 'New',
       pins: [
-        ...(anchors && p0 ? [pin('0', stopHex(p0), mode)] : []),
-        ...arr.map(s => pin(String(s.stop), stopHex(s), mode)),
-        ...(anchors ? [pin('12', mode === 'light' ? '#000000' : '#ffffff', mode)] : []),
+        // the anchors by their shipped names' digits: paper-100 and ink-0 (the old
+        // pre-Stage-B axis said 0 and 12, the internal indices)
+        ...(anchors && p0 ? [pin('100', stopHex(p0), mode)] : []),
+        ...arr.map(s => pin(llDigits(s.stop), stopHex(s), mode)),
+        ...(anchors ? [pin('0', mode === 'light' ? '#000000' : '#ffffff', mode)] : []),
       ],
     }
   }
@@ -721,12 +727,10 @@ export default function UnifyCompare() {
                 left off the chart on purpose: it carries the brand's identity inside a gated register, so it is
                 supposed to vary, and plotting it here only competes with the point.
               </div>
-              {/* Added 2026-07-30. The old copy said the tint registers were "flat within ~1 L*" with no
-                  mode qualifier, and the section lede said "flat across brands, in both modes" — both are
-                  true of light and false of dark, where paper-95 spans 2.7 L* and wash-80 spans 7.8. Not a
-                  regression: dark is placed on the PHOTOMETRIC ladder on purpose (a dark surface only reads
-                  as one plane if its stops share a luminance), so measuring it with an apparent-L ruler is
-                  supposed to fan out. The chart was already showing this; only the sentence was wrong. */}
+              {/* The mode qualifier is load-bearing (2026-07-30 catch): the flatness claim is true of
+                  light and false of dark BY DESIGN — dark rides the photometric ladder (a dark surface
+                  only reads as one plane if its stops share a luminance), so the apparent-L ruler is
+                  supposed to fan it out. The spans in the sentence are computed live, never typed. */}
               <div style={STAT}>
                 Where a line is <i>not</i> flat, the reason is the ruler rather than the placement. Each mode is
                 placed on its own declared ladder — light on apparent lightness, dark on luminance, because a dark
@@ -753,7 +757,7 @@ export default function UnifyCompare() {
               <RampChart mode="dark" lines={unifyRampLines('dark')} xTicks={unifyTicks} />
             </div>
             <div style={CARD}>
-              <div style={CARD_TITLE}>OKChroma — generated scales, stops 1–{SCALE_STOP_COUNT}</div>
+              <div style={CARD_TITLE}>OKChroma — generated scales, paper-99 → ink-30-aaa</div>
               <p style={CARD_SUB}>
                 Same seeds, full scales. One curve shape repeated per brand, in both modes, with no stop left unpicked —
                 the shape is the system, not a per-family judgment call.

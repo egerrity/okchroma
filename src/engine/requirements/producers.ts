@@ -19,7 +19,8 @@ import {
   DARK_FLOOR_FULL_C, DARK_FLOOR_MUTED_MAX_C, onTextIsWhite,
 } from '../colorMath'
 import { p2Diff, P2_D, P2_D_UP } from '../p2'
-import { DARK_CTA_MIN_L, DARK_CTA_C, chromaFloorBase } from '../stopTable'
+import { DARK_CTA_MIN_L, DARK_CTA_C, chromaFloorBase, DARK_BAND_TOP_LIFT, ROOT_L_LIGHT } from '../stopTable'
+import { PAPER0_DARK_ROOT_L } from './spec'
 import { CTA_ONFILL_ENFORCE_LC } from './profiles'
 import { darkCtaTrim } from '../darkChromaCurve'
 import type { GenerateOptions } from '../colorEngine'   // type-only: erased at runtime, no cycle
@@ -448,6 +449,37 @@ export function deltaDarkPlace(
   const target = Math.min(DELTA_LIGHT_GROUND_APP - 0.5,
     Math.max(DELTA_DARK_GROUND_APP + 0.5, DELTA_DARK_GROUND_APP + lift * dApp))
   return { L: solveLForApparent(target, C, lightTwin.H), C }
+}
+
+// ── THE SMOOTHED BAND LIFT (owner round 2026-08-13) ───────────────────────────
+// The per-stop lift for the surface band 1–7, COMPUTED from light's own distribution
+// instead of declared (retires stopTable's DARK_BAND_LIFT six-value table). Law: in
+// shipped-Y contrast space over the achromatic scaffolds, the dark band's
+// log-contrast shares between the ground (paper-100's dark scaffold) and the held
+// top (wash-80 at DARK_BAND_TOP_LIFT, the C37 solve, verbatim) equal light's shares
+// between white and wash-80. Expressed as a lift so deltaDarkPlace's C28 photometric
+// dialect — and its chroma-at-depth sampling — is unchanged. Papers included: the
+// C27 pin is retired, the paper-95→wash-92 concentration dissolves, and every family
+// (neutral too) shares the one achromatic ladder.
+const yOfLstar = (l: number) => (l > 8 ? ((l + 16) / 116) ** 3 : l / 903.2962962)
+let smoothedLifts: Record<number, number> | null = null
+export function smoothedBandLift(stop: number): number {
+  if (!smoothedLifts) {
+    const yWhite = wcagY(1, 0, 0)
+    const yGround = wcagY(PAPER0_DARK_ROOT_L, 0, 0)
+    const cLight = (n: number) => (yWhite + 0.05) / (wcagY(ROOT_L_LIGHT[n], 0, 0) + 0.05)
+    const depth = (n: number) => 100 - lstarFromY(wcagY(ROOT_L_LIGHT[n], 0, 0))
+    const topLstar = DELTA_DARK_GROUND_LSTAR + DARK_BAND_TOP_LIFT * depth(7)
+    const cTop = (yOfLstar(topLstar) + 0.05) / (yGround + 0.05)
+    const lifts: Record<number, number> = {}
+    for (let n = 1; n <= 7; n++) {
+      const t = Math.log(cLight(n)) / Math.log(cLight(7))
+      const yN = Math.exp(t * Math.log(cTop)) * (yGround + 0.05) - 0.05
+      lifts[n] = (lstarFromY(yN) - DELTA_DARK_GROUND_LSTAR) / depth(n)
+    }
+    smoothedLifts = lifts
+  }
+  return smoothedLifts[stop] ?? 1
 }
 
 export function deltaLiftChroma(

@@ -137,80 +137,24 @@ export type DarkCtaKind = keyof typeof DARK_CTA_C
 // in both directions rather than by whatever the stop below it happens to do.
 export const STOP_8_NONTEXT_CONTRAST = 3.0
 
-// ── DARK BAND LIFT (owner-calibrated 2026-07-27; marks rounds 1–3, wcag-lane exhibits) ──
-// The dark-surround eye compresses contrast (Bartleson–Breneman): the delta model's
-// mirror-of-light separations read quieter in dark than the same separations read in
-// light. Her picks: the surface band's apparent depth scales by a RAMP — ×1.25 at stop 2
-// rising to ×1.75 at stop 7 (the "washes" candidate; flat ×2 was vetoed at the card/field
-// seams, and a ×2 top inverted the 7→8 seam). Stops 1 and 8–10 carry NO lift: stop 8's
-// 3:1 law re-solves against the lifted paper-3 on its own, and the inks are dark-native.
-// (Both band-order floors are gone: stop 9's died with the highlight band and the 7→8 half
-// was deleted 2026-07-29. The lift therefore no longer reaches stop 8 AT ALL — it used to,
-// through that floor, which meant an illustration-facing wash decision silently moved the
-// accessibility border. Changing these numbers is now purely a wash decision.)
-// The lifted stop's VIRTUAL light twin moves with it — its
-// chroma samples the light ladder's own chroma-at-depth relationship at the scaled depth
-// (deltaLiftChroma; per seed, per hue — the cross-hue perceptualDarkC equalizer was tried
-// for this and vetoed: it dusted strong-H-K hues ~30%).
-// C28 RE-MARK (owner 2026-07-28, "half the lift looks right"): stops 2–3 below are her
-// original 2026-07-27 ramp at HALF strength — 1 + (old−1)/2. The old ×1.25→1.75 was
-// calibrated against APPARENT depth; the photometric ladder now supplies most of that
-// loudness itself, so the same numbers over-applied and pushed wash-7 into the highlight
-// band (7→8 seam collapse + a chroma peak at stop 7 — caught by dark-audit §A and
-// smoothness `wobble`). Her exhibit compared full/half/quarter.
-//
-// ── WASHES 4–7 ARE NO LONGER A HAND RAMP (owner 2026-07-29) ──────────────────
-// Owner's framing: dark has different surfaces, so its needs differ — the washes carry no
-// contrast requirement but they still have to READ on paper, and flipped to dark they recede.
-// *"4–7 probably do need to be higher than they are in light mode, but their distribution
-// should be more analogous."*
-//
-// THE RAMP WAS SLOPING THE WRONG WAY. The lift is PROPORTIONAL on apparent depth from the
-// ground, and depth is near zero at the top of the band. So a rising ramp delivered almost
-// nothing where the recession actually was: measured as S = dark's contrast-vs-paper-1 over
-// its light twin's, the old 1.225/1.275/1.325/1.375 produced S = 1.03 / 1.09 / 1.20 / 1.41.
-// wash-4 got 3% and wash-7 got 41% — and `-bg-subtle` is wash-5. Turning the number up
-// cannot fix it: even a flat ×5 lift only reaches S 3.3 at wash-4 against 9.7 at wash-7.
-//
-// SO THE BAND IS DECLARED IN CONTRAST SPACE, AT ONE S. Seam contrast between adjacent
-// washes equals c_n/c_{n−1} in BOTH modes, where c is contrast against that mode's own
-// paper — so a constant S cancels in the ratio and every seam ratio matches light's
-// identically while the whole band sits S× further off the paper. One number, and the
-// distribution comes out analogous by algebra rather than by luck.
-//
-// S = 1.20 IS WASH-6'S OWN CURRENT VALUE (her pick: "a lighter touch"). Choosing the pivot
-// that way makes this a pure REDISTRIBUTION rather than a boost — wash-6 does not move at
-// all (its solved lift comes back at 1.325, identical to shipped), washes 4 and 5 come up,
-// wash-7 comes down. Contrast vs paper-1, median: wash-4 1.24→1.45, wash-5 1.45→1.60,
-// wash-6 1.82→1.82, wash-7 2.53→2.16. Resulting seams 1.105/1.137/1.186 against light's
-// 1.105/1.139/1.188. A full 1.40 was built and looked right on chips but read as too much
-// in full-ramp context — her call.
-//
-// THE VALUES BELOW ARE SOLVED, NOT PICKED. Each is the per-stop lift that delivers S=1.20
-// through the real pipeline, bisected on the agnostic median. Re-deriving them means
-// re-running that solve, not nudging the digits — and the SHAPE is the finding: it must
-// DECREASE down the band, because the operator it feeds is proportional.
-// Accepted cost: the papers stay pinned by C27, so the whole raise lands on the single
-// 3→4 seam where the band meets paper-3 — 1.107 → 1.295 (= light's 1.082 × S).
-export const DARK_BAND_LIFT: Record<number, number> = {
-  2: 1.125, 3: 1.175, 4: 1.818, 5: 1.521, 6: 1.325, 7: 1.190,
-}
-
-// ── DARK SHINE PARITY (owner-calibrated 2026-07-27, per-element marks + cusp confirm) ──
-// The apparent instrument CREDITS high-H-K hues with shine, so equal-apparent placement
-// leaves blues/purples physically darkest ("blues and purples need to brighten the most,
-// greens yellows oranges the least"). Per stop, the depth measure blends toward plain-
-// luminance parity: depth = (1−τ)·apparentDepth + τ·L*depth, τ = T[stop] · w(hue).
-// T = her per-element marks (wash-7 none · wash-6 .33 · wash-4 ~.75 · papers full — a
-// linear crossfade: the H-K credit is only as real as the chroma carrying it; near-page
-// stops are near-neutral seams judged photometrically, top-of-band washes genuinely
-// shine). w(hue) = the hue's INTRINSIC-register darkness from the gamut CUSP-LIGHTNESS
-// curve (owner: "red is in the middle of the curve at the baseline, blue range is low,
-// yellow range is high" — measured: blue .99 · purple .87 · red .63 · orange .46 ·
-// green .22 · yellow .15; cuspDarknessW, pure geometry, no hand table).
-export const DARK_SHINE_PARITY_T: Record<number, number> = {
-  2: 1, 3: 1, 4: 0.75, 5: 0.5, 6: 0.25, 7: 0,
-}
+// ── THE DARK BAND ANCHOR (owner round 2026-08-13, the smoothing) ──────────────
+// The six per-stop solved lifts (C24 marks → C28 half-strength → C37 wash
+// redistribution) are RETIRED. C37 declared washes 4–7 in contrast space at one S so
+// their seam ratios match light's by algebra, but with the papers pinned (C27) the
+// whole raise landed on the single paper-95→wash-92 seam (contrast 1.107 → 1.295,
+// recorded then as the accepted cost). This round extends the same law across the
+// WHOLE band, papers included, every family including the neutral (owner: "one rule
+// for everything"): the interior is placed by light's log-contrast distribution
+// (shipped-Y, achromatic scaffold — the C28 one-dialect basis) between two held
+// anchors, the dark ground (paper-100's scaffold) and the band top. The constant
+// below IS the top anchor: wash-80's shipped C37 stop-7 lift, verbatim — wash-80
+// does not move. The interior lifts are COMPUTED (producers.smoothedBandLift), so
+// there is nothing left to hand-maintain: this one number sets the band's loudness,
+// and the shape comes out analogous to light's by construction. The C27 paper pin
+// is retired with it; the planes ride the papers.
+// (DARK_SHINE_PARITY_T deleted with its last consumer — C28's one dialect had
+// already retired it from the band; CATALOG C24 keeps the record.)
+export const DARK_BAND_TOP_LIFT = 1.190
 
 // The yellow hue band (used by audits to scope yellow-specific checks). The old YELLOW_L_LIFT.max
 // lift value was never consumed anywhere and is deleted; only the band definition was live.

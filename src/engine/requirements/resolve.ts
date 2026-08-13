@@ -11,13 +11,13 @@ import { apparentL, perceptualRungL, perceptualDarkC } from '../perceptualL'
 import { clampChromaToGamut, wcagY, legalRatio, findMaxLForContrast, apcaLc, contrastRatio, shippedY } from '../constraints'
 import { hexToOklch, srgbEmitChannels, redSolveDist, RED_GATE, RED_SOLVE } from '../colorMath'
 import { hoverL, pressedL, stateFillL } from '../archetypes'
-import { DARK_BAND_LIFT, DARK_SHINE_PARITY_T, ROOT_L_LIGHT, DARK_SIGNAL_WARM_DRIFT, chromaFloorBase } from '../stopTable'
+import { ROOT_L_LIGHT, DARK_SIGNAL_WARM_DRIFT, chromaFloorBase } from '../stopTable'
 import { MODE_SPECS, type ModeSpec, type StopReq, type RoleReq, type Require } from './spec'
 import {
   buildContext, buildDarkContext, type Ctx, type DarkCtx, type ResolveOpts,
   lightScaleChromaAt, placeLightScale, placeLightText,
   separationClampLight,
-  darkScaleChromaAt, darkInkChromaAt, placeDark, placeDarkDelta, deltaDarkTargetL, deltaLiftChroma, deltaDarkPlace, flatDarkCtaL,
+  darkScaleChromaAt, darkInkChromaAt, placeDark, placeDarkDelta, deltaDarkTargetL, deltaLiftChroma, deltaDarkPlace, flatDarkCtaL, smoothedBandLift,
   onFillIsWhiteLight, onFillIsWhiteDarkAt, ctaLightL, ctaDarkEnforcedL,
   ctaLightLApca, ctaDarkEnforcedLApca, solveBrandExit, solveDarkCtaExit, ctaDualGateL, ctaDarkDualGateL,
   apcaYAt, findMaxLForApcaLc, APCA_SOLVE_MARGIN_LC, APCA_TOL_LC, APCA_ENFORCE_MARGIN_LC,
@@ -215,19 +215,17 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         // (paper-2) clamp, so dark re-solves that same law against the dark paper-97 (paper-2) exactly (the require block below
         // does the solve from the ground up). appL parity would land off-law and the floor's hue-dependent
         // correction was the residual sRGB-shaped wobble (fired 84/108; whole-band 6.90 vs 0.72 for 1–7).
-        // C24 DARK BAND LIFT (owner marks 2026-07-27): stops 2–7's virtual twin sits
-        // DARK_BAND_LIFT[stop]× the apparent depth — L and C both read from that twin
-        // (deltaLiftChroma samples the light ladder's chroma-at-depth). Unlisted stops
-        // and require stops carry at ×1, byte-identical to the plain mirror.
-        const lift = DARK_BAND_LIFT[sp.stop] ?? 1
-        const tShine = DARK_SHINE_PARITY_T[sp.stop] ?? 0
+        // THE SMOOTHED BAND (owner round 2026-08-13): the whole surface band 1–7 —
+        // papers included, the C27 pin retired — lands on the C28 photometric dialect
+        // at the COMPUTED band lift: light's log-contrast distribution between the
+        // held ground and the held wash-80 (producers.smoothedBandLift). Require
+        // stops (8) still solve from the sentinel by their own law.
+        const lift = smoothedBandLift(sp.stop)
         let C = ls.C
         let L: number
         if (sp.require && sp.require.metric !== 'min-separation') L = 0.05
-        else if (lift !== 1 || tShine > 0) {
-          // C27: full-parity stops (the papers) also get the achromatic scaffold
-          // anchor — one photometric level across families (owner 2026-07-28)
-          const p = deltaDarkPlace(dl!, ls, lift, tShine, ROOT_L_LIGHT[sp.stop])
+        else if (sp.stop >= 1 && sp.stop <= 7) {
+          const p = deltaDarkPlace(dl!, ls, lift, 0, ROOT_L_LIGHT[sp.stop])
           L = p.L; C = p.C
         } else L = deltaDarkTargetL(ls, C, ls.H)
         // C28: the warm-spine drift is L-DEPENDENT, but the carry copies the light twin's
@@ -265,7 +263,41 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
           ? placeDarkDelta(d, sp.rootL, chromaAt!, ls)
           : { L: sp.rootL, C: chromaAt!(sp.rootL), H: d.darkHueAtL(sp.rootL) }
       } else {
-        placed = ls
+        // THE INK MIRROR (owner round 2026-08-13, the 53-peak fix): the dark inks stop
+        // being frozen scaffolds (they overshot their bars ~1.6-2×, which was the whole
+        // mark→ink jump). Each dark ink is PLACED at its light twin's shipped ratio vs
+        // paper-95, re-anchored to the resolved dark paper-95 — the shipped-pair basis
+        // on both sides, so the T-requires hold by construction (light holds them) and
+        // stay below as floors. Chroma and hue remain dark-native (the C9/C11 text
+        // register); non-carry callers keep the scaffold path.
+        const dlAll = ctx.opts?.deltaLightStops
+        const lightInk = sp.group === 'ink' && ctx.opts?.deltaCarry ? dlAll?.find(s => s.stop === sp.stop) : undefined
+        const lightP95 = lightInk ? dlAll?.find(s => s.stop === 3) : undefined
+        const darkP95 = lightInk ? stops.find(s => s.stop === 3) : undefined
+        if (lightInk && lightP95 && darkP95) {
+          let L: number
+          if (sp.stop === 9) {
+            const ratio = contrastRatio(shippedY(lightInk.L, lightInk.C, lightInk.H), shippedY(lightP95.L, lightP95.C, lightP95.H))
+            const bgY = shippedY(darkP95.L, darkP95.C, darkP95.H)
+            let lo = darkP95.L, hi = 0.999
+            for (let i = 0; i < 30; i++) {
+              const m = (lo + hi) / 2
+              const mH = d.darkHueAtL(m)
+              contrastRatio(shippedY(m, chromaAt!(m), mH), bgY) < ratio ? (lo = m) : (hi = m)
+            }
+            L = (lo + hi) / 2
+          } else {
+            // 42/30: light's own L steps stacked above the mirrored 53 — the text
+            // hierarchy's pair spacing mirrors light exactly (dark-audit §D reads ~1.0
+            // against its 0.58 bar). A pure ratio mirror compressed the pairs near
+            // white for high-margin seeds (equal ratio steps shrink in L up there).
+            // The T10/T11 floors below still guarantee the bars.
+            const prevDark = stops.find(s => s.stop === sp.stop - 1)!
+            const prevLight = dlAll!.find(s => s.stop === sp.stop - 1)!
+            L = Math.min(0.985, prevDark.L + (prevLight.L - lightInk.L))
+          }
+          placed = { L, C: chromaAt!(L), H: d.darkHueAtL(L) }
+        } else placed = ls
           ? placeDarkDelta(d, sp.rootL, chromaAt!, ls)
           : placeDark(d, sp.rootL, chromaAt!, sp.produce.L === 'perceptual-lift')
       }

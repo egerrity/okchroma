@@ -29,6 +29,8 @@
     "build": "node esbuild.config.js",
     "dev": "node esbuild.config.js --watch",
     "audit": "esbuild scripts/dark-audit.ts --bundle --platform=node --outfile=dist/dark-audit.js && node dist/dark-audit.js",
+    "audit:alpha": "esbuild scripts/alpha-audit.ts --bundle --platform=node --outfile=dist/alpha-audit.js && node dist/alpha-audit.js",
+    "audit:alpha:bless": "esbuild scripts/alpha-audit.ts --bundle --platform=node --outfile=dist/alpha-audit.js && node dist/alpha-audit.js --bless",
     "audit:bless": "esbuild scripts/dark-audit.ts --bundle --platform=node --outfile=dist/dark-audit.js && node dist/dark-audit.js --bless",
     "highlight-audit": "esbuild scripts/highlight-audit.ts --bundle --platform=node --outfile=dist/highlight-audit.js && node dist/highlight-audit.js",
     "highlight-audit:bless": "esbuild scripts/highlight-audit.ts --bundle --platform=node --outfile=dist/highlight-audit.js && node dist/highlight-audit.js --bless",

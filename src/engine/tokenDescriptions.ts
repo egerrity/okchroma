@@ -60,10 +60,21 @@ const solved = (f: Family) => `${TINT[f]}; re-solved to clear its floor`
 // (the cta-ink + cta-ink-strong rows DELETED with their tokens, owner 2026-08-12: the
 // text-style CTA is the ink stops themselves. Leaf keys are FLAT — band flattening,
 // same round: paper-99, never paper/99.)
+// the paper-overlay rows (owner round 2026-08-13): translucent twins of the papers,
+// solved so the reading holds on the neutral papers; anywhere else the backdrop
+// decides — stated here because it is the token's conformance boundary
+const OVERLAY: Body = {
+  req: 'translucent backgrounds that hold their reading on any paper',
+  theming: f => `${TINT[f]}; opacity solved against the papers, other backdrops show through unguaranteed`,
+  collides: true,
+}
 const SCALE: Record<string, Body> = {
   'paper-99': PAPER,
+  'paper-overlay-99': OVERLAY,
   'paper-97': PAPER,
+  'paper-overlay-97': OVERLAY,
   'paper-95': { req: 'backgrounds, inverted text', theming: f => `${TINT[f]}. Worst background text stops must clear.`, collides: true },
+  'paper-overlay-95': OVERLAY,
   'wash-92': WASH,
   'wash-89': WASH,
   'wash-85': WASH,
@@ -120,7 +131,8 @@ const SYSTEM: Record<string, Body> = {
   'system/surface/sunken': PLANE('recessed elevation plane'),
   'system/surface/low': PLANE('resting page plane'),
   'system/surface/base': PLANE('raised plane — cards, menus'),
-  'system/surface/high': PLANE('topmost plane — overlays'),
+  // ("overlays" reworded 2026-08-13: paper-overlay took the word as a label — the C50 law)
+  'system/surface/high': PLANE('topmost plane — modals, dialogs'),
   'system/link/enabled': LINK('', AA_BODY),
   'system/link/hover': LINK(' pointer-over', AA_BODY),
   'system/link/pressed': LINK(' pressed', AAA_BODY),

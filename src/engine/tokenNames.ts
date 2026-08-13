@@ -56,8 +56,12 @@ export function stopTokenName(stop: number): string {
 // cta-1/cta-2 renamed in place to cta/cta-hover via both plugins' RENAMED_LEAVES).
 // (The cta-ink + cta-ink-strong trios DELETED, owner 2026-08-12: they were pure
 // aliases onto the ink stops; the text-register cta is the ink stops read directly.)
+// paper-overlay-LL (owner round 2026-08-13): each paper's translucent twin, inserted
+// directly after its paper (owner naming + order call). rgba leaves solved in
+// alphaPapers.ts; papers only this round, washes excluded.
 const TOKEN_ORDER = [
-  'paper-99', 'paper-97', 'paper-95', 'wash-92', 'wash-89', 'wash-85', 'wash-80',
+  'paper-99', 'paper-overlay-99', 'paper-97', 'paper-overlay-97', 'paper-95', 'paper-overlay-95',
+  'wash-92', 'wash-89', 'wash-85', 'wash-80',
   'mark-74-aa',
   'ink-53-aa', 'ink-42-aa', 'ink-30-aaa',
   'cta', 'cta-hover', 'cta-pressed',
