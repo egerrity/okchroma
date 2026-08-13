@@ -3,6 +3,8 @@ declare const __html__: string
 declare namespace figma {
   function showUI(html: string, options?: { width?: number; height?: number; title?: string }): void
   function closePlugin(message?: string): void
+  /** withFontRetry only — loads a font Figma's unloaded-font error demanded. */
+  function loadFontAsync(fontName: { family: string; style: string }): Promise<void>
 
   const ui: {
     onmessage: ((msg: Record<string, unknown>) => void) | null
@@ -39,6 +41,7 @@ declare namespace figma {
     setPluginData(key: string, value: string): void
     scopes: VariableScope[]
     readonly variableCollectionId: string
+    readonly valuesByMode: { readonly [modeId: string]: RGBA | VariableAlias }
     setValueForMode(modeId: string, value: RGBA | VariableAlias): void
     setVariableCodeSyntax(platform: 'WEB' | 'ANDROID' | 'iOS', value: string): void
   }

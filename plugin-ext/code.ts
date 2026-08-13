@@ -410,6 +410,28 @@ const valEq = (cur: figma.RGBA | figma.VariableAlias | undefined, t: FlatTok): b
 const toRGBA = (t: FlatTok): figma.RGBA =>
   t.a !== undefined && t.a < 1 ? { r: t.r, g: t.g, b: t.b, a: t.a } : { r: t.r, g: t.g, b: t.b }
 
+// Figma requires every font of any text node an edit forces to re-render to be loaded
+// first — including fallback fonts the file never names ("Noto Sans Symbols2" carries
+// symbol glyphs). Fonts load lazily per session, so a variable write into a file whose
+// bound text hasn't rendered yet can throw mid-apply (owner hit 2026-08-12, batch died
+// at one brand and succeeded on manual re-run). Applies and the heal are idempotent, so
+// the recovery IS the re-run: parse the demanded font out of the error, load it, run
+// the whole operation again. Each failing pass names at most one new font; the cap
+// stops a pathological file from looping (loadFontAsync's own failure propagates
+// regardless).
+async function withFontRetry<T>(run: () => Promise<T>): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await run()
+    } catch (err) {
+      const s = String(err)
+      const m = s.includes('unloaded font') ? /family:\s*"([^"]+)",\s*style:\s*"([^"]+)"/.exec(s) : null
+      if (!m || attempt >= 4) throw err
+      await figma.loadFontAsync({ family: m[1], style: m[2] })
+    }
+  }
+}
+
 figma.ui.onmessage = async (msg) => {
   if (msg.type === 'apply') {
     const { brand, brandTokens, baseTokens, retiredNeutral, hasSecondary, confirmed, confirmedToken, spec, rebuildBase, baseSeedHex, renameFrom, descopePrimitives } = msg as unknown as {
@@ -431,7 +453,9 @@ figma.ui.onmessage = async (msg) => {
       // see the resolution beside BASE_SEED_KEY below for the absent/stored/default chain.
       descopePrimitives?: boolean
     }
-    try {
+    // the whole apply is one idempotent pass — withFontRetry re-runs it wholesale on
+    // Figma's unloaded-font error (see the helper above onmessage)
+    const applyOnce = async () => {
       const collections = await figma.variables.getLocalVariableCollectionsAsync()
       const locals = collections.filter(c => !isExtension(c))
       const extensions = collections.filter(isExtension)
@@ -1172,6 +1196,9 @@ figma.ui.onmessage = async (msg) => {
       }
 
       figma.ui.postMessage({ type: 'done', brand, set, removed, inherited, createdVars, baseCreated: created, secondary: secondaryMode, secondaryAdded, addedCols, rowsAdded, orphaned, backfill, unstamped, staleApcaCols })
+    }
+    try {
+      await withFontRetry(applyOnce)
     } catch (err) {
       figma.ui.postMessage({ type: 'error', message: String(err) })
     }
@@ -1200,7 +1227,7 @@ figma.ui.onmessage = async (msg) => {
     // the footer heal (owner 2026-08-12; replaced the Enterprise smoke test): converts
     // node applications of the deleted cta-ink trios to the regular ramp inks
     try {
-      const lines = await runHeal()
+      const lines = await withFontRetry(runHeal)
       figma.ui.postMessage({ type: 'heal-result', lines })
     } catch (err) {
       figma.ui.postMessage({ type: 'heal-result', lines: [`✗ FATAL — ${String(err)}`] })

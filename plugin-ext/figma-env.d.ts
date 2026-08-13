@@ -13,6 +13,8 @@ declare namespace figma {
   function notify(message: string, options?: { error?: boolean; timeout?: number }): void
   /** heal.ts walks every page (dynamic-page manifests load lazily). */
   function loadAllPagesAsync(): Promise<void>
+  /** withFontRetry only — loads a font Figma's unloaded-font error demanded. */
+  function loadFontAsync(fontName: { family: string; style: string }): Promise<void>
 
   const ui: {
     onmessage: ((msg: Record<string, unknown>) => void) | null
