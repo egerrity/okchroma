@@ -263,41 +263,11 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
           ? placeDarkDelta(d, sp.rootL, chromaAt!, ls)
           : { L: sp.rootL, C: chromaAt!(sp.rootL), H: d.darkHueAtL(sp.rootL) }
       } else {
-        // THE INK MIRROR (owner round 2026-08-13, the 53-peak fix): the dark inks stop
-        // being frozen scaffolds (they overshot their bars ~1.6-2×, which was the whole
-        // mark→ink jump). Each dark ink is PLACED at its light twin's shipped ratio vs
-        // paper-95, re-anchored to the resolved dark paper-95 — the shipped-pair basis
-        // on both sides, so the T-requires hold by construction (light holds them) and
-        // stay below as floors. Chroma and hue remain dark-native (the C9/C11 text
-        // register); non-carry callers keep the scaffold path.
-        const dlAll = ctx.opts?.deltaLightStops
-        const lightInk = sp.group === 'ink' && ctx.opts?.deltaCarry ? dlAll?.find(s => s.stop === sp.stop) : undefined
-        const lightP95 = lightInk ? dlAll?.find(s => s.stop === 3) : undefined
-        const darkP95 = lightInk ? stops.find(s => s.stop === 3) : undefined
-        if (lightInk && lightP95 && darkP95) {
-          let L: number
-          if (sp.stop === 9) {
-            const ratio = contrastRatio(shippedY(lightInk.L, lightInk.C, lightInk.H), shippedY(lightP95.L, lightP95.C, lightP95.H))
-            const bgY = shippedY(darkP95.L, darkP95.C, darkP95.H)
-            let lo = darkP95.L, hi = 0.999
-            for (let i = 0; i < 30; i++) {
-              const m = (lo + hi) / 2
-              const mH = d.darkHueAtL(m)
-              contrastRatio(shippedY(m, chromaAt!(m), mH), bgY) < ratio ? (lo = m) : (hi = m)
-            }
-            L = (lo + hi) / 2
-          } else {
-            // 42/30: light's own L steps stacked above the mirrored 53 — the text
-            // hierarchy's pair spacing mirrors light exactly (dark-audit §D reads ~1.0
-            // against its 0.58 bar). A pure ratio mirror compressed the pairs near
-            // white for high-margin seeds (equal ratio steps shrink in L up there).
-            // The T10/T11 floors below still guarantee the bars.
-            const prevDark = stops.find(s => s.stop === sp.stop - 1)!
-            const prevLight = dlAll!.find(s => s.stop === sp.stop - 1)!
-            L = Math.min(0.985, prevDark.L + (prevLight.L - lightInk.L))
-          }
-          placed = { L, C: chromaAt!(L), H: d.darkHueAtL(L) }
-        } else placed = ls
+        // Dark inks are SCAFFOLD-PLACED (owner revert 2026-08-13): the 53-peak ink
+        // mirror shipped and was reverted same day — light's L-geometry transplanted
+        // near white compressed 42→30 in apparent terms. Do not resurrect without a
+        // new owner direction. The T10/T11 floors below still guarantee the bars.
+        placed = ls
           ? placeDarkDelta(d, sp.rootL, chromaAt!, ls)
           : placeDark(d, sp.rootL, chromaAt!, sp.produce.L === 'perceptual-lift')
       }
