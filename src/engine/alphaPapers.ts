@@ -64,7 +64,18 @@ const stopHex = (s: { L: number; C: number; H: number }): string => {
 }
 const appOf = (s: { L: number; C: number; H: number }) =>
   apparentL(s.L, clampChromaToGamut(s.L, s.C, s.H), s.H)
-const appHex = (h: string) => { const o = hexToOklch(h); return apparentL(o.L, o.C, o.H, 'srgb') }
+// memoized — the solve evaluates the same composites thousands of times per theme,
+// and the plugin sandbox runs this on the UI thread (an apply froze the panel,
+// owner-hit 2026-08-13). Keyed by hex: a pure function of its input.
+const appMemo = new Map<string, number>()
+const appHex = (h: string) => {
+  const hit = appMemo.get(h)
+  if (hit !== undefined) return hit
+  const o = hexToOklch(h)
+  const v = apparentL(o.L, o.C, o.H, 'srgb')
+  appMemo.set(h, v)
+  return v
+}
 const hexRgb = (h: string) => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16))
 const rgbHex = (c: number[]) => '#' + c.map(v => Math.round(Math.min(255, Math.max(0, v))).toString(16).padStart(2, '0')).join('')
 // Figma-style gamma-sRGB compositing — the basis every consumer's renderer uses
@@ -114,9 +125,17 @@ export function alphaPapersFor(
   const buildTwins = (lift: number): AlphaPaper[] => PAPER_STOPS.map((sN, i) => {
     const base = mode === 'light' ? stopAt(scale, 'light', sN) : stopAt(scale, 'dark', sN)
     const targetApp = mode === 'light' ? appOf(base) : darkGroundApp + K * dls[i] + lift
+    // memoized per rung (targetApp and hue are fixed here): the bisections evaluate
+    // the same candidate chromas repeatedly, and each miss costs a 34-step Nayatani
+    // L-solve — the plugin-sandbox freeze lived in this line
+    const inkMemo = new Map<number, ColorStop>()
     const mkInk = (c: number): ColorStop => {
+      const hit = inkMemo.get(c)
+      if (hit) return hit
       const L = solveLForApparent(targetApp, c, base.H)
-      return { ...base, L, C: clampChromaToGamut(L, c, base.H, 'srgb') }
+      const v = { ...base, L, C: clampChromaToGamut(L, c, base.H, 'srgb') }
+      inkMemo.set(c, v)
+      return v
     }
     // the chroma boost trades photometric Y for H-K shine (L re-solves down at equal
     // apparent), and WCAG lives on Y — so the floor's search is CEILINGED by the ink
@@ -170,15 +189,20 @@ export function alphaPapersFor(
           c = hi
         }
       }
+      // converged: an unchanged chroma reproduces the identical bisections next pass
+      const prev = inkC
       inkC = c
+      if (Math.abs(c - prev) < 1e-9) break
     }
     return { stop: sN, name: OVERLAY_NAMES[sN], overlayHex: stopHex(mkInk(inkC)), alpha: Math.ceil(a * 100) / 100, ...(capped ? { capped } : {}) }
   })
 
   if (mode === 'light') return gateInks(buildTwins(0), scale, neutral, 'light')
-  // the ink-gated half-step lift, dark
+  // the ink-gated half-step lift, dark (one build reused — the gate never clamped a
+  // real theme, so the fast path is the whole cost)
   const half = ALPHA_LIFT_FRACTION * stepApp
-  if (inkBarsClear(buildTwins(half), scale, neutral, 'dark')) return gateInks(buildTwins(half), scale, neutral, 'dark')
+  const atHalf = buildTwins(half)
+  if (inkBarsClear(atHalf, scale, neutral, 'dark')) return gateInks(atHalf, scale, neutral, 'dark')
   let lo = 0, hi = half
   for (let i = 0; i < 10; i++) {
     const m = (lo + hi) / 2
