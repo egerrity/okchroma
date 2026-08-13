@@ -62,7 +62,7 @@ one exists), and the accessibility category it carries.
 |---|---:|---:|---|---|
 | `paper-99`          | 0.987  | 0.178 | – | app background, inverted text |
 | `paper-97`          | 0.970  | 0.213 | – | raised background, inverted text |
-| `paper-95`          | 0.950  | 0.252 | – | surface plane (light sink / dark pop) |
+| `paper-95`          | 0.950  | 0.252 | – | surface plane (light sunken / dark high) |
 | `wash-92`           | 0.924  | 0.285 | – | low-hierarchy fill, interaction, decorative |
 | `wash-89`           | 0.892  | 0.313 | – | low-hierarchy fill, interaction, decorative |
 | `wash-85`           | 0.852  | 0.348 | – | decorative |

@@ -158,7 +158,7 @@ function buildTokenGroups(): TokGroup[] {
         { token: 'paper-100', role: "the ladder's universal floor (always the neutral's own stop 0, every family)", guarantee: '–', light: swatch(hex(neutral.paper0!)), dark: swatch(hex(neutral.paper0Dark!)) },
         { token: 'paper-99', role: 'app background, inverted text', guarantee: '–', light: swatch(hex(stopAt(L, 1))), dark: swatch(hex(stopAt(D, 1))) },
         { token: 'paper-97', role: 'raised background, inverted text', guarantee: '–', light: swatch(hex(stopAt(L, 2))), dark: swatch(hex(stopAt(D, 2))) },
-        { token: 'paper-95', role: 'surface plane (light sink / dark pop)', guarantee: '–', light: swatch(hex(stopAt(L, 3))), dark: swatch(hex(stopAt(D, 3))) },
+        { token: 'paper-95', role: 'surface plane (light sunken / dark high)', guarantee: '–', light: swatch(hex(stopAt(L, 3))), dark: swatch(hex(stopAt(D, 3))) },
         { token: 'wash-92', role: 'low-hierarchy fill, interaction, decorative', guarantee: '–', light: swatch(hex(stopAt(L, 4))), dark: swatch(hex(stopAt(D, 4))) },
         { token: 'wash-89', role: 'low-hierarchy fill, interaction, decorative', guarantee: '–', light: swatch(hex(stopAt(L, 5))), dark: swatch(hex(stopAt(D, 5))) },
         { token: 'wash-85', role: 'decorative', guarantee: '–', light: swatch(hex(stopAt(L, 6))), dark: swatch(hex(stopAt(D, 6))) },

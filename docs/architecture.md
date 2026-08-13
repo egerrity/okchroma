@@ -231,7 +231,7 @@ ResolvedBrand  = { scale, shearDeg, redRepel: {light,dark}|null,
 | Stops | Token names | Role |
 |---|---|---|
 | 1–2 | `paper-99`, `paper-97` | the page and card planes |
-| 3 | `paper-95` | surface plane (light sink / dark pop), renamed from wash-3, owner 2026-07-24 |
+| 3 | `paper-95` | surface plane (light sunken / dark high), renamed from wash-3, owner 2026-07-24 |
 | 4–7 | `wash-92` … `wash-80` | low-hierarchy fills, borders, decorative |
 | 8 | `mark-74-aa` | WCAG 1.4.11 **3:1** non-text step (borders, UI elements) |
 | 9 | `ink-53-aa` | emphasis fill AND first text stop (4.5:1, the 2026-07-29 highlight collapse) |
