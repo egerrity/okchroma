@@ -20,9 +20,9 @@ import { UNIFY_SIGNALS, UNIFY_THEMES, UNIFY_GRAY } from '../unify-compare/unifyD
 // EDITORIAL RULES (owner, 2026-08-06): utilitarian language, no em dashes in
 // prose, mechanism over outcome, no internal pet names as explanations, and
 // every factual claim verified against the CODE (architecture.md is not a
-// source; it has carried stale claims). Structure: five flat pages (the
-// Motivation essay joined 2026-08-08, prose final, owner hand-edited); the
-// generation flow is ONE numbered article in execution order (owner's edit).
+// source; it has carried stale claims). Structure: four flat pages (the
+// Motivation essay is written but UNPUBLISHED, owner 2026-08-14 — see ARTICLES);
+// the generation flow is ONE numbered article in execution order (owner's edit).
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── Prose primitives ─────────────────────────────────────────────────────────
@@ -879,7 +879,10 @@ const motivation: Article = {
   ),
 }
 
-const ARTICLES: Article[] = [overview, motivation, install, generation, tokenSchema]
+// UNPUBLISHED 2026-08-14 (owner): `motivation` is deliberately absent from this list —
+// the essay is not finished. Its article + figures stay in the file, unreferenced by the
+// site; re-add it here (after overview) to publish it again.
+const ARTICLES: Article[] = [overview, install, generation, tokenSchema]
 
 // ── Layout ───────────────────────────────────────────────────────────────────
 export default function DocsSite({ dark: _dark }: { dark: boolean }) {
