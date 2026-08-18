@@ -370,7 +370,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     brand: { background: 'var(--brand-wash-92)', color: 'var(--brand-ink-30-aaa)' },
     secondary: { background: 'var(--secondary-wash-85)', color: 'var(--secondary-ink-30-aaa)' },
     outline: { background: 'transparent', color: 'var(--secondary-ink-53-aa)', border: '1px solid var(--secondary-mark-74-aa)' },
-    grey: { background: 'var(--surface-sunken)', color: 'var(--fg-subtle)' },
+    grey: { background: 'var(--surface-dim)', color: 'var(--fg-subtle)' },
   }
   const styleLabel: Record<SecondaryStyle, string> = { default: 'Custom', outline: 'Outline', exact: 'Exact' }
   // the ⓘ copy per selection (Figma spec) — the always-visible tooltip replacement
@@ -432,7 +432,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
             <label className="ct-swatch-btn" title="Open color picker">
               {/* the swatch always shows the RESOLVED secondary — in derived mode that's
                   the subtle tint the engine produced, not the primary hex in the input */}
-              <span className="ct-swatch" style={{ background: derived ? 'var(--secondary-cta)' : (secondary ?? 'var(--neutral-wash-89)') }} />
+              <span className="ct-swatch" style={{ background: derived ? 'var(--secondary-solid-fill)' : (secondary ?? 'var(--neutral-wash-89)') }} />
               <input type="color" value={secondary ?? primary} onChange={e => { setSecState('custom'); setSecondaryInput(e.target.value.toUpperCase()) }} />
             </label>
             {/* derived: the input TRACKS the primary live (that's what derived means) and is
@@ -552,7 +552,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
                 else if (!on && linkBundled.current && normalizeHex(linkInput)?.toLowerCase() === DEFAULT_LINK_HEX.toLowerCase()) {
                   linkBundled.current = false; setLinkCustom(false)
                 }
-              }} style={{ accentColor: 'var(--brand-cta)', width: 14, height: 14, cursor: 'pointer' }} />
+              }} style={{ accentColor: 'var(--brand-solid-fill)', width: 14, height: 14, cursor: 'pointer' }} />
               <span>Use neutral primary cta</span>
             </label>
           )}
@@ -560,7 +560,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
             title="Non-cta brand colors are dampened by default to maximize the impact of primary cta and signal messaging. Turn this on for a more vibrant interpretation of the brand color."
             style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 24, fontSize: 12, fontWeight: 600, cursor: 'pointer', userSelect: 'none', color: 'var(--fg-default)' }}
           >
-            <input type="checkbox" checked={fullChroma} onChange={e => setFullChroma(e.target.checked)} style={{ accentColor: 'var(--brand-cta)', width: 14, height: 14, cursor: 'pointer' }} />
+            <input type="checkbox" checked={fullChroma} onChange={e => setFullChroma(e.target.checked)} style={{ accentColor: 'var(--brand-solid-fill)', width: 14, height: 14, cursor: 'pointer' }} />
             <span>Remove brightness clamp</span>
           </label>
           {/* the cta-border opt-out (owner 2026-07-31) — ON by default, mirrors the plugin's
@@ -569,7 +569,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
             title="Buttons whose fill sits too close to the page get a faint stroke so they read as buttons rather than as another sheet of paper. Neutral, secondary and primary each get their own weight. Turn this off to ship every cta borderless."
             style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 24, fontSize: 12, fontWeight: 600, cursor: 'pointer', userSelect: 'none', color: 'var(--fg-default)' }}
           >
-            <input type="checkbox" checked={ctaBorder} onChange={e => setCtaBorder(e.target.checked)} style={{ accentColor: 'var(--brand-cta)', width: 14, height: 14, cursor: 'pointer' }} />
+            <input type="checkbox" checked={ctaBorder} onChange={e => setCtaBorder(e.target.checked)} style={{ accentColor: 'var(--brand-solid-fill)', width: 14, height: 14, cursor: 'pointer' }} />
             <span>Outline low-contrast buttons</span>
           </label>
         </div>
@@ -655,9 +655,9 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     if (stop === 'ink-53-aa') return <div style={{ ...aa, background: cv(stop), color: 'var(--paper-100)' }}>Aa</div>
     // filled cta cells carry NO stroke (filled is filled — same call as the buttons);
     // only the OUTLINE secondary shows its ring, where the boundary IS the component
-    if (stop.startsWith('cta')) {
+    if (stop.startsWith('solid-fill')) {
       const ring = prefix === 'secondary' && computed.t.secondary?.style === 'outline'
-      return <div style={{ ...aa, boxSizing: 'border-box', background: cv(stop), color: cv('on-cta'), border: ring ? `1.5px solid ${cv('cta-border')}` : undefined }}>Aa</div>
+      return <div style={{ ...aa, boxSizing: 'border-box', background: cv(stop), color: cv('solid-on'), border: ring ? `1.5px solid ${cv('solid-edge')}` : undefined }}>Aa</div>
     }
     // ink cells get the family's paper-95 stroke (owner 2026-07-24: the "non-visible"
     // cells — no fill of their own — read as cells, matching the paper-100/ink-0 anchors)
@@ -850,9 +850,9 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
                 same four neutral stops in both themes, order reversed. Chips render the
                 LIVE planes; the stop caption tracks the active theme. */}
             <div className="ct-colorblock">
-              <div className="ct-label" style={{ marginBottom: 8 }}>Elevation planes — sunken · low · base · high</div>
+              <div className="ct-label" style={{ marginBottom: 8 }}>Elevation planes — dim · low · mid · high</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-                {([['sunken', 'paper-95', 'paper-100'], ['low', 'paper-97', 'paper-99'], ['base', 'paper-99', 'paper-97'], ['high', 'paper-100', 'paper-95']] as const).map(([role, lightStop, darkStop]) => (
+                {([['dim', 'paper-95', 'paper-100'], ['low', 'paper-97', 'paper-99'], ['mid', 'paper-99', 'paper-97'], ['high', 'paper-100', 'paper-95']] as const).map(([role, lightStop, darkStop]) => (
                   <div key={role}>
                     <div style={{ background: `var(--surface-${role})`, height: 54, borderRadius: 12, border: '1px solid var(--neutral-paper-95)', boxShadow: 'var(--elev-card)' }} />
                     <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-default)', marginTop: 6 }}>{role}</div>
@@ -1061,11 +1061,11 @@ function EngineChecklist({ rRec, rung, primaryHex, escapeOn }: { rRec: ResolvedB
 // plane + --elev-pop), metric tiles recede to −1 (sink plane + hairline, no
 // shadow, dashMetric below), everything else sits here.
 const dashCard: React.CSSProperties = {
-  background: 'var(--surface-base)', boxShadow: 'var(--elev-card)',
+  background: 'var(--surface-mid)', boxShadow: 'var(--elev-card)',
   borderRadius: 12, padding: 18,
 }
 const dashMetric: React.CSSProperties = {
-  background: 'var(--surface-sunken)', border: '1px solid var(--neutral-wash-92)',
+  background: 'var(--surface-dim)', border: '1px solid var(--neutral-wash-92)',
   borderRadius: 12, padding: 16,
 }
 
@@ -1150,7 +1150,7 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
 
           <section className="dash-card dash-card-getstarted" style={dashCard}>
             <Head title="Get started" />
-            <div className="dash-illo" style={{ background: 'var(--surface-sunken)', borderRadius: 12, padding: '16px 0', marginBottom: 12 }}>
+            <div className="dash-illo" style={{ background: 'var(--surface-dim)', borderRadius: 12, padding: '16px 0', marginBottom: 12 }}>
               <div style={{ width: '78%', margin: '0 auto' }}
                 dangerouslySetInnerHTML={{ __html: HERO_ILLO }} />
             </div>
@@ -1213,7 +1213,7 @@ function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typ
   const focusRing: React.CSSProperties = { borderColor: 'var(--brand-mark-74-aa)', boxShadow: '0 0 0 3px var(--brand-wash-89)' }
   const btn: React.CSSProperties = { padding: '8px 16px', borderRadius: 999, border: '1.5px solid transparent', cursor: 'pointer', fontSize: 13, fontWeight: 500, fontFamily: 'inherit' }
   return (
-    <section className="dash-card" style={{ background: 'var(--surface-base)', boxShadow: 'var(--elev-card)', borderRadius: 12, padding: 18 }}>
+    <section className="dash-card" style={{ background: 'var(--surface-mid)', boxShadow: 'var(--elev-card)', borderRadius: 12, padding: 18 }}>
       {/* title row shows the ink-53-aa RANGE: signal ink vs neutral ink vs brand ink;
           the subtitle (only when a secondary exists) adds secondary ink-53-aa. Wraps so
           the chips drop below the title on narrow cards instead of clipping. */}
@@ -1265,7 +1265,7 @@ function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typ
       <div style={{
         display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 12,
         borderRadius: 8, padding: '9px 12px', fontSize: 12.5,
-        background: v('cta'), color: v('on-cta'),
+        background: v('solid-fill'), color: v('solid-on'),
       }}>
         <Icon size={15} style={{ flexShrink: 0, marginTop: 1 }} aria-hidden />
         <span>{alert}</span>
@@ -1275,15 +1275,15 @@ function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typ
           secondary wash-89 · secondary cta · neutral cta */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
         <button style={{ ...btn, background: 'var(--brand-wash-89)', color: 'var(--brand-ink-30-aaa)' }}>Wash 89</button>
-        <button style={{ ...btn, background: 'var(--brand-cta)', color: 'var(--brand-on-cta)' }}>Primary cta</button>
-        <button style={{ ...btn, background: 'var(--critical-cta)', color: 'var(--critical-on-cta)' }}>Critical cta</button>
+        <button style={{ ...btn, background: 'var(--brand-solid-fill)', color: 'var(--brand-solid-on)' }}>Primary cta</button>
+        <button style={{ ...btn, background: 'var(--critical-solid-fill)', color: 'var(--critical-solid-on)' }}>Critical cta</button>
       </div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {hasSecondary && <>
           <button style={{ ...btn, background: 'var(--secondary-wash-89)', color: 'var(--secondary-ink-30-aaa)' }}>Wash 89</button>
-          <button style={{ ...btn, background: 'var(--secondary-cta)', color: 'var(--secondary-on-cta)', borderColor: 'var(--secondary-cta-border)' }}>Secondary cta</button>
+          <button style={{ ...btn, background: 'var(--secondary-solid-fill)', color: 'var(--secondary-solid-on)', borderColor: 'var(--secondary-solid-edge)' }}>Secondary cta</button>
         </>}
-        <button style={{ ...btn, background: 'var(--neutral-cta)', color: 'var(--neutral-on-cta)' }}>Neutral cta</button>
+        <button style={{ ...btn, background: 'var(--neutral-solid-fill)', color: 'var(--neutral-solid-on)' }}>Neutral cta</button>
       </div>
     </section>
   )
@@ -1366,7 +1366,7 @@ function CustomersTable({ hasSecondary }: { hasSecondary: boolean }) {
             <tr key={c.name}>
               <td>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span className="dash-avatar" style={{ width: 28, height: 28, fontSize: 11, background: 'var(--surface-sunken)', color: 'var(--fg-default)', border: '1px solid var(--neutral-wash-89)' }}>{c.name[0]}</span>
+                  <span className="dash-avatar" style={{ width: 28, height: 28, fontSize: 11, background: 'var(--surface-dim)', color: 'var(--fg-default)', border: '1px solid var(--neutral-wash-89)' }}>{c.name[0]}</span>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500 }}>{c.name}</div>
                     <div style={{ fontSize: 11, color: 'var(--fg-subtle)' }}>{c.email}</div>
@@ -1402,7 +1402,7 @@ const PAGE_CSS = `
    only .dash-main scrolls. */
 .dash { display: grid; grid-template-columns: 220px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); height: calc(100vh - var(--ct-dock, 160px) - 54px); overflow: hidden; background: var(--surface-low);}
 .dash-side {
-  background: var(--surface-sunken);
+  background: var(--surface-dim);
   padding: 18px 14px; display: flex; flex-direction: column; gap: 18px;
 }
 /* wordmark (logoipsum placeholder) — the two svg groups' fills wire to the live
@@ -1420,26 +1420,26 @@ const PAGE_CSS = `
   display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px;
   font-size: 13px; color: var(--fg-default); text-decoration: none;
 }
-.dash-navitem:hover { background: var(--surface-base); }
+.dash-navitem:hover { background: var(--surface-mid); }
 .dash-navitem.active { background: var(--brand-wash-89); color: var(--brand-ink-30-aaa); font-weight: 600; }
 .dash-user { display: flex; align-items: center; gap: 10px; padding-top: 14px; border-top: 1px solid var(--neutral-wash-89); }
 .dash-avatar {
   width: 30px; height: 30px; border-radius: 999px; flex-shrink: 0;
-  background: var(--brand-cta); color: var(--brand-on-cta);
+  background: var(--brand-solid-fill); color: var(--brand-solid-on);
   display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600;
 }
 .dash-main { padding: 20px 24px 40px; min-width: 0; min-height: 0; overflow-y: auto; scrollbar-width: none;}
 .dash-topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
 .dash-search {
   display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--fg-subtle);
-  background: var(--surface-sunken); border: 1px solid var(--neutral-wash-89); border-radius: 999px; padding: 7px 14px; min-width: 200px;
+  background: var(--surface-dim); border: 1px solid var(--neutral-wash-89); border-radius: 999px; padding: 7px 14px; min-width: 200px;
 }
 /* trial banner — a filled tinted chip; the fill carries it, no stroke needed. */
 .dash-info {
   display: flex; gap: 8px; align-items: center; margin-bottom: 16px;
   /* the trial banner is an alert CALLOUT — it rides its signal's CTA register
      (alerts use cta in signals), not the wash (owner-caught 2026-07-24) */
-  background: var(--info-cta); color: var(--info-on-cta);
+  background: var(--info-solid-fill); color: var(--info-solid-on);
   border-radius: 12px; padding: 10px 14px; font-size: 12px;
 }
 .dash-info a { color: inherit; font-weight: 600; margin-left: auto; }
@@ -1447,7 +1447,7 @@ const PAGE_CSS = `
 .dash-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .dash-pill { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 6px; white-space: nowrap; }
 .dash-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.dash-table thead tr { background: var(--surface-sunken); }
+.dash-table thead tr { background: var(--surface-dim); }
 /* dense table keeps hairline row dividers — small/functional, legibility earns them */
 .dash-table th {
   text-align: left; font-size: 11px; font-weight: 600; color: var(--fg-subtle);
@@ -1455,7 +1455,7 @@ const PAGE_CSS = `
 }
 .dash-table td { padding: 10px 18px; border-bottom: 1px solid var(--neutral-wash-89); }
 .dash-table tbody tr:last-child td { border-bottom: none; }
-.dash-table tbody tr:hover { background: var(--surface-sunken); }
+.dash-table tbody tr:hover { background: var(--surface-dim); }
 .dash-table th:nth-child(n+4), .dash-table td:nth-child(n+4) { text-align: right; }
 @media (max-width: 1100px) {
   .dash-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1492,7 +1492,7 @@ const PAGE_CSS = `
 .ct-iconbtn {
   display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
   width: 26px; height: 26px; border-radius: 8px; border: none; cursor: pointer;
-  background: var(--surface-sunken); color: var(--fg-subtle); font-size: 13px;
+  background: var(--surface-dim); color: var(--fg-subtle); font-size: 13px;
   position: relative; overflow: hidden; font-family: inherit;
 }
 .ct-iconbtn:hover { background: var(--brand-paper-97); color: var(--fg-default); }
@@ -1516,7 +1516,7 @@ const PAGE_CSS = `
 .ct-bar {
   position: sticky; top: 52px; z-index: 35;
   display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 18px;
-  padding: 12px 56px 12px 24px; background: var(--surface-base);
+  padding: 12px 56px 12px 24px; background: var(--surface-mid);
   box-shadow: 0 1px 2px rgba(17,18,22,0.06);
 }
 /* Minimize toggle — collapses the workshop controls to a slim strip. */
@@ -1524,7 +1524,7 @@ const PAGE_CSS = `
   position: absolute; top: 10px; right: 20px; z-index: 2;
   display: inline-flex; align-items: center; justify-content: center;
   width: 26px; height: 26px; border-radius: 8px; border: none; cursor: pointer;
-  background: var(--surface-sunken); color: var(--fg-subtle); font-family: inherit;
+  background: var(--surface-dim); color: var(--fg-subtle); font-family: inherit;
 }
 .ct-bar-toggle:hover { color: var(--fg-default); background: var(--brand-paper-97); }
 .ct-bar-min-label { display: none; align-items: center; gap: 8px; height: 26px; font-size: 13px; font-weight: 600; color: var(--fg-default); }
@@ -1562,7 +1562,7 @@ const PAGE_CSS = `
 .ct-tab-select {
   width: 100%; padding: 8px 12px; border-radius: 8px; font-size: 13px;
   font-family: inherit; color: var(--fg-default);
-  background: var(--surface-base); border: 1px solid var(--border-subtle);
+  background: var(--surface-mid); border: 1px solid var(--border-subtle);
 }
 .ct-scroll {
   flex: 1; min-height: 0; overflow-y: auto;
@@ -1585,7 +1585,7 @@ const PAGE_CSS = `
    planes barely separate by lightness. Scoped to the Palette workshop; the
    dashboard's dark elevation is being reworked separately. */
 .ct-colorblock {
-  background: var(--surface-base); box-shadow: 0 0 0 1px rgba(17,18,22,0.05), var(--elev-card);
+  background: var(--surface-mid); box-shadow: 0 0 0 1px rgba(17,18,22,0.05), var(--elev-card);
   border-radius: 16px; padding: 18px 20px;
 }
 [data-theme="dark"] .ct-colorblock { box-shadow: 0 0 0 1px rgba(255,255,255,0.07), 0 2px 6px -1px rgba(0,0,0,0.5); }
@@ -1608,7 +1608,7 @@ const PAGE_CSS = `
   width: 20px; height: 20px; border-radius: 999px; cursor: default;
   color: var(--fg-subtle); font-size: 13px;
 }
-.ct-info:hover { color: var(--fg-default); background: var(--surface-sunken); }
+.ct-info:hover { color: var(--fg-default); background: var(--surface-dim); }
 .ct-info .ct-tip { width: 300px; }
 .ct-info:hover .ct-tip { display: block; }
 .ct-check-header {
@@ -1616,12 +1616,12 @@ const PAGE_CSS = `
   border: none; background: none; cursor: pointer; font-family: inherit;
   font-size: 12px; padding: 5px 2px; color: var(--fg-default);
 }
-.ct-check-header:hover { background: var(--surface-sunken); border-radius: 8px; }
+.ct-check-header:hover { background: var(--surface-dim); border-radius: 8px; }
 .ct-check {
   position: relative; display: flex; align-items: center; gap: 8px;
   font-size: 12px; padding: 3px 2px 3px 8px; cursor: default;
 }
-.ct-check:hover { background: var(--surface-sunken); border-radius: 8px; }
+.ct-check:hover { background: var(--surface-dim); border-radius: 8px; }
 .ct-tip {
   display: none; position: absolute; left: 0; bottom: calc(100% + 6px); z-index: 70;
   width: 290px; background: var(--neutral-ink-30-aaa); color: var(--neutral-paper-99);
@@ -1646,7 +1646,7 @@ const PAGE_CSS = `
 .ct-label { font-size: 12px; font-weight: 600; color: var(--fg-default); margin-bottom: 5px; }
 .ct-field {
   display: flex; align-items: center; gap: 8px; box-sizing: border-box; width: 100%;
-  background: var(--surface-base); border: 1px solid var(--neutral-ink-53-aa); border-radius: 12px;
+  background: var(--surface-mid); border: 1px solid var(--neutral-ink-53-aa); border-radius: 12px;
   padding: 9px 12px;
 }
 .ct-field:focus-within { border-color: var(--brand-mark-74-aa); box-shadow: 0 0 0 3px var(--brand-wash-89); }
@@ -1662,19 +1662,19 @@ const PAGE_CSS = `
 .ct-swatch.sm { width: 13px; height: 13px; }
 .ct-popover {
   position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; width: 230px;
-  background: var(--surface-base); border: 1.5px solid var(--brand-cta); border-radius: 12px;
+  background: var(--surface-mid); border: 1.5px solid var(--brand-solid-fill); border-radius: 12px;
   padding: 12px; box-shadow: var(--elev-float);
   display: flex; flex-direction: column; gap: 8px; align-items: flex-start;
 }
 .ct-suggest {
   display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-family: inherit;
-  background: var(--surface-sunken); border: 1px solid var(--neutral-wash-89); border-radius: 10px;
+  background: var(--surface-dim); border: 1px solid var(--neutral-wash-89); border-radius: 10px;
   padding: 4px 10px; font-size: 12px; color: var(--fg-default);
 }
 .ct-suggest:hover { background: var(--brand-paper-97); }
 .ct-remove {
   display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-family: inherit;
-  background: var(--surface-base); border: 1px solid var(--critical-border-default); border-radius: 10px;
+  background: var(--surface-mid); border: 1px solid var(--critical-border-default); border-radius: 10px;
   padding: 4px 10px; font-size: 12px; font-weight: 600; color: var(--critical-fg-alt);
 }
 .ct-remove:hover { background: var(--critical-bg-subtle); color: var(--critical-fg); border-color: var(--critical-border-default-hover); }

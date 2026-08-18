@@ -156,7 +156,7 @@ The same modules as a table: each piece, where it lives, what it does. Grouped b
 
 | Piece | Location | What it does |
 |---|---|---|
-| CSS emitter | `cssRender.ts` | `brandCss`/`signalsCss`, custom properties per family and mode: the scale stops, the cta fill trio (`cta`/`cta-hover`/`cta-pressed`; the text-style cta is the ink stops themselves since the 2026-08-12 cta-ink deletion), `on-cta` (solid pole or the soft pole-at-alpha), the gated `cta-border` alias onto the system alpha ladder, P3 `@supports` override blocks, the outline secondary's cta shape. Signals emit under their **role names** (`--critical-*`/`--warning-*`/`--positive-*`/`--info-*`); identity names stay engine-internal. |
+| CSS emitter | `cssRender.ts` | `brandCss`/`signalsCss`, custom properties per family and mode: the scale stops, the cta fill trio (`solid-fill`/`solid-fill-hover`/`solid-fill-pressed`; the text-style cta is the ink stops themselves since the 2026-08-12 cta-ink deletion), `solid-on` (solid pole or the soft pole-at-alpha), the gated `solid-edge` alias onto the system alpha ladder, P3 `@supports` override blocks, the outline secondary's cta shape. Signals emit under their **role names** (`--critical-*`/`--warning-*`/`--positive-*`/`--info-*`); identity names stay engine-internal. |
 | Figma emitter | `figmaRender.ts` | `themeToFigma`, the same theme as Figma variable collections (both plugins consume it). |
 | Token vocabulary | `tokenNames.ts` | The shared naming: paper-99/97/95, wash-92–80, mark-74-aa, ink-53-aa/42-aa/30-aaa, the cta state families, ons; one vocabulary across CSS and Figma. |
 | Public API | `index.ts` | The entry point: `resolveBrand`/`resolveTheme`. |
@@ -188,7 +188,7 @@ variables.
 | 1 | Decode + context | `producers.ts` · `buildContext` | hex + opts → OKLCH seed, archetype, and the aesthetic state (chroma boost, mutedness, cream gate, warm-drift caps, red-repel weights) |
 | 2 | Compile | `colorEngine.ts` · `generateScale` (adapter) | caller opts + the built-in declaration → a per-mode `ModeSpec` for the resolver |
 | 3 | Resolve stops | `resolve.ts` · `resolveRamp` | per declared stop: **produce** (hue → chroma → `perceptualRungL`) → **require** (declared contrast floors bind: down-clamp in light, raise-off-paper in dark) → **refine** (chroma yields to gamut). Stops resolve in order, so a require can reference an already-resolved stop |
-| 4 | Resolve roles + ons | `resolve.ts` | off-scale `cta`/`cta-hover`/`cta-pressed` roles (anchor = the brand's own lightness, floored in dark; the on-fill enforce re-solve last); the `on-cta` pole chosen by the declared `ons` rule, never feeding back into a fill except through the enforce |
+| 4 | Resolve roles + ons | `resolve.ts` | off-scale `solid-fill`/`solid-fill-hover`/`solid-fill-pressed` roles (anchor = the brand's own lightness, floored in dark; the on-fill enforce re-solve last); the `solid-on` pole chosen by the declared `ons` rule, never feeding back into a fill except through the enforce |
 | 5 | Assemble | `colorEngine.ts` adapter | resolved ramps → the `GeneratedScale` contract (light[], dark[], the six cta state fills, on-booleans) |
 | 6 | **Policy** | `resolve.ts` (engine) · `resolveBrand` | runs collisions; may re-call the engine with new options; computes signal overrides |
 | 7 | Emit | `cssRender.ts` / `figmaRender.ts` + `tokenNames.ts` | `GeneratedScale` → named CSS vars or Figma variable tree |
@@ -237,9 +237,9 @@ ResolvedBrand  = { scale, shearDeg, redRepel: {light,dark}|null,
 | 9 | `ink-53-aa` | emphasis fill AND first text stop (4.5:1, the 2026-07-29 highlight collapse) |
 | 10 | `ink-42-aa` | the between text stop (6.5:1, C49, promoted from the retired text-cta hover state) |
 | 11 | `ink-30-aaa` | strong text (7:1). The three ink stops read as states ARE the text-style cta (rest 53 / hover 42 / pressed 30); the separate `cta-ink` + `cta-ink-strong` alias trios were deleted 2026-08-12 |
-| off-scale roles | `cta`, `cta-hover`, `cta-pressed` | the pulled-out solid button fill and its states |
-| aliases | `cta-border` | the gated border onto the system alpha ladder |
-| computed | `on-cta` | black/white text for the fill (solid pole, or the soft pole-at-alpha on quiet fills) |
+| off-scale roles | `solid-fill`, `solid-fill-hover`, `solid-fill-pressed` | the pulled-out solid button fill and its states |
+| aliases | `solid-edge` | the gated border onto the system alpha ladder |
+| computed | `solid-on` | black/white text for the fill (solid pole, or the soft pole-at-alpha on quiet fills) |
 | literal | `identity` | the exact input hex (brand / secondary only) |
 | anchors | `paper-100`, `ink-0` | universal per-scheme extremes (paper-100 = the neutral's resolved stop 0; ink-0 = literal black/white, flipped per mode) |
 
@@ -281,7 +281,7 @@ it. Three phases per stop, in order:
     portable specs; **the shipped spec no longer declares any** (the identity-curve
     paper/wash shape guarantees the seams instead, see the comment directly above the
     `LIGHT` export in `spec.ts`).
-  - the `ons` block: the `on-cta` pole choice (`apca-pole` preference) with the law
+  - the `ons` block: the `solid-on` pole choice (`apca-pole` preference) with the law
     `{ ratioFloor: 4.5, coEnforceLc: 65 }`: the chosen pole must pass WCAG 4.5 or the
     fill re-solves, and the fill co-clears APCA Lc 65 (critical rides 50). On-text is
     chosen on one criterion: it passes.
@@ -387,8 +387,8 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
   pole **at alpha** (`SOFT_ON_CTA_ALPHA` .75/.80), gated per brand by a WCAG 4.5 pass on
   all three fill states in the shipped 8-bit basis (`softOnCtaPasses`).
 - **Low-visibility cta border** (C41): every family's cta fill is judged against the page
-  by APCA; below \|Lc\| 15 the family's `cta-border` resolves to a system alpha-ladder
-  stroke (primary offset-16, secondary offset-06, neutral offset-08), otherwise to the
+  by APCA; below \|Lc\| 15 the family's `solid-edge` resolves to a system alpha-ladder
+  stroke (primary 016, secondary 006, neutral 008), otherwise to the
   transparent variable. Components always carry the border, so layout never shifts.
   Default on, per-brand opt-out.
 
@@ -427,27 +427,31 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
   primary by default, the secondary's seed hue followed live, or a custom hex's hue.
   Tint levels `pure` / `default` / `medium` / `branded` scale the tint at every stop in
   both modes (`medium` keeps the pre-2026-08-11 default strength; `default` is 0.75x of it).
-  Its `cta` is intentionally **low-hierarchy**, tracking the scale's own stop 4 (cta) /
+  Its `solid-fill` is intentionally **low-hierarchy**, tracking the scale's own stop 4 (cta) /
   stop 5 (hover) so it **flips per mode**: a near-white wash in light, a dark wash in
-  dark, with `on-cta` recomputed for legibility in each (shipped soft, at alpha).
+  dark, with `solid-on` recomputed for legibility in each (shipped soft, at alpha).
 
-### 2d. The extended plugin's register and descope posture
+### 2d. The extended plugin's ownership zones and descope posture
 
 The extended Figma plugin (`plugin-ext/`, Enterprise-only) prefixes every emitted
-variable path with the single `primitive/` register (added 2026-08-07 as a two-register
-split, flattened to one register 2026-08-11: the semantic/ grouping confused designers,
-so the old grouping is back). This is a plugin-side concern only: the CSS build and the
-community plugin (`plugin/`) have no notion of it. Two kinds of rows share the wrapper:
+variable path with an OWNERSHIP ZONE (2026-08-18, replacing the earlier register
+prefixes): `base/` marks engine-owned rows, where hand edits are deliberately not
+rebuilt by a re-apply, and `utility/` marks team-touchable rows (the surface planes,
+shadows, the scrim) that the engine never reads back, written last so they shelve
+together in the panel. The zone segment is stripped from every WEB code syntax, so
+dev-facing names match the CSS custom properties. This is a plugin-side concern only:
+the CSS build and the community plugin (`plugin/`) have no notion of it. Two kinds of
+rows share the base/ zone:
 
 - **ramp stops and plumbing**: a single resolved color, no state. The scale stops
-  (`primitive/neutral/paper-99`, `primitive/brand-primary/ink-53-aa`, … — flat leaves,
+  (`base/neutral/paper-99`, `base/brand-primary/ink-53-aa`, … — flat leaves,
   band flattening 2026-08-12), the system
-  poles and alpha ladder (`primitive/system/abs-black`, `primitive/system/alpha/offset-16`,
+  poles and alpha ladder (`base/abs-black`, `base/alpha/016`,
   …).
 - **roles**: a state-carrying usage decision, kept in its natural group. The cta family
-  inside its own family group (`primitive/brand-primary/cta/hover`) and the
-  system rows `primitive/system/link/*` and
-  `primitive/system/surface/sunken|low|base|high`.
+  inside its own family group (`base/brand-primary/solid/fill-hover`) and the
+  system rows `base/link/*` and
+  `base/surface/dim|low|base|high`.
 
 **The seam.** `payload.registerPath(path)` (`plugin-ext/payload.ts`) is the one function
 that applies the prefix, as the FINAL step of `toFlat()`, after every other rename
@@ -462,10 +466,10 @@ visibility line, mirrored in `code.ts` as `isRoleRow`.
 from the 2026-08-07..11 window carries the retired two-register spellings
 (`semantic/<family>/cta/*`, `semantic/link/*`, `semantic/surface/*`). `code.ts`'s
 `legacyCandidates()` recovers both: `RENAMED_GROUPS` carries the universal strip
-(`'' → 'primitive/'`), the system-root strip (`'' → 'primitive/system/'`), the
-register swap (`'semantic/' → 'primitive/'`) and exact entries re-homing the semantic-era
-link/surface rows (`'semantic/link/' → 'primitive/system/link/'`,
-`'semantic/surface/' → 'primitive/system/surface/'`), composed with the existing per-role
+(`'' → 'base/'`), the system-root strip (`'' → 'base/'`), the
+register swap (`'semantic/' → 'base/'`) and exact entries re-homing the semantic-era
+link/surface rows (`'semantic/link/' → 'base/link/'`,
+`'semantic/surface/' → 'base/surface/'`), composed with the existing per-role
 and per-leaf rename tables (`RENAMED_LEAVES`, the signal role renames) so a file untouched
 since before the role rename, the Stage B leaf relabel, or the register era can still
 resolve to its current path in one `ensure()` call. The rule stays one-hop: a chained
@@ -484,16 +488,16 @@ panel always reverts on the next apply.
 
 **Hand-authored rows.** Nearly every row is generated from the resolved theme via
 `payload.toFlat()`. The one exception is the four elevation planes,
-`primitive/system/surface/sunken|low|base|high`: `code.ts` creates these itself
-(`ensure('primitive/system/surface/sunken')`, etc.), outside the payload token stream, then
+`base/surface/dim|low|base|high`: `code.ts` creates these itself
+(`ensure('base/surface/dim')`, etc.), outside the payload token stream, then
 wires each as a scheme-divergent alias onto the NEUTRAL's own resolved paper stops
-(`primitive/neutral/paper/*`), never onto the family being themed:
+(`base/neutral/paper/*`), never onto the family being themed:
 
 | plane | light aliases | dark aliases |
 |---|---|---|
-| `system/surface/sunken` | `neutral/paper-95` | `neutral/paper-100` |
+| `system/surface/dim` | `neutral/paper-95` | `neutral/paper-100` |
 | `system/surface/low` | `neutral/paper-97` | `neutral/paper-99` |
-| `system/surface/base` | `neutral/paper-99` | `neutral/paper-97` |
+| `system/surface/mid` | `neutral/paper-99` | `neutral/paper-97` |
 | `system/surface/high`  | `neutral/paper-100` | `neutral/paper-95` |
 
 **Apply never deletes.** A path in an existing base file that the current payload no

@@ -16,10 +16,13 @@
 //
 // Token shape: the operative `brand-` CATEGORY stays in the token name (brand-primary/*,
 // brand-secondary/*), the brand's NAME lives on the extension, so a designer reads
-// kirby → primitive/brand-primary/paper-99. Neutral + signals keep their identity names.
-// Every path also carries the primitive/ REGISTER prefix (added 2026-08-07, flattened
-// to one register 2026-08-11 — see registerPath below): the FAMILY segment is
-// unchanged, so this line's shape still holds one hop in.
+// kirby → base/brand-primary/paper-99. Neutral + signals keep their identity names.
+// Every path carries an OWNERSHIP-ZONE prefix (owner ruling 2026-08-18, replacing the
+// primitive/ register): base/ = engine-owned rows — hand edits there are NOT rebuilt
+// (the apply path is create-once + conservative refresh), so the zone name is the
+// warning; utility/ = team-touchable rows the engine never depends on (changing them
+// cannot break a solve), written LAST so they shelve together. A future semantic tier
+// is its OWN single-mode collection (owner preference) or a third zone beside these.
 
 import { resolveTheme, signalScalesFor, SOFT_ON_CTA_ALPHA, type ResolvedTheme } from '../src/engine/resolve'
 import { themeToFigma, groupEntries, type FigmaGroup, type FigmaColorToken } from '../src/engine/figmaRender'
@@ -29,23 +32,26 @@ import { neutralTintHue, type ContrastProfile, type NeutralLevel } from '../src/
 
 export interface FlatTok { path: string; r: number; g: number; b: number; a?: number }
 
-// THE REGISTER MAP (A1 regroup 2026-08-07; flattened 2026-08-11, owner: the semantic/
-// grouping confused designers — one register, the old grouping back). Every emitted
-// path lands under the single primitive/ wrapper: ctas stay inside their families,
-// the link trio and the surfaces stay under system/. Applied as the FINAL pass in
-// toFlat(), after IDENTITY_HOME and LINK_STATE have already re-homed their rows —
-// this function only prefixes the settled path, it never renames.
-// ROLE_BANDS survives the flatten as the descope posture's VISIBLE set (a state-
-// carrying role a designer binds; everything else hides when descope is on).
-// (cta-ink and cta-ink-strong left the set with their tokens, owner 2026-08-12.)
+// THE ZONE MAP (owner ruling 2026-08-18, replacing the primitive/ register): family
+// rows take the base/ zone as the FINAL pass in toFlat(), after IDENTITY_HOME and
+// LINK_STATE have already re-homed their rows — this function only prefixes the
+// settled path, it never renames. System-descended rows are built with their zone
+// spellings directly (see toFlat). ROLE_BANDS stays the descope posture's VISIBLE
+// set (a state-carrying role a designer binds; everything else hides when descope
+// is on).
 const FAMILY_PREFIXES = ['neutral/', 'brand-primary/', 'brand-secondary/', 'critical/', 'warning/', 'positive/', 'info/']
-export const ROLE_BANDS = ['cta/']
+export const ROLE_BANDS = ['solid/']
 export function registerPath(p: string): string {
-  if (p.startsWith('system/')) return 'primitive/' + p            // link/*, alpha/*, abs-*
+  if (p.startsWith('base/') || p.startsWith('utility/')) return p // already zoned (system-descended rows)
   const fam = FAMILY_PREFIXES.find(f => p.startsWith(f))
   if (!fam) return p                                              // defensive: unknown untouched
-  return 'primitive/' + p
+  return 'base/' + p
 }
+
+// The ownership rosters (CONTRACT_INVARIANT_ROWS, EXT_NON_OVERRIDABLE,
+// EXT_OVERRIDABLE_SYSTEM) live in src/engine/tokenNames.ts — the zero-import module
+// the sandbox bundle can also consume; this file re-exports them for the audit.
+export { CONTRACT_INVARIANT_ROWS, EXT_NON_OVERRIDABLE, EXT_OVERRIDABLE_SYSTEM } from '../src/engine/tokenNames'
 
 export type Column = 'light' | 'dark'
 export const COLUMNS: Column[] = ['light', 'dark']
@@ -105,7 +111,7 @@ function flatten(node: FigmaGroup, prefix: string, out: FlatTok[]): void {
 
 // Panel order = creation order (v1's rule; owner layout 2026-07-27: abs poles at the
 // system root, then surface/, then alpha/): system → neutral → brand-primary →
-// brand-secondary → signals. The system/surface/sunken|low|base|high planes are NOT here —
+// brand-secondary → signals. The utility/surface/dim|low|mid|high planes are NOT here —
 // they are scheme-divergent aliases the plugin creates after the abs rows (ordering) and
 // wires once the neutral exists. neutral/ink-0 (the OFF-SCALE anchor — pure black in
 // light, pure white in dark) is injected right after the last real ink stop, in ladder
@@ -122,14 +128,18 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
   const K = { r: 0, g: 0, b: 0 }
   const dark = scheme === 'dark'
   const out: FlatTok[] = [
-    { path: 'system/abs-black', ...K },
-    { path: 'system/abs-white', ...W },
-    { path: 'system/alpha/transparent', ...W, a: 0 },
-    { path: 'system/alpha/scrim', ...K, a: 0.6 },
-    // the SOFT ON-CTA primitive (C43 follow-up, owner-named 2026-08-03): the on-text pole
-    // at the engine's SOFT_ON_CTA_ALPHA — black in light, white in dark, alpha per
-    // mode. The default-model secondary's cta/on aliases this row, never a raw write.
-    { path: 'system/alpha/ink', ...(dark ? W : K), a: dark ? SOFT_ON_CTA_ALPHA.dark : SOFT_ON_CTA_ALPHA.light },
+    { path: 'base/absolute/black', ...K },
+    { path: 'base/absolute/white', ...W },
+    { path: 'base/alpha/transparent', ...W, a: 0 },
+    // the scrim, spelled by its composition (owner export 2026-08-18: black at 60%,
+    // honest in BOTH modes) — utility zone: the engine never reads it back, a team
+    // re-value cannot break a solve
+    { path: 'utility/abs-black-060', ...K, a: 0.6 },
+    // the SOFT ON-COLOR primitive (C43 follow-up, owner-named 2026-08-03): the on-text
+    // pole at the engine's SOFT_ON_CTA_ALPHA — black in light, white in dark, alpha per
+    // mode. The default-model secondary's solid/on aliases this row, never a raw write.
+    // base zone: an engine-required input (the alias graph targets it).
+    { path: 'base/alpha/ink', ...(dark ? W : K), a: dark ? SOFT_ON_CTA_ALPHA.dark : SOFT_ON_CTA_ALPHA.light },
     // the decorative cta stroke (owner 2026-07-29, ladder 2026-07-31): black in light, flipped
     // to WHITE in dark, one row per rung — neutral takes 08, secondary 06, primary and the
     // signals 16. Unlike the shadow set below these do NOT scale up in dark: a stroke sits on the
@@ -142,9 +152,10 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
     // files that already carry the row — ensure() renames in place WITHOUT re-seeding.
     ...(Object.keys(OFFSET_ALPHAS) as unknown as OffsetRung[]).map(Number).sort((a, b) => a - b)
       .map(r => ({ path: offsetTokenPath(r as OffsetRung), ...(dark ? W : K), a: OFFSET_ALPHAS[r as OffsetRung] })),
-    { path: 'system/alpha/shadow-04', ...K, a: dark ? 0.32 : 0.04 },
-    { path: 'system/alpha/shadow-08', ...K, a: dark ? 0.48 : 0.08 },
-    { path: 'system/alpha/shadow-12', ...K, a: dark ? 0.64 : 0.12 },
+    // shadows: utility zone (classic hand-tuned rows — the engine never reads them)
+    { path: 'utility/shadow-04', ...K, a: dark ? 0.32 : 0.04 },
+    { path: 'utility/shadow-08', ...K, a: dark ? 0.48 : 0.08 },
+    { path: 'utility/shadow-12', ...K, a: dark ? 0.64 : 0.12 },
   ]
   const neutral: FlatTok[] = []
   flatten(g.neutral as FigmaGroup, 'neutral', neutral)
@@ -154,12 +165,11 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
     // is 'ink-30-aaa'; the anchor it triggers is 'ink-0'. Stop index unchanged.
     if (t.path === 'neutral/ink-30-aaa') out.push({ path: 'neutral/ink-0', ...(scheme === 'light' ? K : W) })
   }
-  // identity rows re-home to the system ABSOLUTES (owner 2026-07-27: the
-  // unprocessed inputs sit with the poles — abs-primary/abs-secondary; the
-  // family groups stay pure solve output). Brand-overridable like system/link.
+  // identity rows re-home to the ABSOLUTES (owner 2026-07-27: the unprocessed inputs
+  // sit with the poles; zone spellings 2026-08-18). Brand-overridable like base/link.
   const IDENTITY_HOME: Record<string, string> = {
-    'brand-primary/identity': 'system/abs-primary',
-    'brand-secondary/identity': 'system/abs-secondary',
+    'brand-primary/identity': 'base/absolute/primary',
+    'brand-secondary/identity': 'base/absolute/secondary',
   }
   const brandRows: FlatTok[] = []
   flatten(g.brand as FigmaGroup, 'brand-primary', brandRows)
@@ -168,20 +178,22 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
   // signal rows carry the ROLE prefix (critical/warning/positive/info — owner
   // 2026-07-27: the re-pointable in-between tier); g stays keyed by identity
   for (const s of SIGNALS) flatten(g[s.name] as FigmaGroup, s.emitName, out)
-  // the SYSTEM LINK trio (Phase 4): system-pathed but BRAND-OVERRIDABLE (unlike the
-  // contract-invariant system/* poles — code.ts carves it out of the override skip);
-  // rows carry the resolved values (primary's ink stops, or the custom seed's register).
+  // the LINK trio (Phase 4): BRAND-OVERRIDABLE (unlike the contract-invariant rows —
+  // code.ts carves it out of the override skip via OVERRIDABLE_SYSTEM_ROWS); rows
+  // carry the resolved values (primary's ink stops, or the custom seed's register).
   // The engine group's link/link-hover/link-pressed leaves are remapped to the
-  // system/link/* STATE names (owner regroup 2026-07-27).
+  // base/link/* STATE names (owner regroup 2026-07-27; zone spelling 2026-08-18 —
+  // base zone: engine-GENERATED per brand, the leak that killed the old
+  // generated-vs-static reading of system/).
   const linkRows: FlatTok[] = []
-  flatten(g.link as FigmaGroup, 'system', linkRows)
+  flatten(g.link as FigmaGroup, '', linkRows)
   const LINK_STATE: Record<string, string> = {
-    'system/link': 'system/link/enabled',
-    'system/link-hover': 'system/link/hover',
-    'system/link-pressed': 'system/link/pressed',
+    'link': 'base/link/enabled',
+    'link-hover': 'base/link/hover',
+    'link-pressed': 'base/link/pressed',
   }
   for (const t of linkRows) out.push({ ...t, path: LINK_STATE[t.path] ?? t.path })
-  // THE REGISTER PASS (final step): every settled path takes the primitive/ wrapper.
+  // THE ZONE PASS (final step): every still-unzoned family path takes base/.
   return out.map(t => ({ ...t, path: registerPath(t.path) }))
 }
 
@@ -261,7 +273,7 @@ export function buildRetiredNeutralRows(seedHex: string = BASE_SEED_HEX): TokenC
     'medium', true, true,
   )
   return {
-    light: cols.light.filter(t => t.path.startsWith('primitive/neutral/')),
-    dark: cols.dark.filter(t => t.path.startsWith('primitive/neutral/')),
+    light: cols.light.filter(t => t.path.startsWith('base/neutral/')),
+    dark: cols.dark.filter(t => t.path.startsWith('base/neutral/')),
   }
 }

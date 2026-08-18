@@ -47,7 +47,9 @@ export interface AlphaPaper {
   capped?: 'gamut' | 'ink-bars'
 }
 
-const OVERLAY_NAMES: Record<number, string> = { 1: 'paper-overlay-99', 2: 'paper-overlay-97', 3: 'paper-overlay-95' }
+// flat names (owner rename 2026-08-18: overlay leads so the Figma tree folds them
+// into the overlay/ subgroup — see tokenNames.OVERLAY_LEAVES, the flat↔nested table)
+const OVERLAY_NAMES: Record<number, string> = { 1: 'overlay-paper-99', 2: 'overlay-paper-97', 3: 'overlay-paper-95' }
 const PAPER_STOPS = [1, 2, 3]
 
 // the two declared constants: the apparent-L tolerance the alpha solve holds on every

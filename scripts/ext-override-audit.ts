@@ -16,6 +16,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { FIXTURES, FIXTURE_SECONDARIES } from './fixture'
 import { buildBaseColumns, buildBrandColumns, COLUMNS, type FlatTok, type TokenColumns } from '../plugin-ext/payload'
+import { EXT_NON_OVERRIDABLE } from '../src/engine/tokenNames'
 import { ROSTER, rosterSpec } from '../plugin-ext/roster'
 
 const EPS = 1 / 1024
@@ -37,13 +38,12 @@ function overridesFor(brand: TokenColumns, base: TokenColumns, label: string): R
     const ov: string[] = []
     for (const t of brand[col]) {
       const b = baseMap.get(t.path)
-      // primitive/system/* is contract-invariant — EXCEPT the identity absolutes (owner
-      // 2026-07-27, abs-primary / abs-secondary) and the system link trio, BRAND-VARYING
-      // too (Phase 4, owner: "link is a system level color. It can still be extended"),
-      // back under primitive/system/link/ since the 2026-08-11 flatten. Mirrors
-      // plugin-ext/code.ts OVERRIDABLE_SYSTEM.
-      if (t.path.startsWith('primitive/system/') && !t.path.startsWith('primitive/system/link/')
-        && t.path !== 'primitive/system/abs-primary' && t.path !== 'primitive/system/abs-secondary') {
+      // contract-invariant rows never diverge from base — the roster import from
+      // tokenNames.ts (2026-08-18: the prefix test died with the ownership zones; the
+      // sweep showed prefix-keyed behavior disarms silently on renames). Brand-VARYING
+      // exceptions (link trio, identity absolutes) are EXT_OVERRIDABLE_SYSTEM — the
+      // same source plugin-ext/code.ts consumes.
+      if (EXT_NON_OVERRIDABLE(t.path)) {
         if (!b || !eq(t, b)) fails.push(`${label} ${col}: system token diverges from base — ${t.path}`)
         continue
       }
@@ -102,7 +102,7 @@ for (const b of FIXTURES) {
   // code.ts decides whether it's WRITTEN based on the file's posture. The group spans
   // both registers since A1 (primitive scale rows, semantic cta rows) — the scale rows
   // are always present whenever a secondary exists, so the primitive check alone suffices.
-  if (!tokens[COLUMNS[0]].some(x => x.path.startsWith('primitive/brand-secondary/')))
+  if (!tokens[COLUMNS[0]].some(x => x.path.startsWith('base/brand-secondary/')))
     fails.push(`${b.slug}: payload missing brand-secondary (the derive fallback is broken)`)
   snap.brands[b.slug] = overridesFor(tokens, base, b.slug)
 }
@@ -164,4 +164,4 @@ if (fails.length) {
   for (const f of fails) console.error(`  ✗ ${f}`)
   process.exit(1)
 }
-console.log('ext-override-audit: override sets match the snapshot; path-set + primitive/system/* invariants hold.')
+console.log('ext-override-audit: override sets match the snapshot; path-set + contract-invariant-row invariants hold.')

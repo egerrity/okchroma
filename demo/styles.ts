@@ -28,7 +28,7 @@ export const STYLE_CSS = /* css */ `
   font-family: "SF Mono", Menlo, ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
   --rt-line: var(--border-default);
-  --rt-shadow: color-mix(in srgb, var(--brand-cta) 45%, black);
+  --rt-shadow: color-mix(in srgb, var(--brand-solid-fill) 45%, black);
   --elev-card: 4px 4px 0 var(--neutral-wash-80);
   --elev-pop: 4px 4px 0 var(--rt-shadow);
   --elev-float: 7px 7px 0 var(--rt-shadow);
@@ -144,7 +144,7 @@ export const STYLE_CSS = /* css */ `
   /* the shade — the owner's eyedrop #354d43 (teal seed) kept GENERATIVE: cta
      pulled 70% toward mid-grey, so every brand shades with its own quiet
      warmth. Display-only, no token minted (owner ruling 2026-07-27). */
-  --nm-shade: color-mix(in srgb, var(--brand-cta) 30%, #4d4d4d);
+  --nm-shade: color-mix(in srgb, var(--brand-solid-fill) 30%, #4d4d4d);
   /* +1 — her style=bubble, level=+1 variant */
   --bb-plateau:
     10px 10px 20px color-mix(in srgb, var(--nm-shade) 8%, transparent),
@@ -199,7 +199,7 @@ export const STYLE_CSS = /* css */ `
   border: 0 !important;
   box-shadow: var(--bb-recess) !important;
   padding: 20px !important;
-  background-image: linear-gradient(109deg, var(--surface-sunken) 22%, var(--surface-low)) !important;
+  background-image: linear-gradient(109deg, var(--surface-dim) 22%, var(--surface-low)) !important;
 }
 /* the side menu FLOATS (owner): a lifted container off the ground — margins,
    big radius, the card pillow */

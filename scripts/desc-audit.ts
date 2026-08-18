@@ -27,7 +27,7 @@ const PHRASES = [
 // ext emits register-prefixed paths (primitive/* — one register since the 2026-08-11
 // flatten); the elevation planes are code.ts's own rows at primitive/system/surface/*
 const paths = buildBaseColumns().light.map(t => t.path)
-paths.push('primitive/system/surface/sunken', 'primitive/system/surface/low', 'primitive/system/surface/base', 'primitive/system/surface/high')
+paths.push('utility/surface/dim', 'utility/surface/low', 'utility/surface/mid', 'utility/surface/high')
 // the community plugin's spellings carry no register prefix and spell the brand families
 // differently — same rows, so the same rules must hold on those spellings too. Derived
 // from the CANONICAL form (adversarial-audit-caught 2026-08-07: matching the raw
@@ -67,15 +67,15 @@ for (const p of paths) {
 
 // ── rule 5: no foreign label word ────────────────────────────────────────────
 // The vocabulary is derived from the real paths, so a future token name joins the ban
-// automatically. "cta" is the one allowed crossover: the owner's own lines say "max
-// contrast on CTAs" / "low contrast CTAs" on the poles and the offset rungs, and a search
-// for it wants the action rows anyway. "aaa" joined it (owner 2026-08-07, requirement-code
-// rename): ink/30-aaa's own leaf now collides with "AAA", the WCAG conformance-level word
-// AA_BODY/AAA_BODY (tokenDescriptions.ts) use verbatim in the Contrast line of every other
-// AA/AAA text-register row (PHRASES enforces those exact strings, rule 4) — same class of
-// crossover as "cta", a real word every text-contrast row legitimately carries, not a
-// pointer at ink/30-aaa specifically.
-const ALLOWED_FOREIGN = new Set(['cta', 'aaa'])
+// automatically — the 2026-08-18 solid rename put solid/fill/edge/overlay/dim/mid on
+// the list for free, and retired "cta" from it (no path carries the word now, so the
+// bodies' deliberate "CTA" prose — kept so a designer's cta query still lands on the
+// action rows — needs no exception any more). "aaa" stays: ink-30-aaa's own leaf
+// collides with "AAA", the WCAG conformance-level word AA_BODY/AAA_BODY
+// (tokenDescriptions.ts) use verbatim in the Contrast line of every other AA/AAA
+// text-register row (PHRASES enforces those exact strings, rule 4) — a real word every
+// text-contrast row legitimately carries, not a pointer at ink-30-aaa specifically.
+const ALLOWED_FOREIGN = new Set(['aaa'])
 const vocab = new Set<string>()
 for (const p of paths) for (const w of p.toLowerCase().split(/[/-]/)) if (/^[a-z]{3,}$/.test(w)) vocab.add(w)
 for (const p of paths) {

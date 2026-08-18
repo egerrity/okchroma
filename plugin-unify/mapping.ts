@@ -17,25 +17,25 @@ export interface Rule {
 }
 
 /** the elevation planes (scheme-divergent aliases in the ext register; renamed
-    sunken|low|base|high, owner 2026-08-12 — base = the raised plane components sit on) */
-export const SURFACE = (plane: 'sunken' | 'low' | 'base' | 'high') => `primitive/system/surface/${plane}`
+    dim|low|mid|high, owner 2026-08-18 — mid = the raised plane components sit on) */
+export const SURFACE = (plane: 'dim' | 'low' | 'mid' | 'high') => `utility/surface/${plane}`
 
-/** the on-cta register per family (an ALIAS row in the ext register — resolves live) */
-export const CTA_ON = (family: string) => `primitive/${family}/cta/on`
+/** the on-color register per family (an ALIAS row in the ext register — resolves live) */
+export const CTA_ON = (family: string) => `base/${family}/solid/on`
 export const BRAND_CTA_ON = CTA_ON('brand-primary')
 export const isCtaContext = (anc: string): boolean => /button|btn|cta/i.test(anc)
 
 // leaves are FLAT since the band flattening (owner 2026-08-12): the engine token name
 // IS the leaf ('ink-53-aa', 'paper-99'), no dash→slash transform any more
-const fam = (family: string) => (toks: string[]) => toks.map(t => `primitive/${family}/${t}`)
+const fam = (family: string) => (toks: string[]) => toks.map(t => `base/${family}/${t}`)
 
 const PRIMARY_BAND = ['mark-74-aa', 'ink-53-aa', 'ink-42-aa', 'ink-30-aaa']
 const SPOTLIGHT_BAND = ['mark-74-aa', 'ink-53-aa']
 const WASHES = ['wash-92', 'wash-89', 'wash-85', 'wash-80']
 const PAPERS = ['paper-99', 'paper-97', 'paper-95']
-const OFFSET_08 = 'primitive/system/alpha/offset-08'
-const OFFSET_16 = 'primitive/system/alpha/offset-16'
-const PAPER_100 = 'primitive/neutral/paper-100'
+const OFFSET_08 = 'base/alpha/008'
+const OFFSET_16 = 'base/alpha/016'
+const PAPER_100 = 'base/neutral/paper-100'
 
 const n = fam('neutral')
 // signal identities live under their ROLE prefixes in the ext register
@@ -86,8 +86,8 @@ export function matchBound(name: string): Rule | 'ignore' | null {
   // (same planes as when the rule was made; the planes were renamed 2026-08-12)
   if (s.includes('background')) {
     if (s.includes('inverse')) return { candidates: n(['ink-30-aaa', 'ink-42-aa']) }
-    if (s.includes('tertiary')) return { candidates: [SURFACE('sunken'), SURFACE('low')] }
-    if (s.includes('secondary')) return { candidates: [SURFACE('base')], auto: true }
+    if (s.includes('tertiary')) return { candidates: [SURFACE('dim'), SURFACE('low')] }
+    if (s.includes('secondary')) return { candidates: [SURFACE('mid')], auto: true }
     return { candidates: [SURFACE('high')], auto: true }
   }
   if (s.includes('stroke')) {
@@ -126,8 +126,8 @@ export function matchDetached(hex: string, alpha: number): Rule | 'ignore' | nul
     '#868FA2': { candidates: n(['ink-53-aa']) },
     '#95979D': { candidates: n(['ink-53-aa']) },
     '#FFFFFF': { candidates: [PAPER_100], auto: true },
-    '#F9FAFB': { candidates: [SURFACE('base')], auto: true },
-    '#EEEFF2': { candidates: [SURFACE('sunken'), SURFACE('low')] },
+    '#F9FAFB': { candidates: [SURFACE('mid')], auto: true },
+    '#EEEFF2': { candidates: [SURFACE('dim'), SURFACE('low')] },
     '#CBCFD7': { candidates: n(['mark-74-aa', 'wash-80']) },
     '#E2E4E9': { candidates: n(['wash-85', 'wash-80', 'mark-74-aa']) },
     '#044BAF': { candidates: fam('brand-primary')(PRIMARY_BAND) },
@@ -155,7 +155,7 @@ export function matchDetached(hex: string, alpha: number): Rule | 'ignore' | nul
 /** Every path any rule can emit — the sandbox inventories these targets per scan. */
 export function allCandidatePaths(): string[] {
   const out = new Set<string>([PAPER_100, OFFSET_08, OFFSET_16,
-    SURFACE('sunken'), SURFACE('low'), SURFACE('base'), SURFACE('high')])
+    SURFACE('dim'), SURFACE('low'), SURFACE('mid'), SURFACE('high')])
   for (const family of ['neutral', 'brand-primary', 'critical', 'positive', 'warning']) {
     const f = fam(family)
     for (const t of [...PRIMARY_BAND, ...WASHES, ...PAPERS]) for (const p of f([t])) out.add(p)

@@ -99,7 +99,7 @@ async function buildTargetMap(): Promise<Map<string, figma.Variable>> {
     let stamped = ''
     try { stamped = v.getSharedPluginData(SHARED_NS, SHARED_KEY) } catch { /* older builds */ }
     if (stamped) { map.set(stamped, v); continue }
-    if (v.name.startsWith('primitive/') && !map.has(v.name)) map.set(v.name, v)
+    if ((v.name.startsWith('base/') || v.name.startsWith('utility/')) && !map.has(v.name)) map.set(v.name, v)
   }
   return map
 }

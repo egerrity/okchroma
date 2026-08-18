@@ -21,6 +21,7 @@
 
 import type { FlatTok, TokenColumns, Column } from './payload'
 import { LEGACY_COLUMN_NAME, RETIRED_COLUMN_NAMES } from './payload'
+import { SOLID_LEAF, EXT_NON_OVERRIDABLE, EXT_OVERRIDABLE_SYSTEM } from '../src/engine/tokenNames'
 // zero-import text module — safe here, drags nothing of the engine into the sandbox bundle
 import { describeToken } from '../src/engine/tokenDescriptions'
 import { runHeal } from './heal'
@@ -77,7 +78,7 @@ const COLUMNS: Column[] = ['light', 'dark']
 // own decorative strokes when converting a pre-existing raw value to the alias, never to write one.
 // 0.12 is the RETIRED rung (owner 2026-07-31) and stays in the recognise set precisely because
 // files in the wild still hold it — dropping it would leave those raw forever.
-const RUNG_ALPHAS: Record<string, number> = { '06': 0.06, '08': 0.08, '16': 0.16 }
+const RUNG_ALPHAS: Record<string, number> = { '006': 0.06, '008': 0.08, '016': 0.16 }
 const RETIRED_RUNG_ALPHA = 0.12
 
 // RETIRED CANONICAL SIGNAL VALUES (owner report 2026-08-03: "the warning ink-9 [is]
@@ -94,21 +95,22 @@ const RETIRED_RUNG_ALPHA = 0.12
 // the CANONICAL path (the post-migration map key, independent of any user display
 // rename) — Stage B relabeled the leaves, the 2026-08-11 flatten re-homed the cta
 // bands under primitive/; the VALUES they gate are unchanged.
+// ⚠️ Keys must spell the CURRENT canonical path exactly — the 2026-08-18 sweep found
+// four keys still in nested Stage-B spellings (mark/74-aa …), silently disarmed since
+// the 2026-08-12 flatten (the lookup path went flat and never matched again); respelled
+// here, and the four cta-ink keys dropped (their paths died 2026-08-12 — entries could
+// never fire). Zone spellings per the same round's rename.
 const RETIRED_SIGNAL_VALUES: Record<string, string[]> = {
-  'primitive/critical/mark/74-aa': ['#e06146'],
-  'primitive/warning/mark/74-aa': ['#c67a00'],
-  'primitive/warning/ink/53-aa': ['#a56000'],
-  'primitive/warning/cta-ink/enabled': ['#a56000'],
-  'primitive/warning/cta-ink/hover': ['#814a00'],
-  'primitive/positive/ink/53-aa': ['#1c7e36'],
-  'primitive/positive/cta-ink/enabled': ['#1c7e36'],
-  'primitive/positive/cta-ink/hover': ['#005f21'],
-  'primitive/positive/cta/enabled': ['#63c373', '#67c777'],
-  'primitive/positive/cta/hover': ['#52b364', '#77d786'],
-  'primitive/positive/cta/pressed': ['#42a355', '#87e896'],
-  'primitive/info/cta/enabled': ['#afa3ff'],
-  'primitive/info/cta/hover': ['#a093ee', '#bfb7ff'],
-  'primitive/info/cta/pressed': ['#9184dd', '#cfcaff'],
+  'base/critical/mark-74-aa': ['#e06146'],
+  'base/warning/mark-74-aa': ['#c67a00'],
+  'base/warning/ink-53-aa': ['#a56000'],
+  'base/positive/ink-53-aa': ['#1c7e36'],
+  'base/positive/solid/fill': ['#63c373', '#67c777'],
+  'base/positive/solid/fill-hover': ['#52b364', '#77d786'],
+  'base/positive/solid/fill-pressed': ['#42a355', '#87e896'],
+  'base/info/solid/fill': ['#afa3ff'],
+  'base/info/solid/fill-hover': ['#a093ee', '#bfb7ff'],
+  'base/info/solid/fill-pressed': ['#9184dd', '#cfcaff'],
 }
 // half-8-bit-step tolerance: Figma stores floats; a retired hex must match to the channel
 const rgbaMatchesHex = (cur: { r: number; g: number; b: number; a?: number }, hex: string): boolean => {
@@ -131,6 +133,36 @@ const DARK_COLUMNS = new Set<Column>(['dark'])
 // before any candidate, so the ascending walk would hand the vacating row to the
 // wrong stop; see the inkUpshifts pre-pass in the apply handler.
 const RENAMED_LEAVES: Array<[string, string]> = [
+  // ── SOLID RENAME + OWNERSHIP ZONES (owner 2026-08-18): the cta words → the solid/
+  // state group; overlays fold into overlay/; planes sunken|base → dim|mid; scrim →
+  // abs-black-060; the offset ladder drops its word; the system rows re-home by zone
+  // (leaf reshapes here, zone prefixes in RENAMED_GROUPS). CURRENT-name entries must
+  // stay FIRST: they are exactly what a 2026-08-12-era file holds as its variables.
+  ['cta/enabled', 'solid/fill'],
+  ['cta/hover', 'solid/fill-hover'],
+  ['cta/pressed', 'solid/fill-pressed'],
+  ['cta/border', 'solid/edge'],
+  ['cta/on', 'solid/on'],
+  ['paper-overlay-99', 'overlay/paper-99'],
+  ['paper-overlay-97', 'overlay/paper-97'],
+  ['paper-overlay-95', 'overlay/paper-95'],
+  ['surface/sunken', 'surface/dim'],
+  // ⚠️ the word base's THIRD life (page plane pre-08-12 → raised plane to 08-18 →
+  // retired): consumes an 08-12-era file's base row into mid; a pre-08-12 file's base
+  // row (the PAGE plane) still belongs to surface/low via the entry further down —
+  // ensure ORDER disambiguates (low direct-hits before mid's legacy lookup).
+  ['surface/base', 'surface/mid'],
+  ['alpha/scrim', 'abs-black-060'],
+  ['alpha/offset-06', 'alpha/006'],
+  ['alpha/offset-08', 'alpha/008'],
+  ['alpha/offset-16', 'alpha/016'],
+  ['alpha/shadow-04', 'shadow-04'],
+  ['alpha/shadow-08', 'shadow-08'],
+  ['alpha/shadow-12', 'shadow-12'],
+  ['abs-black', 'absolute/black'],
+  ['abs-white', 'absolute/white'],
+  ['abs-primary', 'absolute/primary'],
+  ['abs-secondary', 'absolute/secondary'],
   // ── BAND FLATTENING (owner 2026-08-12): ramp leaves sit FLAT in the family group
   // again — paper-99, wash-92, mark-74-aa, ink-53-aa … (band word + hyphen + level,
   // the engine's own token names). The 2026-07-27 band nesting (paper/99 …) is
@@ -203,11 +235,11 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['ink/53-r450', 'ink-53-aa'],
   ['ink/42-r650', 'ink-42-aa'],
   ['ink/30-r700', 'ink-30-aaa'],
-  ['cta', 'cta/enabled'],
-  ['cta-hover', 'cta/hover'],
-  ['cta-pressed', 'cta/pressed'],
-  ['cta-border', 'cta/border'],
-  ['on-cta', 'cta/on'],
+  ['cta', 'solid/fill'],
+  ['cta-hover', 'solid/fill-hover'],
+  ['cta-pressed', 'solid/fill-pressed'],
+  ['cta-border', 'solid/edge'],
+  ['on-cta', 'solid/on'],
   // cta-ink DIED 2026-08-12 (the trio was pure aliases onto the ink stops; deleted
   // with the band flattening). These entries keep their RETIRED banded homes on
   // purpose — the highlight-9 precedent: an ancient flat row is still FOUND and
@@ -221,14 +253,14 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // ── historical retargets, pointed STRAIGHT at the final homes (the
   // one-hop rule). Renumber entries shift names DOWN; safe in ascending order
   // with self-deleting consumed keys — new ink/10 eats old ink-11 first.
-  ['cta-stroke', 'cta/border'],
+  ['cta-stroke', 'solid/edge'],
   // the decorative stroke's system row, renamed cta-border → offset-12 (owner 2026-07-30): it
   // belongs to the alpha ladder beside shadow-04/08/12 and is not cta-specific. Only ever
   // resolves under system/alpha/, so it cannot collide with the ['cta-border','cta/border']
   // entry above — candidates are prefix-scoped, and no other path ends in /offset-12. Needed
   // because the row shipped under the old name at b72bfd9, so an already-imported file must
   // adopt it in place rather than gain a duplicate.
-  ['cta-border', 'offset-12'],
+  ['alpha/cta-border', 'alpha/008'],
   // ── THE RUNG LADDER (owner 2026-07-31). offset-12 is retired: the ladder is offset-06 for the
   // secondary, offset-08 for the neutral, offset-16 for the primary and the signals, and no
   // family lands on 12 any more. The NEUTRAL was offset-12's only real consumer (in shipped dist
@@ -240,7 +272,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // does NOT bump createdVars, so seedFresh never runs and the row keeps its old 0.12 under the
   // new name — a token called offset-08 holding 12%. The value-correction pass further down
   // (the RUNG_ALPHAS loop) is what actually re-values it; do not delete one without the other.
-  ['offset-12', 'offset-08'],
+  ['alpha/offset-12', 'alpha/008'],
   // ── THE 2026-07-29 COLLAPSE, under C49 numbering. highlight/9 and highlight/on are
   // DELETED (they ORPHAN — the plugin reports orphans, it never deletes a user's
   // variables). Of C33's three downshift entries only the first survives: C49 gave the
@@ -270,8 +302,8 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['blue-7eb5fb', 'cyan-side-7eb5fb'],
   // cta semantic rename (owner 2026-07-16: states, never options), retargeted to
   // the cta state homes; cta/pressed is a newer token.
-  ['cta-1', 'cta/enabled'],
-  ['cta-2', 'cta/hover'],
+  ['cta-1', 'solid/fill'],
+  ['cta-2', 'solid/fill-hover'],
   // stop-3 rename (owner 2026-07-24) retargeted to its final flat home. Pure
   // relabel, same color.
   ['wash-3', 'paper-95'],
@@ -283,9 +315,9 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // ensure() call order in the apply) — an exact-name hit on a file's old base row
   // would otherwise hand the PAGE plane's variable (and its bindings) to the cards
   // name before the low-lookup could consume it.
-  ['surface/sink', 'surface/sunken'],
+  ['surface/sink', 'surface/dim'],
   ['surface/base', 'surface/low'],
-  ['surface/lift', 'surface/base'],
+  ['surface/lift', 'surface/mid'],
   ['surface/pop', 'surface/high'],
   // elevation planes went 2 → 4 (owner spec, 2026-07-24; that round's sink/base/
   // lift/pop names retired by the 2026-08-12 rename above): the old pair migrates to
@@ -293,17 +325,17 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // the new ladder — raised p0→p1, sunken p2→p3). These entries point STRAIGHT at the
   // final surface/ homes: legacyCandidates expands one hop only, so a chained
   // old→mid→new table would strand pre-elevation files on the middle name.
-  ['paper-raised', 'surface/base'],
-  ['paper-sunken', 'surface/sunken'],
+  ['paper-raised', 'surface/mid'],
+  ['paper-sunken', 'surface/dim'],
   // system regroup (owner 2026-07-27): planes → system/surface/*, alpha-carrying
   // utilities → system/alpha/*, link trio → system/link/* with state leaves.
   // abs-black/abs-white stay at the system root. Same-value moves, no ladder shift.
-  ['sink', 'surface/sunken'],
+  ['sink', 'surface/dim'],
   ['base', 'surface/low'],
-  ['lift', 'surface/base'],
+  ['lift', 'surface/mid'],
   ['pop', 'surface/high'],
   ['transparent', 'alpha/transparent'],
-  ['scrim', 'alpha/scrim'],
+  ['scrim', 'abs-black-060'],
   ['link', 'link/enabled'],
   ['link-hover', 'link/hover'],
   ['link-pressed', 'link/pressed'],
@@ -329,17 +361,30 @@ const RENAMED_LEAVES: Array<[string, string]> = [
 // semantic/surface/*). The signal-role entries compose with RENAMED_LEAVES to reach the
 // oldest flat spellings (e.g. red/highlight-8).
 const RENAMED_GROUPS: Array<[string, string]> = [
-  ['system/info-color/', 'primitive/system/blue/'],
-  ['', 'primitive/'],        // universal strip: every pre-regroup spelling of a ramp/family row
-  ['', 'primitive/system/'], // the system rows' pre-2026-07-27 root spellings (sink, link, …)
-  ['semantic/', 'primitive/'],                        // A1-era cta bands + signal roles
-  ['semantic/link/', 'primitive/system/link/'],       // A1 era parked the link trio outside system/
-  ['semantic/surface/', 'primitive/system/surface/'], // …and the surface planes
-  ['info-color/', 'primitive/info/'],
-  ['red/', 'primitive/critical/'],
-  ['yellow/', 'primitive/warning/'],
-  ['green/', 'primitive/positive/'],
-  ['blue/', 'primitive/info/'],
+  ['system/info-color/', 'base/blue/'],
+  // the primitive/ register era (2026-08-11 → 08-18) — system rows split by zone now,
+  // so BOTH zone targets carry the old prefix (misses are harmless; candidates that
+  // never existed simply never hit)
+  ['primitive/', 'base/'],
+  ['primitive/system/', 'base/'],
+  ['primitive/system/', 'utility/'],
+  // the pre-A1 system/ spellings (no register, 2026-07-27 → 08-07)
+  ['system/', 'base/'],
+  ['system/', 'utility/'],
+  // pre-regroup root spellings (sink, scrim, link, … — reached via RENAMED_LEAVES'
+  // leaf-variant composition)
+  ['', 'base/'],
+  ['', 'utility/'],
+  // the A1 semantic/ era (2026-08-07..11)
+  ['semantic/', 'base/'],
+  ['semantic/link/', 'base/link/'],
+  ['semantic/surface/', 'utility/surface/'],
+  // signal-role rename era
+  ['info-color/', 'base/info/'],
+  ['red/', 'base/critical/'],
+  ['yellow/', 'base/warning/'],
+  ['green/', 'base/positive/'],
+  ['blue/', 'base/info/'],
 ]
 // Every legacy spelling of `path`: old leaf, old group, and old group + old leaf composed
 // (a file untouched since before ALL THREE renames needs e.g. primitive/critical/ink/53-aa
@@ -538,8 +583,8 @@ figma.ui.onmessage = async (msg) => {
       // spells it brand-secondary/paper-1; read-only, no renames here). The live leaf
       // is flat paper-99 (band flattening, owner 2026-08-12) — legacyCandidates
       // still recovers every older spelling behind it.
-      const baseHasSecondary = baseVars.has('primitive/brand-secondary/paper-99')
-        || legacyCandidates('primitive/brand-secondary/paper-99').some(p => baseVars.has(p))
+      const baseHasSecondary = baseVars.has('base/brand-secondary/paper-99')
+        || legacyCandidates('base/brand-secondary/paper-99').some(p => baseVars.has(p))
       const extsOfBase = baseMatch ? extensions.filter(e => e.rootVariableCollectionId === baseMatch!.id) : []
       // case-insensitive identity: "l1-near-black" typed by hand must overwrite
       // L1-near-black, never create a sibling that differs only by case
@@ -608,10 +653,11 @@ figma.ui.onmessage = async (msg) => {
       // Brand-VARYING system rows — the link trio and the identity absolutes
       // (owner 2026-07-27) — are the only primitive/system/ paths extensions may
       // override (the 2026-08-11 flatten put the link trio back under system/).
-      const OVERRIDABLE_SYSTEM = (p: string) =>
-        p.startsWith('primitive/system/link/') || p === 'primitive/system/abs-primary' || p === 'primitive/system/abs-secondary'
+      // rosters from tokenNames.ts (zero-import — the sandbox-safe single source; the
+      // sweep retired prefix tests, which disarm silently when a name moves)
+      const OVERRIDABLE_SYSTEM = EXT_OVERRIDABLE_SYSTEM
       // one helper so every exclusion site stays in sync
-      const isBrandSecondary = (p: string) => p.startsWith('primitive/brand-secondary/')
+      const isBrandSecondary = (p: string) => p.startsWith('base/brand-secondary/')
       // Contract-invariant system rows (everything under primitive/system/ except the
       // brand-overridable rows above) are excluded: extensions can never override
       // them (the work loop skips them), so their appearance seeds silently —
@@ -622,14 +668,14 @@ figma.ui.onmessage = async (msg) => {
         ? baseTokens[activeCols[0]]
             .map((t: FlatTok) => t.path)
             .filter((p: string) => !isBrandSecondary(p))
-            .filter((p: string) => !p.startsWith('primitive/system/') || OVERRIDABLE_SYSTEM(p))
+            .filter((p: string) => !EXT_NON_OVERRIDABLE(p))
             // the identity absolutes migrate via the BESPOKE pre-pass, invisible to
             // legacyCandidates — a base still holding the old identity rows must not
             // count them as new; and abs-secondary follows the SECONDARY POSTURE
             // (the ensure loop skips it when off — counting it would fire a confirm
             // + extension backfill on every apply, forever). Review-caught 2026-07-27.
-            .filter((p: string) => !(p === 'primitive/system/abs-primary' && baseVars.has('brand-primary/identity')))
-            .filter((p: string) => !(p === 'primitive/system/abs-secondary'
+            .filter((p: string) => !(p === 'base/absolute/primary' && baseVars.has('brand-primary/identity')))
+            .filter((p: string) => !(p === 'base/absolute/secondary'
               && (baseVars.has('brand-secondary/identity') || !(baseHasSecondary || hasSecondary))))
             // C49: a path an inkUpshift will FILL by rename is not new — and a vacating
             // ink/10 name is new even though a row currently squats on it (the strong
@@ -647,8 +693,8 @@ figma.ui.onmessage = async (msg) => {
             // CURRENT payload path — Stage-B-leaf-spelled. Map the upshift leaf through
             // the Stage B rename before comparing; small local map (index-keyed), no
             // payload value-import (keeps the engine out of the sandbox bundle).
-            .filter((p: string) => !inkUpshifts.some(([, to]) => 'primitive/' + stageBInkLeaf(to) === p))
-            .filter((p: string) => inkUpshifts.some(([from]) => 'primitive/' + stageBInkLeaf(from) === p)
+            .filter((p: string) => !inkUpshifts.some(([, to]) => 'base/' + stageBInkLeaf(to) === p))
+            .filter((p: string) => inkUpshifts.some(([from]) => 'base/' + stageBInkLeaf(from) === p)
               || (!baseVars.has(p) && !legacyCandidates(p).some(lp => baseVars.has(lp))))
         : []
 
@@ -747,13 +793,13 @@ figma.ui.onmessage = async (msg) => {
       // role rows always keep ALL_SCOPES. Off exposes everything. Re-stamped every
       // apply regardless of rebuildBase, so a scope hand-edited in Figma's own panel
       // always reverts on the next apply.
-      // Hand-duplicated band list (code.ts stays engine-import-free): payload.ROLE_BANDS
+      // The role-row band list: the solid/ state band (payload.ROLE_BANDS' one entry)
       // + the surfaces and the link trio, which are code.ts's own rows. (cta-ink and
       // cta-ink-strong left the set with their tokens, owner 2026-08-12.)
       const isRoleRow = (p: string): boolean =>
-        /\/cta\//.test(p)
-        || p.startsWith('primitive/system/link/')
-        || p.startsWith('primitive/system/surface/')
+        /\/solid\//.test(p)
+        || p.startsWith('base/link/')
+        || p.startsWith('utility/surface/')
       const withSecondary = baseHasSecondary || hasSecondary
       const seedByCol = new Map<Column, Map<string, FlatTok>>(
         activeCols.map(c => [c, new Map(baseTokens[c].map(t => [t.path, t]))]))
@@ -774,7 +820,10 @@ figma.ui.onmessage = async (msg) => {
         v.setSharedPluginData('okchroma', PATH_KEY, path)
         v.description = describeToken(path) // restamped every apply — regenerated, never hand-kept
         // Web code syntax = the hyphenated CURRENT name (owner 2026-08-10) — follows a rename; raw kebab, no var(--…)
-        v.setVariableCodeSyntax('WEB', v.name.toLowerCase().replace(/[\s/]+/g, '-'))
+        // zone prefixes stay OUT of dev-facing names (owner 2026-08-18): the code
+        // syntax matches the CSS var modulo the leading --, and a row migrating zones
+        // never breaks an engineer's reference
+        v.setVariableCodeSyntax('WEB', v.name.replace(/^(base|utility)\//, '').toLowerCase().replace(/[\s/]+/g, '-'))
         v.scopes = descopeOn && !isRoleRow(path) ? [] : ['ALL_SCOPES']
         return v
       }
@@ -788,7 +837,7 @@ figma.ui.onmessage = async (msg) => {
       // anchor is flat ink-0 since the band flattening, owner 2026-08-12 — was banded
       // ink/0, ink/12 pre-Stage-B.)
       const POLE_LEAVES = (path: string) =>
-        path.endsWith('/cta/on') || path === 'primitive/neutral/ink-0'
+        path.endsWith('/' + SOLID_LEAF.ON) || path === 'base/neutral/ink-0'
       // EXACT poles only (per-channel EPS): the engine emits true 0/1 poles, so a
       // loose band buys nothing — and the conversion pass below must never snap a
       // hand-edited near-pole value (#FFFFF8) onto the abs row (review-caught
@@ -800,7 +849,7 @@ figma.ui.onmessage = async (msg) => {
         return w || k
       }
       const absFor = (t: { r: number; g: number; b: number }) =>
-        baseVars.get(t.r + t.g + t.b > 1.5 ? 'primitive/system/abs-white' : 'primitive/system/abs-black')
+        baseVars.get(t.r + t.g + t.b > 1.5 ? 'base/absolute/white' : 'base/absolute/black')
       // CTA-BORDER ALIASING (owner 2026-07-29: *"the rest of them should get aliased to the
       // transparent variable instead of being raw"*). BOTH states are aliases, never raw writes:
       // alpha 0 → primitive/system/alpha/transparent, the decorative stroke → its rung row (offset-06/08/16). So
@@ -816,10 +865,10 @@ figma.ui.onmessage = async (msg) => {
       // The rung is carried by the token's own alpha (the engine picks it per family), so the
       // router is a value lookup — no family table to keep in sync with cssRender.ctaBorderRung.
       const strokeFor = (path: string, t: { a?: number }) => {
-        if (!path.endsWith('/cta/border')) return undefined
-        if (t.a === 0) return baseVars.get('primitive/system/alpha/transparent')
+        if (!path.endsWith('/' + SOLID_LEAF.EDGE)) return undefined
+        if (t.a === 0) return baseVars.get('base/alpha/transparent')
         const rung = RUNG_FOR_ALPHA(t.a)
-        return rung ? baseVars.get(`primitive/system/alpha/offset-${rung}`) : undefined
+        return rung ? baseVars.get(`base/alpha/${rung}`) : undefined
       }
       // the SOFT ON-CTA (C43 follow-up, owner-named 2026-08-03): a cta/on leaf carrying a
       // POLE AT PARTIAL ALPHA is the default-model secondary's soft text — alias it onto
@@ -827,9 +876,9 @@ figma.ui.onmessage = async (msg) => {
       // router these leaves fell through to RAW writes (owner-caught: "you did not make a
       // variable for it").
       const softInkFor = (path: string, t: { r: number; g: number; b: number; a?: number }) => {
-        if (!path.endsWith('/cta/on')) return undefined
+        if (!path.endsWith('/' + SOLID_LEAF.ON)) return undefined
         if (t.a === undefined || t.a >= 1 - EPS || t.a <= EPS) return undefined
-        return isPole({ r: t.r, g: t.g, b: t.b }) ? baseVars.get('primitive/system/alpha/ink') : undefined
+        return isPole({ r: t.r, g: t.g, b: t.b }) ? baseVars.get('base/alpha/ink') : undefined
       }
       // (INK_SIBLING / the text-cta sibling aliasing DELETED with the cta-ink register,
       // owner 2026-08-12: the payload no longer carries text-cta reference leaves — the
@@ -873,16 +922,19 @@ figma.ui.onmessage = async (msg) => {
       // rebuildBase (the "redo the main theme" action): seedFresh runs for EVERY base row,
       // not only freshly created ones — the one sanctioned overwrite of base values, taking
       // each row back to what a fresh seed would write today (values AND alias idioms)
-      for (const path of ['primitive/system/abs-black', 'primitive/system/abs-white', 'primitive/system/alpha/transparent', 'primitive/system/alpha/ink',
-        ...Object.keys(RUNG_ALPHAS).map(r => `primitive/system/alpha/offset-${r}`)]) {
+      for (const path of ['base/absolute/black', 'base/absolute/white', 'base/alpha/transparent', 'base/alpha/ink',
+        ...Object.keys(RUNG_ALPHAS).map(r => `base/alpha/${r}`)]) {
         const before = createdVars
         const v = ensure(path)
         if (createdVars > before || rebuildBase) seedFresh(v, path)
       }
-      ensure('primitive/system/surface/sunken')
-      ensure('primitive/system/surface/low') // MUST precede base (the 2026-08-12 rename swap)
-      ensure('primitive/system/surface/base')
-      ensure('primitive/system/surface/high')
+      ensure('utility/surface/dim')
+      // low MUST precede mid: an 08-12-era file's real low row must direct-hit before
+      // mid's legacy lookup consumes that file's base row (the word base moved planes
+      // in 08-12 and retired in 08-18 — see the RENAMED_LEAVES plane notes)
+      ensure('utility/surface/low')
+      ensure('utility/surface/mid')
+      ensure('utility/surface/high')
       // identity re-homes to the system absolutes — bespoke in-place migration
       // (a leaf entry can't express two divergent homes for the same 'identity'
       // leaf); the renamed var keeps its id, bindings and overrides survive. SOURCES
@@ -890,8 +942,8 @@ figma.ui.onmessage = async (msg) => {
       // it is retired by this very migration, not renamed by A1); only the TARGETS gain
       // the primitive/system/ prefix.
       for (const [oldPath, newPath] of [
-        ['brand-primary/identity', 'primitive/system/abs-primary'],
-        ['brand-secondary/identity', 'primitive/system/abs-secondary'],
+        ['brand-primary/identity', 'base/absolute/primary'],
+        ['brand-secondary/identity', 'base/absolute/secondary'],
       ] as const) {
         const v = baseVars.get(oldPath)
         if (v && !baseVars.has(newPath)) {
@@ -901,7 +953,7 @@ figma.ui.onmessage = async (msg) => {
         }
       }
       for (const t of baseTokens[activeCols[0]]) { // all columns share the path set
-        if (!withSecondary && (isBrandSecondary(t.path) || t.path === 'primitive/system/abs-secondary')) continue
+        if (!withSecondary && (isBrandSecondary(t.path) || t.path === 'base/absolute/secondary')) continue
         const before = createdVars
         const v = ensure(t.path)
         if (createdVars > before || rebuildBase) seedFresh(v, t.path) // fresh variable (or a rebuild) → seed every active column
@@ -934,7 +986,7 @@ figma.ui.onmessage = async (msg) => {
       // aliasing idiom claimed it). Convert OUR values only: a pure pole at exactly the
       // alpha the payload wants for this path — a designer's own soft text is left alone.
       const softInkTargetFor = (path: string, cur: figma.RGBA, col: Column) => {
-        if (!path.endsWith('/cta/on')) return undefined
+        if (!path.endsWith('/' + SOLID_LEAF.ON)) return undefined
         const seed = seedByCol.get(col)!.get(path)
         if (!seed || !softInkFor(path, seed)) return undefined
         if (!isPole({ r: cur.r, g: cur.g, b: cur.b })) return undefined
@@ -959,12 +1011,12 @@ figma.ui.onmessage = async (msg) => {
             // cta/on seeded PRE-C43 was pole-aliased onto abs-black/abs-white, and an alias
             // is otherwise never touched — so the base kept reading the SOLID pole after the
             // payload went soft. OUR abs alias on a path whose seed is soft is exactly the
-            // stale half of that migration: re-point it to primitive/system/alpha/ink. An
+            // stale half of that migration: re-point it to base/alpha/ink. An
             // alias to any OTHER target is a designer's own wiring and is left alone.
             const seed = seedByCol.get(activeCols[i])!.get(path)
             const soft = seed ? softInkFor(path, seed) : undefined
-            const isOurAbs = cur.id === baseVars.get('primitive/system/abs-black')?.id
-              || cur.id === baseVars.get('primitive/system/abs-white')?.id
+            const isOurAbs = cur.id === baseVars.get('base/absolute/black')?.id
+              || cur.id === baseVars.get('base/absolute/white')?.id
             if (soft && isOurAbs && soft.id !== v.id) v.setValueForMode(colIds[i], figma.variables.createVariableAlias(soft))
             continue
           }
@@ -984,7 +1036,7 @@ figma.ui.onmessage = async (msg) => {
           // current value. Same conservatism as the signal refresh: any other value is a
           // designer's own and is left alone. Rows applied before the 2026-07-17 tint round
           // hold earlier-era values, don't match, and stay — the explicit rebuild covers them.
-          if (retiredNeutralByCol && path.startsWith('primitive/neutral/')) {
+          if (retiredNeutralByCol && path.startsWith('base/neutral/')) {
             const old = retiredNeutralByCol.get(activeCols[i])!.get(path)
             const seed = seedByCol.get(activeCols[i])!.get(path)
             if (old && seed && chEq(cur, old) && !chEq(cur, seed)) {
@@ -1008,7 +1060,7 @@ figma.ui.onmessage = async (msg) => {
       // Conservative in the same way strokeTargetFor is: only a value that is EXACTLY one of our
       // own rung alphas at a pure pole is rewritten. A designer who re-valued the row keeps it.
       for (const rung of Object.keys(RUNG_ALPHAS)) {
-        const v = baseVars.get(`primitive/system/alpha/offset-${rung}`)
+        const v = baseVars.get(`base/alpha/${rung}`)
         if (!v) continue
         for (let i = 0; i < activeCols.length; i++) {
           const cur = v.valuesByMode[colIds[i]]
@@ -1018,7 +1070,7 @@ figma.ui.onmessage = async (msg) => {
           if (!isPole({ r: rgba.r, g: rgba.g, b: rgba.b })) continue
           const isOurs = RUNG_FOR_ALPHA(a) !== undefined || Math.abs(a - RETIRED_RUNG_ALPHA) < EPS
           if (!isOurs || Math.abs(a - RUNG_ALPHAS[rung]) < EPS) continue
-          const seed = seedByCol.get(activeCols[i])!.get(`primitive/system/alpha/offset-${rung}`)
+          const seed = seedByCol.get(activeCols[i])!.get(`base/alpha/${rung}`)
           if (seed) v.setValueForMode(colIds[i], toRGBA(seed))
         }
       }
@@ -1043,8 +1095,8 @@ figma.ui.onmessage = async (msg) => {
       let orphaned = 0
       if (addedCols.length) {
         const known = new Set(baseTokens[activeCols[0]].map(t => t.path))
-        known.add('primitive/system/surface/sunken'); known.add('primitive/system/surface/low')
-        known.add('primitive/system/surface/base'); known.add('primitive/system/surface/high')
+        known.add('utility/surface/dim'); known.add('utility/surface/low')
+        known.add('utility/surface/mid'); known.add('utility/surface/high')
         for (const p of baseVars.keys()) if (!known.has(p)) orphaned++
         for (const c of addedCols) {
           const idx = activeCols.indexOf(c)
@@ -1065,14 +1117,14 @@ figma.ui.onmessage = async (msg) => {
       //   base → neutral/paper-97 light · neutral/paper-99 dark    (was paper-2/paper-1)
       //   lift → neutral/paper-99 light · neutral/paper-97 dark    (was paper-1/paper-2)
       //   pop  → neutral/paper-100 light · neutral/paper-95 dark   (was paper-0/paper-3)
-      const p0 = baseVars.get('primitive/neutral/paper-100')
-      const p1 = baseVars.get('primitive/neutral/paper-99')
-      const p2 = baseVars.get('primitive/neutral/paper-97')
-      const p3 = baseVars.get('primitive/neutral/paper-95')
+      const p0 = baseVars.get('base/neutral/paper-100')
+      const p1 = baseVars.get('base/neutral/paper-99')
+      const p2 = baseVars.get('base/neutral/paper-97')
+      const p3 = baseVars.get('base/neutral/paper-95')
       if (p0 && p1 && p2 && p3) {
         const planes: Array<[string, figma.Variable, figma.Variable]> = [
-          ['primitive/system/surface/sunken', p3, p0], ['primitive/system/surface/low', p2, p1],
-          ['primitive/system/surface/base', p1, p2], ['primitive/system/surface/high', p0, p3],
+          ['utility/surface/dim', p3, p0], ['utility/surface/low', p2, p1],
+          ['utility/surface/mid', p1, p2], ['utility/surface/high', p0, p3],
         ]
         for (const [path, light, darkVar] of planes) {
           const v = baseVars.get(path)!
@@ -1127,10 +1179,10 @@ figma.ui.onmessage = async (msg) => {
         // primitive/system/* is contract-invariant and skipped — EXCEPT the brand-varying
         // rows OVERRIDABLE_SYSTEM names: the link trio (Phase 4, owner: "link is a system
         // level color. It can still be extended" — each brand's extension overrides
-        // primitive/system/link/* with its own resolved values, its primary's ink stops
+        // base/link/* with its own resolved values, its primary's ink stops
         // or its custom link seed) and the identity absolutes.
-        if (t.path.startsWith('primitive/system/') && !OVERRIDABLE_SYSTEM(t.path)) continue
-        if (secondaryMode === 'none' && (isBrandSecondary(t.path) || t.path === 'primitive/system/abs-secondary')) continue
+        if (EXT_NON_OVERRIDABLE(t.path)) continue
+        if (secondaryMode === 'none' && (isBrandSecondary(t.path) || t.path === 'base/absolute/secondary')) continue
         work.push(t.path)
       }
       // The pole aliases resolve through ONE hop (they point at the raw abs rows) —

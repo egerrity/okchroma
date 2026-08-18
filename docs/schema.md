@@ -122,7 +122,7 @@ three ink stops.
 
 | field | type | meaning |
 |---|---|---|
-| `role` | `cta` \| `cta-hover` \| `cta-pressed` | The role name. Off the numbered scale by design. |
+| `role` | `solid-fill` \| `solid-fill-hover` \| `solid-fill-pressed` | The role name. Off the numbered scale by design. |
 | `produce` | object | `{ hue: "constant", L: "anchor" \| "hover" \| "pressed", chroma: "brand" }`: the fill carries the seed's own hue and lightness; `hover`/`pressed` derive from the resolved cta. |
 | `floorL` | number | The anchor floor (0 = none). Dark fills must not sink. The on-fill enforcement re-solve may legitimately pass it: the floor governs the anchor, not the enforced result. |
 | `chromaMult` | number | Multiplier on the seed's chroma. |

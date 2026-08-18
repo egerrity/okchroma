@@ -1,7 +1,7 @@
 # The scale
 
 One brand color in, a full ramp out: 3 papers, 4 washes, 1 mark, and 3 inks, plus the
-off-scale cta/hover and their on-text colors. Every name follows one pattern,
+off-scale solid/fill-hover and their on-text colors. Every name follows one pattern,
 `band-LL` or `band-LL-aa` / `band-LL-aaa`: the band word (`paper`, `wash`, `mark`,
 `ink`), the stop's visibility (its light rootL times 100, rounded), and, where a WCAG
 level is central to the stop's job, the conformance letters it certifies. The engine
@@ -12,7 +12,7 @@ name does the same thing on every brand.
 
 Lightness comes from a declared ladder; chroma is saturation-preserving (a fraction of
 the gamut the step allows, scaled by how saturated the brand is). Names fall in four
-groups: `paper`, `wash`, `mark`, and `ink`, plus the off-scale `cta` roles.
+groups: `paper`, `wash`, `mark`, and `ink`, plus the off-scale `solid-fill` roles.
 
 Stage B (2026-08-07, names only, no color changed) gave every name its own placement: a
 bare number is the stop's light rootL times 100, rounded (`paper-99` sits at rootL ≈
@@ -33,7 +33,7 @@ In the extended Figma plugin, a full path adds two more segments in front of the
 word: the register (which panel a row lives in) and the family. The register and family
 are groups (slash-separated); the band joins its visibility and conformance with
 hyphens, so the token name itself is one flat leaf. Read left to right,
-`primitive/neutral/ink-53-aa`:
+`base/neutral/ink-53-aa`:
 
 | segment | example | meaning |
 |---|---|---|
@@ -95,9 +95,9 @@ documented in [architecture.md](architecture.md)'s requirement section.
   scaffold clears its declared floors everywhere measured; declaring them means any
   future seed or tuning that would break dark legibility fails the gate
   (`npm run req:audit`) instead of shipping.
-- Off the scale: the `cta` state family (`cta`/`cta-hover`/`cta-pressed`) are **roles**,
+- Off the scale: the `solid-fill` state family (`solid-fill`/`solid-fill-hover`/`solid-fill-pressed`) are **roles**,
   not stops: the pulled-out button fill and its states. Fills that carry text ship
-  `on-cta` (see [On-fill text](#on-fill-text)). The text-style cta is the ink stops
+  `solid-on` (see [On-fill text](#on-fill-text)). The text-style cta is the ink stops
   read directly (rest ≡ ink-53-aa, hover ≡ ink-42-aa, pressed ≡ ink-30-aaa); the
   separate `cta-ink` alias trio was deleted 2026-08-12.
 - Also off the scale despite sitting at the ink band's zero end: `ink-0` is the
@@ -109,7 +109,7 @@ documented in [architecture.md](architecture.md)'s requirement section.
 
 ## On-fill text
 
-A fill that carries text ships its text color: `on-cta`, the one on-fill token every
+A fill that carries text ships its text color: `solid-on`, the one on-fill token every
 family emits (`on-highlight` was deleted with the highlight collapse, 2026-07-29). The only
 criterion is that it **passes**: the engine picks white or black, whichever clears the
 bar on that fill. White and black are the contrast extremes, so if neither clears, no

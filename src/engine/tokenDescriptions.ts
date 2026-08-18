@@ -52,17 +52,18 @@ interface Body {
 // ── the shared family scale — per-STOP text, the title line carries the family,
 // TINT carries the per-family theming half
 const PAPER: Body = { req: 'backgrounds, inverted text', theming: f => TINT[f], collides: true }
-// "decorative edges", not "borders": a token label word in a foreign row's body floods that
+// "decorative borders", not "edges": a token label word in a foreign row's body floods that
 // word's search results (the whole reason the shared stamp broke search). A row may carry a
-// label word only when it is in its OWN path — cta border's own title is the exception.
-const WASH: Body = { req: 'subtle interaction states, decorative edges, illustrations, signal hierarchy', theming: f => TINT[f], collides: true }
+// label word only when it is in its OWN path. The 2026-08-18 solid rename flipped this
+// word: edge became the label (solid/edge) and border stopped being one.
+const WASH: Body = { req: 'subtle interaction states, decorative borders, illustrations, signal hierarchy', theming: f => TINT[f], collides: true }
 const solved = (f: Family) => `${TINT[f]}; re-solved to clear its floor`
-// (the cta-ink + cta-ink-strong rows DELETED with their tokens, owner 2026-08-12: the
-// text-style CTA is the ink stops themselves. Leaf keys are FLAT — band flattening,
-// same round: paper-99, never paper/99.)
-// the paper-overlay rows (owner round 2026-08-13): translucent twins of the papers,
-// solved so the reading holds on the neutral papers; anywhere else the backdrop
-// decides — stated here because it is the token's conformance boundary
+// (Leaf keys are FLAT — band flattening 2026-08-12: paper-99, never paper/99 — except
+// the two nested subgroups, solid/ and overlay/, keyed by their nested spellings.)
+// the overlay rows (owner round 2026-08-13; regrouped under overlay/ 2026-08-18):
+// translucent twins of the papers, solved so the reading holds on the neutral papers;
+// anywhere else the backdrop decides — stated here because it is the token's
+// conformance boundary
 const OVERLAY: Body = {
   req: 'translucent backgrounds that hold their reading on any paper',
   theming: f => `${TINT[f]}; opacity solved against the papers, other backdrops show through unguaranteed`,
@@ -70,11 +71,11 @@ const OVERLAY: Body = {
 }
 const SCALE: Record<string, Body> = {
   'paper-99': PAPER,
-  'paper-overlay-99': OVERLAY,
+  'overlay/paper-99': OVERLAY,
   'paper-97': PAPER,
-  'paper-overlay-97': OVERLAY,
+  'overlay/paper-97': OVERLAY,
   'paper-95': { req: 'backgrounds, inverted text', theming: f => `${TINT[f]}. Worst background text stops must clear.`, collides: true },
-  'paper-overlay-95': OVERLAY,
+  'overlay/paper-95': OVERLAY,
   'wash-92': WASH,
   'wash-89': WASH,
   'wash-85': WASH,
@@ -85,11 +86,15 @@ const SCALE: Record<string, Body> = {
   // ("high-emphasis" reworded 2026-08-12: the surface planes took low/high as label
   // words, and a body carrying either floods that token's picker search — the C50 law)
   'ink-30-aaa': { req: 'strong-emphasis text, inverted backgrounds', contrast: AAA_BODY, theming: solved, collides: true },
-  'cta/enabled': { req: 'CTAs', theming: 'fully re-solved per theme and family' },
-  'cta/hover': { req: 'CTA pointer-over state', theming: 'follows its rest fill' },
-  'cta/pressed': { req: 'CTA pressed state', theming: 'follows its rest fill' },
-  'cta/border': { req: 'min APCA visibility', theming: 'draws for CTAs that sit close to the page; strength per family tier' },
-  'cta/on': { req: 'text over the fill', contrast: `${AA_BODY} over its fill`, theming: 'whichever pole passes; quiet fills take the soft pole' },
+  // the solid family (renamed from the cta words, owner 2026-08-18). "CTA" stays in
+  // these bodies on purpose: it stopped being a token label, so it floods nothing,
+  // and a designer's "cta" query still lands on these rows.
+  'solid/fill': { req: 'CTAs', theming: 'fully re-solved per theme and family' },
+  'solid/fill-hover': { req: 'CTA pointer-over state', theming: 'follows its rest fill' },
+  'solid/fill-pressed': { req: 'CTA pressed state', theming: 'follows its rest fill' },
+  'solid/edge': { req: 'min APCA visibility', theming: 'draws for CTAs that sit close to the page; strength per family tier' },
+  // ("fill" reworded out 2026-08-18: fill became a label word and is foreign here)
+  'solid/on': { req: 'text over the CTA color', contrast: `${AA_BODY} over its CTA`, theming: 'whichever pole passes; quiet CTAs take the soft pole' },
 }
 
 // ── rows only the neutral carries ────────────────────────────────────────────
@@ -120,17 +125,19 @@ const SYSTEM: Record<string, Body> = {
   'system/abs-primary': { req: 'identity seed reference', theming: 'the theme’s own input, as given' },
   'system/abs-secondary': { req: 'identity seed reference', theming: 'the theme’s companion input, as given' },
   'system/alpha/transparent': { req: 'aliased off-states' },
-  'system/alpha/scrim': { req: 'dimming behind elements' },
-  'system/alpha/ink': { req: 'soft on-color for quiet fills' },
-  'system/alpha/offset-06': OFFSET,
-  'system/alpha/offset-08': OFFSET,
-  'system/alpha/offset-16': OFFSET,
+  // ("dimming" reworded 2026-08-18: the surface planes took dim as a label word)
+  'system/alpha/abs-black-060': { req: 'veils the page behind modals' },
+  // ("fills" reworded 2026-08-18: fill became a label word and is foreign here)
+  'system/alpha/ink': { req: 'soft on-color for quiet CTAs' },
+  'system/alpha/006': OFFSET,
+  'system/alpha/008': OFFSET,
+  'system/alpha/016': OFFSET,
   'system/alpha/shadow-04': SHADOW,
   'system/alpha/shadow-08': SHADOW,
   'system/alpha/shadow-12': SHADOW,
-  'system/surface/sunken': PLANE('recessed elevation plane'),
+  'system/surface/dim': PLANE('recessed elevation plane'),
   'system/surface/low': PLANE('resting page plane'),
-  'system/surface/base': PLANE('raised plane — cards, menus'),
+  'system/surface/mid': PLANE('raised plane — cards, menus'),
   // ("overlays" reworded 2026-08-13: paper-overlay took the word as a label — the C50 law)
   'system/surface/high': PLANE('topmost plane — modals, dialogs'),
   'system/link/enabled': LINK('', AA_BODY),
@@ -146,17 +153,32 @@ const PREFIXES: Array<[string, Family]> = [
   ['brand/secondary/', 'brand-secondary'],
 ]
 
-// CANONICALIZE (A1 regroup 2026-08-07, flattened to one register 2026-08-11): the ext
-// plugin's paths carry the primitive/ REGISTER prefix (plugin-ext/payload.ts
-// registerPath) that this module must never see — the register is a Figma-panel
-// organizing axis, not part of a row's identity, and letting register words into a
-// description would flood Figma's picker search exactly like the old ratio-digit stamp
-// did (see the file header). Strip it; everything underneath (system/link/*,
-// system/surface/*, the families) already spells the identity this module keys on. The
-// community plugin's paths (plugin/code.ts) never carried a register to begin with, so
-// this is a no-op for them.
+// CANONICALIZE: the ext plugin's paths carry OWNERSHIP-ZONE prefixes (owner ruling
+// 2026-08-18: base/ = engine-owned, utility/ = team-touchable — plugin-ext/payload.ts
+// registerPath) that this module must never see — a zone is a Figma-panel organizing
+// axis, not part of a row's identity, and letting zone words into a description would
+// flood Figma's picker search exactly like the old ratio-digit stamp did (see the file
+// header). Zone paths map onto the community spellings this module keys on (the same
+// one-body-two-shapes idea PREFIXES already implements for the families). The retired
+// primitive/ register strip stays for rows described mid-migration. The community
+// plugin's paths (plugin/code.ts) carry no zone, so this is a no-op for them.
+const ZONE_MAP: Array<[string, string]> = [
+  ['base/absolute/black', 'system/abs-black'],
+  ['base/absolute/white', 'system/abs-white'],
+  ['base/absolute/primary', 'system/abs-primary'],
+  ['base/absolute/secondary', 'system/abs-secondary'],
+  ['base/link/', 'system/link/'],
+  ['base/alpha/', 'system/alpha/'],
+  ['utility/surface/', 'system/surface/'],
+  ['utility/shadow-', 'system/alpha/shadow-'],
+  ['utility/abs-black-060', 'system/alpha/abs-black-060'],
+  ['base/', ''],
+  ['primitive/', ''],
+]
 export function canonicalize(path: string): string {
-  return path.startsWith('primitive/') ? path.slice('primitive/'.length) : path
+  for (const [prefix, home] of ZONE_MAP)
+    if (path.startsWith(prefix)) return home + path.slice(prefix.length)
+  return path
 }
 
 function bodyFor(path: string): { body: Body; fam: Family } | undefined {

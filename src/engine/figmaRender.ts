@@ -2,7 +2,7 @@
 
 import { toHex, ctaNeedsBorder, pageStopFor, ctaBorderRung, OFFSET_ALPHAS, type OffsetRung } from './cssRender'
 import { srgbEmitChannels } from './colorMath'
-import { stopTokenName, tokenOrder } from './tokenNames'
+import { stopTokenName, tokenOrder, SOLID_FILL, SOLID_FILL_HOVER, SOLID_FILL_PRESSED, SOLID_EDGE, SOLID_ON, SOLID_STATE_LEAVES, OVERLAY_LEAVES } from './tokenNames'
 import { alphaPapersFor, alphaSep, type AlphaPaper } from './alphaPapers'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
 import { OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, SOFT_ON_CTA_ALPHA, softOnCtaPasses, escapeCtaFamily, resolveLinkTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
@@ -56,21 +56,16 @@ function colorFromHexString(hex: string): FigmaColorToken {
   return { $type: 'color', $value: { colorSpace: 'srgb', components: [r, g, b], alpha: 1, hex: hex.toLowerCase() } }
 }
 
-// LEAF SHAPE (owner 2026-08-12, band flattening): ramp tokens sit FLAT in the family
-// group — paper-99, wash-92, mark-74-aa, ink-53-aa … (the 2026-07-27 band nesting
-// paper/99 etc. is retired; the band word stays in the leaf, the slash between band
-// and level became a hyphen). ONLY the cta family still nests, into STATE leaves
-// (enabled/hover/pressed, matching system/link) with the on-color riding its carrier
-// (cta/on). `identity` stays a flat leaf; the plugins re-home the BIND surfaces to
-// system/abs-primary|abs-secondary. Both plugins migrate every old
-// spelling in place via RENAMED_LEAVES.
-// (The cta-ink + cta-ink-strong state groups DELETED with their tokens, owner 2026-08-12.)
+// LEAF SHAPE (owner 2026-08-12, band flattening; solid rename 2026-08-18): ramp
+// tokens sit FLAT in the family group — paper-99, wash-92, mark-74-aa, ink-53-aa …
+// Two subgroups nest: the solid/ state group (fill/fill-hover/fill-pressed/edge/on,
+// matching system/link's state shape) and the overlay/ subgroup (the translucent
+// paper twins, folded out of the ramp — owner call 2026-08-18). Both tables live in
+// tokenNames.ts — the one flat↔nested source every consumer rides. `identity` stays
+// a flat leaf; the plugins re-home the BIND surfaces to their absolute rows. Both
+// plugins migrate every old spelling in place via RENAMED_LEAVES.
 function bandedLeaf(flat: string): string {
-  const STATE: Record<string, string> = {
-    'cta': 'cta/enabled', 'cta-hover': 'cta/hover', 'cta-pressed': 'cta/pressed',
-    'cta-border': 'cta/border', 'on-cta': 'cta/on',
-  }
-  return STATE[flat] ?? flat
+  return SOLID_STATE_LEAVES[flat] ?? OVERLAY_LEAVES[flat] ?? flat
 }
 // Order-aware entries for a FigmaGroup (adversarial-audit-caught 2026-08-07): JS
 // enumerates integer-index string keys ascending, before any string keys, REGARDLESS of
@@ -134,20 +129,21 @@ function rampGroup(
   ].sort((a, b) => tokenOrder(a.name) - tokenOrder(b.name))
   for (const l of leaves) putLeaf(g, l.name, l.tok)
 
-  // the cta family, SEMANTIC-named (owner ruling 2026-07-16: states, never options;
-  // banded to cta/enabled|hover|pressed 2026-07-27) — renames ride both plugins'
-  // RENAMED_LEAVES in-place migration.
-  if (extra?.cta) putLeaf(g, 'cta', colorFromStop(extra.cta))
-  if (extra?.ctaHover) putLeaf(g, 'cta-hover', colorFromStop(extra.ctaHover))
-  if (extra?.ctaPressed) putLeaf(g, 'cta-pressed', colorFromStop(extra.ctaPressed))
-  // cta/border pairs with the cta family: the SAFETY STROKE when the fill would vibrate against
+  // the solid family (states, never options — owner ruling 2026-07-16; renamed from
+  // the cta words 2026-08-18) — renames ride both plugins' RENAMED_LEAVES in-place
+  // migration. Internal GeneratedScale properties keep their cta spelling: they are
+  // compiler-checked and never surface in any emitted name.
+  if (extra?.cta) putLeaf(g, SOLID_FILL, colorFromStop(extra.cta))
+  if (extra?.ctaHover) putLeaf(g, SOLID_FILL_HOVER, colorFromStop(extra.ctaHover))
+  if (extra?.ctaPressed) putLeaf(g, SOLID_FILL_PRESSED, colorFromStop(extra.ctaPressed))
+  // solid/edge pairs with the fill trio: the SAFETY STROKE when the fill would vibrate against
   // the background rather than sit on it (owner 2026-07-29, superseding the 2026-07-04 "filled is
   // filled" removal), else transparent. The rule lives in cssRender.ctaNeedsBorder — |Lc| of the
-  // cta against the page under 15 — so both emitters decide identically, and the rung comes from
-  // cssRender.ctaBorderRung. The outline secondary still overrides this with its own mark/74-aa
-  // unconditionally — there the border is the button's identity, not a safety.
-  if (extra?.cta) putLeaf(g, 'cta-border', extra.ctaBorder ?? TRANSPARENT_TOKEN)
-  putLeaf(g, 'on-cta', colorFromHex(onFillWhite))
+  // fill against the page under 15 — so both emitters decide identically, and the rung comes from
+  // cssRender.ctaBorderRung. The outline secondary still overrides this with its own mark-74-aa
+  // unconditionally — there the edge is the button's identity, not a safety.
+  if (extra?.cta) putLeaf(g, SOLID_EDGE, extra.ctaBorder ?? TRANSPARENT_TOKEN)
+  putLeaf(g, SOLID_ON, colorFromHex(onFillWhite))
   if (extra?.identityHex) g['identity'] = colorFromHexString(extra.identityHex)
   return g
 }
@@ -245,22 +241,22 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     if (input.secondaryStyle === 'outline' && input.secondary) {
       const s8 = secondary[mode].find(s => s.stop === 8)
       const s9 = secondary[mode].find(s => s.stop === 9)
-      putLeaf(secondaryGroup, 'cta', TRANSPARENT_TOKEN)
+      putLeaf(secondaryGroup, SOLID_FILL, TRANSPARENT_TOKEN)
       if (s8) {
         const e = srgbEmitChannels(s8)
         const alphaTint = (alpha: number): FigmaColorToken => ({
           $type: 'color',
           $value: { colorSpace: 'srgb', components: [clamp01(e.r), clamp01(e.g), clamp01(e.b)], alpha, hex: toHex(e.r, e.g, e.b) },
         })
-        putLeaf(secondaryGroup, 'cta-hover', alphaTint(OUTLINE_HOVER_ALPHA))
+        putLeaf(secondaryGroup, SOLID_FILL_HOVER, alphaTint(OUTLINE_HOVER_ALPHA))
         // pressed = the hover tint at doubled alpha (pressed-doubles-hover, alpha register)
-        putLeaf(secondaryGroup, 'cta-pressed', alphaTint(OUTLINE_PRESSED_ALPHA))
+        putLeaf(secondaryGroup, SOLID_FILL_PRESSED, alphaTint(OUTLINE_PRESSED_ALPHA))
       }
-      if (s8) putLeaf(secondaryGroup, 'cta-border', colorFromStop(s8))
+      if (s8) putLeaf(secondaryGroup, SOLID_EDGE, colorFromStop(s8))
       // outline re-expresses the FILL trio only — the ramp's ink stops (the text register)
       // are already emitted by rampGroup and stay untouched
-      // cta/on = the family's ink-53-aa, NOT a pole — the plugin aliases non-pole on-fills to the sibling ink-53-aa
-      if (s9) putLeaf(secondaryGroup, 'on-cta', colorFromStop(s9))
+      // solid/on = the family's ink-53-aa, NOT a pole — the plugin aliases non-pole on-colors to the sibling ink-53-aa
+      if (s9) putLeaf(secondaryGroup, SOLID_ON, colorFromStop(s9))
     }
     // the SOFT on-cta — THE QUIET-FILL RULE: a low-hierarchy cta's button text is the
     // on-text pole at SOFT_ON_CTA_ALPHA, composited by the consumer over the fill's current
@@ -277,7 +273,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     // brand, the signals, and the cta ESCAPE below — keep the solid pole.
     const softOnCta = (g: FigmaGroup, white: boolean) => {
       const p = white ? 1 : 0
-      putLeaf(g, 'on-cta', {
+      putLeaf(g, SOLID_ON, {
         $type: 'color',
         $value: { colorSpace: 'srgb', components: [p, p, p], alpha: SOFT_ON_CTA_ALPHA[mode], hex: white ? '#ffffff' : '#000000' },
       })
@@ -296,10 +292,10 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     const esc = input.ctaEscape ? escapeCtaFamily(nScale, mode, input.contrastProfile) : null
     if (esc) {
       for (const g of input.secondary ? [brandGroup] : [brandGroup, secondaryGroup]) {
-        putLeaf(g, 'cta', colorFromStop(esc.cta))
-        putLeaf(g, 'cta-hover', colorFromStop(esc.ctaHover))
-        putLeaf(g, 'cta-pressed', colorFromStop(esc.ctaPressed))
-        putLeaf(g, 'on-cta', colorFromHex(esc.onFillIsWhite))
+        putLeaf(g, SOLID_FILL, colorFromStop(esc.cta))
+        putLeaf(g, SOLID_FILL_HOVER, colorFromStop(esc.ctaHover))
+        putLeaf(g, SOLID_FILL_PRESSED, colorFromStop(esc.ctaPressed))
+        putLeaf(g, SOLID_ON, colorFromHex(esc.onFillIsWhite))
       }
     }
     // the SYSTEM LINK trio (Phase 4): ONE per theme. Custom seed → its ink-register

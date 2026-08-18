@@ -1,7 +1,8 @@
 /// <reference path="./figma-env.d.ts" />
 
-// zero-import text module — safe here, drags nothing of the engine into the sandbox bundle
+// zero-import text modules — safe here, drag nothing of the engine into the sandbox bundle
 import { describeToken } from '../src/engine/tokenDescriptions'
+import { SOLID_LEAF } from '../src/engine/tokenNames'
 
 figma.showUI(__html__, { width: 720, height: 640, title: 'OKChroma' })
 
@@ -64,6 +65,29 @@ const profileStamp = (profile: Profile) =>
 // up, so the direct map.get never wrongly hits a stale same-name variable. Any future
 // renumber must keep that ascending order.
 const RENAMED_LEAVES: Array<[string, string]> = [
+  // ── SOLID RENAME + REGROUPS (owner 2026-08-18): the cta words → the solid/ state
+  // group (fill/fill-hover/fill-pressed/edge/on); the paper overlays fold into the
+  // overlay/ subgroup; planes sunken|base → dim|mid; scrim → abs-black-060; the
+  // offset ladder drops its word (006/008/016). These CURRENT-name entries must stay
+  // FIRST: they are exactly what a 2026-08-12-era file holds as its real variables.
+  ['cta/enabled', 'solid/fill'],
+  ['cta/hover', 'solid/fill-hover'],
+  ['cta/pressed', 'solid/fill-pressed'],
+  ['cta/border', 'solid/edge'],
+  ['cta/on', 'solid/on'],
+  ['paper-overlay-99', 'overlay/paper-99'],
+  ['paper-overlay-97', 'overlay/paper-97'],
+  ['paper-overlay-95', 'overlay/paper-95'],
+  ['surface/sunken', 'surface/dim'],
+  // ⚠️ the word base's THIRD life (page plane pre-08-12 → raised plane to 08-18 →
+  // retired): this entry consumes an 08-12-era file's base row into mid. A pre-08-12
+  // file's base row (the PAGE plane) still belongs to surface/low via the entry
+  // further down — resolution ORDER disambiguates, see the plane-order note there.
+  ['surface/base', 'surface/mid'],
+  ['alpha/scrim', 'alpha/abs-black-060'],
+  ['alpha/offset-06', 'alpha/006'],
+  ['alpha/offset-08', 'alpha/008'],
+  ['alpha/offset-16', 'alpha/016'],
   // ── BAND FLATTENING (owner 2026-08-12): ramp leaves sit FLAT in the family group
   // again — paper-99, wash-92, mark-74-aa, ink-53-aa … (band word + hyphen + level, the
   // engine's own token names). The 2026-07-27 band nesting (paper/99 …) is retired; only
@@ -146,11 +170,11 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['ink/53-r450', 'ink-53-aa'],
   ['ink/42-r650', 'ink-42-aa'],
   ['ink/30-r700', 'ink-30-aaa'],
-  ['cta', 'cta/enabled'],
-  ['cta-hover', 'cta/hover'],
-  ['cta-pressed', 'cta/pressed'],
-  ['cta-border', 'cta/border'],
-  ['on-cta', 'cta/on'],
+  ['cta', 'solid/fill'],
+  ['cta-hover', 'solid/fill-hover'],
+  ['cta-pressed', 'solid/fill-pressed'],
+  ['cta-border', 'solid/edge'],
+  ['on-cta', 'solid/on'],
   ['on-highlight', 'highlight/on'],
   // cta-ink DIED 2026-08-12 (the trio was pure aliases onto the ink stops; deleted
   // with the band flattening). These entries keep their RETIRED banded homes on
@@ -170,7 +194,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // ink/10 (the between stop, C49); the Stage-B batch above resolves
   // ink-53-aa off such a file's own ink/9 FIRST, so this entry only fires once
   // that candidate is absent — it never steals a real between-stop row.
-  ['cta-stroke', 'cta/border'],
+  ['cta-stroke', 'solid/edge'],
   ['ink/10', 'ink-53-aa'],
   ['ink-11', 'ink-53-aa'],
   ['ink-12', 'ink-30-aaa'],
@@ -183,8 +207,8 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['blue-7eb5fb', 'cyan-side-7eb5fb'],
   // cta semantic rename (owner 2026-07-16: states, never options), retargeted to
   // the cta state homes; cta/pressed is a newer token.
-  ['cta-1', 'cta/enabled'],
-  ['cta-2', 'cta/hover'],
+  ['cta-1', 'solid/fill'],
+  ['cta-2', 'solid/fill-hover'],
   // stop-3 rename (owner 2026-07-24, elevation round) retargeted to its final flat
   // home — it is a surface plane in both themes. Pure relabel, same color.
   ['wash-3', 'paper-95'],
@@ -204,9 +228,9 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // (STATIC_UTILS + SYSTEM_GLOBALS list order below) — an exact-name hit on a file's
   // old base row would otherwise hand the PAGE plane's variable (and its bindings)
   // to the cards name before the low-lookup could consume it.
-  ['surface/sink', 'surface/sunken'],
+  ['surface/sink', 'surface/dim'],
   ['surface/base', 'surface/low'],
-  ['surface/lift', 'surface/base'],
+  ['surface/lift', 'surface/mid'],
   ['surface/pop', 'surface/high'],
   // elevation planes went 2 → 4 (owner spec, 2026-07-24; that round's sink/base/
   // lift/pop names retired by the 2026-08-12 rename above): the old pair migrates to
@@ -214,17 +238,17 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // the new ladder — raised p0→p1, sunken p2→p3). These entries point STRAIGHT at the
   // final surface/ homes: legacyCandidates expands one hop only, so a chained
   // old→mid→new table would strand pre-elevation files on the middle name.
-  ['paper-raised', 'surface/base'],
-  ['paper-sunken', 'surface/sunken'],
+  ['paper-raised', 'surface/mid'],
+  ['paper-sunken', 'surface/dim'],
   // system regroup (owner 2026-07-27): planes → system/surface/*, alpha-carrying
   // utilities → system/alpha/*, link trio → system/link/* with state leaves.
   // abs-black/abs-white stay at the system root. Same-value moves, no ladder shift.
-  ['sink', 'surface/sunken'],
+  ['sink', 'surface/dim'],
   ['base', 'surface/low'],
-  ['lift', 'surface/base'],
+  ['lift', 'surface/mid'],
   ['pop', 'surface/high'],
   ['transparent', 'alpha/transparent'],
-  ['scrim', 'alpha/scrim'],
+  ['scrim', 'alpha/abs-black-060'],
   ['link', 'link/enabled'],
   ['link-hover', 'link/hover'],
   ['link-pressed', 'link/pressed'],
@@ -524,15 +548,18 @@ figma.ui.onmessage = async (msg) => {
         { path: 'system/abs-black', light: K, dark: K },
         { path: 'system/abs-white', light: W, dark: W },
         { path: 'system/ink-0', light: K, dark: W },
-        { path: 'system/surface/sunken', elevation: true },
-        { path: 'system/surface/low', elevation: true }, // MUST precede base (rename swap)
-        { path: 'system/surface/base', elevation: true },
+        { path: 'system/surface/dim', elevation: true },
+        // low MUST precede mid: an 08-12-era file's real low row must direct-hit before
+        // mid's legacy lookup consumes that file's base row (the word base moved planes
+        // in 08-12 and retired in 08-18 — see the RENAMED_LEAVES plane notes)
+        { path: 'system/surface/low', elevation: true },
+        { path: 'system/surface/mid', elevation: true },
         { path: 'system/surface/high', elevation: true },
         { path: 'system/alpha/transparent', light: { r: 1, g: 1, b: 1, a: 0 }, dark: { r: 1, g: 1, b: 1, a: 0 } },
-        { path: 'system/alpha/scrim', light: { r: 0, g: 0, b: 0, a: 0.6 }, dark: { r: 0, g: 0, b: 0, a: 0.6 } },
+        { path: 'system/alpha/abs-black-060', light: { r: 0, g: 0, b: 0, a: 0.6 }, dark: { r: 0, g: 0, b: 0, a: 0.6 } },
         // the SOFT ON-CTA primitive (C43 follow-up, owner-named 2026-08-03): the on-text
         // pole at the engine's SOFT_ON_CTA_ALPHA register — black@.75 light,
-        // white@.80 dark. The default-model secondary's cta/on aliases this row.
+        // white@.80 dark. The default-model secondary's solid/on aliases this row.
         { path: 'system/alpha/ink', light: { r: 0, g: 0, b: 0, a: 0.75 }, dark: { r: 1, g: 1, b: 1, a: 0.8 } },
         { path: 'system/alpha/shadow-04', light: { r: 0, g: 0, b: 0, a: 0.04 }, dark: { r: 0, g: 0, b: 0, a: 0.32 } },
         { path: 'system/alpha/shadow-08', light: { r: 0, g: 0, b: 0, a: 0.08 }, dark: { r: 0, g: 0, b: 0, a: 0.48 } },
@@ -592,16 +619,20 @@ figma.ui.onmessage = async (msg) => {
         v.setVariableCodeSyntax('WEB', codeSyntaxFor(v.name))
         v.scopes = [] // primitives hidden from every picker (re-applies fix older files too)
         const dk = darkMap.get(t.path)
-        // a TRUE pole (the engine's on-fills are exactly white or black); an outline
-        // secondary's on-cta is the family's ink-53-aa instead — alias the sibling, not
+        // a TRUE pole (the engine's on-colors are exactly white or black); an outline
+        // secondary's solid/on is the family's ink-53-aa instead — alias the sibling, not
         // a pole (C33 renumbered the inks; the old ink/10 target aliased the WRONG stop
         // for a post-renumber outline — fixed 2026-08-04)
+        // (the dead 'highlight/on' arm deleted 2026-08-18 — the engine has emitted no
+        // highlight token since the 2026-07-29 collapse; the sweep caught the check
+        // silently matching nothing. Recognition now rides tokenNames.SOLID_LEAF so a
+        // future rename breaks this build instead of disarming the aliasing.)
         const isPole = (c: { r: number; g: number; b: number }) => {
           const sum = c.r + c.g + c.b
           return sum > 2.97 || sum < 0.03
         }
-        if (t.path === 'cta/on' || t.path === 'highlight/on') {
-          const sibling9 = primByName.get(path.replace(/(?:cta\/on|highlight\/on)$/, 'ink-53-aa'))
+        if (t.path === SOLID_LEAF.ON) {
+          const sibling9 = primByName.get(path.slice(0, -SOLID_LEAF.ON.length) + 'ink-53-aa')
           // the SOFT ON-CTA (C43 follow-up, owner 2026-08-03): a POLE AT PARTIAL ALPHA is
           // the default-model secondary's soft text → alias system/alpha/ink. Checked
           // BEFORE the solid-pole case — isPole ignores alpha here, so without this the
@@ -618,14 +649,14 @@ figma.ui.onmessage = async (msg) => {
             v.setValueForMode(pDark, figma.variables.createVariableAlias(darkTarget))
           }
         } else if (t.a === 0 && (dk === undefined || dk.a === 0)) {
-          // fully-transparent leaf (an outline secondary's cta-1) → alias system/alpha/transparent
+          // fully-transparent leaf (an outline secondary's rest fill) → alias system/alpha/transparent
           const transparent = primByName.get('system/alpha/transparent')
           if (transparent) {
             v.setValueForMode(pLight, figma.variables.createVariableAlias(transparent))
             v.setValueForMode(pDark, figma.variables.createVariableAlias(transparent))
           }
-        } else if (t.path === 'cta/border') {
-          const sibling8 = primByName.get(path.replace(/cta\/border$/, 'mark-74-aa'))
+        } else if (t.path === SOLID_LEAF.EDGE) {
+          const sibling8 = primByName.get(path.slice(0, -SOLID_LEAF.EDGE.length) + 'mark-74-aa')
           const transparent = primByName.get('system/alpha/transparent')
           const target = (leaf?: { a?: number }) =>
             leaf?.a === 0 ? transparent : (sibling8 ?? transparent)
@@ -706,7 +737,7 @@ figma.ui.onmessage = async (msg) => {
         // the value guard matches and the relationship stays live in Figma). Fill
         // hover/pressed stay raw derived values.
         const pairs: Array<[string, string]> = [
-          ['cta/enabled', 'ink-30-aaa'],
+          [SOLID_LEAF.FILL, 'ink-30-aaa'],
           ['ink-53-aa', 'ink-53-aa'], ['ink-42-aa', 'ink-42-aa'], ['ink-30-aaa', 'ink-30-aaa'],
         ]
         for (const [leaf, neutralLeaf] of pairs) {
@@ -767,8 +798,8 @@ figma.ui.onmessage = async (msg) => {
       // ① system globals (brand-independent: every theme mode aliases the same seed;
       // idempotent — backfills pre-existing brand modes the moment the globals appear)
       const SYSTEM_GLOBALS = ['system/abs-black', 'system/abs-white',
-        'system/surface/sunken', 'system/surface/low', 'system/surface/base', 'system/surface/high',
-        'system/alpha/transparent', 'system/alpha/scrim',
+        'system/surface/dim', 'system/surface/low', 'system/surface/mid', 'system/surface/high',
+        'system/alpha/transparent', 'system/alpha/abs-black-060',
         'system/alpha/shadow-04', 'system/alpha/shadow-08', 'system/alpha/shadow-12']
       for (const path of SYSTEM_GLOBALS) {
         for (const m of th.coll.modes) aliasInto(path, path, m.modeId)
@@ -950,9 +981,9 @@ figma.ui.onmessage = async (msg) => {
           v.setValueForMode(pLight, figma.variables.createVariableAlias(light))
           v.setValueForMode(pDark, figma.variables.createVariableAlias(dark))
         }
-        aliasElev('system/surface/sunken', themeNeutralP3, themeNeutralP0)
+        aliasElev('system/surface/dim', themeNeutralP3, themeNeutralP0)
         aliasElev('system/surface/low', themeNeutralP2, themeNeutralP1)
-        aliasElev('system/surface/base', themeNeutralP1, themeNeutralP2)
+        aliasElev('system/surface/mid', themeNeutralP1, themeNeutralP2)
         aliasElev('system/surface/high', themeNeutralP0, themeNeutralP3)
       }
 

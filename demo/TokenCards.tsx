@@ -4,7 +4,7 @@ import { AlertCircle, AlertTriangle, CheckCircle, Info } from 'lucide-react'
 // Stage 3 — the per-ramp token display, as a realistic SHOWCASE card. It renders
 // with the LIVE primitives, so it themes (light/dark) and picks the right on-fill
 // polarity for free. The card it sits in is `.ct-colorblock` (already on the elevated
-// --surface-base plane), so it lifts off the page consistently in both modes.
+// --surface-mid plane), so it lifts off the page consistently in both modes.
 //
 // Roles demonstrated in context, not as abstract chips:
 //   ink     → the heading + body copy ("ink family" called out in ink-53-aa)
@@ -48,13 +48,13 @@ export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; 
     { prefix: 'positive', label: 'positive' },
     { prefix: 'info', label: 'info' },
   ]
-  const cell = (prefix: string, tok: 'cta' | 'cta-hover' | 'cta-pressed') => (
+  const cell = (prefix: string, tok: 'solid-fill' | 'solid-fill-hover' | 'solid-fill-pressed') => (
     <div title={`--${prefix}-${tok}`} style={{
-      flex: tok === 'cta' ? 1.6 : 1, height: 44, boxSizing: 'border-box',
+      flex: tok === 'solid-fill' ? 1.6 : 1, height: 44, boxSizing: 'border-box',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: `var(--${prefix}-${tok})`, color: `var(--${prefix}-on-cta)`,
+      background: `var(--${prefix}-${tok})`, color: `var(--${prefix}-solid-on)`,
       fontSize: 13, fontWeight: 600,
-      border: `1.5px solid var(--${prefix}-cta-border)`,
+      border: `1.5px solid var(--${prefix}-solid-edge)`,
     }}>Aa</div>
   )
   // the TEXT-style cta (the ink stops — the action color's 4.5 text rendition) rendered
@@ -69,9 +69,9 @@ export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; 
       {families.map(f => (
         <div key={f.prefix} style={{ flex: '1 1 104px', maxWidth: 220 }}>
           <div style={{ display: 'flex', borderRadius: 8, overflow: 'hidden' }}>
-            {cell(f.prefix, 'cta')}
-            {cell(f.prefix, 'cta-hover')}
-            {cell(f.prefix, 'cta-pressed')}
+            {cell(f.prefix, 'solid-fill')}
+            {cell(f.prefix, 'solid-fill-hover')}
+            {cell(f.prefix, 'solid-fill-pressed')}
           </div>
           <div style={{ display: 'flex', marginTop: 7 }}>
             {inkCell(f.prefix, 'ink-53-aa')}
@@ -139,7 +139,7 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
       </p>
 
       {/* cta in context — the pill (hidden on signals, where cta lives in the alert).
-          Hover swaps cta → cta-hover; holding the button shows cta-pressed. Beside it,
+          Hover swaps solid-fill → solid-fill-hover; holding the button shows solid-fill-pressed. Beside it,
           the TEXT-STYLE cta (the ink stops as states — the action color's 4.5 text
           rendition, a text button; never underlined, never a hyperlink — links are the
           SYSTEM --link). */}
@@ -152,14 +152,14 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
             onMouseUp={() => setCtaPressed(false)}
             style={{
               width: 184, boxSizing: 'border-box', textAlign: 'center',
-              background: ctaPressed ? v('cta-pressed') : ctaHover ? v('cta-hover') : v('cta'), color: v('on-cta'),
+              background: ctaPressed ? v('solid-fill-pressed') : ctaHover ? v('solid-fill-hover') : v('solid-fill'), color: v('solid-on'),
               // filled buttons carry NO stroke (the label identifies the button — WCAG 1.4.11
               // doesn't require a boundary); only the OUTLINE style keeps its ring, where the
               // boundary IS the component. Transparent border keeps layout identical.
-              border: `1.5px solid ${outlineCta ? v('cta-border') : 'transparent'}`,
+              border: `1.5px solid ${outlineCta ? v('solid-edge') : 'transparent'}`,
               borderRadius: 999, padding: '12px 28px', fontSize: 15, fontWeight: 600, fontFamily: 'inherit',
               cursor: 'pointer',
-            }}>{ctaPressed ? 'cta-pressed held' : ctaHover ? 'cta-hover' : 'cta button'}</button>
+            }}>{ctaPressed ? 'solid-fill-pressed held' : ctaHover ? 'solid-fill-hover' : 'solid button'}</button>
           <button
             onMouseEnter={() => setLinkState('hover')}
             onMouseLeave={() => setLinkState('rest')}
@@ -182,11 +182,11 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
           <div style={{ ...boxBody, color: v('ink-30-aaa') }}>Body copy in ink on a wash fill.</div>
         </div>
         {isSignal ? (
-          <div style={{ ...box, background: v('cta'), display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-            <span style={{ flexShrink: 0, marginTop: 1, lineHeight: 0, color: v('on-cta') }}><Icon size={18} color={v('on-cta')} /></span>
+          <div style={{ ...box, background: v('solid-fill'), display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+            <span style={{ flexShrink: 0, marginTop: 1, lineHeight: 0, color: v('solid-on') }}><Icon size={18} color={v('solid-on')} /></span>
             <div>
-              <div style={{ ...boxLabel, color: v('on-cta') }}>alert &middot; cta</div>
-              <div style={{ ...boxBody, color: v('on-cta') }}>Loud message in on-cta text.</div>
+              <div style={{ ...boxLabel, color: v('solid-on') }}>alert &middot; cta</div>
+              <div style={{ ...boxBody, color: v('solid-on') }}>Loud message in solid-on text.</div>
             </div>
           </div>
         ) : insetControls ? (

@@ -138,7 +138,7 @@ function buildModel(r: ScanResults): { ignored: number; other: number } {
 // ── render ──────────────────────────────────────────────────────────────────────
 const chipHtml = (clusterId: string, path: string, picked: boolean): string => {
   const t = okValues.get(path)
-  const short = path.replace('primitive/', '')
+  const short = path.replace(/^(base|utility)\//, '')
   if (!t || !t.light) return `<span class="okchip miss" title="target missing — re-apply the okchroma theme once">${esc(short)}</span>`
   return `<button class="okchip${picked ? ' sel' : ''}" data-cluster="${esc(clusterId)}" data-path="${esc(path)}">
     <span class="pair"><span style="background:${t.light}"></span><span style="background:${t.dark ?? '#111'}"></span></span>${esc(short)}</button>`
@@ -176,7 +176,7 @@ const clusterHtml = (b: TokenBucket, c: Cluster): string => {
 function morePanelHtml(clusterId: string): string {
   const fams = new Map<string, OkTarget[]>()
   for (const t of okValues.values()) {
-    const famName = t.path.replace('primitive/', '').split('/')[0]
+    const famName = t.path.replace(/^(base|utility)\//, '').split('/')[0]
     const list = fams.get(famName) ?? []
     list.push(t); fams.set(famName, list)
   }
@@ -191,7 +191,7 @@ function morePanelHtml(clusterId: string): string {
 // applications here are X")
 const headerChipHtml = (b: TokenBucket, path: string): string => {
   const t = okValues.get(path)
-  const short = path.replace('primitive/', '')
+  const short = path.replace(/^(base|utility)\//, '')
   const allPicked = b.clusters.length > 0 && b.clusters.every(c => picks.get(c.id) === path)
   if (!t || !t.light) return `<span class="okchip miss" title="target missing — re-apply the okchroma theme once">${esc(short)}</span>`
   return `<button class="okchip${allPicked ? ' sel' : ''}" data-bucket="${esc(b.key)}" data-path="${esc(path)}">

@@ -40,11 +40,11 @@ So: do not go looking for the "real" primitives underneath these, and do not tre
 
 ## The cta tokens
 
-`cta`, `cta-hover`, `cta-pressed`: the call-to-action fill and its states. These sit off the scale and are fully re-solved per theme and family; never substitute a scale stop for them.
+`solid-fill`, `solid-fill-hover`, `solid-fill-pressed`: the call-to-action fill and its states. These sit off the scale and are fully re-solved per theme and family; never substitute a scale stop for them.
 
-`cta-border`: a gated outline stroke. It resolves to a visible offset only in themes where the cta fill sits close to the page; otherwise it resolves to transparent. Always render it (`border: 1.5px solid var(...-cta-border)`), never conditionally add or remove the border, so layout never shifts.
+`solid-edge`: a gated outline stroke. It resolves to a visible offset only in themes where the cta fill sits close to the page; otherwise it resolves to transparent. Always render it (`border: 1.5px solid var(...-solid-edge)`), never conditionally add or remove the border, so layout never shifts.
 
-`on-cta`: the only sanctioned text color over a cta fill. It is whichever pole passes on that fill; do not compute or pick your own.
+`solid-on`: the only sanctioned text color over a cta fill. It is whichever pole passes on that fill; do not compute or pick your own.
 
 `identity`: the raw brand seed as given. A reference value, not a UI color.
 
@@ -62,7 +62,7 @@ So: do not go looking for the "real" primitives underneath these, and do not tre
 
 Signal families are named by identity, always `critical`/`warning`/`positive`/`info`, never `error`/`success`/`danger`. Signal stops may be shifted slightly from the naive value to stay visually distinct from the brand; that is by design, do not "correct" them.
 
-Example composed names: `--brand-wash-89`, `--critical-ink-42-aa`, `--neutral-mark-74-aa`, `--secondary-cta-hover`.
+Example composed names: `--brand-wash-89`, `--critical-ink-42-aa`, `--neutral-mark-74-aa`, `--secondary-solid-fill-hover`.
 
 ## Elevation planes
 
@@ -78,7 +78,7 @@ Light theme descends the papers as elevation rises toward white; dark ascends th
 ## System tokens
 
 - `--link`, `--link-hover`, `--link-pressed`: the one system link color. A link is not a text-style CTA; do not restyle links with ink stops.
-- `--alpha-offset-06/-08/-16`: the alpha rungs cta-border draws from.
+- `--alpha-006/-008/-016`: the alpha rungs solid-edge draws from.
 - `--shadow-04/-08/-12`: drop shadow alphas. Shadows are always dark, never glows.
 - scrim, transparent: dimming and aliased off-states.
 
@@ -89,13 +89,13 @@ If the project consumes the semantic layer, prefer it over raw stops:
 - `--fg-default` (`ink-30-aaa`), `--fg-subtle` (`ink-53-aa`)
 - `--border-default` (`mark-74-aa`), `--border-subtle` (`wash-89`)
 - `--brand-bg-faint/-subtle/-emphasis` and their hover/pressed variants
-- `--brand-fg`, `--brand-fg-on-emphasis` (`on-cta`)
+- `--brand-fg`, `--brand-fg-on-emphasis` (`solid-on`)
 
 ## Rules for agents
 
 1. Never hardcode a hex. Every color in UI code is a token reference.
-2. Text comes from the ink band (or `on-cta` over a cta fill). The conformance letters in the name tell you what is already guaranteed; do not run your own contrast checks or add compensating colors.
+2. Text comes from the ink band (or `solid-on` over a cta fill). The conformance letters in the name tell you what is already guaranteed; do not run your own contrast checks or add compensating colors.
 3. The same token is used in both light and dark. Theming moves the values, not the references; never swap to a different stop for dark mode.
-4. States move along the scale in the order the names imply: rest, hover, pressed follow `cta`/`cta-hover`/`cta-pressed`, and text-style CTAs follow `ink-53-aa`/`ink-42-aa`/`ink-30-aaa`.
+4. States move along the scale in the order the names imply: rest, hover, pressed follow `solid-fill`/`solid-fill-hover`/`solid-fill-pressed`, and text-style CTAs follow `ink-53-aa`/`ink-42-aa`/`ink-30-aaa`.
 5. Do not invent intermediate values (no opacity tweaks on stops, no color-mix between stops). If a needed value seems missing, that is a design-system question, not something to patch locally.
 6. Contrast language is WCAG conformance levels, not ratios.

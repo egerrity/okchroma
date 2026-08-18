@@ -45,27 +45,83 @@ export function stopTokenName(stop: number): string {
   return name
 }
 
+// THE SOLID FAMILY (owner rename round 2026-08-18, replacing the cta words —
+// stakeholder ruling: cta read as a semantic token). Flat engine identity =
+// hyphenated Figma path = CSS var body, one spelling everywhere: solid-fill /
+// solid-fill-hover / solid-fill-pressed / solid-edge / solid-on. In Figma the
+// family still nests as the solid/ state group (fill, fill-hover, fill-pressed,
+// edge, on) — SOLID_STATE_LEAVES below is the one flat↔nested table every
+// consumer must ride (figmaRender, both plugins, figma-verify).
+export const SOLID_FILL = 'solid-fill'
+export const SOLID_FILL_HOVER = 'solid-fill-hover'
+export const SOLID_FILL_PRESSED = 'solid-fill-pressed'
+export const SOLID_EDGE = 'solid-edge'
+export const SOLID_ON = 'solid-on'
+// flat engine name → nested Figma leaf (the ONLY divergence between the two
+// spellings is this slash; code syntax re-hyphenates it back to the flat name)
+export const SOLID_STATE_LEAVES: Record<string, string> = {
+  [SOLID_FILL]: 'solid/fill',
+  [SOLID_FILL_HOVER]: 'solid/fill-hover',
+  [SOLID_FILL_PRESSED]: 'solid/fill-pressed',
+  [SOLID_EDGE]: 'solid/edge',
+  [SOLID_ON]: 'solid/on',
+}
+// the nested Figma spellings, for consumers that recognize rows by their written
+// path (both plugins' alias wiring, figma-verify) — importing these instead of
+// spelling the strings means a future rename breaks the build instead of silently
+// disarming a check (the highlight/on lesson, sweep 2026-08-18)
+export const SOLID_LEAF = {
+  FILL: SOLID_STATE_LEAVES[SOLID_FILL],
+  FILL_HOVER: SOLID_STATE_LEAVES[SOLID_FILL_HOVER],
+  FILL_PRESSED: SOLID_STATE_LEAVES[SOLID_FILL_PRESSED],
+  EDGE: SOLID_STATE_LEAVES[SOLID_EDGE],
+  ON: SOLID_STATE_LEAVES[SOLID_ON],
+} as const
+
+// the paper overlays (owner round 2026-08-13; regrouped 2026-08-18): each paper's
+// translucent twin. Flat name overlay-paper-LL; Figma nests them as the overlay/
+// subgroup so they stop cluttering the ramp (owner call 2026-08-18).
+export const OVERLAY_LEAVES: Record<string, string> = {
+  'overlay-paper-99': 'overlay/paper-99',
+  'overlay-paper-97': 'overlay/paper-97',
+  'overlay-paper-95': 'overlay/paper-95',
+}
+
+// ── the ext plugin's OWNERSHIP-ZONE rosters (owner ruling 2026-08-18). They live in
+// THIS zero-import module so plugin-ext/code.ts (sandbox bundle, must not drag the
+// engine in via payload.ts) and payload.ts/ext-override-audit share ONE source —
+// prefix-keyed behavior died with the sweep (a rename disarms it silently; a roster
+// import breaks the build instead).
+// Contract-invariant rows: never brand-overridable, skipped by the override diff,
+// asserted never-diffing by ext-override-audit. utility/ rows are team-owned and
+// equally never overridable — the combined test is EXT_NON_OVERRIDABLE.
+export const CONTRACT_INVARIANT_ROWS: ReadonlySet<string> = new Set([
+  'base/absolute/black', 'base/absolute/white',
+  'base/alpha/transparent', 'base/alpha/ink',
+  'base/alpha/006', 'base/alpha/008', 'base/alpha/016',
+])
+export const EXT_NON_OVERRIDABLE = (p: string): boolean =>
+  CONTRACT_INVARIANT_ROWS.has(p) || p.startsWith('utility/')
+// Brand-VARYING system-descended rows — the only non-family base/ paths extensions
+// may override: the link trio and the identity absolutes.
+export const EXT_OVERRIDABLE_SYSTEM = (p: string): boolean =>
+  p.startsWith('base/link/') || p === 'base/absolute/primary' || p === 'base/absolute/secondary'
+
 // Canonical emit order, uniform across every ramp (the white-label remap shape,
-// an explicit requirement of the original concept). Paper (1–3) / wash (4–7) then
-// the focus ring (mark-74-aa — clamped to WCAG 1.4.11 3:1 non-text contrast vs
-// paper-95) read as one contiguous ladder, then the text stops (ink-53-aa /
-// ink-42-aa / ink-30-aaa — the first doubles as the emphasis fill), then the
-// pulled-out off-scale cta family + on-cta, then identity. A ramp skips tokens it
-// doesn't have. Emitters sort by this, not by stop number.
-// The cta family is SEMANTIC-named (owner ruling 2026-07-16: states, never options —
-// cta-1/cta-2 renamed in place to cta/cta-hover via both plugins' RENAMED_LEAVES).
-// (The cta-ink + cta-ink-strong trios DELETED, owner 2026-08-12: they were pure
-// aliases onto the ink stops; the text-register cta is the ink stops read directly.)
-// paper-overlay-LL (owner round 2026-08-13): each paper's translucent twin, inserted
-// directly after its paper (owner naming + order call). rgba leaves solved in
-// alphaPapers.ts; papers only this round, washes excluded.
+// an explicit requirement of the original concept). Paper (1–3) with their
+// overlay twins, wash (4–7), then the focus ring (mark-74-aa — clamped to WCAG
+// 1.4.11 3:1 non-text contrast vs paper-95) read as one contiguous ladder, then
+// the text stops (ink-53-aa / ink-42-aa / ink-30-aaa — the first doubles as the
+// emphasis fill), then the pulled-out off-scale solid family + solid-on, then
+// identity. A ramp skips tokens it doesn't have. Emitters sort by this, not by
+// stop number.
 const TOKEN_ORDER = [
-  'paper-99', 'paper-overlay-99', 'paper-97', 'paper-overlay-97', 'paper-95', 'paper-overlay-95',
+  'paper-99', 'overlay-paper-99', 'paper-97', 'overlay-paper-97', 'paper-95', 'overlay-paper-95',
   'wash-92', 'wash-89', 'wash-85', 'wash-80',
   'mark-74-aa',
   'ink-53-aa', 'ink-42-aa', 'ink-30-aaa',
-  'cta', 'cta-hover', 'cta-pressed',
-  'on-cta',
+  SOLID_FILL, SOLID_FILL_HOVER, SOLID_FILL_PRESSED,
+  SOLID_ON,
   'identity',
 ]
 export function tokenOrder(name: string): number {

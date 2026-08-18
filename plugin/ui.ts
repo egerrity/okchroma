@@ -199,7 +199,7 @@ function themeInput(name: string) {
 }
 
 // the demo's top-card matrix: every family × ID + the 11 stops + the cta pair (light mode).
-// Stop 8 renders AS a stroke (it's the boundary stop); cta cells carry the family's cta-border.
+// Stop 8 renders AS a stroke (it's the boundary stop); fill cells carry the family's solid/edge.
 // Cells iterate the scale's ACTUAL stops (stop 10 deleted 2026-07-09) — a future stop change
 // reshapes the grid instead of throwing into updatePreview's catch.
 function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
@@ -258,23 +258,23 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
       const ink9 = hx(st(9))
       const c8 = st(8)
       const rgb = `${Math.round(c8.r * 255)},${Math.round(c8.g * 255)},${Math.round(c8.b * 255)}`
-      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink9}" title="cta (outline)">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink9};background:rgba(${rgb},0.09)" title="cta-hover (outline)">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink9};background:rgba(${rgb},0.18)" title="cta-pressed (outline)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink9}" title="solid/fill (outline)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink9};background:rgba(${rgb},0.09)" title="solid/fill-hover (outline)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink9};background:rgba(${rgb},0.18)" title="solid/fill-pressed (outline)">Aa</div>`)
     } else if (row.escape) {
       // the neutral cta escape: the fill trio previews the brand-neutral's ink register
       const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
       const esc = escapeCtaFamily(nScale, 'light', cp)
       const on = pole(esc.onFillIsWhite)
-      cells.push(`<div class="mx-aa" style="background:${hx(esc.cta)};color:${on}" title="cta/enabled (neutral escape)">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="background:${hx(esc.ctaHover)};color:${on}" title="cta/hover (neutral escape)">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="background:${hx(esc.ctaPressed)};color:${on}" title="cta/pressed (neutral escape)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(esc.cta)};color:${on}" title="solid/fill (neutral escape)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(esc.ctaHover)};color:${on}" title="solid/fill-hover (neutral escape)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(esc.ctaPressed)};color:${on}" title="solid/fill-pressed (neutral escape)">Aa</div>`)
     } else {
       // filled cta cells carry NO stroke (filled is filled); only outline shows its ring
       const on = pole(row.scale.onFillTextIsWhite)
-      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.cta)};color:${on}" title="cta/enabled">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaHover)};color:${on}" title="cta/hover">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaPressed)};color:${on}" title="cta/pressed">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.cta)};color:${on}" title="solid/fill">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaHover)};color:${on}" title="solid/fill-hover">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaPressed)};color:${on}" title="solid/fill-pressed">Aa</div>`)
     }
     // (the cta-ink + cta-ink-strong preview columns DELETED with their tokens, owner
     // 2026-08-12: the text-style cta is the ink stops, already rendered as scale cells

@@ -4,6 +4,30 @@ Fresh tracker. The previous CATALOG was archived with the whole old docs tree in
 ("clean-slate rewrite" 2026-06-27); entries here are code-grounded, logged at find-time,
 fixed holistically after owner sign-off.
 
+## C56 — hardcoded token-name literals drift silently across renames (FIXED IN ROUND, 2026-08-18)
+
+Found by the 2026-08-18 name sweep (554 quoted-literal hits verdicted against a
+live-pipeline canonical dump). Two real casualties, both fixed by the solid rename
+round the same day:
+
+- `plugin/code.ts` carried a live `t.path === 'highlight/on'` condition arm although the
+  engine has emitted no highlight token since the 2026-07-29 collapse. Deleted; the
+  recognition sites now import their names from `tokenNames.ts` (`SOLID_LEAF`), so a
+  future rename breaks the build instead of disarming the aliasing.
+- `plugin-ext/code.ts` `RETIRED_SIGNAL_VALUES` held four keys in nested Stage-B
+  spellings (`primitive/critical/mark/74-aa`, ...) while the lookup path went flat in
+  the 2026-08-12 band flattening: the retired-value refresh for those rows was silently
+  disarmed. Keys respelled to the current canonical paths; the four `cta-ink` keys
+  (paths deleted 2026-08-12, entries unreachable) dropped.
+
+Systemic fix, same round: leaf names, the solid state table, the overlay table, and the
+ext ownership rosters now live in `src/engine/tokenNames.ts` (zero-import, bundled by
+both plugin sandboxes); `scripts/figma-verify.ts` consumes the same tables instead of a
+duplicated local copy; the ext override skip and `scripts/ext-override-audit.ts` re-key
+on an explicit roster instead of a `primitive/system/` prefix test. Residual (logged,
+not built): a "reset to engine" heal that force-rebuilds base-zone rows on request, for
+the owner's changes-do-not-rebuild friction; the roster makes it cheap.
+
 ## C6 — red-cool re-conflict: fixed-direction cool drives warm-of-red brands THROUGH the red signal
 
 > **⛔ SUPERSEDED IN PART by C12 v8 (2026-07-10):** the ramp-side `redRepelShiftDeg` cool
@@ -905,7 +929,7 @@ follow as their own phases).
 names go SEMANTIC (owner: "more understandable, and keeps people from thinking they are
 options for different ctas; they are only ever going to be hover and pressed"):
 
-- **Fill trio** — `cta` / `cta-hover` / `cta-pressed`. Pressed = hover's direction,
+- **Fill trio** — `solid-fill` / `solid-fill-hover` / `solid-fill-pressed`. Pressed = hover's direction,
   DOUBLED (`pressedL`, archetypes.ts: `delta = 2 × 0.03/(L+0.1)`, same lighten-below-0.40
   rule); chroma re-evaluated at the pressed L through the same register, hue constant.
   Pressed tracks every cta re-emit (light single mint; dark base / enforce / p2-exit) and
@@ -955,7 +979,7 @@ internally aliases the primary ink 10 unless it's being deconflicted from red").
 DEFAULT: the primary's cta-ink trio (= ink-10 by construction, C19 — states ride;
 plugin v1 aliases `system/link*` → the brand's cta-ink prims; plugin-ext carries values
 with a `system/link` carve-out from the invariant skip so extensions override per brand;
-CSS `--link*` aliases `var(--brand-cta-ink*)`; `--fg-link` in semantic.css rides
+CSS `--link*` aliases `var(--brand-solid-fill-ink*)`; `--fg-link` in semantic.css rides
 `--link` and is accent-flip-invariant — the old `var(--brand-ink-10)` pair removed).
 CUSTOM (the de-conflict): a seed (`DEFAULT_LINK_HEX` #0B57D0 on toggle) through
 `resolveLinkTrio` = the seed's own ink-register resolution (stop-10 law per lane/mode,
@@ -2000,7 +2024,7 @@ floor AND the other clears it — deliberately narrower than `onTextIsWhite`'s o
 branch, which flips whenever the chosen pole misses, including into a pole that also misses. So
 it is inert for every fill whose label already passes, which is why the fleet holds still.
 
-BLAST RADIUS: `audit:ext` only, 28 override-set changes, every one `brand-secondary/cta/on` — 22
+BLAST RADIUS: `audit:ext` only, 28 override-set changes, every one `brand-secondary/solid/on` — 22
 dark gain the override, 6 light LOSE it because their pole now matches the base. Zero lines of
 that snapshot changed on any other path. Brand primaries, signals, divergence and smoothness all
 clean; nine gates needed no bless.
@@ -2054,7 +2078,7 @@ sits ON the fill rather than bleeding into the ground.
 BOTH STATES ARE ALIASES, NEVER RAW (owner: *"the rest of them should get aliased to the transparent
 variable instead of being raw"*). New `system/alpha/cta-border` row beside `system/alpha/transparent`;
 CSS gains `--alpha-cta-border` / `--alpha-transparent` at the engine's one global `:root`, emitted
-<!-- NAMES AS OF C39. The row was renamed `cta-border` → `offset-12` one commit later (5a30f1b,
+<!-- NAMES AS OF C39. The row was renamed `solid-edge` → `offset-12` one commit later (5a30f1b,
      never back-written here), and C41 then retired `offset-12` entirely for the 06/08/16 ladder.
      Read the token names in this entry as historical. -->
 
@@ -2067,7 +2091,7 @@ Layout never shifts: components already carried `border: 1.5px solid var(...-cta
 unconditionally against the transparent value, which is why the token survived 2026-07-04.
 
 BLAST RADIUS: `audit:ext` only — base token count 140 → 141 (the new row) and ONE roster entry
-gaining `brand-secondary/cta/border`. Nine gates needed no bless. Demo untouched, per her
+gaining `brand-secondary/solid/edge`. Nine gates needed no bless. Demo untouched, per her
 instruction. Both plugins rebuilt and the extended UI re-verified in a browser.
 
 TRAP FOUND: `npm run generate` runs `node dist/build-script.js` — a PREBUILT bundle. It will
@@ -2144,9 +2168,9 @@ canonical neutral plane. Measured spread of each signal's |Lc| across 12 brand h
 ### THE LADDER
 | family | rung | |
 |---|---|---|
-| neutral | `offset-08` | fixed by owner ruling, never solved |
-| secondary | `offset-06` | |
-| brand + signals | `offset-16` | signals are unreachable at Lc 15 but defined |
+| neutral | `008` | fixed by owner ruling, never solved |
+| secondary | `006` | |
+| brand + signals | `016` | signals are unreachable at Lc 15 but defined |
 
 Picked off a four-way render of 06\|08 secondary × 16\|20 primary: **06/16 held hierarchy in 36 of
 36 cases** with the secondary in band everywhere. 04 bottomed out at Lc 15–16 (*"04 is too low"*);
@@ -2178,11 +2202,11 @@ No signal reaches Lc 15 in either mode (nearest: warning-light at 19.4), though 
 *variants* do dip under and fire.
 
 ### MIGRATION — A RENAME MOVES THE NAME, NOT THE VALUE
-`offset-12` is retired via `RENAMED_LEAVES` `['offset-12','offset-08']` (owner: *"just rename
+`offset-12` is retired via `RENAMED_LEAVES` `['offset-12','008']` (owner: *"just rename
 offset-12 and adjust the value"*). The neutral was its only consumer, so the rename carries every
 existing binding. **But `ensure()` adopts a legacy row by renaming it WITHOUT bumping `createdVars`,
 so `seedFresh` never runs and the row arrives still holding 0.12 under its new name** — a token
-called offset-08 resolving 12%, which is worse than a raw value because the name lies. A third pass
+called 008 resolving 12%, which is worse than a raw value because the name lies. A third pass
 (the `RUNG_ALPHAS` loop in `plugin-ext/code.ts`) re-values it, conservatively: only an exact pole at
 one of our own rung alphas is rewritten, so a designer's edit survives. Deleting that pass silently
 un-does the rename. Same class as the 2026-07-30 *"the alpha transparent didn't take"* catch.
@@ -2210,7 +2234,7 @@ at L 0.94). Her screenshot is in the unreachable class, which is why the ladder,
 what fixed it.
 
 BLAST RADIUS: `audit:ext` only — base token count 141 → 143 (offset-12 renamed to 08, plus 06 and
-16), and 8 roster entries gaining a `cta/border` override (warning variants and roster secondaries),
+16), and 8 roster entries gaining a `solid/edge` override (warning variants and roster secondaries),
 **all light-mode**. Eleven other gates needed no bless. Instruments:
 `cta-border-sweep.ts`, `cta-border-trio.ts`, `cta-border-hierarchy.ts` (one-off, removed in
 the research cleanup; git history has them).
@@ -2351,8 +2375,8 @@ measured at the chosen values (72 probes, worst case):
 
 ### WHAT MOVED
 Derived secondaries un-rotate 12° (hue now the primary's, ΔH residue is 8-bit hex rounding
-only). Every default-model secondary's `on-cta` becomes an rgba. `audit:ext` moved on 15
-rows, all exactly `+brand-secondary/cta/on` — the alpha pole becoming an override for the
+only). Every default-model secondary's `solid-on` becomes an rgba. `audit:ext` moved on 15
+rows, all exactly `+brand-secondary/solid/on` — the alpha pole becoming an override for the
 secondary-bearing brands — re-blessed. `audit:secondary` (custom lanes 1/1b assert the
 custom model), dark-audit incl. lane F, divergence, register, cta-apca all clean with no
 re-bless. Both typechecks clean.
@@ -2369,7 +2393,7 @@ Exact. The last three are future rounds and are blocked on the naming ruling.
 
 C43's Figma emit shipped the soft on-cta as a RAW rgba: the ext plugin's `isPole` rejects
 alpha≠1 (correctly), so no aliasing idiom claimed the leaf — and the community plugin's
-`cta/on` branch ignored alpha entirely, aliasing the soft value to the abs pole and
+`solid/on` branch ignored alpha entirely, aliasing the soft value to the abs pole and
 SILENTLY DROPPING the alpha. Her catch: *"you did not make a variable for it."*
 
 Her ruling, walked in two questions: ONE token, not two absolutes (`abs-white-80`/
@@ -2381,7 +2405,7 @@ scrim/shadow grammar is one plain word whose value mode-adjusts).
 
 The row: black@.75 light · white@.80 dark (values from `SECONDARY_ON_CTA_ALPHA` in the ext
 payload; the community table carries them inline like its shadow rows). Both plugins alias
-any `cta/on` leaf holding a POLE AT PARTIAL ALPHA onto it — the cta-border "never a raw
+any `solid/on` leaf holding a POLE AT PARTIAL ALPHA onto it — the cta-border "never a raw
 write" idiom — and the ext conversion pass upgrades existing raw C43 writes on re-apply
 (exact register alpha at a pure pole only; a designer's own soft text is left alone).
 Blast radius: ext base token count 143 → 144 (the row itself), re-blessed; engine values
@@ -2390,7 +2414,7 @@ byte-identical.
 **Second owner catch, same day** (*"not seeing these changes come through in the top level
 theme"*): the ext plugin has THREE write paths — base seeding, the raw-conversion pass, and
 the per-brand EXTENSION OVERRIDE loop — and the first cut wired the router into only the
-first two. `brand-secondary/cta/on` is an OVERRIDE row (the base posture is the mirror's
+first two. `brand-secondary/solid/on` is an OVERRIDE row (the base posture is the mirror's
 solid pole), and the override loop is the write the APPLIED theme actually shows, so the
 soft on-cta kept shipping raw there on every apply. The router now runs in all three.
 STRUCTURAL BLIND SPOT, recorded: the ext audit measures override MEMBERSHIP in payload
@@ -2459,7 +2483,7 @@ Re-applies write fresh per-brand OVERRIDES; the base "theme" collection keeps sh
 stale value (her warning ink-9: `#a56000`, the pre-C44 canonical, vs today's `#9d5b00`).
 
 Three shipped pieces, her rulings:
-1. **Ext heal** — `RETIRED_SIGNAL_VALUES` (code.ts): the offset-08 idiom extended to
+1. **Ext heal** — `RETIRED_SIGNAL_VALUES` (code.ts): the 008 idiom extended to
    values. The 20 rows the two eras moved (derived by diffing SIGNAL_SCALES at
    e8eff89 → dbac539 → HEAD), each with its exact retired hex; a raw base value matching
    one refreshes to the payload's current value on any apply. Extend the map whenever an
@@ -2568,7 +2592,7 @@ the ordinary new-base-token confirm/backfill flow.
 ### STALE-TARGET FIXES FOUND IN THE ROUND (all the same C33-renumber class)
 - plugin/code.ts's sibling-alias block targeted `ink/10`/`ink/11` — DEAD since C33 (the
   value guard failed; every trio silently shipped raw). Retargeted 9/10.
-- plugin/code.ts's non-pole cta/on alias targeted `ink/10` — post-C33 the outline's
+- plugin/code.ts's non-pole solid/on alias targeted `ink/10` — post-C33 the outline's
   on-cta rides ink-9, so it aliased the WRONG STOP (live value bug in community files
   with an outline secondary). Retargeted ink/9.
 - plugin/ui.ts's matrix still drew stop 9 as "highlight-9" via the DELETED
@@ -2578,7 +2602,7 @@ the ordinary new-base-token confirm/backfill flow.
 ## C47 — THE SOFT ON-CTA IS A QUIET-FILL RULE, NOT A SECONDARY ONE
 
 Owner, 2026-08-04: *"neutral cta on's should also be the alpha and they are not."* Correct —
-`neutral/cta/on` shipped a SOLID pole in both modes while the default-model secondary had
+`neutral/solid/on` shipped a SOLID pole in both modes while the default-model secondary had
 carried the pole AT ALPHA since C43.
 
 The C43 rationale was never secondary-specific: a QUIET, low-hierarchy cta's button text is
@@ -2619,16 +2643,16 @@ pair) across rest AND both states, which is the whole point of the alpha. Its `o
 died with the old check.
 
 ### PLUGINS: NO CODE CHANGE (verified, not assumed)
-`softInkFor` matches on `path.endsWith('/cta/on')`, so `neutral/cta/on` routes to
+`softInkFor` matches on `path.endsWith('/solid/on')`, so `neutral/solid/on` routes to
 `system/alpha/ink` on the base seed, the per-brand override path, and the conversion pass;
 plugin-ext's era-crossing branch re-points the existing abs-black/abs-white alias, so existing
 files heal on the next apply with no Rebuild. The payload token is byte-identical to the
-primitive in both modes. The community plugin's `cta/on` branch has the same pole-at-alpha
+primitive in both modes. The community plugin's `solid/on` branch has the same pole-at-alpha
 check.
 
 ### C47 addendum (2026-08-06) — EXACT JOINS, GATED PER BRAND
 Owner: the soft ink *"should be the default on text color as long as it doesn't cause it to
-fail wcag"* — exact-style secondaries were the one carrier left out, and their `cta/on` kept
+fail wcag"* — exact-style secondaries were the one carrier left out, and their `solid/on` kept
 aliasing the abs poles while derived/custom aliased `system/alpha/ink`.
 
 The distinction that makes exact different: a default-model fill comes out of the tint register,
@@ -2651,7 +2675,7 @@ Outline still keeps its ink-9 (colored text on a transparent fill — nothing to
 the no-secondary mirror keeps the brand's; loud fills and the escape stay solid. Plugins again
 needed ZERO code — `softInkFor` keys on path + partial alpha, never on style — and existing
 files heal via the same era-crossing pass. Blast radius: `audit:ext` only, 9 light-mode
-`-brand-secondary/cta/on` diffs (those brands' soft value now equals the base's, so the override
+`-brand-secondary/solid/on` diffs (those brands' soft value now equals the base's, so the override
 collapses into an inherit).
 
 ## C48 — THE NEUTRAL PICKS ITS HUE: MATCH SECONDARY + CUSTOM SOURCES

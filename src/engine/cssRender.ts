@@ -123,8 +123,13 @@ export const OFFSET_ALPHAS = { 6: 0.06, 8: 0.08, 16: 0.16 } as const
 export type OffsetRung = keyof typeof OFFSET_ALPHAS
 export const ctaBorderRung = (prefix: string): OffsetRung =>
   prefix === 'neutral' ? 8 : prefix === 'secondary' ? 6 : 16
-export const offsetVarName = (rung: OffsetRung) => `--alpha-offset-${String(rung).padStart(2, '0')}`
-export const offsetTokenPath = (rung: OffsetRung) => `system/alpha/offset-${String(rung).padStart(2, '0')}`
+// the offset ladder dropped its word (owner rename round 2026-08-18): the rung IS the
+// name, three digits of percent (006/008/016) — honest in both modes because the alpha
+// is constant and only the color flips. One spelling: CSS --alpha-006, ext Figma row
+// base/alpha/006 (the ext zone home; the community plugin creates no offset rows).
+export const offsetLeafName = (rung: OffsetRung) => String(rung).padStart(3, '0')
+export const offsetVarName = (rung: OffsetRung) => `--alpha-${offsetLeafName(rung)}`
+export const offsetTokenPath = (rung: OffsetRung) => `base/alpha/${offsetLeafName(rung)}`
 
 // The system alpha VARIABLES, never raw values (owner 2026-07-29: *"the rest of them should get
 // aliased to the transparent variable instead of being raw"*). Both mirror rows the Figma side
@@ -190,10 +195,10 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
   ].sort((a, b) => tokenOrder(a.name) - tokenOrder(b.name)).map(v => v.line).join('\n')
   return [
     scaleBlock,
-    `  --${prefix}-cta: ${stopHex(f.cta)};`,
-    `  --${prefix}-cta-hover: ${stopHex(f.ctaHover)};`,
-    `  --${prefix}-cta-pressed: ${stopHex(f.ctaPressed)};`,
-    `  --${prefix}-cta-border: var(${border ? offsetVarName(ctaBorderRung(prefix)) : TRANSPARENT_VAR});`,
+    `  --${prefix}-solid-fill: ${stopHex(f.cta)};`,
+    `  --${prefix}-solid-fill-hover: ${stopHex(f.ctaHover)};`,
+    `  --${prefix}-solid-fill-pressed: ${stopHex(f.ctaPressed)};`,
+    `  --${prefix}-solid-edge: var(${border ? offsetVarName(ctaBorderRung(prefix)) : TRANSPARENT_VAR});`,
     // the SOFT on-cta (owner 2026-08-04: "neutral cta on's should also be the alpha"): the
     // neutral's cta is the scale-fed WASH-level fill, the system's other quiet cta, so its
     // button text takes the pole AT ALPHA like the default-model secondary's — composited
@@ -203,8 +208,8 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
     // unconditional — the secondary's rides the cascade only because it gates on the style
     // chip. Loud fills (brand, signals, the cta escape) keep the solid pole.
     prefix === 'neutral'
-      ? `  --neutral-on-cta: rgba(${onCta ? '255, 255, 255' : '0, 0, 0'}, ${SOFT_ON_CTA_ALPHA[mode]});`
-      : `  --${prefix}-on-cta: ${onColor(onCta)};`,
+      ? `  --neutral-solid-on: rgba(${onCta ? '255, 255, 255' : '0, 0, 0'}, ${SOFT_ON_CTA_ALPHA[mode]});`
+      : `  --${prefix}-solid-on: ${onColor(onCta)};`,
   ]
 }
 
@@ -222,7 +227,7 @@ export function brandKindP3Body(prefix: string, s: GeneratedScale, mode: 'light'
   const f = ctaFamilyOf(s, mode)
   const out: string[] = []
   for (const st of stops) if (p3Differs(st)) out.push(`  --${prefix}-${stopTokenName(st.stop)}: ${p3Value(st)};`)
-  for (const [name, st] of [['cta', f.cta], ['cta-hover', f.ctaHover], ['cta-pressed', f.ctaPressed]] as const)
+  for (const [name, st] of [['solid-fill', f.cta], ['solid-fill-hover', f.ctaHover], ['solid-fill-pressed', f.ctaPressed]] as const)
     if (p3Differs(st)) out.push(`  --${prefix}-${name}: ${p3Value(st)};`)
   return out
 }
@@ -440,12 +445,12 @@ export function brandCss(
     const alias = (name: string) => `  --${prefix}-${name}: var(--brand-${name});`
     return [
       ...stops.map(x => alias(stopTokenName(x.stop))),
-      alias('paper-overlay-99'), alias('paper-overlay-97'), alias('paper-overlay-95'),
-      alias('cta'),
-      alias('cta-hover'),
-      alias('cta-pressed'),
-      alias('cta-border'),
-      alias('on-cta'),
+      alias('overlay-paper-99'), alias('overlay-paper-97'), alias('overlay-paper-95'),
+      alias('solid-fill'),
+      alias('solid-fill-hover'),
+      alias('solid-fill-pressed'),
+      alias('solid-edge'),
+      alias('solid-on'),
     ]
   }
 
@@ -508,10 +513,10 @@ export function brandCss(
     // brand's ink stops — the text register, and --link's default alias onto them —
     // keep the brand's own chroma under the escape.
     return [
-      `  --brand-cta: ${stopHex(esc.cta)};`,
-      `  --brand-cta-hover: ${stopHex(esc.ctaHover)};`,
-      `  --brand-cta-pressed: ${stopHex(esc.ctaPressed)};`,
-      `  --brand-on-cta: ${onColor(esc.onFillIsWhite)};`,
+      `  --brand-solid-fill: ${stopHex(esc.cta)};`,
+      `  --brand-solid-fill-hover: ${stopHex(esc.ctaHover)};`,
+      `  --brand-solid-fill-pressed: ${stopHex(esc.ctaPressed)};`,
+      `  --brand-solid-on: ${onColor(esc.onFillIsWhite)};`,
     ]
   }
 
@@ -528,7 +533,7 @@ export function brandCss(
     if (!secondary || secondaryStyle === 'outline') return []
     if (secondaryStyle !== 'default' && !softOnCtaPasses(secondary, mode)) return []
     const white = mode === 'light' ? secondary.onFillTextIsWhite : secondary.onFillTextIsWhiteDark
-    return [`  --secondary-on-cta: rgba(${white ? '255, 255, 255' : '0, 0, 0'}, ${SOFT_ON_CTA_ALPHA[mode]});`]
+    return [`  --secondary-solid-on: rgba(${white ? '255, 255, 255' : '0, 0, 0'}, ${SOFT_ON_CTA_ALPHA[mode]});`]
   }
 
   const outline = (mode: 'light' | 'dark'): string[] => {
@@ -539,13 +544,13 @@ export function brandCss(
     // fill trio re-resolved; pressed = the hover tint at doubled alpha (pressed-doubles-hover).
     // cta-ink trio untouched — links keep the exact ramp's text-register values.
     return [
-      `  --secondary-cta: transparent;`,
+      `  --secondary-solid-fill: transparent;`,
       ...(s8e ? [
-        `  --secondary-cta-hover: rgba(${c(s8e.r)}, ${c(s8e.g)}, ${c(s8e.b)}, ${OUTLINE_HOVER_ALPHA});`,
-        `  --secondary-cta-pressed: rgba(${c(s8e.r)}, ${c(s8e.g)}, ${c(s8e.b)}, ${OUTLINE_PRESSED_ALPHA});`,
+        `  --secondary-solid-fill-hover: rgba(${c(s8e.r)}, ${c(s8e.g)}, ${c(s8e.b)}, ${OUTLINE_HOVER_ALPHA});`,
+        `  --secondary-solid-fill-pressed: rgba(${c(s8e.r)}, ${c(s8e.g)}, ${c(s8e.b)}, ${OUTLINE_PRESSED_ALPHA});`,
       ] : []),
-      `  --secondary-cta-border: var(--secondary-mark-74-aa);`,
-      `  --secondary-on-cta: var(--secondary-ink-53-aa);`,
+      `  --secondary-solid-edge: var(--secondary-mark-74-aa);`,
+      `  --secondary-solid-on: var(--secondary-ink-53-aa);`,
     ]
   }
 
@@ -556,7 +561,7 @@ export function brandCss(
   // 2026-07-11). The cta-pair P3 overrides are dropped for outline; scale stops keep theirs.
   const dropOutlineCta = (lines: string[]): string[] =>
     secondaryStyle === 'outline'
-      ? lines.filter(l => !l.startsWith('  --secondary-cta:') && !l.startsWith('  --secondary-cta-hover:') && !l.startsWith('  --secondary-cta-pressed:'))
+      ? lines.filter(l => !l.startsWith('  --secondary-solid-fill:') && !l.startsWith('  --secondary-solid-fill-hover:') && !l.startsWith('  --secondary-solid-fill-pressed:'))
       : lines
   // same P3-pop class for the ESCAPE (the owner-caught outline lesson, 2026-07-11): the
   // escaped fill trio ships the neutral's whisper chroma — an out-of-sRGB BRAND cta's P3
@@ -564,7 +569,7 @@ export function brandCss(
   // ink stops keep the brand's chroma under the escape, so their P3 lines stay.
   const dropEscapeCta = (lines: string[]): string[] =>
     ctaEscape
-      ? lines.filter(l => !/^  --brand-cta(-hover|-pressed)?:/.test(l))
+      ? lines.filter(l => !/^  --brand-solid-fill(-hover|-pressed)?:/.test(l))
       : lines
   const p3Light = [
     ...dropEscapeCta(brandKindP3Body('brand', scale, 'light')),

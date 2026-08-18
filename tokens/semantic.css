@@ -15,9 +15,9 @@
      black → high paper-95). paper-100 flips white→black with the mode, so it is
      always the extreme pole: the high in light, the sunken in dark. The stops
      themselves have never moved through any of the renames. */
-  --surface-sunken:        var(--neutral-paper-95);
+  --surface-dim:        var(--neutral-paper-95);
   --surface-low:         var(--neutral-paper-97);
-  --surface-base:       var(--neutral-paper-99);
+  --surface-mid:       var(--neutral-paper-99);
   --surface-high:        var(--paper-100, #ffffff);
 
   --fg-default:           var(--neutral-ink-30-aaa);
@@ -52,9 +52,9 @@
      plane by construction; a generated candidate for it was tried and retired,
      owner 2026-07-28). Low needs its own override here because the shared block's
      low is paper-97 (the light value); the stops themselves did not move. */
-  --surface-sunken:        var(--paper-100, #000000);
+  --surface-dim:        var(--paper-100, #000000);
   --surface-low:         var(--neutral-paper-99);
-  --surface-base:       var(--neutral-paper-97);
+  --surface-mid:       var(--neutral-paper-97);
   --surface-high:        var(--neutral-paper-95);
 
   --shadow-04: rgba(0, 0, 0, 0.32);
@@ -69,21 +69,21 @@
   --brand-fg-hover:              var(--brand-ink-53-aa);
   --brand-fg-alt:                var(--brand-ink-53-aa);
   --brand-fg-alt-hover:          var(--brand-ink-30-aaa);
-  --brand-fg-on-emphasis:        var(--brand-on-cta);
+  --brand-fg-on-emphasis:        var(--brand-solid-on);
 
   --brand-bg-faint:              var(--brand-paper-97);
   --brand-bg-subtle:             var(--brand-wash-89);
   --brand-bg-subtle-hover:       var(--brand-wash-85);
-  --brand-bg-emphasis:           var(--brand-cta);
-  --brand-bg-emphasis-hover:     var(--brand-cta-hover);
-  --brand-bg-emphasis-pressed:   var(--brand-cta-pressed);
+  --brand-bg-emphasis:           var(--brand-solid-fill);
+  --brand-bg-emphasis-hover:     var(--brand-solid-fill-hover);
+  --brand-bg-emphasis-pressed:   var(--brand-solid-fill-pressed);
 
   --brand-border-subtle:         var(--brand-wash-92);
   --brand-border-subtle-hover:   var(--brand-wash-89);
   --brand-border-default:            var(--brand-wash-85);
   --brand-border-default-hover:      var(--brand-mark-74-aa);
-  --brand-border-emphasis:       var(--brand-cta);
-  --brand-border-emphasis-hover: var(--brand-cta-hover);
+  --brand-border-emphasis:       var(--brand-solid-fill);
+  --brand-border-emphasis-hover: var(--brand-solid-fill-hover);
 
   /* the SYSTEM LINK (one trio per theme — aliases the primary's ink stops unless a custom
      link color de-conflicts it; --link/-hover/-pressed are emitted per brand) */
@@ -99,21 +99,21 @@
   --secondary-fg-hover:              var(--secondary-ink-53-aa);
   --secondary-fg-alt:                var(--secondary-ink-53-aa);
   --secondary-fg-alt-hover:          var(--secondary-ink-30-aaa);
-  --secondary-fg-on-emphasis:        var(--secondary-on-cta);
+  --secondary-fg-on-emphasis:        var(--secondary-solid-on);
 
   --secondary-bg-faint:              var(--secondary-paper-97);
   --secondary-bg-subtle:             var(--secondary-wash-89);
   --secondary-bg-subtle-hover:       var(--secondary-wash-85);
-  --secondary-bg-emphasis:           var(--secondary-cta);
-  --secondary-bg-emphasis-hover:     var(--secondary-cta-hover);
-  --secondary-bg-emphasis-pressed:   var(--secondary-cta-pressed);
+  --secondary-bg-emphasis:           var(--secondary-solid-fill);
+  --secondary-bg-emphasis-hover:     var(--secondary-solid-fill-hover);
+  --secondary-bg-emphasis-pressed:   var(--secondary-solid-fill-pressed);
 
   --secondary-border-subtle:         var(--secondary-wash-92);
   --secondary-border-subtle-hover:   var(--secondary-wash-89);
   --secondary-border-default:           var(--secondary-wash-85);
   --secondary-border-default-hover:     var(--secondary-mark-74-aa);
-  --secondary-border-emphasis:       var(--secondary-cta);
-  --secondary-border-emphasis-hover: var(--secondary-cta-hover);
+  --secondary-border-emphasis:       var(--secondary-solid-fill);
+  --secondary-border-emphasis-hover: var(--secondary-solid-fill-hover);
 }
 
 /* ─── Signal roles ──────────────────────────────────────────────────────────

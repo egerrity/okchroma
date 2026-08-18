@@ -28,10 +28,10 @@ function accentModeCss(mode: AccentMode, primary: Family, subtle: Family): strin
   const other = (f: Family): Family => (f === 'brand' ? 'accent' : 'brand')
   const prim = (f: Family): string => (f === 'brand' ? 'brand' : 'secondary')
   const PRIMARY_ROLES: Array<[string, string]> = [
-    ['fg', 'ink-30-aaa'], ['fg-hover', 'ink-53-aa'], ['fg-alt', 'ink-53-aa'], ['fg-alt-hover', 'ink-30-aaa'], ['fg-on-emphasis', 'on-cta'],
-    ['bg-emphasis', 'cta'], ['bg-emphasis-hover', 'cta-hover'], ['bg-emphasis-pressed', 'cta-pressed'],
+    ['fg', 'ink-30-aaa'], ['fg-hover', 'ink-53-aa'], ['fg-alt', 'ink-53-aa'], ['fg-alt-hover', 'ink-30-aaa'], ['fg-on-emphasis', 'solid-on'],
+    ['bg-emphasis', 'solid-fill'], ['bg-emphasis-hover', 'solid-fill-hover'], ['bg-emphasis-pressed', 'solid-fill-pressed'],
     ['border-default', 'wash-85'], ['border-default-hover', 'mark-74-aa'],
-    ['border-emphasis', 'cta'], ['border-emphasis-hover', 'cta-hover'],
+    ['border-emphasis', 'solid-fill'], ['border-emphasis-hover', 'solid-fill-hover'],
   ]
   const SUBTLE_ROLES: Array<[string, string]> = [
     ['bg-faint', 'paper-97'], ['bg-subtle', 'wash-89'], ['bg-subtle-hover', 'wash-85'],
@@ -68,12 +68,12 @@ export const COMPONENT_CSS = `
   cursor: pointer; font-size: 14px; font-weight: 500; font-family: inherit;
   display: inline-flex; align-items: center; gap: 6px;
 }
-/* cta-border rides EVERY cta button, not just the secondary (owner 2026-07-31). Until this
+/* solid-edge rides EVERY cta button, not just the secondary (owner 2026-07-31). Until this
    round only .u-btn-secondary wired the token, so a firing brand or neutral emitted a stroke
    that nothing drew — the engine and the demo disagreed about what shipped. The value is an
    alias to system/alpha/* (transparent when the gate does not fire), so the border stays
    unconditional and layout never shifts. */
-.u-btn-primary { background: var(--brand-bg-emphasis); color: var(--brand-fg-on-emphasis); border-color: var(--brand-cta-border); }
+.u-btn-primary { background: var(--brand-bg-emphasis); color: var(--brand-fg-on-emphasis); border-color: var(--brand-solid-edge); }
 .u-btn-primary:hover { background: var(--brand-bg-emphasis-hover); }
 .u-btn-primary:active { background: var(--brand-bg-emphasis-pressed); }
 .u-btn-subtle { background: var(--brand-bg-subtle); color: var(--brand-fg); }
@@ -81,16 +81,16 @@ export const COMPONENT_CSS = `
 /* the LOW-HIERARCHY button: the neutral's quiet scale-fed cta (stop 4/5). The
    secondary-showcase slots fall back to this when no secondary exists — a
    subtle slot reads neutral until a secondary claims it, never brand-again. */
-.u-btn-neutral { background: var(--neutral-cta); color: var(--neutral-on-cta); border-color: var(--neutral-cta-border); }
-.u-btn-neutral:hover { background: var(--neutral-cta-hover); }
-.u-btn-neutral:active { background: var(--neutral-cta-pressed); }
-/* the SECONDARY cta trio (--secondary-cta/-hover/-pressed + on-cta), shown beside the
+.u-btn-neutral { background: var(--neutral-solid-fill); color: var(--neutral-solid-on); border-color: var(--neutral-solid-edge); }
+.u-btn-neutral:hover { background: var(--neutral-solid-fill-hover); }
+.u-btn-neutral:active { background: var(--neutral-solid-fill-pressed); }
+/* the SECONDARY fill trio (--secondary-solid-fill/-hover/-pressed + solid-on), shown beside the
    brand cta wherever that is showcased. cta-border carries the gated stroke at this
    family's rung, transparent when the gate does not fire, and the outline style's own
    unconditional ring (where the ring IS the component). Always set, so layout never shifts. */
-.u-btn-secondary { background: var(--secondary-cta); color: var(--secondary-on-cta); border-color: var(--secondary-cta-border); }
-.u-btn-secondary:hover { background: var(--secondary-cta-hover); }
-.u-btn-secondary:active { background: var(--secondary-cta-pressed); }
+.u-btn-secondary { background: var(--secondary-solid-fill); color: var(--secondary-solid-on); border-color: var(--secondary-solid-edge); }
+.u-btn-secondary:hover { background: var(--secondary-solid-fill-hover); }
+.u-btn-secondary:active { background: var(--secondary-solid-fill-pressed); }
 .u-btn-ghost { background: transparent; color: var(--brand-fg); }
 .u-btn-ghost:hover { background: var(--brand-bg-subtle); }
 /* Universal destructive rule (designer decision): destructive BUTTONS never
@@ -101,7 +101,7 @@ export const COMPONENT_CSS = `
    degrades to the same treatment instead of a solid fill. */
 .u-btn-destructive,
 .u-btn-destructive-outline {
-  background: var(--surface-base);
+  background: var(--surface-mid);
   color: var(--critical-fg-alt);
   border-color: var(--critical-border-default);
 }
@@ -156,7 +156,7 @@ export function Segmented<T extends string>({ value, onChange, options }: {
       {options.map(([v, label]) => (
         <button key={v} onClick={() => onChange(v)} style={{
           padding: '5px 10px', fontSize: 12, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-          background: value === v ? 'var(--brand-bg-subtle)' : 'var(--surface-base)',
+          background: value === v ? 'var(--brand-bg-subtle)' : 'var(--surface-mid)',
           color: 'var(--fg-default)', fontWeight: value === v ? 600 : 400,
         }}>{label}</button>
       ))}
@@ -251,7 +251,7 @@ export function Showcase(props: {
 
       {!props.bare && <>
         {/* single toolbar row: palette picker + locked fields + controls */}
-        <header style={{ position: 'sticky', top: 0, zIndex: 35, background: 'var(--surface-base)', borderBottom: '1px solid var(--border-subtle)', padding: '12px 24px', display: 'flex', alignItems: 'flex-end', gap: '12px 18px', flexWrap: 'wrap' }}>
+        <header style={{ position: 'sticky', top: 0, zIndex: 35, background: 'var(--surface-mid)', borderBottom: '1px solid var(--border-subtle)', padding: '12px 24px', display: 'flex', alignItems: 'flex-end', gap: '12px 18px', flexWrap: 'wrap' }}>
           {props.header}
           {props.controls}
         </header>
@@ -448,7 +448,7 @@ export function ScaleStrip({ label, prefix }: { label: string; prefix: string })
 
 export const ctxCard: React.CSSProperties = {
   padding: 20, borderRadius: 10,
-  background: 'var(--surface-base)',
+  background: 'var(--surface-mid)',
   border: '1px solid var(--border-subtle)',
 }
 export const ctxCardTitle: React.CSSProperties = { fontSize: 15, fontWeight: 600 }
@@ -502,7 +502,7 @@ export function Card({ title, value, sub, accent }: { title: string; value: stri
   return (
     <div style={{
       padding: 20, borderRadius: 10,
-      background: 'var(--surface-base)',
+      background: 'var(--surface-mid)',
       border: '1px solid var(--border-subtle)',
       display: 'flex', flexDirection: 'column', gap: 4,
     }}>
