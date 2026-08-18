@@ -197,15 +197,6 @@ body {
 .apply-btn:hover:not(:disabled) { background: #6d5fc0; }
 .apply-btn:disabled { opacity: .5; cursor: not-allowed; }
 
-/* the roster's OWN button — separate from the brand form above; runs the fixed test set */
-.roster-btn {
-  width: 100%; height: 32px; border-radius: 9px; margin-top: 8px;
-  background: transparent; border: 1.5px solid #d9d9de; color: #555;
-  font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer;
-  transition: border-color .1s, color .1s, opacity .1s;
-}
-.roster-btn:hover:not(:disabled) { border-color: #7c6fcd; color: #1a1a1a; }
-.roster-btn:disabled { opacity: .5; cursor: not-allowed; }
 
 /* ── Status ── */
 .status { margin-top: 8px; font-size: 11px; text-align: center; min-height: 16px; color: #888; }
@@ -359,10 +350,6 @@ body {
 <div class="matrix" id="matrix"></div>
 
 <button class="apply-btn" id="apply-btn">Apply to Figma</button>
-<!-- the count is SET FROM JS at init (ui.ts, from ROSTER.length) — it was hardcoded and would
-     have gone stale the first time an entry was added or retired, the same way the matrix's
-     column count and three post-C33 reporters did. -->
-<button class="roster-btn" id="roster-btn" title="Applies the edge-case brand set — one extension per roster entry, all solve columns. Ignores the fields above.">Apply test roster</button>
 <div class="status" id="status"></div>
 
 <label class="check-line" for="descope-primitives" style="margin-top:10px;justify-content:center" title="Hides the raw ramp stops and alpha/abs rows from every Figma picker, so designers bind the state-carrying roles instead (cta, link, surface). File-wide (not per brand) and re-stamped on every apply, including re-apply and rebuild. Turn off to expose everything again.">
@@ -371,14 +358,12 @@ body {
 </label>
 
 <div style="margin-top:10px;text-align:center;display:flex;gap:14px;justify-content:center;align-items:center">
-  <button class="smoke-link" id="heal-btn" title="One-time converter: finds everything in the file still using the retired cta-ink variables and re-binds it to the matching ramp ink (ink-53-aa / ink-42-aa / ink-30-aaa). Safe to run again — a second pass finds nothing.">Convert cta-ink uses</button>
   <button class="smoke-link" id="reapply-btn" title="Rebuilds every brand extension from the recipe stamped at its last apply">Re-apply all brands</button>
   <span style="display:inline-flex;gap:6px;align-items:center">
     <button class="smoke-link" id="rebuild-btn" title="Re-seeds every base 'theme' row from the current engine at the seed color (overwrites base-row edits), then re-applies every brand against the new base">Rebuild base theme</button>
     <input id="rebuild-hex" placeholder="#E93D82" title="The base theme's seed color — leave empty to refresh the current color onto today's engine" style="width:72px;font:inherit;padding:2px 4px">
   </span>
 </div>
-<pre class="smoke-log" id="heal-log" style="display:none"></pre>
 
 <script>__BUNDLE__</script>
 </body>

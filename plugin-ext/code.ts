@@ -24,7 +24,6 @@ import { LEGACY_COLUMN_NAME, RETIRED_COLUMN_NAMES } from './payload'
 import { SOLID_LEAF, EXT_NON_OVERRIDABLE, EXT_OVERRIDABLE_SYSTEM } from '../src/engine/tokenNames'
 // zero-import text module — safe here, drags nothing of the engine into the sandbox bundle
 import { describeToken } from '../src/engine/tokenDescriptions'
-import { runHeal } from './heal'
 
 figma.showUI(__html__, { width: 720, height: 640, title: 'OKChroma Extended' })
 
@@ -1273,15 +1272,6 @@ figma.ui.onmessage = async (msg) => {
       figma.ui.postMessage({ type: 'specs', specs, unstamped, reason: (msg as { reason?: string }).reason })
     } catch (err) {
       figma.ui.postMessage({ type: 'error', message: String(err) })
-    }
-  } else if (msg.type === 'heal-cta-ink') {
-    // the footer heal (owner 2026-08-12; replaced the Enterprise smoke test): converts
-    // node applications of the deleted cta-ink trios to the regular ramp inks
-    try {
-      const lines = await withFontRetry(runHeal)
-      figma.ui.postMessage({ type: 'heal-result', lines })
-    } catch (err) {
-      figma.ui.postMessage({ type: 'heal-result', lines: [`✗ FATAL — ${String(err)}`] })
     }
   } else if (msg.type === 'close') {
     figma.closePlugin()

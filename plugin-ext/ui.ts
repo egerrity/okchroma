@@ -6,7 +6,6 @@ import { SIGNALS } from '../src/engine/signals'
 import { toHex } from '../src/engine/cssRender'
 import { stopTokenName } from '../src/engine/tokenNames'
 import { buildBrandColumns, buildBaseColumns, buildRetiredNeutralRows, BASE_SEED_HEX, type ThemeSpec } from './payload'
-import { ROSTER, rosterSpec } from './roster'
 
 // ─── State ───────────────────────────────────────────────────────────────────
 
@@ -63,7 +62,7 @@ let ctaBorder = true
 // state, not per-brand — unlike every flag above this never rides themeInput/the recipe.
 // Default ON (ramp stops + alpha/abs plumbing hidden from every Figma picker; the cta
 // bands, link trio and surface planes always stay bindable). Initialized from the file-state
-// handshake on load, then carried on every apply message so a re-apply/rebuild/roster
+// handshake on load, then carried on every apply message so a re-apply/rebuild/batch
 // batch always re-stamps the SAME posture the checkbox currently shows.
 let descopePrimitives = true
 // brand + the exact confirm TOKEN it was armed with (reason-scoped — the plugin only
@@ -120,9 +119,6 @@ const linkSwatch      = $<HTMLElement>('link-swatch')
 const matrixEl        = $<HTMLElement>('matrix')
 const applyBtn        = $<HTMLButtonElement>('apply-btn')
 const statusEl        = $<HTMLElement>('status')
-const healBtn         = $<HTMLButtonElement>('heal-btn')
-const healLog         = $<HTMLElement>('heal-log')
-const rosterBtn       = $<HTMLButtonElement>('roster-btn')
 const reapplyBtn      = $<HTMLButtonElement>('reapply-btn')
 const rebuildBtn      = $<HTMLButtonElement>('rebuild-btn')
 const rebuildHexInput = $<HTMLInputElement>('rebuild-hex')
@@ -144,7 +140,7 @@ function normalizeHex(s: string): string | null {
 
 // v2 brand names are free-form (they are ONLY a collection name + a tag — never a
 // variable path segment, unlike v1): trim and collapse whitespace, keep everything else
-// verbatim. The roster's own names (L1-near-black, "vs-red (shifts light)") set the precedent —
+// verbatim. The audit fixture's own names (L1-near-black, "vs-red (shifts light)") set the precedent —
 // spinal-casing here made manual re-writes of them impossible (owner-caught 2026-07-07).
 function cleanName(s: string): string {
   return s.trim().replace(/\s+/g, ' ')
@@ -715,7 +711,7 @@ window.addEventListener('message', e => {
     }
   }).pluginMessage
   if (!msg) return
-  // an active batch (roster / secondary check / re-apply) consumes done/error/confirm
+  // an active batch (secondary check / re-apply / rebuild) consumes done/error/confirm
   if (queue && (msg.type === 'done' || msg.type === 'error' || msg.type === 'confirm')) {
     const item = queue[qi]
     if (msg.type === 'done') {
@@ -735,7 +731,6 @@ window.addEventListener('message', e => {
       queue = null
       queueRebuildSeed = null
       applyBtn.disabled = false
-      rosterBtn.disabled = false
       requestThemeList() // batches add/restamp extensions — the edit picker re-syncs
       setStatus(`✓ ${label}: ${n} brands · ${qTotals.set} overridden · ${qTotals.inherited} inherited`
         + `${qTotals.removed ? ` · ${qTotals.removed} reverted` : ''}${qTotals.baseCreated ? ' · base created' : ''}`
@@ -747,7 +742,6 @@ window.addEventListener('message', e => {
     queue = null
     queueRebuildSeed = null
     applyBtn.disabled = false
-    rosterBtn.disabled = false
     setStatus(`Batch stopped at ${stoppedAt} — ${msg.message ?? msg.type}`, 'err')
     return
   }
@@ -819,22 +813,10 @@ window.addEventListener('message', e => {
     rebuildHexInput.placeholder = fileBaseSeed
     descopePrimitives = msg.descopePrimitives !== false
     descopeBox.checked = descopePrimitives
-  } else if (msg.type === 'heal-result') {
-    healLog.style.display = ''
-    healLog.textContent = (msg.lines ?? []).join('\n')
   }
 })
 
-// ─── The cta-ink heal (owner 2026-08-12; replaced the Enterprise smoke test):
-// converts node applications of the deleted cta-ink trios to the regular ramp inks ──
-
-healBtn.addEventListener('click', () => {
-  healLog.style.display = ''
-  healLog.textContent = 'scanning…'
-  parent.postMessage({ pluginMessage: { type: 'heal-cta-ink' } }, '*')
-})
-
-// ─── The batch queue — serves the roster, the automatic secondary check, and
+// ─── The batch queue — serves the automatic secondary check and
 // "Re-apply all brands". Every item is a RECIPE (brand + ThemeSpec + options), runs
 // through the UNCHANGED single-apply path with confirmed: true, and gets stamped onto
 // its extension; the handler above accumulates totals and advances the queue.
@@ -842,14 +824,13 @@ healBtn.addEventListener('click', () => {
 type Recipe = { brand: string; theme: ThemeSpec; neutralLevel: NeutralLevel; hasSecondary: boolean }
 let queue: Recipe[] | null = null // active batch; null = idle
 let qi = 0
-let qLabel = 'roster'
+let qLabel = 'batch'
 let qTotals = { set: 0, removed: 0, inherited: 0, baseCreated: false, addedCols: [] as string[], orphaned: 0 }
 let qUnstamped: string[] = []
 // the APCA posture a batch runs under is SNAPSHOTTED at queue start (re-verify
 // 2026-07-16: reading the live checkbox per item let a mid-batch tick flip the file's
 // posture with confirmed:true and no arm mention). The arm copy names what the snapshot
 // will do; ticking the box after arming resets the arms (see the change handler).
-let rosterArmed = false
 let reapplyArmed = false
 // ─── the REBUILD feature (owner 2026-08-03: "a way to redo the main theme … or change it
 // to a different color") ──────────────────────────────────────────────────────────────
@@ -884,7 +865,6 @@ function startQueue(items: Recipe[], label: string) {
   qTotals = { set: 0, removed: 0, inherited: 0, baseCreated: false, addedCols: [], orphaned: 0 }
   qUnstamped = []
   applyBtn.disabled = true
-  rosterBtn.disabled = true
   sendQueueItem()
 }
 
@@ -912,23 +892,6 @@ function enqueueBackfill(specs: unknown[], unstamped?: string[], note?: string) 
   for (const it of items) if (!ahead.has(it.brand)) queue.push(it)
 }
 
-rosterBtn.addEventListener('click', () => {
-  if (queue) return // a batch is already running
-  if (!rosterArmed) {
-    rosterArmed = true
-    setStatus(`Applies the fixed ${ROSTER.length}-brand test set (ignores the fields above; overwrites existing roster extensions). `
-      + `Keep the plugin open until it finishes. Click the same button again to start.`, 'err')
-    return
-  }
-  rosterArmed = false
-  startQueue(ROSTER.map(e => ({
-    brand: e.name,
-    theme: rosterSpec(e),
-    neutralLevel: e.neutralLevel ?? 'default',
-    hasSecondary: !!e.secondaryHex,
-  })), 'roster')
-})
-
 reapplyBtn.addEventListener('click', () => {
   if (queue) return
   if (!reapplyArmed) {
@@ -941,7 +904,7 @@ reapplyBtn.addEventListener('click', () => {
 })
 
 // ─── Rebuild base theme (owner 2026-08-03: "a way to redo the main theme … or change it
-// to a different color"). Armed two-click like the roster/re-apply; the hex field empty =
+// to a different color"). Armed two-click like re-apply; the hex field empty =
 // refresh the CURRENT seed onto today's engine. Overwrites base-row edits by design —
 // that is what "redo" means; per-brand extension overrides recompute right after.
 rebuildBtn.addEventListener('click', () => {
@@ -1088,10 +1051,6 @@ editSelect.addEventListener('change', () => {
 })
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
-
-// the roster button's count, from the roster itself — the template used to hardcode
-// "(16 brands)", which would have gone stale the first time an entry was added or retired
-rosterBtn.textContent = `Apply test roster (${ROSTER.length} brands)`
 
 // the edit picker's first fill — the reason tag keeps the reply out of the batch flows
 requestThemeList()
