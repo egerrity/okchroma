@@ -73,7 +73,9 @@ function assertLadderOrder(tokens: FlatTok[], label: string): void {
   for (const fam of LADDER_FAMILIES) {
     const nums: number[] = []
     for (const t of tokens) {
-      const m = new RegExp(`/${fam}/(?:paper|wash|mark|ink)-(\\d+)`).exec(t.path)
+      // end-anchored (2026-08-18): the flat overlay twins (paper-99-overlay) carry a
+      // ladder digit mid-name and must not double-count their paper's rung
+      const m = new RegExp(`/${fam}/(?:paper|wash|mark|ink)-(\\d+)(?:-aaa?)?$`).exec(t.path)
       if (m) nums.push(parseInt(m[1], 10))
     }
     // the gate must never silently disarm again: every family carries a full ladder

@@ -109,11 +109,11 @@ function flatten(node: FigmaGroup, prefix: string, out: FlatTok[]): void {
   }
 }
 
-// Panel order = creation order (v1's rule; owner layout 2026-07-27: abs poles at the
-// system root, then surface/, then alpha/): system → neutral → brand-primary →
-// brand-secondary → signals. The utility/surface/dim|low|mid|high planes are NOT here —
-// they are scheme-divergent aliases the plugin creates after the abs rows (ordering) and
-// wires once the neutral exists. neutral/ink-0 (the OFF-SCALE anchor — pure black in
+// Panel order = creation order (v1's rule; owner layout 2026-08-18: utility leads,
+// then the families, then the low-usage machinery tail — link, alpha, absolutes).
+// The utility/surface/dim|low|mid|high planes are NOT here — they are scheme-divergent
+// aliases the plugin creates FIRST (top of the panel) and wires once the neutral
+// exists. neutral/ink-0 (the OFF-SCALE anchor — pure black in
 // light, pure white in dark) is injected right after the last real ink stop, in ladder
 // order. ⚠️ Its trigger is the LAST SCALE INK, so a stop renumber (or a relabel of
 // that stop's leaf) moves it: it fired on ink/11 → emitted ink/12 pre-collapse, ink/10 →
@@ -127,35 +127,19 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
   const W = { r: 1, g: 1, b: 1 }
   const K = { r: 0, g: 0, b: 0 }
   const dark = scheme === 'dark'
+  // EMIT ORDER = PANEL ORDER (owner 2026-08-18): the utility shelf leads (the
+  // surfaces, plugin-created, come before even these), the families follow, and the
+  // low-usage machinery — link, alpha, absolutes — trails the collection. Alias
+  // targets living in the tail is safe: code.ts seeds a missing-target row raw and
+  // its conversion walk re-points the raw onto the alias in the same apply.
   const out: FlatTok[] = [
-    { path: 'base/absolute/black', ...K },
-    { path: 'base/absolute/white', ...W },
-    { path: 'base/alpha/transparent', ...W, a: 0 },
-    // the scrim, spelled by its composition (owner export 2026-08-18: black at 60%,
-    // honest in BOTH modes) — utility zone: the engine never reads it back, a team
-    // re-value cannot break a solve
-    { path: 'utility/abs-black-060', ...K, a: 0.6 },
-    // the SOFT ON-COLOR primitive (C43 follow-up, owner-named 2026-08-03): the on-text
-    // pole at the engine's SOFT_ON_CTA_ALPHA — black in light, white in dark, alpha per
-    // mode. The default-model secondary's solid/on aliases this row, never a raw write.
-    // base zone: an engine-required input (the alias graph targets it).
-    { path: 'base/alpha/ink', ...(dark ? W : K), a: dark ? SOFT_ON_CTA_ALPHA.dark : SOFT_ON_CTA_ALPHA.light },
-    // the decorative cta stroke (owner 2026-07-29, ladder 2026-07-31): black in light, flipped
-    // to WHITE in dark, one row per rung — neutral takes 08, secondary 06, primary and the
-    // signals 16. Unlike the shadow set below these do NOT scale up in dark: a stroke sits on the
-    // fill rather than bleeding into the ground. Brand-independent, so each stays a base row and
-    // costs no per-brand overrides — the whole reason C39 chose an alpha over a family stop.
-    //
-    // offset-12 is GONE, renamed to offset-08 with its value adjusted (owner 2026-07-31). The
-    // neutral was its only consumer, so the rename carries every existing binding across; see
-    // RENAMED_LEAVES in code.ts, plus the value-correction pass that rewrites the old 0.12 in
-    // files that already carry the row — ensure() renames in place WITHOUT re-seeding.
-    ...(Object.keys(OFFSET_ALPHAS) as unknown as OffsetRung[]).map(Number).sort((a, b) => a - b)
-      .map(r => ({ path: offsetTokenPath(r as OffsetRung), ...(dark ? W : K), a: OFFSET_ALPHAS[r as OffsetRung] })),
-    // shadows: utility zone (classic hand-tuned rows — the engine never reads them)
+    // shadows + the scrim: utility zone (classic hand-tuned rows — the engine never
+    // reads them back; the scrim spelled by its composition, black at 60%, honest in
+    // BOTH modes — owner export 2026-08-18)
     { path: 'utility/shadow-04', ...K, a: dark ? 0.32 : 0.04 },
     { path: 'utility/shadow-08', ...K, a: dark ? 0.48 : 0.08 },
     { path: 'utility/shadow-12', ...K, a: dark ? 0.64 : 0.12 },
+    { path: 'utility/abs-black-060', ...K, a: 0.6 },
   ]
   const neutral: FlatTok[] = []
   flatten(g.neutral as FigmaGroup, 'neutral', neutral)
@@ -174,7 +158,12 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
   const brandRows: FlatTok[] = []
   flatten(g.brand as FigmaGroup, 'brand-primary', brandRows)
   if (includeSecondary) flatten(g.secondary as FigmaGroup, 'brand-secondary', brandRows)
-  for (const t of brandRows) out.push(IDENTITY_HOME[t.path] ? { ...t, path: IDENTITY_HOME[t.path] } : t)
+  // identity rows are set aside for the absolutes tail below (panel order)
+  const identityRows: FlatTok[] = []
+  for (const t of brandRows) {
+    if (IDENTITY_HOME[t.path]) identityRows.push({ ...t, path: IDENTITY_HOME[t.path] })
+    else out.push(t)
+  }
   // signal rows carry the ROLE prefix (critical/warning/positive/info — owner
   // 2026-07-27: the re-pointable in-between tier); g stays keyed by identity
   for (const s of SIGNALS) flatten(g[s.name] as FigmaGroup, s.emitName, out)
@@ -193,6 +182,24 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
     'link-pressed': 'base/link/pressed',
   }
   for (const t of linkRows) out.push({ ...t, path: LINK_STATE[t.path] ?? t.path })
+  // ── the low-usage tail (owner 2026-08-18: built last, panel bottom) ─────────────
+  out.push({ path: 'base/alpha/transparent', ...W, a: 0 })
+  // the SOFT ON-COLOR primitive (C43 follow-up, owner-named 2026-08-03): the on-text
+  // pole at the engine's SOFT_ON_CTA_ALPHA — black in light, white in dark, alpha per
+  // mode. The default-model secondary's solid/on aliases this row, never a raw write.
+  // base zone: an engine-required input (the alias graph targets it).
+  out.push({ path: 'base/alpha/ink', ...(dark ? W : K), a: dark ? SOFT_ON_CTA_ALPHA.dark : SOFT_ON_CTA_ALPHA.light })
+  // the decorative stroke's rung ladder (owner 2026-07-29/31): black in light, flipped
+  // to WHITE in dark, one row per rung — neutral takes 08, secondary 06, primary and
+  // the signals 16. Unlike the shadows these do NOT scale up in dark: a stroke sits on
+  // the fill rather than bleeding into the ground. Brand-independent, so each stays a
+  // base row and costs no per-brand overrides. (offset-12 died 2026-07-31 — renamed to
+  // 08 with its value corrected; see RENAMED_LEAVES + the value-correction pass.)
+  for (const r of (Object.keys(OFFSET_ALPHAS) as unknown as OffsetRung[]).map(Number).sort((x, y) => x - y))
+    out.push({ path: offsetTokenPath(r as OffsetRung), ...(dark ? W : K), a: OFFSET_ALPHAS[r as OffsetRung] })
+  out.push({ path: 'base/absolute/black', ...K })
+  out.push({ path: 'base/absolute/white', ...W })
+  out.push(...identityRows)
   // THE ZONE PASS (final step): every still-unzoned family path takes base/.
   return out.map(t => ({ ...t, path: registerPath(t.path) }))
 }

@@ -38,7 +38,7 @@ import { stopDeltaE } from './collision'
 export type AlphaMode = 'light' | 'dark'
 export interface AlphaPaper {
   stop: number          // 1/2/3 — the paper rung this overlays
-  name: string          // paper-overlay-99 / -97 / -95
+  name: string          // paper-99-overlay / -97 / -95
   overlayHex: string    // the ink
   alpha: number         // 0..1, quantized to 1%
   // set when the visibility floor could not be reached: 'gamut' = the sRGB ceiling
@@ -47,9 +47,7 @@ export interface AlphaPaper {
   capped?: 'gamut' | 'ink-bars'
 }
 
-// flat names (owner rename 2026-08-18: overlay leads so the Figma tree folds them
-// into the overlay/ subgroup — see tokenNames.OVERLAY_LEAVES, the flat↔nested table)
-const OVERLAY_NAMES: Record<number, string> = { 1: 'overlay-paper-99', 2: 'overlay-paper-97', 3: 'overlay-paper-95' }
+const OVERLAY_NAMES: Record<number, string> = { 1: 'paper-99-overlay', 2: 'paper-97-overlay', 3: 'paper-95-overlay' }
 const PAPER_STOPS = [1, 2, 3]
 
 // the two declared constants: the apparent-L tolerance the alpha solve holds on every

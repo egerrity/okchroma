@@ -2,7 +2,7 @@
 
 import { toHex, ctaNeedsBorder, pageStopFor, ctaBorderRung, OFFSET_ALPHAS, type OffsetRung } from './cssRender'
 import { srgbEmitChannels } from './colorMath'
-import { stopTokenName, tokenOrder, SOLID_FILL, SOLID_FILL_HOVER, SOLID_FILL_PRESSED, SOLID_EDGE, SOLID_ON, SOLID_STATE_LEAVES, OVERLAY_LEAVES } from './tokenNames'
+import { stopTokenName, tokenOrder, SOLID_FILL, SOLID_FILL_HOVER, SOLID_FILL_PRESSED, SOLID_EDGE, SOLID_ON, SOLID_STATE_LEAVES } from './tokenNames'
 import { alphaPapersFor, alphaSep, type AlphaPaper } from './alphaPapers'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
 import { OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, SOFT_ON_CTA_ALPHA, softOnCtaPasses, escapeCtaFamily, resolveLinkTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
@@ -57,15 +57,14 @@ function colorFromHexString(hex: string): FigmaColorToken {
 }
 
 // LEAF SHAPE (owner 2026-08-12, band flattening; solid rename 2026-08-18): ramp
-// tokens sit FLAT in the family group — paper-99, wash-92, mark-74-aa, ink-53-aa …
-// Two subgroups nest: the solid/ state group (fill/fill-hover/fill-pressed/edge/on,
-// matching system/link's state shape) and the overlay/ subgroup (the translucent
-// paper twins, folded out of the ramp — owner call 2026-08-18). Both tables live in
-// tokenNames.ts — the one flat↔nested source every consumer rides. `identity` stays
+// tokens sit FLAT in the family group — paper-99, paper-99-overlay, wash-92,
+// mark-74-aa, ink-53-aa … ONLY the solid/ state group nests
+// (fill/fill-hover/fill-pressed/edge/on, matching system/link's state shape); its
+// table lives in tokenNames.ts — the one flat↔nested source every consumer rides. `identity` stays
 // a flat leaf; the plugins re-home the BIND surfaces to their absolute rows. Both
 // plugins migrate every old spelling in place via RENAMED_LEAVES.
 function bandedLeaf(flat: string): string {
-  return SOLID_STATE_LEAVES[flat] ?? OVERLAY_LEAVES[flat] ?? flat
+  return SOLID_STATE_LEAVES[flat] ?? flat
 }
 // Order-aware entries for a FigmaGroup (adversarial-audit-caught 2026-08-07): JS
 // enumerates integer-index string keys ascending, before any string keys, REGARDLESS of

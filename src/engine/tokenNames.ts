@@ -78,14 +78,10 @@ export const SOLID_LEAF = {
   ON: SOLID_STATE_LEAVES[SOLID_ON],
 } as const
 
-// the paper overlays (owner round 2026-08-13; regrouped 2026-08-18): each paper's
-// translucent twin. Flat name overlay-paper-LL; Figma nests them as the overlay/
-// subgroup so they stop cluttering the ramp (owner call 2026-08-18).
-export const OVERLAY_LEAVES: Record<string, string> = {
-  'overlay-paper-99': 'overlay/paper-99',
-  'overlay-paper-97': 'overlay/paper-97',
-  'overlay-paper-95': 'overlay/paper-95',
-}
+// the paper overlays (owner round 2026-08-13): each paper's translucent twin, FLAT
+// in the ramp directly after its paper — paper-99-overlay (owner call 2026-08-18,
+// reverting a brief overlay/ subgroup the same day: the near-identical names next to
+// a subgroup read as two different things and confused more than they tidied).
 
 // ── the ext plugin's OWNERSHIP-ZONE rosters (owner ruling 2026-08-18). They live in
 // THIS zero-import module so plugin-ext/code.ts (sandbox bundle, must not drag the
@@ -116,7 +112,7 @@ export const EXT_OVERRIDABLE_SYSTEM = (p: string): boolean =>
 // identity. A ramp skips tokens it doesn't have. Emitters sort by this, not by
 // stop number.
 const TOKEN_ORDER = [
-  'paper-99', 'overlay-paper-99', 'paper-97', 'overlay-paper-97', 'paper-95', 'overlay-paper-95',
+  'paper-99', 'paper-99-overlay', 'paper-97', 'paper-97-overlay', 'paper-95', 'paper-95-overlay',
   'wash-92', 'wash-89', 'wash-85', 'wash-80',
   'mark-74-aa',
   'ink-53-aa', 'ink-42-aa', 'ink-30-aaa',

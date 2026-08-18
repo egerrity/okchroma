@@ -143,9 +143,16 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['cta/pressed', 'solid/fill-pressed'],
   ['cta/border', 'solid/edge'],
   ['cta/on', 'solid/on'],
-  ['paper-overlay-99', 'overlay/paper-99'],
-  ['paper-overlay-97', 'overlay/paper-97'],
-  ['paper-overlay-95', 'overlay/paper-95'],
+  // the overlays' final flat home (owner 2026-08-18, second call the same day: the
+  // overlay/ subgroup next to near-identical ramp names confused more than it tidied).
+  // The subgroup spelling shipped for hours — files that applied that build carry it
+  // as their CURRENT name, hence its own entries right below the 08-13 spelling's.
+  ['paper-overlay-99', 'paper-99-overlay'],
+  ['paper-overlay-97', 'paper-97-overlay'],
+  ['paper-overlay-95', 'paper-95-overlay'],
+  ['overlay/paper-99', 'paper-99-overlay'],
+  ['overlay/paper-97', 'paper-97-overlay'],
+  ['overlay/paper-95', 'paper-95-overlay'],
   ['surface/sunken', 'surface/dim'],
   // ⚠️ the word base's THIRD life (page plane pre-08-12 → raised plane to 08-18 →
   // retired): consumes an 08-12-era file's base row into mid; a pre-08-12 file's base
@@ -911,23 +918,15 @@ figma.ui.onmessage = async (msg) => {
           baseVars.set(to, v); baseVars.delete(from)
         }
       }
-      // The abs poles are created FIRST (they are alias targets and the owner's panel
-      // layout leads with them), then the elevation planes (aliased below once the
-      // neutral exists — ensure() migrates legacy plane names in place
-      // via RENAMED_LEAVES), then everything else in payload order.
-      // the two alpha rows join the abs poles in this pass for the same reason: they are now
-      // ALIAS TARGETS (every cta/border points at one or the other), and ensure() registers into
-      // baseVars as it creates — a target created later in payload order would not exist yet when
-      // an earlier leaf tried to alias it, silently falling back to a raw write.
-      // rebuildBase (the "redo the main theme" action): seedFresh runs for EVERY base row,
-      // not only freshly created ones — the one sanctioned overwrite of base values, taking
-      // each row back to what a fresh seed would write today (values AND alias idioms)
-      for (const path of ['base/absolute/black', 'base/absolute/white', 'base/alpha/transparent', 'base/alpha/ink',
-        ...Object.keys(RUNG_ALPHAS).map(r => `base/alpha/${r}`)]) {
-        const before = createdVars
-        const v = ensure(path)
-        if (createdVars > before || rebuildBase) seedFresh(v, path)
-      }
+      // PANEL ORDER = CREATION ORDER (owner 2026-08-18): the team-touchable utility
+      // shelf leads so it never buries under the families; the low-usage machinery
+      // rows (link, alpha, absolutes) sit LAST in payload order. The alias-target
+      // pre-pass is GONE with that ruling: targets now create AFTER their consumers,
+      // which is safe because seedValue falls back to a raw write when a target is
+      // missing and the conversion walk below — which runs after every row exists —
+      // re-points every OUR-value raw onto its alias in the same apply. rebuildBase
+      // ("redo the main theme") rides the main loop: seedFresh runs for EVERY row —
+      // the one sanctioned overwrite of base values (values AND alias idioms).
       ensure('utility/surface/dim')
       // low MUST precede mid: an 08-12-era file's real low row must direct-hit before
       // mid's legacy lookup consumes that file's base row (the word base moved planes

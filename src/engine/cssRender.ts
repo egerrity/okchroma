@@ -445,7 +445,7 @@ export function brandCss(
     const alias = (name: string) => `  --${prefix}-${name}: var(--brand-${name});`
     return [
       ...stops.map(x => alias(stopTokenName(x.stop))),
-      alias('overlay-paper-99'), alias('overlay-paper-97'), alias('overlay-paper-95'),
+      alias('paper-99-overlay'), alias('paper-97-overlay'), alias('paper-95-overlay'),
       alias('solid-fill'),
       alias('solid-fill-hover'),
       alias('solid-fill-pressed'),

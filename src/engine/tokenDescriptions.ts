@@ -59,8 +59,8 @@ const PAPER: Body = { req: 'backgrounds, inverted text', theming: f => TINT[f], 
 const WASH: Body = { req: 'subtle interaction states, decorative borders, illustrations, signal hierarchy', theming: f => TINT[f], collides: true }
 const solved = (f: Family) => `${TINT[f]}; re-solved to clear its floor`
 // (Leaf keys are FLAT — band flattening 2026-08-12: paper-99, never paper/99 — except
-// the two nested subgroups, solid/ and overlay/, keyed by their nested spellings.)
-// the overlay rows (owner round 2026-08-13; regrouped under overlay/ 2026-08-18):
+// the solid/ state group, keyed by its nested spelling.)
+// the overlay rows (owner round 2026-08-13; flat paper-LL-overlay, owner 2026-08-18):
 // translucent twins of the papers, solved so the reading holds on the neutral papers;
 // anywhere else the backdrop decides — stated here because it is the token's
 // conformance boundary
@@ -71,11 +71,11 @@ const OVERLAY: Body = {
 }
 const SCALE: Record<string, Body> = {
   'paper-99': PAPER,
-  'overlay/paper-99': OVERLAY,
+  'paper-99-overlay': OVERLAY,
   'paper-97': PAPER,
-  'overlay/paper-97': OVERLAY,
+  'paper-97-overlay': OVERLAY,
   'paper-95': { req: 'backgrounds, inverted text', theming: f => `${TINT[f]}. Worst background text stops must clear.`, collides: true },
-  'overlay/paper-95': OVERLAY,
+  'paper-95-overlay': OVERLAY,
   'wash-92': WASH,
   'wash-89': WASH,
   'wash-85': WASH,

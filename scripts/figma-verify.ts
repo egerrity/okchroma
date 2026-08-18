@@ -7,7 +7,7 @@ import { FIXTURES, FIXTURE_SECONDARIES } from './fixture'
 import { SIGNALS } from '../src/engine/signals'
 import { resolveBrand, resolveTheme, SIGNAL_SCALES, SOFT_ON_CTA_ALPHA } from '../src/engine/resolve'
 import { themeToFigma } from '../src/engine/figmaRender'
-import { SOLID_STATE_LEAVES, OVERLAY_LEAVES } from '../src/engine/tokenNames'
+import { SOLID_STATE_LEAVES } from '../src/engine/tokenNames'
 import { brandCss, signalsCss, ctaNeedsBorder, ctaPageLc, pageStopFor } from '../src/engine/cssRender'
 import { generateNeutralScale } from '../src/engine/colorEngine'
 
@@ -31,7 +31,7 @@ const ok = (cond: boolean, msg: string) => { if (!cond) fails.push(msg) }
 // duplicated local copy died 2026-08-18: the sweep flagged lockstep copies as the
 // silent-drift class this file exists to catch)
 const leaf = (g: any, flat: string): any =>
-  (SOLID_STATE_LEAVES[flat] ?? OVERLAY_LEAVES[flat] ?? flat)
+  (SOLID_STATE_LEAVES[flat] ?? flat)
     .split('/').reduce((cur: any, seg: string) => cur?.[seg], g)
 
 // Same families/modes — every family is emitted UNIFORMLY now: the scale runs 1–10
@@ -162,10 +162,10 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
     // the paper-overlay leaves legitimately track the neutral in EVERY group (their
     // solve fields ARE the neutral papers — owner round 2026-08-13); the leak
     // invariant covers everything else in the group
-    const stripOv = (g: any) => Object.fromEntries(Object.entries(g).filter(([k]) => !k.startsWith('overlay')))
+    const stripOv = (g: any) => Object.fromEntries(Object.entries(g).filter(([k]) => !k.endsWith('-overlay')))
     ok(JSON.stringify(stripOv((sourced[mode] as any).brand)) === JSON.stringify(stripOv((base[mode] as any).brand)),
       `${mode} neutralH leaked outside the neutral group`)
-    for (const n of ['overlay-paper-99', 'overlay-paper-97', 'overlay-paper-95'])
+    for (const n of ['paper-99-overlay', 'paper-97-overlay', 'paper-95-overlay'])
       ok(!!leaf((base[mode] as any).brand, n) && leaf((base[mode] as any).brand, n).$value.alpha <= 1,
         `${mode} brand ${n} present with an alpha`)
     ok(JSON.stringify((dflt[mode] as any).neutral) === JSON.stringify((base[mode] as any).neutral),

@@ -75,9 +75,16 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['cta/pressed', 'solid/fill-pressed'],
   ['cta/border', 'solid/edge'],
   ['cta/on', 'solid/on'],
-  ['paper-overlay-99', 'overlay/paper-99'],
-  ['paper-overlay-97', 'overlay/paper-97'],
-  ['paper-overlay-95', 'overlay/paper-95'],
+  // the overlays' final flat home (owner 2026-08-18, second call the same day: the
+  // overlay/ subgroup next to near-identical ramp names confused more than it tidied).
+  // The subgroup spelling shipped for hours — files that applied that build carry it
+  // as their CURRENT name, hence its own entries right below the 08-13 spelling's.
+  ['paper-overlay-99', 'paper-99-overlay'],
+  ['paper-overlay-97', 'paper-97-overlay'],
+  ['paper-overlay-95', 'paper-95-overlay'],
+  ['overlay/paper-99', 'paper-99-overlay'],
+  ['overlay/paper-97', 'paper-97-overlay'],
+  ['overlay/paper-95', 'paper-95-overlay'],
   ['surface/sunken', 'surface/dim'],
   // ⚠️ the word base's THIRD life (page plane pre-08-12 → raised plane to 08-18 →
   // retired): this entry consumes an 08-12-era file's base row into mid. A pre-08-12
