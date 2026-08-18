@@ -3,7 +3,6 @@
 import { toHex, ctaNeedsBorder, pageStopFor, ctaBorderRung, OFFSET_ALPHAS, type OffsetRung } from './cssRender'
 import { srgbEmitChannels } from './colorMath'
 import { stopTokenName, tokenOrder, SOLID_FILL, SOLID_FILL_HOVER, SOLID_FILL_PRESSED, SOLID_EDGE, SOLID_ON, SOLID_STATE_LEAVES } from './tokenNames'
-import { alphaPapersFor, alphaSep, type AlphaPaper } from './alphaPapers'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
 import { OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, SOFT_ON_CTA_ALPHA, softOnCtaPasses, escapeCtaFamily, resolveLinkTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
 
@@ -112,20 +111,14 @@ function rampGroup(
     // (system/alpha/offset-06|08|16 | system/alpha/transparent), so neither is ever a raw write.
     ctaBorder?: FigmaColorToken
   },
-  // the paper-overlay leaves (owner round 2026-08-13) — rgba values from
-  // alphaPapers.ts, interleaved after their papers by TOKEN_ORDER (insertion order
-  // is the display order)
-  overlays?: AlphaPaper[],
+  // (the paper-overlay leaves are PARKED — owner 2026-08-18, "remove them for now and
+  // come back": emission is off, the solve lives on in alphaPapers.ts under
+  // audit:alpha, and existing rows in files ORPHAN rather than being deleted.
+  // Resurrection = re-passing alphaPapersFor's rows here; see git for the wiring.)
 ): FigmaGroup {
   const g: FigmaGroup = {}
-  const overlayToken = (o: AlphaPaper): FigmaColorToken => {
-    const [r, g2, b] = [1, 3, 5].map(i => parseInt(o.overlayHex.slice(i, i + 2), 16) / 255)
-    return { $type: 'color', $value: { colorSpace: 'srgb', components: [r, g2, b], alpha: o.alpha, hex: o.overlayHex } }
-  }
-  const leaves = [
-    ...stops.map(s => ({ name: stopTokenName(s.stop), tok: colorFromStop(s) })),
-    ...(overlays ?? []).map(o => ({ name: o.name, tok: overlayToken(o) })),
-  ].sort((a, b) => tokenOrder(a.name) - tokenOrder(b.name))
+  const leaves = stops.map(s => ({ name: stopTokenName(s.stop), tok: colorFromStop(s) }))
+    .sort((a, b) => tokenOrder(a.name) - tokenOrder(b.name))
   for (const l of leaves) putLeaf(g, l.name, l.tok)
 
   // the solid family (states, never options — owner ruling 2026-07-16; renamed from
@@ -214,10 +207,6 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
   })
 
   const nScale = generateNeutralScale(input.neutralH ?? scale.brandH, input.neutralLevel ?? 'default', input.contrastProfile)
-  // the paper-overlay solve context — the THEME's neutral and bar (cssRender.brandCss
-  // computes the same pair; the two emitters must agree on the values)
-  const sep = alphaSep([nScale, scale, ...input.signals.map(s => s.scale)])
-  const ov = (s: GeneratedScale, mode: 'light' | 'dark') => alphaPapersFor(s, nScale, mode, sep)
   // custom link seed resolved ONCE (both modes read it)
   const lt = input.linkHex ? resolveLinkTrio(input.linkHex, input.contrastProfile) : null
   // (the neutral's STRONG text-cta mirror DELETED with the cta-ink register, owner
@@ -231,9 +220,9 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     // leaves are not integer keys, so enumeration follows insertion order (the banded
     // era leaned on integer-key enumeration putting 100 ahead of 99 inside paper/).
     const p0 = mode === 'light' ? nScale.paper0 : nScale.paper0Dark
-    const ramp = rampGroup(nScale[mode], mode === 'light' ? nScale.onFillTextIsWhite : nScale.onFillTextIsWhiteDark, neutralExtra(mode), ov(nScale, mode))
+    const ramp = rampGroup(nScale[mode], mode === 'light' ? nScale.onFillTextIsWhite : nScale.onFillTextIsWhiteDark, neutralExtra(mode))
     const neutralGroup: FigmaGroup = p0 ? { 'paper-100': colorFromStop(p0), ...ramp } : ramp
-    const secondaryGroup = rampGroup(secondary[mode], mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark, brandExtra(secondary, mode, 'secondary'), ov(secondary, mode))
+    const secondaryGroup = rampGroup(secondary[mode], mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark, brandExtra(secondary, mode, 'secondary'))
     // outline re-expression (only a real secondary can be outline) — same values cssRender
     // emits. The hover = mark-74-aa at OUTLINE_HOVER_ALPHA (the STABLE gated stop the ring
     // uses — 9% of the generated subtle cta was imperceptible).
@@ -281,7 +270,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     if (input.secondary && input.secondaryStyle !== 'outline'
       && (input.secondaryStyle === 'default' || softOnCtaPasses(input.secondary, mode)))
       softOnCta(secondaryGroup, mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark)
-    const brandGroup = rampGroup(scale[mode], mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark, brandExtra(scale, mode, 'brand'), ov(scale, mode))
+    const brandGroup = rampGroup(scale[mode], mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark, brandExtra(scale, mode, 'brand'))
     // neutral cta escape re-expression (mirrors the outline block above): the brand's
     // FILL trio + on-cta swap to the brand-neutral's ink register — the ink stops keep
     // the brand's own chroma (owner 2026-08-13, reverting the 2026-08-12 ink de-chroma).
@@ -324,7 +313,6 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
         // signals rank with the primary (ctaBorderRung: anything not neutral/secondary takes 16).
         // Unreachable at the Lc 15 gate — no signal gets within 4 Lc of it — but defined, not accidental.
         ctaFamily(sig.scale, mode, sig.name),
-        ov(sig.scale, mode),
       )
     }
     return g

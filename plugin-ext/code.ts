@@ -142,10 +142,12 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['cta/pressed', 'solid/fill-pressed'],
   ['cta/border', 'solid/edge'],
   ['cta/on', 'solid/on'],
-  // the overlays' final flat home (owner 2026-08-18, second call the same day: the
-  // overlay/ subgroup next to near-identical ramp names confused more than it tidied).
-  // The subgroup spelling shipped for hours — files that applied that build carry it
-  // as their CURRENT name, hence its own entries right below the 08-13 spelling's.
+  // the overlays are PARKED (owner 2026-08-18, third call the same day: "remove them
+  // for now and come back") — nothing emits or refreshes paper-LL-overlay any more.
+  // These entries KEEP consolidating every shipped spelling (the 08-13 original and
+  // the hours-lived overlay/ subgroup build) onto the parked flat name, the cta-ink
+  // precedent: old rows are FOUND and renamed to one recognizable retired home
+  // (then orphan-reported) rather than silently left under vintage names.
   ['paper-overlay-99', 'paper-99-overlay'],
   ['paper-overlay-97', 'paper-97-overlay'],
   ['paper-overlay-95', 'paper-95-overlay'],

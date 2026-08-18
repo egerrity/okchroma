@@ -75,10 +75,10 @@ const WASH: Body = { req: 'subtle interaction states, decorative borders, illust
 const solved = (f: Family) => `${TINT[f]}; re-solved to clear its floor`
 // (Leaf keys are FLAT — band flattening 2026-08-12: paper-99, never paper/99 — except
 // the solid/ state group, keyed by its nested spelling.)
-// the overlay rows (owner round 2026-08-13; flat paper-LL-overlay, owner 2026-08-18):
-// translucent twins of the papers, solved so the reading holds on the neutral papers;
-// anywhere else the backdrop decides — stated here because it is the token's
-// conformance boundary
+// the overlay rows (owner round 2026-08-13) are PARKED (owner 2026-08-18) — not
+// emitted, so these bodies are dormant; kept for the comeback. Translucent twins of
+// the papers, solved so the reading holds on the neutral papers; anywhere else the
+// backdrop decides — stated because it is the token's conformance boundary
 const OVERLAY: Body = {
   req: 'translucent backgrounds that hold their reading on any paper',
   theming: f => `${TINT[f]}; opacity solved against the papers, other backdrops show through unguaranteed`,

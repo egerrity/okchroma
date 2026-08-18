@@ -159,15 +159,12 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
   for (const mode of ['light', 'dark'] as const) {
     ok(JSON.stringify((sourced[mode] as any).neutral) !== JSON.stringify((base[mode] as any).neutral),
       `${mode} neutralH=200 did not move the neutral off the primary-hued emit`)
-    // the paper-overlay leaves legitimately track the neutral in EVERY group (their
-    // solve fields ARE the neutral papers — owner round 2026-08-13); the leak
-    // invariant covers everything else in the group
-    const stripOv = (g: any) => Object.fromEntries(Object.entries(g).filter(([k]) => !k.endsWith('-overlay')))
-    ok(JSON.stringify(stripOv((sourced[mode] as any).brand)) === JSON.stringify(stripOv((base[mode] as any).brand)),
+    ok(JSON.stringify((sourced[mode] as any).brand) === JSON.stringify((base[mode] as any).brand),
       `${mode} neutralH leaked outside the neutral group`)
-    for (const n of ['paper-99-overlay', 'paper-97-overlay', 'paper-95-overlay'])
-      ok(!!leaf((base[mode] as any).brand, n) && leaf((base[mode] as any).brand, n).$value.alpha <= 1,
-        `${mode} brand ${n} present with an alpha`)
+    // the paper overlays are PARKED (owner 2026-08-18) — a reappearance means an
+    // emitter regressed the park
+    for (const gone of ['paper-99-overlay', 'paper-97-overlay', 'paper-95-overlay'])
+      ok(!leaf((base[mode] as any).brand, gone), `${mode} brand ${gone} is still emitted — the overlay park regressed`)
     ok(JSON.stringify((dflt[mode] as any).neutral) === JSON.stringify((base[mode] as any).neutral),
       `${mode} explicit neutralH=brandH should be byte-equal to the absent default`)
   }
