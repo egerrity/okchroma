@@ -177,7 +177,7 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
   const linkRows: FlatTok[] = []
   flatten(g.link as FigmaGroup, '', linkRows)
   const LINK_STATE: Record<string, string> = {
-    'link': 'base/link/enabled',
+    'link': 'base/link/default',
     'link-hover': 'base/link/hover',
     'link-pressed': 'base/link/pressed',
   }

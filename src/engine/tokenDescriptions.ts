@@ -155,7 +155,7 @@ const SYSTEM: Record<string, Body> = {
   'system/surface/mid': PLANE('raised plane — cards, menus'),
   // ("overlays" reworded 2026-08-13: paper-overlay took the word as a label — the C50 law)
   'system/surface/high': PLANE('topmost plane — modals, dialogs'),
-  'system/link/enabled': LINK('', AA_BODY),
+  'system/link/default': LINK('', AA_BODY),
   'system/link/hover': LINK(' pointer-over', AA_BODY),
   'system/link/pressed': LINK(' pressed', AAA_BODY),
 }

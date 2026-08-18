@@ -70,6 +70,9 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // overlay/ subgroup; planes sunken|base → dim|mid; scrim → abs-black-060; the
   // offset ladder drops its word (006/008/016). These CURRENT-name entries must stay
   // FIRST: they are exactly what a 2026-08-12-era file holds as its real variables.
+  // the link rest state follows the solid group's word change (owner 2026-08-18:
+  // enabled died with the cta words — the rest leaf is default)
+  ['link/enabled', 'link/default'],
   ['cta/enabled', 'solid/fill'],
   ['cta/hover', 'solid/fill-hover'],
   ['cta/pressed', 'solid/fill-pressed'],
@@ -258,7 +261,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['pop', 'surface/high'],
   ['transparent', 'alpha/transparent'],
   ['scrim', 'alpha/abs-black-060'],
-  ['link', 'link/enabled'],
+  ['link', 'link/default'],
   ['link-hover', 'link/hover'],
   ['link-pressed', 'link/pressed'],
 ]
@@ -918,7 +921,7 @@ figma.ui.onmessage = async (msg) => {
       // link-pressed leaves (third column) — prims are hidden and unbound, renaming
       // them buys nothing.
       const LINK_LEAVES = [
-        ['link/enabled', 'ink-53-aa', 'link'],
+        ['link/default', 'ink-53-aa', 'link'],
         ['link/hover', 'ink-42-aa', 'link-hover'],
         ['link/pressed', 'ink-30-aaa', 'link-pressed'],
       ] as const

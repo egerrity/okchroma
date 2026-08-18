@@ -137,6 +137,9 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // abs-black-060; the offset ladder drops its word; the system rows re-home by zone
   // (leaf reshapes here, zone prefixes in RENAMED_GROUPS). CURRENT-name entries must
   // stay FIRST: they are exactly what a 2026-08-12-era file holds as its variables.
+  // the link rest state follows the solid group's word change (owner 2026-08-18:
+  // enabled died with the cta words — the rest leaf is default)
+  ['link/enabled', 'link/default'],
   ['cta/enabled', 'solid/fill'],
   ['cta/hover', 'solid/fill-hover'],
   ['cta/pressed', 'solid/fill-pressed'],
@@ -344,7 +347,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['pop', 'surface/high'],
   ['transparent', 'alpha/transparent'],
   ['scrim', 'abs-black-060'],
-  ['link', 'link/enabled'],
+  ['link', 'link/default'],
   ['link-hover', 'link/hover'],
   ['link-pressed', 'link/pressed'],
 ]
