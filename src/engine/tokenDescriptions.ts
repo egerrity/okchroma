@@ -30,14 +30,21 @@ const FAMILIES: Family[] = ['neutral', 'brand-primary', 'brand-secondary', 'crit
 const SIGNALS: Family[] = ['critical', 'warning', 'positive', 'info']
 
 // The per-family half of a scale row's Theming line (owner's language).
+// the parenthetical color words (owner 2026-08-18): the picker search matches
+// descriptions, and a designer types the COLOR, not the role — "red" should land on
+// the critical family. Legal under the foreign-label rule: the role round removed
+// every identity word from the paths, so none of these is a token label. white/black
+// are deliberately absent — the absolutes answer those searches by NAME, and any
+// other row saying them would lie across modes (ink-0, the poles) or advertise an
+// on-text choice the on rows must never make.
 const TINT: Record<Family, string> = {
-  'neutral': 'tints carry neutral hue',
+  'neutral': 'tints carry neutral hue (gray)',
   'brand-primary': 'tints carry primary hue',
   'brand-secondary': 'tints carry secondary hue (family derived or custom per brand)',
-  'critical': 'tints carry critical hue',
-  'warning': 'tints carry warning hue',
-  'positive': 'tints carry positive hue',
-  'info': 'tints carry info hue',
+  'critical': 'tints carry critical hue (red)',
+  'warning': 'tints carry warning hue (yellow)',
+  'positive': 'tints carry positive hue (green)',
+  'info': 'tints carry info hue (blue)',
 }
 
 const COLLIDES = 'may shift within band to de-conflict'
