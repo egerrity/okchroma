@@ -47,6 +47,14 @@ const TINT: Record<Family, string> = {
   'info': 'tints carry info hue (blue)',
 }
 
+// the same color words for the SOLID rows (owner 2026-08-18 follow-up: the solid
+// bodies are shared across families, so the TINT line never reaches them) — appended
+// to their theming lines as a family marker. Empty for the brands.
+const COLOR_WORD: Record<Family, string> = {
+  'neutral': ' (gray)', 'brand-primary': '', 'brand-secondary': '',
+  'critical': ' (red)', 'warning': ' (yellow)', 'positive': ' (green)', 'info': ' (blue)',
+}
+
 const COLLIDES = 'may shift within band to de-conflict'
 
 interface Body {
@@ -96,12 +104,12 @@ const SCALE: Record<string, Body> = {
   // the solid family (renamed from the cta words, owner 2026-08-18). "CTA" stays in
   // these bodies on purpose: it stopped being a token label, so it floods nothing,
   // and a designer's "cta" query still lands on these rows.
-  'solid/fill': { req: 'CTAs', theming: 'fully re-solved per theme and family' },
-  'solid/fill-hover': { req: 'CTA pointer-over state', theming: 'follows its rest fill' },
-  'solid/fill-pressed': { req: 'CTA pressed state', theming: 'follows its rest fill' },
-  'solid/edge': { req: 'min APCA visibility', theming: 'draws for CTAs that sit close to the page; strength per family tier' },
+  'solid/fill': { req: 'CTAs', theming: f => `fully re-solved per theme and family${COLOR_WORD[f]}` },
+  'solid/fill-hover': { req: 'CTA pointer-over state', theming: f => `follows its rest fill${COLOR_WORD[f]}` },
+  'solid/fill-pressed': { req: 'CTA pressed state', theming: f => `follows its rest fill${COLOR_WORD[f]}` },
+  'solid/edge': { req: 'min APCA visibility', theming: f => `draws for CTAs that sit close to the page; strength per family tier${COLOR_WORD[f]}` },
   // ("fill" reworded out 2026-08-18: fill became a label word and is foreign here)
-  'solid/on': { req: 'text over the CTA color', contrast: `${AA_BODY} over its CTA`, theming: 'whichever pole passes; quiet CTAs take the soft pole' },
+  'solid/on': { req: 'text over the CTA color', contrast: `${AA_BODY} over its CTA`, theming: f => `whichever pole passes; quiet CTAs take the soft pole${COLOR_WORD[f]}` },
 }
 
 // ── rows only the neutral carries ────────────────────────────────────────────
