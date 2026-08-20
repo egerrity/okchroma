@@ -65,6 +65,13 @@ const profileStamp = (profile: Profile) =>
 // up, so the direct map.get never wrongly hits a stale same-name variable. Any future
 // renumber must keep that ascending order.
 const RENAMED_LEAVES: Array<[string, string]> = [
+  // ── LINK-INVERSE REGROUP (owner 2026-08-20): the inverse trio folds INSIDE the
+  // link group (its solo group lasted one day, 2026-08-19..20). Multi-segment
+  // leaves — the suffix match carries the group word, so system/link/inverse finds
+  // a file's system/link-inverse/default and renames it in place.
+  ['link-inverse/default', 'link/inverse'],
+  ['link-inverse/hover', 'link/inverse-hover'],
+  ['link-inverse/pressed', 'link/inverse-pressed'],
   // ── SOLID RENAME + REGROUPS (owner 2026-08-18): the cta words → the solid/ state
   // group (fill/fill-hover/fill-pressed/edge/on); the paper overlays fold into the
   // overlay/ subgroup; planes sunken|base → dim|mid; scrim → abs-black-060; the
@@ -973,10 +980,12 @@ figma.ui.onmessage = async (msg) => {
       // these values — so the ui ALWAYS ships a seed-keyed prim and every posture aliases
       // it (the custom-link idiom, made unconditional).
       const linkInvGrp = shared.find(g => g.theme === 'link-inverse')
+      // theme leaves live INSIDE the link group (owner regroup 2026-08-20):
+      // link/inverse·inverse-hover·inverse-pressed, six flat leaves with the trio above
       const LINK_INVERSE_LEAVES = [
-        ['link-inverse/default', 'link'],
-        ['link-inverse/hover', 'link-hover'],
-        ['link-inverse/pressed', 'link-pressed'],
+        ['link/inverse', 'link'],
+        ['link/inverse-hover', 'link-hover'],
+        ['link/inverse-pressed', 'link-pressed'],
       ] as const
       if (linkInvGrp) {
         const invIsNew = LINK_INVERSE_LEAVES.some(([themeLeaf]) => !themeByName.has(`system/${themeLeaf}`))

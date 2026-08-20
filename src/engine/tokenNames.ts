@@ -100,11 +100,11 @@ export const CONTRACT_INVARIANT_ROWS: ReadonlySet<string> = new Set([
 export const EXT_NON_OVERRIDABLE = (p: string): boolean =>
   CONTRACT_INVARIANT_ROWS.has(p) || p.startsWith('utility/')
 // Brand-VARYING system-descended rows — the only non-family base/ paths extensions
-// may override: the link trios (the paper-surface one and the ink-30 inverse) and the
-// identity absolutes. NOTE the inverse needs its own prefix: 'base/link-inverse/' does
-// not start with 'base/link/' (hyphen vs slash after 'link').
+// may override: the link trio with its inverse leaves (owner regroup 2026-08-20:
+// the ink-30 inverse lives INSIDE the link group as inverse/inverse-hover/
+// inverse-pressed, so one prefix covers both trios) and the identity absolutes.
 export const EXT_OVERRIDABLE_SYSTEM = (p: string): boolean =>
-  p.startsWith('base/link/') || p.startsWith('base/link-inverse/')
+  p.startsWith('base/link/')
   || p === 'base/absolute/primary' || p === 'base/absolute/secondary'
 
 // Canonical emit order, uniform across every ramp (the white-label remap shape,

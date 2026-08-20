@@ -450,8 +450,9 @@ rows share the base/ zone:
   …).
 - **roles**: a state-carrying usage decision, kept in its natural group. The cta family
   inside its own family group (`base/brand-primary/solid/fill-hover`) and the
-  system rows `base/link/*`, `base/link-inverse/*` (the same link seed re-solved for
-  text on ink-30 surfaces: `resolveLinkInverseTrio`, anchored at `INK_30_GROUND`), and
+  system rows `base/link/*` (default/hover/pressed plus the inverse leaves
+  inverse/inverse-hover/inverse-pressed: the same link seed re-solved for
+  text on ink-30 surfaces via `resolveLinkInverseTrio`, anchored at `INK_30_GROUND`), and
   `base/surface/dim|low|base|high`.
 
 **The seam.** `payload.registerPath(path)` (`plugin-ext/payload.ts`) is the one function

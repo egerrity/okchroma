@@ -165,9 +165,9 @@ const SYSTEM: Record<string, Body> = {
   'system/link/default': LINK('', AA_BODY),
   'system/link/hover': LINK(' pointer-over', AA_BODY),
   'system/link/pressed': LINK(' pressed', AAA_BODY),
-  'system/link-inverse/default': LINK_INVERSE('', AA_BODY),
-  'system/link-inverse/hover': LINK_INVERSE(' pointer-over', AA_BODY),
-  'system/link-inverse/pressed': LINK_INVERSE(' pressed', AAA_BODY),
+  'system/link/inverse': LINK_INVERSE('', AA_BODY),
+  'system/link/inverse-hover': LINK_INVERSE(' pointer-over', AA_BODY),
+  'system/link/inverse-pressed': LINK_INVERSE(' pressed', AAA_BODY),
 }
 
 // Both plugins' user-facing path shapes: the ext base uses brand-primary/…, the community
@@ -193,7 +193,6 @@ const ZONE_MAP: Array<[string, string]> = [
   ['base/absolute/primary', 'system/abs-primary'],
   ['base/absolute/secondary', 'system/abs-secondary'],
   ['base/link/', 'system/link/'],
-  ['base/link-inverse/', 'system/link-inverse/'],
   ['base/alpha/', 'system/alpha/'],
   ['utility/surface/', 'system/surface/'],
   ['utility/shadow-', 'system/alpha/shadow-'],

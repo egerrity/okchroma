@@ -132,6 +132,13 @@ const DARK_COLUMNS = new Set<Column>(['dark'])
 // before any candidate, so the ascending walk would hand the vacating row to the
 // wrong stop; see the inkUpshifts pre-pass in the apply handler.
 const RENAMED_LEAVES: Array<[string, string]> = [
+  // ── LINK-INVERSE REGROUP (owner 2026-08-20): the inverse trio folds INSIDE the
+  // link group (its solo group lasted one day, 2026-08-19..20). Multi-segment
+  // leaves — the suffix match carries the group word, so base/link/inverse finds
+  // a file's base/link-inverse/default and renames it in place.
+  ['link-inverse/default', 'link/inverse'],
+  ['link-inverse/hover', 'link/inverse-hover'],
+  ['link-inverse/pressed', 'link/inverse-pressed'],
   // ── SOLID RENAME + OWNERSHIP ZONES (owner 2026-08-18): the cta words → the solid/
   // state group; overlays fold into overlay/; planes sunken|base → dim|mid; scrim →
   // abs-black-060; the offset ladder drops its word; the system rows re-home by zone
@@ -805,12 +812,12 @@ figma.ui.onmessage = async (msg) => {
       // apply regardless of rebuildBase, so a scope hand-edited in Figma's own panel
       // always reverts on the next apply.
       // The role-row band list: the solid/ state band (payload.ROLE_BANDS' one entry)
-      // + the surfaces and the link trio, which are code.ts's own rows. (cta-ink and
+      // + the surfaces and the link trio (whose prefix also carries the inverse leaves,
+      // owner regroup 2026-08-20), which are code.ts's own rows. (cta-ink and
       // cta-ink-strong left the set with their tokens, owner 2026-08-12.)
       const isRoleRow = (p: string): boolean =>
         /\/solid\//.test(p)
         || p.startsWith('base/link/')
-        || p.startsWith('base/link-inverse/')
         || p.startsWith('utility/surface/')
       const withSecondary = baseHasSecondary || hasSecondary
       const seedByCol = new Map<Column, Map<string, FlatTok>>(
