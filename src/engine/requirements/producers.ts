@@ -159,8 +159,10 @@ export type Ctx = ReturnType<typeof buildContext>
 // muted path only. Stop 9 has its own producer and is deliberately outside the bell — C31 gave
 // the highlight band its own laws and this must not reach them.
 // NOTE: unclamped by design — the perceptual solve sees the raw blend; makeStop clamps at emit.
-export const lightScaleChromaAt = (ctx: Ctx, baseC: number, satFraction: number) => (L: number): number => {
-  const cLadder = ctx.vSubtle * ctx.chromaBoost * baseC * ctx.bellAt(L)
+// boostOverride replaces ctx.chromaBoost in the ladder — used only to price the rung's
+// apparent target at pre-boost (identity) chroma; the emitted chroma always keeps the boost.
+export const lightScaleChromaAt = (ctx: Ctx, baseC: number, satFraction: number, boostOverride?: number) => (L: number): number => {
+  const cLadder = ctx.vSubtle * (boostOverride ?? ctx.chromaBoost) * baseC * ctx.bellAt(L)
   const cEnv = ctx.brandSat * satFraction * maxChromaAt(L, ctx.lightHueAt(L))
   return ctx.cAt('light', L, cLadder + ctx.envW * (cEnv - cLadder))
 }
@@ -203,8 +205,9 @@ export const APCA_TOL_LC = 0.05
 // (caller gamut-clamps).
 export function placeLightScale(
   ctx: Ctx, rootL: number, chromaAt: (L: number) => number, maxLFor: ((C: number, H: number) => number) | undefined,
+  targetChromaAt?: (L: number) => number,
 ): { L: number; C: number; H: number } {
-  let L = perceptualRungL(rootL, chromaAt(rootL), ctx.lightHueAt(rootL))
+  let L = perceptualRungL(rootL, chromaAt(rootL), ctx.lightHueAt(rootL), undefined, undefined, targetChromaAt?.(rootL))
   if (maxLFor !== undefined) {
     for (let pass = 0; pass < 6; pass++) {
       const next = Math.min(L, maxLFor(chromaAt(L), ctx.lightHueAt(L)))

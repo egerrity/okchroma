@@ -90,9 +90,13 @@ export function meanBoost(rootL: number, C: number, gamut: Gamut = MASTER_GAMUT)
 }
 
 // LIGHT rung target lightness: solve L so apparent = gray + KEEP·meanBoost. C/H
-// are the rung's own (already-derived) chroma/hue.
-export function perceptualRungL(rootL: number, C: number, H: number, keep = KEEP_LIGHT, gamut: Gamut = MASTER_GAMUT): number {
-  return solveLForApparent(grayApparentL(rootL, gamut) + keep * meanBoost(rootL, C, gamut), C, H, gamut)
+// are the rung's own (already-derived) chroma/hue. targetC lets the pop allowance
+// be priced at a different chroma than the solve emits: the goldBoost shine must not
+// inflate the rung's lightness target (at the H-K minimum the extra chroma buys no
+// apparent pop, so the solver could only cover the inflated target with true L —
+// warning's washes floated above the other signals').
+export function perceptualRungL(rootL: number, C: number, H: number, keep = KEEP_LIGHT, gamut: Gamut = MASTER_GAMUT, targetC = C): number {
+  return solveLForApparent(grayApparentL(rootL, gamut) + keep * meanBoost(rootL, targetC, gamut), C, H, gamut)
 }
 
 // The dark FILL policy: equalize apparent-brightness boost across hues. By

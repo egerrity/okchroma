@@ -165,7 +165,10 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       } else {
         const chromaAt = lightScaleChromaAt(ctx, sp.baseC ?? 0, sp.satFraction ?? 1)
         const contrastReq = sp.require && sp.require.metric !== 'min-separation' ? sp.require : undefined
-        placed = placeLightScale(ctx, sp.rootL, chromaAt, contrastReq ? maxLForOf(contrastReq, sp.stop, true) : undefined)
+        // goldBoost scales (signals) price the rung's apparent target at pre-boost chroma —
+        // the shine stays in the emitted chroma but no longer floats the rung's lightness
+        const targetChromaAt = ctx.chromaBoost !== 1 ? lightScaleChromaAt(ctx, sp.baseC ?? 0, sp.satFraction ?? 1, 1) : undefined
+        placed = placeLightScale(ctx, sp.rootL, chromaAt, contrastReq ? maxLForOf(contrastReq, sp.stop, true) : undefined, targetChromaAt)
         clamped = !!contrastReq
         if (sp.require?.metric === 'min-separation') {
           const refStop = sp.require.against === 'paper-99' ? 1 : sp.stop - 1
