@@ -94,6 +94,7 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
   const [ctaHover, setCtaHover] = React.useState(false)     // cta → cta-hover on hover
   const [ctaPressed, setCtaPressed] = React.useState(false)  // → cta-pressed while held
   const [linkState, setLinkState] = React.useState<'rest' | 'hover' | 'pressed'>('rest')
+  const [invLinkState, setInvLinkState] = React.useState<'rest' | 'hover' | 'pressed'>('rest')
   // Only brand & secondary preserve an exact input hex (identity); neutral and
   // signals are generated and carry none.
   const hasIdentity = prefix === 'brand' || prefix === 'secondary'
@@ -213,9 +214,25 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
           <div style={{ ...box, background: v('ink-53-aa') }}>
             <div style={{ ...boxLabel, color: 'var(--paper-100)' }}>inset &middot; emphasis</div>
             {/* the emphasis inset is the INVERTED fill: ink-53-aa (the emphasis fill since the
-                2026-07-29 collapse) carrying --paper-100, over an ink-30-aaa panel with paper-99 text */}
+                2026-07-29 collapse) carrying --paper-100, over an ink-30-aaa panel with paper-99 text.
+                The link on it is the INVERSE trio (owner round 2026-08-19) — the link seed
+                re-solved for exactly this ground; the system --link is illegible here. */}
             <div style={{ background: v('ink-30-aaa'), borderRadius: 8, padding: '10px 12px' }}>
-              <div style={{ ...boxBody, color: v('paper-99') }}>Emphasis copy in paper-99 text.</div>
+              <div style={{ ...boxBody, color: v('paper-99') }}>
+                Emphasis copy in paper-99 text with an{' '}
+                <a
+                  href="#"
+                  onClick={e => e.preventDefault()}
+                  onMouseEnter={() => setInvLinkState('hover')}
+                  onMouseLeave={() => setInvLinkState('rest')}
+                  onMouseDown={() => setInvLinkState('pressed')}
+                  onMouseUp={() => setInvLinkState('hover')}
+                  title={`--link-inverse${invLinkState === 'pressed' ? '-pressed' : invLinkState === 'hover' ? '-hover' : ''}`}
+                  style={{
+                    color: invLinkState === 'pressed' ? 'var(--fg-link-inverse-pressed)' : invLinkState === 'hover' ? 'var(--fg-link-inverse-hover)' : 'var(--fg-link-inverse)',
+                    textDecoration: 'underline', textUnderlineOffset: 2,
+                  }}>inverse link</a>.
+              </div>
             </div>
           </div>
         )}

@@ -128,6 +128,13 @@ const LINK = (state: string, contrast: string): Body => ({
   contrast,
   theming: 'rides the theme’s text action; custom seed re-solves; overridable per theme',
 })
+// ("ink" stays out of these bodies — it is a label word elsewhere and would flood
+// that search; "inverted backgrounds" is the established phrasing for the surface)
+const LINK_INVERSE = (state: string, contrast: string): Body => ({
+  req: 'links on inverted backgrounds' + state,
+  contrast,
+  theming: 'same seed as the link, re-solved for inverted backgrounds; overridable per theme',
+})
 
 const SYSTEM: Record<string, Body> = {
   'system/abs-black': ABS,
@@ -158,6 +165,9 @@ const SYSTEM: Record<string, Body> = {
   'system/link/default': LINK('', AA_BODY),
   'system/link/hover': LINK(' pointer-over', AA_BODY),
   'system/link/pressed': LINK(' pressed', AAA_BODY),
+  'system/link-inverse/default': LINK_INVERSE('', AA_BODY),
+  'system/link-inverse/hover': LINK_INVERSE(' pointer-over', AA_BODY),
+  'system/link-inverse/pressed': LINK_INVERSE(' pressed', AAA_BODY),
 }
 
 // Both plugins' user-facing path shapes: the ext base uses brand-primary/…, the community
@@ -183,6 +193,7 @@ const ZONE_MAP: Array<[string, string]> = [
   ['base/absolute/primary', 'system/abs-primary'],
   ['base/absolute/secondary', 'system/abs-secondary'],
   ['base/link/', 'system/link/'],
+  ['base/link-inverse/', 'system/link-inverse/'],
   ['base/alpha/', 'system/alpha/'],
   ['utility/surface/', 'system/surface/'],
   ['utility/shadow-', 'system/alpha/shadow-'],

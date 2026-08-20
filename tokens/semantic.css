@@ -90,6 +90,13 @@
   --fg-link:         var(--link);
   --fg-link-hover:   var(--link-hover);
   --fg-link-pressed: var(--link-pressed);
+
+  /* the INVERSE link trio (owner round 2026-08-19): the same link seed re-solved for
+     text on inverted surfaces (an ink-30-aaa fill); always its own emitted values —
+     no stop is anchored against that ground, so there is no alias posture */
+  --fg-link-inverse:         var(--link-inverse);
+  --fg-link-inverse-hover:   var(--link-inverse-hover);
+  --fg-link-inverse-pressed: var(--link-inverse-pressed);
 }
 
 /* ─── role.secondary (the brand's secondary ramp; mirrors brand when none) ──── */

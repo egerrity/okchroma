@@ -182,6 +182,18 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
     'link-pressed': 'base/link/pressed',
   }
   for (const t of linkRows) out.push({ ...t, path: LINK_STATE[t.path] ?? t.path })
+  // the INVERSE link trio (owner round 2026-08-19): the link seed re-solved for text on
+  // ink-30 surfaces (engine resolveLinkInverseTrio). Same overridable-system posture and
+  // the same engine leaf spelling, remapped to its own state names. Values are always
+  // resolved raw — there is no alias posture (no family row carries these values).
+  const linkInvRows: FlatTok[] = []
+  flatten(g['link-inverse'] as FigmaGroup, '', linkInvRows)
+  const LINK_INVERSE_STATE: Record<string, string> = {
+    'link': 'base/link-inverse/default',
+    'link-hover': 'base/link-inverse/hover',
+    'link-pressed': 'base/link-inverse/pressed',
+  }
+  for (const t of linkInvRows) out.push({ ...t, path: LINK_INVERSE_STATE[t.path] ?? t.path })
   // ── the low-usage tail (owner 2026-08-18: built last, panel bottom) ─────────────
   out.push({ path: 'base/alpha/transparent', ...W, a: 0 })
   // the SOFT ON-COLOR primitive (C43 follow-up, owner-named 2026-08-03): the on-text

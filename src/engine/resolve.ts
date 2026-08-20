@@ -4,7 +4,7 @@ import { generateScale, generateSubtleSecondary, type GeneratedScale, type Contr
 import { darkChromaCurve } from './darkChromaCurve'
 import type { Archetype } from './archetypes'
 import { SIGNALS, type SignalDef } from './signals'
-import { DARK_BRAND_FILL_MIN_L } from './stopTable'
+import { DARK_BRAND_FILL_MIN_L, INK_30_GROUND } from './stopTable'
 import {
   checkCollision,
   checkHueCollision,
@@ -211,6 +211,10 @@ export function resolveBrand(
     // internal (resolveTheme, derived secondary): the FLAT dark-cta register — see
     // DEFAULT_SECONDARY.darkFlatGapApp. Absent for every other caller (the prominence pin holds).
     darkCtaFlatApp?: number
+
+    // internal (resolveLinkInverseTrio): re-anchor this resolve's ink stops at the ink-30
+    // ground instead of a paper — see GenerateOptions.inkGround.
+    inkGround?: { light: { L: number; C: number; H: number }; dark: { L: number; C: number; H: number } }
   }
 ): ResolvedBrand {
   const sigScales = signalScalesFor(opts?.contrastProfile)
@@ -263,6 +267,7 @@ export function resolveBrand(
     // (buildSignalScales/signalShift) — neutral alone stays outside; exact has enforce off.
     apcaClearance: opts?.apcaClearance ?? true,
     darkCtaFlatApp: opts?.darkCtaFlatApp,
+    inkGround: opts?.inkGround,
   }
 
   let scale = generateScale(hex, name, undefined, floor)
@@ -514,6 +519,51 @@ export function resolveLinkTrio(
   return {
     link: at(s.light, 9), linkHover: at(s.light, 10), linkPressed: at(s.light, 11),
     linkDark: at(s.dark, 9), linkHoverDark: at(s.dark, 10), linkPressedDark: at(s.dark, 11),
+  }
+}
+
+// ── the INVERSE LINK trio (owner round 2026-08-19): the same link family, for text on an
+// INVERTED surface — an ink-30 fill rather than a paper. Reuse was measured and rejected:
+// the existing dark trio read 4.95/6.43/8.99 against the worst light ink-30 (hover short of
+// its 6.5 bar) and the light trio 3.97 against the worst dark ink-30 — under AA. So the
+// family gets its own solve, built exactly like resolveLinkTrio: the seed is the SEED of a
+// throwaway resolve and the shipped trio is that resolve's ink stops. The only thing that
+// moves is the ground the ink requires anchor at (INK_30_GROUND, stopTable.ts).
+//
+// THE CROSS: an inverse trio is text with its mode's polarity INVERTED — the light-mode
+// inverse link is light-on-dark, which is the DARK ramp's construction, and the dark-mode
+// inverse is dark-on-light, which is the LIGHT ramp's. So each ramp is handed the OTHER
+// mode's ground and each mode's trio is read off the opposite ramp. This is what "the
+// inverse is just the dark mode of whatever would have been output there" means once the
+// anchor follows the surface (owner 2026-08-19).
+//
+// The seed is the link's: the custom link hex when the link is de-conflicted (the red
+// cta → neutral case bundles DEFAULT_LINK_HEX, so its pushed-in blue feeds this family
+// too), else the brand's own hex — the default link ALIASES the primary's ink stops, but
+// no existing stop is anchored at the ink-30 ground, so the default inverse is a solve on
+// the same seed rather than an alias.
+export function resolveLinkInverseTrio(
+  seedHex: string,
+  contrastProfile?: ContrastProfile,
+): { link: ColorStop; linkHover: ColorStop; linkPressed: ColorStop; linkDark: ColorStop; linkHoverDark: ColorStop; linkPressedDark: ColorStop } {
+  // the ground is PER LANE (see INK_30_GROUND: a lane's themes only ship that lane's
+  // surfaces, so each lane is judged against its own worst)
+  const ground = INK_30_GROUND[contrastProfile === 'apca' ? 'apca' : 'wcag']
+  const s = resolveBrand(seedHex, 'link-inverse', {
+    skipCollisionRules: true,
+    contrastProfile,
+    // the cross — ramp keyed, ground mode-swapped
+    inkGround: { light: ground.dark, dark: ground.light },
+  }).scale
+  const at = (arr: ColorStop[], n: number) => {
+    const st = arr.find(x => x.stop === n)
+    if (!st) throw new Error(`resolveLinkInverseTrio: the link resolve has no ink stop ${n}`)
+    return st
+  }
+  return {
+    // light MODE reads the DARK ramp, and vice versa — the cross above
+    link: at(s.dark, 9), linkHover: at(s.dark, 10), linkPressed: at(s.dark, 11),
+    linkDark: at(s.light, 9), linkHoverDark: at(s.light, 10), linkPressedDark: at(s.light, 11),
   }
 }
 

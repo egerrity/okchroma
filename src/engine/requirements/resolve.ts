@@ -83,15 +83,8 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     if (!ref) throw new Error(`stop ${forWhom}: require against stop ${stopNum} but it is not resolved yet`)
     return ref
   }
-  const refYOf = (stopNum: number, forWhom: number): number => {
-    const ref = refOf(stopNum, forWhom)
-    return wcagY(ref.L, ref.C, ref.H)
-  }
-  // the apca reference Y: paper-97's (paper-2's) emitted (gamut-clamped) color through the APCA screen-luminance model
-  const refApcaYOf = (stopNum: number, forWhom: number): number => {
-    const ref = refOf(stopNum, forWhom)
-    return apcaYAt(ref.L, ref.C, ref.H)
-  }
+  // Reference measures are taken off the resolved GROUND (groundOf / apcaGroundOf below) —
+  // wcagY for the wcag lane, apcaYAt (the APCA screen-luminance model) for the apca lane.
   // THE DECLARED ANCHOR (owner 2026-07-28): `require.against` is now AUTHORITATIVE —
   // it used to be documentation while the resolver hardcoded paper-97 (paper-2) here and in the
   // apca path, so moving a require's anchor meant editing the engine rather than the
@@ -110,6 +103,16 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   // This IS why the collapse is visually cheap — it is the rule that made ink-53-aa (then
   // ink-10) land on top of highlight-9, both solving 4.5 against paper-95 (paper-3).
   const wcagAnchorStop = (req: Require, stop: number) => (stop >= 9 ? 3 : declaredAnchor(req))
+  // THE INVERSE INK GROUND (owner round 2026-08-19, opts.inkGround): the ink stops solve
+  // against an EXTERNAL color rather than a stop of their own ramp — the inverse link family
+  // is text on an ink-30 fill. Everything downstream reads its ground through these two, so
+  // the override lands once and the wcag/apca/shipped-pair paths cannot drift apart. Absent
+  // (every other caller) = the declared/lane anchor, byte-identical.
+  const inkGround = ctx.opts?.inkGround?.[mode]
+  const groundOf = (req: Require, stop: number): { L: number; C: number; H: number } =>
+    inkGround && stop >= 9 ? inkGround : refOf(wcagAnchorStop(req, stop), stop)
+  const apcaGroundOf = (req: Require, stop: number): { L: number; C: number; H: number } =>
+    inkGround && stop >= 9 ? inkGround : refOf(declaredAnchor(req), stop)
   // the CROSS-FAMILY paper bound (owner defect 2026-08-03 — her measured pair was the
   // brand ink-53-aa (ink-9) on the NEUTRAL paper-95 (paper-3), 4.479:1; her follow-up
   // caught mark-74-aa (highlight-8) the same way, 26/72 under 3:1): "usable on every
@@ -132,12 +135,14 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   // `withMargin` mirrors the wcag idiom: the scale solve carries the emit margin, the ink solve doesn't.
   const maxLForOf = (req: Require, forWhom: number, withMargin: boolean): ((C: number, H: number) => number) => {
     if (req.metric === 'wcag') {
-      const refY = refYOf(wcagAnchorStop(req, forWhom), forWhom)
+      const g = groundOf(req, forWhom)
+      const refY = wcagY(g.L, g.C, g.H)
       const t = withMargin ? req.target + 0.05 : req.target
       return (C, H) => findMaxLForContrast(C, H, refY, t)
     }
     if (req.metric === 'apca') {
-      const refA = refApcaYOf(declaredAnchor(req), forWhom)
+      const ga = apcaGroundOf(req, forWhom)
+      const refA = apcaYAt(ga.L, ga.C, ga.H)
       const t = withMargin ? req.targetLc + APCA_SOLVE_MARGIN_LC : req.targetLc
       return (C, H) => findMaxLForApcaLc(C, H, refA, t)
     }
@@ -287,7 +292,8 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         const hAtL = (L: number) => (carryReq ? (spineH ?? ls!.H) : d.darkHueAtL(L))
         const cAtL = (L: number) => (carryReq ? ls!.C : chromaAt!(L))
         const isApca = req.metric === 'apca'
-        const refMeasY = isApca ? refApcaYOf(declaredAnchor(req), sp.stop) : refYOf(wcagAnchorStop(req, sp.stop), sp.stop)
+        const gMeas = isApca ? apcaGroundOf(req, sp.stop) : groundOf(req, sp.stop)
+        const refMeasY = isApca ? apcaYAt(gMeas.L, gMeas.C, gMeas.H) : wcagY(gMeas.L, gMeas.C, gMeas.H)
         // wcag floors are D1 legality: both renditions of the fill must clear the target
         const measure = (L: number, C: number, H: number): number =>
           isApca ? Math.abs(apcaLc(apcaYAt(L, C, H), refMeasY)) : legalRatio(L, C, H, refMeasY)
@@ -337,14 +343,17 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       // held — the dark floor's delta-purity idiom, and the moves are ≤ ~0.01 L) until
       // it clears. A stop whose shipped pair already clears does not move — byte-
       // identical outside the failing set (19/72 of the agnostic sweep, green–cyan).
-      const anchor = refOf(wcagAnchorStop(sp.require, sp.stop), sp.stop)
+      const anchor = groundOf(sp.require, sp.stop)
       const anchorShipY = shippedY(anchor.L, anchor.C, anchor.H)
       // stops 8+ also clear the worst neutral paper (the cross-family bound above) —
-      // the min-ratio anchor, since the binding paper is whichever sits nearest in Y
+      // the min-ratio anchor, since the binding paper is whichever sits nearest in Y.
+      // EXCEPT on the inverse ink ground: that text sits on an ink-30 fill, never on a
+      // paper, so the paper bound is not its law — its own frozen worst IS the bound.
+      const paperBound = sp.stop >= 8 && !(inkGround && sp.stop >= 9)
       const shipRatio = (L: number) => {
         const y = shippedY(L, placed.C, placed.H)
         const own = contrastRatio(y, anchorShipY)
-        return sp.stop >= 8 ? Math.min(own, contrastRatio(y, NEUTRAL_P3_WORST_SHIP_Y[mode])) : own
+        return paperBound ? Math.min(own, contrastRatio(y, NEUTRAL_P3_WORST_SHIP_Y[mode])) : own
       }
       if (shipRatio(placed.L) < sp.require.target) {
         const away = shippedY(placed.L, placed.C, placed.H) < anchorShipY ? -1 : +1
@@ -352,14 +361,15 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         for (let i = 0; i < 100 && shipRatio(L2) < sp.require.target; i++) L2 += away * 0.001
         if (shipRatio(L2) >= sp.require.target) { placed = { ...placed, L: L2 }; clamped = true }
       }
-      const refY = refYOf(wcagAnchorStop(sp.require, sp.stop), sp.stop)
+      const refY = wcagY(anchor.L, anchor.C, anchor.H)
       const got = Math.min(
         legalRatio(placed.L, clampChromaToGamut(placed.L, placed.C, placed.H), placed.H, refY),
         shipRatio(placed.L),
       )
       if (got < sp.require.target - 1e-3) unresolvable = `stop ${sp.stop}: contrast ${got.toFixed(2)} < required ${sp.require.target}`
     } else if (sp.require?.metric === 'apca') {
-      const refA = refApcaYOf(declaredAnchor(sp.require), sp.stop)
+      const ga = apcaGroundOf(sp.require, sp.stop)
+      const refA = apcaYAt(ga.L, ga.C, ga.H)
       const got = Math.abs(apcaLc(apcaYAt(placed.L, clampChromaToGamut(placed.L, placed.C, placed.H), placed.H), refA))
       if (got < sp.require.targetLc - APCA_TOL_LC) unresolvable = `stop ${sp.stop}: |Lc| ${got.toFixed(1)} < required ${sp.require.targetLc}`
     } else if (sp.require?.metric === 'min-separation') {

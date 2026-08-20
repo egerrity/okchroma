@@ -4,7 +4,7 @@ import { toHex, ctaNeedsBorder, pageStopFor, ctaBorderRung, OFFSET_ALPHAS, type 
 import { srgbEmitChannels } from './colorMath'
 import { stopTokenName, tokenOrder, SOLID_FILL, SOLID_FILL_HOVER, SOLID_FILL_PRESSED, SOLID_EDGE, SOLID_ON, SOLID_STATE_LEAVES } from './tokenNames'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
-import { OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, SOFT_ON_CTA_ALPHA, softOnCtaPasses, escapeCtaFamily, resolveLinkTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
+import { OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, SOFT_ON_CTA_ALPHA, softOnCtaPasses, escapeCtaFamily, resolveLinkTrio, resolveLinkInverseTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v))
 
@@ -209,6 +209,16 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
   const nScale = generateNeutralScale(input.neutralH ?? scale.brandH, input.neutralLevel ?? 'default', input.contrastProfile)
   // custom link seed resolved ONCE (both modes read it)
   const lt = input.linkHex ? resolveLinkTrio(input.linkHex, input.contrastProfile) : null
+  // the INVERSE link trio (owner round 2026-08-19): the same link seed re-solved for
+  // text on ink-30 surfaces (resolve.resolveLinkInverseTrio — the ink register anchored
+  // at INK_30_GROUND, modes crossed). Unlike the link there is NO alias posture: no
+  // existing stop is anchored at the ink-30 ground, so the default seeds from the
+  // brand's own hex and the values always ship raw. (identityHex is typed optional but
+  // generateScale always sets it; the ink-stop fallback keeps a hand-built scale on its
+  // own hue rather than throwing.)
+  const invSeed = input.linkHex ?? scale.identityHex
+    ?? (() => { const s9 = scale.light.find(x => x.stop === 9)!; const e = srgbEmitChannels(s9); return toHex(e.r, e.g, e.b) })()
+  const invLt = resolveLinkInverseTrio(invSeed, input.contrastProfile)
   // (the neutral's STRONG text-cta mirror DELETED with the cta-ink register, owner
   // 2026-08-12 — it was the same three ink stops descending; consumers read them directly)
   const neutralExtra = (mode: 'light' | 'dark') => ctaFamily(nScale, mode, 'neutral')
@@ -299,11 +309,17 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
         ? { 'link': colorFromStop(lt.link), 'link-hover': colorFromStop(lt.linkHover), 'link-pressed': colorFromStop(lt.linkPressed) }
         : { 'link': colorFromStop(lt.linkDark), 'link-hover': colorFromStop(lt.linkHoverDark), 'link-pressed': colorFromStop(lt.linkPressedDark) })
       : { 'link': colorFromStop(scaleInkAt(9)), 'link-hover': colorFromStop(scaleInkAt(10)), 'link-pressed': colorFromStop(scaleInkAt(11)) }
+    // the INVERSE trio's group mirrors the link group's leaf spelling so both plugins'
+    // state-name remaps stay one shared shape
+    const linkInverseGroup: FigmaGroup = mode === 'light'
+      ? { 'link': colorFromStop(invLt.link), 'link-hover': colorFromStop(invLt.linkHover), 'link-pressed': colorFromStop(invLt.linkPressed) }
+      : { 'link': colorFromStop(invLt.linkDark), 'link-hover': colorFromStop(invLt.linkHoverDark), 'link-pressed': colorFromStop(invLt.linkPressedDark) }
     const g: FigmaGroup = {
       brand: brandGroup,
       secondary: secondaryGroup,
       neutral: neutralGroup,
       link: linkGroup,
+      'link-inverse': linkInverseGroup,
     }
     for (const sig of input.signals) {
 

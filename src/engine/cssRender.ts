@@ -4,7 +4,7 @@ import { generateNeutralScale, type GeneratedScale, type ColorStop, type Neutral
 import { srgbEmitChannels, masterEmitChannels } from './colorMath'
 import { clampChromaToGamut, apcaY, apcaLc } from './constraints'
 import { stopTokenName, tokenOrder } from './tokenNames'
-import { signalScalesFor, OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, SOFT_ON_CTA_ALPHA, softOnCtaPasses, escapeCtaFamily, resolveLinkTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
+import { signalScalesFor, OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, SOFT_ON_CTA_ALPHA, softOnCtaPasses, escapeCtaFamily, resolveLinkTrio, resolveLinkInverseTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
 import { SIGNALS, SIGNAL_EMIT_NAME } from './signals'
 
 export function toHex(r: number, g: number, b: number): string {
@@ -480,6 +480,27 @@ export function brandCss(
     return trio.filter(([, s]) => p3Differs(s)).map(([n, s]) => `  --${n}: ${p3Value(s)};`)
   }
 
+  // the INVERSE link trio (owner round 2026-08-19): the same link seed re-solved for text
+  // on ink-30 surfaces (resolve.resolveLinkInverseTrio — the ink register anchored at
+  // INK_30_GROUND, modes crossed). No alias posture exists: no emitted stop is anchored at
+  // the ink-30 ground, so the default seeds from the brand's own hex and the trio always
+  // ships raw hexes — which also means it always needs its own P3 lines (the custom-link
+  // rationale above applies to every posture here).
+  // (identityHex is typed optional but generateScale always sets it; the ink-stop
+  // fallback keeps a hand-built scale on its own hue rather than throwing)
+  const inverseSeed = linkHex ?? scale.identityHex
+    ?? stopHex(scale.light.find(x => x.stop === 9)!)
+  const linkInverseTrio = resolveLinkInverseTrio(inverseSeed, contrastProfile)
+  const linkInverse = (mode: 'light' | 'dark'): string[] => (mode === 'light'
+    ? [`  --link-inverse: ${stopHex(linkInverseTrio.link)};`, `  --link-inverse-hover: ${stopHex(linkInverseTrio.linkHover)};`, `  --link-inverse-pressed: ${stopHex(linkInverseTrio.linkPressed)};`]
+    : [`  --link-inverse: ${stopHex(linkInverseTrio.linkDark)};`, `  --link-inverse-hover: ${stopHex(linkInverseTrio.linkHoverDark)};`, `  --link-inverse-pressed: ${stopHex(linkInverseTrio.linkPressedDark)};`])
+  const linkInverseP3 = (mode: 'light' | 'dark'): string[] => {
+    const trio = mode === 'light'
+      ? [['link-inverse', linkInverseTrio.link], ['link-inverse-hover', linkInverseTrio.linkHover], ['link-inverse-pressed', linkInverseTrio.linkPressed]] as const
+      : [['link-inverse', linkInverseTrio.linkDark], ['link-inverse-hover', linkInverseTrio.linkHoverDark], ['link-inverse-pressed', linkInverseTrio.linkPressedDark]] as const
+    return trio.filter(([, s]) => p3Differs(s)).map(([n, s]) => `  --${n}: ${p3Value(s)};`)
+  }
+
   // neutral cta escape re-resolution: emitted AFTER the brand body so the cascade takes
   // these values (the outline idiom).
   const escape = (mode: 'light' | 'dark'): string[] => {
@@ -553,6 +574,7 @@ export function brandCss(
     ...brandKindP3Body('neutral', nScale, 'light'),
     ...effOverrides.flatMap(o => brandKindP3Body(SIGNAL_EMIT_NAME[o.name], o.scale, 'light')),
     ...linkP3('light'),
+    ...linkInverseP3('light'),
   ]
   const p3Dark = [
     ...dropEscapeCta(brandKindP3Body('brand', scale, 'dark')),
@@ -560,6 +582,7 @@ export function brandCss(
     ...brandKindP3Body('neutral', nScale, 'dark'),
     ...effOverrides.flatMap(o => brandKindP3Body(SIGNAL_EMIT_NAME[o.name], o.scale, 'dark')),
     ...linkP3('dark'),
+    ...linkInverseP3('dark'),
   ]
 
   return [
@@ -569,6 +592,7 @@ export function brandCss(
     ...brandKindBody('brand', scale, 'light', page.light),
     ...escape('light'),
     ...link('light'),
+    ...linkInverse('light'),
     brandIdentity,
     ...secondaryLight,
     ...softOnCta('light'),
@@ -582,6 +606,7 @@ export function brandCss(
     ...brandKindBody('brand', scale, 'dark', page.dark),
     ...escape('dark'),
     ...link('dark'),
+    ...linkInverse('dark'),
     ...secondaryDark,
     ...softOnCta('dark'),
     ...outline('dark'),

@@ -810,6 +810,7 @@ figma.ui.onmessage = async (msg) => {
       const isRoleRow = (p: string): boolean =>
         /\/solid\//.test(p)
         || p.startsWith('base/link/')
+        || p.startsWith('base/link-inverse/')
         || p.startsWith('utility/surface/')
       const withSecondary = baseHasSecondary || hasSecondary
       const seedByCol = new Map<Column, Map<string, FlatTok>>(

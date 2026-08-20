@@ -901,7 +901,7 @@ figma.ui.onmessage = async (msg) => {
       }
       // ④ signals → their shared primitive paths (engine order: red, yellow, green, info-color)
       for (const grp of shared) {
-        if (grp === neutralGrp || grp.theme === 'link') continue
+        if (grp === neutralGrp || grp.theme === 'link' || grp.theme === 'link-inverse') continue
         for (const t of flatten(grp.light)) {
           aliasInto(`${grp.theme}/${t.path}`, `${grp.prim}/${t.path}`)
         }
@@ -964,6 +964,40 @@ figma.ui.onmessage = async (msg) => {
             if (cur && typeof cur === 'object' && 'type' in cur) continue
             const target = findPrim(primary + brandLeaf) ?? findPrim(primary + 'ink-42-aa')
             if (target) aliasInto(`system/${themeLeaf}`, target, m.modeId)
+          }
+        }
+      }
+
+      // ⑤bis the INVERSE link trio (owner round 2026-08-19): the link seed re-solved for
+      // text on inverted surfaces. NO default-alias posture exists — no brand row carries
+      // these values — so the ui ALWAYS ships a seed-keyed prim and every posture aliases
+      // it (the custom-link idiom, made unconditional).
+      const linkInvGrp = shared.find(g => g.theme === 'link-inverse')
+      const LINK_INVERSE_LEAVES = [
+        ['link-inverse/default', 'link'],
+        ['link-inverse/hover', 'link-hover'],
+        ['link-inverse/pressed', 'link-pressed'],
+      ] as const
+      if (linkInvGrp) {
+        const invIsNew = LINK_INVERSE_LEAVES.some(([themeLeaf]) => !themeByName.has(`system/${themeLeaf}`))
+        for (const [themeLeaf, primLeaf] of LINK_INVERSE_LEAVES) {
+          aliasInto(`system/${themeLeaf}`, `${linkInvGrp.prim}/${primLeaf}`)
+        }
+        // BACKFILL on first appearance (the linkIsNew idiom): freshly created theme vars
+        // hold the create-default (black) in every OTHER brand mode. Unlike the link there
+        // is no per-brand row to point each mode at — other brands' inverse prims don't
+        // exist until they re-apply — so every raw mode takes THIS brand's prim (better a
+        // static trio than black; the same tradeoff the link backfill records). A later
+        // apply of that brand sets its own mode and wins over this.
+        if (invIsNew) {
+          for (const m of th.coll.modes) {
+            if (m.name === brand) continue
+            for (const [themeLeaf, primLeaf] of LINK_INVERSE_LEAVES) {
+              const themeVar = themeByName.get(`system/${themeLeaf}`)
+              const cur = themeVar?.valuesByMode[m.modeId]
+              if (cur && typeof cur === 'object' && 'type' in cur) continue
+              aliasInto(`system/${themeLeaf}`, `${linkInvGrp.prim}/${primLeaf}`, m.modeId)
+            }
           }
         }
       }

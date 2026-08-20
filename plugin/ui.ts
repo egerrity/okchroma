@@ -520,6 +520,16 @@ function buildAndSend() {
         prim: `system/link/${customLink.slice(1)}`,
         light: light.link, dark: dark.link,
       }] : []),
+      // the INVERSE link trio (owner round 2026-08-19): the link seed re-solved for text
+      // on inverted (strong-text-colored) surfaces. Unlike the link there is NO alias
+      // posture — no brand stop carries these values — so the prim ALWAYS ships, seed-keyed
+      // like the custom link's. The key mirrors themeToFigma's seed choice (linkHex ??
+      // identityHex) so the prim name can never disagree with the values under it.
+      {
+        theme: 'link-inverse',
+        prim: `system/link-inverse/${(customLink ?? r.scale.identityHex ?? norm).slice(1)}`,
+        light: light['link-inverse'], dark: dark['link-inverse'],
+      },
     ]
 
     // confirmed only when this exact name was just flagged as an overwrite.

@@ -182,6 +182,40 @@ export const INK_10_CONTRAST = 6.5
 
 export const INK_11_CONTRAST_FLOOR = 7.0
 
+// THE INK-30 GROUND (owner round 2026-08-19): the inverse link family is text on an
+// INVERTED surface — an ink-30 fill, not a paper — so its ink requires anchor here
+// instead of at a paper of their own ramp. Same doctrine as NEUTRAL_P3_WORST_SHIP_Y
+// (requirements/resolve.ts): a cross-family bound frozen at the worst surface any theme
+// can put on screen, so "the inverse link is usable on every ink-30" is a law rather
+// than a per-theme hope. Stored as the COLOR, not a Y — each lane derives its own
+// measure (shippedY for wcag, apcaY for apca) and the shipped-pair floor needs the
+// anchor's own 8-bit rendition.
+//   light = the LIGHTEST light-mode ink-30 — light text on it is the binding case, and
+//           clearing the lightest ground clears every darker one.
+//   dark  = the DARKEST dark-mode ink-30 — the mirror.
+// PER LANE (like signalScalesFor — a lane's themes only ever ship that lane's surfaces,
+// so each lane is judged against its own worst; one shared bound was tried and the wcag
+// lane's darker dark-worst put the apca pressed bar, Lc for the strong text rung, past
+// the black pole's ceiling on a ground the apca lane never ships). The light worsts
+// coincide today (the same olive-band seed binds both lanes); stated per lane anyway so
+// a divergence is a value edit, not a shape change.
+// Measured 2026-08-19 over hue 0..355 x C 0.02..0.24 x L 0.40..0.90, every NeutralLevel x
+// hue, and the signal set, per lane, via resolveBrand/generateNeutralScale -> stopHex.
+// RE-DERIVE if the ink ladder, the ink chroma floors, or the neutral curve moves —
+// reqtoken-audit's ground-bound tripwire catches an escape on its own sweep.
+// Shipped renditions: light #3c3800 (Y 0.037890) both lanes · dark wcag #e1dbfc
+// (Y 0.736989) · dark apca #ceedd6 (Y 0.785452).
+export const INK_30_GROUND = {
+  wcag: {
+    light: { L: 0.3334966864733433, C: 0.07399966383476321, H: 104.26776675496032 },
+    dark: { L: 0.907688606079988, C: 0.045, H: 293.66431934911327 },
+  },
+  apca: {
+    light: { L: 0.3334966864733433, C: 0.07399966383476321, H: 104.26776675496032 },
+    dark: { L: 0.9183200227624329, C: 0.045, H: 153.30922413895024 },
+  },
+} as const
+
 // Dark fill min-L family — one concept (how light a fed dark fill may sit),
 // parameterized by consumer via the `darkFillMinL` opt: DARK_CTA_MIN_L is the
 // default floor; brands raise it for prominence (DARK_BRAND_FILL_MIN_L); signals

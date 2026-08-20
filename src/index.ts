@@ -27,6 +27,9 @@ export {
 export {
   resolveBrand,
   resolveTheme,
+  resolveLinkTrio,
+  resolveLinkInverseTrio,
+  DEFAULT_LINK_HEX,
   SIGNAL_SCALES,
   signalScalesFor,
   SECONDARY_DISTINCT_DELTA_E,

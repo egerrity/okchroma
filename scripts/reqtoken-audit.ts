@@ -7,7 +7,9 @@ import { resolveRamp } from '../src/engine/requirements/resolve'
 import { MODE_SPECS } from '../src/engine/requirements/spec'
 import { withProfile, type ContrastProfile } from '../src/engine/requirements/profiles'
 import { APCA_TOL_LC, apcaYAt } from '../src/engine/requirements/producers'
-import { clampChromaToGamut, wcagY, contrastRatio, oklchToLinearRgb, apcaLc, apcaY } from '../src/engine/constraints'
+import { clampChromaToGamut, wcagY, contrastRatio, oklchToLinearRgb, apcaLc, apcaY, shippedY } from '../src/engine/constraints'
+import { resolveBrand, resolveLinkInverseTrio } from '../src/engine/resolve'
+import { INK_30_GROUND } from '../src/engine/stopTable'
 
 const enc = (c: number) => { c = Math.max(0, Math.min(1, c)); return c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055 }
 const oklchToHex = (L: number, C: number, H: number) => '#' + oklchToLinearRgb(L, C, H).map(c => Math.round(enc(c) * 255).toString(16).padStart(2, '0')).join('')
@@ -154,6 +156,57 @@ for (const H of HUES) for (const C of CHROMAS) {
           fails.push({ seed: id, mode, check: 'on-fill-pole', detail: `chosen ${r.ons.onFillIsWhite ? 'white' : 'black'} ${chosenWcag.toFixed(2)}, other passes ${otherWcag.toFixed(2)}`, sev: 15 })
       }
     }
+  }
+}
+
+// 6b. the INVERSE LINK trio (owner round 2026-08-19) — HARD. The trio is a role-level
+//     construct (resolveLinkInverseTrio: the link seed's ink register re-anchored at
+//     INK_30_GROUND, modes crossed), so the declaration-driven loop above never sees it.
+//     Two laws, each lane under its own metric:
+//       a) the trio clears its bars against the frozen ground — wcag on the SHIPPED pair
+//          (the 8-bit basis the constant is stated in), apca as |Lc| vs the ground's apcaY
+//          at the DEFAULT_APCA_LC_MAP translations of the same bars;
+//       b) the GROUND BOUND tripwire: no ink-30 this sweep resolves may escape the frozen
+//          worst (lighter than light's, darker than dark's) — the constant's re-derive
+//          note (stopTable.ts) names the full derivation sweep; this catches drift.
+{
+  const INK_BARS: Array<[number, number]> = [[4.5, 75], [6.5, 85], [7.0, 90]] // [wcag, Lc] per state
+  for (const profile of PROFILES) for (const H of HUES) for (const C of CHROMAS) {
+    const ground = INK_30_GROUND[profile]
+    const groundShipY = {
+      light: shippedY(ground.light.L, ground.light.C, ground.light.H),
+      dark: shippedY(ground.dark.L, ground.dark.C, ground.dark.H),
+    }
+    const groundApcaY = {
+      light: apcaYAt(ground.light.L, ground.light.C, ground.light.H),
+      dark: apcaYAt(ground.dark.L, ground.dark.C, ground.dark.H),
+    }
+    const hex = oklchToHex(SEED_L, C, H)
+    const id = `${profile} H${H} C${C}`
+    const t = resolveLinkInverseTrio(hex, profile)
+    const trios = {
+      light: [t.link, t.linkHover, t.linkPressed],
+      dark: [t.linkDark, t.linkHoverDark, t.linkPressedDark],
+    } as const
+    for (const mode of ['light', 'dark'] as const) {
+      trios[mode].forEach((st, i) => {
+        const [bar, barLc] = INK_BARS[i]
+        // any miss is HARD (sev over the gate threshold) — these bars are the family's law
+        if (profile === 'wcag') {
+          const got = contrastRatio(shippedY(st.L, st.C, st.H), groundShipY[mode])
+          if (got < bar - 1e-3) fails.push({ seed: id, mode, check: 'link-inverse', detail: `state ${i} shipped ${got.toFixed(2)} < ${bar} vs ground`, sev: 15 })
+        } else {
+          const got = Math.abs(apcaLc(apcaYAt(st.L, clampChromaToGamut(st.L, st.C, st.H), st.H), groundApcaY[mode]))
+          if (got < barLc - APCA_TOL_LC) fails.push({ seed: id, mode, check: 'link-inverse', detail: `state ${i} |Lc| ${got.toFixed(1)} < ${barLc} vs ground`, sev: 15 })
+        }
+      })
+    }
+    // b) ground bound: this seed's own ink-30 must stay inside the frozen worst
+    const rb = resolveBrand(hex, 'ground-bound', { contrastProfile: profile === 'apca' ? 'apca' : undefined })
+    const li = rb.scale.light.find(s => s.stop === 11)!, di = rb.scale.dark.find(s => s.stop === 11)!
+    const liY = shippedY(li.L, li.C, li.H), diY = shippedY(di.L, di.C, di.H)
+    if (liY > groundShipY.light + 1e-9) fails.push({ seed: id, mode: 'light', check: 'ink30-ground-bound', detail: `ink-30 Y ${liY.toFixed(4)} > frozen worst ${groundShipY.light.toFixed(4)} — re-derive INK_30_GROUND`, sev: 50 })
+    if (diY < groundShipY.dark - 1e-9) fails.push({ seed: id, mode: 'dark', check: 'ink30-ground-bound', detail: `ink-30 Y ${diY.toFixed(4)} < frozen worst ${groundShipY.dark.toFixed(4)} — re-derive INK_30_GROUND`, sev: 50 })
   }
 }
 

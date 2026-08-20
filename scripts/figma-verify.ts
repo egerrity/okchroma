@@ -186,6 +186,22 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
     ok(l['link'].$value.hex !== leaf(b, 'ink-53-aa').$value.hex, `${mode} custom link should differ from the brand's ink-53-aa`)
   }
   ok((custom.light as any).link['link'].$value.hex === '#2a5cb4', `custom link light hex ${(custom.light as any).link['link'].$value.hex} != #2a5cb4 (the #0B57D0 seed through the wcag register, gamut-mapped emit)`)
+
+  // the INVERSE link trio (owner round 2026-08-19): the same seed re-solved for text on
+  // ink-30 surfaces — always raw values (no alias posture), same leaf spelling as link.
+  // The light-mode inverse is a LIGHT color (dark-ramp construction) so it must differ
+  // from the light-mode link; the custom seed must move the inverse with it.
+  for (const mode of ['light', 'dark'] as const) {
+    const inv = (figma[mode] as any)['link-inverse']
+    for (const leafName of ['link', 'link-hover', 'link-pressed'])
+      ok(!!inv?.[leafName], `${mode}.link-inverse.${leafName} missing`)
+    ok(inv['link'].$value.hex !== (figma[mode] as any).link['link'].$value.hex,
+      `${mode} inverse link should differ from the link on the same seed`)
+  }
+  ok((figma.light as any)['link-inverse']['link'].$value.hex !== (figma.dark as any)['link-inverse']['link'].$value.hex,
+    'inverse link should differ across modes (each mode solves against its own ground)')
+  ok((custom.light as any)['link-inverse']['link'].$value.hex !== (figma.light as any)['link-inverse']['link'].$value.hex,
+    'a custom link seed should re-seed the inverse trio too')
 }
 
 // VIVIDNESS LEVER (Phase 5): style:'full-chroma' releases the ramp's vividness cap

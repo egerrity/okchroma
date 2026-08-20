@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { generateScale, generateNeutralScale } from '../../src/engine/colorEngine'
 import { stopHex, ctaNeedsBorder, pageStopFor, ctaBorderRung, OFFSET_ALPHAS } from '../../src/engine/cssRender'
-import { defaultSecondarySeed, SOFT_ON_CTA_ALPHA } from '../../src/engine/resolve'
+import { defaultSecondarySeed, SOFT_ON_CTA_ALPHA, resolveLinkInverseTrio } from '../../src/engine/resolve'
 import { emitDtcgRamp } from '../../src/engine/requirements/dtcg'
 // Real Unify export data, borrowed for the Motivation page's evidence figures.
 // Labels on anything rendered from it use FAMILY hue words only, never theme
@@ -132,6 +132,9 @@ type TokGroup = { register: string; caption: string; rows: TokRow[] }
 function buildTokenGroups(): TokGroup[] {
   const scale = generateScale(TOKEN_REF_HEX, 'docs', undefined, {})
   const neutral = generateNeutralScale(scale.brandH, 'default')
+  // the inverse link trio — same seed as the default link (the brand hex), re-solved
+  // for ink-30 surfaces; always raw values, never an alias
+  const inv = resolveLinkInverseTrio(TOKEN_REF_HEX)
   const L = scale.light, D = scale.dark
   const NL = neutral.light, ND = neutral.dark
   const hex = (s: { L: number; C: number; H: number; stop: number; r: number; g: number; b: number }) => stopHex(s as Parameters<typeof stopHex>[0])
@@ -195,6 +198,9 @@ function buildTokenGroups(): TokGroup[] {
         { token: 'link/default', role: "hyperlinks; with no custom seed, aliases the primary's ink-53-aa", guarantee: '4.5:1, on every paper', light: alias(hex(stopAt(L, 9)), '→ ink-53-aa'), dark: alias(hex(stopAt(D, 9)), '→ ink-53-aa') },
         { token: 'link/hover', role: 'default alias → ink-42-aa', guarantee: '6.5:1, on every paper', light: alias(hex(stopAt(L, 10)), '→ ink-42-aa'), dark: alias(hex(stopAt(D, 10)), '→ ink-42-aa') },
         { token: 'link/pressed', role: 'default alias → ink-30-aaa', guarantee: '7:1, on every paper', light: alias(hex(stopAt(L, 11)), '→ ink-30-aaa'), dark: alias(hex(stopAt(D, 11)), '→ ink-30-aaa') },
+        { token: 'link-inverse/default', role: 'hyperlinks on inverted (ink-30) fills; same seed as the link, re-solved against the worst shipped ink-30', guarantee: '4.5:1, on every ink-30', light: swatch(hex(inv.link as never)), dark: swatch(hex(inv.linkDark as never)) },
+        { token: 'link-inverse/hover', role: 'hover state', guarantee: '6.5:1, on every ink-30', light: swatch(hex(inv.linkHover as never)), dark: swatch(hex(inv.linkHoverDark as never)) },
+        { token: 'link-inverse/pressed', role: 'pressed state', guarantee: '7:1, on every ink-30', light: swatch(hex(inv.linkPressed as never)), dark: swatch(hex(inv.linkPressedDark as never)) },
         { token: 'surface/dim', role: 'the lowest elevation; always the NEUTRAL, never the themed family', guarantee: '–', light: alias(hex(stopAt(NL, 3)), '→ neutral paper-95'), dark: alias(hex(neutral.paper0Dark!), '→ neutral paper-100') },
         { token: 'surface/low', role: 'the page plane; always the NEUTRAL', guarantee: '–', light: alias(hex(stopAt(NL, 2)), '→ neutral paper-97'), dark: alias(hex(stopAt(ND, 1)), '→ neutral paper-99') },
         { token: 'surface/mid', role: 'raised (cards); always the NEUTRAL', guarantee: '–', light: alias(hex(stopAt(NL, 1)), '→ neutral paper-99'), dark: alias(hex(stopAt(ND, 2)), '→ neutral paper-97') },
@@ -597,6 +603,9 @@ function UnifyChipGrid() {
 function BandTiles() {
   const scale = generateScale(TOKEN_REF_HEX, 'docs', undefined, {})
   const neutral = generateNeutralScale(scale.brandH, 'default')
+  // the inverse link trio — same seed as the default link (the brand hex), re-solved
+  // for ink-30 surfaces; always raw values, never an alias
+  const inv = resolveLinkInverseTrio(TOKEN_REF_HEX)
   const at = (stop: number) => stopHex(neutral.light.find(s => s.stop === stop)!)
   const tiles = [
     { band: 'paper', bg: at(1), fg: '#202020' },

@@ -156,6 +156,15 @@ export interface GenerateOptions {
   deltaCarry?: boolean
   // per-bolt-on instruments (not shipped): layer exactly ONE old dark mechanism onto the pure carry, so the
   // eye can see what that piece does. Each is a REAL engine fn (no reimplementation); default off = identical.
+  // THE INVERSE INK GROUND (owner round 2026-08-19): re-anchor THIS ramp's ink requires
+  // (stops 9–11) at an external color instead of a paper of its own ramp — the inverse link
+  // family is text on an ink-30 fill, so the paper anchor is the wrong ground. Keyed BY RAMP,
+  // not by the surface's mode: the light-mode inverse trio is light-on-dark text, which is the
+  // DARK ramp's construction, so resolveLinkInverseTrio hands the dark ramp the LIGHT-mode
+  // ground and vice versa (see the cross there). Nothing else in the solve changes — same
+  // requires, producers, hue laws, chroma floors and shipped-pair floor. Absent = byte-identical.
+  inkGround?: { light: { L: number; C: number; H: number }; dark: { L: number; C: number; H: number } }
+
   deltaHKPlace?: boolean     // place carried C/H by the old apparent-L rung (perceptualRungL @ scaffold), not luminance
   deltaChromaEq?: boolean    // replace carried C with the old H-K chroma equalizer (perceptualDarkC)
   deltaLiftFloor?: boolean   // floor carried L at the scaffold rootL (the old "lift, never sink" recede floor)
