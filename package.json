@@ -49,6 +49,7 @@
     "audit:ext:bless": "esbuild scripts/ext-override-audit.ts --bundle --platform=node --outfile=dist/ext-override-audit.js && node dist/ext-override-audit.js --bless",
     "audit:cta-apca": "esbuild scripts/cta-apca-audit.ts --bundle --platform=node --outfile=dist/cta-apca-audit.js && node dist/cta-apca-audit.js",
     "audit:desc": "esbuild scripts/desc-audit.ts --bundle --platform=node --outfile=dist/desc-audit.js && node dist/desc-audit.js",
+    "name-lint": "esbuild scripts/name-lint.ts --bundle --platform=node --outfile=dist/name-lint.js && node dist/name-lint.js",
     "typecheck": "tsc --noEmit",
     "typecheck:ext": "tsc --noEmit -p plugin-ext"
   },
