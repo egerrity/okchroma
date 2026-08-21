@@ -21,7 +21,7 @@ import { describeToken, canonicalize } from '../src/engine/tokenDescriptions'
 const PHRASES = [
   'AA large text and UI elements',
   'AA standard body text & Level AAA large text',
-  'Level AAA enhanced contrast for standard body text',
+  'AAA standard body text',
 ]
 
 // ext emits register-prefixed paths (primitive/* — one register since the 2026-08-11
@@ -47,6 +47,9 @@ paths.push('system/ink-0')
 
 let bad = 0
 const fail = (p: string, why: string) => { console.error(`FAIL ${p}: ${why}`); bad++ }
+// tripwire: if the conformance-line label ever renames, the phrase gate below would
+// silently match nothing — a zero count fails the run instead
+let contrastLines = 0
 
 for (const p of paths) {
   const d = describeToken(p)
@@ -60,10 +63,13 @@ for (const p of paths) {
   if (/:1\b/.test(text)) fail(p, 'ratio string in body')
   if (/\b(light|dark|mode|modes|n\/a)\b/i.test(text)) fail(p, 'mode talk or n/a filler')
   for (const line of body) {
-    if (line.startsWith('Contrast: ') && !PHRASES.some(ph => line.includes(ph)))
-      fail(p, `Contrast line off-phrase: ${line}`)
+    if (line.startsWith('Contrast: ')) {
+      contrastLines++
+      if (!PHRASES.some(ph => line.includes(ph))) fail(p, `Contrast line off-phrase: ${line}`)
+    }
   }
 }
+if (contrastLines === 0) fail('(gate)', 'conformance-phrase gate matched zero lines — label renamed without updating this audit')
 
 // ── rule 5: no foreign label word ────────────────────────────────────────────
 // The vocabulary is derived from the real paths, so a future token name joins the ban

@@ -23,7 +23,7 @@
 // The owner's conformance phrases — the only way contrast is ever stated.
 const AA_LARGE = 'AA large text and UI elements'
 const AA_BODY = 'AA standard body text & Level AAA large text'
-const AAA_BODY = 'Level AAA enhanced contrast for standard body text'
+const AAA_BODY = 'AAA standard body text'
 
 type Family = 'neutral' | 'brand-primary' | 'brand-secondary' | 'critical' | 'warning' | 'positive' | 'info'
 const FAMILIES: Family[] = ['neutral', 'brand-primary', 'brand-secondary', 'critical', 'warning', 'positive', 'info']
@@ -40,7 +40,7 @@ const SIGNALS: Family[] = ['critical', 'warning', 'positive', 'info']
 const TINT: Record<Family, string> = {
   'neutral': 'tints carry neutral hue (gray)',
   'brand-primary': 'tints carry primary hue',
-  'brand-secondary': 'tints carry secondary hue (family derived or custom per brand)',
+  'brand-secondary': 'tints carry secondary hue',
   'critical': 'tints carry critical hue (red)',
   'warning': 'tints carry warning hue (yellow)',
   'positive': 'tints carry positive hue (green)',
@@ -55,7 +55,7 @@ const COLOR_WORD: Record<Family, string> = {
   'critical': ' (red)', 'warning': ' (yellow)', 'positive': ' (green)', 'info': ' (blue)',
 }
 
-const COLLIDES = 'may shift within band to de-conflict'
+const COLLIDES = 'shifts to avoid similar colors'
 
 interface Body {
   req: string
@@ -71,7 +71,7 @@ const PAPER: Body = { req: 'backgrounds, inverted text', theming: f => TINT[f], 
 // word's search results (the whole reason the shared stamp broke search). A row may carry a
 // label word only when it is in its OWN path. The 2026-08-18 solid rename flipped this
 // word: edge became the label (solid/edge) and border stopped being one.
-const WASH: Body = { req: 'subtle interaction states, decorative borders, illustrations, signal hierarchy', theming: f => TINT[f], collides: true }
+const WASH: Body = { req: 'subtle interaction states, decorative borders, illos, signal hierarchy', theming: f => TINT[f], collides: true }
 const solved = (f: Family) => `${TINT[f]}; re-solved to clear its floor`
 // (Leaf keys are FLAT — band flattening 2026-08-12: paper-99, never paper/99 — except
 // the solid/ state group, keyed by its nested spelling.)
