@@ -29,6 +29,8 @@ import { themeToFigma, groupEntries, type FigmaGroup, type FigmaColorToken } fro
 import { SIGNALS } from '../src/engine/signals'
 import { OFFSET_ALPHAS, offsetTokenPath, type OffsetRung } from '../src/engine/cssRender'
 import { neutralTintHue, type ContrastProfile, type NeutralLevel } from '../src/engine/colorEngine'
+import { FAMILIES } from '../src/engine/tokenDescriptions'
+import { stopTokenName, INK_0 } from '../src/engine/tokenNames'
 
 export interface FlatTok { path: string; r: number; g: number; b: number; a?: number }
 
@@ -39,7 +41,7 @@ export interface FlatTok { path: string; r: number; g: number; b: number; a?: nu
 // spellings directly (see toFlat). ROLE_BANDS stays the descope posture's VISIBLE
 // set (a state-carrying role a designer binds; everything else hides when descope
 // is on).
-const FAMILY_PREFIXES = ['neutral/', 'brand-primary/', 'brand-secondary/', 'critical/', 'warning/', 'positive/', 'info/']
+const FAMILY_PREFIXES = FAMILIES.map(f => f + '/')
 export const ROLE_BANDS = ['solid/']
 export function registerPath(p: string): string {
   if (p.startsWith('base/') || p.startsWith('utility/')) return p // already zoned (system-descended rows)
@@ -145,9 +147,9 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
   flatten(g.neutral as FigmaGroup, 'neutral', neutral)
   for (const t of neutral) {
     out.push(t)
-    // Flat leaves since the band flattening (owner 2026-08-12): stop 11 (strong ink)
-    // is 'ink-30-aaa'; the anchor it triggers is 'ink-0'. Stop index unchanged.
-    if (t.path === 'neutral/ink-30-aaa') out.push({ path: 'neutral/ink-0', ...(scheme === 'light' ? K : W) })
+    // The trigger is the LAST SCALE INK (stop 11) by its table spelling, so a stop
+    // RELABEL rides for free; a renumber still moves the index here.
+    if (t.path === 'neutral/' + stopTokenName(11)) out.push({ path: 'neutral/' + INK_0, ...(scheme === 'light' ? K : W) })
   }
   // identity rows re-home to the ABSOLUTES (owner 2026-07-27: the unprocessed inputs
   // sit with the poles; zone spellings 2026-08-18). Brand-overridable like base/link.

@@ -17,6 +17,7 @@ import * as path from 'path'
 import { FIXTURES, FIXTURE_SECONDARIES } from './fixture'
 import { buildBaseColumns, buildBrandColumns, COLUMNS, type FlatTok, type TokenColumns } from '../plugin-ext/payload'
 import { EXT_NON_OVERRIDABLE } from '../src/engine/tokenNames'
+import { FAMILIES } from '../src/engine/tokenDescriptions'
 import { ROSTER, rosterSpec } from '../plugin-ext/roster'
 
 const EPS = 1 / 1024
@@ -68,9 +69,8 @@ for (const col of COLUMNS) snap.base[col] = base[col].length
 // + its two consumers (payload.ts flatten(), plugin/code.ts's orderedEntries). The
 // shape is structural, not per-brand-value-dependent — every brand shares the same
 // layout — so checking the base seed's two columns is enough.
-const LADDER_FAMILIES = ['neutral', 'brand-primary', 'brand-secondary', 'critical', 'warning', 'positive', 'info']
 function assertLadderOrder(tokens: FlatTok[], label: string): void {
-  for (const fam of LADDER_FAMILIES) {
+  for (const fam of FAMILIES) {
     const nums: number[] = []
     for (const t of tokens) {
       // end-anchored (2026-08-18): the flat overlay twins (paper-99-overlay) carry a

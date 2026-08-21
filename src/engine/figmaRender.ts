@@ -2,7 +2,8 @@
 
 import { toHex, ctaNeedsBorder, pageStopFor, ctaBorderRung, OFFSET_ALPHAS, type OffsetRung } from './cssRender'
 import { srgbEmitChannels } from './colorMath'
-import { stopTokenName, tokenOrder, SOLID_FILL, SOLID_FILL_HOVER, SOLID_FILL_PRESSED, SOLID_EDGE, SOLID_ON, SOLID_STATE_LEAVES } from './tokenNames'
+import { stopTokenName, tokenOrder, SOLID_FILL, SOLID_FILL_HOVER, SOLID_FILL_PRESSED, SOLID_EDGE, SOLID_ON, SOLID_STATE_LEAVES, PAPER_100 } from './tokenNames'
+import { CSS_FAMILY } from './tokenDescriptions'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
 import { OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, SOFT_ON_CTA_ALPHA, softOnCtaPasses, escapeCtaFamily, resolveLinkTrio, resolveLinkInverseTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
 
@@ -191,7 +192,8 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
   // ctaBorder rides here too (owner 2026-07-29) so brand, secondary, neutral AND the signals all
   // get the stroke from one decision — see cssRender.ctaNeedsBorder, which owns the rule (|Lc| of
   // the cta against the PAGE under 15), and ctaBorderRung, which owns the per-family rung.
-  // `prefix` must match the css side's var prefix or the two emitters would disagree on the rung.
+  // `prefix` is the CSS_FAMILY word (tokenDescriptions.ts), the same table the css
+  // emitter reads, so the two emitters cannot disagree on the rung.
   // nScale is declared below but only READ when build() runs, which is after — no TDZ.
   const borderPage = (mode: 'light' | 'dark') => (input.ctaBorder ?? true) ? pageStopFor(nScale, mode) : undefined
   const ctaFamily = (s: GeneratedScale, mode: 'light' | 'dark', prefix: string) => ({
@@ -221,7 +223,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
   const invLt = resolveLinkInverseTrio(invSeed, input.contrastProfile)
   // (the neutral's STRONG text-cta mirror DELETED with the cta-ink register, owner
   // 2026-08-12 — it was the same three ink stops descending; consumers read them directly)
-  const neutralExtra = (mode: 'light' | 'dark') => ctaFamily(nScale, mode, 'neutral')
+  const neutralExtra = (mode: 'light' | 'dark') => ctaFamily(nScale, mode, CSS_FAMILY.neutral)
   const build = (mode: 'light' | 'dark'): FigmaGroup => {
     // paper-100 (paper-0 pre-Stage-B) rides WITH the neutral ramp at paper-100 (its dark value is
     // neutral-tinted, so it dedups and aliases through the same per-tint
@@ -231,8 +233,8 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     // era leaned on integer-key enumeration putting 100 ahead of 99 inside paper/).
     const p0 = mode === 'light' ? nScale.paper0 : nScale.paper0Dark
     const ramp = rampGroup(nScale[mode], mode === 'light' ? nScale.onFillTextIsWhite : nScale.onFillTextIsWhiteDark, neutralExtra(mode))
-    const neutralGroup: FigmaGroup = p0 ? { 'paper-100': colorFromStop(p0), ...ramp } : ramp
-    const secondaryGroup = rampGroup(secondary[mode], mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark, brandExtra(secondary, mode, 'secondary'))
+    const neutralGroup: FigmaGroup = p0 ? { [PAPER_100]: colorFromStop(p0), ...ramp } : ramp
+    const secondaryGroup = rampGroup(secondary[mode], mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark, brandExtra(secondary, mode, CSS_FAMILY.brandSecondary))
     // outline re-expression (only a real secondary can be outline) — same values cssRender
     // emits. The hover = mark-74-aa at OUTLINE_HOVER_ALPHA (the STABLE gated stop the ring
     // uses — 9% of the generated subtle cta was imperceptible).
@@ -280,7 +282,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     if (input.secondary && input.secondaryStyle !== 'outline'
       && (input.secondaryStyle === 'default' || softOnCtaPasses(input.secondary, mode)))
       softOnCta(secondaryGroup, mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark)
-    const brandGroup = rampGroup(scale[mode], mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark, brandExtra(scale, mode, 'brand'))
+    const brandGroup = rampGroup(scale[mode], mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark, brandExtra(scale, mode, CSS_FAMILY.brandPrimary))
     // neutral cta escape re-expression (mirrors the outline block above): the brand's
     // FILL trio + on-cta swap to the brand-neutral's ink register — the ink stops keep
     // the brand's own chroma (owner 2026-08-13, reverting the 2026-08-12 ink de-chroma).

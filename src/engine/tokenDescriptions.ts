@@ -25,9 +25,36 @@ const AA_LARGE = 'AA large text and UI elements'
 const AA_BODY = 'AA standard body text & Level AAA large text'
 const AAA_BODY = 'AAA standard body text'
 
-type Family = 'neutral' | 'brand-primary' | 'brand-secondary' | 'critical' | 'warning' | 'positive' | 'info'
-const FAMILIES: Family[] = ['neutral', 'brand-primary', 'brand-secondary', 'critical', 'warning', 'positive', 'info']
-const SIGNALS: Family[] = ['critical', 'warning', 'positive', 'info']
+// ── THE FAMILY ROSTER — the one definition of the family path words. Every other
+// roster site imports it (plugin-ext/payload.ts prefixes, scripts/ext-override-audit.ts
+// ladder list, plugin-unify/mapping.ts targets), so a family rename edits this table's
+// VALUES only; the camelCase keys are internal identities and are never rendered. The
+// roster lives here and not in tokenNames.ts because this file must stay import-free
+// (both plugin sandboxes bundle it; desc-audit enforces the leaf).
+export const FAMILY = {
+  neutral: 'neutral',
+  brandPrimary: 'brand-primary',
+  brandSecondary: 'brand-secondary',
+  critical: 'critical',
+  warning: 'warning',
+  positive: 'positive',
+  info: 'info',
+} as const
+export type Family = (typeof FAMILY)[keyof typeof FAMILY]
+export const FAMILIES: readonly Family[] = Object.values(FAMILY)
+const SIGNALS: readonly Family[] = [FAMILY.critical, FAMILY.warning, FAMILY.positive, FAMILY.info]
+
+// ── the CSS grammar's words for the same identities: the shipped --<word>-…
+// variable-name prefixes. cssRender's emit sites AND its border-rung rule ride this
+// table, as do figmaRender's rung keys — so the two emitters cannot disagree on a
+// prefix. The signal families' CSS prefixes are their role names, single-sourced as
+// emit names in the signals module, not here. Differs from the Figma path words
+// only on the brands.
+export const CSS_FAMILY = {
+  neutral: FAMILY.neutral,
+  brandPrimary: 'brand',
+  brandSecondary: 'secondary',
+} as const
 
 // The per-family half of a scale row's Theming line (owner's language).
 // the parenthetical color words (owner 2026-08-18): the picker search matches
@@ -38,21 +65,21 @@ const SIGNALS: Family[] = ['critical', 'warning', 'positive', 'info']
 // other row saying them would lie across modes (ink-0, the poles) or advertise an
 // on-text choice the on rows must never make.
 const TINT: Record<Family, string> = {
-  'neutral': 'tints carry neutral hue (gray)',
-  'brand-primary': 'tints carry primary hue',
-  'brand-secondary': 'tints carry secondary hue',
-  'critical': 'tints carry critical hue (red)',
-  'warning': 'tints carry warning hue (yellow)',
-  'positive': 'tints carry positive hue (green)',
-  'info': 'tints carry info hue (blue)',
+  [FAMILY.neutral]: 'tints carry neutral hue (gray)',
+  [FAMILY.brandPrimary]: 'tints carry primary hue',
+  [FAMILY.brandSecondary]: 'tints carry secondary hue',
+  [FAMILY.critical]: 'tints carry critical hue (red)',
+  [FAMILY.warning]: 'tints carry warning hue (yellow)',
+  [FAMILY.positive]: 'tints carry positive hue (green)',
+  [FAMILY.info]: 'tints carry info hue (blue)',
 }
 
 // the same color words for the SOLID rows (owner 2026-08-18 follow-up: the solid
 // bodies are shared across families, so the TINT line never reaches them) — appended
 // to their theming lines as a family marker. Empty for the brands.
 const COLOR_WORD: Record<Family, string> = {
-  'neutral': ' (gray)', 'brand-primary': '', 'brand-secondary': '',
-  'critical': ' (red)', 'warning': ' (yellow)', 'positive': ' (green)', 'info': ' (blue)',
+  [FAMILY.neutral]: ' (gray)', [FAMILY.brandPrimary]: '', [FAMILY.brandSecondary]: '',
+  [FAMILY.critical]: ' (red)', [FAMILY.warning]: ' (yellow)', [FAMILY.positive]: ' (green)', [FAMILY.info]: ' (blue)',
 }
 
 const COLLIDES = 'shifts to avoid similar colors'
@@ -174,8 +201,8 @@ const SYSTEM: Record<string, Body> = {
 // theme collection uses brand/primary/… — same rows, same text.
 const PREFIXES: Array<[string, Family]> = [
   ...FAMILIES.map((f): [string, Family] => [f + '/', f]),
-  ['brand/primary/', 'brand-primary'],
-  ['brand/secondary/', 'brand-secondary'],
+  ['brand/primary/', FAMILY.brandPrimary],
+  ['brand/secondary/', FAMILY.brandSecondary],
 ]
 
 // CANONICALIZE: the ext plugin's paths carry OWNERSHIP-ZONE prefixes (owner ruling
@@ -208,12 +235,12 @@ export function canonicalize(path: string): string {
 
 function bodyFor(path: string): { body: Body; fam: Family } | undefined {
   const canonical = canonicalize(path)
-  if (SYSTEM[canonical]) return { body: SYSTEM[canonical], fam: 'neutral' }
+  if (SYSTEM[canonical]) return { body: SYSTEM[canonical], fam: FAMILY.neutral }
   const hit = PREFIXES.find(([p]) => canonical.startsWith(p))
   if (!hit) return undefined
   const [prefix, fam] = hit
   const leaf = canonical.slice(prefix.length)
-  const body = (fam === 'neutral' && NEUTRAL_ONLY[leaf]) || SCALE[leaf]
+  const body = (fam === FAMILY.neutral && NEUTRAL_ONLY[leaf]) || SCALE[leaf]
   return body ? { body, fam } : undefined
 }
 

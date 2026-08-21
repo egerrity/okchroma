@@ -6,6 +6,15 @@
 // the cta family. Matching is suffix + value based so old and new Unify name vintages
 // both route. Link is parked (the known tricky case) — those land unmatched.
 
+import { FAMILY } from '../src/engine/tokenDescriptions'
+import { stopTokenName, SOLID_LEAF, PAPER_100 as POLE_PAPER } from '../src/engine/tokenNames'
+
+// the ladder leaves by stop index (tokenNames SHARED_NAMES — ascending index =
+// descending lightness), so a stop relabel flows from that one table into every
+// rule below; these identifiers spell today's names and are internal-only
+const [P99, P97, P95, W92, W89, W85, W80, M74, I53, I42, I30] =
+  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(stopTokenName)
+
 export interface Rule {
   /** okchroma primitive paths, preferred first; empty = suggest-at-runtime */
   candidates: string[]
@@ -21,26 +30,26 @@ export interface Rule {
 export const SURFACE = (plane: 'dim' | 'low' | 'mid' | 'high') => `utility/surface/${plane}`
 
 /** the on-color register per family (an ALIAS row in the ext register — resolves live) */
-export const CTA_ON = (family: string) => `base/${family}/solid/on`
-export const BRAND_CTA_ON = CTA_ON('brand-primary')
+export const CTA_ON = (family: string) => `base/${family}/${SOLID_LEAF.ON}`
+export const BRAND_CTA_ON = CTA_ON(FAMILY.brandPrimary)
 export const isCtaContext = (anc: string): boolean => /button|btn|cta/i.test(anc)
 
-// leaves are FLAT since the band flattening (owner 2026-08-12): the engine token name
-// IS the leaf ('ink-53-aa', 'paper-99'), no dash→slash transform any more
+// leaves are FLAT since the band flattening (owner 2026-08-12): the engine token
+// name (the stopTokenName spelling) IS the leaf, no dash→slash transform any more
 const fam = (family: string) => (toks: string[]) => toks.map(t => `base/${family}/${t}`)
 
-const PRIMARY_BAND = ['mark-74-aa', 'ink-53-aa', 'ink-42-aa', 'ink-30-aaa']
-const SPOTLIGHT_BAND = ['mark-74-aa', 'ink-53-aa']
-const WASHES = ['wash-92', 'wash-89', 'wash-85', 'wash-80']
-const PAPERS = ['paper-99', 'paper-97', 'paper-95']
+const PRIMARY_BAND = [M74, I53, I42, I30]
+const SPOTLIGHT_BAND = [M74, I53]
+const WASHES = [W92, W89, W85, W80]
+const PAPERS = [P99, P97, P95]
 const OFFSET_08 = 'base/alpha/008'
 const OFFSET_16 = 'base/alpha/016'
-const PAPER_100 = 'base/neutral/paper-100'
+const PAPER_100 = 'base/neutral/' + POLE_PAPER
 
-const n = fam('neutral')
+const n = fam(FAMILY.neutral)
 // signal identities live under their ROLE prefixes in the ext register
 const FAMILY_PREFIX: Record<string, string> = {
-  brand: 'brand-primary', error: 'critical', success: 'positive', warning: 'warning',
+  brand: FAMILY.brandPrimary, error: FAMILY.critical, success: FAMILY.positive, warning: FAMILY.warning,
 }
 
 /** Collections whose variables the Mapper treats as Unify semantics. */
@@ -75,34 +84,34 @@ export function matchBound(name: string): Rule | 'ignore' | null {
   if (s.includes('scrim')) return { candidates: [] } // suggest-at-runtime
   if (s.includes('content')) {
     if (s.includes('inverse')) return { candidates: [PAPER_100], auto: true }
-    if (s.includes('tertiary')) return { candidates: n(['ink-53-aa']) }
+    if (s.includes('tertiary')) return { candidates: n([I53]) }
     // owner 2026-08-11: Content Primary/Secondary are ALWAYS 30/53 — auto, with the
     // one exception: on cta buttons they are always the on-cta (handled per cluster)
-    if (s.includes('secondary')) return { candidates: n(['ink-53-aa']), auto: true, onCtaException: true }
-    return { candidates: n(['ink-30-aaa']), auto: true, onCtaException: true }
+    if (s.includes('secondary')) return { candidates: n([I53]), auto: true, onCtaException: true }
+    return { candidates: n([I30]), auto: true, onCtaException: true }
   }
   // owner 2026-08-11: backgrounds are the SURFACE PLANES, never raw papers —
   // primary is always high, secondary always base, tertiary is sunken or low
   // (same planes as when the rule was made; the planes were renamed 2026-08-12)
   if (s.includes('background')) {
-    if (s.includes('inverse')) return { candidates: n(['ink-30-aaa', 'ink-42-aa']) }
+    if (s.includes('inverse')) return { candidates: n([I30, I42]) }
     if (s.includes('tertiary')) return { candidates: [SURFACE('dim'), SURFACE('low')] }
     if (s.includes('secondary')) return { candidates: [SURFACE('mid')], auto: true }
     return { candidates: [SURFACE('high')], auto: true }
   }
   if (s.includes('stroke')) {
     if (s.includes('inverse')) return { candidates: [PAPER_100], auto: true }
-    if (s.includes('quaternary') || s.includes('quarternary')) return { candidates: n(['wash-92', 'wash-85', 'wash-80', 'mark-74-aa']) } // wash-92 first: nearest value (owner 2026-08-11)
-    if (s.includes('tertiary')) return { candidates: n(['mark-74-aa', 'wash-80']) }
-    if (s.includes('secondary')) return { candidates: n(['ink-53-aa', 'mark-74-aa']) }
-    return { candidates: n(['ink-30-aaa', 'ink-42-aa', 'ink-53-aa', 'mark-74-aa']) }
+    if (s.includes('quaternary') || s.includes('quarternary')) return { candidates: n([W92, W85, W80, M74]) } // wash-92 first: nearest value (owner 2026-08-11)
+    if (s.includes('tertiary')) return { candidates: n([M74, W80]) }
+    if (s.includes('secondary')) return { candidates: n([I53, M74]) }
+    return { candidates: n([I30, I42, I53, M74]) }
   }
   if (s.includes('merge')) {
     const m = s.match(/intensity\s*(\d)/)
     const rung = m && Number(m[1]) >= 3 ? OFFSET_16 : OFFSET_08
     return { candidates: [rung], auto: false } // the ladder collapse stays a pick
   }
-  if (s.includes('skeleton')) return { candidates: n(['wash-85', 'paper-95']) }
+  if (s.includes('skeleton')) return { candidates: n([W85, P95]) }
   return null // unmatched -> nearest-suggest at runtime
 }
 
@@ -119,35 +128,35 @@ export function matchDetached(hex: string, alpha: number): Rule | 'ignore' | nul
     return null
   }
   const T: Record<string, Rule> = {
-    '#0E0F10': { candidates: n(['ink-30-aaa', 'ink-42-aa', 'ink-53-aa', 'mark-74-aa']) },
-    '#000000': { candidates: n(['ink-30-aaa', 'ink-42-aa', 'ink-53-aa']) },
-    '#17191C': { candidates: n(['ink-30-aaa', 'ink-42-aa']) },
-    '#515767': { candidates: n(['ink-53-aa', 'ink-42-aa']) },
-    '#868FA2': { candidates: n(['ink-53-aa']) },
-    '#95979D': { candidates: n(['ink-53-aa']) },
+    '#0E0F10': { candidates: n([I30, I42, I53, M74]) },
+    '#000000': { candidates: n([I30, I42, I53]) },
+    '#17191C': { candidates: n([I30, I42]) },
+    '#515767': { candidates: n([I53, I42]) },
+    '#868FA2': { candidates: n([I53]) },
+    '#95979D': { candidates: n([I53]) },
     '#FFFFFF': { candidates: [PAPER_100], auto: true },
     '#F9FAFB': { candidates: [SURFACE('mid')], auto: true },
     '#EEEFF2': { candidates: [SURFACE('dim'), SURFACE('low')] },
-    '#CBCFD7': { candidates: n(['mark-74-aa', 'wash-80']) },
-    '#E2E4E9': { candidates: n(['wash-85', 'wash-80', 'mark-74-aa']) },
-    '#044BAF': { candidates: fam('brand-primary')(PRIMARY_BAND) },
-    '#4F46E5': { candidates: fam('brand-primary')(PRIMARY_BAND) }, // archived Violet vintage
-    '#8EB9F5': { candidates: fam('brand-primary')(WASHES) },
-    '#E6EFFB': { candidates: fam('brand-primary')(PAPERS) },
-    '#B42318': { candidates: fam('critical')(PRIMARY_BAND) },
-    '#FECDCA': { candidates: fam('critical')(WASHES) },
-    '#FEF3F2': { candidates: fam('critical')(PAPERS) },
-    '#2A5F26': { candidates: fam('positive')(PRIMARY_BAND) },
-    '#277A1F': { candidates: fam('positive')(PRIMARY_BAND) }, // vintage
-    '#A3DB9E': { candidates: fam('positive')(WASHES) },
-    '#AFE9AA': { candidates: fam('positive')(WASHES) },
-    '#EBF5EA': { candidates: fam('positive')(PAPERS) },
-    '#804F00': { candidates: fam('warning')(PRIMARY_BAND) },
-    '#B54708': { candidates: fam('warning')(PRIMARY_BAND) }, // vintage
-    '#FFE680': { candidates: fam('warning')(WASHES) },
-    '#FEDF89': { candidates: fam('warning')(WASHES) },
-    '#FFF9E5': { candidates: fam('warning')(PAPERS) },
-    '#FFFAEB': { candidates: fam('warning')(PAPERS) },
+    '#CBCFD7': { candidates: n([M74, W80]) },
+    '#E2E4E9': { candidates: n([W85, W80, M74]) },
+    '#044BAF': { candidates: fam(FAMILY.brandPrimary)(PRIMARY_BAND) },
+    '#4F46E5': { candidates: fam(FAMILY.brandPrimary)(PRIMARY_BAND) }, // archived Violet vintage
+    '#8EB9F5': { candidates: fam(FAMILY.brandPrimary)(WASHES) },
+    '#E6EFFB': { candidates: fam(FAMILY.brandPrimary)(PAPERS) },
+    '#B42318': { candidates: fam(FAMILY.critical)(PRIMARY_BAND) },
+    '#FECDCA': { candidates: fam(FAMILY.critical)(WASHES) },
+    '#FEF3F2': { candidates: fam(FAMILY.critical)(PAPERS) },
+    '#2A5F26': { candidates: fam(FAMILY.positive)(PRIMARY_BAND) },
+    '#277A1F': { candidates: fam(FAMILY.positive)(PRIMARY_BAND) }, // vintage
+    '#A3DB9E': { candidates: fam(FAMILY.positive)(WASHES) },
+    '#AFE9AA': { candidates: fam(FAMILY.positive)(WASHES) },
+    '#EBF5EA': { candidates: fam(FAMILY.positive)(PAPERS) },
+    '#804F00': { candidates: fam(FAMILY.warning)(PRIMARY_BAND) },
+    '#B54708': { candidates: fam(FAMILY.warning)(PRIMARY_BAND) }, // vintage
+    '#FFE680': { candidates: fam(FAMILY.warning)(WASHES) },
+    '#FEDF89': { candidates: fam(FAMILY.warning)(WASHES) },
+    '#FFF9E5': { candidates: fam(FAMILY.warning)(PAPERS) },
+    '#FFFAEB': { candidates: fam(FAMILY.warning)(PAPERS) },
   }
   return T[h] ?? null
 }
@@ -156,7 +165,7 @@ export function matchDetached(hex: string, alpha: number): Rule | 'ignore' | nul
 export function allCandidatePaths(): string[] {
   const out = new Set<string>([PAPER_100, OFFSET_08, OFFSET_16,
     SURFACE('dim'), SURFACE('low'), SURFACE('mid'), SURFACE('high')])
-  for (const family of ['neutral', 'brand-primary', 'critical', 'positive', 'warning']) {
+  for (const family of [FAMILY.neutral, FAMILY.brandPrimary, FAMILY.critical, FAMILY.positive, FAMILY.warning]) {
     const f = fam(family)
     for (const t of [...PRIMARY_BAND, ...WASHES, ...PAPERS]) for (const p of f([t])) out.add(p)
     out.add(CTA_ON(family))

@@ -3,9 +3,14 @@
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
 import { srgbEmitChannels, masterEmitChannels } from './colorMath'
 import { clampChromaToGamut, apcaY, apcaLc } from './constraints'
-import { stopTokenName, tokenOrder } from './tokenNames'
+import { stopTokenName, tokenOrder, PAPER_100, INK_0 } from './tokenNames'
 import { signalScalesFor, OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, SOFT_ON_CTA_ALPHA, softOnCtaPasses, escapeCtaFamily, resolveLinkTrio, resolveLinkInverseTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
 import { SIGNALS, SIGNAL_EMIT_NAME } from './signals'
+import { CSS_FAMILY } from './tokenDescriptions'
+
+// the CSS grammar words, single-sourced — a family rename edits the CSS_FAMILY
+// table, never this file
+const { brandPrimary: CSS_BRAND, brandSecondary: CSS_SECONDARY, neutral: CSS_NEUTRAL } = CSS_FAMILY
 
 export function toHex(r: number, g: number, b: number): string {
   const ch = (v: number) => Math.round(Math.min(1, Math.max(0, v)) * 255).toString(16).padStart(2, '0')
@@ -121,7 +126,7 @@ export function pageStopFor(neutral: GeneratedScale, mode: 'light' | 'dark'): Co
 export const OFFSET_ALPHAS = { 6: 0.06, 8: 0.08, 16: 0.16 } as const
 export type OffsetRung = keyof typeof OFFSET_ALPHAS
 export const ctaBorderRung = (prefix: string): OffsetRung =>
-  prefix === 'neutral' ? 8 : prefix === 'secondary' ? 6 : 16
+  prefix === CSS_NEUTRAL ? 8 : prefix === CSS_SECONDARY ? 6 : 16
 // the offset ladder dropped its word (owner rename round 2026-08-18): the rung IS the
 // name, three digits of percent (006/008/016) — honest in both modes because the alpha
 // is constant and only the color flips. One spelling: CSS --alpha-006, ext Figma row
@@ -200,8 +205,8 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
     // primitive. Emitted HERE rather than as a post-body override because the neutral's is
     // unconditional — the secondary's rides the cascade only because it gates on the style
     // chip. Loud fills (brand, signals, the cta escape) keep the solid pole.
-    prefix === 'neutral'
-      ? `  --neutral-solid-on: rgba(${onCta ? '255, 255, 255' : '0, 0, 0'}, ${SOFT_ON_CTA_ALPHA[mode]});`
+    prefix === CSS_NEUTRAL
+      ? `  --${CSS_NEUTRAL}-solid-on: rgba(${onCta ? '255, 255, 255' : '0, 0, 0'}, ${SOFT_ON_CTA_ALPHA[mode]});`
       : `  --${prefix}-solid-on: ${onColor(onCta)};`,
   ]
 }
@@ -238,21 +243,21 @@ export function neutralCss(selector: string, brandH: number, level: NeutralLevel
   // --surface-high resolve through them). paper-100 = the neutral's resolved
   // stop 0 (white in light; one seam below paper-99 in dark, never absolute black).
   const p0 = (st: ColorStop | undefined, fallback: string) => (st ? stopHex(st) : fallback)
-  const p3Light = brandKindP3Body('neutral', s, 'light')
-  const p3Dark = brandKindP3Body('neutral', s, 'dark')
+  const p3Light = brandKindP3Body(CSS_NEUTRAL, s, 'light')
+  const p3Dark = brandKindP3Body(CSS_NEUTRAL, s, 'dark')
   return [
     `${selector} {`,
-    `  --paper-100: ${p0(s.paper0, '#ffffff')};`,
-    `  --ink-0: #000000;`,
+    `  --${PAPER_100}: ${p0(s.paper0, '#ffffff')};`,
+    `  --${INK_0}: #000000;`,
     // the neutral IS the page, so it is judged against its own paper stop
     // the neutral's overlays never read the visibility bar (the exempt family), so
     // the brandless chrome context passes 0
-    ...brandKindBody('neutral', s, 'light', nPage('light')),
+    ...brandKindBody(CSS_NEUTRAL, s, 'light', nPage('light')),
     `}`,
     `${selector}[data-theme="dark"] {`,
-    `  --paper-100: ${p0(s.paper0Dark, '#000000')};`,
-    `  --ink-0: #ffffff;`,
-    ...brandKindBody('neutral', s, 'dark', nPage('dark')),
+    `  --${PAPER_100}: ${p0(s.paper0Dark, '#000000')};`,
+    `  --${INK_0}: #ffffff;`,
+    ...brandKindBody(CSS_NEUTRAL, s, 'dark', nPage('dark')),
     `}`,
     ...(p3Light.length || p3Dark.length ? [
       `${P3_SUPPORTS} {`,
@@ -419,7 +424,7 @@ export function brandCss(
   // (scale stops, off-scale cta, and the on-text token).
   const mirrorBody = (prefix: string, mode: 'light' | 'dark'): string[] => {
     const stops = mode === 'light' ? scale.light : scale.dark
-    const alias = (name: string) => `  --${prefix}-${name}: var(--brand-${name});`
+    const alias = (name: string) => `  --${prefix}-${name}: var(--${CSS_BRAND}-${name});`
     return [
       ...stops.map(x => alias(stopTokenName(x.stop))),
       alias('solid-fill'),
@@ -430,14 +435,14 @@ export function brandCss(
     ]
   }
 
-  const secondaryLight = secondary ? brandKindBody('secondary', secondary, 'light', page.light) : mirrorBody('secondary', 'light')
-  const secondaryDark = secondary ? brandKindBody('secondary', secondary, 'dark', page.dark) : mirrorBody('secondary', 'dark')
+  const secondaryLight = secondary ? brandKindBody(CSS_SECONDARY, secondary, 'light', page.light) : mirrorBody(CSS_SECONDARY, 'light')
+  const secondaryDark = secondary ? brandKindBody(CSS_SECONDARY, secondary, 'dark', page.dark) : mirrorBody(CSS_SECONDARY, 'dark')
   // identity — literal input hex, mode-invariant (light block only). Secondary
   // mirrors the brand's when no secondary ramp exists.
-  const brandIdentity = `  --brand-identity: ${scale.identityHex};`
+  const brandIdentity = `  --${CSS_BRAND}-identity: ${scale.identityHex};`
   const secondaryIdentity = secondary
-    ? `  --secondary-identity: ${secondary.identityHex};`
-    : `  --secondary-identity: var(--brand-identity);`
+    ? `  --${CSS_SECONDARY}-identity: ${secondary.identityHex};`
+    : `  --${CSS_SECONDARY}-identity: var(--${CSS_BRAND}-identity);`
 
   // Universal scale anchors — the two off-scale ends that extend the paper→ink
   // ladder past its generated stops, flipping with the mode. paper-100 (paper-0
@@ -447,8 +452,8 @@ export function brandCss(
   // C49 (it spent 2026-07-29 → 2026-08-05 as stop-index 11). Emitted per mode block
   // so each resolves to the right pole.
   const p0hex = (s: ColorStop | undefined, fallback: string) => (s ? stopHex(s) : fallback)
-  const lightAnchors = [`  --paper-100: ${p0hex(nScale.paper0, '#ffffff')};`, `  --ink-0: #000000;`]
-  const darkAnchors = [`  --paper-100: ${p0hex(nScale.paper0Dark, '#000000')};`, `  --ink-0: #ffffff;`]
+  const lightAnchors = [`  --${PAPER_100}: ${p0hex(nScale.paper0, '#ffffff')};`, `  --${INK_0}: #000000;`]
+  const darkAnchors = [`  --${PAPER_100}: ${p0hex(nScale.paper0Dark, '#000000')};`, `  --${INK_0}: #ffffff;`]
 
   // outline re-resolution: emitted AFTER the secondary body so the cascade takes these values.
   // cta-hover = mark-74-aa at OUTLINE_HOVER_ALPHA (pressed doubles it) — the STABLE contrast-gated stop, the same one
@@ -463,9 +468,9 @@ export function brandCss(
       ? [`  --link: ${stopHex(linkTrio.link)};`, `  --link-hover: ${stopHex(linkTrio.linkHover)};`, `  --link-pressed: ${stopHex(linkTrio.linkPressed)};`]
       : [`  --link: ${stopHex(linkTrio.linkDark)};`, `  --link-hover: ${stopHex(linkTrio.linkHoverDark)};`, `  --link-pressed: ${stopHex(linkTrio.linkPressedDark)};`])
     : [
-      `  --link: var(--brand-ink-53-aa);`,
-      `  --link-hover: var(--brand-ink-42-aa);`,
-      `  --link-pressed: var(--brand-ink-30-aaa);`,
+      `  --link: var(--${CSS_BRAND}-${stopTokenName(9)});`,
+      `  --link-hover: var(--${CSS_BRAND}-${stopTokenName(10)});`,
+      `  --link-pressed: var(--${CSS_BRAND}-${stopTokenName(11)});`,
     ]
   // the custom trio's P3 renditions (review-caught 2026-07-16): the DEFAULT posture rides
   // the ink stops' own P3 overrides through the alias chain, but a custom trio ships
@@ -510,10 +515,10 @@ export function brandCss(
     // brand's ink stops — the text register, and --link's default alias onto them —
     // keep the brand's own chroma under the escape.
     return [
-      `  --brand-solid-fill: ${stopHex(esc.cta)};`,
-      `  --brand-solid-fill-hover: ${stopHex(esc.ctaHover)};`,
-      `  --brand-solid-fill-pressed: ${stopHex(esc.ctaPressed)};`,
-      `  --brand-solid-on: ${onColor(esc.onFillIsWhite)};`,
+      `  --${CSS_BRAND}-solid-fill: ${stopHex(esc.cta)};`,
+      `  --${CSS_BRAND}-solid-fill-hover: ${stopHex(esc.ctaHover)};`,
+      `  --${CSS_BRAND}-solid-fill-pressed: ${stopHex(esc.ctaPressed)};`,
+      `  --${CSS_BRAND}-solid-on: ${onColor(esc.onFillIsWhite)};`,
     ]
   }
 
@@ -530,7 +535,7 @@ export function brandCss(
     if (!secondary || secondaryStyle === 'outline') return []
     if (secondaryStyle !== 'default' && !softOnCtaPasses(secondary, mode)) return []
     const white = mode === 'light' ? secondary.onFillTextIsWhite : secondary.onFillTextIsWhiteDark
-    return [`  --secondary-solid-on: rgba(${white ? '255, 255, 255' : '0, 0, 0'}, ${SOFT_ON_CTA_ALPHA[mode]});`]
+    return [`  --${CSS_SECONDARY}-solid-on: rgba(${white ? '255, 255, 255' : '0, 0, 0'}, ${SOFT_ON_CTA_ALPHA[mode]});`]
   }
 
   const outline = (mode: 'light' | 'dark'): string[] => {
@@ -541,13 +546,13 @@ export function brandCss(
     // fill trio re-resolved; pressed = the hover tint at doubled alpha (pressed-doubles-hover).
     // cta-ink trio untouched — links keep the exact ramp's text-register values.
     return [
-      `  --secondary-solid-fill: transparent;`,
+      `  --${CSS_SECONDARY}-solid-fill: transparent;`,
       ...(s8e ? [
-        `  --secondary-solid-fill-hover: rgba(${c(s8e.r)}, ${c(s8e.g)}, ${c(s8e.b)}, ${OUTLINE_HOVER_ALPHA});`,
-        `  --secondary-solid-fill-pressed: rgba(${c(s8e.r)}, ${c(s8e.g)}, ${c(s8e.b)}, ${OUTLINE_PRESSED_ALPHA});`,
+        `  --${CSS_SECONDARY}-solid-fill-hover: rgba(${c(s8e.r)}, ${c(s8e.g)}, ${c(s8e.b)}, ${OUTLINE_HOVER_ALPHA});`,
+        `  --${CSS_SECONDARY}-solid-fill-pressed: rgba(${c(s8e.r)}, ${c(s8e.g)}, ${c(s8e.b)}, ${OUTLINE_PRESSED_ALPHA});`,
       ] : []),
-      `  --secondary-solid-edge: var(--secondary-mark-74-aa);`,
-      `  --secondary-solid-on: var(--secondary-ink-53-aa);`,
+      `  --${CSS_SECONDARY}-solid-edge: var(--${CSS_SECONDARY}-${stopTokenName(8)});`,
+      `  --${CSS_SECONDARY}-solid-on: var(--${CSS_SECONDARY}-${stopTokenName(9)});`,
     ]
   }
 
@@ -558,7 +563,7 @@ export function brandCss(
   // 2026-07-11). The cta-pair P3 overrides are dropped for outline; scale stops keep theirs.
   const dropOutlineCta = (lines: string[]): string[] =>
     secondaryStyle === 'outline'
-      ? lines.filter(l => !l.startsWith('  --secondary-solid-fill:') && !l.startsWith('  --secondary-solid-fill-hover:') && !l.startsWith('  --secondary-solid-fill-pressed:'))
+      ? lines.filter(l => !l.startsWith(`  --${CSS_SECONDARY}-solid-fill:`) && !l.startsWith(`  --${CSS_SECONDARY}-solid-fill-hover:`) && !l.startsWith(`  --${CSS_SECONDARY}-solid-fill-pressed:`))
       : lines
   // same P3-pop class for the ESCAPE (the owner-caught outline lesson, 2026-07-11): the
   // escaped fill trio ships the neutral's whisper chroma — an out-of-sRGB BRAND cta's P3
@@ -566,20 +571,20 @@ export function brandCss(
   // ink stops keep the brand's chroma under the escape, so their P3 lines stay.
   const dropEscapeCta = (lines: string[]): string[] =>
     ctaEscape
-      ? lines.filter(l => !/^  --brand-solid-fill(-hover|-pressed)?:/.test(l))
+      ? lines.filter(l => !new RegExp(`^  --${CSS_BRAND}-solid-fill(-hover|-pressed)?:`).test(l))
       : lines
   const p3Light = [
-    ...dropEscapeCta(brandKindP3Body('brand', scale, 'light')),
-    ...(secondary ? dropOutlineCta(brandKindP3Body('secondary', secondary, 'light')) : []),
-    ...brandKindP3Body('neutral', nScale, 'light'),
+    ...dropEscapeCta(brandKindP3Body(CSS_BRAND, scale, 'light')),
+    ...(secondary ? dropOutlineCta(brandKindP3Body(CSS_SECONDARY, secondary, 'light')) : []),
+    ...brandKindP3Body(CSS_NEUTRAL, nScale, 'light'),
     ...effOverrides.flatMap(o => brandKindP3Body(SIGNAL_EMIT_NAME[o.name], o.scale, 'light')),
     ...linkP3('light'),
     ...linkInverseP3('light'),
   ]
   const p3Dark = [
-    ...dropEscapeCta(brandKindP3Body('brand', scale, 'dark')),
-    ...(secondary ? dropOutlineCta(brandKindP3Body('secondary', secondary, 'dark')) : []),
-    ...brandKindP3Body('neutral', nScale, 'dark'),
+    ...dropEscapeCta(brandKindP3Body(CSS_BRAND, scale, 'dark')),
+    ...(secondary ? dropOutlineCta(brandKindP3Body(CSS_SECONDARY, secondary, 'dark')) : []),
+    ...brandKindP3Body(CSS_NEUTRAL, nScale, 'dark'),
     ...effOverrides.flatMap(o => brandKindP3Body(SIGNAL_EMIT_NAME[o.name], o.scale, 'dark')),
     ...linkP3('dark'),
     ...linkInverseP3('dark'),
@@ -589,7 +594,7 @@ export function brandCss(
     ``,
     `[data-brand="${slug}"] {`,
     ...lightAnchors,
-    ...brandKindBody('brand', scale, 'light', page.light),
+    ...brandKindBody(CSS_BRAND, scale, 'light', page.light),
     ...escape('light'),
     ...link('light'),
     ...linkInverse('light'),
@@ -598,19 +603,19 @@ export function brandCss(
     ...softOnCta('light'),
     ...outline('light'),
     secondaryIdentity,
-    ...brandKindBody('neutral', nScale, 'light', page.light),
+    ...brandKindBody(CSS_NEUTRAL, nScale, 'light', page.light),
     ...effOverrides.flatMap(o => brandKindBody(SIGNAL_EMIT_NAME[o.name], o.scale, 'light', page.light)),
     `}`,
     `[data-brand="${slug}"][data-theme="dark"] {`,
     ...darkAnchors,
-    ...brandKindBody('brand', scale, 'dark', page.dark),
+    ...brandKindBody(CSS_BRAND, scale, 'dark', page.dark),
     ...escape('dark'),
     ...link('dark'),
     ...linkInverse('dark'),
     ...secondaryDark,
     ...softOnCta('dark'),
     ...outline('dark'),
-    ...brandKindBody('neutral', nScale, 'dark', page.dark),
+    ...brandKindBody(CSS_NEUTRAL, nScale, 'dark', page.dark),
     ...effOverrides.flatMap(o => brandKindBody(SIGNAL_EMIT_NAME[o.name], o.scale, 'dark', page.dark)),
     `}`,
     ...(p3Light.length || p3Dark.length ? [

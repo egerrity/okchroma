@@ -45,6 +45,13 @@ export function stopTokenName(stop: number): string {
   return name
 }
 
+// The off-scale ladder POLES — not stops of SHARED_NAMES (index-keyed generation
+// never produces them; they flip with the mode). One spelling here; the emitters
+// (cssRender anchors, figmaRender's neutral group, payload's anchor injection)
+// reference these instead of re-spelling them.
+export const PAPER_100 = 'paper-100'
+export const INK_0 = 'ink-0'
+
 // THE SOLID FAMILY (owner rename round 2026-08-18, replacing the cta words —
 // stakeholder ruling: cta read as a semantic token). Flat engine identity =
 // hyphenated Figma path = CSS var body, one spelling everywhere: solid-fill /
@@ -115,11 +122,10 @@ export const EXT_OVERRIDABLE_SYSTEM = (p: string): boolean =>
 // emphasis fill), then the pulled-out off-scale solid family + solid-on, then
 // identity. A ramp skips tokens it doesn't have. Emitters sort by this, not by
 // stop number.
+// The ladder half DERIVES from SHARED_NAMES (integer keys enumerate ascending, and
+// ascending stop index IS descending LL), so a stop relabel edits one table, not two.
 const TOKEN_ORDER = [
-  'paper-99', 'paper-97', 'paper-95',
-  'wash-92', 'wash-89', 'wash-85', 'wash-80',
-  'mark-74-aa',
-  'ink-53-aa', 'ink-42-aa', 'ink-30-aaa',
+  ...Object.values(SHARED_NAMES),
   SOLID_FILL, SOLID_FILL_HOVER, SOLID_FILL_PRESSED,
   SOLID_ON,
   'identity',
