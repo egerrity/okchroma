@@ -7,9 +7,9 @@ import { AlertCircle, AlertTriangle, CheckCircle, Info } from 'lucide-react'
 // --surface-mid plane), so it lifts off the page consistently in both modes.
 //
 // Roles demonstrated in context, not as abstract chips:
-//   ink     → the heading + body copy ("ink family" called out in ink-53-aa)
+//   ink     → the heading + body copy ("ink family" called out in ink-53)
 //   wash    → the inset surface(s)
-//   cta     → the full-round pill button (brand/secondary/neutral) OR, on signals,
+//   cta     → the full-round pill button (brand/alt/neutral) OR, on signals,
 //             the ALERT callout (alerts use cta in signals; the pill is hidden)
 //   scale   → the ladder, stop labels above the chips, with paper/wash/mark/ink brackets
 //
@@ -59,7 +59,7 @@ export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; 
   )
   // the TEXT-style cta (the ink stops — the action color's 4.5 text rendition) rendered
   // on the card, so its rest / hover / pressed sit right under the fill cta trio
-  const inkCell = (prefix: string, tok: 'ink-53-aa' | 'ink-42-aa' | 'ink-30-aaa') => (
+  const inkCell = (prefix: string, tok: 'ink-53' | 'ink-42' | 'ink-30') => (
     <div title={`--${prefix}-${tok}`} style={{
       flex: 1, textAlign: 'center', fontSize: 15, fontWeight: 800, color: `var(--${prefix}-${tok})`,
     }}>Aa</div>
@@ -74,9 +74,9 @@ export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; 
             {cell(f.prefix, 'solid-fill-pressed')}
           </div>
           <div style={{ display: 'flex', marginTop: 7 }}>
-            {inkCell(f.prefix, 'ink-53-aa')}
-            {inkCell(f.prefix, 'ink-42-aa')}
-            {inkCell(f.prefix, 'ink-30-aaa')}
+            {inkCell(f.prefix, 'ink-53')}
+            {inkCell(f.prefix, 'ink-42')}
+            {inkCell(f.prefix, 'ink-30')}
           </div>
           <div style={{ marginTop: 6, fontSize: 11, textAlign: 'center', color: 'var(--fg-default)', fontWeight: 600 }}>
             {f.label}
@@ -106,7 +106,7 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
   // themselves stay clean.
   const scale = [
     'paper-99', 'paper-97', 'paper-95', 'wash-92', 'wash-89', 'wash-85', 'wash-80',
-    'mark-74-aa', 'ink-53-aa', 'ink-42-aa', 'ink-30-aaa',
+    'mark-74', 'ink-53', 'ink-42', 'ink-30',
   ]
   const stopLabel = (tok: string): string => tok.split('-').slice(1).join('')
   const groups = [
@@ -129,14 +129,14 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
       {hasIdentity && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 14 }}>
           <span style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0, background: v('identity') }} />
-          <span style={{ fontSize: 13, fontWeight: 600, color: v('ink-53-aa') }}>identity</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: v('ink-53') }}>identity</span>
         </div>
       )}
 
-      {/* ink in context — heading + body, "ink family" called out in ink-53-aa */}
-      <div style={{ fontSize: 24, fontWeight: 700, color: v('ink-30-aaa'), lineHeight: 1.15, marginBottom: 8 }}>Aa Heading</div>
-      <p style={{ fontSize: 15, lineHeight: 1.5, color: v('ink-30-aaa'), margin: '0 0 16px' }}>
-        The <span style={{ color: v('ink-53-aa') }}>ink family</span> is designed to contrast with the paper and wash stops and is perfect for text. It can also be used as an inverted fill.
+      {/* ink in context — heading + body, "ink family" called out in ink-53 */}
+      <div style={{ fontSize: 24, fontWeight: 700, color: v('ink-30'), lineHeight: 1.15, marginBottom: 8 }}>Aa Heading</div>
+      <p style={{ fontSize: 15, lineHeight: 1.5, color: v('ink-30'), margin: '0 0 16px' }}>
+        The <span style={{ color: v('ink-53') }}>ink family</span> is designed to contrast with the paper and wash stops and is perfect for text. It can also be used as an inverted fill.
       </p>
 
       {/* cta in context — the pill (hidden on signals, where cta lives in the alert).
@@ -166,11 +166,11 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
             onMouseLeave={() => setLinkState('rest')}
             onMouseDown={() => setLinkState('pressed')}
             onMouseUp={() => setLinkState('hover')}
-            title={`--${prefix}-${linkState === 'pressed' ? 'ink-30-aaa' : linkState === 'hover' ? 'ink-42-aa' : 'ink-53-aa'}`}
+            title={`--${prefix}-${linkState === 'pressed' ? 'ink-30' : linkState === 'hover' ? 'ink-42' : 'ink-53'}`}
             style={{
               background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
               fontSize: 15, fontWeight: 600, padding: '12px 10px',
-              color: linkState === 'pressed' ? v('ink-30-aaa') : linkState === 'hover' ? v('ink-42-aa') : v('ink-53-aa'),
+              color: linkState === 'pressed' ? v('ink-30') : linkState === 'hover' ? v('ink-42') : v('ink-53'),
             }}>Text action</button>
         </div>
       )}
@@ -179,8 +179,8 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
           focus-ring controls box (insetControls), or the highlight inset (default) */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 18 }}>
         <div style={{ ...box, background: v('wash-92') }}>
-          <div style={{ ...boxLabel, color: v('ink-53-aa') }}>inset &middot; wash</div>
-          <div style={{ ...boxBody, color: v('ink-30-aaa') }}>Body copy in ink on a wash fill.</div>
+          <div style={{ ...boxLabel, color: v('ink-53') }}>inset &middot; wash</div>
+          <div style={{ ...boxBody, color: v('ink-30') }}>Body copy in ink on a wash fill.</div>
         </div>
         {isSignal ? (
           <div style={{ ...box, background: v('solid-fill'), display: 'flex', gap: 10, alignItems: 'flex-start' }}>
@@ -193,31 +193,31 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
         ) : insetControls ? (
           /* the controls box (owner 2026-07-28, unify-compare section 3): chip +
              focused input, so the stops' JOBS read directly — chip = paper-95 fill ·
-             wash-85 border · ink-53-aa text; the ring is mark-74-aa with a wash-89 halo
+             wash-85 border · ink-53 text; the ring is mark-74 with a wash-89 halo
              (the collision demo's held-focus idiom) */
           <div style={{ ...box, background: v('paper-97') }}>
-            <div style={{ ...boxLabel, color: v('ink-53-aa') }}>chip &middot; focus ring</div>
+            <div style={{ ...boxLabel, color: v('ink-53') }}>chip &middot; focus ring</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{
                 display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 6,
                 fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap',
-                background: v('paper-95'), color: v('ink-53-aa'), border: `1px solid ${v('wash-85')}`,
+                background: v('paper-95'), color: v('ink-53'), border: `1px solid ${v('wash-85')}`,
               }}>chip</span>
               <input readOnly value="Focused input" style={{
                 flex: 1, minWidth: 0, boxSizing: 'border-box', padding: '7px 11px', borderRadius: 8,
-                fontSize: 13, fontFamily: 'inherit', background: v('paper-99'), color: v('ink-30-aaa'),
-                border: `1.5px solid ${v('mark-74-aa')}`, boxShadow: `0 0 0 3px ${v('wash-89')}`, outline: 'none',
+                fontSize: 13, fontFamily: 'inherit', background: v('paper-99'), color: v('ink-30'),
+                border: `1.5px solid ${v('mark-74')}`, boxShadow: `0 0 0 3px ${v('wash-89')}`, outline: 'none',
               }} />
             </div>
           </div>
         ) : (
-          <div style={{ ...box, background: v('ink-53-aa') }}>
+          <div style={{ ...box, background: v('ink-53') }}>
             <div style={{ ...boxLabel, color: 'var(--paper-100)' }}>inset &middot; emphasis</div>
-            {/* the emphasis inset is the INVERTED fill: ink-53-aa (the emphasis fill since the
-                2026-07-29 collapse) carrying --paper-100, over an ink-30-aaa panel with paper-99 text.
+            {/* the emphasis inset is the INVERTED fill: ink-53 (the emphasis fill since the
+                2026-07-29 collapse) carrying --paper-100, over an ink-30 panel with paper-99 text.
                 The link on it is the INVERSE trio (owner round 2026-08-19) — the link seed
                 re-solved for exactly this ground; the system --link is illegible here. */}
-            <div style={{ background: v('ink-30-aaa'), borderRadius: 8, padding: '10px 12px' }}>
+            <div style={{ background: v('ink-30'), borderRadius: 8, padding: '10px 12px' }}>
               <div style={{ ...boxBody, color: v('paper-99') }}>
                 Emphasis copy in paper-99 text with an{' '}
                 <a

@@ -25,10 +25,10 @@ On any other plan the plugin detects the missing API and reports it instead of w
   users bind — no hidden seed collection). With the default descope posture on, the
   state-carrying roles (cta bands, link, surfaces) are bindable in every picker and the
   raw ramp/plumbing rows are hidden; turning it off exposes everything:
-  - `primitive/brand-primary/*`, `primitive/brand-secondary/*` (only if the file uses a
+  - `primitive/brand/*`, `primitive/brand-alt/*` (only if the file uses a
     secondary) including their `cta/*` states in the same family group — the
     operative `brand-` category is in the token name; the brand's NAME lives on the
-    extension, so a designer reads `kirby → primitive/brand-primary/paper-99` (ramp
+    extension, so a designer reads `kirby → primitive/brand/paper-99` (ramp
     leaves are flat since the band flattening 2026-08-12). Every
     path carries the single `primitive/` register prefix (A1 regroup 2026-08-07,
     flattened to one register 2026-08-11).
@@ -43,7 +43,7 @@ On any other plan the plugin detects the missing API and reports it instead of w
     and restamp descriptions.
 - **One extension per brand**, overriding **only what differs** from the base in each
   column: the primary ramp + identity, the brand-tinted neutral, a real secondary (or a
-  brand-primary mirror when the file has a secondary group and this brand doesn't), and
+  brand mirror when the file has a secondary group and this brand doesn't), and
   signals only where collision-shifted — per column, so a profile-dependent collision
   shift lands only in its own lane. Everything else inherits — Figma highlights
   overrides blue per mode, so the diff is visible and honest.
@@ -51,7 +51,7 @@ On any other plan the plugin detects the missing API and reports it instead of w
 ## Secondary posture (owner 2026-07-07, revised same day)
 
 Secondary is opt-in and defaults **off** — a base created without one has no
-`brand-secondary/*` group and nothing is ever written there. **Adding a secondary is
+`brand-alt/*` group and nothing is ever written there. **Adding a secondary is
 the deliberate posture flip**: the first apply that brings one confirms, adds the group
 to the base, and then **checks the entire collection** — every existing brand extension
 is re-applied from its stored recipe, and brands without their own secondary get one

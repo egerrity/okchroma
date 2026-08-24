@@ -10,7 +10,7 @@
 // Also asserts the invariants the plugin's write path relies on:
 //   · every column shares the same token path set (code.ts iterates one column's paths)
 //   · primitive/system/* never diffs from the base (code.ts skips it outright)
-//   · a brand carries a brand-secondary group exactly when it HAS a secondary
+//   · a brand carries a brand-alt group exactly when it HAS a secondary
 
 import * as fs from 'fs'
 import * as path from 'path'
@@ -100,12 +100,12 @@ for (const b of FIXTURES) {
     primaryHex: b.hex, name: b.name, exact: b.exact, archetypeOverride: b.archetypeOverride,
     style: b.style, secondaryHex,
   }, 'default')
-  // every payload carries a brand-secondary now (real or derived from the primary);
+  // every payload carries a brand-alt now (real or derived from the primary);
   // code.ts decides whether it's WRITTEN based on the file's posture. The group spans
   // both registers since A1 (primitive scale rows, semantic cta rows) — the scale rows
   // are always present whenever a secondary exists, so the primitive check alone suffices.
-  if (!tokens[COLUMNS[0]].some(x => x.path.startsWith('base/brand-secondary/')))
-    fails.push(`${b.slug}: payload missing brand-secondary (the derive fallback is broken)`)
+  if (!tokens[COLUMNS[0]].some(x => x.path.startsWith('base/brand-alt/')))
+    fails.push(`${b.slug}: payload missing brand-alt (the derive fallback is broken)`)
   snap.brands[b.slug] = overridesFor(tokens, base, b.slug)
 }
 

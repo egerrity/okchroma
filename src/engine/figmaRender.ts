@@ -58,7 +58,7 @@ function colorFromHexString(hex: string): FigmaColorToken {
 
 // LEAF SHAPE (owner 2026-08-12, band flattening; solid rename 2026-08-18): ramp
 // tokens sit FLAT in the family group — paper-99, paper-99-overlay, wash-92,
-// mark-74-aa, ink-53-aa … ONLY the solid/ state group nests
+// mark-74, ink-53 … ONLY the solid/ state group nests
 // (fill/fill-hover/fill-pressed/edge/on, matching system/link's state shape); its
 // table lives in tokenNames.ts — the one flat↔nested source every consumer rides. `identity` stays
 // a flat leaf; the plugins re-home the BIND surfaces to their absolute rows. Both
@@ -133,7 +133,7 @@ function rampGroup(
   // the background rather than sit on it (owner 2026-07-29, superseding the 2026-07-04 "filled is
   // filled" removal), else transparent. The rule lives in cssRender.ctaNeedsBorder — |Lc| of the
   // fill against the page under 15 — so both emitters decide identically, and the rung comes from
-  // cssRender.ctaBorderRung. The outline secondary still overrides this with its own mark-74-aa
+  // cssRender.ctaBorderRung. The outline secondary still overrides this with its own mark-74
   // unconditionally — there the edge is the button's identity, not a safety.
   if (extra?.cta) putLeaf(g, SOLID_EDGE, extra.ctaBorder ?? TRANSPARENT_TOKEN)
   putLeaf(g, SOLID_ON, colorFromHex(onFillWhite))
@@ -147,7 +147,7 @@ export interface ThemeInput {
 
   // the secondary's mode chip — 'outline' re-expresses the cta pair (mirrors cssRender's
   // outline override): cta transparent, cta-hover/-pressed the cta color at OUTLINE alphas,
-  // cta-border ALWAYS the secondary's own mark-74-aa, on-cta the secondary's ink-53-aa.
+  // cta-border ALWAYS the secondary's own mark-74, on-cta the secondary's ink-53.
   secondaryStyle?: SecondaryStyle
 
   neutralLevel?: NeutralLevel
@@ -161,7 +161,7 @@ export interface ThemeInput {
   signals: Array<{ name: string; scale: GeneratedScale }>
 
   // profile the theme was resolved under: the neutral generated HERE must match the caller's
-  // brand/secondary/signal scales (which already carry it). Default wcag.
+  // brand/alt/signal scales (which already carry it). Default wcag.
   contrastProfile?: ContrastProfile
 
   // the NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): the brand's cta FILL trio +
@@ -236,7 +236,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     const neutralGroup: FigmaGroup = p0 ? { [PAPER_100]: colorFromStop(p0), ...ramp } : ramp
     const secondaryGroup = rampGroup(secondary[mode], mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark, brandExtra(secondary, mode, CSS_FAMILY.brandSecondary))
     // outline re-expression (only a real secondary can be outline) — same values cssRender
-    // emits. The hover = mark-74-aa at OUTLINE_HOVER_ALPHA (the STABLE gated stop the ring
+    // emits. The hover = mark-74 at OUTLINE_HOVER_ALPHA (the STABLE gated stop the ring
     // uses — 9% of the generated subtle cta was imperceptible).
     if (input.secondaryStyle === 'outline' && input.secondary) {
       const s8 = secondary[mode].find(s => s.stop === 8)
@@ -255,7 +255,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
       if (s8) putLeaf(secondaryGroup, SOLID_EDGE, colorFromStop(s8))
       // outline re-expresses the FILL trio only — the ramp's ink stops (the text register)
       // are already emitted by rampGroup and stay untouched
-      // solid/on = the family's ink-53-aa, NOT a pole — the plugin aliases non-pole on-colors to the sibling ink-53-aa
+      // solid/on = the family's ink-53, NOT a pole — the plugin aliases non-pole on-colors to the sibling ink-53
       if (s9) putLeaf(secondaryGroup, SOLID_ON, colorFromStop(s9))
     }
     // the SOFT on-cta — THE QUIET-FILL RULE: a low-hierarchy cta's button text is the

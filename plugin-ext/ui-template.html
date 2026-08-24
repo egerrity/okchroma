@@ -122,7 +122,7 @@ body {
 }
 .pop-remove:hover { background: #fde8e8; }
 
-/* "+ Add secondary" — the field's none-state */
+/* "+ Add brand-alt" — the field's none-state */
 .add {
   display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px;
   cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 600;
@@ -264,14 +264,14 @@ body {
   </div>
 
   <div class="bar-field" style="position:relative" id="secondary-slot">
-    <div class="label">Secondary color</div>
-    <button class="add" id="secondary-add">+ Add secondary</button>
+    <div class="label">Brand-alt color</div>
+    <button class="add" id="secondary-add">+ Add brand-alt</button>
     <div class="field field-color" id="secondary-field" style="display:none">
       <span class="swatch" id="secondary-swatch" style="background:#ccc" title="Open color picker">
         <input type="color" id="secondary-picker" value="#E93D82" />
       </span>
       <input type="text" id="secondary-hex" value="" spellcheck="false" placeholder="enter a hex" />
-      <span class="chip" id="secondary-chip" title="Secondary options" style="display:none">
+      <span class="chip" id="secondary-chip" title="Brand-alt options" style="display:none">
         <span id="secondary-chip-label">From primary</span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         <select id="secondary-style">
@@ -302,7 +302,7 @@ body {
         <option value="medium">Medium</option>
         <option value="branded">Intense</option>
         <option value="pure">True grey</option>
-        <option value="secondary" id="neutral-opt-secondary" hidden>Match secondary</option>
+        <option value="secondary" id="neutral-opt-secondary" hidden>Match brand-alt</option>
         <option value="custom">Custom…</option>
       </select>
     </div>
@@ -336,7 +336,7 @@ body {
           <input type="checkbox" id="full-chroma" />
           <span>Remove brightness clamp</span>
         </label>
-        <label class="check-line" for="cta-border" style="margin-top:22px" title="Buttons whose fill sits too close to the page get a faint stroke so they read as buttons rather than as another sheet of paper. Neutral, secondary and primary each get their own weight. Turn this off to ship every cta borderless.">
+        <label class="check-line" for="cta-border" style="margin-top:22px" title="Buttons whose fill sits too close to the page get a faint stroke so they read as buttons rather than as another sheet of paper. Neutral, brand-alt and primary each get their own weight. Turn this off to ship every cta borderless.">
           <input type="checkbox" id="cta-border" checked />
           <span>Outline low-contrast buttons</span>
         </label>

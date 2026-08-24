@@ -20,19 +20,19 @@
   --surface-mid:       var(--neutral-paper-99);
   --surface-high:        var(--paper-100, #ffffff);
 
-  --fg-default:           var(--neutral-ink-30-aaa);
-  --fg-subtle:            var(--neutral-ink-53-aa);
+  --fg-default:           var(--neutral-ink-30);
+  --fg-subtle:            var(--neutral-ink-53);
   /* --fg-link moved to the SYSTEM LINK trio below (owner 2026-07-16: one link per
      theme, riding --link — no longer the brand's raw ink pair) */
 
   /* --border-default IS THE ACCESSIBILITY BORDER (owner 2026-07-29): a border that has
-     to be there — inputs and other controls — so it rides mark-74-aa, the stop that
+     to be there — inputs and other controls — so it rides mark-74, the stop that
      carries the WCAG 1.4.11 3:1 non-text require (highlight-8 pre-Stage-B). It sat on
-     --neutral-highlight-9 until that stop was deleted; mark-74-aa is where the
+     --neutral-highlight-9 until that stop was deleted; mark-74 is where the
      requirement actually lives, and it is the one stop this round does not move.
      Decorative borders are --border-subtle (wash-89) and the per-family
      --*-border-default (wash-85). */
-  --border-default:       var(--neutral-mark-74-aa);
+  --border-default:       var(--neutral-mark-74);
   --border-subtle:        var(--neutral-wash-89);
 
   /* Shadow transparencies (owner 2026-07-27) — pure black, mirrors the plugin's
@@ -65,10 +65,10 @@
 /* ─── role.brand ────────────────────────────────────────────────────────────── */
 
 [data-brand] {
-  --brand-fg:                    var(--brand-ink-30-aaa);
-  --brand-fg-hover:              var(--brand-ink-53-aa);
-  --brand-fg-alt:                var(--brand-ink-53-aa);
-  --brand-fg-alt-hover:          var(--brand-ink-30-aaa);
+  --brand-fg:                    var(--brand-ink-30);
+  --brand-fg-hover:              var(--brand-ink-53);
+  --brand-fg-alt:                var(--brand-ink-53);
+  --brand-fg-alt-hover:          var(--brand-ink-30);
   --brand-fg-on-emphasis:        var(--brand-solid-on);
 
   --brand-bg-faint:              var(--brand-paper-97);
@@ -81,7 +81,7 @@
   --brand-border-subtle:         var(--brand-wash-92);
   --brand-border-subtle-hover:   var(--brand-wash-89);
   --brand-border-default:            var(--brand-wash-85);
-  --brand-border-default-hover:      var(--brand-mark-74-aa);
+  --brand-border-default-hover:      var(--brand-mark-74);
   --brand-border-emphasis:       var(--brand-solid-fill);
   --brand-border-emphasis-hover: var(--brand-solid-fill-hover);
 
@@ -92,7 +92,7 @@
   --fg-link-pressed: var(--link-pressed);
 
   /* the INVERSE link trio (owner round 2026-08-19): the same link seed re-solved for
-     text on inverted surfaces (an ink-30-aaa fill); always its own emitted values —
+     text on inverted surfaces (an ink-30 fill); always its own emitted values —
      no stop is anchored against that ground, so there is no alias posture */
   --fg-link-inverse:         var(--link-inverse);
   --fg-link-inverse-hover:   var(--link-inverse-hover);
@@ -102,25 +102,25 @@
 /* ─── role.secondary (the brand's secondary ramp; mirrors brand when none) ──── */
 
 [data-brand] {
-  --secondary-fg:                    var(--secondary-ink-30-aaa);
-  --secondary-fg-hover:              var(--secondary-ink-53-aa);
-  --secondary-fg-alt:                var(--secondary-ink-53-aa);
-  --secondary-fg-alt-hover:          var(--secondary-ink-30-aaa);
-  --secondary-fg-on-emphasis:        var(--secondary-solid-on);
+  --brand-alt-fg:                    var(--brand-alt-ink-30);
+  --brand-alt-fg-hover:              var(--brand-alt-ink-53);
+  --brand-alt-fg-alt:                var(--brand-alt-ink-53);
+  --brand-alt-fg-alt-hover:          var(--brand-alt-ink-30);
+  --brand-alt-fg-on-emphasis:        var(--brand-alt-solid-on);
 
-  --secondary-bg-faint:              var(--secondary-paper-97);
-  --secondary-bg-subtle:             var(--secondary-wash-89);
-  --secondary-bg-subtle-hover:       var(--secondary-wash-85);
-  --secondary-bg-emphasis:           var(--secondary-solid-fill);
-  --secondary-bg-emphasis-hover:     var(--secondary-solid-fill-hover);
-  --secondary-bg-emphasis-pressed:   var(--secondary-solid-fill-pressed);
+  --brand-alt-bg-faint:              var(--brand-alt-paper-97);
+  --brand-alt-bg-subtle:             var(--brand-alt-wash-89);
+  --brand-alt-bg-subtle-hover:       var(--brand-alt-wash-85);
+  --brand-alt-bg-emphasis:           var(--brand-alt-solid-fill);
+  --brand-alt-bg-emphasis-hover:     var(--brand-alt-solid-fill-hover);
+  --brand-alt-bg-emphasis-pressed:   var(--brand-alt-solid-fill-pressed);
 
-  --secondary-border-subtle:         var(--secondary-wash-92);
-  --secondary-border-subtle-hover:   var(--secondary-wash-89);
-  --secondary-border-default:           var(--secondary-wash-85);
-  --secondary-border-default-hover:     var(--secondary-mark-74-aa);
-  --secondary-border-emphasis:       var(--secondary-solid-fill);
-  --secondary-border-emphasis-hover: var(--secondary-solid-fill-hover);
+  --brand-alt-border-subtle:         var(--brand-alt-wash-92);
+  --brand-alt-border-subtle-hover:   var(--brand-alt-wash-89);
+  --brand-alt-border-default:           var(--brand-alt-wash-85);
+  --brand-alt-border-default-hover:     var(--brand-alt-mark-74);
+  --brand-alt-border-emphasis:       var(--brand-alt-solid-fill);
+  --brand-alt-border-emphasis-hover: var(--brand-alt-solid-fill-hover);
 }
 
 /* ─── Signal roles ──────────────────────────────────────────────────────────
@@ -129,76 +129,76 @@
    Signal families emit by ROLE (owner 2026-07-27: critical/warning/positive/
    info — the re-pointable in-between tier; identity stays engine-internal),
    so the role tokens and the family ramp share a prefix: --critical-fg rides
-   --critical-ink-30-aaa. The old alert-high/alert-med role prefixes collapsed
+   --critical-ink-30. The old alert-high/alert-med role prefixes collapsed
    into critical/warning in the same round.
 
    -fg-on-emphasis rides --paper-100, NOT a solved on-color: the engine's on-highlight
    token was deleted with the highlight band (owner 2026-07-29). paper-100 is the
    mode-flipping paper extreme — white in light, the tinted deep ground in dark — and
-   it clears 4.5 against ink-53-aa everywhere (agnostic 360-seed sweep, worst 4.96
+   it clears 4.5 against ink-53 everywhere (agnostic 360-seed sweep, worst 4.96
    light / 8.04 dark). -bg-emphasis / -border-emphasis moved from highlight-9 to
-   ink-53-aa (ink-9 pre-Stage-B) with it; in dark that reads lighter (contrast vs
+   ink-53 (ink-9 pre-Stage-B) with it; in dark that reads lighter (contrast vs
    paper-95, median 6.01 → 7.72). Stage B (owner 2026-08-07, names only) relabeled
    every leaf in the block below; the stops themselves did not move. */
 
 [data-brand] {
-  --critical-fg:                    var(--critical-ink-30-aaa);
-  --critical-fg-hover:              var(--critical-ink-53-aa);
-  --critical-fg-alt:                var(--critical-ink-53-aa);
-  --critical-fg-alt-hover:          var(--critical-ink-30-aaa);
+  --critical-fg:                    var(--critical-ink-30);
+  --critical-fg-hover:              var(--critical-ink-53);
+  --critical-fg-alt:                var(--critical-ink-53);
+  --critical-fg-alt-hover:          var(--critical-ink-30);
   --critical-fg-on-emphasis:        var(--paper-100);
   --critical-bg-faint:              var(--critical-paper-97);
   --critical-bg-subtle:             var(--critical-wash-89);
   --critical-bg-subtle-hover:       var(--critical-wash-85);
-  --critical-bg-emphasis:           var(--critical-ink-53-aa);
+  --critical-bg-emphasis:           var(--critical-ink-53);
   --critical-border-subtle:         var(--critical-wash-92);
   --critical-border-subtle-hover:   var(--critical-wash-89);
   --critical-border-default:       var(--critical-wash-85);
-  --critical-border-default-hover: var(--critical-mark-74-aa);
-  --critical-border-emphasis:       var(--critical-ink-53-aa);
+  --critical-border-default-hover: var(--critical-mark-74);
+  --critical-border-emphasis:       var(--critical-ink-53);
 
-  --warning-fg:                     var(--warning-ink-30-aaa);
-  --warning-fg-hover:               var(--warning-ink-53-aa);
-  --warning-fg-alt:                 var(--warning-ink-53-aa);
-  --warning-fg-alt-hover:           var(--warning-ink-30-aaa);
+  --warning-fg:                     var(--warning-ink-30);
+  --warning-fg-hover:               var(--warning-ink-53);
+  --warning-fg-alt:                 var(--warning-ink-53);
+  --warning-fg-alt-hover:           var(--warning-ink-30);
   --warning-fg-on-emphasis:         var(--paper-100);
   --warning-bg-faint:               var(--warning-paper-97);
   --warning-bg-subtle:              var(--warning-wash-89);
   --warning-bg-subtle-hover:        var(--warning-wash-85);
-  --warning-bg-emphasis:            var(--warning-ink-53-aa);
+  --warning-bg-emphasis:            var(--warning-ink-53);
   --warning-border-subtle:          var(--warning-wash-92);
   --warning-border-subtle-hover:    var(--warning-wash-89);
   --warning-border-default:        var(--warning-wash-85);
-  --warning-border-default-hover:  var(--warning-mark-74-aa);
-  --warning-border-emphasis:        var(--warning-ink-53-aa);
+  --warning-border-default-hover:  var(--warning-mark-74);
+  --warning-border-emphasis:        var(--warning-ink-53);
 
-  --positive-fg:                      var(--positive-ink-30-aaa);
-  --positive-fg-hover:                var(--positive-ink-53-aa);
-  --positive-fg-alt:                  var(--positive-ink-53-aa);
-  --positive-fg-alt-hover:            var(--positive-ink-30-aaa);
+  --positive-fg:                      var(--positive-ink-30);
+  --positive-fg-hover:                var(--positive-ink-53);
+  --positive-fg-alt:                  var(--positive-ink-53);
+  --positive-fg-alt-hover:            var(--positive-ink-30);
   --positive-fg-on-emphasis:          var(--paper-100);
   --positive-bg-faint:                var(--positive-paper-97);
   --positive-bg-subtle:               var(--positive-wash-89);
   --positive-bg-subtle-hover:         var(--positive-wash-85);
-  --positive-bg-emphasis:             var(--positive-ink-53-aa);
+  --positive-bg-emphasis:             var(--positive-ink-53);
   --positive-border-subtle:           var(--positive-wash-92);
   --positive-border-subtle-hover:     var(--positive-wash-89);
   --positive-border-default:         var(--positive-wash-85);
-  --positive-border-default-hover:   var(--positive-mark-74-aa);
-  --positive-border-emphasis:         var(--positive-ink-53-aa);
+  --positive-border-default-hover:   var(--positive-mark-74);
+  --positive-border-emphasis:         var(--positive-ink-53);
 
-  --info-fg:                          var(--info-ink-30-aaa);
-  --info-fg-hover:                    var(--info-ink-53-aa);
-  --info-fg-alt:                      var(--info-ink-53-aa);
-  --info-fg-alt-hover:                var(--info-ink-30-aaa);
+  --info-fg:                          var(--info-ink-30);
+  --info-fg-hover:                    var(--info-ink-53);
+  --info-fg-alt:                      var(--info-ink-53);
+  --info-fg-alt-hover:                var(--info-ink-30);
   --info-fg-on-emphasis:              var(--paper-100);
   --info-bg-faint:                    var(--info-paper-97);
   --info-bg-subtle:                   var(--info-wash-89);
   --info-bg-subtle-hover:             var(--info-wash-85);
-  --info-bg-emphasis:                 var(--info-ink-53-aa);
+  --info-bg-emphasis:                 var(--info-ink-53);
   --info-border-subtle:               var(--info-wash-92);
   --info-border-subtle-hover:         var(--info-wash-89);
   --info-border-default:             var(--info-wash-85);
-  --info-border-default-hover:       var(--info-mark-74-aa);
-  --info-border-emphasis:             var(--info-ink-53-aa);
+  --info-border-default-hover:       var(--info-mark-74);
+  --info-border-emphasis:             var(--info-ink-53);
 }

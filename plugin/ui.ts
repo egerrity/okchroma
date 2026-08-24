@@ -13,7 +13,7 @@ let primaryHex = '#E93D82'
 let secondaryHex: string | null = null
 // the neutral offering is ONE 6-entry choice (owner 2026-08-04; Medium joined 2026-08-11):
 // four strengths of the PRIMARY's hue, or an alternate hue SOURCE at the Default
-// strength — Match secondary (follows the current secondary live) or Custom (the hex's
+// strength — Match brand-alt (follows the current secondary live) or Custom (the hex's
 // hue tints the grey).
 type NeutralChoice = NeutralLevel | 'secondary' | 'custom'
 let neutralChoice: NeutralChoice = 'default'
@@ -45,7 +45,7 @@ let linkBundled = false
 // the VIVIDNESS LEVER (phase 5): default OFF = the shipped dampened registers
 let fullChroma = false
 let pendingName: string | null = null // brand armed for overwrite confirmation
-// The secondary is the demo's THREE-STATE field: none (default — just "+ Add secondary") →
+// The secondary is the demo's THREE-STATE field: none (default — just "+ Add brand-alt") →
 // derived (the input tracks the primary live; the engine derives the default secondary) →
 // custom (user hex + style chip). The chevron menu moves between all three.
 type SecondaryMode = 'derived' | 'custom' | 'off'
@@ -128,14 +128,14 @@ const STYLE_INFO: Record<SecondaryStyle, string> = {
 }
 const NEUTRAL_LABEL: Record<NeutralChoice, string> = {
   default: 'Default', medium: 'Medium', branded: 'Intense', pure: 'True grey',
-  secondary: 'Match secondary', custom: 'Custom…',
+  secondary: 'Match brand-alt', custom: 'Custom…',
 }
 const NEUTRAL_INFO: Record<NeutralChoice, string> = {
   default: 'Adds a touch of primary hue',
   medium: 'Slightly more tint than Default',
   branded: 'Adds a noticeable tint to neutral',
   pure: 'Neutrals are pure grey',
-  secondary: 'Adds a touch of the secondary hue',
+  secondary: 'Adds a touch of the brand-alt hue',
   custom: 'Adds a touch of your custom hue',
 }
 
@@ -148,7 +148,7 @@ function syncInfoLines() {
   secondaryStyleSelect.value = secondaryMode === 'derived' ? 'from-primary' : secondaryStyle
   secondaryInfoLine.style.display = secondaryMode === 'off' ? 'none' : ''
   secondaryInfo.textContent = secondaryMode === 'derived' ? 'A lighter take on your primary — derived by default' : STYLE_INFO[secondaryStyle]
-  // NEUTRAL-SOURCE HYGIENE (the linkBundled idiom): "Match secondary" must not outlive
+  // NEUTRAL-SOURCE HYGIENE (the linkBundled idiom): "Match brand-alt" must not outlive
   // the secondary it matches — with the secondary off, the choice reverts to Default and
   // the option hides so it can't be re-picked.
   if (neutralChoice === 'secondary' && secondaryMode === 'off') {
@@ -214,7 +214,7 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
   type Row = { label: string; scale: GeneratedScale; idHex?: string; outline?: boolean; escape?: boolean }
   const rows: Row[] = [
     { label: 'primary', scale: t.themed.scale, idHex: t.themed.scale.identityHex, escape: ctaEscape && inRedRange },
-    ...(t.secondary ? [{ label: 'secondary', scale: t.secondary.scale, idHex: t.secondary.scale.identityHex, outline: t.secondary.style === 'outline' }] : []),
+    ...(t.secondary ? [{ label: 'brand-alt', scale: t.secondary.scale, idHex: t.secondary.scale.identityHex, outline: t.secondary.style === 'outline' }] : []),
     { label: 'neutral', scale: nScale },
     ...SIGNALS.map(s => ({ label: s.emitName, scale: effective(s.name) })),
   ]
@@ -238,7 +238,7 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     for (const s of row.scale.light) {
       const n = s.stop
       const h = hx(s)
-      // stop 9 (ink-53-aa) is BOTH the emphasis fill and a text stop (owner
+      // stop 9 (ink-53) is BOTH the emphasis fill and a text stop (owner
       // 2026-07-29) — this cell was stale on the dead highlight-9 name and the
       // DELETED onHighlightIsWhite field until 2026-08-04; it now mirrors the ext
       // plugin's rendition (on-emphasis = the paper). Titles read the live name off
@@ -330,7 +330,7 @@ function updatePreview() {
     }
 
     // the link FIELD previews the RESOLVED system link: custom seed through the ink
-    // register, else the primary's ink-53-aa (which rides the neutral's register when
+    // register, else the primary's ink-53 (which rides the neutral's register when
     // the escape is active). The from-primary posture shows the resolved hex GREYED +
     // read-only; clicking the hex takes it over (owner Advanced-menu spec 2026-07-16).
     const fromPrimaryStop = t.themed.scale.light.find(s => s.stop === 9)!
@@ -352,7 +352,7 @@ function updatePreview() {
 
     renderMatrix(t, nScale)
 
-    // the bar's live swatches: neutral shows its stop 9 (ink-53-aa, the emphasis
+    // the bar's live swatches: neutral shows its stop 9 (ink-53, the emphasis
     // fill); a derived secondary shows the RESOLVED default secondary (the input
     // tracks the primary hex — that's the source, not the result)
     const n9 = nScale.light.find(s => s.stop === 9)

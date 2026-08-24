@@ -176,9 +176,9 @@ function RampChart({ mode, lines, xTicks, height = 210 }: {
 // space before the first stop, and read as misleading (owner 2026-07-30). Plain log
 // fixed that but left the low end tight and the 8 → 20 tail luxurious; above 8:1 the
 // differences stop mattering, so that tail is condensed and the width goes to
-// 1 → 8 instead. The natural gap between wash-80 and mark-74-aa absorbs the stretch.
+// 1 → 8 instead. The natural gap between wash-80 and mark-74 absorbs the stretch.
 // 21 is the true WCAG ceiling (pure black on pure white) — the neutral lane plots
-// ink-30-aaa, which is exactly that, so the axis has to reach it rather than clamp.
+// ink-30, which is exactly that, so the axis has to reach it rather than clamp.
 const DIST_MAX = 21
 const DIST_KNEE = 8
 const DIST_KNEE_FRAC = 0.84
@@ -283,8 +283,8 @@ function DistributionChart({ mode, lanes, reqs }: { mode: PanelMode; lanes: Dist
 // and unlabelled, because she adds the labelling herself. Both sides render on the
 // same page colour so they read against each other. She rebuilds this in Figma to
 // toggle modes, so it is deliberately not gold-plated.
-// heading = the FIRST text level (ink-53-aa, the brand-carrying one), body = the second
-// (ink-30-aaa, the darkest and most legible). Owner ordering.
+// heading = the FIRST text level (ink-53, the brand-carrying one), body = the second
+// (ink-30, the darkest and most legible). Owner ordering.
 function ForkComposition({ heading, body, page, ring, fill, onFill, linkC, textBtn }: {
   heading: string; body: string; page: string; ring: string; fill: string
   onFill: string; linkC: string; textBtn: string
@@ -339,7 +339,7 @@ function Section({ n, title, lede, children }: { n: number; title: string; lede?
   return (
     <section style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
-        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.08em', color: 'var(--brand-ink-53-aa, var(--fg-subtle))' }}>0{n}</div>
+        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.08em', color: 'var(--brand-ink-53, var(--fg-subtle))' }}>0{n}</div>
         <h2 style={{ margin: '2px 0 6px', fontSize: 22, fontWeight: 700, color: 'var(--fg-default)' }}>{title}</h2>
         {lede && <p style={{ margin: 0, maxWidth: 720, fontSize: 14, lineHeight: 1.55, color: 'var(--fg-subtle)' }}>{lede}</p>}
       </div>
@@ -464,8 +464,8 @@ export default function UnifyCompare() {
   // This page rendered APCA until 2026-07-29 under a comment claiming apca was the shipped
   // lane. Papers and washes are byte-identical between the lanes, so the change is confined
   // to the emphasis band — and that is the whole subject of the comparison: measured over
-  // the 7 Unify seeds, light mark-74-aa differed on 7/7 (worst ΔE 0.128, #369c54 vs
-  // #62c47a) and dark ink-53-aa on 7/7 (worst 0.127). The published page was showing a focus
+  // the 7 Unify seeds, light mark-74 differed on 7/7 (worst ΔE 0.128, #369c54 vs
+  // #62c47a) and dark ink-53 on 7/7 (worst 0.127). The published page was showing a focus
   // ring visibly lighter than the one the WCAG lane actually ships.
   const resolved = useMemo(() => themes.map(t => ({
     t, slug: slugOf(t), r: resolveBrand(t.primary.hex, shortName(t), { contrastProfile: 'wcag' }),
@@ -705,22 +705,22 @@ export default function UnifyCompare() {
                   The cta series is deliberately NOT plotted (owner 2026-07-29): it varies by
                   design, and the point of this chart is that the STRUCTURAL roles do not. */}
               <DotChart mode="light" xLabels={labels} series={[
-                { label: 'ink-30-aaa', dots: okRole(okStop(11), 'light') },
-                { label: 'ink-53-aa', dots: okRole(okStop(9), 'light') },
+                { label: 'ink-30', dots: okRole(okStop(11), 'light') },
+                { label: 'ink-53', dots: okRole(okStop(9), 'light') },
                 { label: 'wash-85', dots: okRole(okStop(6), 'light') },
                 { label: 'paper-95', dots: okRole(okStop(3), 'light') },
               ]} />
               <span style={MODE_TAG}>Dark mode</span>
               <DotChart mode="dark" xLabels={labels} series={[
-                { label: 'ink-30-aaa', dots: okRole(okStop(11), 'dark') },
-                { label: 'ink-53-aa', dots: okRole(okStop(9), 'dark') },
+                { label: 'ink-30', dots: okRole(okStop(11), 'dark') },
+                { label: 'ink-53', dots: okRole(okStop(9), 'dark') },
                 { label: 'wash-85', dots: okRole(okStop(6), 'dark') },
                 { label: 'paper-95', dots: okRole(okStop(3), 'dark') },
               ]} />
               <div style={STAT}>
                 Unify's one Primary is doing the button job, the text job, and the emphasis job at once — here it
-                forks. In light mode: <b>ink-30-aaa</b>, the body text register, spans <b>{okSpread(11, 'light')} L*</b> across
-                the seven seeds; <b>ink-53-aa</b>, the emphasis fill and first text stop, <b>{okSpread(9, 'light')} L*</b>; and
+                forks. In light mode: <b>ink-30</b>, the body text register, spans <b>{okSpread(11, 'light')} L*</b> across
+                the seven seeds; <b>ink-53</b>, the emphasis fill and first text stop, <b>{okSpread(9, 'light')} L*</b>; and
                 the tint registers wash-85 / paper-95 — Unify's Highlight and Accent analogs —
                 <b> {okSpread(6, 'light')}</b> and <b>{okSpread(3, 'light')} L*</b>. Unify's Primary spans
                 <b> {spread(uPrimL).toFixed(0)} L*</b> over the same seven. The fourth fork, the <b>cta</b>, is
@@ -737,7 +737,7 @@ export default function UnifyCompare() {
                 surface only reads as a single plane when its stops share a luminance. This chart measures both
                 with the apparent-lightness ruler, so the dark papers and washes fan out with chroma
                 (<b>{okSpread(3, 'dark')}</b> to <b>{okSpread(7, 'dark')} L*</b>) while their luminance holds within
-                about a tenth of a percentage point. Light mode's ink-53-aa is the same trade running the other way:
+                about a tenth of a percentage point. Light mode's ink-53 is the same trade running the other way:
                 the text register solves a contrast requirement, contrast is pure luminance, and equal contrast
                 across hues cannot also be equal apparent lightness once chroma differs.
               </div>
@@ -757,7 +757,7 @@ export default function UnifyCompare() {
               <RampChart mode="dark" lines={unifyRampLines('dark')} xTicks={unifyTicks} />
             </div>
             <div style={CARD}>
-              <div style={CARD_TITLE}>OKChroma — generated scales, paper-99 → ink-30-aaa</div>
+              <div style={CARD_TITLE}>OKChroma — generated scales, paper-99 → ink-30</div>
               <p style={CARD_SUB}>
                 Same seeds, full scales. One curve shape repeated per brand, in both modes, with no stop left unpicked —
                 the shape is the system, not a per-family judgment call.
@@ -772,7 +772,7 @@ export default function UnifyCompare() {
 
         {/* ── 02 · CHIP ROWS ── */}
         <Section n={2} title="One chip recipe, seven themes"
-          lede={'Unify builds an indicator chip from the three brand aliases — Accent fill, Highlight border, Primary text — and each theme re-rolls all three. So the brand chip lands at a different weight in every theme while the signal chips beside it never move; where a brand is green or orange, its chip and a signal chip read as neighbors. OKChroma builds the same chip from structural stops — paper-95 fill, wash-85 border, ink-53-aa text — so the chip is the same component in every theme, and only its hue belongs to the brand.'}>
+          lede={'Unify builds an indicator chip from the three brand aliases — Accent fill, Highlight border, Primary text — and each theme re-rolls all three. So the brand chip lands at a different weight in every theme while the signal chips beside it never move; where a brand is green or orange, its chip and a signal chip read as neighbors. OKChroma builds the same chip from structural stops — paper-95 fill, wash-85 border, ink-53 text — so the chip is the same component in every theme, and only its hue belongs to the brand.'}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: 18 }}>
             <div style={CARD}>
               <div style={CARD_TITLE}>Unify — Accent · Highlight · Primary, re-aliased per theme</div>
@@ -794,7 +794,7 @@ export default function UnifyCompare() {
               </div>
             </div>
             <div style={CARD}>
-              <div style={CARD_TITLE}>OKChroma — paper-95 · wash-85 · ink-53-aa, from the same seeds</div>
+              <div style={CARD_TITLE}>OKChroma — paper-95 · wash-85 · ink-53, from the same seeds</div>
               <div style={{
                 background: dark ? PANEL.dark.bg : PANEL.light.bg, borderRadius: 10, padding: '14px 16px',
                 display: 'flex', flexDirection: 'column', gap: 10,
@@ -803,14 +803,14 @@ export default function UnifyCompare() {
                   <div key={slug} data-brand={slug} data-theme={dark ? 'dark' : 'light'}
                     style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     {OK_CHIP_PREFIXES.map(p => (
-                      <Chip key={p} bg={`var(--${p}-paper-95)`} border={`var(--${p}-wash-85)`} fg={`var(--${p}-ink-53-aa)`} />
+                      <Chip key={p} bg={`var(--${p}-paper-95)`} border={`var(--${p}-wash-85)`} fg={`var(--${p}-ink-53)`} />
                     ))}
                     <span style={{ marginLeft: 'auto', paddingLeft: 8, fontSize: 11, fontWeight: 600, color: dark ? PANEL.dark.ink : PANEL.light.ink }}>{shortName(t)}</span>
                   </div>
                 ))}
               </div>
               <div style={STAT}>
-                Same recipe from structural stops: the ink-53-aa text spans <b>{okSpread(9, 'light')} L*</b> light
+                Same recipe from structural stops: the ink-53 text spans <b>{okSpread(9, 'light')} L*</b> light
                 / <b>{okSpread(9, 'dark')} L*</b> dark, and the paper-95 fill <b>{okSpread(3, 'light')}</b> / <b>{okSpread(3, 'dark')} L*</b> —
                 the chip reads as one component everywhere, and the hue alone says which brand you're in.
               </div>
@@ -890,16 +890,16 @@ export default function UnifyCompare() {
                 are COLOURED text, and Brand Primary is the only stop Unify vets for it — so
                 asking for a second level gets you the same value back. Do NOT route these to
                 Gray (I did once): gray text is a different subject and it deletes the
-                comparison the forked side is making with ink-53-aa vs ink-30-aaa. */}
+                comparison the forked side is making with ink-53 vs ink-30. */}
             <ForkComposition
               page={DIST_PAGE[distMode]} heading={forkPrimary} body={forkPrimary}
               ring={forkPrimary} fill={forkPrimary} onFill={dark ? '#0E0F10' : '#FFFFFF'}
               linkC={forkPrimary} textBtn={forkPrimary} />
             <div data-brand={focus.slug} data-theme={dark ? 'dark' : 'light'}>
               <ForkComposition
-                page={DIST_PAGE[distMode]} heading="var(--brand-ink-53-aa)" body="var(--brand-ink-30-aaa)"
-                ring="var(--brand-mark-74-aa)" fill="var(--brand-solid-fill)" onFill="var(--brand-solid-on)"
-                linkC="var(--link)" textBtn="var(--brand-ink-53-aa)" />
+                page={DIST_PAGE[distMode]} heading="var(--brand-ink-53)" body="var(--brand-ink-30)"
+                ring="var(--brand-mark-74)" fill="var(--brand-solid-fill)" onFill="var(--brand-solid-on)"
+                linkC="var(--link)" textBtn="var(--brand-ink-53)" />
             </div>
           </div>
         </section>

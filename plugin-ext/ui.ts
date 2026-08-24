@@ -13,7 +13,7 @@ let primaryHex = '#E93D82'
 let secondaryHex: string | null = null
 // the neutral offering is ONE 6-entry choice (owner 2026-08-04; Medium joined 2026-08-11):
 // four strengths of the PRIMARY's hue, or an alternate hue SOURCE at the Default strength
-// — Match secondary (follows the current secondary live; the recipe stores the SOURCE,
+// — Match brand-alt (follows the current secondary live; the recipe stores the SOURCE,
 // never a frozen hue) or Custom (the hex's hue tints the grey). Level + source derive
 // from the one choice.
 type NeutralChoice = NeutralLevel | 'secondary' | 'custom'
@@ -69,7 +69,7 @@ let descopePrimitives = true
 // honors a confirm whose reasons haven't changed since it was shown; changing the
 // toggle or fields between the two Applies re-confirms)
 let pendingConfirm: { name: string; token: string } | null = null
-// The secondary is the demo's THREE-STATE field: none (default — just "+ Add secondary") →
+// The secondary is the demo's THREE-STATE field: none (default — just "+ Add brand-alt") →
 // derived (the input tracks the primary live; the engine derives the default secondary) →
 // custom (user hex + style chip). The chevron menu moves between all three.
 type SecondaryMode = 'derived' | 'custom' | 'off'
@@ -162,14 +162,14 @@ const STYLE_INFO: Record<SecondaryStyle, string> = {
 }
 const NEUTRAL_LABEL: Record<NeutralChoice, string> = {
   default: 'Default', medium: 'Medium', branded: 'Intense', pure: 'True grey',
-  secondary: 'Match secondary', custom: 'Custom…',
+  secondary: 'Match brand-alt', custom: 'Custom…',
 }
 const NEUTRAL_INFO: Record<NeutralChoice, string> = {
   default: 'Adds a touch of primary hue',
   medium: 'Slightly more tint than Default',
   branded: 'Adds a noticeable tint to neutral',
   pure: 'Neutrals are pure grey',
-  secondary: 'Adds a touch of the secondary hue',
+  secondary: 'Adds a touch of the brand-alt hue',
   custom: 'Adds a touch of your custom hue',
 }
 
@@ -188,7 +188,7 @@ function syncInfoLines() {
   secondaryInfo.textContent = secondaryMode === 'derived' ? 'A lighter take on your primary — derived by default'
     : secondaryArchetype ? `Your color, with the button at ${secondaryArchetype} lightness`
     : STYLE_INFO[secondaryStyle]
-  // NEUTRAL-SOURCE HYGIENE (the linkBundled idiom): "Match secondary" must not outlive
+  // NEUTRAL-SOURCE HYGIENE (the linkBundled idiom): "Match brand-alt" must not outlive
   // the secondary it matches — with the secondary off, the choice reverts to Default
   // (the engine helper already falls back; this keeps the CONTROL honest) and the
   // option hides so it can't be re-picked.
@@ -267,7 +267,7 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
   type Row = { label: string; scale: GeneratedScale; idHex?: string; outline?: boolean; escape?: boolean }
   const rows: Row[] = [
     { label: 'primary', scale: t.themed.scale, idHex: t.themed.scale.identityHex, escape: ctaEscape && inRedRange },
-    ...(t.secondary ? [{ label: 'secondary', scale: t.secondary.scale, idHex: t.secondary.scale.identityHex, outline: t.secondary.style === 'outline' }] : []),
+    ...(t.secondary ? [{ label: 'brand-alt', scale: t.secondary.scale, idHex: t.secondary.scale.identityHex, outline: t.secondary.style === 'outline' }] : []),
     { label: 'neutral', scale: nScale },
     ...SIGNALS.map(s => ({ label: s.emitName, scale: effective(s.name) })),
   ]
@@ -291,7 +291,7 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     for (const s of row.scale.light) {
       const n = s.stop
       const h = hx(s)
-      // stop 9 (ink-53-aa) is BOTH the emphasis fill and a text stop (owner
+      // stop 9 (ink-53) is BOTH the emphasis fill and a text stop (owner
       // 2026-07-29), so it renders as a filled chip carrying its on-emphasis paper — the
       // role highlight-9 used to show. Titles read the live name off stopTokenName (the
       // engine's SSOT) so a future rename never drifts this preview — Stage B (owner
@@ -379,7 +379,7 @@ function updatePreview() {
     }
 
     // the link FIELD previews the RESOLVED system link: custom seed through the ink
-    // register, else the primary's ink-53-aa. The from-primary posture shows
+    // register, else the primary's ink-53. The from-primary posture shows
     // the resolved hex GREYED + read-only; clicking the hex takes it over (owner
     // Advanced-menu spec 2026-07-16).
     const fromPrimaryStop = t.themed.scale.light.find(s => s.stop === 9)!
@@ -401,7 +401,7 @@ function updatePreview() {
 
     renderMatrix(t, nScale)
 
-    // the bar's live swatches: neutral shows its emphasis fill (stop 9, ink-53-aa
+    // the bar's live swatches: neutral shows its emphasis fill (stop 9, ink-53
     // since the 2026-07-29 collapse); a derived secondary shows the RESOLVED default
     // secondary (the input tracks the primary hex — that's the source, not the result)
     const n9 = nScale.light.find(s => s.stop === 9)
@@ -490,7 +490,7 @@ function buildAndSend() {
   try {
     // v2 sends flat token COLUMNS (wcag · wcag-dark · apca · apca-dark — both lanes,
     // always): this brand's semantic set, plus the DEFAULT-SEED base set (used only when
-    // the base collection — or its brand-secondary group — is created). No dedup keys,
+    // the base collection — or its brand-alt group — is created). No dedup keys,
     // no shared-primitive paths, no profile picker: the diff against the base IS the
     // dedup, and the solve columns carry the profile axis. The RECIPE rides along and
     // gets stamped on the extension — it powers the automatic secondary check and
@@ -755,7 +755,7 @@ window.addEventListener('message', e => {
     const parts = [`${msg.set ?? 0} overridden`, `${msg.inherited ?? 0} inherited`]
     if (msg.removed) parts.push(`${msg.removed} reverted to base`)
     const grew = msg.baseCreated ? ' · base created' : (msg.createdVars ? ` · ${msg.createdVars} base tokens added` : '')
-    const acc = msg.secondary === 'derived' ? ' · secondary derived' : ''
+    const acc = msg.secondary === 'derived' ? ' · brand-alt derived' : ''
     const colsNote = [
       msg.addedCols?.length
         ? `${msg.addedCols.join('+')} column(s) added${msg.orphaned ? ` (${msg.orphaned} stale variable(s) kept default values there — not in the current token set)` : ''}`

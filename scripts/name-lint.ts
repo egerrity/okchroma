@@ -43,8 +43,8 @@ const communityNames: string[] = []
 for (const p of extNames) {
   const c = canonicalize(p)
   if (c !== p) communityNames.push(c)
-  if (c.startsWith('brand-primary/')) communityNames.push('brand/primary/' + c.slice('brand-primary/'.length))
-  if (c.startsWith('brand-secondary/')) communityNames.push('brand/secondary/' + c.slice('brand-secondary/'.length))
+  if (c.startsWith('brand/')) communityNames.push('brand/primary/' + c.slice('brand/'.length))
+  if (c.startsWith('brand-alt/')) communityNames.push('brand/alt/' + c.slice('brand-alt/'.length))
 }
 communityNames.push('system/ink-0')
 

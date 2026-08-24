@@ -144,7 +144,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   // legacy shape for the checklist/toast logic: anchors count as recommended machinery
   const rung: RungMode = primaryMode === 'exact' ? 'exact' : 'recommended'
   // WCAG is the DEFAULT (owner 2026-07-29, the true split): the strict legal mode ships,
-  // every on-text pole ratio-passing, ink-53-aa (the emphasis fill) flips to black where
+  // every on-text pole ratio-passing, ink-53 (the emphasis fill) flips to black where
   // white fails 4.5. APCA is the opt-in extra-legibility lane, the perceptually-solved look.
   const [profile, setProfile] = useState<ContrastProfile>('wcag')
   // Neutral offering (owner 2026-08-04): one 5-entry choice — three strengths of the
@@ -258,7 +258,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     const css = brandCss('custom', 'Custom brand', t.themed, t.secondary?.scale ?? null, '', neutralLevel, cp, t.secondary?.style, ctaEscape && inRedRangeNow, linkHex, ctaBorder, nH)
       + '\n' + signalsCss(cp)
     // the Advanced link field's from-primary display hex — the default link aliases the
-    // primary's ink-53-aa (stop 9; was cta-ink until its 2026-08-12 deletion); the ink
+    // primary's ink-53 (stop 9; was cta-ink until its 2026-08-12 deletion); the ink
     // stops keep the brand's own values under the escape (owner 2026-08-13)
     const linkFromPrimaryHex = stopHex(t.themed.scale.light.find(s => s.stop === 9)!).toUpperCase()
     return { t, r: t.themed, accent: t.secondary?.scale ?? null, css, inRedRange, escapeOn: ctaEscape && inRedRangeNow, linkFromPrimaryHex }
@@ -367,9 +367,9 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   // the chip TINTS with the selection (Figma spec): the family's own wash/ink; outline gets
   // the outline treatment; exact reads neutral-grey "hands off"
   const chipTone: Record<string, React.CSSProperties> = {
-    brand: { background: 'var(--brand-wash-92)', color: 'var(--brand-ink-30-aaa)' },
-    secondary: { background: 'var(--secondary-wash-85)', color: 'var(--secondary-ink-30-aaa)' },
-    outline: { background: 'transparent', color: 'var(--secondary-ink-53-aa)', border: '1px solid var(--secondary-mark-74-aa)' },
+    brand: { background: 'var(--brand-wash-92)', color: 'var(--brand-ink-30)' },
+    secondary: { background: 'var(--brand-alt-wash-85)', color: 'var(--brand-alt-ink-30)' },
+    outline: { background: 'transparent', color: 'var(--brand-alt-ink-53)', border: '1px solid var(--brand-alt-mark-74)' },
     grey: { background: 'var(--surface-dim)', color: 'var(--fg-subtle)' },
   }
   const styleLabel: Record<SecondaryStyle, string> = { default: 'Custom', outline: 'Outline', exact: 'Exact' }
@@ -432,7 +432,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
             <label className="ct-swatch-btn" title="Open color picker">
               {/* the swatch always shows the RESOLVED secondary — in derived mode that's
                   the subtle tint the engine produced, not the primary hex in the input */}
-              <span className="ct-swatch" style={{ background: derived ? 'var(--secondary-solid-fill)' : (secondary ?? 'var(--neutral-wash-89)') }} />
+              <span className="ct-swatch" style={{ background: derived ? 'var(--brand-alt-solid-fill)' : (secondary ?? 'var(--neutral-wash-89)') }} />
               <input type="color" value={secondary ?? primary} onChange={e => { setSecState('custom'); setSecondaryInput(e.target.value.toUpperCase()) }} />
             </label>
             {/* derived: the input TRACKS the primary live (that's what derived means) and is
@@ -478,7 +478,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
               otherwise swallow the click. */}
           <label className="ct-swatch-btn" title="Pick a custom neutral hue" style={{ zIndex: 1 }}
             onClick={e => e.stopPropagation()}>
-            <span className="ct-swatch" style={{ background: 'var(--neutral-ink-53-aa)' }} />
+            <span className="ct-swatch" style={{ background: 'var(--neutral-ink-53)' }} />
             <input type="color" value={normalizeHex(neutralHexInput) ?? primary}
               onChange={e => { setNeutralChoice('custom'); setNeutralHexInput(e.target.value.toUpperCase()) }} />
           </label>
@@ -498,7 +498,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
               <span className="ct-tip">
                 The same requirements solved under two contrast metrics. WCAG (the default) is
                 the strict legal mode: the 2.x ratios (3:1 / 4.5 / 7), every text color
-                guaranteed to pass its ratio, ink-53-aa (the emphasis fill) flipping to black
+                guaranteed to pass its ratio, ink-53 (the emphasis fill) flipping to black
                 where white reads under 4.5:1. APCA is the opt-in extra-legibility lane: the
                 perceptual model, Lc 30 / 75 / 90, a closer read of what's actually legible.
               </span>
@@ -619,9 +619,9 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   // eyeballing the ladder. The cta family lives in the deconfliction card below, not
   // here (owner 2026-07-17: keep the top card to the 0–12 scale, reserve the second
   // card for the ctas). Each cell shows the token representatively: surfaces as
-  // plain swatches, mark-74-aa as a ring (its role IS a stroke), ink as "Aa" text,
+  // plain swatches, mark-74 as a ring (its role IS a stroke), ink as "Aa" text,
   // identity as an "ID" chip. Themes with the page toggle.
-  const SWATCH_STOPS = ['paper-99', 'paper-97', 'paper-95', 'wash-92', 'wash-89', 'wash-85', 'wash-80', 'mark-74-aa', 'ink-53-aa', 'ink-42-aa', 'ink-30-aaa']
+  const SWATCH_STOPS = ['paper-99', 'paper-97', 'paper-95', 'wash-92', 'wash-89', 'wash-85', 'wash-80', 'mark-74', 'ink-53', 'ink-42', 'ink-30']
   // column labels = the token name minus the band word ("89", "53aa"), derived from
   // the token strings so a rename cannot desynchronise label and column
   const stopLabel = (s: string) => s.split('-').slice(1).join('')
@@ -638,21 +638,21 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     // chip "Aa" (mark/cta) carries its on-color at a slightly lighter weight;
     // ink "Aa" is a big, heavy glyph so it reads as a text swatch, not a chip label.
     const aa: React.CSSProperties = { height: 36, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600 }
-    // mark-74-aa is the 3:1 NON-TEXT stop (boundaries/strokes) — it carries no on-text, so it
+    // mark-74 is the 3:1 NON-TEXT stop (boundaries/strokes) — it carries no on-text, so it
     // renders AS a stroke: a ring of the color, not a fill.
     // …and it's icon-grade at the same 3:1 (owner 2026-07-24): the ring carries a
-    // plus glyph painted IN mark-74-aa — non-text contrast serves icons, unlike the
+    // plus glyph painted IN mark-74 — non-text contrast serves icons, unlike the
     // ink text stops.
-    if (stop === 'mark-74-aa') return (
+    if (stop === 'mark-74') return (
       <div style={{ height: 36, borderRadius: 6, boxSizing: 'border-box', border: `2px solid ${cv(stop)}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Plus size={18} strokeWidth={2.5} color={cv(stop)} />
       </div>
     )
-    // ink-53-aa is BOTH the emphasis fill and a text stop since the 2026-07-29 collapse: it
+    // ink-53 is BOTH the emphasis fill and a text stop since the 2026-07-29 collapse: it
     // took over highlight-9's fill role. Render it AS a fill, carrying the on-emphasis
     // paper the semantic layer gives it (--paper-100, the mode-flipping paper extreme),
     // so this slot still reads as the filled chip it always was.
-    if (stop === 'ink-53-aa') return <div style={{ ...aa, background: cv(stop), color: 'var(--paper-100)' }}>Aa</div>
+    if (stop === 'ink-53') return <div style={{ ...aa, background: cv(stop), color: 'var(--paper-100)' }}>Aa</div>
     // filled cta cells carry NO stroke (filled is filled — same call as the buttons);
     // only the OUTLINE secondary shows its ring, where the boundary IS the component
     if (stop.startsWith('solid-fill')) {
@@ -697,7 +697,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   // Row layout per the owner's Figma spec (node 72:38, 2026-07-24): the anchor/ID
   // mini-swatch (24px) and the family label SHARE the first column — label
   // right-aligned beneath — so no separate label line pads the rows. The footnote
-  // rides the card's bottom-right corner. Family labels are tinted with the family's ink-53-aa.
+  // rides the card's bottom-right corner. Family labels are tinted with the family's ink-53.
   const miniSwatch = (bg: string, stroked: boolean, badge?: string, badgeColor?: string) => (
     <div style={{ position: 'relative' }}>
       <div style={{ height: 24, borderRadius: 6, boxSizing: 'border-box', background: bg, border: stroked ? anchorStroke : undefined }} />
@@ -722,7 +722,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
               {prefix === 'neutral' && <div style={{ height: 22, borderRadius: 5, background: 'var(--ink-0)' }} />}
             </div>
           </div>
-          <div style={{ fontSize: 11, fontWeight: 700, lineHeight: 1, color: `var(--${prefix}-ink-53-aa)`, marginTop: 4 }}>{label}</div>
+          <div style={{ fontSize: 11, fontWeight: 700, lineHeight: 1, color: `var(--${prefix}-ink-53)`, marginTop: 4 }}>{label}</div>
         </div>
       ))}
     </div>
@@ -746,7 +746,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
               : (prefix === 'brand' || prefix === 'secondary') ? miniSwatch(`var(--${prefix}-identity)`, false, 'ID',
                   idTextOn(prefix === 'brand' ? computed.r.scale.identityHex : computed.accent?.identityHex))
               : <span />}
-            <div style={{ fontSize: 11, lineHeight: 1, fontWeight: 700, color: `var(--${prefix}-ink-53-aa)`, textAlign: 'right' }}>{label}</div>
+            <div style={{ fontSize: 11, lineHeight: 1, fontWeight: 700, color: `var(--${prefix}-ink-53)`, textAlign: 'right' }}>{label}</div>
           </div>
           {SWATCH_STOPS.map(s => (
             <div key={s} title={`--${prefix}-${s}`}>
@@ -891,12 +891,12 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
               <div style={{ display: 'flex', gap: 12 }}>
                 <div style={{ flex: 1 }} title="--brand-identity">
                   <div style={{ height: 54, borderRadius: 12, background: 'var(--brand-identity)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: idTextOn(computed.r.scale.identityHex) }}>ID</div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-default)', marginTop: 6 }}>brand-primary</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-default)', marginTop: 6 }}>brand</div>
                 </div>
                 {(secondary || derived) && (
-                  <div style={{ flex: 1 }} title="--secondary-identity">
-                    <div style={{ height: 54, borderRadius: 12, background: 'var(--secondary-identity)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: idTextOn(computed.accent?.identityHex) }}>ID</div>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-default)', marginTop: 6 }}>brand-secondary</div>
+                  <div style={{ flex: 1 }} title="--brand-alt-identity">
+                    <div style={{ height: 54, borderRadius: 12, background: 'var(--brand-alt-identity)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: idTextOn(computed.accent?.identityHex) }}>ID</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-default)', marginTop: 6 }}>brand-alt</div>
                   </div>
                 )}
               </div>
@@ -1010,10 +1010,10 @@ function checklistRows(rRec: ResolvedBrand, rung: RungMode, primaryHex: string, 
 
 const TONE_META: Record<CheckTone, { Icon: typeof Check; color: string }> = {
   pass: { Icon: Check, color: 'var(--positive-fg)' },
-  // BRAND register (brand-ink-53-aa, i.e. brand-fg-alt): an engine decision reads as
+  // BRAND register (brand-ink-53, i.e. brand-fg-alt): an engine decision reads as
   // "on-brand", never as a link (--link is reserved for real anchors) and never as
   // the info-blue it used to borrow (owner 2026-07-17).
-  adjusted: { Icon: Sparkles, color: 'var(--brand-ink-53-aa)' },
+  adjusted: { Icon: Sparkles, color: 'var(--brand-ink-53)' },
   standard: { Icon: ArrowRight, color: 'var(--fg-subtle)' },
   fail: { Icon: TriangleAlert, color: 'var(--warning-fg)' },
 }
@@ -1181,8 +1181,8 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
 // as of the 2026-07-17 redesign (was literal paper-100, which collapses to the darkest
 // plane in dark; the raised plane lifts correctly in both modes)
 // (critical / warning / positive / info — role names), each combining:
-//   ink-53-aa title + brand chip + the card signal's chip
-//   ink-30-aaa short body
+//   ink-53 title + brand chip + the card signal's chip
+//   ink-30 short body
 //   focused input + resting input
 //   input with the signal's helper + an error (red) input
 //   the signal's alert message (its cta register)
@@ -1198,45 +1198,45 @@ const SIGNAL_CARDS: Array<{ sig: string; Icon: typeof Info; alert: string }> = [
 
 function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typeof Info; alert: string; hasSecondary: boolean }) {
   const v = (t: string) => `var(--${sig}-${t})`
-  // the canonical chip recipe (owner 2026-07-28): paper-95 · wash-85 · ink-53-aa
+  // the canonical chip recipe (owner 2026-07-28): paper-95 · wash-85 · ink-53
   const chip = (prefix: string, label: string) => (
     <span style={{
       display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 6,
       fontSize: 12, fontWeight: 500,
-      background: `var(--${prefix}-paper-95)`, color: `var(--${prefix}-ink-53-aa)`,
+      background: `var(--${prefix}-paper-95)`, color: `var(--${prefix}-ink-53)`,
       border: `1px solid var(--${prefix}-wash-85)`,
     }}>{label}</span>
   )
   const fieldLabel: React.CSSProperties = { fontSize: 11, fontWeight: 600, color: 'var(--fg-subtle)', marginBottom: 4 }
   // the focused state, held statically (mirror of .ct-field:focus-within) so all
   // four cards can show it at once
-  const focusRing: React.CSSProperties = { borderColor: 'var(--brand-mark-74-aa)', boxShadow: '0 0 0 3px var(--brand-wash-89)' }
+  const focusRing: React.CSSProperties = { borderColor: 'var(--brand-mark-74)', boxShadow: '0 0 0 3px var(--brand-wash-89)' }
   const btn: React.CSSProperties = { padding: '8px 16px', borderRadius: 999, border: '1.5px solid transparent', cursor: 'pointer', fontSize: 13, fontWeight: 500, fontFamily: 'inherit' }
   return (
     <section className="dash-card" style={{ background: 'var(--surface-mid)', boxShadow: 'var(--elev-card)', borderRadius: 12, padding: 18 }}>
-      {/* title row shows the ink-53-aa RANGE: signal ink vs neutral ink vs brand ink;
-          the subtitle (only when a secondary exists) adds secondary ink-53-aa. Wraps so
+      {/* title row shows the ink-53 RANGE: signal ink vs neutral ink vs brand ink;
+          the subtitle (only when a secondary exists) adds secondary ink-53. Wraps so
           the chips drop below the title on narrow cards instead of clipping. */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
         <div style={{ fontSize: 15, fontWeight: 700, marginRight: 'auto' }}>
-          <span style={{ color: v('ink-53-aa') }}>{sig}</span>
-          <span style={{ color: 'var(--neutral-ink-53-aa)', fontWeight: 500 }}> vs </span>
-          <span style={{ color: 'var(--brand-ink-53-aa)' }}>Brand-primary</span>
+          <span style={{ color: v('ink-53') }}>{sig}</span>
+          <span style={{ color: 'var(--neutral-ink-53)', fontWeight: 500 }}> vs </span>
+          <span style={{ color: 'var(--brand-ink-53)' }}>Brand-primary</span>
         </div>
         {chip('brand', 'brand')}
         {chip(sig, sig)}
       </div>
       {hasSecondary && (
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--secondary-ink-53-aa)', marginBottom: 6 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--brand-alt-ink-53)', marginBottom: 6 }}>
           This is a subtitle in Brand-secondary
         </div>
       )}
-      {/* body shows the ink-30-aaa range, one sentence per family */}
+      {/* body shows the ink-30 range, one sentence per family */}
       <p style={{ fontSize: 12.5, lineHeight: 1.45, margin: '0 0 12px' }}>
-        <span style={{ color: v('ink-30-aaa') }}>This body copy is in {sig}'s ink-30-aaa. </span>
-        <span style={{ color: 'var(--brand-ink-30-aaa)' }}>This body copy is in brand-primary's ink-30-aaa. </span>
-        {hasSecondary && <span style={{ color: 'var(--secondary-ink-30-aaa)' }}>This body copy is in brand-secondary's ink-30-aaa. </span>}
-        <span style={{ color: 'var(--neutral-ink-30-aaa)' }}>This body copy is in neutral's ink-30-aaa.</span>
+        <span style={{ color: v('ink-30') }}>This body copy is in {sig}'s ink-30. </span>
+        <span style={{ color: 'var(--brand-ink-30)' }}>This body copy is in brand's ink-30. </span>
+        {hasSecondary && <span style={{ color: 'var(--brand-alt-ink-30)' }}>This body copy is in brand-alt's ink-30. </span>}
+        <span style={{ color: 'var(--neutral-ink-30)' }}>This body copy is in neutral's ink-30.</span>
       </p>
 
       {/* inputs: focused + resting / signal helper + error */}
@@ -1252,7 +1252,7 @@ function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typ
         <div>
           <div style={fieldLabel}>With helper</div>
           <div className="ct-field"><input defaultValue="Value" spellCheck={false} /></div>
-          <div style={{ fontSize: 11, color: v('ink-53-aa'), marginTop: 5 }}>Helper text in the {sig} register.</div>
+          <div style={{ fontSize: 11, color: v('ink-53'), marginTop: 5 }}>Helper text in the {sig} register.</div>
         </div>
         <div>
           <div style={fieldLabel}>Error</div>
@@ -1274,14 +1274,14 @@ function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typ
       {/* button rows: primary wash-89 · primary cta · red cta, then
           secondary wash-89 · secondary cta · neutral cta */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
-        <button style={{ ...btn, background: 'var(--brand-wash-89)', color: 'var(--brand-ink-30-aaa)' }}>Wash 89</button>
+        <button style={{ ...btn, background: 'var(--brand-wash-89)', color: 'var(--brand-ink-30)' }}>Wash 89</button>
         <button style={{ ...btn, background: 'var(--brand-solid-fill)', color: 'var(--brand-solid-on)' }}>Primary cta</button>
         <button style={{ ...btn, background: 'var(--critical-solid-fill)', color: 'var(--critical-solid-on)' }}>Critical cta</button>
       </div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {hasSecondary && <>
-          <button style={{ ...btn, background: 'var(--secondary-wash-89)', color: 'var(--secondary-ink-30-aaa)' }}>Wash 89</button>
-          <button style={{ ...btn, background: 'var(--secondary-solid-fill)', color: 'var(--secondary-solid-on)', borderColor: 'var(--secondary-solid-edge)' }}>Secondary cta</button>
+          <button style={{ ...btn, background: 'var(--brand-alt-wash-89)', color: 'var(--brand-alt-ink-30)' }}>Wash 89</button>
+          <button style={{ ...btn, background: 'var(--brand-alt-solid-fill)', color: 'var(--brand-alt-solid-on)', borderColor: 'var(--brand-alt-solid-edge)' }}>Secondary cta</button>
         </>}
         <button style={{ ...btn, background: 'var(--neutral-solid-fill)', color: 'var(--neutral-solid-on)' }}>Neutral cta</button>
       </div>
@@ -1314,7 +1314,7 @@ function Metric({ label, value, delta, tone }: { label: string; value: string; d
   return (
     <div className="dash-card dash-metric" style={{ ...dashMetric, ['--mtone' as string]: `var(--${tone}-bg-emphasis)` } as React.CSSProperties}>
       <div style={{ fontSize: 12, color: 'var(--fg-subtle)' }}>{label}</div>
-      {/* the value carries its signal's ink-53-aa (owner 2026-07-24, revising the
+      {/* the value carries its signal's ink-53 (owner 2026-07-24, revising the
           2026-07-17 neutralization: the number holds the signal, not just the delta) */}
       <div className="dash-metric-value" style={{ fontSize: 26, fontWeight: 700, margin: '4px 0 4px', color: `var(--${tone}-fg-alt)` }}>{value}</div>
       <span style={{ fontSize: 11, fontWeight: 600, color: `var(--${tone}-fg)` }}>{delta}</span>
@@ -1354,13 +1354,13 @@ function CustomersTable({ hasSecondary }: { hasSecondary: boolean }) {
           const premium = c.plan !== 'Starter'
           // Premium plans carry the accent when a secondary exists, else the brand.
           // THE canonical chip recipe (owner 2026-07-28, matching the unify-compare
-          // exhibit): paper-95 fill · wash-85 stroke · ink-53-aa text, family = the only
+          // exhibit): paper-95 fill · wash-85 stroke · ink-53 text, family = the only
           // variable. Chips are color-family recipes, never surface planes. NOTE:
           // dark chips on the HIGH plane (= paper-95) show the fill collision honestly —
           // that's the context the pop-plane decision is being judged in.
           const planFam = premium ? (hasSecondary ? 'secondary' : 'brand') : 'neutral'
           const planBg = `var(--${planFam}-paper-95)`
-          const planFg = `var(--${planFam}-ink-53-aa)`
+          const planFg = `var(--${planFam}-ink-53)`
           const planBorder = `var(--${planFam}-wash-85)`
           return (
             <tr key={c.name}>
@@ -1374,7 +1374,7 @@ function CustomersTable({ hasSecondary }: { hasSecondary: boolean }) {
                 </div>
               </td>
               <td><span className="dash-pill" style={{ background: planBg, color: planFg, border: `1px solid ${planBorder}` }}>{c.plan}</span></td>
-              <td><span className="dash-pill" style={{ background: `var(--${tone}-paper-95)`, color: `var(--${tone}-ink-53-aa)`, border: `1px solid var(--${tone}-wash-85)` }}>{label}</span></td>
+              <td><span className="dash-pill" style={{ background: `var(--${tone}-paper-95)`, color: `var(--${tone}-ink-53)`, border: `1px solid var(--${tone}-wash-85)` }}>{label}</span></td>
               <td style={{ fontWeight: 500 }}>{c.mrr}</td>
               <td style={{ color: 'var(--fg-subtle)' }}>{c.seen}</td>
             </tr>
@@ -1406,22 +1406,22 @@ const PAGE_CSS = `
   padding: 18px 14px; display: flex; flex-direction: column; gap: 18px;
 }
 /* wordmark (logoipsum placeholder) — the two svg groups' fills wire to the live
-   palette: the mark to brand-ink-53-aa (darkest highlight stop — keeps the mark
+   palette: the mark to brand-ink-53 (darkest highlight stop — keeps the mark
    COLOURED yet legible on the light neutral sidebar; ~2.9:1 worst-case for a bright
-   yellow brand, and a logo mark is WCAG-exempt so 3:1 isn't required. cta/mark-74-aa
-   wash out for bright brands here), the wordmark to brand-ink-53-aa. A fully-robust
+   yellow brand, and a logo mark is WCAG-exempt so 3:1 isn't required. cta/mark-74
+   wash out for bright brands here), the wordmark to brand-ink-53. A fully-robust
    colour-AND-contrast mark would need an engine-emitted contrast-clamped stop. */
 .dash-logo { display: flex; align-items: center; }
 .dash-logo svg { height: 22px; width: auto; display: block; }
-.dash-logo .bl-mark path { fill: var(--brand-ink-53-aa); }
-.dash-logo .bl-type path { fill: var(--brand-ink-53-aa); }
+.dash-logo .bl-mark path { fill: var(--brand-ink-53); }
+.dash-logo .bl-type path { fill: var(--brand-ink-53); }
 .dash-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
 .dash-navitem {
   display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px;
   font-size: 13px; color: var(--fg-default); text-decoration: none;
 }
 .dash-navitem:hover { background: var(--surface-mid); }
-.dash-navitem.active { background: var(--brand-wash-89); color: var(--brand-ink-30-aaa); font-weight: 600; }
+.dash-navitem.active { background: var(--brand-wash-89); color: var(--brand-ink-30); font-weight: 600; }
 .dash-user { display: flex; align-items: center; gap: 10px; padding-top: 14px; border-top: 1px solid var(--neutral-wash-89); }
 .dash-avatar {
   width: 30px; height: 30px; border-radius: 999px; flex-shrink: 0;
@@ -1502,7 +1502,7 @@ const PAGE_CSS = `
 .ct-alert-warn {
   display: flex; gap: 8px; align-items: flex-start; margin-top: 8px;
   padding: 8px 10px; border-radius: 10px; font-size: 12px; line-height: 1.45;
-  background: var(--warning-wash-92); border: 1px solid var(--warning-mark-74-aa); color: var(--warning-ink-30-aaa);
+  background: var(--warning-wash-92); border: 1px solid var(--warning-mark-74); color: var(--warning-ink-30);
 }
 .ct-alert-warn a { color: inherit; font-weight: 600; }
 .ct-alert-text {
@@ -1545,9 +1545,9 @@ const PAGE_CSS = `
   display: inline-flex; align-items: center; gap: 6px; box-sizing: border-box; height: 40px;
   padding: 0 14px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600;
   color: var(--fg-subtle); background: transparent;
-  border: 1.5px dashed var(--neutral-ink-53-aa); border-radius: 12px;
+  border: 1.5px dashed var(--neutral-ink-53); border-radius: 12px;
 }
-.ct-add:hover { color: var(--fg-default); border-color: var(--brand-mark-74-aa); background: var(--brand-paper-97); }
+.ct-add:hover { color: var(--fg-default); border-color: var(--brand-mark-74); background: var(--brand-paper-97); }
 /* STATIC FRAME (owner 2026-07-24): the palette page never scrolls as a page. The
    pane fills the viewport from the measured controls-bar bottom (--ct-dock, set by
    a ResizeObserver — the bar's height varies) down to the bottom bar (54px). The
@@ -1624,7 +1624,7 @@ const PAGE_CSS = `
 .ct-check:hover { background: var(--surface-dim); border-radius: 8px; }
 .ct-tip {
   display: none; position: absolute; left: 0; bottom: calc(100% + 6px); z-index: 70;
-  width: 290px; background: var(--neutral-ink-30-aaa); color: var(--neutral-paper-99);
+  width: 290px; background: var(--neutral-ink-30); color: var(--neutral-paper-99);
   border-radius: 8px; padding: 9px 11px; font-size: 11px; line-height: 1.5;
   box-shadow: var(--elev-float); pointer-events: none;
 }
@@ -1646,10 +1646,10 @@ const PAGE_CSS = `
 .ct-label { font-size: 12px; font-weight: 600; color: var(--fg-default); margin-bottom: 5px; }
 .ct-field {
   display: flex; align-items: center; gap: 8px; box-sizing: border-box; width: 100%;
-  background: var(--surface-mid); border: 1px solid var(--neutral-ink-53-aa); border-radius: 12px;
+  background: var(--surface-mid); border: 1px solid var(--neutral-ink-53); border-radius: 12px;
   padding: 9px 12px;
 }
-.ct-field:focus-within { border-color: var(--brand-mark-74-aa); box-shadow: 0 0 0 3px var(--brand-wash-89); }
+.ct-field:focus-within { border-color: var(--brand-mark-74); box-shadow: 0 0 0 3px var(--brand-wash-89); }
 .ct-field input, .ct-field select {
   border: none; outline: none; background: transparent; color: var(--fg-default);
   font-family: inherit; font-size: 14px; flex: 1; min-width: 0;

@@ -35,8 +35,8 @@ paths.push('utility/surface/dim', 'utility/surface/low', 'utility/surface/mid', 
 for (const p of [...paths]) {
   const c = canonicalize(p)
   if (c !== p) paths.push(c)
-  if (c.startsWith('brand-primary/')) paths.push('brand/primary/' + c.slice('brand-primary/'.length))
-  if (c.startsWith('brand-secondary/')) paths.push('brand/secondary/' + c.slice('brand-secondary/'.length))
+  if (c.startsWith('brand/')) paths.push('brand/primary/' + c.slice('brand/'.length))
+  if (c.startsWith('brand-alt/')) paths.push('brand/alt/' + c.slice('brand-alt/'.length))
 }
 // community-only shapes: paths that exist ONLY under the community plugin's flat
 // system/ namespace (plugin/code.ts STATIC_UTILS) with no ext equivalent for
@@ -76,11 +76,11 @@ if (contrastLines === 0) fail('(gate)', 'conformance-phrase gate matched zero li
 // automatically — the 2026-08-18 solid rename put solid/fill/edge/overlay/dim/mid on
 // the list for free, and retired "cta" from it (no path carries the word now, so the
 // bodies' deliberate "CTA" prose — kept so a designer's cta query still lands on the
-// action rows — needs no exception any more). "aaa" stays: ink-30-aaa's own leaf
+// action rows — needs no exception any more). "aaa" stays: ink-30's own leaf
 // collides with "AAA", the WCAG conformance-level word AA_BODY/AAA_BODY
 // (tokenDescriptions.ts) use verbatim in the Contrast line of every other AA/AAA
 // text-register row (PHRASES enforces those exact strings, rule 4) — a real word every
-// text-contrast row legitimately carries, not a pointer at ink-30-aaa specifically.
+// text-contrast row legitimately carries, not a pointer at ink-30 specifically.
 const ALLOWED_FOREIGN = new Set(['aaa'])
 const vocab = new Set<string>()
 for (const p of paths) for (const w of p.toLowerCase().split(/[/-]/)) if (/^[a-z]{3,}$/.test(w)) vocab.add(w)

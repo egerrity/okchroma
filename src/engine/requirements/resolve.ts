@@ -43,7 +43,7 @@ export type ResolvedRamp = {
     cta: ResolvedRole; ctaHover: ResolvedRole; ctaPressed: ResolvedRole
   }
   // one on-color left: the cta's own text pole. onHighlightIsWhite died with the
-  // highlight band (owner 2026-07-29) — ink-53-aa's on-color is a paper token now.
+  // highlight band (owner 2026-07-29) — ink-53's on-color is a paper token now.
   ons: { onFillIsWhite: boolean }
 }
 export type { ResolveOpts }
@@ -100,7 +100,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   // (agnostic sweep worst 5.28 wcag-ratio, 0/216 under 4.5) and stays byte-identical.
   // Lane-specific, so it stays an override on top of the declaration rather than in it.
   // Threshold moved 10 → 9 with the 2026-07-29 renumber: the ink band starts at 9 now.
-  // This IS why the collapse is visually cheap — it is the rule that made ink-53-aa (then
+  // This IS why the collapse is visually cheap — it is the rule that made ink-53 (then
   // ink-10) land on top of highlight-9, both solving 4.5 against paper-95 (paper-3).
   const wcagAnchorStop = (req: Require, stop: number) => (stop >= 9 ? 3 : declaredAnchor(req))
   // THE INVERSE INK GROUND (owner round 2026-08-19, opts.inkGround): the ink stops solve
@@ -114,12 +114,12 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   const apcaGroundOf = (req: Require, stop: number): { L: number; C: number; H: number } =>
     inkGround && stop >= 9 ? inkGround : refOf(declaredAnchor(req), stop)
   // the CROSS-FAMILY paper bound (owner defect 2026-08-03 — her measured pair was the
-  // brand ink-53-aa (ink-9) on the NEUTRAL paper-95 (paper-3), 4.479:1; her follow-up
-  // caught mark-74-aa (highlight-8) the same way, 26/72 under 3:1): "usable on every
+  // brand ink-53 (ink-9) on the NEUTRAL paper-95 (paper-3), 4.479:1; her follow-up
+  // caught mark-74 (highlight-8) the same way, 26/72 under 3:1): "usable on every
   // paper" includes the per-brand NEUTRAL's papers, and the own-family paper-95 (paper-3)
   // is NOT the nearest paper for green-band brands — their tinted paper carries more Y
   // than the near-gray neutral at the same L. Covers every contrast-required stop from 8
-  // up: the inks are text on any paper, and mark-74-aa (highlight-8) is the focus-
+  // up: the inks are text on any paper, and mark-74 (highlight-8) is the focus-
   // ring/border register that sits on neutral surfaces (WCAG 1.4.11).
   // The bound is the worst SHIPPED neutral paper-95 (paper-3) Y over hue 0..350 × every NeutralLevel:
   // light min 0.845015 (H260 branded #e8edf8) · dark max 0.014247 (H300 medium #211f23),
@@ -332,7 +332,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
 
     // verify any declared require against the emitted (gamut-clamped) values — total, fail loud
     if (sp.require?.metric === 'wcag') {
-      // THE SHIPPED-PAIR FLOOR (owner defect 2026-08-03 — #43B02A ink-53-aa (ink-9) read
+      // THE SHIPPED-PAIR FLOOR (owner defect 2026-08-03 — #43B02A ink-53 (ink-9) read
       // 4.44:1 on paper-95 (paper-3)): the analytic solve lands exactly on the bar, and the
       // sRGB encode plus 8-bit hex quantization of BOTH sides then eats up to ~0.08 of ratio.
       // legalRatio covers the fill's renditions, but its reference side is the ANALYTIC

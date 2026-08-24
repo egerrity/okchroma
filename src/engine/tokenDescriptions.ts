@@ -33,8 +33,8 @@ const AAA_BODY = 'AAA standard body text'
 // (both plugin sandboxes bundle it; desc-audit enforces the leaf).
 export const FAMILY = {
   neutral: 'neutral',
-  brandPrimary: 'brand-primary',
-  brandSecondary: 'brand-secondary',
+  brandPrimary: 'brand',
+  brandSecondary: 'brand-alt',
   critical: 'critical',
   warning: 'warning',
   positive: 'positive',
@@ -53,7 +53,7 @@ const SIGNALS: readonly Family[] = [FAMILY.critical, FAMILY.warning, FAMILY.posi
 export const CSS_FAMILY = {
   neutral: FAMILY.neutral,
   brandPrimary: 'brand',
-  brandSecondary: 'secondary',
+  brandSecondary: 'brand-alt',
 } as const
 
 // The per-family half of a scale row's Theming line (owner's language).
@@ -66,8 +66,8 @@ export const CSS_FAMILY = {
 // on-text choice the on rows must never make.
 const TINT: Record<Family, string> = {
   [FAMILY.neutral]: 'tints carry neutral hue (gray)',
-  [FAMILY.brandPrimary]: 'tints carry primary hue',
-  [FAMILY.brandSecondary]: 'tints carry secondary hue',
+  [FAMILY.brandPrimary]: 'tints carry brand hue',
+  [FAMILY.brandSecondary]: 'tints carry brand-alt hue',
   [FAMILY.critical]: 'tints carry critical hue (red)',
   [FAMILY.warning]: 'tints carry warning hue (yellow)',
   [FAMILY.positive]: 'tints carry positive hue (green)',
@@ -122,12 +122,12 @@ const SCALE: Record<string, Body> = {
   'wash-89': WASH,
   'wash-85': WASH,
   'wash-80': WASH,
-  'mark-74-aa': { req: 'focus rings, icons, large text', contrast: AA_LARGE, theming: solved, collides: true },
-  'ink-53-aa': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
-  'ink-42-aa': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
+  'mark-74': { req: 'focus rings, icons, large text', contrast: AA_LARGE, theming: solved, collides: true },
+  'ink-53': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
+  'ink-42': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
   // ("high-emphasis" reworded 2026-08-12: the surface planes took low/high as label
   // words, and a body carrying either floods that token's picker search — the C50 law)
-  'ink-30-aaa': { req: 'strong-emphasis text, inverted backgrounds', contrast: AAA_BODY, theming: solved, collides: true },
+  'ink-30': { req: 'strong-emphasis text, inverted backgrounds', contrast: AAA_BODY, theming: solved, collides: true },
   // the solid family (renamed from the cta words, owner 2026-08-18). "CTA" stays in
   // these bodies on purpose: it stopped being a token label, so it floods nothing,
   // and a designer's "cta" query still lands on these rows.
@@ -172,7 +172,7 @@ const SYSTEM: Record<string, Body> = {
   'system/ink-0': { req: 'max-emphasis text anchor', contrast: AAA_BODY },
 
   'system/abs-primary': { req: 'identity seed reference', theming: 'the theme’s own input, as given' },
-  'system/abs-secondary': { req: 'identity seed reference', theming: 'the theme’s companion input, as given' },
+  'system/abs-alt': { req: 'identity seed reference', theming: 'the theme’s companion input, as given' },
   'system/alpha/transparent': { req: 'aliased off-states' },
   // ("dimming" reworded 2026-08-18: the surface planes took dim as a label word)
   'system/alpha/abs-black-060': { req: 'veils the page behind modals' },
@@ -197,12 +197,15 @@ const SYSTEM: Record<string, Body> = {
   'system/link/inverse-pressed': LINK_INVERSE(' pressed', AAA_BODY),
 }
 
-// Both plugins' user-facing path shapes: the ext base uses brand-primary/…, the community
+// Both plugins' user-facing path shapes: the ext base uses brand/…, the community
 // theme collection uses brand/primary/… — same rows, same text.
 const PREFIXES: Array<[string, Family]> = [
-  ...FAMILIES.map((f): [string, Family] => [f + '/', f]),
+  // community spellings FIRST: the 2026-08-21 family rename made the ext word a
+  // PREFIX of the community shapes ('brand/' would shadow 'brand/primary/' and
+  // 'brand/alt/'), so most-specific must be tried before the family words
   ['brand/primary/', FAMILY.brandPrimary],
-  ['brand/secondary/', FAMILY.brandSecondary],
+  ['brand/alt/', FAMILY.brandSecondary],
+  ...FAMILIES.map((f): [string, Family] => [f + '/', f]),
 ]
 
 // CANONICALIZE: the ext plugin's paths carry OWNERSHIP-ZONE prefixes (owner ruling
@@ -218,7 +221,7 @@ const ZONE_MAP: Array<[string, string]> = [
   ['base/absolute/black', 'system/abs-black'],
   ['base/absolute/white', 'system/abs-white'],
   ['base/absolute/primary', 'system/abs-primary'],
-  ['base/absolute/secondary', 'system/abs-secondary'],
+  ['base/absolute/alt', 'system/abs-alt'],
   ['base/link/', 'system/link/'],
   ['base/alpha/', 'system/alpha/'],
   ['utility/surface/', 'system/surface/'],

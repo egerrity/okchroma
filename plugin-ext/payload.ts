@@ -14,9 +14,9 @@
 // src/engine/requirements/profiles.ts (the wcag path is a passthrough), so re-enabling is a column
 // list, not a rebuild.
 //
-// Token shape: the operative `brand-` CATEGORY stays in the token name (brand-primary/*,
-// brand-secondary/*), the brand's NAME lives on the extension, so a designer reads
-// kirby → base/brand-primary/paper-99. Neutral + signals keep their identity names.
+// Token shape: the operative `brand-` CATEGORY stays in the token name (brand/*,
+// brand-alt/*), the brand's NAME lives on the extension, so a designer reads
+// kirby → base/brand/paper-99. Neutral + signals keep their identity names.
 // Every path carries an OWNERSHIP-ZONE prefix (owner ruling 2026-08-18, replacing the
 // primitive/ register): base/ = engine-owned rows — hand edits there are NOT rebuilt
 // (the apply path is create-once + conservative refresh), so the zone name is the
@@ -121,7 +121,7 @@ function flatten(node: FigmaGroup, prefix: string, out: FlatTok[]): void {
 // that stop's leaf) moves it: it fired on ink/11 → emitted ink/12 pre-collapse, ink/10 →
 // ink/11 through the C33 era, C49 restored the original pairing (ink/11 → ink/12), Stage
 // B relabeled the pair to ink/30-aaa → ink/0, and the band flattening (owner 2026-08-12)
-// flattened it to ink-30-aaa → ink-0 — same stop index, same trigger position, new
+// flattened it to ink-30 → ink-0 — same stop index, same trigger position, new
 // strings. The alpha/shadow ladder (owner
 // 2026-07-27) is pure black at 4/8/12% light; dark is heavier by necessity — near black
 // a light-mode alpha vanishes — at 32/48/64%.
@@ -154,12 +154,12 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
   // identity rows re-home to the ABSOLUTES (owner 2026-07-27: the unprocessed inputs
   // sit with the poles; zone spellings 2026-08-18). Brand-overridable like base/link.
   const IDENTITY_HOME: Record<string, string> = {
-    'brand-primary/identity': 'base/absolute/primary',
-    'brand-secondary/identity': 'base/absolute/secondary',
+    'brand/identity': 'base/absolute/primary',
+    'brand-alt/identity': 'base/absolute/alt',
   }
   const brandRows: FlatTok[] = []
-  flatten(g.brand as FigmaGroup, 'brand-primary', brandRows)
-  if (includeSecondary) flatten(g.secondary as FigmaGroup, 'brand-secondary', brandRows)
+  flatten(g.brand as FigmaGroup, 'brand', brandRows)
+  if (includeSecondary) flatten(g.secondary as FigmaGroup, 'brand-alt', brandRows)
   // identity rows are set aside for the absolutes tail below (panel order)
   const identityRows: FlatTok[] = []
   for (const t of brandRows) {
@@ -258,7 +258,7 @@ function columns(input: ThemeSpec, neutralLevel: NeutralLevel, canonicalSignals:
 }
 
 // The apply payload for a brand — both schemes, collision overrides merged.
-// The payload ALWAYS carries a brand-secondary: the brand's own (hex or derived-by-choice)
+// The payload ALWAYS carries a brand-alt: the brand's own (hex or derived-by-choice)
 // when it brings one, otherwise the DERIVED pastel from its primary (owner 2026-07-07 —
 // no brand ever has a blank or wrong-hue secondary; supersedes v1's mirror). Whether those
 // paths are WRITTEN is the file's posture, decided in code.ts.
@@ -269,7 +269,7 @@ export function buildBrandColumns(input: ThemeSpec, neutralLevel: NeutralLevel):
   return columns(spec, neutralLevel, false, true)
 }
 
-// The base collection's seed set. brand-secondary is ALWAYS included (the derived pastel):
+// The base collection's seed set. brand-alt is ALWAYS included (the derived pastel):
 // at base creation it's written only when the file's posture says so, and it's the seed for
 // a later "add a secondary to the base" apply.
 // seedHex: the base "theme" collection's seed color — the fixed okchroma baseline by

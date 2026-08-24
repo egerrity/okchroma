@@ -100,10 +100,10 @@ const RETIRED_RUNG_ALPHA = 0.12
 // here, and the four cta-ink keys dropped (their paths died 2026-08-12 — entries could
 // never fire). Zone spellings per the same round's rename.
 const RETIRED_SIGNAL_VALUES: Record<string, string[]> = {
-  'base/critical/mark-74-aa': ['#e06146'],
-  'base/warning/mark-74-aa': ['#c67a00'],
-  'base/warning/ink-53-aa': ['#a56000'],
-  'base/positive/ink-53-aa': ['#1c7e36'],
+  'base/critical/mark-74': ['#e06146'],
+  'base/warning/mark-74': ['#c67a00'],
+  'base/warning/ink-53': ['#a56000'],
+  'base/positive/ink-53': ['#1c7e36'],
   'base/positive/solid/fill': ['#63c373', '#67c777'],
   'base/positive/solid/fill-hover': ['#52b364', '#77d786'],
   'base/positive/solid/fill-pressed': ['#42a355', '#87e896'],
@@ -132,6 +132,16 @@ const DARK_COLUMNS = new Set<Column>(['dark'])
 // before any candidate, so the ascending walk would hand the vacating row to the
 // wrong stop; see the inkUpshifts pre-pass in the apply handler.
 const RENAMED_LEAVES: Array<[string, string]> = [
+  // ── CONFORMANCE-SUFFIX DROP + FAMILY RENAME (owner 2026-08-21): the aa/aaa
+  // signifiers leave the NAMES (the Contrast description lines still carry the
+  // conformance, so an "aaa" search lands on descriptions); brand-primary → brand
+  // and brand-secondary → brand-alt ride RENAMED_GROUPS below. Same indices, same
+  // values — a relabel, not a renumber.
+  ['mark-74-aa', 'mark-74'],
+  ['ink-53-aa', 'ink-53'],
+  ['ink-42-aa', 'ink-42'],
+  ['ink-30-aaa', 'ink-30'],
+  ['absolute/secondary', 'absolute/alt'],
   // ── LINK-INVERSE REGROUP (owner 2026-08-20): the inverse trio folds INSIDE the
   // link group (its solo group lasted one day, 2026-08-19..20). Multi-segment
   // leaves — the suffix match carries the group word, so base/link/inverse finds
@@ -180,9 +190,9 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['abs-black', 'absolute/black'],
   ['abs-white', 'absolute/white'],
   ['abs-primary', 'absolute/primary'],
-  ['abs-secondary', 'absolute/secondary'],
+  ['abs-secondary', 'absolute/alt'],
   // ── BAND FLATTENING (owner 2026-08-12): ramp leaves sit FLAT in the family group
-  // again — paper-99, wash-92, mark-74-aa, ink-53-aa … (band word + hyphen + level,
+  // again — paper-99, wash-92, mark-74, ink-53 … (band word + hyphen + level,
   // the engine's own token names). The 2026-07-27 band nesting (paper/99 …) is
   // retired; only the cta STATE group still nests. These CURRENT-name entries MUST
   // precede everything below: candidates are tried in table order and the banded
@@ -199,10 +209,10 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['wash/89', 'wash-89'],
   ['wash/85', 'wash-85'],
   ['wash/80', 'wash-80'],
-  ['mark/74-aa', 'mark-74-aa'],
-  ['ink/53-aa', 'ink-53-aa'],
-  ['ink/42-aa', 'ink-42-aa'],
-  ['ink/30-aaa', 'ink-30-aaa'],
+  ['mark/74-aa', 'mark-74'],
+  ['ink/53-aa', 'ink-53'],
+  ['ink/42-aa', 'ink-42'],
+  ['ink/30-aaa', 'ink-30'],
   ['ink/0', 'ink-0'],
   // ── the pre-banding flat vintage (leaf shapes before 2026-07-27; every target below
   // points STRAIGHT at the final flat home — the one-hop rule).
@@ -214,22 +224,22 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['wash-5', 'wash-89'],
   ['wash-6', 'wash-85'],
   ['wash-7', 'wash-80'],
-  ['highlight-8', 'mark-74-aa'],
+  ['highlight-8', 'mark-74'],
   // ── ink flats, 2026-07-10-numbering vintage (pre-banding files, 07-10 → 07-27).
   // C49 restored the strong ink's and the anchor's pre-C33 numbers, so these map
   // one-hop to homes that are now NUMBER-TRUE for this vintage (the pre-C49 table
   // had homed flat ink-10 — that era's FIRST text stop — onto the then-strong
   // ink/10, a wrong-by-one latent C46's sweep class predicted).
-  ['ink-9', 'ink-53-aa'],
-  ['ink-10', 'ink-53-aa'],
-  ['ink-11', 'ink-30-aaa'],
+  ['ink-9', 'ink-53'],
+  ['ink-10', 'ink-53'],
+  ['ink-11', 'ink-30'],
   ['ink-12', 'ink-0'],
   // ── STAGE-B BANDED ENTRIES for the pre-Stage-B banded digit vintage (2026-07-27 →
   // 2026-08-07; the flattening batch at the top covers the Stage-B spellings
   // themselves). Ordering note kept from Stage B: a banded-digit file holds both
   // ink/9 (first text) and ink/10 (the between stop) as two DIFFERENT real variables
   // sharing a leaf-string family with the OLD-KEY 'ink/10' the collapse-era entry
-  // further down ALSO targets. Resolving ink-53-aa (stop 9) must consume this
+  // further down ALSO targets. Resolving ink-53 (stop 9) must consume this
   // batch's ink/9 BEFORE the collapse-era ink/10 entry ever gets a chance to
   // (wrongly) claim a real between-stop row.
   ['paper/0', 'paper-100'],
@@ -240,19 +250,19 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['wash/5', 'wash-89'],
   ['wash/6', 'wash-85'],
   ['wash/7', 'wash-80'],
-  ['highlight/8', 'mark-74-aa'],
-  ['ink/9', 'ink-53-aa'],
-  ['ink/10', 'ink-42-aa'],
-  ['ink/11', 'ink-30-aaa'],
+  ['highlight/8', 'mark-74'],
+  ['ink/9', 'ink-53'],
+  ['ink/10', 'ink-42'],
+  ['ink/11', 'ink-30'],
   ['ink/12', 'ink-0'],
   // ── REQUIREMENT-CODE HEAL (owner 2026-08-07, names only): C54 shipped the banded
   // r-floor leaves (mark/74-r300, ink/53-r450, ink/42-r650, ink/30-r700) for part of
   // one day; a file applied under that build carries them as its CURRENT names.
   // One-hop, no chaining: targets follow the final flat homes.
-  ['mark/74-r300', 'mark-74-aa'],
-  ['ink/53-r450', 'ink-53-aa'],
-  ['ink/42-r650', 'ink-42-aa'],
-  ['ink/30-r700', 'ink-30-aaa'],
+  ['mark/74-r300', 'mark-74'],
+  ['ink/53-r450', 'ink-53'],
+  ['ink/42-r650', 'ink-42'],
+  ['ink/30-r700', 'ink-30'],
   ['cta', 'solid/fill'],
   ['cta-hover', 'solid/fill-hover'],
   ['cta-pressed', 'solid/fill-pressed'],
@@ -299,18 +309,18 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // mapping at best and a hijack at worst. This entry catches a pre-C33 file's ink/10
   // (that vintage's FIRST TEXT stop), which is a DIFFERENT thing than a banded-era
   // file's ink/10 (the between stop, C49); the Stage-B batch above resolves
-  // ink-53-aa off such a file's own ink/9 FIRST, so this entry is only ever reached
+  // ink-53 off such a file's own ink/9 FIRST, so this entry is only ever reached
   // once that candidate is absent — it never gets a chance to steal a real
   // between-stop row.
-  ['ink/10', 'ink-53-aa'],
+  ['ink/10', 'ink-53'],
   // ── pre-banding flat names from BEFORE the 2026-07-10 renumber (two renumbers back:
   // first text = ink-11, strong = ink-12, anchor = ink-13). Vintage disambiguation vs
-  // the 07-10 flats above is by ensure order + consumption: ink-53-aa (ensured first)
-  // eats an old-old file's ink-11 — a 07-10 file's ink-11 survives for ink-30-aaa
-  // because ink-53-aa consumed that file's ink-10 instead — then ink-30-aaa falls
+  // the 07-10 flats above is by ensure order + consumption: ink-53 (ensured first)
+  // eats an old-old file's ink-11 — a 07-10 file's ink-11 survives for ink-30
+  // because ink-53 consumed that file's ink-10 instead — then ink-30 falls
   // through its own-name candidate to this vintage's ink-12, and ink-0 to ink-13.
-  ['ink-11', 'ink-53-aa'],
-  ['ink-12', 'ink-30-aaa'],
+  ['ink-11', 'ink-53'],
+  ['ink-12', 'ink-30'],
   ['ink-13', 'ink-0'],
   // blue-signal variant relabels (2026-07-13, info-color → blue): variant leaf =
   // label + resolved light-cta hex (variantKey), so the relabel needs per-lane entries.
@@ -379,6 +389,10 @@ const RENAMED_LEAVES: Array<[string, string]> = [
 // semantic/surface/*). The signal-role entries compose with RENAMED_LEAVES to reach the
 // oldest flat spellings (e.g. red/highlight-8).
 const RENAMED_GROUPS: Array<[string, string]> = [
+  // the 2026-08-21 family rename: brand-primary → brand, brand-secondary → brand-alt
+  // (trailing slashes keep base/brand/ from ever matching base/brand-alt/ paths)
+  ['base/brand-primary/', 'base/brand/'],
+  ['base/brand-secondary/', 'base/brand-alt/'],
   ['system/info-color/', 'base/blue/'],
   // the primitive/ register era (2026-08-11 → 08-18) — system rows split by zone now,
   // so BOTH zone targets carry the old prefix (misses are harmless; candidates that
@@ -601,8 +615,8 @@ figma.ui.onmessage = async (msg) => {
       // spells it brand-secondary/paper-1; read-only, no renames here). The live leaf
       // is flat paper-99 (band flattening, owner 2026-08-12) — legacyCandidates
       // still recovers every older spelling behind it.
-      const baseHasSecondary = baseVars.has('base/brand-secondary/paper-99')
-        || legacyCandidates('base/brand-secondary/paper-99').some(p => baseVars.has(p))
+      const baseHasSecondary = baseVars.has('base/brand-alt/paper-99')
+        || legacyCandidates('base/brand-alt/paper-99').some(p => baseVars.has(p))
       const extsOfBase = baseMatch ? extensions.filter(e => e.rootVariableCollectionId === baseMatch!.id) : []
       // case-insensitive identity: "l1-near-black" typed by hand must overwrite
       // L1-near-black, never create a sibling that differs only by case
@@ -630,7 +644,7 @@ figma.ui.onmessage = async (msg) => {
       // upshift's from/to against a fresh payload path below. Index-keyed, not a payload
       // value-import (keeps the engine out of the sandbox bundle — see the header
       // comment). Anything else passes through unchanged.
-      const STAGE_B_INK_LEAF: Record<string, string> = { '10': 'ink-42-aa', '11': 'ink-30-aaa', '12': 'ink-0' }
+      const STAGE_B_INK_LEAF: Record<string, string> = { '10': 'ink-42', '11': 'ink-30', '12': 'ink-0' }
       const stageBInkLeaf = (oldSpelling: string): string => {
         const m = /\/ink\/(10|11|12)$/.exec(oldSpelling)
         return m ? oldSpelling.slice(0, -m[0].length) + '/' + STAGE_B_INK_LEAF[m[1]] : oldSpelling
@@ -666,7 +680,7 @@ figma.ui.onmessage = async (msg) => {
       // until manually re-applied; the C19 cta-ink rows were the same latent class).
       // Same discipline as missingCols: confirm first, then the recipe backfill
       // regenerates every extension so each brand overrides the new rows with its own.
-      // brand-secondary/* is excluded (the secondary posture has its own reason +
+      // brand-alt/* is excluded (the secondary posture has its own reason +
       // trigger); a legacy name counts as EXISTING (ensure() migrates it in place).
       // Brand-VARYING system rows — the link trio and the identity absolutes
       // (owner 2026-07-27) — are the only primitive/system/ paths extensions may
@@ -675,7 +689,7 @@ figma.ui.onmessage = async (msg) => {
       // sweep retired prefix tests, which disarm silently when a name moves)
       const OVERRIDABLE_SYSTEM = EXT_OVERRIDABLE_SYSTEM
       // one helper so every exclusion site stays in sync
-      const isBrandSecondary = (p: string) => p.startsWith('base/brand-secondary/')
+      const isBrandSecondary = (p: string) => p.startsWith('base/brand-alt/')
       // Contract-invariant system rows (everything under primitive/system/ except the
       // brand-overridable rows above) are excluded: extensions can never override
       // them (the work loop skips them), so their appearance seeds silently —
@@ -693,7 +707,7 @@ figma.ui.onmessage = async (msg) => {
             // (the ensure loop skips it when off — counting it would fire a confirm
             // + extension backfill on every apply, forever). Review-caught 2026-07-27.
             .filter((p: string) => !(p === 'base/absolute/primary' && baseVars.has('brand-primary/identity')))
-            .filter((p: string) => !(p === 'base/absolute/secondary'
+            .filter((p: string) => !(p === 'base/absolute/alt'
               && (baseVars.has('brand-secondary/identity') || !(baseHasSecondary || hasSecondary))))
             // C49: a path an inkUpshift will FILL by rename is not new — and a vacating
             // ink/10 name is new even though a row currently squats on it (the strong
@@ -728,7 +742,7 @@ figma.ui.onmessage = async (msg) => {
       const reasons: string[] = []
       if (overwrite) reasons.push(`overwrite "${brand}"`)
       if (addingSecondary) reasons.push(
-        'add a brand-secondary group to the base and update every existing brand with its derived secondary')
+        'add a brand-alt group to the base and update every existing brand with its derived brand-alt')
       if (missingCols.length) reasons.push(
         `add the ${missingCols.join(' + ')} column(s) to the base and regenerate ${extsOfBase.length ? `all ${extsOfBase.length} existing brand extension(s)` : 'the file'} to fill them (existing column values stay untouched)`)
       if (newRows.length) reasons.push(
@@ -850,7 +864,7 @@ figma.ui.onmessage = async (msg) => {
       // are exact poles by construction — alias them to the primitive/system/abs-* rows so the
       // chip READS as the pole and the poles stay single-source. Emit-layer
       // representation only: a non-pole value (an outline secondary's on-cta rides
-      // its ink-53-aa) falls back to a raw write, so the alias never constrains the
+      // its ink-53) falls back to a raw write, so the alias never constrains the
       // solve — the engine still picks the pole per family × column.
       // (highlight/on dropped from this list 2026-07-29 with the token; the neutral
       // anchor is flat ink-0 since the band flattening, owner 2026-08-12 — was banded
@@ -954,7 +968,7 @@ figma.ui.onmessage = async (msg) => {
       // the primitive/system/ prefix.
       for (const [oldPath, newPath] of [
         ['brand-primary/identity', 'base/absolute/primary'],
-        ['brand-secondary/identity', 'base/absolute/secondary'],
+        ['brand-secondary/identity', 'base/absolute/alt'],
       ] as const) {
         const v = baseVars.get(oldPath)
         if (v && !baseVars.has(newPath)) {
@@ -964,7 +978,7 @@ figma.ui.onmessage = async (msg) => {
         }
       }
       for (const t of baseTokens[activeCols[0]]) { // all columns share the path set
-        if (!withSecondary && (isBrandSecondary(t.path) || t.path === 'base/absolute/secondary')) continue
+        if (!withSecondary && (isBrandSecondary(t.path) || t.path === 'base/absolute/alt')) continue
         const before = createdVars
         const v = ensure(t.path)
         if (createdVars > before || rebuildBase) seedFresh(v, t.path) // fresh variable (or a rebuild) → seed every active column
@@ -1180,7 +1194,7 @@ figma.ui.onmessage = async (msg) => {
       // Different → setValueForMode routed by the extension's modeId for that column.
       // primitive/system/* is contract-invariant and skipped outright (the sunken/low/base/high
       // planes are aliases; the rest are poles every brand shares). The payload always CARRIES a
-      // brand-secondary (real or derived from the primary); it is WRITTEN only when the
+      // brand-alt (real or derived from the primary); it is WRITTEN only when the
       // file's posture is on — secondary stays opt-in, and once on, every brand derives.
       const secondaryMode: 'real' | 'derived' | 'none' = hasSecondary ? 'real' : (withSecondary ? 'derived' : 'none')
       const brandByCol = new Map<Column, Map<string, FlatTok>>(
@@ -1193,7 +1207,7 @@ figma.ui.onmessage = async (msg) => {
         // base/link/* with its own resolved values, its primary's ink stops
         // or its custom link seed) and the identity absolutes.
         if (EXT_NON_OVERRIDABLE(t.path)) continue
-        if (secondaryMode === 'none' && (isBrandSecondary(t.path) || t.path === 'base/absolute/secondary')) continue
+        if (secondaryMode === 'none' && (isBrandSecondary(t.path) || t.path === 'base/absolute/alt')) continue
         work.push(t.path)
       }
       // The pole aliases resolve through ONE hop (they point at the raw abs rows) —
@@ -1228,7 +1242,7 @@ figma.ui.onmessage = async (msg) => {
             // the soft on-cta reads "alpha/ink"). strokeFor/softInkFor come FIRST for the same
             // reason they do at the base seeding: isPole rejects alpha≠1, so the poles rule can
             // never claim an alpha-carrying leaf. ⚠️ THIS is the write path the APPLIED theme
-            // shows — brand-secondary/cta/on is an OVERRIDE row (the base posture is the
+            // shows — brand-alt/solid/on is an OVERRIDE row (the base posture is the
             // mirror's solid pole), so a router missing HERE ships raw even when the base
             // seeding and the conversion pass both carry it (owner-caught 2026-08-03: "not
             // seeing these changes come through in the top level theme").

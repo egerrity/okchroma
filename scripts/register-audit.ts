@@ -54,9 +54,9 @@ const ok = (msg: string) => console.log('  ✓ ' + msg)
   // THE INK CHROMA FLOORS ARE FROZEN VALUES (normalized 2026-08-05 from the pinned-index
   // form). The first-text and strong floors have sat at the ladder law's rungs 10/11
   // since before two renumbers — the values are the invariant, declared per row
-  // precisely so a stop renumber has nothing left to move. ink-42-aa (the C49 between
+  // precisely so a stop renumber has nothing left to move. ink-42 (the C49 between
   // stop) inherits the first-text rung value: the retired hover law it replaces
-  // evaluated ink-53-aa's register, floor included. This check fails if a row's
+  // evaluated ink-53's register, floor included. This check fails if a row's
   // declared floor drifts off its historical value.
   const INK_FLOOR_VALUES: Record<number, number> = { 9: chromaFloorBase(10), 10: chromaFloorBase(10), 11: chromaFloorBase(11) }
   for (const [label, tbl] of [['light', t], ['dark', d]] as const) {

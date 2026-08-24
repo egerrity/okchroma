@@ -16,7 +16,7 @@ A token name reads as `band-lightness(-conformance)`:
 
 In a conventional token architecture, primitives are raw named values (`blue-500`) with no promises attached, and a semantic layer above them assigns meaning and accessibility (`text-primary`). okchroma's scale tokens do not fit that split, and reading them as semantic tokens will mislead you.
 
-Every scale token here is a primitive. What is unusual is that the requirement is built into the primitive itself: the name states a contract (band, lightness rung, WCAG conformance level), and the engine solves the actual color value per brand and per theme so that the contract holds. `ink-42-aa` is not "the text color role"; it is a primitive whose generated value is guaranteed to clear AA body-text contrast against the paper band, whatever seed color the brand supplies.
+Every scale token here is a primitive. What is unusual is that the requirement is built into the primitive itself: the name states a contract (band, lightness rung, WCAG conformance level), and the engine solves the actual color value per brand and per theme so that the contract holds. `ink-42` is not "the text color role"; it is a primitive whose generated value is guaranteed to clear AA body-text contrast against the paper band, whatever seed color the brand supplies.
 
 This is what makes theming work over a range of input colors while keeping the output predictable. The names and their guarantees never move; the values are re-solved for each brand seed and theme. An agent can rely on the contract in the name without knowing which brand is active, which theme is active, or what hex the token currently resolves to.
 
@@ -28,15 +28,15 @@ So: do not go looking for the "real" primitives underneath these, and do not tre
 
 **wash: `wash-92`, `wash-89`, `wash-85`, `wash-80`.** Subtle interaction states, decorative edges, illustrations, signal hierarchy. Washes are tinted with the family hue but carry no text guarantee. Do not put body text on or in a wash color.
 
-**mark: `mark-74-aa`.** Focus rings, icons, large text. Guaranteed WCAG AA for large text and UI elements (this also satisfies the 3:1 non-text contrast requirement for UI components against the papers).
+**mark: `mark-74`.** Focus rings, icons, large text. Guaranteed WCAG AA for large text and UI elements (this also satisfies the 3:1 non-text contrast requirement for UI components against the papers).
 
-**ink: `ink-53-aa`, `ink-42-aa`, `ink-30-aaa`.** The text stops.
+**ink: `ink-53`, `ink-42`, `ink-30`.** The text stops.
 
-- `ink-53-aa` and `ink-42-aa`: regular text, WCAG AA for standard body text (AAA for large text). `ink-53-aa` also serves as the emphasis fill.
-- `ink-30-aaa`: strong-emphasis text, WCAG AAA for standard body text.
+- `ink-53` and `ink-42`: regular text, WCAG AA for standard body text (AAA for large text). `ink-53` also serves as the emphasis fill.
+- `ink-30`: strong-emphasis text, WCAG AAA for standard body text.
 - The three ink stops read in sequence ARE the text-style CTA (rest, hover, pressed). There is no separate cta-ink token; if you see one referenced, it is stale.
 
-**poles (neutral only): `paper-100`, `ink-0`.** The absolute endpoints. `ink-0` is the max-emphasis anchor; prefer `ink-30-aaa` for running text.
+**poles (neutral only): `paper-100`, `ink-0`.** The absolute endpoints. `ink-0` is the max-emphasis anchor; prefer `ink-30` for running text.
 
 ## The cta tokens
 
@@ -54,7 +54,7 @@ So: do not go looking for the "real" primitives underneath these, and do not tre
 |---|---|---|
 | neutral | `--neutral-` | grays, generated from the brand hue |
 | brand primary | `--brand-` | the main brand family |
-| brand secondary | `--secondary-` | the companion family, derived or custom |
+| brand secondary | `--brand-alt-` | the companion family, derived or custom |
 | critical | `--critical-` | destructive and error signal |
 | warning | `--warning-` | caution signal |
 | positive | `--positive-` | success signal |
@@ -62,7 +62,7 @@ So: do not go looking for the "real" primitives underneath these, and do not tre
 
 Signal families are named by identity, always `critical`/`warning`/`positive`/`info`, never `error`/`success`/`danger`. Signal stops may be shifted slightly from the naive value to stay visually distinct from the brand; that is by design, do not "correct" them.
 
-Example composed names: `--brand-wash-89`, `--critical-ink-42-aa`, `--neutral-mark-74-aa`, `--secondary-solid-fill-hover`.
+Example composed names: `--brand-wash-89`, `--critical-ink-42`, `--neutral-mark-74`, `--brand-alt-solid-fill-hover`.
 
 ## Elevation planes
 
@@ -86,8 +86,8 @@ Light theme descends the papers as elevation rises toward white; dark ascends th
 
 If the project consumes the semantic layer, prefer it over raw stops:
 
-- `--fg-default` (`ink-30-aaa`), `--fg-subtle` (`ink-53-aa`)
-- `--border-default` (`mark-74-aa`), `--border-subtle` (`wash-89`)
+- `--fg-default` (`ink-30`), `--fg-subtle` (`ink-53`)
+- `--border-default` (`mark-74`), `--border-subtle` (`wash-89`)
 - `--brand-bg-faint/-subtle/-emphasis` and their hover/pressed variants
 - `--brand-fg`, `--brand-fg-on-emphasis` (`solid-on`)
 
@@ -96,6 +96,6 @@ If the project consumes the semantic layer, prefer it over raw stops:
 1. Never hardcode a hex. Every color in UI code is a token reference.
 2. Text comes from the ink band (or `solid-on` over a cta fill). The conformance letters in the name tell you what is already guaranteed; do not run your own contrast checks or add compensating colors.
 3. The same token is used in both light and dark. Theming moves the values, not the references; never swap to a different stop for dark mode.
-4. States move along the scale in the order the names imply: rest, hover, pressed follow `solid-fill`/`solid-fill-hover`/`solid-fill-pressed`, and text-style CTAs follow `ink-53-aa`/`ink-42-aa`/`ink-30-aaa`.
+4. States move along the scale in the order the names imply: rest, hover, pressed follow `solid-fill`/`solid-fill-hover`/`solid-fill-pressed`, and text-style CTAs follow `ink-53`/`ink-42`/`ink-30`.
 5. Do not invent intermediate values (no opacity tweaks on stops, no color-mix between stops). If a needed value seems missing, that is a design-system question, not something to patch locally.
 6. Contrast language is WCAG conformance levels, not ratios.

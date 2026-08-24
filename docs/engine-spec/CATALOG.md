@@ -2007,7 +2007,7 @@ THE RESOLUTION IS THE NEUTRAL'S LAW, which colorEngine already stated for the sc
 `ratioFloor`; it now declares 4.5, `withProfile('apca')` strips it (as spec.ts always claimed it
 would — there had never been a floor to strip), and the floor is applied at THE FILL THAT SHIPS,
 after every move has settled. Measured sufficient and free: a pole flip alone reaches 4.5 on
-240/240 agnostic seeds and 62/62 brand-secondary lanes, and the exact cta now holds the typed hex
+240/240 agnostic seeds and 62/62 brand-alt lanes, and the exact cta now holds the typed hex
 on 240/240 seeds — max movement 0.0000 — with zero label failures in either lane.
 
 THE FIRST TWO ATTEMPTS WERE BOTH WRONG, recorded because the shape of the error is the lesson.
@@ -2024,7 +2024,7 @@ floor AND the other clears it — deliberately narrower than `onTextIsWhite`'s o
 branch, which flips whenever the chosen pole misses, including into a pole that also misses. So
 it is inert for every fill whose label already passes, which is why the fleet holds still.
 
-BLAST RADIUS: `audit:ext` only, 28 override-set changes, every one `brand-secondary/solid/on` — 22
+BLAST RADIUS: `audit:ext` only, 28 override-set changes, every one `brand-alt/solid/on` — 22
 dark gain the override, 6 light LOSE it because their pole now matches the base. Zero lines of
 that snapshot changed on any other path. Brand primaries, signals, divergence and smoothness all
 clean; nine gates needed no bless.
@@ -2091,7 +2091,7 @@ Layout never shifts: components already carried `border: 1.5px solid var(...-cta
 unconditionally against the transparent value, which is why the token survived 2026-07-04.
 
 BLAST RADIUS: `audit:ext` only — base token count 140 → 141 (the new row) and ONE roster entry
-gaining `brand-secondary/solid/edge`. Nine gates needed no bless. Demo untouched, per her
+gaining `brand-alt/solid/edge`. Nine gates needed no bless. Demo untouched, per her
 instruction. Both plugins rebuilt and the extended UI re-verified in a browser.
 
 TRAP FOUND: `npm run generate` runs `node dist/build-script.js` — a PREBUILT bundle. It will
@@ -2355,7 +2355,7 @@ pairing answers to the Lc-60 on-cta bar (the one the dark audit's hard lane F al
 not C42's Lc 65.
 
 ```
---secondary-on-cta = rgba(pole, SECONDARY_ON_CTA_ALPHA[mode])   // style 'default' only
+--brand-alt-on-cta = rgba(pole, SECONDARY_ON_CTA_ALPHA[mode])   // style 'default' only
 SECONDARY_ON_CTA_ALPHA = { light: 0.75, dark: 0.80 }
 measured at the chosen values (72 probes, worst case):
   light   wcag rest/hover/pressed  6.99 / 6.19 / 5.42   ·  Lc rest 61.3
@@ -2376,7 +2376,7 @@ measured at the chosen values (72 probes, worst case):
 ### WHAT MOVED
 Derived secondaries un-rotate 12° (hue now the primary's, ΔH residue is 8-bit hex rounding
 only). Every default-model secondary's `solid-on` becomes an rgba. `audit:ext` moved on 15
-rows, all exactly `+brand-secondary/solid/on` — the alpha pole becoming an override for the
+rows, all exactly `+brand-alt/solid/on` — the alpha pole becoming an override for the
 secondary-bearing brands — re-blessed. `audit:secondary` (custom lanes 1/1b assert the
 custom model), dark-audit incl. lane F, divergence, register, cta-apca all clean with no
 re-bless. Both typechecks clean.
@@ -2414,7 +2414,7 @@ byte-identical.
 **Second owner catch, same day** (*"not seeing these changes come through in the top level
 theme"*): the ext plugin has THREE write paths — base seeding, the raw-conversion pass, and
 the per-brand EXTENSION OVERRIDE loop — and the first cut wired the router into only the
-first two. `brand-secondary/solid/on` is an OVERRIDE row (the base posture is the mirror's
+first two. `brand-alt/solid/on` is an OVERRIDE row (the base posture is the mirror's
 solid pole), and the override loop is the write the APPLIED theme actually shows, so the
 soft on-cta kept shipping raw there on every apply. The router now runs in all three.
 STRUCTURAL BLIND SPOT, recorded: the ext audit measures override MEMBERSHIP in payload
@@ -2675,7 +2675,7 @@ Outline still keeps its ink-9 (colored text on a transparent fill — nothing to
 the no-secondary mirror keeps the brand's; loud fills and the escape stay solid. Plugins again
 needed ZERO code — `softInkFor` keys on path + partial alpha, never on style — and existing
 files heal via the same era-crossing pass. Blast radius: `audit:ext` only, 9 light-mode
-`-brand-secondary/solid/on` diffs (those brands' soft value now equals the base's, so the override
+`-brand-alt/solid/on` diffs (those brands' soft value now equals the base's, so the override
 collapses into an inherit).
 
 ## C48 — THE NEUTRAL PICKS ITS HUE: MATCH SECONDARY + CUSTOM SOURCES

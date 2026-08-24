@@ -178,7 +178,7 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
   const f = ctaFamilyOf(s, mode)
   const onCta = mode === 'light' ? s.onFillTextIsWhite : s.onFillTextIsWhiteDark
   // cta-border: the gated stroke at THIS family's rung, else the transparent variable. The
-  // OUTLINE secondary keeps its own unconditional mark-74-aa override at the emitter — there
+  // OUTLINE secondary keeps its own unconditional mark-74 override at the emitter — there
   // the border is the button's identity, not a safety. Renamed from cta-stroke (owner 2026-07-09);
   // the Figma side renamed with it — plugins migrate existing variables in place.
   // cta family SEMANTIC-named (owner ruling 2026-07-16): cta/cta-hover/cta-pressed.
@@ -367,12 +367,12 @@ export function brandCss(
   secondary?: GeneratedScale | null,
   noteSuffix = '',
   neutralLevel: NeutralLevel = 'default',
-  // the per-brand neutral is generated here, so it needs the caller's profile (the brand/secondary
+  // the per-brand neutral is generated here, so it needs the caller's profile (the brand/alt
   // scales inside `r` were already resolved under it by resolveBrand)
   contrastProfile?: ContrastProfile,
   // the secondary's mode chip: 'outline' re-resolves the fill trio — cta transparent, cta-hover the
-  // cta color at OUTLINE_HOVER_ALPHA (the tinted hover), on-cta ink-53-aa, cta-border ALWAYS the
-  // gated mark-74-aa. Same tokens, different resolution — no component changes needed.
+  // cta color at OUTLINE_HOVER_ALPHA (the tinted hover), on-cta ink-53, cta-border ALWAYS the
+  // gated mark-74. Same tokens, different resolution — no component changes needed.
   secondaryStyle?: SecondaryStyle,
   // the NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): the brand's cta FILL trio + on-cta
   // re-resolve from the brand-neutral's ink register (near-black light / near-white dark) —
@@ -456,7 +456,7 @@ export function brandCss(
   const darkAnchors = [`  --${PAPER_100}: ${p0hex(nScale.paper0Dark, '#000000')};`, `  --${INK_0}: #ffffff;`]
 
   // outline re-resolution: emitted AFTER the secondary body so the cascade takes these values.
-  // cta-hover = mark-74-aa at OUTLINE_HOVER_ALPHA (pressed doubles it) — the STABLE contrast-gated stop, the same one
+  // cta-hover = mark-74 at OUTLINE_HOVER_ALPHA (pressed doubles it) — the STABLE contrast-gated stop, the same one
   // the ring aliases (owner: 9% of the generated subtle cta was imperceptible — it's a very
   // light/dark color; the hover must reference a stable value).
   // the SYSTEM LINK trio: default aliases the primary's ink stops directly (mode-blind —
@@ -530,7 +530,7 @@ export function brandCss(
   // construction), and the EXACT-style secondary — including the absent-style case, which
   // resolve normalizes to exact — wherever softOnCtaPasses says the composite stays over
   // WCAG 4.5 on every fill state. A failing exact fill keeps the solid pole. Outline keeps
-  // its ink-53-aa and the no-secondary mirror keeps the brand's.
+  // its ink-53 and the no-secondary mirror keeps the brand's.
   const softOnCta = (mode: 'light' | 'dark'): string[] => {
     if (!secondary || secondaryStyle === 'outline') return []
     if (secondaryStyle !== 'default' && !softOnCtaPasses(secondary, mode)) return []

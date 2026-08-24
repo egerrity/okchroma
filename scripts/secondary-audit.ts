@@ -76,7 +76,7 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
     //        regression back to transforming the whole ramp.
     //   iii. the CTA is NOT the exact posture's — it is the tint, and it must actually differ,
     //        or the posture has silently collapsed into exact.
-    //   iv.  cta-ink is NOT tinted (owner ruling): it stays the own ramp's, matching ink-53-aa/ink-42-aa.
+    //   iv.  cta-ink is NOT tinted (owner ruling): it stays the own ramp's, matching ink-53/ink-42.
     const tf = resolveTheme({ primaryHex: pHex, secondaryHex: sHex, secondaryStyle: 'default', contrastProfile: cp })
     const secF = tf.secondary!
     const secX = resolveTheme({ primaryHex: pHex, secondaryHex: sHex, secondaryStyle: 'exact', contrastProfile: cp }).secondary!

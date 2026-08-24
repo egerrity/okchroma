@@ -1,13 +1,13 @@
 // Placeholder brand logo (logoipsum) for the demo — replaces the old ◈ glyph +
 // "yourBrand" text spans. Two groups carry classes so the fills wire to the live
 // palette (not the baked-in green) when it lands in CustomTheme:
-//   .bl-mark → --brand-ink-53-aa (darkest highlight stop — keeps the mark COLOURED
+//   .bl-mark → --brand-ink-53 (darkest highlight stop — keeps the mark COLOURED
 //              yet legible on the light neutral sidebar; ~2.9:1 worst-case for a bright
 //              yellow brand. A logo mark is WCAG-exempt, so 3:1 isn't required; a raw
-//              cta/mark-74-aa/identity fill washes out for bright brands. A mark that
+//              cta/mark-74/identity fill washes out for bright brands. A mark that
 //              is colourful AND always ≥3:1 would need an engine-emitted contrast-
 //              clamped stop. Wired in demo/CustomTheme.tsx PAGE_CSS.)
-//   .bl-type → --brand-ink-53-aa (the wordmark register)
+//   .bl-type → --brand-ink-53 (the wordmark register)
 // Both are PRIMITIVES, so the accent/secondary flip (accentModeCss remaps the
 // role tokens, never the primitives) can't break the logo. Rendered via
 // dangerouslySetInnerHTML, same idiom as heroIllo. Baked fills are the raw
