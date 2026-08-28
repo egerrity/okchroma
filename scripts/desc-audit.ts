@@ -38,12 +38,10 @@ for (const p of [...paths]) {
   if (c.startsWith('brand/')) paths.push('brand/primary/' + c.slice('brand/'.length))
   if (c.startsWith('brand-alt/')) paths.push('brand/alt/' + c.slice('brand-alt/'.length))
 }
-// community-only shapes: paths that exist ONLY under the community plugin's flat
-// system/ namespace (plugin/code.ts STATIC_UTILS) with no ext equivalent for
-// canonicalize to derive them from — the ext anchor lives banded at neutral/ink/0
-// (covered above via NEUTRAL_ONLY), the community anchor lives flat at system/ink-0
-// (adversarial-audit-caught 2026-08-07: this hole let it resolve title-only).
-paths.push('system/ink-0')
+// (the community-only system/ink-0 push RETIRED 2026-08-28: the anchor is
+// engine-resolved and rides the neutral group in both plugins — covered above via
+// NEUTRAL_ONLY like paper-100. The 2026-08-07 title-only hole it patched cannot
+// reopen: no plugin creates the flat system/ path anymore.)
 
 let bad = 0
 const fail = (p: string, why: string) => { console.error(`FAIL ${p}: ${why}`); bad++ }

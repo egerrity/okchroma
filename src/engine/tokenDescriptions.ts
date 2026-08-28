@@ -142,7 +142,9 @@ const SCALE: Record<string, Body> = {
 // ── rows only the neutral carries ────────────────────────────────────────────
 const NEUTRAL_ONLY: Record<string, Body> = {
   'paper-100': { req: 'backgrounds, inverted text', theming: f => TINT[f] },
-  'ink-0': { req: 'max-emphasis text', contrast: AAA_BODY },
+  // resolved off the pole 2026-08-28 (the paper-100 posture): it tints like the rest
+  // of the neutral now, so it carries the theming line paper-100 does
+  'ink-0': { req: 'max-emphasis text', contrast: AAA_BODY, theming: f => TINT[f] },
 }
 
 // ── system rows, keyed by full path ──────────────────────────────────────────
@@ -166,10 +168,9 @@ const LINK_INVERSE = (state: string, contrast: string): Body => ({
 const SYSTEM: Record<string, Body> = {
   'system/abs-black': ABS,
   'system/abs-white': ABS,
-  // the community plugin's system-root anchor home (plugin/code.ts STATIC_UTILS) — the
-  // ext plugin's equivalent rides the neutral at neutral/ink-0 (NEUTRAL_ONLY above);
-  // same stop, same body text.
-  'system/ink-0': { req: 'max-emphasis text anchor', contrast: AAA_BODY },
+  // (the community system/ink-0 row RETIRED 2026-08-28 with its STATIC_UTILS entry:
+  // the anchor is engine-resolved and rides the neutral in BOTH plugins now —
+  // NEUTRAL_ONLY above. Old files' static rows orphan unwritten.)
 
   'system/abs-primary': { req: 'identity seed reference', theming: 'the theme’s own input, as given' },
   'system/abs-alt': { req: 'identity seed reference', theming: 'the theme’s companion input, as given' },

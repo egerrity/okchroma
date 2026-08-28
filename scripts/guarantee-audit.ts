@@ -26,7 +26,7 @@ const seedHex = (L: number, C: number, H: number) => '#' + oklchToLinearRgb(L, C
 // surfaces (array index = stop-1) and marks, by the guarantee bands
 const PAPERS = [1, 2, 3] as const          // paper-99 / 97 / 95 (paper-100 poles below)
 const WASHES = [4, 5, 6, 7] as const       // wash-92 / 89 / 85 / 80
-const MARK = 8, LEAD = 9, INKS = [10, 11] as const   // + the ink-0 pole
+const MARK = 8, LEAD = 9, INKS = [10, 11] as const   // + ink-0, the resolved extreme (below)
 const BAR = { mark: 3.0, text: 4.5 }
 
 type Worst = { r: number; where: string }
@@ -57,7 +57,11 @@ function check(hex: string, tag: string, opts: { exact?: boolean; archetypeOverr
     const nArr = mode === 'light' ? neutral.light : neutral.dark
     const nP0 = mode === 'light' ? neutral.paper0 : neutral.paper0Dark
     const yOf = (s: { L: number; C: number; H: number }) => shippedY(s.L, s.C, s.H)
-    const inkPoleY = mode === 'light' ? 0 : 1                    // ink-0 = #000000 / #ffffff
+    // ink-0 RESOLVED off the pole 2026-08-28 (near-black light / near-white dark) — the
+    // claim now measures the shipped extreme, not the literal; missing field falls back
+    // to the old pole so a partial build still gates
+    const nI0 = mode === 'light' ? neutral.ink0 : neutral.ink0Dark
+    const inkPoleY = nI0 ? yOf(nI0) : mode === 'light' ? 0 : 1
     for (const f of fams) {
       const arr = mode === 'light' ? f.scale.light : f.scale.dark
       // the claim's scope: the stop's own family's surfaces + the neutral's

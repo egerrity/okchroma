@@ -27,7 +27,7 @@ export {
 export type { ColorStop } from './colorMath'
 
 import { resolveRamp, type ResolvedStop } from './requirements/resolve'
-import { MODE_SPECS, type ModeSpec } from './requirements/spec'
+import { MODE_SPECS, INK0_SEAM_OVERSHOOT, type ModeSpec } from './requirements/spec'
 import { withProfile, DEFAULT_APCA_LC_MAP, CTA_ONFILL_ENFORCE_LC, type ContrastProfile } from './requirements/profiles'
 import { whiteTextLcAt, findLForWhiteTextLc, APCA_SOLVE_MARGIN_LC } from './requirements/producers'
 export type { ContrastProfile } from './requirements/profiles'
@@ -67,6 +67,12 @@ export interface GeneratedScale {
   // dark — never absolute black). OFF the light[]/dark[] arrays: consumers index [0] as stop 1.
   paper0?: ColorStop
   paper0Dark?: ColorStop
+  // ink-0: the resolved OPPOSITE extreme (owner 2026-08-28 — the pole literals fall like
+  // paper-0's did): the ink lane extended past stop 11 by INK0_SEAM_OVERSHOOT of its last
+  // seam, at stop 11's register tint. Near-black in light, near-white in dark — never the
+  // pole. OFF the arrays like paper0; emitted only where the anchors ship (the neutral).
+  ink0?: ColorStop
+  ink0Dark?: ColorStop
 }
 
 export interface GenerateOptions {
@@ -210,6 +216,15 @@ export function generateScale(
   const p0Light = lightRamp.stops.find(s => s.stop === 0)
   const p0Dark = darkRamp.stops.find(s => s.stop === 0)
 
+  // ink-0: linear L extrapolation beyond stop 11 along the 10→11 seam (light deepens, dark
+  // brightens — the sign rides the seam's own direction); C/H verbatim from stop 11 (the
+  // register tail is flat this close to the pole; makeStop re-clamps chroma to the gamut at
+  // the new L, which is what pins dark's near-white chroma down).
+  const inkExtreme = (arr: ColorStop[]): ColorStop | undefined => {
+    const a = arr.find(s => s.stop === 10), b = arr.find(s => s.stop === 11)
+    return a && b ? makeStop(12, b.L + (b.L - a.L) * INK0_SEAM_OVERSHOOT, b.C, b.H) : undefined
+  }
+
   const cta = makeStop(9, lightRamp.roles.cta.L, lightRamp.roles.cta.C, lightRamp.roles.cta.H)
   const ctaDark = makeStop(9, darkRamp.roles.cta.L, darkRamp.roles.cta.C, darkRamp.roles.cta.H)
 
@@ -229,6 +244,8 @@ export function generateScale(
     identityHex: hex.toUpperCase(),
     paper0: p0Light ? makeStop(0, p0Light.L, p0Light.C, p0Light.H) : undefined,
     paper0Dark: p0Dark ? makeStop(0, p0Dark.L, p0Dark.C, p0Dark.H) : undefined,
+    ink0: inkExtreme(light),
+    ink0Dark: inkExtreme(dark),
   }
 }
 

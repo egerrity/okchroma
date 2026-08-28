@@ -2,7 +2,7 @@
 
 import { toHex, ctaNeedsBorder, pageStopFor, ctaBorderRung, OFFSET_ALPHAS, type OffsetRung } from './cssRender'
 import { srgbEmitChannels } from './colorMath'
-import { stopTokenName, tokenOrder, STAMP_FILL, STAMP_FILL_HOVER, STAMP_FILL_PRESSED, STAMP_EDGE, STAMP_ON, STAMP_STATE_LEAVES, PAPER_100 } from './tokenNames'
+import { stopTokenName, tokenOrder, STAMP_FILL, STAMP_FILL_HOVER, STAMP_FILL_PRESSED, STAMP_EDGE, STAMP_ON, STAMP_STATE_LEAVES, PAPER_100, INK_0 } from './tokenNames'
 import { CSS_FAMILY } from './tokenDescriptions'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
 import { OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, SOFT_ON_CTA_ALPHA, softOnCtaPasses, escapeCtaFamily, resolveLinkTrio, resolveLinkInverseTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
@@ -233,7 +233,22 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     // era leaned on integer-key enumeration putting 100 ahead of 99 inside paper/).
     const p0 = mode === 'light' ? nScale.paper0 : nScale.paper0Dark
     const ramp = rampGroup(nScale[mode], mode === 'light' ? nScale.onFillTextIsWhite : nScale.onFillTextIsWhiteDark, neutralExtra(mode))
-    const neutralGroup: FigmaGroup = p0 ? { [PAPER_100]: colorFromStop(p0), ...ramp } : ramp
+    // ink-0 rides WITH the neutral ramp too (RESOLVED off the pole, owner 2026-08-28 —
+    // the paper-100 treatment; was a plugin-side #000/#fff literal): spliced directly
+    // after ink-30 so the flat group keeps ladder order by insertion (flat leaves are
+    // never integer keys — see groupEntries). Missing field = the leaf is omitted and
+    // the plugins keep whatever the file holds.
+    const i0 = mode === 'light' ? nScale.ink0 : nScale.ink0Dark
+    const spliceInk0 = (g: FigmaGroup): FigmaGroup => {
+      if (!i0) return g
+      const out: FigmaGroup = {}
+      for (const [k, v] of Object.entries(g)) {
+        out[k] = v
+        if (k === stopTokenName(11)) out[INK_0] = colorFromStop(i0)
+      }
+      return out
+    }
+    const neutralGroup: FigmaGroup = spliceInk0(p0 ? { [PAPER_100]: colorFromStop(p0), ...ramp } : ramp)
     const secondaryGroup = rampGroup(secondary[mode], mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark, brandExtra(secondary, mode, CSS_FAMILY.brandSecondary))
     // outline re-expression (only a real secondary can be outline) — same values cssRender
     // emits. The hover = mark-74 at OUTLINE_HOVER_ALPHA (the STABLE gated stop the ring

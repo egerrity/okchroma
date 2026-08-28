@@ -947,17 +947,18 @@ figma.ui.onmessage = async (msg) => {
         v.scopes = descopeOn && !isRoleRow(path) ? [] : ['ALL_SCOPES']
         return v
       }
-      // Pole-aliasing (owner 2026-07-27): the on-fill leaves and the neutral anchor
-      // are exact poles by construction — alias them to the primitive/system/abs-* rows so the
+      // Pole-aliasing (owner 2026-07-27): the on-fill leaves are exact poles by
+      // construction — alias them to the primitive/system/abs-* rows so the
       // chip READS as the pole and the poles stay single-source. Emit-layer
       // representation only: a non-pole value (an outline secondary's on-cta rides
       // its lead-53) falls back to a raw write, so the alias never constrains the
       // solve — the engine still picks the pole per family × column.
       // (highlight/on dropped from this list 2026-07-29 with the token; the neutral
-      // anchor is flat ink-0 since the band flattening, owner 2026-08-12 — was banded
-      // ink/0, ink/12 pre-Stage-B.)
+      // anchor base/neutral/ink-0 dropped 2026-08-28 — the engine RESOLVES it off the
+      // pole now, so it writes raw like any scale leaf. An existing file's pole ALIAS
+      // on that row stands until a base rebuild — create-once is the base contract.)
       const POLE_LEAVES = (path: string) =>
-        path.endsWith('/' + STAMP_LEAF.ON) || path === 'base/neutral/ink-0'
+        path.endsWith('/' + STAMP_LEAF.ON)
       // EXACT poles only (per-channel EPS): the engine emits true 0/1 poles, so a
       // loose band buys nothing — and the conversion pass below must never snap a
       // hand-edited near-pole value (#FFFFF8) onto the abs row (review-caught

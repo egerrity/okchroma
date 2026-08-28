@@ -30,7 +30,6 @@ import { SIGNALS } from '../src/engine/signals'
 import { OFFSET_ALPHAS, offsetTokenPath, type OffsetRung } from '../src/engine/cssRender'
 import { neutralTintHue, type ContrastProfile, type NeutralLevel } from '../src/engine/colorEngine'
 import { FAMILIES } from '../src/engine/tokenDescriptions'
-import { stopTokenName, INK_0 } from '../src/engine/tokenNames'
 
 export interface FlatTok { path: string; r: number; g: number; b: number; a?: number }
 
@@ -115,14 +114,11 @@ function flatten(node: FigmaGroup, prefix: string, out: FlatTok[]): void {
 // then the families, then the low-usage machinery tail — link, alpha, absolutes).
 // The utility/surface/dim|low|mid|high planes are NOT here — they are scheme-divergent
 // aliases the plugin creates FIRST (top of the panel) and wires once the neutral
-// exists. neutral/ink-0 (the OFF-SCALE anchor — pure black in
-// light, pure white in dark) is injected right after the last real ink stop, in ladder
-// order. ⚠️ Its trigger is the LAST SCALE INK, so a stop renumber (or a relabel of
-// that stop's leaf) moves it: it fired on ink/11 → emitted ink/12 pre-collapse, ink/10 →
-// ink/11 through the C33 era, C49 restored the original pairing (ink/11 → ink/12), Stage
-// B relabeled the pair to ink/30-aaa → ink/0, and the band flattening (owner 2026-08-12)
-// flattened it to ink-30 → ink-0 — same stop index, same trigger position, new
-// strings. The alpha/shadow ladder (owner
+// exists. neutral/ink-0 (the off-scale anchor) is NO LONGER injected here (it was a
+// pure-pole literal spliced after the last scale ink, 2026-08-12 → 2026-08-28): the
+// engine RESOLVES it now and figmaRender carries it inside the neutral group, already
+// in ladder position, so the generic walk ships it like any other leaf. The
+// alpha/shadow ladder (owner
 // 2026-07-27) is pure black at 4/8/12% light; dark is heavier by necessity — near black
 // a light-mode alpha vanishes — at 32/48/64%.
 function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boolean): FlatTok[] {
@@ -143,14 +139,7 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
     { path: 'utility/shadow-12', ...K, a: dark ? 0.64 : 0.12 },
     { path: 'utility/abs-black-060', ...K, a: 0.6 },
   ]
-  const neutral: FlatTok[] = []
-  flatten(g.neutral as FigmaGroup, 'neutral', neutral)
-  for (const t of neutral) {
-    out.push(t)
-    // The trigger is the LAST SCALE INK (stop 11) by its table spelling, so a stop
-    // RELABEL rides for free; a renumber still moves the index here.
-    if (t.path === 'neutral/' + stopTokenName(11)) out.push({ path: 'neutral/' + INK_0, ...(scheme === 'light' ? K : W) })
-  }
+  flatten(g.neutral as FigmaGroup, 'neutral', out)
   // identity rows re-home to the ABSOLUTES (owner 2026-07-27: the unprocessed inputs
   // sit with the poles; zone spellings 2026-08-18). Brand-overridable like base/link.
   const IDENTITY_HOME: Record<string, string> = {

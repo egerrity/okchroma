@@ -254,12 +254,12 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // stop-3 rename (owner 2026-07-24, elevation round) retargeted to its final flat
   // home — it is a surface plane in both themes. Pure relabel, same color.
   ['wash-3', 'paper-95'],
-  // the anchor's flat home 'ink-0' now serves BOTH lanes (band flattening,
-  // 2026-08-12): the system-root prim (Stage B relabeled it from system/ink-12; a
-  // pre-renumber file's system/ink-13 still needs the rescue or STATIC_UTILS orphans
-  // it — review-caught 2026-07-27) AND the family anchor (whose banded ink/0 home is
-  // covered by the flattening batch at the top; its own ink-13/ink-12 flat vintages
-  // ride the ['ink-13','ink-0'] entry above and ['ink-12','ink-0'] here).
+  // the anchor's flat home 'ink-0' (band flattening, 2026-08-12): the family anchor's
+  // banded ink/0 home is covered by the flattening batch at the top; its ink-13/ink-12
+  // flat vintages ride the ['ink-13','ink-0'] entry above and ['ink-12','ink-0'] here.
+  // (The system-root prim lane this entry also served retired 2026-08-28 with the
+  // STATIC_UTILS system/ink-0 row — the resolved anchor rides the neutral tint prim;
+  // old files' system-root vintages orphan unwritten.)
   ['ink-12', 'ink-0'],
   // ── ELEVATION-PLANE RENAME (owner 2026-08-12): sink|base|lift|pop →
   // sunken|low|base|high — the old "base" gave the PAGE plane too much semantic
@@ -611,12 +611,12 @@ figma.ui.onmessage = async (msg) => {
       //   - abs-white / abs-black — mode-INVARIANT poles; on-fill tokens alias
       //     one PER MODE (a flipping on-fill = abs-white in light, abs-black in
       //     dark), so text stays a true pole regardless of the ladder.
-      //   - ink-0 (Stage B leaf; was ink-12) — the literal ink extreme beyond the
-      //     strong stop (black→white).
-      //   - paper-100 (Stage B leaf; was paper-0) is NOT static anymore: the engine
-      //     resolves it (white in light; one seam below paper-99 in dark,
-      //     neutral-tinted) and it rides the neutral ramp at
-      //     system/neutral/<tint>/paper-100.
+      //   - NEITHER anchor is static anymore: the engine resolves both and they ride
+      //     the neutral ramp at system/neutral/<tint>/paper-100 and .../ink-0
+      //     (paper-100 fell 2026-07-02; ink-0 followed 2026-08-28 — near-black
+      //     light / near-white dark, never the literal pole). An existing file's
+      //     old system/ink-0 static row orphans in place (scopes [], unbindable —
+      //     the red-variant class); its theme alias re-points on re-apply.
       const W = { r: 1, g: 1, b: 1 }
       const K = { r: 0, g: 0, b: 0 }
       // The list order IS the display order in Figma (variables list in creation
@@ -634,7 +634,6 @@ figma.ui.onmessage = async (msg) => {
       const STATIC_UTILS: Array<{ path: string; light?: figma.RGBA; dark?: figma.RGBA; elevation?: boolean }> = [
         { path: 'system/abs-black', light: K, dark: K },
         { path: 'system/abs-white', light: W, dark: W },
-        { path: 'system/ink-0', light: K, dark: W },
         { path: 'system/surface/dim', elevation: true },
         // low MUST precede mid: an 08-12-era file's real low row must direct-hit before
         // mid's legacy lookup consumes that file's base row (the word base moved planes
@@ -653,9 +652,10 @@ figma.ui.onmessage = async (msg) => {
         { path: 'system/alpha/shadow-12', light: { r: 0, g: 0, b: 0, a: 0.12 }, dark: { r: 0, g: 0, b: 0, a: 0.64 } },
       ]
       for (const u of STATIC_UTILS) {
-        // getOrMigrate (not .get): the anchor was renamed ink-13→ink-0 (ink-12 pre-
-        // Stage B) — existing files' system/ink-13 primitive is renamed in place
-        // instead of orphaned
+        // getOrMigrate (not .get): renamed rows (the surface-plane words, historical
+        // vintages) are adopted in place instead of orphaned. (The anchor's ink-13→
+        // ink-0 case left this loop 2026-08-28 with its STATIC_UTILS entry — the
+        // resolved anchor rides the neutral walk now.)
         const existing = getOrMigrate(primByName, u.path)
         // already seeded — enforce the scope rule + restamp the code syntax
         if (existing) { existing.scopes = [] ; existing.setVariableCodeSyntax('WEB', codeSyntaxFor(existing.name)); continue }
@@ -679,8 +679,9 @@ figma.ui.onmessage = async (msg) => {
       // Solid poles alias PER MODE to abs-white/abs-black
       // (mode-divergent alias, like the elevation pair) instead of duplicating a
       // value. Decoupled from the paper-100/ink-0 anchors on purpose (Stage B leaves;
-      // were paper-0/ink-12): paper-100 is a RESOLVED color now (near-black, tinted,
-      // in dark) — text must stay a pole.
+      // were paper-0/ink-12): BOTH anchors are RESOLVED colors now (paper-100
+      // 2026-07-02, ink-0 2026-08-28 — tinted, never the pole) — on-CTA text must
+      // stay a true pole, so it aliases the abs rows, never an anchor.
       const isWhite = (c: { r: number; g: number; b: number }) => c.r + c.g + c.b > 1.5
       const absPole = (white: boolean) => primByName.get(white ? 'system/abs-white' : 'system/abs-black')
 
@@ -892,17 +893,16 @@ figma.ui.onmessage = async (msg) => {
         for (const m of th.coll.modes) aliasInto(path, path, m.modeId)
       }
 
-      // ② neutral (+ ink-0 the anchor, folded into the neutral group like paper-100 —
-      // its seed stays the system/ink-0 pole in the mode collection). Flat leaves since
-      // the band flattening (owner 2026-08-12) — were ink/30-aaa · neutral/ink/0.
+      // ② neutral. ink-0 the anchor is IN the payload group now (engine-resolved off
+      // the pole, 2026-08-28 — the paper-100 posture; was a per-mode alias onto the
+      // static system/ink-0 pole), already in ladder position after ink-30, so the
+      // generic walk aliases it onto the tint prim like every other leaf. A file's
+      // existing neutral/ink-0 theme var is the same var — getOrMigrate finds it and
+      // this brand's mode re-points from the old pole to the tint prim.
       const neutralGrp = shared.find(g => g.theme === 'neutral')
       if (neutralGrp) {
         for (const t of flatten(neutralGrp.light)) {
           aliasInto(`neutral/${t.path}`, `${neutralGrp.prim}/${t.path}`)
-          if (t.path === 'ink-30') {
-            // the anchor slots DIRECTLY after the strong ink — ladder order, before the cta tokens
-            for (const m of th.coll.modes) aliasInto('neutral/ink-0', 'system/ink-0', m.modeId)
-          }
         }
       }
 

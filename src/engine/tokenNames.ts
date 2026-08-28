@@ -45,10 +45,12 @@ export function stopTokenName(stop: number): string {
   return name
 }
 
-// The off-scale ladder POLES — not stops of SHARED_NAMES (index-keyed generation
-// never produces them; they flip with the mode). One spelling here; the emitters
-// (cssRender anchors, figmaRender's neutral group, payload's anchor injection)
-// reference these instead of re-spelling them.
+// The off-scale ladder EXTREMES — not stops of SHARED_NAMES (index-keyed generation
+// never produces them; they flip with the mode). Both RESOLVE now: paper-100 since
+// the 2026-07-02 paper-0 fall, ink-0 since 2026-08-28 (the ink lane extended past
+// ink-30 — never the literal pole; anything needing a true pole aliases the absolute
+// rows instead). One spelling here; the emitters (cssRender anchors, figmaRender's
+// neutral group) reference these instead of re-spelling them.
 export const PAPER_100 = 'paper-100'
 export const INK_0 = 'ink-0'
 

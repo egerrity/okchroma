@@ -240,15 +240,16 @@ export function neutralCss(selector: string, brandH: number, level: NeutralLevel
   const nPage = (mode: 'light' | 'dark') => ctaBorder ? pageStopFor(s, mode) : undefined
   // The universal paper-100/ink-0 anchors ride along (paper-0/ink-12 pre-Stage-B): any scope
   // that carries the ladder must also carry its mode-flipping extremes (semantic aliases like
-  // --surface-high resolve through them). paper-100 = the neutral's resolved
-  // stop 0 (white in light; one seam below paper-99 in dark, never absolute black).
+  // --surface-high resolve through them). BOTH are the neutral's resolved extremes now
+  // (ink-0 joined 2026-08-28 — the ink lane extended past ink-30, never the literal pole);
+  // the literals survive only as missing-field fallbacks.
   const p0 = (st: ColorStop | undefined, fallback: string) => (st ? stopHex(st) : fallback)
   const p3Light = brandKindP3Body(CSS_NEUTRAL, s, 'light')
   const p3Dark = brandKindP3Body(CSS_NEUTRAL, s, 'dark')
   return [
     `${selector} {`,
     `  --${PAPER_100}: ${p0(s.paper0, '#ffffff')};`,
-    `  --${INK_0}: #000000;`,
+    `  --${INK_0}: ${p0(s.ink0, '#000000')};`,
     // the neutral IS the page, so it is judged against its own paper stop
     // the neutral's overlays never read the visibility bar (the exempt family), so
     // the brandless chrome context passes 0
@@ -256,7 +257,7 @@ export function neutralCss(selector: string, brandH: number, level: NeutralLevel
     `}`,
     `${selector}[data-theme="dark"] {`,
     `  --${PAPER_100}: ${p0(s.paper0Dark, '#000000')};`,
-    `  --${INK_0}: #ffffff;`,
+    `  --${INK_0}: ${p0(s.ink0Dark, '#ffffff')};`,
     ...brandKindBody(CSS_NEUTRAL, s, 'dark', nPage('dark')),
     `}`,
     ...(p3Light.length || p3Dark.length ? [
@@ -446,14 +447,15 @@ export function brandCss(
 
   // Universal scale anchors — the two off-scale ends that extend the paper→ink
   // ladder past its generated stops, flipping with the mode. paper-100 (paper-0
-  // pre-Stage-B) is now a RESOLVED stop of the neutral ramp (white in light; one
+  // pre-Stage-B) is a RESOLVED stop of the neutral ramp (white in light; one
   // seam below paper-99 in dark — never absolute black). ink-0 (ink-12 pre-Stage-B,
-  // the anchor) stays the literal ink extreme — its pre-collapse number, restored by
-  // C49 (it spent 2026-07-29 → 2026-08-05 as stop-index 11). Emitted per mode block
-  // so each resolves to the right pole.
+  // the anchor) RESOLVES too since 2026-08-28 (owner: pure pole text rejected, dark
+  // worse than light): the neutral's ink lane extended past ink-30 by the paper-100
+  // seam fraction — near-black light, near-white dark, never #000/#fff. Emitted per
+  // mode block; the literals survive only as missing-field fallbacks.
   const p0hex = (s: ColorStop | undefined, fallback: string) => (s ? stopHex(s) : fallback)
-  const lightAnchors = [`  --${PAPER_100}: ${p0hex(nScale.paper0, '#ffffff')};`, `  --${INK_0}: #000000;`]
-  const darkAnchors = [`  --${PAPER_100}: ${p0hex(nScale.paper0Dark, '#000000')};`, `  --${INK_0}: #ffffff;`]
+  const lightAnchors = [`  --${PAPER_100}: ${p0hex(nScale.paper0, '#ffffff')};`, `  --${INK_0}: ${p0hex(nScale.ink0, '#000000')};`]
+  const darkAnchors = [`  --${PAPER_100}: ${p0hex(nScale.paper0Dark, '#000000')};`, `  --${INK_0}: ${p0hex(nScale.ink0Dark, '#ffffff')};`]
 
   // outline re-resolution: emitted AFTER the secondary body so the cascade takes these values.
   // cta-hover = mark-74 at OUTLINE_HOVER_ALPHA (pressed doubles it) — the STABLE contrast-gated stop, the same one
