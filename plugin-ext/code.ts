@@ -1348,6 +1348,18 @@ figma.ui.onmessage = async (msg) => {
         }
       }
 
+      // THE APPLY REPORT (owner defect round 2026-08-27): every apply ends by SAYING
+      // what it did and where — the silent-wrong-target class of failure ("nothing
+      // happens") must be impossible to reproduce without a message naming the gap.
+      // old-named = rows still answering to a retired spelling after the heal ran;
+      // a non-zero count here IS the diagnosis and names its own evidence.
+      const oldSpellings = RENAMED_LEAVES.map(([from]) => from)
+      const postVars = (await figma.variables.getLocalVariablesAsync()).filter(v => v.variableCollectionId === base.id)
+      const oldNamed = postVars.filter(v => {
+        const n = normPath(v.name)
+        return oldSpellings.some(o => n === o || n.endsWith('/' + o))
+      })
+      figma.notify(`OKChroma: applied "${brand}" → collection "${base.name}" · ${createdVars} rows created · ${oldNamed.length} old-named rows left${oldNamed.length ? ` (${oldNamed.slice(0, 3).map(v => v.name).join(', ')}${oldNamed.length > 3 ? ', …' : ''}) — report this message` : ''}`)
       figma.ui.postMessage({ type: 'done', brand, set, removed, inherited, createdVars, baseCreated: created, secondary: secondaryMode, secondaryAdded, addedCols, rowsAdded, orphaned, backfill, unstamped, staleApcaCols })
     }
     try {
