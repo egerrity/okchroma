@@ -45,7 +45,19 @@ export {
 } from './engine/resolve'
 
 // ── Emitters ─────────────────────────────────────────────────────────────────
-export { brandCss, neutralCss, signalsCss, stopsToVars, toHex, stopHex, OFFSET_ALPHAS } from './engine/cssRender'
+export {
+  brandCss,
+  neutralCss,
+  signalsCss,
+  stopsToVars,
+  toHex,
+  stopHex,
+  OFFSET_ALPHAS,
+  ctaNeedsBorder,
+  ctaBorderRung,
+  pageStopFor,
+} from './engine/cssRender'
+export { CSS_FAMILY } from './engine/tokenDescriptions'
 export {
   themeToFigma,
   type FigmaGroup,
