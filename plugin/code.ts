@@ -338,22 +338,31 @@ function legacyCandidates(path: string): string[] {
 // normalizes onto an engine path. Stamps and exact names always win.
 const normPath = (p: string) => p.split('/').map(s => s.trim()).join('/').toLowerCase()
 
+// Is `name` an ENGINE spelling of `path` — canonical or any legacy vintage? (ext-plugin
+// mirror, owner defect 2026-08-27: a display name spelling a RETIRED engine path is a
+// stale generation, not a custom name — it must follow the rename. Only names outside
+// the entire engine grammar are the user's.)
+const isEngineSpelling = (name: string, path: string): boolean => {
+  const n = normPath(name)
+  return n === normPath(path) || legacyCandidates(path).some(lp => normPath(lp) === n)
+}
+
 // Look up `path` in `map`, first as-is, then under each legacy spelling. Every hit is
 // (re)stamped with PATH_KEY — that heals unstamped rows found by their name. A legacy
 // hit migrates in place (Figma keeps the variable id, so bindings survive); its display
-// name follows while it spells the legacy path exactly or only invisibly off it — a
-// genuinely user-custom name stays.
+// name follows while it spells ANY engine vintage of the path — a genuinely user-custom
+// name stays.
 function getOrMigrate(map: Map<string, figma.Variable>, path: string): figma.Variable | undefined {
   const v = map.get(path)
   if (v) {
-    if (v.name !== path && normPath(v.name) === normPath(path)) v.name = path
+    if (v.name !== path && isEngineSpelling(v.name, path)) v.name = path
     v.setPluginData(PATH_KEY, path)
     return v
   }
   for (const legacyPath of legacyCandidates(path)) {
     const legacy = map.get(legacyPath)
     if (legacy) {
-      if (legacy.name === legacyPath || normPath(legacy.name) === normPath(legacyPath)) legacy.name = path
+      if (legacy.name === legacyPath || isEngineSpelling(legacy.name, path)) legacy.name = path
       legacy.setPluginData(PATH_KEY, path)
       map.delete(legacyPath)
       map.set(path, legacy)

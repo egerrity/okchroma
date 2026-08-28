@@ -457,6 +457,18 @@ function legacyCandidates(path: string): string[] {
 // and exact names always win — the aliases fill gaps, never shadow.
 const normPath = (p: string) => p.split('/').map(s => s.trim()).join('/').toLowerCase()
 
+// Is `name` an ENGINE spelling of `path` — canonical or any legacy vintage? The custom-
+// name doctrine's missing half (owner defect 2026-08-27, the 43-stale-rows toast): a
+// display name that spells a RETIRED engine path is not a user's custom name — it is a
+// stale generation and must follow the rename. Root cause: an apply during a group-
+// rename window advanced the STAMPS but judged the then-shifted names custom, and every
+// later apply protected the stale names under the custom-name rule. Only names outside
+// the entire engine grammar are the user's.
+const isEngineSpelling = (name: string, path: string): boolean => {
+  const n = normPath(name)
+  return n === normPath(path) || legacyCandidates(path).some(lp => normPath(lp) === n)
+}
+
 const ENTERPRISE_MSG =
   'Extended collections need a Figma Enterprise org — this file’s plan doesn’t expose collection.extend(). '
   + 'The published OKChroma plugin (v1) covers every plan.'
@@ -909,15 +921,14 @@ figma.ui.onmessage = async (msg) => {
       let createdVars = 0
       const ensure = (path: string): figma.Variable => {
         let v = baseVars.get(path)
-        // a normalized direct hit heals its invisibly-off display name to canonical
-        if (v && v.name !== path && normPath(v.name) === normPath(path)) v.name = path
+        // a direct hit (usually via stamp) whose display name is any ENGINE spelling
+        // of this path — a stale generation or invisibly-off — heals to canonical;
+        // a genuinely custom name stays (isEngineSpelling, the doctrine's other half)
+        if (v && v.name !== path && isEngineSpelling(v.name, path)) v.name = path
         if (!v) for (const legacyPath of legacyCandidates(path)) {
           const legacy = baseVars.get(legacyPath)
-          // display follows while it spells the legacy path exactly OR only invisibly
-          // off it — a genuinely user-custom name stays; the stamp below carries
-          // identity either way
           if (legacy) {
-            if (legacy.name === legacyPath || normPath(legacy.name) === normPath(legacyPath)) legacy.name = path
+            if (legacy.name === legacyPath || isEngineSpelling(legacy.name, path)) legacy.name = path
             baseVars.delete(legacyPath); baseVars.set(path, legacy); v = legacy; break
           }
         }
@@ -1353,11 +1364,14 @@ figma.ui.onmessage = async (msg) => {
       // happens") must be impossible to reproduce without a message naming the gap.
       // old-named = rows still answering to a retired spelling after the heal ran;
       // a non-zero count here IS the diagnosis and names its own evidence.
-      const oldSpellings = RENAMED_LEAVES.map(([from]) => from)
+      // stale = stamped identity says one path, the display name spells an ENGINE
+      // vintage of it (never a custom name; suffix-matching raw old spellings false-
+      // positived on rows like base/alpha/transparent whose CURRENT leaf is also a
+      // retired flat source)
       const postVars = (await figma.variables.getLocalVariablesAsync()).filter(v => v.variableCollectionId === base.id)
       const oldNamed = postVars.filter(v => {
-        const n = normPath(v.name)
-        return oldSpellings.some(o => n === o || n.endsWith('/' + o))
+        const stamp = v.getPluginData(PATH_KEY)
+        return !!stamp && v.name !== stamp && isEngineSpelling(v.name, stamp)
       })
       figma.notify(`OKChroma: applied "${brand}" → collection "${base.name}" · ${createdVars} rows created · ${oldNamed.length} old-named rows left${oldNamed.length ? ` (${oldNamed.slice(0, 3).map(v => v.name).join(', ')}${oldNamed.length > 3 ? ', …' : ''}) — report this message` : ''}`)
       figma.ui.postMessage({ type: 'done', brand, set, removed, inherited, createdVars, baseCreated: created, secondary: secondaryMode, secondaryAdded, addedCols, rowsAdded, orphaned, backfill, unstamped, staleApcaCols })
