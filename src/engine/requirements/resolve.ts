@@ -43,7 +43,7 @@ export type ResolvedRamp = {
     cta: ResolvedRole; ctaHover: ResolvedRole; ctaPressed: ResolvedRole
   }
   // one on-color left: the cta's own text pole. onHighlightIsWhite died with the
-  // highlight band (owner 2026-07-29) — ink-53's on-color is a paper token now.
+  // highlight band (owner 2026-07-29) — lead-53's on-color is a paper token now.
   ons: { onFillIsWhite: boolean }
 }
 export type { ResolveOpts }
@@ -63,6 +63,19 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   const o = hexToOklch(hex); const seed: Seed = { hex, ...o }
   const ctx = buildContext(hex, opts)
   spec ??= MODE_SPECS[mode]
+  // THE INVERSE LANE KEEPS ITS OWN LADDER (guarantee-groups round, owner 2026-08-27):
+  // T10's wash-80 law is a claim about washes, which the inverse lane never ships — its
+  // ink register is text on an ink-30 fill, judged against INK_30_GROUND at the
+  // 4.5 / 6.5 / 7.0 ladder the inverse round froze. On the inkGround path stop 10's
+  // target therefore stays 6.5 (the anchor is moot there: groundOf overrides every
+  // ink stop's ground to inkGround).
+  if (ctx.opts?.inkGround) {
+    spec = {
+      ...spec,
+      stops: spec.stops.map(s => (s.stop === 10 && s.require?.metric === 'wcag'
+        ? { ...s, require: { ...s.require, target: 6.5 } } : s)),
+    }
+  }
   const ctaReq = spec.roles.find(r => r.role === 'cta')
   const hoverReq = spec.roles.find(r => r.role === 'cta-hover')
   const pressedReq = spec.roles.find(r => r.role === 'cta-pressed')
@@ -89,7 +102,9 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   // it used to be documentation while the resolver hardcoded paper-97 (paper-2) here and in the
   // apca path, so moving a require's anchor meant editing the engine rather than the
   // declaration. spec.ts is the portable artifact; the anchor belongs in it.
-  const AGAINST_STOP: Record<string, number> = { 'paper-99': 1, 'paper-97': 2, 'paper-95': 3 }
+  // wash-80 joined the union with the T10 wash-80 law (guarantee-groups round, owner
+  // 2026-08-27): the ink group's "usable on every wash" claim anchors at the darkest wash.
+  const AGAINST_STOP: Record<string, number> = { 'paper-99': 1, 'paper-97': 2, 'paper-95': 3, 'wash-80': 7 }
   const declaredAnchor = (req: Require): number =>
     req.metric === 'min-separation' ? 1 : AGAINST_STOP[req.against] ?? 2
   // THE INK ANCHOR (owner rule 2026-07-28: "ink-10 can only be used on papers" — and it
@@ -100,9 +115,12 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   // (agnostic sweep worst 5.28 wcag-ratio, 0/216 under 4.5) and stays byte-identical.
   // Lane-specific, so it stays an override on top of the declaration rather than in it.
   // Threshold moved 10 → 9 with the 2026-07-29 renumber: the ink band starts at 9 now.
-  // This IS why the collapse is visually cheap — it is the rule that made ink-53 (then
+  // This IS why the collapse is visually cheap — it is the rule that made lead-53 (then
   // ink-10) land on top of highlight-9, both solving 4.5 against paper-95 (paper-3).
-  const wcagAnchorStop = (req: Require, stop: number) => (stop >= 9 ? 3 : declaredAnchor(req))
+  // The override applies only when the declaration names a PAPER: a declared wash anchor
+  // (T10's wash-80 law) is already darker than every paper and must be honored as-is.
+  const wcagAnchorStop = (req: Require, stop: number) =>
+    (stop >= 9 && declaredAnchor(req) <= 3 ? 3 : declaredAnchor(req))
   // THE INVERSE INK GROUND (owner round 2026-08-19, opts.inkGround): the ink stops solve
   // against an EXTERNAL color rather than a stop of their own ramp — the inverse link family
   // is text on an ink-30 fill. Everything downstream reads its ground through these two, so
@@ -114,7 +132,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   const apcaGroundOf = (req: Require, stop: number): { L: number; C: number; H: number } =>
     inkGround && stop >= 9 ? inkGround : refOf(declaredAnchor(req), stop)
   // the CROSS-FAMILY paper bound (owner defect 2026-08-03 — her measured pair was the
-  // brand ink-53 (ink-9) on the NEUTRAL paper-95 (paper-3), 4.479:1; her follow-up
+  // brand lead-53 (ink-9) on the NEUTRAL paper-95 (paper-3), 4.479:1; her follow-up
   // caught mark-74 (highlight-8) the same way, 26/72 under 3:1): "usable on every
   // paper" includes the per-brand NEUTRAL's papers, and the own-family paper-95 (paper-3)
   // is NOT the nearest paper for green-band brands — their tinted paper carries more Y
@@ -129,6 +147,14 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   // scope here (the ramp resolves per family), so the floor clears the worst neutral any
   // theme can generate. RE-DERIVE if the neutral curve or the paper ladder moves.
   const NEUTRAL_P3_WORST_SHIP_Y = { light: 0.845015, dark: 0.014247 } as const
+  // The same doctrine for the wash-80 anchor (T10's wash-80 law, owner 2026-08-27): the
+  // ink group's claim spans its own family AND the neutral, so the bound is the worst
+  // SHIPPED neutral wash-80 Y over hue 0..350 × every NeutralLevel — light min (darkest)
+  // H290 branded, dark max (lightest) H30 branded, measured 2026-08-27 via
+  // generateNeutralScale → shippedY (scratchpad derive-w80-bound). RE-DERIVE if the
+  // neutral curve or the wash ladder moves. A wash-80-anchored stop needs no paper bound:
+  // clearing the darkest wash clears every paper of both ramps by ladder monotonicity.
+  const NEUTRAL_W80_WORST_SHIP_Y = { light: 0.506433, dark: 0.074262 } as const
   // the light contrast solves are metric-blind: the resolver hands the producer a maxLFor closure built
   // from the declared require. wcag closures call findMaxLForContrast with the exact old arguments
   // (float-identical — the wcag profile stays byte-for-byte); apca closures swap in the Lc bisection.
@@ -332,7 +358,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
 
     // verify any declared require against the emitted (gamut-clamped) values — total, fail loud
     if (sp.require?.metric === 'wcag') {
-      // THE SHIPPED-PAIR FLOOR (owner defect 2026-08-03 — #43B02A ink-53 (ink-9) read
+      // THE SHIPPED-PAIR FLOOR (owner defect 2026-08-03 — #43B02A lead-53 (ink-9) read
       // 4.44:1 on paper-95 (paper-3)): the analytic solve lands exactly on the bar, and the
       // sRGB encode plus 8-bit hex quantization of BOTH sides then eats up to ~0.08 of ratio.
       // legalRatio covers the fill's renditions, but its reference side is the ANALYTIC
@@ -350,10 +376,15 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       // EXCEPT on the inverse ink ground: that text sits on an ink-30 fill, never on a
       // paper, so the paper bound is not its law — its own frozen worst IS the bound.
       const paperBound = sp.stop >= 8 && !(inkGround && sp.stop >= 9)
+      // the cross-family bound follows the anchor's band: a wash-anchored stop (T10's
+      // wash-80 law) reads against the worst neutral WASH-80, which dominates the paper
+      // bound on both ramps (ladder monotonicity, see the constant above)
+      const crossBoundY = wcagAnchorStop(sp.require, sp.stop) === 7
+        ? NEUTRAL_W80_WORST_SHIP_Y[mode] : NEUTRAL_P3_WORST_SHIP_Y[mode]
       const shipRatio = (L: number) => {
         const y = shippedY(L, placed.C, placed.H)
         const own = contrastRatio(y, anchorShipY)
-        return paperBound ? Math.min(own, contrastRatio(y, NEUTRAL_P3_WORST_SHIP_Y[mode])) : own
+        return paperBound ? Math.min(own, contrastRatio(y, crossBoundY)) : own
       }
       if (shipRatio(placed.L) < sp.require.target) {
         const away = shippedY(placed.L, placed.C, placed.H) < anchorShipY ? -1 : +1

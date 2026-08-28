@@ -41,6 +41,7 @@
     "figma:verify": "esbuild scripts/figma-verify.ts --bundle --platform=node --outfile=dist/figma-verify.js && node dist/figma-verify.js",
     "req:audit": "esbuild scripts/reqtoken-audit.ts --bundle --platform=node --outfile=dist/reqtoken-audit.js && node dist/reqtoken-audit.js",
     "audit:secondary": "esbuild scripts/secondary-audit.ts --bundle --platform=node --outfile=dist/secondary-audit.js && node dist/secondary-audit.js",
+    "audit:guarantee": "esbuild scripts/guarantee-audit.ts --bundle --platform=node --outfile=dist/guarantee-audit.js && node dist/guarantee-audit.js",
     "plugin:build": "node esbuild.config.js --plugin",
     "plugin-unify:build": "node esbuild.config.js --plugin-unify",
     "plugin-ext:build": "node esbuild.config.js --plugin-ext",

@@ -18,9 +18,9 @@
 // - alpha = the minimum keeping the composite within TOL apparent of the target on
 //   all four fields; ink and alpha iterate to convergence.
 // - the dark half-step lift is GATED by the paper/ink law: bisected down wherever
-//   ink-53/42/30 would lose 4.5/6.5/7.0 (shipped 8-bit basis, the QUANTIZED rgba)
+//   lead-53/42/30 would lose 4.5/6.5/7.0 (shipped 8-bit basis, the QUANTIZED rgba)
 //   against the lightest lifted overlay composited on the lightest field. The same
-//   gate runs in LIGHT against the darkest composite (the thin neutral ink-53 margin).
+//   gate runs in LIGHT against the darkest composite (the thin neutral lead-53 margin).
 // - the NEUTRAL family is exempt from the visibility floor (a grey distinguishes by
 //   lightness only; the floor at its tint hue turns it pastel) but carries everything
 //   else.
@@ -211,7 +211,7 @@ export function alphaPapersFor(
   return gateInks(buildTwins(lo), scale, neutral, 'dark')
 }
 
-// the paper/ink law as a gate: ink-53/42/30 must keep 4.5/6.5/7.0 (shipped basis,
+// the paper/ink law as a gate: lead-53/42/30 must keep 4.5/6.5/7.0 (shipped basis,
 // the quantized rgba) against the WORST composite — the lightest overlay on the
 // lightest field in dark, the darkest overlay on the darkest field in light
 const INK_BARS: Array<[number, number]> = [[9, 4.5], [10, 6.5], [11, 7.0]]

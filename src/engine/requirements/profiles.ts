@@ -34,6 +34,13 @@ export const DEFAULT_APCA_LC_MAP: LcMap = { 3: 30, 4.5: 75, 6.5: 85, 7: 90 }
 
 function toApca(req: Require, lcMap: LcMap): Require {
   if (req.metric !== 'wcag') return req
+  // THE APCA-LANE FREEZE (D3, guarantee-groups round, owner direction 2026-08-27): the
+  // wash-80 law is a WCAG-lane guarantee. Its apca twin stays the pre-law declaration —
+  // paper-97 at Lc 85, the 6.5-era slot — so the apca lane remains byte-identical (the
+  // placement already cleared 85; a floor that holds does not move). The lane re-anchors,
+  // if ever, in its own measured round ("provisional until the apca lane is next
+  // measured", the map note above).
+  if (req.against === 'wash-80') return { metric: 'apca', against: 'paper-97', targetLc: 85 }
   const targetLc = lcMap[req.target]
   if (targetLc === undefined) throw new Error(`apca profile: no Lc mapping for wcag target ${req.target}`)
   return { metric: 'apca', against: req.against, targetLc }

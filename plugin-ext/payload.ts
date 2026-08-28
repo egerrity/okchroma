@@ -42,7 +42,7 @@ export interface FlatTok { path: string; r: number; g: number; b: number; a?: nu
 // set (a state-carrying role a designer binds; everything else hides when descope
 // is on).
 const FAMILY_PREFIXES = FAMILIES.map(f => f + '/')
-export const ROLE_BANDS = ['solid/']
+export const ROLE_BANDS = ['stamp/']
 export function registerPath(p: string): string {
   if (p.startsWith('base/') || p.startsWith('utility/')) return p // already zoned (system-descended rows)
   const fam = FAMILY_PREFIXES.find(f => p.startsWith(f))
@@ -201,7 +201,7 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
   out.push({ path: 'base/alpha/transparent', ...W, a: 0 })
   // the SOFT ON-COLOR primitive (C43 follow-up, owner-named 2026-08-03): the on-text
   // pole at the engine's SOFT_ON_CTA_ALPHA — black in light, white in dark, alpha per
-  // mode. The default-model secondary's solid/on aliases this row, never a raw write.
+  // mode. The default-model secondary's stamp/on aliases this row, never a raw write.
   // base zone: an engine-required input (the alias graph targets it).
   out.push({ path: 'base/alpha/ink', ...(dark ? W : K), a: dark ? SOFT_ON_CTA_ALPHA.dark : SOFT_ON_CTA_ALPHA.light })
   // the decorative stroke's rung ladder (owner 2026-07-29/31): black in light, flipped

@@ -1,7 +1,7 @@
 // alpha-audit — the paper-overlay law gates (owner round 2026-08-13), fixture-sweep wide.
 //
 // HARD GATES, per theme × family × mode:
-//   1. ink bars on the QUANTIZED rgba: ink-53/42/30 keep 4.5/6.5/7.0 (shipped 8-bit
+//   1. ink bars on the QUANTIZED rgba: lead-53/42/30 keep 4.5/6.5/7.0 (shipped 8-bit
 //      basis) against the worst overlay composite — the lightest on the lightest
 //      paper in dark, the darkest on the darkest paper in light.
 //   2. the TOL bound, observed: each rung's composite apparent L* spans ≤ 2×TOL

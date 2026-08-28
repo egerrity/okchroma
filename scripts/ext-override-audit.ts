@@ -75,7 +75,10 @@ function assertLadderOrder(tokens: FlatTok[], label: string): void {
     for (const t of tokens) {
       // end-anchored (2026-08-18): the flat overlay twins (paper-99-overlay) carry a
       // ladder digit mid-name and must not double-count their paper's rung
-      const m = new RegExp(`/${fam}/(?:paper|wash|mark|ink)-(\\d+)(?:-aaa?)?$`).exec(t.path)
+      // 'lead' joined the band words in the guarantee round (ink-53 → lead-53,
+      // owner 2026-08-27) — this regex IS the disarm-detection gate, so it moves
+      // with the leaf shape by design (the cta-ink round's lesson)
+      const m = new RegExp(`/${fam}/(?:paper|wash|mark|lead|ink)-(\\d+)(?:-aaa?)?$`).exec(t.path)
       if (m) nums.push(parseInt(m[1], 10))
     }
     // the gate must never silently disarm again: every family carries a full ladder

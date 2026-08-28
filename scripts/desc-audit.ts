@@ -73,7 +73,7 @@ if (contrastLines === 0) fail('(gate)', 'conformance-phrase gate matched zero li
 
 // ── rule 5: no foreign label word ────────────────────────────────────────────
 // The vocabulary is derived from the real paths, so a future token name joins the ban
-// automatically — the 2026-08-18 solid rename put solid/fill/edge/overlay/dim/mid on
+// automatically — the 2026-08-18 solid rename put stamp/fill/edge/overlay/dim/mid on
 // the list for free, and retired "cta" from it (no path carries the word now, so the
 // bodies' deliberate "CTA" prose — kept so a designer's cta query still lands on the
 // action rows — needs no exception any more). "aaa" stays: ink-30's own leaf

@@ -74,7 +74,7 @@ const TINT: Record<Family, string> = {
   [FAMILY.info]: 'tints carry info hue (blue)',
 }
 
-// the same color words for the SOLID rows (owner 2026-08-18 follow-up: the solid
+// the same color words for the STAMP rows (owner 2026-08-18 follow-up: the solid
 // bodies are shared across families, so the TINT line never reaches them) — appended
 // to their theming lines as a family marker. Empty for the brands.
 const COLOR_WORD: Record<Family, string> = {
@@ -97,11 +97,11 @@ const PAPER: Body = { req: 'backgrounds, inverted text', theming: f => TINT[f], 
 // "decorative borders", not "edges": a token label word in a foreign row's body floods that
 // word's search results (the whole reason the shared stamp broke search). A row may carry a
 // label word only when it is in its OWN path. The 2026-08-18 solid rename flipped this
-// word: edge became the label (solid/edge) and border stopped being one.
+// word: edge became the label (stamp/edge) and border stopped being one.
 const WASH: Body = { req: 'subtle interaction states, decorative borders, illos, signal hierarchy', theming: f => TINT[f], collides: true }
 const solved = (f: Family) => `${TINT[f]}; re-solved to clear its floor`
 // (Leaf keys are FLAT — band flattening 2026-08-12: paper-99, never paper/99 — except
-// the solid/ state group, keyed by its nested spelling.)
+// the stamp/ state group, keyed by its nested spelling.)
 // the overlay rows (owner round 2026-08-13) are PARKED (owner 2026-08-18) — not
 // emitted, so these bodies are dormant; kept for the comeback. Translucent twins of
 // the papers, solved so the reading holds on the neutral papers; anywhere else the
@@ -123,20 +123,20 @@ const SCALE: Record<string, Body> = {
   'wash-85': WASH,
   'wash-80': WASH,
   'mark-74': { req: 'focus rings, icons, large text', contrast: AA_LARGE, theming: solved, collides: true },
-  'ink-53': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
+  'lead-53': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
   'ink-42': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
   // ("high-emphasis" reworded 2026-08-12: the surface planes took low/high as label
   // words, and a body carrying either floods that token's picker search — the C50 law)
   'ink-30': { req: 'strong-emphasis text, inverted backgrounds', contrast: AAA_BODY, theming: solved, collides: true },
-  // the solid family (renamed from the cta words, owner 2026-08-18). "CTA" stays in
+  // the stamp family (cta words → solid 2026-08-18, solid → stamp 2026-08-27). "CTA" stays in
   // these bodies on purpose: it stopped being a token label, so it floods nothing,
   // and a designer's "cta" query still lands on these rows.
-  'solid/fill': { req: 'CTAs', theming: f => `fully re-solved per theme and family${COLOR_WORD[f]}` },
-  'solid/fill-hover': { req: 'CTA pointer-over state', theming: f => `follows its rest fill${COLOR_WORD[f]}` },
-  'solid/fill-pressed': { req: 'CTA pressed state', theming: f => `follows its rest fill${COLOR_WORD[f]}` },
-  'solid/edge': { req: 'min APCA visibility', theming: f => `draws for CTAs that sit close to the page; strength per family tier${COLOR_WORD[f]}` },
+  'stamp/fill': { req: 'CTAs', theming: f => `fully re-solved per theme and family${COLOR_WORD[f]}` },
+  'stamp/fill-hover': { req: 'CTA pointer-over state', theming: f => `follows its rest fill${COLOR_WORD[f]}` },
+  'stamp/fill-pressed': { req: 'CTA pressed state', theming: f => `follows its rest fill${COLOR_WORD[f]}` },
+  'stamp/edge': { req: 'min APCA visibility', theming: f => `draws for CTAs that sit close to the page; strength per family tier${COLOR_WORD[f]}` },
   // ("fill" reworded out 2026-08-18: fill became a label word and is foreign here)
-  'solid/on': { req: 'text over the CTA color', contrast: `${AA_BODY} over its CTA`, theming: f => `whichever pole passes; quiet CTAs take the soft pole${COLOR_WORD[f]}` },
+  'stamp/on': { req: 'text over the CTA color', contrast: `${AA_BODY} over its CTA`, theming: f => `whichever pole passes; quiet CTAs take the soft pole${COLOR_WORD[f]}` },
 }
 
 // ── rows only the neutral carries ────────────────────────────────────────────

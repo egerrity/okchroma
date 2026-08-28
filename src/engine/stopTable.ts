@@ -174,11 +174,14 @@ export const YELLOW_BAND = { centerH: 92, sigmaDeg: 20 }
 // Named by ROLE, not by stop number, so the next renumber cannot make the name lie.
 export const INK_9_CONTRAST = 4.5
 
-// ink-10, the BETWEEN text stop (C49): a floor that never fires on the current geometry —
-// the perceptual placement at the midpoint rootL already reads 6.84:1+ vs paper-3 across
-// the 360-seed sweep (dark 8.80+) — so the stop stays purely placed while the register is
-// guaranteed. Sits between the 4.5 first-text bar and the 7.0 strong floor by design.
-export const INK_10_CONTRAST = 6.5
+// ink-10, the BETWEEN text stop — THE WASH-80 LAW (guarantee-groups round, owner
+// 2026-08-27): 4.5 anchored at wash-80 (stop 7), the darkest wash, so "ink-42 is usable
+// on every wash" is a guarantee rather than a near-miss (the pre-law worst was 4.25 on
+// wash-80, positive lane, light). Replaces the old 6.5-vs-paper-97 declaration, a floor
+// that never fired on the geometry; the paper-97 fact still holds after this law (the
+// solve only darkens) and guarantee-audit pins the full group matrix. Light-only in
+// effect: the dark scaffold clears everywhere, so dark stays byte-identical.
+export const INK_10_CONTRAST = 4.5
 
 export const INK_11_CONTRAST_FLOOR = 7.0
 

@@ -29,7 +29,7 @@ const SHARED_NAMES: Record<number, string> = {
   // two pre-collapse stop INDICES (11, and the off-scale anchor's 12 — emitted as a
   // literal in cssRender, not through this table) with the between stop taking the
   // vacated index 10; the indices (9/10/11) are unchanged since.
-  9: 'ink-53',
+  9: 'lead-53',
   10: 'ink-42',
   11: 'ink-30',
 }
@@ -54,35 +54,35 @@ export const INK_0 = 'ink-0'
 
 // THE SOLID FAMILY (owner rename round 2026-08-18, replacing the cta words —
 // stakeholder ruling: cta read as a semantic token). Flat engine identity =
-// hyphenated Figma path = CSS var body, one spelling everywhere: solid-fill /
-// solid-fill-hover / solid-fill-pressed / solid-edge / solid-on. In Figma the
-// family still nests as the solid/ state group (fill, fill-hover, fill-pressed,
-// edge, on) — SOLID_STATE_LEAVES below is the one flat↔nested table every
+// hyphenated Figma path = CSS var body, one spelling everywhere: stamp-fill /
+// stamp-fill-hover / stamp-fill-pressed / stamp-edge / stamp-on. In Figma the
+// family still nests as the stamp/ state group (fill, fill-hover, fill-pressed,
+// edge, on) — STAMP_STATE_LEAVES below is the one flat↔nested table every
 // consumer must ride (figmaRender, both plugins, figma-verify).
-export const SOLID_FILL = 'solid-fill'
-export const SOLID_FILL_HOVER = 'solid-fill-hover'
-export const SOLID_FILL_PRESSED = 'solid-fill-pressed'
-export const SOLID_EDGE = 'solid-edge'
-export const SOLID_ON = 'solid-on'
+export const STAMP_FILL = 'stamp-fill'
+export const STAMP_FILL_HOVER = 'stamp-fill-hover'
+export const STAMP_FILL_PRESSED = 'stamp-fill-pressed'
+export const STAMP_EDGE = 'stamp-edge'
+export const STAMP_ON = 'stamp-on'
 // flat engine name → nested Figma leaf (the ONLY divergence between the two
 // spellings is this slash; code syntax re-hyphenates it back to the flat name)
-export const SOLID_STATE_LEAVES: Record<string, string> = {
-  [SOLID_FILL]: 'solid/fill',
-  [SOLID_FILL_HOVER]: 'solid/fill-hover',
-  [SOLID_FILL_PRESSED]: 'solid/fill-pressed',
-  [SOLID_EDGE]: 'solid/edge',
-  [SOLID_ON]: 'solid/on',
+export const STAMP_STATE_LEAVES: Record<string, string> = {
+  [STAMP_FILL]: 'stamp/fill',
+  [STAMP_FILL_HOVER]: 'stamp/fill-hover',
+  [STAMP_FILL_PRESSED]: 'stamp/fill-pressed',
+  [STAMP_EDGE]: 'stamp/edge',
+  [STAMP_ON]: 'stamp/on',
 }
 // the nested Figma spellings, for consumers that recognize rows by their written
 // path (both plugins' alias wiring, figma-verify) — importing these instead of
 // spelling the strings means a future rename breaks the build instead of silently
 // disarming a check (the highlight/on lesson, sweep 2026-08-18)
-export const SOLID_LEAF = {
-  FILL: SOLID_STATE_LEAVES[SOLID_FILL],
-  FILL_HOVER: SOLID_STATE_LEAVES[SOLID_FILL_HOVER],
-  FILL_PRESSED: SOLID_STATE_LEAVES[SOLID_FILL_PRESSED],
-  EDGE: SOLID_STATE_LEAVES[SOLID_EDGE],
-  ON: SOLID_STATE_LEAVES[SOLID_ON],
+export const STAMP_LEAF = {
+  FILL: STAMP_STATE_LEAVES[STAMP_FILL],
+  FILL_HOVER: STAMP_STATE_LEAVES[STAMP_FILL_HOVER],
+  FILL_PRESSED: STAMP_STATE_LEAVES[STAMP_FILL_PRESSED],
+  EDGE: STAMP_STATE_LEAVES[STAMP_EDGE],
+  ON: STAMP_STATE_LEAVES[STAMP_ON],
 } as const
 
 // (the paper overlays — paper-99-overlay etc, owner round 2026-08-13 — are PARKED:
@@ -118,16 +118,16 @@ export const EXT_OVERRIDABLE_SYSTEM = (p: string): boolean =>
 // an explicit requirement of the original concept). Paper (1–3), wash (4–7),
 // then the focus ring (mark-74 — clamped to WCAG
 // 1.4.11 3:1 non-text contrast vs paper-95) read as one contiguous ladder, then
-// the text stops (ink-53 / ink-42 / ink-30 — the first doubles as the
-// emphasis fill), then the pulled-out off-scale solid family + solid-on, then
+// the text stops (lead-53 / ink-42 / ink-30 — the first doubles as the
+// emphasis fill), then the pulled-out off-scale stamp family + stamp-on, then
 // identity. A ramp skips tokens it doesn't have. Emitters sort by this, not by
 // stop number.
 // The ladder half DERIVES from SHARED_NAMES (integer keys enumerate ascending, and
 // ascending stop index IS descending LL), so a stop relabel edits one table, not two.
 const TOKEN_ORDER = [
   ...Object.values(SHARED_NAMES),
-  SOLID_FILL, SOLID_FILL_HOVER, SOLID_FILL_PRESSED,
-  SOLID_ON,
+  STAMP_FILL, STAMP_FILL_HOVER, STAMP_FILL_PRESSED,
+  STAMP_ON,
   'identity',
 ]
 export function tokenOrder(name: string): number {

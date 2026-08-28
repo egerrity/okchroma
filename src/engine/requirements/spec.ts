@@ -7,7 +7,7 @@
 // highlight (mark) 8, ink 9–10 (contiguous). THE HIGHLIGHT BAND COLLAPSED 2026-07-29: highlight-9 is
 // deleted and the inks renumbered down onto it (old 10/11 → 9/10). highlight-9 and old ink-10 both
 // solved 4.5 against paper-95 (paper-3) — the same bar against the same anchor — so they landed on
-// top of each other (145 of 360 agnostic seeds within 0.01). ink-53 (ink-9) now carries both
+// top of each other (145 of 360 agnostic seeds within 0.01). lead-53 (ink-9) now carries both
 // jobs: the emphasis fill AND the first text stop. The cta is NOT a scale stop: it is an OFF-SCALE
 // ROLE (cta / cta-hover), exactly like GeneratedScale.cta/ctaHover. The old prototype's "stop 9 = cta"
 // pairing is dead.
@@ -35,7 +35,7 @@ export type Producer = {
 // (resolve.ts declaredAnchor). paper-95 (paper-3) joined the union when stop 8 became the focus
 // ring (owner 2026-07-28); the ink stops keep a lane-specific override in the resolver.
 export type Require =
-  | { metric: 'wcag'; against: 'paper-99' | 'paper-97' | 'paper-95'; target: number; level: 'AA' | 'AAA' }
+  | { metric: 'wcag'; against: 'paper-99' | 'paper-97' | 'paper-95' | 'wash-80'; target: number; level: 'AA' | 'AAA' }
   // APCA lightness-contrast requirement (the contrast-PROFILE alternative to wcag): the stop must read
   // |Lc| ≥ targetLc against its declared anchor. Same floor semantics — a placement that already clears
   // does not move. Produced by withProfile() (profiles.ts), never hand-declared in the built-in specs.
@@ -92,7 +92,7 @@ export type RoleReq = {
 // ENFORCEMENT itself (the fill re-solves to 4.5-white).
 // withProfile('apca') strips the ratio floor; the apca law is the Lc bar.
 // (The second on-color, `onHighlight`, is GONE — owner 2026-07-29. It solved the text pole for the
-// highlight-9 fill; that fill is now ink-53 (ink-9), whose on-color is a declared paper token, not a solve.)
+// highlight-9 fill; that fill is now lead-53 (ink-9), whose on-color is a declared paper token, not a solve.)
 // `coEnforceLc` (the APCA legibility CLEARANCE, default-ON since C18): a SECOND on-fill contrast requirement
 // that rides ALONGSIDE the wcag lane's 4.5 floor — read only in the wcag lane (enforceLc undefined);
 // opts.apcaClearance=false opts out (instruments). Where wcag and APCA disagree on whether the chosen pole reads, the fill
@@ -155,7 +155,7 @@ const P_TEXT: Producer = { hue: 'warm-torsion', L: 'perceptual', chroma: 'brand'
 const S8: Require = { metric: 'wcag', against: 'paper-95', target: STOP_8_NONTEXT_CONTRAST, level: 'AA' }
 // INK ANCHOR NOTE (owner 2026-07-28): in the WCAG lane the resolver anchors ink
 // requires (the ink stops 9–11) at paper-95 (paper-3) — the nearest paper —
-// so "ink-53 is usable on every paper" is a law, not a hope (resolve.ts
+// so "lead-53 is usable on every paper" is a law, not a hope (resolve.ts
 // wcagAnchorStop). That override is LANE-SPECIFIC, so it stays in the resolver; the
 // apca lane keeps paper-97 (paper-2) (clears paper-95 with margin, byte-identical) and
 // reads it from the declaration below.
@@ -164,9 +164,13 @@ const S8: Require = { metric: 'wcag', against: 'paper-95', target: STOP_8_NONTEX
 // and why one of them can carry both jobs. Nothing about the number changed; only the
 // count of stops asking for it.
 const T9: Require = { metric: 'wcag', against: 'paper-97', target: INK_9_CONTRAST, level: 'AA' }
-// T10 (C49): the between text stop's guarantee — a floor that never fires on the current
-// geometry (the midpoint placement reads 6.84+ vs paper-95 sweep-wide); see stopTable.ts.
-const T10: Require = { metric: 'wcag', against: 'paper-97', target: INK_10_CONTRAST, level: 'AA' }
+// T10 — THE WASH-80 LAW (guarantee-groups round, owner 2026-08-27): the between text
+// stop anchors at wash-80, its own ramp's darkest wash, so the ink group's "usable on
+// every wash" claim is declared rather than hoped (see stopTable.ts INK_10_CONTRAST).
+// WCAG lane only in effect: the resolver keeps the apca lane's anchor at paper-97
+// (resolve.ts apcaGroundOf) so the community/apca lane stays byte-identical — the
+// mirror of the wcag lane's own paper-95 ink override.
+const T10: Require = { metric: 'wcag', against: 'wash-80', target: INK_10_CONTRAST, level: 'AA' }
 const T11: Require = { metric: 'wcag', against: 'paper-97', target: INK_11_CONTRAST_FLOOR, level: 'AAA' }
 
 // ONE on-color left (owner 2026-07-29). `onHighlight` is deleted with the band it named:
@@ -174,7 +178,7 @@ const T11: Require = { metric: 'wcag', against: 'paper-97', target: INK_11_CONTR
 // by forcing hl-9 to clear 4.5 against paper-95 (paper-3), so it was an emitted token that no
 // longer carried a solved value. Its successor is a declaration in the semantic layer —
 // `-fg-on-emphasis` → --paper-100 (--paper-0 pre-Stage-B) — measured at worst 4.96 (light) /
-// 8.04 (dark) against ink-53 (ink-9) over the 360-seed agnostic sweep. Only the cta still
+// 8.04 (dark) against lead-53 (ink-9) over the 360-seed agnostic sweep. Only the cta still
 // solves its own text pole.
 // onFill CARRIES THE POLE FLOOR (owner 2026-07-29). It was the one requirement without a
 // `ratioFloor`, on the reasoning recorded above — "onFill's floor is the ENFORCEMENT itself
@@ -210,7 +214,7 @@ export const LIGHT: ModeSpec = {
       satFraction: SCALE_C_LIGHT[stop].sat, baseC: SCALE_C_LIGHT[stop].base,
       require: stop === 8 ? S8 : undefined,
     })),
-    // ink text: perceptual + contrast-required. ink-53 (ink-9) is ALSO the emphasis fill (the
+    // ink text: perceptual + contrast-required. lead-53 (ink-9) is ALSO the emphasis fill (the
     // highlight-9 collapse, owner 2026-07-29). ink-42 (ink-10) is the between text stop (C49) —
     // a normal stop like its neighbors; the three together are the text-register cta.
     { stop: 9, rootL: ROOT_L_LIGHT[9], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[9].inkMult, inkMaxC: SCALE_C_LIGHT[9].inkMaxC, chromaFloor: SCALE_C_LIGHT[9].chromaFloor, require: T9 },

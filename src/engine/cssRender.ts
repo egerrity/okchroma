@@ -193,10 +193,10 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
   ].sort((a, b) => tokenOrder(a.name) - tokenOrder(b.name)).map(v => v.line).join('\n')
   return [
     scaleBlock,
-    `  --${prefix}-solid-fill: ${stopHex(f.cta)};`,
-    `  --${prefix}-solid-fill-hover: ${stopHex(f.ctaHover)};`,
-    `  --${prefix}-solid-fill-pressed: ${stopHex(f.ctaPressed)};`,
-    `  --${prefix}-solid-edge: var(${border ? offsetVarName(ctaBorderRung(prefix)) : TRANSPARENT_VAR});`,
+    `  --${prefix}-stamp-fill: ${stopHex(f.cta)};`,
+    `  --${prefix}-stamp-fill-hover: ${stopHex(f.ctaHover)};`,
+    `  --${prefix}-stamp-fill-pressed: ${stopHex(f.ctaPressed)};`,
+    `  --${prefix}-stamp-edge: var(${border ? offsetVarName(ctaBorderRung(prefix)) : TRANSPARENT_VAR});`,
     // the SOFT on-cta (owner 2026-08-04: "neutral cta on's should also be the alpha"): the
     // neutral's cta is the scale-fed WASH-level fill, the system's other quiet cta, so its
     // button text takes the pole AT ALPHA like the default-model secondary's — composited
@@ -206,8 +206,8 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
     // unconditional — the secondary's rides the cascade only because it gates on the style
     // chip. Loud fills (brand, signals, the cta escape) keep the solid pole.
     prefix === CSS_NEUTRAL
-      ? `  --${CSS_NEUTRAL}-solid-on: rgba(${onCta ? '255, 255, 255' : '0, 0, 0'}, ${SOFT_ON_CTA_ALPHA[mode]});`
-      : `  --${prefix}-solid-on: ${onColor(onCta)};`,
+      ? `  --${CSS_NEUTRAL}-stamp-on: rgba(${onCta ? '255, 255, 255' : '0, 0, 0'}, ${SOFT_ON_CTA_ALPHA[mode]});`
+      : `  --${prefix}-stamp-on: ${onColor(onCta)};`,
   ]
 }
 
@@ -225,7 +225,7 @@ export function brandKindP3Body(prefix: string, s: GeneratedScale, mode: 'light'
   const f = ctaFamilyOf(s, mode)
   const out: string[] = []
   for (const st of stops) if (p3Differs(st)) out.push(`  --${prefix}-${stopTokenName(st.stop)}: ${p3Value(st)};`)
-  for (const [name, st] of [['solid-fill', f.cta], ['solid-fill-hover', f.ctaHover], ['solid-fill-pressed', f.ctaPressed]] as const)
+  for (const [name, st] of [['stamp-fill', f.cta], ['stamp-fill-hover', f.ctaHover], ['stamp-fill-pressed', f.ctaPressed]] as const)
     if (p3Differs(st)) out.push(`  --${prefix}-${name}: ${p3Value(st)};`)
   return out
 }
@@ -371,7 +371,7 @@ export function brandCss(
   // scales inside `r` were already resolved under it by resolveBrand)
   contrastProfile?: ContrastProfile,
   // the secondary's mode chip: 'outline' re-resolves the fill trio — cta transparent, cta-hover the
-  // cta color at OUTLINE_HOVER_ALPHA (the tinted hover), on-cta ink-53, cta-border ALWAYS the
+  // cta color at OUTLINE_HOVER_ALPHA (the tinted hover), on-cta lead-53, cta-border ALWAYS the
   // gated mark-74. Same tokens, different resolution — no component changes needed.
   secondaryStyle?: SecondaryStyle,
   // the NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): the brand's cta FILL trio + on-cta
@@ -427,11 +427,11 @@ export function brandCss(
     const alias = (name: string) => `  --${prefix}-${name}: var(--${CSS_BRAND}-${name});`
     return [
       ...stops.map(x => alias(stopTokenName(x.stop))),
-      alias('solid-fill'),
-      alias('solid-fill-hover'),
-      alias('solid-fill-pressed'),
-      alias('solid-edge'),
-      alias('solid-on'),
+      alias('stamp-fill'),
+      alias('stamp-fill-hover'),
+      alias('stamp-fill-pressed'),
+      alias('stamp-edge'),
+      alias('stamp-on'),
     ]
   }
 
@@ -515,10 +515,10 @@ export function brandCss(
     // brand's ink stops — the text register, and --link's default alias onto them —
     // keep the brand's own chroma under the escape.
     return [
-      `  --${CSS_BRAND}-solid-fill: ${stopHex(esc.cta)};`,
-      `  --${CSS_BRAND}-solid-fill-hover: ${stopHex(esc.ctaHover)};`,
-      `  --${CSS_BRAND}-solid-fill-pressed: ${stopHex(esc.ctaPressed)};`,
-      `  --${CSS_BRAND}-solid-on: ${onColor(esc.onFillIsWhite)};`,
+      `  --${CSS_BRAND}-stamp-fill: ${stopHex(esc.cta)};`,
+      `  --${CSS_BRAND}-stamp-fill-hover: ${stopHex(esc.ctaHover)};`,
+      `  --${CSS_BRAND}-stamp-fill-pressed: ${stopHex(esc.ctaPressed)};`,
+      `  --${CSS_BRAND}-stamp-on: ${onColor(esc.onFillIsWhite)};`,
     ]
   }
 
@@ -530,12 +530,12 @@ export function brandCss(
   // construction), and the EXACT-style secondary — including the absent-style case, which
   // resolve normalizes to exact — wherever softOnCtaPasses says the composite stays over
   // WCAG 4.5 on every fill state. A failing exact fill keeps the solid pole. Outline keeps
-  // its ink-53 and the no-secondary mirror keeps the brand's.
+  // its lead-53 and the no-secondary mirror keeps the brand's.
   const softOnCta = (mode: 'light' | 'dark'): string[] => {
     if (!secondary || secondaryStyle === 'outline') return []
     if (secondaryStyle !== 'default' && !softOnCtaPasses(secondary, mode)) return []
     const white = mode === 'light' ? secondary.onFillTextIsWhite : secondary.onFillTextIsWhiteDark
-    return [`  --${CSS_SECONDARY}-solid-on: rgba(${white ? '255, 255, 255' : '0, 0, 0'}, ${SOFT_ON_CTA_ALPHA[mode]});`]
+    return [`  --${CSS_SECONDARY}-stamp-on: rgba(${white ? '255, 255, 255' : '0, 0, 0'}, ${SOFT_ON_CTA_ALPHA[mode]});`]
   }
 
   const outline = (mode: 'light' | 'dark'): string[] => {
@@ -546,13 +546,13 @@ export function brandCss(
     // fill trio re-resolved; pressed = the hover tint at doubled alpha (pressed-doubles-hover).
     // cta-ink trio untouched — links keep the exact ramp's text-register values.
     return [
-      `  --${CSS_SECONDARY}-solid-fill: transparent;`,
+      `  --${CSS_SECONDARY}-stamp-fill: transparent;`,
       ...(s8e ? [
-        `  --${CSS_SECONDARY}-solid-fill-hover: rgba(${c(s8e.r)}, ${c(s8e.g)}, ${c(s8e.b)}, ${OUTLINE_HOVER_ALPHA});`,
-        `  --${CSS_SECONDARY}-solid-fill-pressed: rgba(${c(s8e.r)}, ${c(s8e.g)}, ${c(s8e.b)}, ${OUTLINE_PRESSED_ALPHA});`,
+        `  --${CSS_SECONDARY}-stamp-fill-hover: rgba(${c(s8e.r)}, ${c(s8e.g)}, ${c(s8e.b)}, ${OUTLINE_HOVER_ALPHA});`,
+        `  --${CSS_SECONDARY}-stamp-fill-pressed: rgba(${c(s8e.r)}, ${c(s8e.g)}, ${c(s8e.b)}, ${OUTLINE_PRESSED_ALPHA});`,
       ] : []),
-      `  --${CSS_SECONDARY}-solid-edge: var(--${CSS_SECONDARY}-${stopTokenName(8)});`,
-      `  --${CSS_SECONDARY}-solid-on: var(--${CSS_SECONDARY}-${stopTokenName(9)});`,
+      `  --${CSS_SECONDARY}-stamp-edge: var(--${CSS_SECONDARY}-${stopTokenName(8)});`,
+      `  --${CSS_SECONDARY}-stamp-on: var(--${CSS_SECONDARY}-${stopTokenName(9)});`,
     ]
   }
 
@@ -563,7 +563,7 @@ export function brandCss(
   // 2026-07-11). The cta-pair P3 overrides are dropped for outline; scale stops keep theirs.
   const dropOutlineCta = (lines: string[]): string[] =>
     secondaryStyle === 'outline'
-      ? lines.filter(l => !l.startsWith(`  --${CSS_SECONDARY}-solid-fill:`) && !l.startsWith(`  --${CSS_SECONDARY}-solid-fill-hover:`) && !l.startsWith(`  --${CSS_SECONDARY}-solid-fill-pressed:`))
+      ? lines.filter(l => !l.startsWith(`  --${CSS_SECONDARY}-stamp-fill:`) && !l.startsWith(`  --${CSS_SECONDARY}-stamp-fill-hover:`) && !l.startsWith(`  --${CSS_SECONDARY}-stamp-fill-pressed:`))
       : lines
   // same P3-pop class for the ESCAPE (the owner-caught outline lesson, 2026-07-11): the
   // escaped fill trio ships the neutral's whisper chroma — an out-of-sRGB BRAND cta's P3
@@ -571,7 +571,7 @@ export function brandCss(
   // ink stops keep the brand's chroma under the escape, so their P3 lines stay.
   const dropEscapeCta = (lines: string[]): string[] =>
     ctaEscape
-      ? lines.filter(l => !new RegExp(`^  --${CSS_BRAND}-solid-fill(-hover|-pressed)?:`).test(l))
+      ? lines.filter(l => !new RegExp(`^  --${CSS_BRAND}-stamp-fill(-hover|-pressed)?:`).test(l))
       : lines
   const p3Light = [
     ...dropEscapeCta(brandKindP3Body(CSS_BRAND, scale, 'light')),

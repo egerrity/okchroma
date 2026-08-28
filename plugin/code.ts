@@ -2,7 +2,7 @@
 
 // zero-import text modules — safe here, drag nothing of the engine into the sandbox bundle
 import { describeToken } from '../src/engine/tokenDescriptions'
-import { SOLID_LEAF } from '../src/engine/tokenNames'
+import { STAMP_LEAF } from '../src/engine/tokenNames'
 
 figma.showUI(__html__, { width: 720, height: 640, title: 'OKChroma' })
 
@@ -71,10 +71,23 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // the per-brand prim groups ride the bespoke mid-segment pass (primByName
   // migration). Same indices, same values — a relabel, not a renumber.
   ['mark-74-aa', 'mark-74'],
-  ['ink-53-aa', 'ink-53'],
+  ['ink-53-aa', 'lead-53'],
   ['ink-42-aa', 'ink-42'],
   ['ink-30-aaa', 'ink-30'],
   ['abs-secondary', 'abs-alt'],
+  // ── GUARANTEE-ROUND PASS 1 (owner 2026-08-27): ink-53 → lead-53, the band-word
+  // split the group guarantees need ("ink is guaranteed on every wash" must not
+  // implicate the papers-only stop). Name only, same index, same values; every
+  // older ink-53-vintage source above/below already points straight at lead-53
+  // (the one-hop rule).
+  ['ink-53', 'lead-53'],
+  // solid → stamp (same round): the 2026-08-18 solid generation becomes a vintage;
+  // the cta-era sources below already re-target straight to stamp/ (one hop).
+  ['solid/fill', 'stamp/fill'],
+  ['solid/fill-hover', 'stamp/fill-hover'],
+  ['solid/fill-pressed', 'stamp/fill-pressed'],
+  ['solid/edge', 'stamp/edge'],
+  ['solid/on', 'stamp/on'],
   // ── LINK-INVERSE REGROUP (owner 2026-08-20): the inverse trio folds INSIDE the
   // link group (its solo group lasted one day, 2026-08-19..20). Multi-segment
   // leaves — the suffix match carries the group word, so system/link/inverse finds
@@ -90,11 +103,11 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // the link rest state follows the solid group's word change (owner 2026-08-18:
   // enabled died with the cta words — the rest leaf is default)
   ['link/enabled', 'link/default'],
-  ['cta/enabled', 'solid/fill'],
-  ['cta/hover', 'solid/fill-hover'],
-  ['cta/pressed', 'solid/fill-pressed'],
-  ['cta/border', 'solid/edge'],
-  ['cta/on', 'solid/on'],
+  ['cta/enabled', 'stamp/fill'],
+  ['cta/hover', 'stamp/fill-hover'],
+  ['cta/pressed', 'stamp/fill-pressed'],
+  ['cta/border', 'stamp/edge'],
+  ['cta/on', 'stamp/on'],
   // the overlays are PARKED (owner 2026-08-18, third call the same day: "remove them
   // for now and come back") — nothing emits or refreshes paper-LL-overlay any more.
   // These entries KEEP consolidating every shipped spelling (the 08-13 original and
@@ -118,7 +131,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['alpha/offset-08', 'alpha/008'],
   ['alpha/offset-16', 'alpha/016'],
   // ── BAND FLATTENING (owner 2026-08-12): ramp leaves sit FLAT in the family group
-  // again — paper-99, wash-92, mark-74, ink-53 … (band word + hyphen + level, the
+  // again — paper-99, wash-92, mark-74, lead-53 … (band word + hyphen + level, the
   // engine's own token names). The 2026-07-27 band nesting (paper/99 …) is retired; only
   // the cta STATE group still nests. These CURRENT-name entries MUST precede everything
   // below: legacyCandidates tries entries in table order, and the banded spellings are
@@ -132,7 +145,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['wash/85', 'wash-85'],
   ['wash/80', 'wash-80'],
   ['mark/74-aa', 'mark-74'],
-  ['ink/53-aa', 'ink-53'],
+  ['ink/53-aa', 'lead-53'],
   ['ink/42-aa', 'ink-42'],
   ['ink/30-aaa', 'ink-30'],
   ['ink/0', 'ink-0'],
@@ -166,8 +179,8 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // plugin-ext ONLY. A C33-era community file re-applied here will hand its old
   // strong-ink row to the new stop. Community is currently unsupported; port the
   // inkUpshifts idiom from plugin-ext/code.ts before re-listing.
-  ['ink-9', 'ink-53'],
-  ['ink-10', 'ink-53'],
+  ['ink-9', 'lead-53'],
+  ['ink-10', 'lead-53'],
   ['ink-11', 'ink-30'],
   // (['ink-12','ink-0'] lives below with the system-root anchor rescue — one merged
   // entry serves both lanes now that the family home is bare ink-0 too)
@@ -175,7 +188,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // already cover (the pre-Stage-B banded digit vintage, 2026-07-27 → 2026-08-07).
   // Ordering note kept from Stage B: a banded-digit file holds both ink/9 (first
   // text) and ink/10 (the between stop) as two DIFFERENT real variables; resolving
-  // ink-53 (stop 9) must consume this batch's ink/9 BEFORE the collapse-era
+  // lead-53 (stop 9) must consume this batch's ink/9 BEFORE the collapse-era
   // ink/10 entry further down ever gets a chance to (wrongly) claim a real
   // between-stop row.
   ['paper/0', 'paper-100'],
@@ -187,7 +200,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['wash/6', 'wash-85'],
   ['wash/7', 'wash-80'],
   ['highlight/8', 'mark-74'],
-  ['ink/9', 'ink-53'],
+  ['ink/9', 'lead-53'],
   ['ink/10', 'ink-42'],
   ['ink/11', 'ink-30'],
   ['ink/12', 'ink-0'],
@@ -196,14 +209,14 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // one day; a file applied under that build carries them as its CURRENT names.
   // One-hop, no chaining: targets follow the final flat homes.
   ['mark/74-r300', 'mark-74'],
-  ['ink/53-r450', 'ink-53'],
+  ['ink/53-r450', 'lead-53'],
   ['ink/42-r650', 'ink-42'],
   ['ink/30-r700', 'ink-30'],
-  ['cta', 'solid/fill'],
-  ['cta-hover', 'solid/fill-hover'],
-  ['cta-pressed', 'solid/fill-pressed'],
-  ['cta-border', 'solid/edge'],
-  ['on-cta', 'solid/on'],
+  ['cta', 'stamp/fill'],
+  ['cta-hover', 'stamp/fill-hover'],
+  ['cta-pressed', 'stamp/fill-pressed'],
+  ['cta-border', 'stamp/edge'],
+  ['on-cta', 'stamp/on'],
   ['on-highlight', 'highlight/on'],
   // cta-ink DIED 2026-08-12 (the trio was pure aliases onto the ink stops; deleted
   // with the band flattening). These entries keep their RETIRED banded homes on
@@ -221,11 +234,11 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // ink-11 BEFORE ink/11 is looked up. This entry catches a pre-C33 file's ink/10
   // (that vintage's FIRST TEXT stop) — a DIFFERENT thing than a banded-era file's
   // ink/10 (the between stop, C49); the Stage-B batch above resolves
-  // ink-53 off such a file's own ink/9 FIRST, so this entry only fires once
+  // lead-53 off such a file's own ink/9 FIRST, so this entry only fires once
   // that candidate is absent — it never steals a real between-stop row.
-  ['cta-stroke', 'solid/edge'],
-  ['ink/10', 'ink-53'],
-  ['ink-11', 'ink-53'],
+  ['cta-stroke', 'stamp/edge'],
+  ['ink/10', 'lead-53'],
+  ['ink-11', 'lead-53'],
   ['ink-12', 'ink-30'],
   ['ink-13', 'ink-0'],
   // blue-signal variant relabels (2026-07-13, info-color → blue): the variant leaf is
@@ -236,8 +249,8 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['blue-7eb5fb', 'cyan-side-7eb5fb'],
   // cta semantic rename (owner 2026-07-16: states, never options), retargeted to
   // the cta state homes; cta/pressed is a newer token.
-  ['cta-1', 'solid/fill'],
-  ['cta-2', 'solid/fill-hover'],
+  ['cta-1', 'stamp/fill'],
+  ['cta-2', 'stamp/fill-hover'],
   // stop-3 rename (owner 2026-07-24, elevation round) retargeted to its final flat
   // home — it is a surface plane in both themes. Pure relabel, same color.
   ['wash-3', 'paper-95'],
@@ -605,7 +618,7 @@ figma.ui.onmessage = async (msg) => {
         { path: 'system/alpha/abs-black-060', light: { r: 0, g: 0, b: 0, a: 0.6 }, dark: { r: 0, g: 0, b: 0, a: 0.6 } },
         // the SOFT ON-CTA primitive (C43 follow-up, owner-named 2026-08-03): the on-text
         // pole at the engine's SOFT_ON_CTA_ALPHA register — black@.75 light,
-        // white@.80 dark. The default-model secondary's solid/on aliases this row.
+        // white@.80 dark. The default-model secondary's stamp/on aliases this row.
         { path: 'system/alpha/ink', light: { r: 0, g: 0, b: 0, a: 0.75 }, dark: { r: 1, g: 1, b: 1, a: 0.8 } },
         { path: 'system/alpha/shadow-04', light: { r: 0, g: 0, b: 0, a: 0.04 }, dark: { r: 0, g: 0, b: 0, a: 0.32 } },
         { path: 'system/alpha/shadow-08', light: { r: 0, g: 0, b: 0, a: 0.08 }, dark: { r: 0, g: 0, b: 0, a: 0.48 } },
@@ -666,19 +679,19 @@ figma.ui.onmessage = async (msg) => {
         v.scopes = [] // primitives hidden from every picker (re-applies fix older files too)
         const dk = darkMap.get(t.path)
         // a TRUE pole (the engine's on-colors are exactly white or black); an outline
-        // secondary's solid/on is the family's ink-53 instead — alias the sibling, not
+        // secondary's stamp/on is the family's lead-53 instead — alias the sibling, not
         // a pole (C33 renumbered the inks; the old ink/10 target aliased the WRONG stop
         // for a post-renumber outline — fixed 2026-08-04)
         // (the dead 'highlight/on' arm deleted 2026-08-18 — the engine has emitted no
         // highlight token since the 2026-07-29 collapse; the sweep caught the check
-        // silently matching nothing. Recognition now rides tokenNames.SOLID_LEAF so a
+        // silently matching nothing. Recognition now rides tokenNames.STAMP_LEAF so a
         // future rename breaks this build instead of disarming the aliasing.)
         const isPole = (c: { r: number; g: number; b: number }) => {
           const sum = c.r + c.g + c.b
           return sum > 2.97 || sum < 0.03
         }
-        if (t.path === SOLID_LEAF.ON) {
-          const sibling9 = primByName.get(path.slice(0, -SOLID_LEAF.ON.length) + 'ink-53')
+        if (t.path === STAMP_LEAF.ON) {
+          const sibling9 = primByName.get(path.slice(0, -STAMP_LEAF.ON.length) + 'lead-53')
           // the SOFT ON-CTA (C43 follow-up, owner 2026-08-03): a POLE AT PARTIAL ALPHA is
           // the default-model secondary's soft text → alias system/alpha/ink. Checked
           // BEFORE the solid-pole case — isPole ignores alpha here, so without this the
@@ -701,8 +714,8 @@ figma.ui.onmessage = async (msg) => {
             v.setValueForMode(pLight, figma.variables.createVariableAlias(transparent))
             v.setValueForMode(pDark, figma.variables.createVariableAlias(transparent))
           }
-        } else if (t.path === SOLID_LEAF.EDGE) {
-          const sibling8 = primByName.get(path.slice(0, -SOLID_LEAF.EDGE.length) + 'mark-74')
+        } else if (t.path === STAMP_LEAF.EDGE) {
+          const sibling8 = primByName.get(path.slice(0, -STAMP_LEAF.EDGE.length) + 'mark-74')
           const transparent = primByName.get('system/alpha/transparent')
           const target = (leaf?: { a?: number }) =>
             leaf?.a === 0 ? transparent : (sibling8 ?? transparent)
@@ -738,7 +751,7 @@ figma.ui.onmessage = async (msg) => {
       // serve old hover/pressed/dark values under every theme alias. Same seed ⇒ same
       // engine output, so the refresh is idempotent across brands sharing the prim.
       // The SIGNAL prims join that rule (owner report 2026-08-03: a stale warning
-      // ink-53 failing on papers — the create-once base stranded C42/C44 canonical
+      // lead-53 failing on papers — the create-once base stranded C42/C44 canonical
       // moves): their
       // identity/variant paths survive engine retunes exactly as link's does, and the
       // same idempotence argument holds. The NEUTRAL joined last (owner 2026-08-11, the
@@ -783,8 +796,8 @@ figma.ui.onmessage = async (msg) => {
         // the value guard matches and the relationship stays live in Figma). Fill
         // hover/pressed stay raw derived values.
         const pairs: Array<[string, string]> = [
-          [SOLID_LEAF.FILL, 'ink-30'],
-          ['ink-53', 'ink-53'], ['ink-42', 'ink-42'], ['ink-30', 'ink-30'],
+          [STAMP_LEAF.FILL, 'ink-30'],
+          ['lead-53', 'lead-53'], ['ink-42', 'ink-42'], ['ink-30', 'ink-30'],
         ]
         for (const [leaf, neutralLeaf] of pairs) {
           const target = neutralPrim ? (primVar.get(`${neutralPrim}/${neutralLeaf}`) ?? primByName.get(`${neutralPrim}/${neutralLeaf}`)) : undefined
@@ -955,7 +968,7 @@ figma.ui.onmessage = async (msg) => {
       // link-pressed leaves (third column) — prims are hidden and unbound, renaming
       // them buys nothing.
       const LINK_LEAVES = [
-        ['link/default', 'ink-53', 'link'],
+        ['link/default', 'lead-53', 'link'],
         ['link/hover', 'ink-42', 'link-hover'],
         ['link/pressed', 'ink-30', 'link-pressed'],
       ] as const

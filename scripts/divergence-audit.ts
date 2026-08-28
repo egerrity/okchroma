@@ -170,7 +170,7 @@ for (let H = 0; H < 360; H += 15) for (const C of [0.04, 0.10, 0.16, 0.22]) for 
 }
 console.log(`\n=== D. dark text contrast vs paper-97 (agnostic worst) — REPORT ===`)
 console.log(`  stop 8  worst ${dark.s8.toFixed(2)}:1 (${dark.s8at})  [floor 3.0 — but vs PAPER-95, not this plane]`)
-console.log(`  ink-53   worst ${dark.s10.toFixed(2)}:1 (${dark.s10at})  [light floor 4.5]`)
+console.log(`  lead-53   worst ${dark.s10.toFixed(2)}:1 (${dark.s10at})  [light floor 4.5]`)
 console.log(`  ink-42  worst ${dark.s11.toFixed(2)}:1 (${dark.s11at})  [light floor 7.0]`)
 
 // ── Snapshot — full family × mode × stop L/C/H (the regression + provenance gate)

@@ -199,7 +199,7 @@ function themeInput(name: string) {
 }
 
 // the demo's top-card matrix: every family × ID + the 11 stops + the cta pair (light mode).
-// Stop 8 renders AS a stroke (it's the boundary stop); fill cells carry the family's solid/edge.
+// Stop 8 renders AS a stroke (it's the boundary stop); fill cells carry the family's stamp/edge.
 // Cells iterate the scale's ACTUAL stops (stop 10 deleted 2026-07-09) — a future stop change
 // reshapes the grid instead of throwing into updatePreview's catch.
 function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
@@ -238,7 +238,7 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     for (const s of row.scale.light) {
       const n = s.stop
       const h = hx(s)
-      // stop 9 (ink-53) is BOTH the emphasis fill and a text stop (owner
+      // stop 9 (lead-53) is BOTH the emphasis fill and a text stop (owner
       // 2026-07-29) — this cell was stale on the dead highlight-9 name and the
       // DELETED onHighlightIsWhite field until 2026-08-04; it now mirrors the ext
       // plugin's rendition (on-emphasis = the paper). Titles read the live name off
@@ -258,23 +258,23 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
       const ink9 = hx(st(9))
       const c8 = st(8)
       const rgb = `${Math.round(c8.r * 255)},${Math.round(c8.g * 255)},${Math.round(c8.b * 255)}`
-      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink9}" title="solid/fill (outline)">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink9};background:rgba(${rgb},0.09)" title="solid/fill-hover (outline)">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink9};background:rgba(${rgb},0.18)" title="solid/fill-pressed (outline)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink9}" title="stamp/fill (outline)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink9};background:rgba(${rgb},0.09)" title="stamp/fill-hover (outline)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink9};background:rgba(${rgb},0.18)" title="stamp/fill-pressed (outline)">Aa</div>`)
     } else if (row.escape) {
       // the neutral cta escape: the fill trio previews the brand-neutral's ink register
       const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
       const esc = escapeCtaFamily(nScale, 'light', cp)
       const on = pole(esc.onFillIsWhite)
-      cells.push(`<div class="mx-aa" style="background:${hx(esc.cta)};color:${on}" title="solid/fill (neutral escape)">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="background:${hx(esc.ctaHover)};color:${on}" title="solid/fill-hover (neutral escape)">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="background:${hx(esc.ctaPressed)};color:${on}" title="solid/fill-pressed (neutral escape)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(esc.cta)};color:${on}" title="stamp/fill (neutral escape)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(esc.ctaHover)};color:${on}" title="stamp/fill-hover (neutral escape)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(esc.ctaPressed)};color:${on}" title="stamp/fill-pressed (neutral escape)">Aa</div>`)
     } else {
       // filled cta cells carry NO stroke (filled is filled); only outline shows its ring
       const on = pole(row.scale.onFillTextIsWhite)
-      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.cta)};color:${on}" title="solid/fill">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaHover)};color:${on}" title="solid/fill-hover">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaPressed)};color:${on}" title="solid/fill-pressed">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.cta)};color:${on}" title="stamp/fill">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaHover)};color:${on}" title="stamp/fill-hover">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaPressed)};color:${on}" title="stamp/fill-pressed">Aa</div>`)
     }
     // (the cta-ink + cta-ink-strong preview columns DELETED with their tokens, owner
     // 2026-08-12: the text-style cta is the ink stops, already rendered as scale cells
@@ -330,7 +330,7 @@ function updatePreview() {
     }
 
     // the link FIELD previews the RESOLVED system link: custom seed through the ink
-    // register, else the primary's ink-53 (which rides the neutral's register when
+    // register, else the primary's lead-53 (which rides the neutral's register when
     // the escape is active). The from-primary posture shows the resolved hex GREYED +
     // read-only; clicking the hex takes it over (owner Advanced-menu spec 2026-07-16).
     const fromPrimaryStop = t.themed.scale.light.find(s => s.stop === 9)!
@@ -352,7 +352,7 @@ function updatePreview() {
 
     renderMatrix(t, nScale)
 
-    // the bar's live swatches: neutral shows its stop 9 (ink-53, the emphasis
+    // the bar's live swatches: neutral shows its stop 9 (lead-53, the emphasis
     // fill); a derived secondary shows the RESOLVED default secondary (the input
     // tracks the primary hex — that's the source, not the result)
     const n9 = nScale.light.find(s => s.stop === 9)

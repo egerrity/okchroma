@@ -2,12 +2,12 @@
 // okchroma primitive paths. Owner rules: suffix bands per color family — Primary (or
 // the bare token) -> marks + inks of the family (text under the flat hierarchy; focus
 // rings, brand only; icons can take mark-74) · Highlight -> any wash (borders) ·
-// Accent -> any paper · Spotlight -> mark-74 or ink-53. NEVER identity, never
+// Accent -> any paper · Spotlight -> mark-74 or lead-53. NEVER identity, never
 // the cta family. Matching is suffix + value based so old and new Unify name vintages
 // both route. Link is parked (the known tricky case) — those land unmatched.
 
 import { FAMILY } from '../src/engine/tokenDescriptions'
-import { stopTokenName, SOLID_LEAF, PAPER_100 as POLE_PAPER } from '../src/engine/tokenNames'
+import { stopTokenName, STAMP_LEAF, PAPER_100 as POLE_PAPER } from '../src/engine/tokenNames'
 
 // the ladder leaves by stop index (tokenNames SHARED_NAMES — ascending index =
 // descending lightness), so a stop relabel flows from that one table into every
@@ -30,7 +30,7 @@ export interface Rule {
 export const SURFACE = (plane: 'dim' | 'low' | 'mid' | 'high') => `utility/surface/${plane}`
 
 /** the on-color register per family (an ALIAS row in the ext register — resolves live) */
-export const CTA_ON = (family: string) => `base/${family}/${SOLID_LEAF.ON}`
+export const CTA_ON = (family: string) => `base/${family}/${STAMP_LEAF.ON}`
 export const BRAND_CTA_ON = CTA_ON(FAMILY.brandPrimary)
 export const isCtaContext = (anc: string): boolean => /button|btn|cta/i.test(anc)
 

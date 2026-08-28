@@ -29,7 +29,7 @@ if (!sub) { console.error('usage: npm run name-lint -- <substring>'); process.ex
 // the ext descope posture (mirrors plugin-ext/code.ts isRoleRow); the system/
 // spellings are the community/canonical homes of the same role rows
 const isRoleRow = (p: string): boolean =>
-  /\/solid\//.test(p)
+  /\/stamp\//.test(p)
   || p.startsWith('base/link/') || p.startsWith('system/link/')
   || p.startsWith('utility/surface/') || p.startsWith('system/surface/')
 const flag = (p: string): string => (isRoleRow(p) ? 'pickable' : 'hidden  ')

@@ -18,17 +18,17 @@ export const STYLE_CSS = /* css */ `
    different clothes; the dashboard is a DESKTOP OF WINDOWS. THREE-LEVEL LADDER
    (owner's 2026-07-27 Figma card set — one 4px flat offset everywhere, the
    SHADOW COLOR fades down the ladder and the stroke fades with it):
-     +2 hero    titlebar + brand-black shadow + ink-53 stroke → Customers (high plane)
+     +2 hero    titlebar + brand-black shadow + lead-53 stroke → Customers (high plane)
      +1 cards   wash-80 grey shadow + mark-74 stroke            → Get started, Activity, sidebar
      −1 metrics surface-high shadow (punched in) + wash-92 stroke    → metric tiles (compact)
-     ctas       ink-0 border + ink-53 shadow                      → primary/secondary cta buttons
+     ctas       ink-0 border + lead-53 shadow                      → primary/secondary cta buttons
    Every shadow color is a token (or the brand mix), so DARK FALLS OUT of the
    swap — no bespoke dark block (owner ruling 2026-07-27). */
 [data-style="retro"] .dash {
   font-family: "SF Mono", Menlo, ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
   --rt-line: var(--border-default);
-  --rt-shadow: color-mix(in srgb, var(--brand-solid-fill) 45%, black);
+  --rt-shadow: color-mix(in srgb, var(--brand-stamp-fill) 45%, black);
   --elev-card: 4px 4px 0 var(--neutral-wash-80);
   --elev-pop: 4px 4px 0 var(--rt-shadow);
   --elev-float: 7px 7px 0 var(--rt-shadow);
@@ -86,18 +86,18 @@ export const STYLE_CSS = /* css */ `
   font-size: 18px !important; font-weight: 700 !important; margin: 2px 0 !important;
 }
 [data-style="retro"] .dash .dash-metrics { gap: 10px; margin-bottom: 12px; }
-/* buttons: L4 stroke by default; L5 for the cta tiers — ink-0 border, ink-53
+/* buttons: L4 stroke by default; L5 for the cta tiers — ink-0 border, lead-53
    flat shadow (owner spec), press collapses into the surface */
 [data-style="retro"] .dash button { border: 2px solid var(--rt-line); }
 [data-style="retro"] .dash .u-btn-primary,
 [data-style="retro"] .dash .u-btn-secondary {
   border: 2px solid var(--ink-0) !important;
-  box-shadow: 3px 3px 0 var(--brand-ink-53);
+  box-shadow: 3px 3px 0 var(--brand-lead-53);
   transition: transform 90ms ease, box-shadow 90ms ease;
 }
 [data-style="retro"] .dash .u-btn-primary:active,
 [data-style="retro"] .dash .u-btn-secondary:active {
-  transform: translate(3px, 3px); box-shadow: 0 0 0 var(--brand-ink-53);
+  transform: translate(3px, 3px); box-shadow: 0 0 0 var(--brand-lead-53);
 }
 /* INVERTED SELECTION — the active item swaps its own fill/text pair */
 [data-style="retro"] .dash .dash-navitem.active {
@@ -144,7 +144,7 @@ export const STYLE_CSS = /* css */ `
   /* the shade — the owner's eyedrop #354d43 (teal seed) kept GENERATIVE: cta
      pulled 70% toward mid-grey, so every brand shades with its own quiet
      warmth. Display-only, no token minted (owner ruling 2026-07-27). */
-  --nm-shade: color-mix(in srgb, var(--brand-solid-fill) 30%, #4d4d4d);
+  --nm-shade: color-mix(in srgb, var(--brand-stamp-fill) 30%, #4d4d4d);
   /* +1 — her style=bubble, level=+1 variant */
   --bb-plateau:
     10px 10px 20px color-mix(in srgb, var(--nm-shade) 8%, transparent),

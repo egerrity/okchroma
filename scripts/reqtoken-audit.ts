@@ -39,15 +39,19 @@ for (const H of HUES) for (const C of CHROMAS) {
     // 1. totality: every declared stop resolved, none unresolvable
     for (const sp of spec.stops) if (!byStop(sp.stop)) fails.push({ seed: id, mode, check: 'missing-stop', detail: `stop ${sp.stop}`, sev: 100 })
     for (const st of s) if (st.unresolvable) fails.push({ seed: id, mode, check: 'unresolvable', detail: st.unresolvable, sev: 100 })
-    // 2. every DECLARED contrast require holds under ITS OWN metric (recomputed from emitted, gamut-clamped)
+    // 2. every DECLARED contrast require holds under ITS OWN metric (recomputed from emitted,
+    // gamut-clamped) — the wcag reference follows the DECLARED anchor (T10 anchors wash-80
+    // since the wash-80 law; the papers verify vs paper-97 as before)
+    const AGAINST: Record<string, number> = { 'paper-99': 1, 'paper-97': 2, 'paper-95': 3, 'wash-80': 7 }
     const p2 = byStop(2)!
-    const p2Y = wcagY(p2.L, clampChromaToGamut(p2.L, p2.C, p2.H), p2.H)
     const p2ApcaY = apcaYAt(p2.L, clampChromaToGamut(p2.L, p2.C, p2.H), p2.H)
     for (const sp of spec.stops) {
       if (!sp.require) continue
       const st = byStop(sp.stop)!
       if (sp.require.metric === 'wcag') {
-        const got = contrastRatio(wcagY(st.L, clampChromaToGamut(st.L, st.C, st.H), st.H), p2Y)
+        const ref = byStop(AGAINST[sp.require.against] ?? 2)!
+        const refY = wcagY(ref.L, clampChromaToGamut(ref.L, ref.C, ref.H), ref.H)
+        const got = contrastRatio(wcagY(st.L, clampChromaToGamut(st.L, st.C, st.H), st.H), refY)
         if (got < sp.require.target - 1e-3) fails.push({ seed: id, mode, check: `require-stop${sp.stop}`, detail: `got ${got.toFixed(2)} < ${sp.require.target}`, sev: sp.require.target - got })
       } else if (sp.require.metric === 'apca') {
         const got = Math.abs(apcaLc(apcaYAt(st.L, clampChromaToGamut(st.L, st.C, st.H), st.H), p2ApcaY))
@@ -80,7 +84,7 @@ for (const H of HUES) for (const C of CHROMAS) {
     const p3Y = wcagY(p3b.L, clampChromaToGamut(p3b.L, p3b.C, p3b.H), p3b.H)
     const vsP3 = (st: typeof s8b) => contrastRatio(wcagY(st.L, clampChromaToGamut(st.L, st.C, st.H), st.H), p3Y)
     if (vsP3(i9) <= vsP3(s8b) + 1e-6)
-      fails.push({ seed: id, mode, check: 'band-order', detail: `ink-53 ${vsP3(i9).toFixed(2)} !> mark-74 ${vsP3(s8b).toFixed(2)} vs paper-95`, sev: 12 })
+      fails.push({ seed: id, mode, check: 'band-order', detail: `lead-53 ${vsP3(i9).toFixed(2)} !> mark-74 ${vsP3(s8b).toFixed(2)} vs paper-95`, sev: 12 })
     // the ink band is strictly monotonic — darker per stop in light, lighter in dark
     // (three stops since C49: 9 the first text, 10 the between, 11 the strong)
     for (const [lo, hi] of [[9, 10], [10, 11]] as const) {

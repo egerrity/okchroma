@@ -21,7 +21,7 @@
 
 import type { FlatTok, TokenColumns, Column } from './payload'
 import { LEGACY_COLUMN_NAME, RETIRED_COLUMN_NAMES } from './payload'
-import { SOLID_LEAF, EXT_NON_OVERRIDABLE, EXT_OVERRIDABLE_SYSTEM } from '../src/engine/tokenNames'
+import { STAMP_LEAF, EXT_NON_OVERRIDABLE, EXT_OVERRIDABLE_SYSTEM } from '../src/engine/tokenNames'
 // zero-import text module — safe here, drags nothing of the engine into the sandbox bundle
 import { describeToken } from '../src/engine/tokenDescriptions'
 
@@ -102,14 +102,14 @@ const RETIRED_RUNG_ALPHA = 0.12
 const RETIRED_SIGNAL_VALUES: Record<string, string[]> = {
   'base/critical/mark-74': ['#e06146'],
   'base/warning/mark-74': ['#c67a00'],
-  'base/warning/ink-53': ['#a56000'],
-  'base/positive/ink-53': ['#1c7e36'],
-  'base/positive/solid/fill': ['#63c373', '#67c777'],
-  'base/positive/solid/fill-hover': ['#52b364', '#77d786'],
-  'base/positive/solid/fill-pressed': ['#42a355', '#87e896'],
-  'base/info/solid/fill': ['#afa3ff'],
-  'base/info/solid/fill-hover': ['#a093ee', '#bfb7ff'],
-  'base/info/solid/fill-pressed': ['#9184dd', '#cfcaff'],
+  'base/warning/lead-53': ['#a56000'],
+  'base/positive/lead-53': ['#1c7e36'],
+  'base/positive/stamp/fill': ['#63c373', '#67c777'],
+  'base/positive/stamp/fill-hover': ['#52b364', '#77d786'],
+  'base/positive/stamp/fill-pressed': ['#42a355', '#87e896'],
+  'base/info/stamp/fill': ['#afa3ff'],
+  'base/info/stamp/fill-hover': ['#a093ee', '#bfb7ff'],
+  'base/info/stamp/fill-pressed': ['#9184dd', '#cfcaff'],
 }
 // half-8-bit-step tolerance: Figma stores floats; a retired hex must match to the channel
 const rgbaMatchesHex = (cur: { r: number; g: number; b: number; a?: number }, hex: string): boolean => {
@@ -138,10 +138,21 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // and brand-secondary → brand-alt ride RENAMED_GROUPS below. Same indices, same
   // values — a relabel, not a renumber.
   ['mark-74-aa', 'mark-74'],
-  ['ink-53-aa', 'ink-53'],
+  ['ink-53-aa', 'lead-53'],
   ['ink-42-aa', 'ink-42'],
   ['ink-30-aaa', 'ink-30'],
   ['absolute/secondary', 'absolute/alt'],
+  // ── GUARANTEE-ROUND PASS 1 (owner 2026-08-27): ink-53 → lead-53, the band-word
+  // split the group guarantees need. Name only, same index, same values; older
+  // ink-53-vintage sources already point straight at lead-53 (the one-hop rule).
+  ['ink-53', 'lead-53'],
+  // solid → stamp (same round): the 2026-08-18 solid generation becomes a vintage;
+  // the cta-era sources below already re-target straight to stamp/ (one hop).
+  ['solid/fill', 'stamp/fill'],
+  ['solid/fill-hover', 'stamp/fill-hover'],
+  ['solid/fill-pressed', 'stamp/fill-pressed'],
+  ['solid/edge', 'stamp/edge'],
+  ['solid/on', 'stamp/on'],
   // ── LINK-INVERSE REGROUP (owner 2026-08-20): the inverse trio folds INSIDE the
   // link group (its solo group lasted one day, 2026-08-19..20). Multi-segment
   // leaves — the suffix match carries the group word, so base/link/inverse finds
@@ -157,11 +168,11 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // the link rest state follows the solid group's word change (owner 2026-08-18:
   // enabled died with the cta words — the rest leaf is default)
   ['link/enabled', 'link/default'],
-  ['cta/enabled', 'solid/fill'],
-  ['cta/hover', 'solid/fill-hover'],
-  ['cta/pressed', 'solid/fill-pressed'],
-  ['cta/border', 'solid/edge'],
-  ['cta/on', 'solid/on'],
+  ['cta/enabled', 'stamp/fill'],
+  ['cta/hover', 'stamp/fill-hover'],
+  ['cta/pressed', 'stamp/fill-pressed'],
+  ['cta/border', 'stamp/edge'],
+  ['cta/on', 'stamp/on'],
   // the overlays are PARKED (owner 2026-08-18, third call the same day: "remove them
   // for now and come back") — nothing emits or refreshes paper-LL-overlay any more.
   // These entries KEEP consolidating every shipped spelling (the 08-13 original and
@@ -192,7 +203,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['abs-primary', 'absolute/primary'],
   ['abs-secondary', 'absolute/alt'],
   // ── BAND FLATTENING (owner 2026-08-12): ramp leaves sit FLAT in the family group
-  // again — paper-99, wash-92, mark-74, ink-53 … (band word + hyphen + level,
+  // again — paper-99, wash-92, mark-74, lead-53 … (band word + hyphen + level,
   // the engine's own token names). The 2026-07-27 band nesting (paper/99 …) is
   // retired; only the cta STATE group still nests. These CURRENT-name entries MUST
   // precede everything below: candidates are tried in table order and the banded
@@ -210,7 +221,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['wash/85', 'wash-85'],
   ['wash/80', 'wash-80'],
   ['mark/74-aa', 'mark-74'],
-  ['ink/53-aa', 'ink-53'],
+  ['ink/53-aa', 'lead-53'],
   ['ink/42-aa', 'ink-42'],
   ['ink/30-aaa', 'ink-30'],
   ['ink/0', 'ink-0'],
@@ -230,8 +241,8 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // one-hop to homes that are now NUMBER-TRUE for this vintage (the pre-C49 table
   // had homed flat ink-10 — that era's FIRST text stop — onto the then-strong
   // ink/10, a wrong-by-one latent C46's sweep class predicted).
-  ['ink-9', 'ink-53'],
-  ['ink-10', 'ink-53'],
+  ['ink-9', 'lead-53'],
+  ['ink-10', 'lead-53'],
   ['ink-11', 'ink-30'],
   ['ink-12', 'ink-0'],
   // ── STAGE-B BANDED ENTRIES for the pre-Stage-B banded digit vintage (2026-07-27 →
@@ -239,7 +250,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // themselves). Ordering note kept from Stage B: a banded-digit file holds both
   // ink/9 (first text) and ink/10 (the between stop) as two DIFFERENT real variables
   // sharing a leaf-string family with the OLD-KEY 'ink/10' the collapse-era entry
-  // further down ALSO targets. Resolving ink-53 (stop 9) must consume this
+  // further down ALSO targets. Resolving lead-53 (stop 9) must consume this
   // batch's ink/9 BEFORE the collapse-era ink/10 entry ever gets a chance to
   // (wrongly) claim a real between-stop row.
   ['paper/0', 'paper-100'],
@@ -251,7 +262,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['wash/6', 'wash-85'],
   ['wash/7', 'wash-80'],
   ['highlight/8', 'mark-74'],
-  ['ink/9', 'ink-53'],
+  ['ink/9', 'lead-53'],
   ['ink/10', 'ink-42'],
   ['ink/11', 'ink-30'],
   ['ink/12', 'ink-0'],
@@ -260,14 +271,14 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // one day; a file applied under that build carries them as its CURRENT names.
   // One-hop, no chaining: targets follow the final flat homes.
   ['mark/74-r300', 'mark-74'],
-  ['ink/53-r450', 'ink-53'],
+  ['ink/53-r450', 'lead-53'],
   ['ink/42-r650', 'ink-42'],
   ['ink/30-r700', 'ink-30'],
-  ['cta', 'solid/fill'],
-  ['cta-hover', 'solid/fill-hover'],
-  ['cta-pressed', 'solid/fill-pressed'],
-  ['cta-border', 'solid/edge'],
-  ['on-cta', 'solid/on'],
+  ['cta', 'stamp/fill'],
+  ['cta-hover', 'stamp/fill-hover'],
+  ['cta-pressed', 'stamp/fill-pressed'],
+  ['cta-border', 'stamp/edge'],
+  ['on-cta', 'stamp/on'],
   // cta-ink DIED 2026-08-12 (the trio was pure aliases onto the ink stops; deleted
   // with the band flattening). These entries keep their RETIRED banded homes on
   // purpose — the highlight-9 precedent: an ancient flat row is still FOUND and
@@ -281,7 +292,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // ── historical retargets, pointed STRAIGHT at the final homes (the
   // one-hop rule). Renumber entries shift names DOWN; safe in ascending order
   // with self-deleting consumed keys — new ink/10 eats old ink-11 first.
-  ['cta-stroke', 'solid/edge'],
+  ['cta-stroke', 'stamp/edge'],
   // the decorative stroke's system row, renamed cta-border → offset-12 (owner 2026-07-30): it
   // belongs to the alpha ladder beside shadow-04/08/12 and is not cta-specific. Only ever
   // resolves under system/alpha/, so it cannot collide with the ['cta-border','cta/border']
@@ -309,17 +320,17 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // mapping at best and a hijack at worst. This entry catches a pre-C33 file's ink/10
   // (that vintage's FIRST TEXT stop), which is a DIFFERENT thing than a banded-era
   // file's ink/10 (the between stop, C49); the Stage-B batch above resolves
-  // ink-53 off such a file's own ink/9 FIRST, so this entry is only ever reached
+  // lead-53 off such a file's own ink/9 FIRST, so this entry is only ever reached
   // once that candidate is absent — it never gets a chance to steal a real
   // between-stop row.
-  ['ink/10', 'ink-53'],
+  ['ink/10', 'lead-53'],
   // ── pre-banding flat names from BEFORE the 2026-07-10 renumber (two renumbers back:
   // first text = ink-11, strong = ink-12, anchor = ink-13). Vintage disambiguation vs
-  // the 07-10 flats above is by ensure order + consumption: ink-53 (ensured first)
+  // the 07-10 flats above is by ensure order + consumption: lead-53 (ensured first)
   // eats an old-old file's ink-11 — a 07-10 file's ink-11 survives for ink-30
-  // because ink-53 consumed that file's ink-10 instead — then ink-30 falls
+  // because lead-53 consumed that file's ink-10 instead — then ink-30 falls
   // through its own-name candidate to this vintage's ink-12, and ink-0 to ink-13.
-  ['ink-11', 'ink-53'],
+  ['ink-11', 'lead-53'],
   ['ink-12', 'ink-30'],
   ['ink-13', 'ink-0'],
   // blue-signal variant relabels (2026-07-13, info-color → blue): variant leaf =
@@ -330,8 +341,8 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['blue-7eb5fb', 'cyan-side-7eb5fb'],
   // cta semantic rename (owner 2026-07-16: states, never options), retargeted to
   // the cta state homes; cta/pressed is a newer token.
-  ['cta-1', 'solid/fill'],
-  ['cta-2', 'solid/fill-hover'],
+  ['cta-1', 'stamp/fill'],
+  ['cta-2', 'stamp/fill-hover'],
   // stop-3 rename (owner 2026-07-24) retargeted to its final flat home. Pure
   // relabel, same color.
   ['wash-3', 'paper-95'],
@@ -830,7 +841,7 @@ figma.ui.onmessage = async (msg) => {
       // owner regroup 2026-08-20), which are code.ts's own rows. (cta-ink and
       // cta-ink-strong left the set with their tokens, owner 2026-08-12.)
       const isRoleRow = (p: string): boolean =>
-        /\/solid\//.test(p)
+        /\/stamp\//.test(p)
         || p.startsWith('base/link/')
         || p.startsWith('utility/surface/')
       const withSecondary = baseHasSecondary || hasSecondary
@@ -864,13 +875,13 @@ figma.ui.onmessage = async (msg) => {
       // are exact poles by construction — alias them to the primitive/system/abs-* rows so the
       // chip READS as the pole and the poles stay single-source. Emit-layer
       // representation only: a non-pole value (an outline secondary's on-cta rides
-      // its ink-53) falls back to a raw write, so the alias never constrains the
+      // its lead-53) falls back to a raw write, so the alias never constrains the
       // solve — the engine still picks the pole per family × column.
       // (highlight/on dropped from this list 2026-07-29 with the token; the neutral
       // anchor is flat ink-0 since the band flattening, owner 2026-08-12 — was banded
       // ink/0, ink/12 pre-Stage-B.)
       const POLE_LEAVES = (path: string) =>
-        path.endsWith('/' + SOLID_LEAF.ON) || path === 'base/neutral/ink-0'
+        path.endsWith('/' + STAMP_LEAF.ON) || path === 'base/neutral/ink-0'
       // EXACT poles only (per-channel EPS): the engine emits true 0/1 poles, so a
       // loose band buys nothing — and the conversion pass below must never snap a
       // hand-edited near-pole value (#FFFFF8) onto the abs row (review-caught
@@ -898,7 +909,7 @@ figma.ui.onmessage = async (msg) => {
       // The rung is carried by the token's own alpha (the engine picks it per family), so the
       // router is a value lookup — no family table to keep in sync with cssRender.ctaBorderRung.
       const strokeFor = (path: string, t: { a?: number }) => {
-        if (!path.endsWith('/' + SOLID_LEAF.EDGE)) return undefined
+        if (!path.endsWith('/' + STAMP_LEAF.EDGE)) return undefined
         if (t.a === 0) return baseVars.get('base/alpha/transparent')
         const rung = RUNG_FOR_ALPHA(t.a)
         return rung ? baseVars.get(`base/alpha/${rung}`) : undefined
@@ -909,7 +920,7 @@ figma.ui.onmessage = async (msg) => {
       // router these leaves fell through to RAW writes (owner-caught: "you did not make a
       // variable for it").
       const softInkFor = (path: string, t: { r: number; g: number; b: number; a?: number }) => {
-        if (!path.endsWith('/' + SOLID_LEAF.ON)) return undefined
+        if (!path.endsWith('/' + STAMP_LEAF.ON)) return undefined
         if (t.a === undefined || t.a >= 1 - EPS || t.a <= EPS) return undefined
         return isPole({ r: t.r, g: t.g, b: t.b }) ? baseVars.get('base/alpha/ink') : undefined
       }
@@ -1011,7 +1022,7 @@ figma.ui.onmessage = async (msg) => {
       // aliasing idiom claimed it). Convert OUR values only: a pure pole at exactly the
       // alpha the payload wants for this path — a designer's own soft text is left alone.
       const softInkTargetFor = (path: string, cur: figma.RGBA, col: Column) => {
-        if (!path.endsWith('/' + SOLID_LEAF.ON)) return undefined
+        if (!path.endsWith('/' + STAMP_LEAF.ON)) return undefined
         const seed = seedByCol.get(col)!.get(path)
         if (!seed || !softInkFor(path, seed)) return undefined
         if (!isPole({ r: cur.r, g: cur.g, b: cur.b })) return undefined
@@ -1242,7 +1253,7 @@ figma.ui.onmessage = async (msg) => {
             // the soft on-cta reads "alpha/ink"). strokeFor/softInkFor come FIRST for the same
             // reason they do at the base seeding: isPole rejects alpha≠1, so the poles rule can
             // never claim an alpha-carrying leaf. ⚠️ THIS is the write path the APPLIED theme
-            // shows — brand-alt/solid/on is an OVERRIDE row (the base posture is the
+            // shows — brand-alt/stamp/on is an OVERRIDE row (the base posture is the
             // mirror's solid pole), so a router missing HERE ships raw even when the base
             // seeding and the conversion pass both carry it (owner-caught 2026-08-03: "not
             // seeing these changes come through in the top level theme").
