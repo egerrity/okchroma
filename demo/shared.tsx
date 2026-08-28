@@ -19,7 +19,7 @@ export const FONT_STACK = "'Inter', -apple-system, system-ui, sans-serif"
 // The "accent" Family is emitted as the `secondary` primitive prefix (the role
 // was renamed in the token rename); prim() maps Family → primitive prefix.
 // Stops are the emitted token names: scale paper/wash, the mark-74 ring, the
-// cta/cta-hover/cta-pressed fill trio, ink-53/42-aa/30-aaa text (doubling as the
+// cta/cta-hover/cta-pressed fill trio, lead-53/42-aa/30-aaa text (doubling as the
 // text-style cta — the cta-ink aliases died 2026-08-12),
 // on-cta on-fill text. (on-highlight died with highlight-9, owner 2026-07-29 — the
 // on-emphasis text is --paper-100 in the semantic layer now.)
@@ -28,10 +28,10 @@ function accentModeCss(mode: AccentMode, primary: Family, subtle: Family): strin
   const other = (f: Family): Family => (f === 'brand' ? 'accent' : 'brand')
   const prim = (f: Family): string => (f === 'brand' ? 'brand' : 'secondary')
   const PRIMARY_ROLES: Array<[string, string]> = [
-    ['fg', 'ink-30'], ['fg-hover', 'ink-53'], ['fg-alt', 'ink-53'], ['fg-alt-hover', 'ink-30'], ['fg-on-emphasis', 'solid-on'],
-    ['bg-emphasis', 'solid-fill'], ['bg-emphasis-hover', 'solid-fill-hover'], ['bg-emphasis-pressed', 'solid-fill-pressed'],
+    ['fg', 'ink-30'], ['fg-hover', 'lead-53'], ['fg-alt', 'lead-53'], ['fg-alt-hover', 'ink-30'], ['fg-on-emphasis', 'stamp-on'],
+    ['bg-emphasis', 'stamp-fill'], ['bg-emphasis-hover', 'stamp-fill-hover'], ['bg-emphasis-pressed', 'stamp-fill-pressed'],
     ['border-default', 'wash-85'], ['border-default-hover', 'mark-74'],
-    ['border-emphasis', 'solid-fill'], ['border-emphasis-hover', 'solid-fill-hover'],
+    ['border-emphasis', 'stamp-fill'], ['border-emphasis-hover', 'stamp-fill-hover'],
   ]
   const SUBTLE_ROLES: Array<[string, string]> = [
     ['bg-faint', 'paper-97'], ['bg-subtle', 'wash-89'], ['bg-subtle-hover', 'wash-85'],
@@ -68,12 +68,12 @@ export const COMPONENT_CSS = `
   cursor: pointer; font-size: 14px; font-weight: 500; font-family: inherit;
   display: inline-flex; align-items: center; gap: 6px;
 }
-/* solid-edge rides EVERY cta button, not just the secondary (owner 2026-07-31). Until this
+/* stamp-edge rides EVERY cta button, not just the secondary (owner 2026-07-31). Until this
    round only .u-btn-secondary wired the token, so a firing brand or neutral emitted a stroke
    that nothing drew — the engine and the demo disagreed about what shipped. The value is an
    alias to system/alpha/* (transparent when the gate does not fire), so the border stays
    unconditional and layout never shifts. */
-.u-btn-primary { background: var(--brand-bg-emphasis); color: var(--brand-fg-on-emphasis); border-color: var(--brand-solid-edge); }
+.u-btn-primary { background: var(--brand-bg-emphasis); color: var(--brand-fg-on-emphasis); border-color: var(--brand-stamp-edge); }
 .u-btn-primary:hover { background: var(--brand-bg-emphasis-hover); }
 .u-btn-primary:active { background: var(--brand-bg-emphasis-pressed); }
 .u-btn-subtle { background: var(--brand-bg-subtle); color: var(--brand-fg); }
@@ -81,16 +81,16 @@ export const COMPONENT_CSS = `
 /* the LOW-HIERARCHY button: the neutral's quiet scale-fed cta (stop 4/5). The
    secondary-showcase slots fall back to this when no secondary exists — a
    subtle slot reads neutral until a secondary claims it, never brand-again. */
-.u-btn-neutral { background: var(--neutral-solid-fill); color: var(--neutral-solid-on); border-color: var(--neutral-solid-edge); }
-.u-btn-neutral:hover { background: var(--neutral-solid-fill-hover); }
-.u-btn-neutral:active { background: var(--neutral-solid-fill-pressed); }
-/* the SECONDARY fill trio (--brand-alt-solid-fill/-hover/-pressed + solid-on), shown beside the
+.u-btn-neutral { background: var(--neutral-stamp-fill); color: var(--neutral-stamp-on); border-color: var(--neutral-stamp-edge); }
+.u-btn-neutral:hover { background: var(--neutral-stamp-fill-hover); }
+.u-btn-neutral:active { background: var(--neutral-stamp-fill-pressed); }
+/* the SECONDARY fill trio (--brand-alt-stamp-fill/-hover/-pressed + stamp-on), shown beside the
    brand cta wherever that is showcased. cta-border carries the gated stroke at this
    family's rung, transparent when the gate does not fire, and the outline style's own
    unconditional ring (where the ring IS the component). Always set, so layout never shifts. */
-.u-btn-secondary { background: var(--brand-alt-solid-fill); color: var(--brand-alt-solid-on); border-color: var(--brand-alt-solid-edge); }
-.u-btn-secondary:hover { background: var(--brand-alt-solid-fill-hover); }
-.u-btn-secondary:active { background: var(--brand-alt-solid-fill-pressed); }
+.u-btn-secondary { background: var(--brand-alt-stamp-fill); color: var(--brand-alt-stamp-on); border-color: var(--brand-alt-stamp-edge); }
+.u-btn-secondary:hover { background: var(--brand-alt-stamp-fill-hover); }
+.u-btn-secondary:active { background: var(--brand-alt-stamp-fill-pressed); }
 .u-btn-ghost { background: transparent; color: var(--brand-fg); }
 .u-btn-ghost:hover { background: var(--brand-bg-subtle); }
 /* Universal destructive rule (designer decision): destructive BUTTONS never
@@ -390,9 +390,9 @@ export function Showcase(props: {
           <SectionLabel>Typography</SectionLabel>
           <p style={{ margin: 0, lineHeight: 1.6, color: 'var(--fg-default)' }}>
             Default body text uses <strong>neutral-ink-30</strong> for maximum readability.{' '}
-            <a href="#" className="u-link">Link text uses brand-ink-53</a>,
+            <a href="#" className="u-link">Link text uses brand-lead-53</a>,
             which meets 4.5:1 AA contrast.{' '}
-            <span style={{ color: 'var(--fg-subtle)' }}>Subtle text uses neutral-ink-53 for secondary information.</span>
+            <span style={{ color: 'var(--fg-subtle)' }}>Subtle text uses neutral-lead-53 for secondary information.</span>
           </p>
         </section>
 
@@ -429,7 +429,7 @@ export function Readout({ r }: { r: ResolvedBrand }) {
 // --{prefix}-N vars). Kept in emit order; cta stays off-scale and out of the strip.
 export const SCALE_STOP_NAMES = [
   'paper-99', 'paper-97', 'paper-95', 'wash-92', 'wash-89', 'wash-85', 'wash-80',
-  'mark-74', 'ink-53', 'ink-42', 'ink-30',
+  'mark-74', 'lead-53', 'ink-42', 'ink-30',
 ] as const
 
 // Labeled single-row scale strip — used where multiple scales stack tight

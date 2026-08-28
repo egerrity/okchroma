@@ -167,7 +167,7 @@ function buildTokenGroups(): TokGroup[] {
         { token: 'wash-85', role: 'decorative', guarantee: '–', light: swatch(hex(stopAt(L, 6))), dark: swatch(hex(stopAt(D, 6))) },
         { token: 'wash-80', role: 'decorative', guarantee: '–', light: swatch(hex(stopAt(L, 7))), dark: swatch(hex(stopAt(D, 7))) },
         { token: 'mark-74', role: 'non-text emphasis: borders, UI elements', guarantee: '3:1, on every paper', light: swatch(hex(stopAt(L, 8))), dark: swatch(hex(stopAt(D, 8))) },
-        { token: 'ink-53', role: 'emphasis fill and first text stop', guarantee: '4.5:1, on every paper', light: swatch(hex(stopAt(L, 9))), dark: swatch(hex(stopAt(D, 9))) },
+        { token: 'lead-53', role: 'emphasis fill and first text stop', guarantee: '4.5:1, on every paper', light: swatch(hex(stopAt(L, 9))), dark: swatch(hex(stopAt(D, 9))) },
         { token: 'ink-42', role: 'mid text', guarantee: '6.5:1, on every paper', light: swatch(hex(stopAt(L, 10))), dark: swatch(hex(stopAt(D, 10))) },
         { token: 'ink-30', role: 'strong text, inverted fill', guarantee: '7:1, on every paper', light: swatch(hex(stopAt(L, 11))), dark: swatch(hex(stopAt(D, 11))) },
         { token: 'ink-0', role: 'universal anchor, mode-flipping constant, never resolved', guarantee: '–', light: swatch('#000000'), dark: swatch('#ffffff') },
@@ -178,9 +178,9 @@ function buildTokenGroups(): TokGroup[] {
         { token: 'alpha/transparent', role: 'fully transparent', guarantee: '–', light: <SwatchCell {...alphaSwatch('#ffffff', 0)} />, dark: <SwatchCell {...alphaSwatch('#ffffff', 0)} /> },
         { token: 'abs-black-060', role: 'modal scrim, spelled by its composition', guarantee: '–', light: <SwatchCell {...alphaSwatch('#000000', 0.6)} />, dark: <SwatchCell {...alphaSwatch('#000000', 0.6)} /> },
         { token: 'alpha/ink', role: 'the soft on-color pole, at alpha (the neutral and default-style secondary)', guarantee: '–', light: <SwatchCell {...alphaSwatch('#000000', SOFT_ON_CTA_ALPHA.light)} />, dark: <SwatchCell {...alphaSwatch('#ffffff', SOFT_ON_CTA_ALPHA.dark)} /> },
-        { token: 'alpha/006', role: 'solid-edge rung: the secondary', guarantee: '–', light: <SwatchCell {...alphaSwatch('#000000', OFFSET_ALPHAS[6])} />, dark: <SwatchCell {...alphaSwatch('#ffffff', OFFSET_ALPHAS[6])} /> },
-        { token: 'alpha/008', role: 'solid-edge rung: the neutral', guarantee: '–', light: <SwatchCell {...alphaSwatch('#000000', OFFSET_ALPHAS[8])} />, dark: <SwatchCell {...alphaSwatch('#ffffff', OFFSET_ALPHAS[8])} /> },
-        { token: 'alpha/016', role: 'solid-edge rung: the primary and the signals', guarantee: '–', light: <SwatchCell {...alphaSwatch('#000000', OFFSET_ALPHAS[16])} />, dark: <SwatchCell {...alphaSwatch('#ffffff', OFFSET_ALPHAS[16])} /> },
+        { token: 'alpha/006', role: 'stamp-edge rung: the secondary', guarantee: '–', light: <SwatchCell {...alphaSwatch('#000000', OFFSET_ALPHAS[6])} />, dark: <SwatchCell {...alphaSwatch('#ffffff', OFFSET_ALPHAS[6])} /> },
+        { token: 'alpha/008', role: 'stamp-edge rung: the neutral', guarantee: '–', light: <SwatchCell {...alphaSwatch('#000000', OFFSET_ALPHAS[8])} />, dark: <SwatchCell {...alphaSwatch('#ffffff', OFFSET_ALPHAS[8])} /> },
+        { token: 'alpha/016', role: 'stamp-edge rung: the primary and the signals', guarantee: '–', light: <SwatchCell {...alphaSwatch('#000000', OFFSET_ALPHAS[16])} />, dark: <SwatchCell {...alphaSwatch('#ffffff', OFFSET_ALPHAS[16])} /> },
         { token: 'alpha/shadow-04', role: 'drop shadow, lightest', guarantee: '–', light: <SwatchCell {...alphaSwatch('#000000', 0.04)} />, dark: <SwatchCell {...alphaSwatch('#000000', 0.32)} /> },
         { token: 'alpha/shadow-08', role: 'drop shadow, mid', guarantee: '–', light: <SwatchCell {...alphaSwatch('#000000', 0.08)} />, dark: <SwatchCell {...alphaSwatch('#000000', 0.48)} /> },
         { token: 'alpha/shadow-12', role: 'drop shadow, strongest', guarantee: '–', light: <SwatchCell {...alphaSwatch('#000000', 0.12)} />, dark: <SwatchCell {...alphaSwatch('#000000', 0.64)} /> },
@@ -189,13 +189,13 @@ function buildTokenGroups(): TokGroup[] {
     {
       register: 'solid · link · surface', caption: 'A state-carrying role or a usage decision, never a raw value a designer should need to re-derive. The solid bands sit inside their own family group; link stays in base and the surfaces in utility. Always visible in the picker.',
       rows: [
-        { token: 'solid/fill', role: "the pulled-out button fill, at the seed's own lightness", guarantee: "on-text passes WCAG 4.5; the fill clears APCA Lc 65 (critical 50)", light: swatch(hex(scale.cta)), dark: swatch(hex(scale.ctaDark)) },
-        { token: 'solid/fill-hover', role: 'hover state', guarantee: 'same law as solid/fill', light: swatch(hex(scale.ctaHover)), dark: swatch(hex(scale.ctaHoverDark)) },
-        { token: 'solid/fill-pressed', role: 'pressed state', guarantee: 'same law as solid/fill', light: swatch(hex(scale.ctaPressed)), dark: swatch(hex(scale.ctaPressedDark)) },
-        { token: 'solid/on', role: 'computed button text: solid pole on loud fills, pole-at-alpha .75/.80 on quiet fills (derived secondary, neutral)', guarantee: 'chosen by passing', light: swatch(onCtaColor(scale.onFillTextIsWhite)), dark: swatch(onCtaColor(scale.onFillTextIsWhiteDark)) },
-        { token: 'solid/edge', role: 'low-visibility stroke; transparent above the gate', guarantee: 'appears below APCA |Lc| 15 vs the page (taste, not accessibility)', light: borderCell('light'), dark: borderCell('dark') },
+        { token: 'stamp/fill', role: "the pulled-out button fill, at the seed's own lightness", guarantee: "on-text passes WCAG 4.5; the fill clears APCA Lc 65 (critical 50)", light: swatch(hex(scale.cta)), dark: swatch(hex(scale.ctaDark)) },
+        { token: 'stamp/fill-hover', role: 'hover state', guarantee: 'same law as stamp/fill', light: swatch(hex(scale.ctaHover)), dark: swatch(hex(scale.ctaHoverDark)) },
+        { token: 'stamp/fill-pressed', role: 'pressed state', guarantee: 'same law as stamp/fill', light: swatch(hex(scale.ctaPressed)), dark: swatch(hex(scale.ctaPressedDark)) },
+        { token: 'stamp/on', role: 'computed button text: solid pole on loud fills, pole-at-alpha .75/.80 on quiet fills (derived secondary, neutral)', guarantee: 'chosen by passing', light: swatch(onCtaColor(scale.onFillTextIsWhite)), dark: swatch(onCtaColor(scale.onFillTextIsWhiteDark)) },
+        { token: 'stamp/edge', role: 'low-visibility stroke; transparent above the gate', guarantee: 'appears below APCA |Lc| 15 vs the page (taste, not accessibility)', light: borderCell('light'), dark: borderCell('dark') },
         { token: 'identity', role: 'the exact input hex, for logos', guarantee: 'never adjusted', light: swatch(scale.identityHex!), dark: swatch(scale.identityHex!) },
-        { token: 'link/default', role: "hyperlinks; with no custom seed, aliases the primary's ink-53", guarantee: '4.5:1, on every paper', light: alias(hex(stopAt(L, 9)), '→ ink-53'), dark: alias(hex(stopAt(D, 9)), '→ ink-53') },
+        { token: 'link/default', role: "hyperlinks; with no custom seed, aliases the primary's lead-53", guarantee: '4.5:1, on every paper', light: alias(hex(stopAt(L, 9)), '→ lead-53'), dark: alias(hex(stopAt(D, 9)), '→ lead-53') },
         { token: 'link/hover', role: 'default alias → ink-42', guarantee: '6.5:1, on every paper', light: alias(hex(stopAt(L, 10)), '→ ink-42'), dark: alias(hex(stopAt(D, 10)), '→ ink-42') },
         { token: 'link/pressed', role: 'default alias → ink-30', guarantee: '7:1, on every paper', light: alias(hex(stopAt(L, 11)), '→ ink-30'), dark: alias(hex(stopAt(D, 11)), '→ ink-30') },
         { token: 'link/inverse', role: 'hyperlinks on inverted (ink-30) fills; same seed as the link, re-solved against the worst shipped ink-30', guarantee: '4.5:1, on every ink-30', light: swatch(hex(inv.link as never)), dark: swatch(hex(inv.linkDark as never)) },
@@ -240,7 +240,7 @@ function TokenTable() {
   )
 }
 
-// ── Naming anatomy: primitive/neutral/ink-53, segment by segment ──────────
+// ── Naming anatomy: primitive/neutral/lead-53, segment by segment ──────────
 function NamingAnatomy() {
   const cols = [
     { seg: 'primitive', title: 'REGISTER', lines: ['the extended', "plugin's wrapper,", 'every row'] },
@@ -254,7 +254,7 @@ function NamingAnatomy() {
   const width = cols.length * colW + (cols.length - 1) * gap
   return (
     <figure className="d2-ramp">
-      <svg viewBox={`0 0 ${width} 190`} className="d2-anatomy" role="img" aria-label="Token path anatomy: base/neutral/ink-53">
+      <svg viewBox={`0 0 ${width} 190`} className="d2-anatomy" role="img" aria-label="Token path anatomy: base/neutral/lead-53">
         {cols.map((c, i) => (
           <g key={c.seg}>
             <rect x={x(i)} y={boxY} width={colW} height={boxH} rx={8} className="d2-anatomy-box" />
@@ -276,7 +276,7 @@ function NamingAnatomy() {
       </svg>
       <figcaption className="d2-ramp-cap">
         The extended plugin's full path for one stop. The plain engine/CSS name drops the
-        first two segments: <Code>ink-53</Code>.
+        first two segments: <Code>lead-53</Code>.
       </figcaption>
     </figure>
   )
@@ -340,7 +340,7 @@ const overview: Article = {
       </P>
       <UL>
         <LI><b>ramp stops and plumbing</b>: one resolved color, no state, e.g. <Code>base/neutral/paper-99</Code>. Hidden from the color picker by default.</LI>
-        <LI><b>roles</b>: a state-carrying usage decision, kept where it belongs: the solid bands inside their family, e.g. <Code>base/brand/solid/fill-hover</Code>, link under base, and the surfaces under utility, e.g. <Code>utility/surface/dim</Code>. Always visible.</LI>
+        <LI><b>roles</b>: a state-carrying usage decision, kept where it belongs: the solid bands inside their family, e.g. <Code>base/brand/stamp/fill-hover</Code>, link under base, and the surfaces under utility, e.g. <Code>utility/surface/dim</Code>. Always visible.</LI>
       </UL>
       <P>
         A checkbox in the plugin ("Hide primitive scale from pickers") controls whether
@@ -419,7 +419,7 @@ const generation: Article = {
         ladder is deliberate). Chroma is trimmed so light-mode loudness carries over. A fill that
         lands too dark is floored upward: it lifts, never sinks.</LI>
         <LI><b>Requirements.</b> Declared floors bind after placement, in both modes: mark-74
-        at WCAG 3:1, ink-53/42-aa/30-aaa at 4.5 / 6.5 / 7:1, each guaranteed on every paper
+        at WCAG 3:1, lead-53/42-aa/30-aaa at 4.5 / 6.5 / 7:1, each guaranteed on every paper
         the family (and its neutral) can produce. A placement that already clears does not
         move. An unmeetable floor marks the stop <Code>unresolvable</Code> instead of fudging.</LI>
         <LI>The cta-related values are generated.
@@ -433,7 +433,7 @@ const generation: Article = {
             secondary 6%, neutral 8%).</LI>
             <LI>A quiet fill (derived secondary, neutral) carries its text at 75/80% alpha, only
             where the composite clears 4.5 on rest, hover, and pressed.</LI>
-            <LI>The text-style cta is the ink stops read as states: ink-53 rest,
+            <LI>The text-style cta is the ink stops read as states: lead-53 rest,
             ink-42 hover, ink-30 pressed.</LI>
           </UL>
         </LI>
@@ -802,7 +802,7 @@ const motivation: Article = {
         <A href="https://egerrity.github.io/okchroma/">on the site</A>), but the number
         earns its place too. It is no longer ordinal: it records the stop's real
         lightness target as generated by the engine, its light root L times 100, so
-        ink-53 tells you both what the stop does and where it actually sits. This
+        lead-53 tells you both what the stop does and where it actually sits. This
         relationship to the real removes the abstraction and, more importantly, tells
         you the token's contractual obligation in plain terms. The rules stop living in
         our heads: the name itself declares what the stop owes.
@@ -953,7 +953,7 @@ const DOCS2_CSS = `
   padding: 16px 18px; overflow-x: auto; margin: 0 0 18px;
 }
 .d2-pre code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; line-height: 1.6; color: var(--fg-default); white-space: pre; }
-.d2-note { font-size: 13.5px; line-height: 1.6; color: var(--fg-subtle); background: var(--surface-dim); border: 1px solid var(--border-subtle); border-left: 3px solid var(--brand-ink-53); border-radius: 8px; padding: 12px 14px; margin: 18px 0; }
+.d2-note { font-size: 13.5px; line-height: 1.6; color: var(--fg-subtle); background: var(--surface-dim); border: 1px solid var(--border-subtle); border-left: 3px solid var(--brand-lead-53); border-radius: 8px; padding: 12px 14px; margin: 18px 0; }
 .d2-ramp { margin: 22px 0 26px; }
 .d2-ramp-nums { font-size: 10px; color: var(--fg-subtle); margin: 4px 0; }
 .d2-ramp-nums span { text-align: center; }

@@ -7,7 +7,7 @@ import { AlertCircle, AlertTriangle, CheckCircle, Info } from 'lucide-react'
 // --surface-mid plane), so it lifts off the page consistently in both modes.
 //
 // Roles demonstrated in context, not as abstract chips:
-//   ink     → the heading + body copy ("ink family" called out in ink-53)
+//   ink     → the heading + body copy ("ink family" called out in lead-53)
 //   wash    → the inset surface(s)
 //   cta     → the full-round pill button (brand/alt/neutral) OR, on signals,
 //             the ALERT callout (alerts use cta in signals; the pill is hidden)
@@ -48,18 +48,18 @@ export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; 
     { prefix: 'positive', label: 'positive' },
     { prefix: 'info', label: 'info' },
   ]
-  const cell = (prefix: string, tok: 'solid-fill' | 'solid-fill-hover' | 'solid-fill-pressed') => (
+  const cell = (prefix: string, tok: 'stamp-fill' | 'stamp-fill-hover' | 'stamp-fill-pressed') => (
     <div title={`--${prefix}-${tok}`} style={{
-      flex: tok === 'solid-fill' ? 1.6 : 1, height: 44, boxSizing: 'border-box',
+      flex: tok === 'stamp-fill' ? 1.6 : 1, height: 44, boxSizing: 'border-box',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: `var(--${prefix}-${tok})`, color: `var(--${prefix}-solid-on)`,
+      background: `var(--${prefix}-${tok})`, color: `var(--${prefix}-stamp-on)`,
       fontSize: 13, fontWeight: 600,
-      border: `1.5px solid var(--${prefix}-solid-edge)`,
+      border: `1.5px solid var(--${prefix}-stamp-edge)`,
     }}>Aa</div>
   )
   // the TEXT-style cta (the ink stops — the action color's 4.5 text rendition) rendered
   // on the card, so its rest / hover / pressed sit right under the fill cta trio
-  const inkCell = (prefix: string, tok: 'ink-53' | 'ink-42' | 'ink-30') => (
+  const inkCell = (prefix: string, tok: 'lead-53' | 'ink-42' | 'ink-30') => (
     <div title={`--${prefix}-${tok}`} style={{
       flex: 1, textAlign: 'center', fontSize: 15, fontWeight: 800, color: `var(--${prefix}-${tok})`,
     }}>Aa</div>
@@ -69,12 +69,12 @@ export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; 
       {families.map(f => (
         <div key={f.prefix} style={{ flex: '1 1 104px', maxWidth: 220 }}>
           <div style={{ display: 'flex', borderRadius: 8, overflow: 'hidden' }}>
-            {cell(f.prefix, 'solid-fill')}
-            {cell(f.prefix, 'solid-fill-hover')}
-            {cell(f.prefix, 'solid-fill-pressed')}
+            {cell(f.prefix, 'stamp-fill')}
+            {cell(f.prefix, 'stamp-fill-hover')}
+            {cell(f.prefix, 'stamp-fill-pressed')}
           </div>
           <div style={{ display: 'flex', marginTop: 7 }}>
-            {inkCell(f.prefix, 'ink-53')}
+            {inkCell(f.prefix, 'lead-53')}
             {inkCell(f.prefix, 'ink-42')}
             {inkCell(f.prefix, 'ink-30')}
           </div>
@@ -106,7 +106,7 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
   // themselves stay clean.
   const scale = [
     'paper-99', 'paper-97', 'paper-95', 'wash-92', 'wash-89', 'wash-85', 'wash-80',
-    'mark-74', 'ink-53', 'ink-42', 'ink-30',
+    'mark-74', 'lead-53', 'ink-42', 'ink-30',
   ]
   const stopLabel = (tok: string): string => tok.split('-').slice(1).join('')
   const groups = [
@@ -129,18 +129,18 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
       {hasIdentity && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 14 }}>
           <span style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0, background: v('identity') }} />
-          <span style={{ fontSize: 13, fontWeight: 600, color: v('ink-53') }}>identity</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: v('lead-53') }}>identity</span>
         </div>
       )}
 
-      {/* ink in context — heading + body, "ink family" called out in ink-53 */}
+      {/* ink in context — heading + body, "ink family" called out in lead-53 */}
       <div style={{ fontSize: 24, fontWeight: 700, color: v('ink-30'), lineHeight: 1.15, marginBottom: 8 }}>Aa Heading</div>
       <p style={{ fontSize: 15, lineHeight: 1.5, color: v('ink-30'), margin: '0 0 16px' }}>
-        The <span style={{ color: v('ink-53') }}>ink family</span> is designed to contrast with the paper and wash stops and is perfect for text. It can also be used as an inverted fill.
+        The <span style={{ color: v('lead-53') }}>ink family</span> is designed to contrast with the paper and wash stops and is perfect for text. It can also be used as an inverted fill.
       </p>
 
       {/* cta in context — the pill (hidden on signals, where cta lives in the alert).
-          Hover swaps solid-fill → solid-fill-hover; holding the button shows solid-fill-pressed. Beside it,
+          Hover swaps stamp-fill → stamp-fill-hover; holding the button shows stamp-fill-pressed. Beside it,
           the TEXT-STYLE cta (the ink stops as states — the action color's 4.5 text
           rendition, a text button; never underlined, never a hyperlink — links are the
           SYSTEM --link). */}
@@ -153,24 +153,24 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
             onMouseUp={() => setCtaPressed(false)}
             style={{
               width: 184, boxSizing: 'border-box', textAlign: 'center',
-              background: ctaPressed ? v('solid-fill-pressed') : ctaHover ? v('solid-fill-hover') : v('solid-fill'), color: v('solid-on'),
+              background: ctaPressed ? v('stamp-fill-pressed') : ctaHover ? v('stamp-fill-hover') : v('stamp-fill'), color: v('stamp-on'),
               // filled buttons carry NO stroke (the label identifies the button — WCAG 1.4.11
               // doesn't require a boundary); only the OUTLINE style keeps its ring, where the
               // boundary IS the component. Transparent border keeps layout identical.
-              border: `1.5px solid ${outlineCta ? v('solid-edge') : 'transparent'}`,
+              border: `1.5px solid ${outlineCta ? v('stamp-edge') : 'transparent'}`,
               borderRadius: 999, padding: '12px 28px', fontSize: 15, fontWeight: 600, fontFamily: 'inherit',
               cursor: 'pointer',
-            }}>{ctaPressed ? 'solid-fill-pressed held' : ctaHover ? 'solid-fill-hover' : 'solid button'}</button>
+            }}>{ctaPressed ? 'stamp-fill-pressed held' : ctaHover ? 'stamp-fill-hover' : 'stamp button'}</button>
           <button
             onMouseEnter={() => setLinkState('hover')}
             onMouseLeave={() => setLinkState('rest')}
             onMouseDown={() => setLinkState('pressed')}
             onMouseUp={() => setLinkState('hover')}
-            title={`--${prefix}-${linkState === 'pressed' ? 'ink-30' : linkState === 'hover' ? 'ink-42' : 'ink-53'}`}
+            title={`--${prefix}-${linkState === 'pressed' ? 'ink-30' : linkState === 'hover' ? 'ink-42' : 'lead-53'}`}
             style={{
               background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
               fontSize: 15, fontWeight: 600, padding: '12px 10px',
-              color: linkState === 'pressed' ? v('ink-30') : linkState === 'hover' ? v('ink-42') : v('ink-53'),
+              color: linkState === 'pressed' ? v('ink-30') : linkState === 'hover' ? v('ink-42') : v('lead-53'),
             }}>Text action</button>
         </div>
       )}
@@ -179,29 +179,29 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
           focus-ring controls box (insetControls), or the highlight inset (default) */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 18 }}>
         <div style={{ ...box, background: v('wash-92') }}>
-          <div style={{ ...boxLabel, color: v('ink-53') }}>inset &middot; wash</div>
+          <div style={{ ...boxLabel, color: v('lead-53') }}>inset &middot; wash</div>
           <div style={{ ...boxBody, color: v('ink-30') }}>Body copy in ink on a wash fill.</div>
         </div>
         {isSignal ? (
-          <div style={{ ...box, background: v('solid-fill'), display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-            <span style={{ flexShrink: 0, marginTop: 1, lineHeight: 0, color: v('solid-on') }}><Icon size={18} color={v('solid-on')} /></span>
+          <div style={{ ...box, background: v('stamp-fill'), display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+            <span style={{ flexShrink: 0, marginTop: 1, lineHeight: 0, color: v('stamp-on') }}><Icon size={18} color={v('stamp-on')} /></span>
             <div>
-              <div style={{ ...boxLabel, color: v('solid-on') }}>alert &middot; cta</div>
-              <div style={{ ...boxBody, color: v('solid-on') }}>Loud message in solid-on text.</div>
+              <div style={{ ...boxLabel, color: v('stamp-on') }}>alert &middot; cta</div>
+              <div style={{ ...boxBody, color: v('stamp-on') }}>Loud message in stamp-on text.</div>
             </div>
           </div>
         ) : insetControls ? (
           /* the controls box (owner 2026-07-28, unify-compare section 3): chip +
              focused input, so the stops' JOBS read directly — chip = paper-95 fill ·
-             wash-85 border · ink-53 text; the ring is mark-74 with a wash-89 halo
+             wash-85 border · lead-53 text; the ring is mark-74 with a wash-89 halo
              (the collision demo's held-focus idiom) */
           <div style={{ ...box, background: v('paper-97') }}>
-            <div style={{ ...boxLabel, color: v('ink-53') }}>chip &middot; focus ring</div>
+            <div style={{ ...boxLabel, color: v('lead-53') }}>chip &middot; focus ring</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{
                 display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 6,
                 fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap',
-                background: v('paper-95'), color: v('ink-53'), border: `1px solid ${v('wash-85')}`,
+                background: v('paper-95'), color: v('lead-53'), border: `1px solid ${v('wash-85')}`,
               }}>chip</span>
               <input readOnly value="Focused input" style={{
                 flex: 1, minWidth: 0, boxSizing: 'border-box', padding: '7px 11px', borderRadius: 8,
@@ -211,9 +211,9 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
             </div>
           </div>
         ) : (
-          <div style={{ ...box, background: v('ink-53') }}>
+          <div style={{ ...box, background: v('lead-53') }}>
             <div style={{ ...boxLabel, color: 'var(--paper-100)' }}>inset &middot; emphasis</div>
-            {/* the emphasis inset is the INVERTED fill: ink-53 (the emphasis fill since the
+            {/* the emphasis inset is the INVERTED fill: lead-53 (the emphasis fill since the
                 2026-07-29 collapse) carrying --paper-100, over an ink-30 panel with paper-99 text.
                 The link on it is the INVERSE trio (owner round 2026-08-19) — the link seed
                 re-solved for exactly this ground; the system --link is illegible here. */}
