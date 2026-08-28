@@ -448,6 +448,15 @@ function legacyCandidates(path: string): string[] {
   return out
 }
 
+// Invisible-rename normalization (owner defect 2026-08-27: the base GROUP renamed and
+// restored with a trailing space left every unstamped row unfindable — the apply then
+// read as "nothing happens", and clicking through the confirm would have duplicated the
+// whole base). A normalized key matches names differing only by segment-edge whitespace
+// or letter case; the token grammar is all-lowercase, so normalization is canonical-
+// stable and a genuinely custom name never normalizes onto an engine path. Stamped rows
+// and exact names always win — the aliases fill gaps, never shadow.
+const normPath = (p: string) => p.split('/').map(s => s.trim()).join('/').toLowerCase()
+
 const ENTERPRISE_MSG =
   'Extended collections need a Figma Enterprise org — this file’s plan doesn’t expose collection.extend(). '
   + 'The published OKChroma plugin (v1) covers every plan.'
@@ -464,6 +473,13 @@ async function varsByName(collectionId: string): Promise<Map<string, figma.Varia
   const map = new Map<string, figma.Variable>()
   for (const v of mine) { const p = v.getPluginData(PATH_KEY); if (p) map.set(p, v) }
   for (const v of mine) { if (!v.getPluginData(PATH_KEY) && !map.has(v.name)) map.set(v.name, v) }
+  // pass 3: NORMALIZED aliases for unstamped rows (invisible renames — see normPath).
+  // Registered last and only into empty keys, so stamps and exact names always win.
+  for (const v of mine) {
+    if (v.getPluginData(PATH_KEY)) continue
+    const n = normPath(v.name)
+    if (n !== v.name && !map.has(n)) map.set(n, v)
+  }
   return map
 }
 
@@ -548,24 +564,56 @@ figma.ui.onmessage = async (msg) => {
       const locals = collections.filter(c => !isExtension(c))
       const extensions = collections.filter(isExtension)
 
-      // The owned base: tag first (survives renames); an untagged name match only counts
-      // when NO tagged base exists — and it must carry the v2 column contract (either the
-      // full four columns or the wcag-only pair — APCA is opt-in since the include toggle).
-      // A "theme" collection with other modes (plugin v1's brand-mode collection, a
-      // hand-made one) is never adopted.
+      // The owned base: tag first (survives renames), then NAME-BLIND ADOPTION
+      // (owner requirement 2026-08-27: apply must work after any rename — her base
+      // was renamed back to "base", the plugin's own UI word, while the old fallback
+      // knew only the literal 'theme', so the apply silently targeted nothing).
+      // Ladder: ① the OWNER_KEY tag; ② a collection whose VARIABLES carry the
+      // PATH_KEY identity stamps — ours by content, whatever it is called; ③ a
+      // collection matching the v2 mode-column contract (the old check minus the
+      // name requirement — catches provenance that strips pluginData: in-file
+      // duplication, API re-creation). Ambiguity never guesses: two candidates at
+      // a rung = an error naming them. The collection's display name is never
+      // touched (names are the user's; the tag is re-written on adoption, so
+      // identity holds from then on). Every non-tagged adoption and every fresh
+      // create is figma.notify'd — a wrong target must never read as "nothing
+      // happened". A "theme"-named collection that fails every rung still gets
+      // the explicit v1/hand-made error rather than a silent shadow create.
       const tagged = locals.find(c => c.getPluginData(OWNER_KEY) === 'base')
       let baseMatch = tagged
+      let adoptedHow: 'identity stamps' | 'column layout' | null = null
       if (!baseMatch) {
-        const byName = locals.find(c => c.name === BASE_NAME)
-        if (byName) {
-          const names = byName.modes.map(m => m.name).join(',')
-          if (names === COLUMNS.join(',') || names === COLUMNS.slice(0, 2).join(',')) baseMatch = byName
-          else {
-            figma.ui.postMessage({ type: 'error', message:
-              `A collection named "${BASE_NAME}" already exists in this file and isn’t an OKChroma Extended base `
-              + '(likely plugin v1’s, or hand-made). Use a fresh file, or rename that collection first.' })
-            return
-          }
+        const allVars = await figma.variables.getLocalVariablesAsync()
+        const stampedColls = new Set(allVars
+          .filter(v => v.getPluginData(PATH_KEY) || v.getSharedPluginData('okchroma', PATH_KEY))
+          .map(v => v.variableCollectionId))
+        const byContent = locals.filter(c => stampedColls.has(c.id))
+        if (byContent.length > 1) {
+          figma.ui.postMessage({ type: 'error', message:
+            `More than one collection carries OKChroma identity stamps (${byContent.map(c => `"${c.name}"`).join(', ')}). `
+            + 'Delete or rename the stale copy so only the real base remains, then apply again.' })
+          return
+        }
+        if (byContent.length === 1) { baseMatch = byContent[0]; adoptedHow = 'identity stamps' }
+      }
+      if (!baseMatch) {
+        const isContract = (c: figma.VariableCollection) => {
+          const names = c.modes.map(m => m.name).join(',')
+          return names === COLUMNS.join(',') || names === COLUMNS.slice(0, 2).join(',')
+        }
+        const byContract = locals.filter(isContract)
+        if (byContract.length > 1) {
+          figma.ui.postMessage({ type: 'error', message:
+            `More than one collection matches the OKChroma base column layout (${byContract.map(c => `"${c.name}"`).join(', ')}). `
+            + 'Delete or rename the copies so only the real base remains, then apply again.' })
+          return
+        }
+        if (byContract.length === 1) { baseMatch = byContract[0]; adoptedHow = 'column layout' }
+        else if (locals.some(c => c.name === BASE_NAME)) {
+          figma.ui.postMessage({ type: 'error', message:
+            `A collection named "${BASE_NAME}" already exists in this file and isn’t an OKChroma Extended base `
+            + '(likely plugin v1’s, or hand-made). Use a fresh file, or rename that collection first.' })
+          return
         }
       }
 
@@ -761,7 +809,15 @@ figma.ui.onmessage = async (msg) => {
       const confirmToken = reasons.join(' | ')
       const authorized = confirmed === true || (typeof confirmedToken === 'string' && confirmedToken === confirmToken)
       if (!authorized && reasons.length) {
-        figma.ui.postMessage({ type: 'confirm', brand, token: confirmToken, message: `Will ${reasons.join(' + ')} — click Apply again.` })
+        // the duplicate footgun (owner defect 2026-08-27): a mass of "new" base tokens
+        // usually means EXISTING rows were not recognized (a renamed group, stripped
+        // stamps) — clicking through would duplicate the base. Say so, and make the
+        // confirm impossible to miss (the quiet in-panel message read as "nothing
+        // happens").
+        const massNew = newRows.length > 20
+          ? ' If these tokens already exist in the collection under other names, do NOT re-apply — report it instead.' : ''
+        figma.ui.postMessage({ type: 'confirm', brand, token: confirmToken, message: `Will ${reasons.join(' + ')} — click Apply again.${massNew}` })
+        figma.notify(`OKChroma: confirmation needed — ${reasons.length === 1 ? reasons[0].split(' and ')[0] : reasons.length + ' changes'} (see the plugin panel, then Apply again)`)
         return
       }
 
@@ -769,6 +825,9 @@ figma.ui.onmessage = async (msg) => {
       const created = !baseMatch
       const base = baseMatch ?? figma.variables.createVariableCollection(BASE_NAME)
       base.setPluginData(OWNER_KEY, 'base')
+      // visibility for every resolution that was NOT the tag (see the ladder above)
+      if (adoptedHow) figma.notify(`OKChroma: adopted "${base.name}" as the base collection (matched by ${adoptedHow}); it is tagged now and any name works from here on`)
+      else if (created) figma.notify(`OKChroma: created a fresh base collection "${BASE_NAME}" — no existing collection matched`)
       // the rebuild stores its seed as FILE state: every later apply's UI builds the base
       // column from it (the file-state handshake), so diffs stay against THIS base
       if (rebuildBase && typeof baseSeedHex === 'string') base.setPluginData(BASE_SEED_KEY, baseSeedHex)
@@ -850,11 +909,17 @@ figma.ui.onmessage = async (msg) => {
       let createdVars = 0
       const ensure = (path: string): figma.Variable => {
         let v = baseVars.get(path)
+        // a normalized direct hit heals its invisibly-off display name to canonical
+        if (v && v.name !== path && normPath(v.name) === normPath(path)) v.name = path
         if (!v) for (const legacyPath of legacyCandidates(path)) {
           const legacy = baseVars.get(legacyPath)
-          // display follows only while it still spells the legacy path — a user-custom
-          // name stays; the stamp below carries identity either way
-          if (legacy) { if (legacy.name === legacyPath) legacy.name = path; baseVars.delete(legacyPath); baseVars.set(path, legacy); v = legacy; break }
+          // display follows while it spells the legacy path exactly OR only invisibly
+          // off it — a genuinely user-custom name stays; the stamp below carries
+          // identity either way
+          if (legacy) {
+            if (legacy.name === legacyPath || normPath(legacy.name) === normPath(legacyPath)) legacy.name = path
+            baseVars.delete(legacyPath); baseVars.set(path, legacy); v = legacy; break
+          }
         }
         if (!v) { v = figma.variables.createVariable(path, base, 'COLOR'); baseVars.set(path, v); createdVars++ }
         v.setPluginData(PATH_KEY, path) // identity stamp — a panel rename survives future lookups

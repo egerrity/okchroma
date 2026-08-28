@@ -331,17 +331,29 @@ function legacyCandidates(path: string): string[] {
   }
   return out
 }
+// Invisible-rename normalization (owner defect 2026-08-27, ext-plugin mirror: a group
+// renamed and restored with a trailing space left every unstamped row unfindable). A
+// normalized key matches names differing only by segment-edge whitespace or letter
+// case; the token grammar is all-lowercase, so a genuinely custom name never
+// normalizes onto an engine path. Stamps and exact names always win.
+const normPath = (p: string) => p.split('/').map(s => s.trim()).join('/').toLowerCase()
+
 // Look up `path` in `map`, first as-is, then under each legacy spelling. Every hit is
 // (re)stamped with PATH_KEY — that heals unstamped rows found by their name. A legacy
 // hit migrates in place (Figma keeps the variable id, so bindings survive); its display
-// name follows only while it still spells the legacy path — a user-custom name stays.
+// name follows while it spells the legacy path exactly or only invisibly off it — a
+// genuinely user-custom name stays.
 function getOrMigrate(map: Map<string, figma.Variable>, path: string): figma.Variable | undefined {
   const v = map.get(path)
-  if (v) { v.setPluginData(PATH_KEY, path); return v }
+  if (v) {
+    if (v.name !== path && normPath(v.name) === normPath(path)) v.name = path
+    v.setPluginData(PATH_KEY, path)
+    return v
+  }
   for (const legacyPath of legacyCandidates(path)) {
     const legacy = map.get(legacyPath)
     if (legacy) {
-      if (legacy.name === legacyPath) legacy.name = path
+      if (legacy.name === legacyPath || normPath(legacy.name) === normPath(legacyPath)) legacy.name = path
       legacy.setPluginData(PATH_KEY, path)
       map.delete(legacyPath)
       map.set(path, legacy)
@@ -413,6 +425,13 @@ async function varsByName(collectionId: string): Promise<Map<string, figma.Varia
   const map = new Map<string, figma.Variable>()
   for (const v of mine) { const p = v.getPluginData(PATH_KEY); if (p) map.set(p, v) }
   for (const v of mine) { if (!v.getPluginData(PATH_KEY) && !map.has(v.name)) map.set(v.name, v) }
+  // pass 3: NORMALIZED aliases for unstamped rows (invisible renames — see normPath).
+  // Registered last and only into empty keys, so stamps and exact names always win.
+  for (const v of mine) {
+    if (v.getPluginData(PATH_KEY)) continue
+    const n = normPath(v.name)
+    if (n !== v.name && !map.has(n)) map.set(n, v)
+  }
   return map
 }
 
