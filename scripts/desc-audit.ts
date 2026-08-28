@@ -6,7 +6,8 @@
 //   1. Every emitted path has a real body (no title-only fallbacks in the shipped set).
 //   2. No digit in a body line — a row's own TITLE line is the only digit carrier.
 //   3. No ratio strings, no light/dark/mode talk, no "n/a" filler (the line is dropped).
-//   4. A Contrast line uses one of the owner's conformance phrases verbatim.
+//   4. Conformance is stated only through the owner's phrases verbatim (the lines are
+//      UNLABELED since 2026-08-28 — the old "Contrast:" label flooded "on" searches).
 //   5. No FOREIGN token label word in a body (owner 2026-08-05: "use a different word to
 //      optimize the search") — "decorative borders" on every wash row floods a search for
 //      the cta border rows exactly the way the stamp's digits flooded number searches. A
@@ -45,8 +46,8 @@ for (const p of [...paths]) {
 
 let bad = 0
 const fail = (p: string, why: string) => { console.error(`FAIL ${p}: ${why}`); bad++ }
-// tripwire: if the conformance-line label ever renames, the phrase gate below would
-// silently match nothing — a zero count fails the run instead
+// tripwire: if the conformance phrases ever rewrite, the gate below would silently
+// match nothing — a zero count fails the run instead
 let contrastLines = 0
 
 for (const p of paths) {
@@ -60,14 +61,11 @@ for (const p of paths) {
   if (/[0-9]/.test(text)) fail(p, `digit in body: ${text.match(/.{0,15}[0-9].{0,15}/)![0]}`)
   if (/:1\b/.test(text)) fail(p, 'ratio string in body')
   if (/\b(light|dark|mode|modes|n\/a)\b/i.test(text)) fail(p, 'mode talk or n/a filler')
-  for (const line of body) {
-    if (line.startsWith('Contrast: ')) {
-      contrastLines++
-      if (!PHRASES.some(ph => line.includes(ph))) fail(p, `Contrast line off-phrase: ${line}`)
-    }
-  }
+  // conformance lines are unlabeled (2026-08-28): a line IS one exactly when it
+  // carries a phrase, so the gate counts phrase carriers directly
+  for (const line of body) if (PHRASES.some(ph => line.includes(ph))) contrastLines++
 }
-if (contrastLines === 0) fail('(gate)', 'conformance-phrase gate matched zero lines — label renamed without updating this audit')
+if (contrastLines === 0) fail('(gate)', 'conformance-phrase gate matched zero lines — phrases rewritten without updating this audit')
 
 // ── rule 5: no foreign label word ────────────────────────────────────────────
 // The vocabulary is derived from the real paths, so a future token name joins the ban

@@ -8,12 +8,15 @@
 // FORMAT (owner 2026-08-05):
 //   title        the row's own spaced name — the one place its own digit may appear; the
 //                literal spaced string is what makes a "wash 4" query land
-//   Req for:     the requirement the stop was DESIGNED to satisfy — documented roles only,
-//                never editorial ("not what the variable COULD be for")
-//   Contrast:    only where a floor exists — WCAG conformance language, never ratios
-//   Theming:     strictly how the theme moves the value; the LINE IS DROPPED when the
-//                theme never moves it. Tint rows say "tints carry <family> hue".
-//   Collisions:  its own line, only on rows that can shift to de-conflict with the brand
+//   Req for:      the requirement the stop was DESIGNED to satisfy — documented roles only,
+//                 never editorial ("not what the variable COULD be for")
+//   (conformance) an UNLABELED line, only where a floor exists — one of the owner's
+//                 phrases verbatim, never ratios. The old "Contrast:" label was dropped
+//                 (owner 2026-08-28): its own letters flooded "on" searches (cONtrast)
+//   Theming:      strictly how the theme moves the value; the LINE IS DROPPED when the
+//                 theme never moves it. Tint rows say "tints carry <family> hue".
+//   (collision)   an unlabeled trailing line, only on rows that can shift to de-conflict
+//                 with the brand ("Collisions:" dropped with the other label, same flood)
 // Never mention light/dark modes anywhere.
 //
 // IMPORT-SAFE BY CONSTRUCTION: zero imports, pure text + string assembly, so both plugin
@@ -98,7 +101,8 @@ const PAPER: Body = { req: 'backgrounds, inverted text', theming: f => TINT[f], 
 // word's search results (the whole reason the shared stamp broke search). A row may carry a
 // label word only when it is in its OWN path. The 2026-08-18 solid rename flipped this
 // word: edge became the label (stamp/edge) and border stopped being one.
-const WASH: Body = { req: 'subtle interaction states, decorative borders, illos, signal hierarchy', theming: f => TINT[f], collides: true }
+// ("interaction" → interactive 2026-08-28: interacti-ON fed the "on" flood)
+const WASH: Body = { req: 'subtle interactive states, decorative borders, illos, signal hierarchy', theming: f => TINT[f], collides: true }
 const solved = (f: Family) => `${TINT[f]}; re-solved to clear its floor`
 // (Leaf keys are FLAT — band flattening 2026-08-12: paper-99, never paper/99 — except
 // the stamp/ state group, keyed by its nested spelling.)
@@ -122,12 +126,15 @@ const SCALE: Record<string, Body> = {
   'wash-89': WASH,
   'wash-85': WASH,
   'wash-80': WASH,
+  // ("icons" KEPT through the 2026-08-28 on-flood strip (owner): an "icon" query
+  // landing on the mark rows is worth its ic-ON-s noise — the one surviving body carrier)
   'mark-74': { req: 'focus rings, icons, large text', contrast: AA_LARGE, theming: solved, collides: true },
   'lead-53': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
   'ink-42': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
   // ("high-emphasis" reworded 2026-08-12: the surface planes took low/high as label
-  // words, and a body carrying either floods that token's picker search — the C50 law)
-  'ink-30': { req: 'strong-emphasis text, inverted backgrounds', contrast: AAA_BODY, theming: solved, collides: true },
+  // words, and a body carrying either floods that token's picker search — the C50 law;
+  // "strong-emphasis" reworded 2026-08-28: str-ON-g fed the "on" flood)
+  'ink-30': { req: 'heavy-emphasis text, inverted backgrounds', contrast: AAA_BODY, theming: solved, collides: true },
   // the stamp family (cta words → solid 2026-08-18, solid → stamp 2026-08-27). "CTA" stays in
   // these bodies on purpose: it stopped being a token label, so it floods nothing,
   // and a designer's "cta" query still lands on these rows.
@@ -148,19 +155,23 @@ const NEUTRAL_ONLY: Record<string, Body> = {
 }
 
 // ── system rows, keyed by full path ──────────────────────────────────────────
-const ABS: Body = { req: 'max contrast on CTAs, aliased global endpoints' }
-const OFFSET: Body = { req: 'min APCA visibility', theming: 'offsets buttons in themes whose CTAs sit close to the page' }
+// (ABS + OFFSET reworded 2026-08-28 for the "on" flood: "max contrast on" carried
+// both cONtrast and a bare on; "buttons" carried butt-ON-s)
+const ABS: Body = { req: 'extreme poles for CTAs, aliased global endpoints' }
+const OFFSET: Body = { req: 'min APCA visibility', theming: 'offsets CTAs in themes where they sit close to the page' }
 const SHADOW: Body = { req: 'drop shadows' }
 const PLANE = (req: string): Body => ({ req, theming: 'aliased to the gray ramp' })
+// ("text action" reworded 2026-08-28: acti-ON fed the "on" flood; "link" is legal
+// here — it is these rows' OWN path word)
 const LINK = (state: string, contrast: string): Body => ({
   req: 'links' + state,
   contrast,
-  theming: 'rides the theme’s text action; custom seed re-solves; overridable per theme',
+  theming: 'rides the theme’s link color; custom seed re-solves; overridable per theme',
 })
 // ("ink" stays out of these bodies — it is a label word elsewhere and would flood
 // that search; "inverted backgrounds" is the established phrasing for the surface)
 const LINK_INVERSE = (state: string, contrast: string): Body => ({
-  req: 'links on inverted backgrounds' + state,
+  req: 'links over inverted backgrounds' + state,
   contrast,
   theming: 'same seed as the link, re-solved for inverted backgrounds; overridable per theme',
 })
@@ -173,19 +184,23 @@ const SYSTEM: Record<string, Body> = {
   // NEUTRAL_ONLY above. Old files' static rows orphan unwritten.)
 
   'system/abs-primary': { req: 'identity seed reference', theming: 'the theme’s own input, as given' },
-  'system/abs-alt': { req: 'identity seed reference', theming: 'the theme’s companion input, as given' },
+  // ("companion" reworded 2026-08-28: compani-ON fed the "on" flood)
+  'system/abs-alt': { req: 'identity seed reference', theming: 'the theme’s paired input, as given' },
   'system/alpha/transparent': { req: 'aliased off-states' },
   // ("dimming" reworded 2026-08-18: the surface planes took dim as a label word)
   'system/alpha/abs-black-060': { req: 'veils the page behind modals' },
-  // ("fills" reworded 2026-08-18: fill became a label word and is foreign here)
-  'system/alpha/ink': { req: 'soft on-color for quiet CTAs' },
+  // ("fills" reworded 2026-08-18: fill became a label word and is foreign here;
+  // "on-color" reworded 2026-08-28: the bare on fed the "on" flood)
+  'system/alpha/ink': { req: 'soft text pole for quiet CTAs' },
   'system/alpha/006': OFFSET,
   'system/alpha/008': OFFSET,
   'system/alpha/016': OFFSET,
   'system/alpha/shadow-04': SHADOW,
   'system/alpha/shadow-08': SHADOW,
   'system/alpha/shadow-12': SHADOW,
-  'system/surface/dim': PLANE('recessed elevation plane'),
+  // ("elevation" dropped 2026-08-28: elevati-ON fed the "on" flood; the sibling
+  // planes never carried the word)
+  'system/surface/dim': PLANE('recessed plane'),
   'system/surface/low': PLANE('resting page plane'),
   'system/surface/mid': PLANE('raised plane — cards, menus'),
   // ("overlays" reworded 2026-08-13: paper-overlay took the word as a label — the C50 law)
@@ -258,8 +273,8 @@ export function describeToken(path: string): string {
   if (!hit) return title
   const { body, fam } = hit
   const lines = [title, `Req for: ${body.req}`]
-  if (body.contrast) lines.push(`Contrast: ${body.contrast}`)
+  if (body.contrast) lines.push(body.contrast)
   if (body.theming) lines.push(`Theming: ${typeof body.theming === 'function' ? body.theming(fam) : body.theming}`)
-  if (body.collides && SIGNALS.includes(fam)) lines.push(`Collisions: ${COLLIDES}`)
+  if (body.collides && SIGNALS.includes(fam)) lines.push(COLLIDES)
   return lines.join('\n')
 }
