@@ -45,7 +45,7 @@ export {
 } from './engine/resolve'
 
 // ── Emitters ─────────────────────────────────────────────────────────────────
-export { brandCss, neutralCss, signalsCss, stopsToVars, toHex } from './engine/cssRender'
+export { brandCss, neutralCss, signalsCss, stopsToVars, toHex, stopHex, OFFSET_ALPHAS } from './engine/cssRender'
 export {
   themeToFigma,
   type FigmaGroup,
@@ -66,7 +66,22 @@ export {
 export { MODE_SPECS, type ModeSpec } from './engine/requirements/spec'
 
 // ── Token vocabulary ─────────────────────────────────────────────────────────
-export { stopTokenName, tokenOrder } from './engine/tokenNames'
+// External consumers must ride these rosters instead of spelling token names —
+// a rename then breaks their build instead of silently mis-mapping.
+export {
+  stopTokenName,
+  tokenOrder,
+  SCALE_STOP_COUNT,
+  PAPER_100,
+  INK_0,
+  STAMP_FILL,
+  STAMP_FILL_HOVER,
+  STAMP_FILL_PRESSED,
+  STAMP_EDGE,
+  STAMP_ON,
+  STAMP_STATE_LEAVES,
+} from './engine/tokenNames'
+export { SIGNAL_EMIT_NAME } from './engine/signals'
 
 // ── Supporting types + data ──────────────────────────────────────────────────
 export { classifyArchetype, type Archetype } from './engine/archetypes'
