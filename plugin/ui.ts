@@ -6,6 +6,7 @@ import { themeToFigma } from '../src/engine/figmaRender'
 import { SIGNALS } from '../src/engine/signals'
 import { toHex } from '../src/engine/cssRender'
 import { stopTokenName } from '../src/engine/tokenNames'
+import { hexToOklch } from '../src/engine/colorMath'
 
 // ─── State ───────────────────────────────────────────────────────────────────
 
@@ -534,7 +535,7 @@ function buildAndSend() {
 
     // confirmed only when this exact name was just flagged as an overwrite.
     const confirmed = pendingName === name
-    parent.postMessage({ pluginMessage: { type: 'apply', brand: name, brandRaw, shared, confirmed, secondary: secondaryMode !== 'off', contrastProfile, ctaEscape: ctaEscape && inRedRange } }, '*')
+    parent.postMessage({ pluginMessage: { type: 'apply', brand: name, brandRaw, shared, confirmed, secondary: secondaryMode !== 'off', contrastProfile, ctaEscape: ctaEscape && inRedRange, recipe: currentRecipe(name, norm) } }, '*')
   } catch (err) {
     applyBtn.disabled = false
     setStatus(String(err), 'err')
@@ -712,7 +713,10 @@ applyBtn.addEventListener('click', buildAndSend)
 
 window.addEventListener('message', e => {
   const msg = (e.data as {
-    pluginMessage?: { type: string; message?: string; brand?: string; aliases?: number; createdShared?: number; secondary?: string }
+    pluginMessage?: {
+      type: string; message?: string; brand?: string; aliases?: number; createdShared?: number; secondary?: string
+      specs?: unknown[]; reconstructed?: unknown[]; unstamped?: string[]; reason?: string
+    }
   }).pluginMessage
   if (!msg) return
   applyBtn.disabled = false
@@ -721,12 +725,205 @@ window.addEventListener('message', e => {
     const acc = msg.secondary && msg.secondary !== 'real' ? `, secondary ${msg.secondary}` : ''
     const grew = msg.createdShared ? `, ${msg.createdShared} new primitives` : ''
     setStatus(`✓ ${msg.brand}: ${msg.aliases} aliased${grew}${acc}`, 'ok')
+    if (raQueue) {
+      raIdx++
+      if (raIdx < raQueue.length) { sendNextReapply(); return }
+      setStatus(`✓ re-applied all ${raQueue.length} brand(s)`, 'ok')
+      raQueue = null
+    }
+    // refresh the picker — a first apply names a new brand, an overwrite may rename one
+    parent.postMessage({ pluginMessage: { type: 'collect-specs', reason: 'list' } }, '*')
   } else if (msg.type === 'confirm') {
     pendingName = msg.brand ?? null
     setStatus(msg.message ?? `"${msg.brand}" already exists — click Apply again`, 'err')
   } else if (msg.type === 'error') {
+    if (raQueue) { setStatus(`Re-apply stopped at "${raQueue[raIdx]?.brand}": ${msg.message ?? 'unknown error'}`, 'err'); raQueue = null; return }
     setStatus(msg.message ?? 'Unknown error', 'err')
+  } else if (msg.type === 'specs') {
+    // the C52 lesson (ext): this reply is SHARED — the reason tag routes it. 'list'
+    // feeds the edit picker and must NEVER start a batch.
+    const stored = ((msg.specs ?? []) as Recipe[]).filter(r => r && typeof r.brand === 'string' && typeof r.primaryHex === 'string')
+    const recon = ((msg.reconstructed ?? []) as ReconFact[]).filter(f => f && typeof f.brand === 'string').map(reconToRecipe)
+    const items = [...stored, ...recon]
+    if (msg.reason === 'list') { renderEditOptions(items, msg.unstamped ?? []); return }
+    if (!items.length) { setStatus(`No applied themes found to re-apply${msg.unstamped?.length ? ` (${msg.unstamped.join(', ')} unreadable)` : ''}.`, 'err'); return }
+    startReapply(items)
   }
+})
+
+// ─── Applied themes: recipes, the edit picker, re-apply all (owner 2026-08-28 —
+// the ext C52 flow ported). Every apply now ships its form inputs as a RECIPE the
+// sandbox stamps on the theme collection; collect-specs returns them (plus
+// RECONSTRUCTION bundles for brands applied before recipes existed, read off the
+// file's identity prims / neutral key / link prim). "Re-apply all brands" replays
+// each recipe through the UNCHANGED apply path — the heal loop for renames and
+// newly added rows without retyping anything. ─────────────────────────────────
+
+type Recipe = {
+  brand: string; primaryHex: string
+  primaryMode: typeof primaryMode
+  secondaryMode: SecondaryMode; secondaryHex: string | null; secondaryStyle: SecondaryStyle
+  neutralChoice: NeutralChoice; neutralHex: string | null
+  linkCustom: boolean; linkHex: string | null
+  ctaEscape: boolean; fullChroma: boolean; contrastProfile: ContrastProfile
+  approx?: boolean
+}
+type ReconFact = { brand: string; primaryHex: string; altHex: string | null; neutralKey: string | null; linkSeed: string | null; profile: ContrastProfile }
+
+const editSelect = $<HTMLSelectElement>('edit-select')
+const reapplyAllBtn = $<HTMLButtonElement>('reapply-all')
+
+function currentRecipe(brand: string, primaryNorm: string): Recipe {
+  return {
+    brand, primaryHex: primaryNorm, primaryMode,
+    secondaryMode, secondaryHex: secondaryMode === 'custom' ? (secondaryHex ?? null) : null,
+    secondaryStyle, neutralChoice, neutralHex: normalizeHex(neutralHexIn.value) || null,
+    linkCustom, linkHex: linkCustom ? (normalizeHex(linkHexInput.value) ?? null) : null,
+    ctaEscape, fullChroma, contrastProfile,
+  }
+}
+
+// Drives the REAL controls (values + native events), so every existing handler does
+// its own state + visibility sync — no duplicated form logic to drift.
+function loadRecipe(r: Recipe) {
+  collectionInput.value = r.brand
+  primaryHexInput.value = r.primaryHex
+  primaryHexInput.dispatchEvent(new Event('input'))
+  primaryModeSelect.value = r.primaryMode
+  primaryModeSelect.dispatchEvent(new Event('change'))
+  if (r.secondaryMode === 'custom' && r.secondaryHex) {
+    setSecondaryMode('custom')
+    secondaryHexInput.value = r.secondaryHex
+    secondaryHexInput.dispatchEvent(new Event('input'))
+    secondaryStyleSelect.value = r.secondaryStyle
+    secondaryStyleSelect.dispatchEvent(new Event('change'))
+  } else setSecondaryMode(r.secondaryMode === 'derived' ? 'derived' : 'off')
+  neutralSelect.value = r.neutralChoice
+  neutralSelect.dispatchEvent(new Event('change'))
+  if (r.neutralChoice === 'custom' && r.neutralHex) {
+    neutralHexIn.value = r.neutralHex
+    neutralHexIn.dispatchEvent(new Event('input'))
+  }
+  const prof = r.contrastProfile === 'wcag' ? 'wcag' : 'apca'
+  profileBtns.forEach(b => { if (b.dataset.profile === prof && !b.classList.contains('active')) b.click() })
+  // escape BEFORE link: the escape's link bundle must not clobber an explicit recipe link
+  if (ctaEscapeBox.checked !== !!r.ctaEscape) { ctaEscapeBox.checked = !!r.ctaEscape; ctaEscapeBox.dispatchEvent(new Event('change')) }
+  if (r.linkCustom && r.linkHex) {
+    linkCustom = true; linkBundled = false
+    linkHexInput.value = r.linkHex
+    linkHexInput.dispatchEvent(new Event('input'))
+  } else if (!r.ctaEscape) { linkCustom = false; linkBundled = false }
+  if (fullChromaBox.checked !== !!r.fullChroma) { fullChromaBox.checked = !!r.fullChroma; fullChromaBox.dispatchEvent(new Event('change')) }
+  updatePreview()
+}
+
+// an sRGB hex whose OKLCH hue lands nearest the target — for re-expressing a
+// reconstructed custom-neutral hue as a form input (only the HUE is read downstream)
+function hueHexOklch(targetH: number): string {
+  const hsl = (h: number) => {
+    const f = (n: number) => { const k = (n + h / 30) % 12; return Math.round(255 * (0.5 - 0.5 * Math.max(-1, Math.min(k - 3, 9 - k, 1)))).toString(16).padStart(2, '0').toUpperCase() }
+    return `#${f(0)}${f(8)}${f(4)}`
+  }
+  let best = '#FF0000', bestD = 1e9
+  for (let h = 0; h < 360; h += 2) {
+    const hex = hsl(h)
+    const d0 = Math.abs(hexToOklch(hex).H - targetH)
+    const d = Math.min(d0, 360 - d0)
+    if (d < bestD) { bestD = d; best = hex }
+  }
+  return best
+}
+
+// A brand applied before recipes existed: translate the file facts into form inputs.
+// Value-preserving where the file can say so (seed, real-vs-derived secondary, the
+// neutral prim key, the custom link seed); postures the file cannot record (exact
+// mode, full vividness, the cta escape) fall back to defaults — the picker labels
+// these entries "(from file)".
+function reconToRecipe(f: ReconFact): Recipe {
+  const primary = f.primaryHex.toUpperCase()
+  let sMode: SecondaryMode = 'off'
+  let sHex: string | null = null
+  let secondaryH: number | undefined
+  if (f.altHex) {
+    const probe = resolveTheme({ primaryHex: primary, name: 'probe', primaryMode: 'recommended', secondaryHex: null, deriveSecondary: true } as never)
+    secondaryH = probe.secondary?.scale.brandH
+    if (probe.secondary?.scale.identityHex?.toLowerCase() === f.altHex.toLowerCase()) sMode = 'derived'
+    else { sMode = 'custom'; sHex = f.altHex.toUpperCase(); secondaryH = hexToOklch(f.altHex).H }
+  }
+  let nChoice: NeutralChoice = 'default'
+  let nHex: string | null = null
+  if (f.neutralKey === 'pure') nChoice = 'pure'
+  else if (f.neutralKey) {
+    const m = f.neutralKey.match(/^(.+)-h(\d+)$/)
+    if (m) {
+      const hue = Number(m[2])
+      const near = (a: number | undefined) => a !== undefined && Math.min(Math.abs(a - hue), 360 - Math.abs(a - hue)) <= 1.5
+      if (near(hexToOklch(primary).H)) nChoice = m[1] as NeutralChoice
+      else if (near(secondaryH)) nChoice = 'secondary'
+      else { nChoice = 'custom'; nHex = hueHexOklch(hue) }
+    }
+  }
+  return {
+    brand: f.brand, primaryHex: primary, primaryMode: 'recommended',
+    secondaryMode: sMode, secondaryHex: sHex, secondaryStyle: 'default',
+    neutralChoice: nChoice, neutralHex: nHex,
+    linkCustom: !!f.linkSeed, linkHex: f.linkSeed ? `#${f.linkSeed.toUpperCase()}` : null,
+    ctaEscape: false, fullChroma: false,
+    contrastProfile: f.profile === 'wcag' ? 'wcag' : 'apca',
+    approx: true,
+  }
+}
+
+let editCache: Recipe[] = []
+function renderEditOptions(items: Recipe[], unstamped: string[]) {
+  editCache = items
+  editSelect.innerHTML = ''
+  const head = document.createElement('option')
+  head.value = ''
+  head.textContent = items.length ? 'Edit applied theme…' : 'No applied themes yet'
+  editSelect.appendChild(head)
+  items.forEach((r, i) => {
+    const o = document.createElement('option')
+    o.value = String(i)
+    o.textContent = r.approx ? `${r.brand} (from file)` : r.brand
+    editSelect.appendChild(o)
+  })
+  for (const u of unstamped) {
+    const o = document.createElement('option')
+    o.disabled = true
+    o.textContent = `${u} (unreadable)`
+    editSelect.appendChild(o)
+  }
+  reapplyAllBtn.disabled = !items.length
+}
+editSelect.addEventListener('change', () => {
+  const i = Number(editSelect.value)
+  if (editSelect.value === '' || Number.isNaN(i) || !editCache[i]) return
+  loadRecipe(editCache[i])
+  setStatus(`Loaded "${editCache[i].brand}"${editCache[i].approx ? ' from the file (exact/vividness/escape postures reset to defaults)' : ''} — review, then Apply.`)
+})
+
+// the batch: each item drives the form (loadRecipe) and rides the UNCHANGED apply
+// path with its overwrite pre-confirmed; the done/error handler advances or aborts
+let raQueue: Recipe[] | null = null
+let raIdx = 0
+function sendNextReapply() {
+  const r = raQueue![raIdx]
+  setStatus(`Re-applying ${raIdx + 1}/${raQueue!.length} — ${r.brand}…`)
+  loadRecipe(r)
+  // pre-confirm the overwrite (confirmed = pendingName === name); buildAndSend
+  // normalizes the field through toSpinal, so the arm must match that spelling
+  pendingName = toSpinal(r.brand)
+  buildAndSend()
+}
+function startReapply(items: Recipe[]) {
+  raQueue = items
+  raIdx = 0
+  sendNextReapply()
+}
+reapplyAllBtn.addEventListener('click', () => {
+  setStatus('Collecting applied themes…')
+  parent.postMessage({ pluginMessage: { type: 'collect-specs', reason: 're-apply' } }, '*')
 })
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
@@ -738,5 +935,8 @@ for (const a of ARCHETYPES) {
   opt.textContent = a.name
   archetypeGroup.appendChild(opt)
 }
+
+// populate the Applied-themes picker from the file on load
+parent.postMessage({ pluginMessage: { type: 'collect-specs', reason: 'list' } }, '*')
 
 updatePreview()

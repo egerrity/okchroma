@@ -320,6 +320,15 @@ body {
 
 <div class="matrix" id="matrix"></div>
 
+<div class="bar-field" style="flex-basis:100%" id="reapply-slot">
+  <div class="label">Applied themes</div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <select id="edit-select" style="min-width:180px"><option value="">No applied themes yet</option></select>
+    <button class="add" id="reapply-all" disabled
+      title="Replay every applied brand through the current engine — heals renamed tokens and fills newly added rows without retyping anything">Re-apply all brands</button>
+  </div>
+</div>
+
 <button class="apply-btn" id="apply-btn">Apply to Figma</button>
 <div class="status" id="status"></div>
 

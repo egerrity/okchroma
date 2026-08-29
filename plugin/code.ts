@@ -42,6 +42,11 @@ const PROFILE_KEY = 'okchroma-profile'
 // modes' rename-proofing (owner 2026-07-27): display names are the user's to
 // change, the stored ids are the contract (the collections' tag idiom).
 const MODE_IDS_KEY = 'okchroma-mode-ids'
+// Each apply stamps its input recipe here (owner 2026-08-28, the ext SPEC_KEY idiom
+// ported): ONE JSON map on the THEME collection, keyed by lower-cased brand — what
+// powers "Edit applied theme" and "Re-apply all brands" without retyping. A brand
+// applied before recipes existed is RECONSTRUCTED from the file in collect-specs.
+const SPEC_KEY = 'okchroma-spec'
 // Variable identity (owner 2026-08-10): the canonical path lives in plugin data — the
 // NAME is display, free for the user to edit in the variables panel; every lookup
 // resolves the stamp first (the modes' rename-proof idiom, applied to variables).
@@ -304,6 +309,12 @@ const RENAMED_LEAVES: Array<[string, string]> = [
 // points at system/blue. Theme-side entries point STRAIGHT at the final role
 // homes (legacyCandidates expands one group hop only — a chained
 // info-color→blue→info table would strand pre-C17 files on the middle name).
+// the offset ladder's rung alphas, keyed by row name (mirrors plugin-ext/code.ts —
+// duplicated by the same sandbox rule: an import from cssRender would drag the engine
+// into this bundle). Used by the stamp/edge router to turn a leaf's own alpha into
+// its system/alpha row.
+const RUNG_ALPHAS: Record<string, number> = { '006': 0.06, '008': 0.08, '016': 0.16 }
+
 const RENAMED_GROUPS: Array<[string, string]> = [
   // the 2026-08-21 family rename: the theme-layer role group brand/secondary → brand/alt
   ['brand/secondary/', 'brand/alt/'],
@@ -467,9 +478,10 @@ async function withFontRetry<T>(run: () => Promise<T>): Promise<T> {
 
 figma.ui.onmessage = async (msg) => {
   if (msg.type === 'apply') {
-    const { brand, brandRaw, shared, confirmed, secondary, contrastProfile, ctaEscape } = msg as {
+    const { brand, brandRaw, shared, confirmed, secondary, contrastProfile, ctaEscape, recipe } = msg as {
       type: 'apply'; brand: string; brandRaw: BrandRamp[]; shared: SharedRamp[]
       confirmed?: boolean; secondary?: boolean; contrastProfile?: Profile; ctaEscape?: boolean
+      recipe?: unknown
     }
     const secondaryOn = secondary !== false // global secondary switch (default on)
     const profile: Profile = contrastProfile === 'apca' ? 'apca' : 'wcag'
@@ -647,6 +659,13 @@ figma.ui.onmessage = async (msg) => {
         // pole at the engine's SOFT_ON_CTA_ALPHA register — black@.75 light,
         // white@.80 dark. The default-model secondary's stamp/on aliases this row.
         { path: 'system/alpha/ink', light: { r: 0, g: 0, b: 0, a: 0.75 }, dark: { r: 1, g: 1, b: 1, a: 0.8 } },
+        // the OFFSET LADDER (owner report 2026-08-28: the rungs never reached this
+        // plugin — cssRender's comment even said so). Black in light, WHITE in dark,
+        // constant alpha per rung (a stroke sits on the fill, so unlike the shadows it
+        // does not scale up in dark). The stamp/edge writer below aliases these.
+        { path: 'system/alpha/006', light: { r: 0, g: 0, b: 0, a: 0.06 }, dark: { r: 1, g: 1, b: 1, a: 0.06 } },
+        { path: 'system/alpha/008', light: { r: 0, g: 0, b: 0, a: 0.08 }, dark: { r: 1, g: 1, b: 1, a: 0.08 } },
+        { path: 'system/alpha/016', light: { r: 0, g: 0, b: 0, a: 0.16 }, dark: { r: 1, g: 1, b: 1, a: 0.16 } },
         { path: 'system/alpha/shadow-04', light: { r: 0, g: 0, b: 0, a: 0.04 }, dark: { r: 0, g: 0, b: 0, a: 0.32 } },
         { path: 'system/alpha/shadow-08', light: { r: 0, g: 0, b: 0, a: 0.08 }, dark: { r: 0, g: 0, b: 0, a: 0.48 } },
         { path: 'system/alpha/shadow-12', light: { r: 0, g: 0, b: 0, a: 0.12 }, dark: { r: 0, g: 0, b: 0, a: 0.64 } },
@@ -746,8 +765,20 @@ figma.ui.onmessage = async (msg) => {
         } else if (t.path === STAMP_LEAF.EDGE) {
           const sibling8 = primByName.get(path.slice(0, -STAMP_LEAF.EDGE.length) + 'mark-74')
           const transparent = primByName.get('system/alpha/transparent')
+          // the OFFSET ROUTER (owner report 2026-08-28, the ext strokeFor idiom): a
+          // firing edge carries its family's rung IN ITS OWN ALPHA — a value lookup,
+          // no family table to drift from cssRender.ctaBorderRung — and aliases the
+          // matching ladder row (created in STATIC_UTILS above, so it exists by now).
+          // a=0 stays transparent (the gate passed); an OPAQUE leaf is the outline
+          // secondary's posture and keeps its mark-74 alias. Re-aliased every apply,
+          // so a pre-ladder file's loud mark-74 edge heals on the next apply.
+          const rungRow = (a: number | undefined) => {
+            const rung = a === undefined ? undefined
+              : Object.keys(RUNG_ALPHAS).find(k => Math.abs(RUNG_ALPHAS[k] - a) < 1e-6)
+            return rung ? primByName.get(`system/alpha/${rung}`) : undefined
+          }
           const target = (leaf?: { a?: number }) =>
-            leaf?.a === 0 ? transparent : (sibling8 ?? transparent)
+            leaf?.a === 0 ? transparent : (rungRow(leaf?.a) ?? sibling8 ?? transparent)
           const lightTarget = target(t)
           const darkTarget = target(dk ?? t)
           if (lightTarget && darkTarget) {
@@ -1110,10 +1141,83 @@ figma.ui.onmessage = async (msg) => {
         aliasElev('system/surface/high', themeNeutralP0, themeNeutralP3)
       }
 
+      // stamp the apply's input recipe (the SPEC_KEY map above) — keyed by brand so an
+      // overwrite replaces its own entry; the map survives brand ADDS untouched
+      if (recipe !== undefined) {
+        let specMap: Record<string, unknown> = {}
+        try { specMap = JSON.parse(th.coll.getPluginData(SPEC_KEY) || '{}') } catch { /* unstamped */ }
+        specMap[brand.toLowerCase()] = recipe
+        th.coll.setPluginData(SPEC_KEY, JSON.stringify(specMap))
+      }
+
       figma.ui.postMessage({ type: 'done', brand, aliases: aliasCount, createdShared, secondary: secondaryMode })
     }
     try {
       await withFontRetry(applyOnce)
+    } catch (err) {
+      figma.ui.postMessage({ type: 'error', message: String(err) })
+    }
+  } else if (msg.type === 'collect-specs') {
+    // "Edit applied theme" + "Re-apply all brands" (owner 2026-08-28 — the ext C52
+    // flow ported). Returns each brand mode's STORED recipe; a brand applied before
+    // recipes existed gets a RECONSTRUCTION bundle read off the file (the identity
+    // prims, the neutral prim's key, the custom-link prim path) that the UI
+    // translates into form inputs. The `reason` echoes back verbatim (the C52
+    // lesson: the specs reply is SHARED — without the tag the edit picker's refresh
+    // could be mistaken for a batch round-trip and start one).
+    try {
+      const reason = (msg as { reason?: string }).reason
+      const collections = await figma.variables.getLocalVariableCollectionsAsync()
+      const themes = collections.filter(c => c.getPluginData(OWNER_KEY) === THEME_NAME)
+      const prims = collections.filter(c => c.getPluginData(OWNER_KEY) === MODE_NAME)
+      const allVars = await figma.variables.getLocalVariablesAsync()
+      const varsOf = (collId: string) => {
+        const map = new Map<string, figma.Variable>()
+        for (const v of allVars) if (v.variableCollectionId === collId) map.set(v.name, v)
+        return map
+      }
+      const specs: unknown[] = []
+      const reconstructed: unknown[] = []
+      const unstamped: string[] = []
+      for (const theme of themes) {
+        const profile = profileOf(theme)
+        const prim = prims.find(c => profileOf(c) === profile) ?? prims[0]
+        const primVars = prim ? varsOf(prim.id) : new Map<string, figma.Variable>()
+        const themeVars = varsOf(theme.id)
+        let stored: Record<string, unknown> = {}
+        try { stored = JSON.parse(theme.getPluginData(SPEC_KEY) || '{}') } catch { /* unstamped */ }
+        let primLight: string | undefined
+        if (prim) {
+          try { primLight = (JSON.parse(prim.getPluginData(MODE_IDS_KEY) || '{}') as { light?: string }).light } catch { /* unstamped */ }
+          primLight = primLight ?? prim.modes[0]?.modeId
+        }
+        const hexOf = (v: figma.Variable | undefined): string | null => {
+          const c = v && primLight ? v.valuesByMode[primLight] : undefined
+          if (!c || typeof c !== 'object' || !('r' in c)) return null
+          const b = (x: number) => Math.round(x * 255).toString(16).padStart(2, '0')
+          const rgba = c as figma.RGBA
+          return `#${b(rgba.r)}${b(rgba.g)}${b(rgba.b)}`
+        }
+        for (const m of theme.modes) {
+          const spec = stored[m.name.toLowerCase()]
+          if (spec !== undefined) { specs.push({ ...(spec as object), brand: m.name }); continue }
+          const primaryHex = hexOf(primVars.get(`brand/${m.name}/primary/identity`))
+          if (!primaryHex) { unstamped.push(m.name); continue }
+          const altHex = hexOf(primVars.get(`brand/${m.name}/alt/identity`))
+          const aliasTarget = (path: string): string | null => {
+            const v = themeVars.get(path)
+            const val = v?.valuesByMode[m.modeId]
+            if (!val || typeof val !== 'object' || !('type' in val)) return null
+            return allVars.find(x => x.id === (val as figma.VariableAlias).id)?.name ?? null
+          }
+          const neutralTarget = aliasTarget('neutral/paper-99')
+          const neutralKey = neutralTarget?.startsWith('system/neutral/') ? neutralTarget.split('/')[2] : null
+          const linkTarget = aliasTarget('link/default')
+          const linkMatch = linkTarget?.match(/^system\/link\/([0-9a-fA-F]{6})\/link$/)
+          reconstructed.push({ brand: m.name, primaryHex, altHex, neutralKey, linkSeed: linkMatch?.[1] ?? null, profile })
+        }
+      }
+      figma.ui.postMessage({ type: 'specs', reason, specs, reconstructed, unstamped })
     } catch (err) {
       figma.ui.postMessage({ type: 'error', message: String(err) })
     }
