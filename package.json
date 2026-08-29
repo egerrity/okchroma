@@ -18,7 +18,8 @@
     }
   },
   "files": [
-    "dist-lib"
+    "dist-lib",
+    "tokens"
   ],
   "sideEffects": false,
   "scripts": {
