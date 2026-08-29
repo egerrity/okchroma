@@ -24,6 +24,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "--prefix", "/Users/emilygerrity/emily-portfolio", "dev"],
       "port": 5173
+    },
+    {
+      "name": "material-poc",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "--prefix", "/Users/emilygerrity/okchroma-material", "dev", "--", "--port", "5174"],
+      "port": 5174
     }
   ]
 }
