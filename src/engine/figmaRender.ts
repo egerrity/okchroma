@@ -279,11 +279,13 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     // VALUE ships here; both plugins alias this leaf onto their system/alpha/ink primitive
     // (owner-named 2026-08-03) — the cta-border idiom, never a raw write.
     // THE CARRIERS (mirrors cssRender.softOnCta — the two must agree):
-    //  · the DEFAULT-model secondary (owner 2026-08-03) and the NEUTRAL (owner 2026-08-04) —
-    //    unconditional, their fills are known-legal by construction.
-    //  · the EXACT-style secondary, including the absent-style case resolve normalizes to
-    //    exact (owner 2026-08-06) — per mode, wherever softOnCtaPasses keeps the composite
-    //    over WCAG 4.5 on every fill state; a failing fill keeps the solid pole.
+    //  · the NEUTRAL (owner 2026-08-04) — unconditional; re-measured 2026-08-29, it passes
+    //    softOnCtaPasses across the sweep in both modes.
+    //  · EVERY non-outline secondary, default model included (owner ruling 2026-08-29) —
+    //    per mode, wherever softOnCtaPasses keeps the composite over WCAG 4.5 on every fill
+    //    state; a failing fill keeps the solid pole, the regular button posture. The default
+    //    model's old unconditional pass was a C47 calibration gap — its dark states were
+    //    never measured and never passed (see the CARRIERS note in resolve.ts).
     // Outline took its ink/53-aa above; the no-secondary mirror keeps the brand's. Loud fills —
     // brand, the signals, and the cta ESCAPE below — keep the solid pole.
     const softOnCta = (g: FigmaGroup, white: boolean) => {
@@ -294,8 +296,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
       })
     }
     softOnCta(neutralGroup, mode === 'light' ? nScale.onFillTextIsWhite : nScale.onFillTextIsWhiteDark)
-    if (input.secondary && input.secondaryStyle !== 'outline'
-      && (input.secondaryStyle === 'default' || softOnCtaPasses(input.secondary, mode)))
+    if (input.secondary && input.secondaryStyle !== 'outline' && softOnCtaPasses(input.secondary, mode))
       softOnCta(secondaryGroup, mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark)
     const brandGroup = rampGroup(scale[mode], mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark, brandExtra(scale, mode, CSS_FAMILY.brandPrimary))
     // neutral cta escape re-expression (mirrors the outline block above): the brand's

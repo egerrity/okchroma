@@ -428,8 +428,10 @@ export function makeStop(stop: number, L: number, C: number, H: number, gamut: G
 // both profiles; the FLOOR is the profile's law (owner 2026-07-04, the true wcag/apca split):
 // under the wcag profile every CHOSEN pole must pass the 4.5 ratio — `ratioFloor` flips to the
 // other pole when the preferred one fails (WCAG 4.5:1 has no dead zone, so the other pole
-// always passes; fills never move). The apca profile carries no ratio floor — its law is the
-// Lc bar (enforceLc re-solves enforced ctas; the highlight band clears Lc 60 by placement).
+// always passes; fills never move). The apca profile carries no ratio floor for LOUD fills —
+// its law is the Lc bar (enforceLc re-solves enforced ctas; the highlight band clears Lc 60
+// by placement) — but the QUIET-cta callers (colorEngine) pass the floor in both profiles
+// (owner 2026-08-29, the C47 not-a-lane-decision precedent).
 // Every 4.5 check is D1 legality: legalRatio (both renditions). The Y arg (APCA
 // preference) is the caller's master-basis apcaY — D2. Ratio vs a pole passes
 // contrastRatio's other side as the pole's Y (white 1.0 / black 0).

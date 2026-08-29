@@ -432,16 +432,19 @@ export const OUTLINE_PRESSED_ALPHA = 0.18
 // the Lc-60 on-cta bar at rest.
 //
 // THE CARRIERS, in two tiers:
-//  · KNOWN-LEGAL BY CONSTRUCTION — the DEFAULT-model secondary (derived + custom share the
-//    tint register; sweep floor 0.726) and the NEUTRAL, whose cta is the scale-fed wash-level
-//    fill (colorEngine, stop 4; sweep floor 0.633, worst state 6.09:1 / Lc 65.2). These two
-//    always ship soft — the register was calibrated on their fills.
-//  · CHECKED PER BRAND (owner 2026-08-06: soft is the DEFAULT on-text for secondaries, "as
-//    long as it doesn't cause it to fail wcag") — the EXACT-style secondary, whose fill is an
-//    arbitrary user hex. softOnCtaPasses below decides per mode; a failing fill keeps the
-//    solid pole, which is always legal (the C38 ratioFloor picked it at 4.5 already).
-// The owner picked light .75 / dark .80 by eye on the alpha ladder; every carrier shares the
-// ONE register, so all alias the single system/alpha/ink primitive in the plugins.
+//  · KNOWN-LEGAL BY CONSTRUCTION — the NEUTRAL only, whose cta is the scale-fed wash-level
+//    fill (colorEngine, stop 4): re-measured 2026-08-29, softOnCtaPasses holds across the
+//    agnostic sweep in both modes. It always ships soft.
+//  · CHECKED PER BRAND AND MODE — every non-outline secondary, the default model included
+//    (owner ruling 2026-08-29). The default model's old "known-legal by construction" tier
+//    was a C47 calibration gap: its dark states were never measured, and they never passed —
+//    the dark quiet fill rests mid-scale and the states lighten under a white composite
+//    (worst pressed 2.83:1 at the register; no alpha up to the pure pole reaches 4.5).
+//    softOnCtaPasses decides per mode; a failing fill keeps the solid pole, the regular
+//    button posture (the C38 ratioFloor picked it at 4.5 at rest). Measured outcome across
+//    the sweep: derived/custom ship soft in light and the solid pole in dark.
+// The owner picked light .75 / dark .80 by eye on the alpha ladder; every soft carrier
+// shares the ONE register, so all alias the single system/alpha/ink primitive in the plugins.
 // LOUD fills keep the solid pole — brand, the signals, and the cta ESCAPE (whose fill is the
 // neutral's ink register, not this quiet one; owner-confirmed 2026-08-04). Outline keeps its
 // ink-9 (colored text on a transparent fill — there is no fill to compose over).

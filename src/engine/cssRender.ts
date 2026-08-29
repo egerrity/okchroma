@@ -527,15 +527,16 @@ export function brandCss(
   // the SOFT on-cta: the on-text pole at SOFT_ON_CTA_ALPHA, composited by the renderer over
   // the fill's current state so hover/pressed carry their own legibility. Emitted AFTER the
   // secondary body so the cascade takes it (the outline idiom).
-  // WHO GETS IT (owner 2026-08-06 — soft is the DEFAULT on-text for secondaries): the
-  // default-model secondary unconditionally (its tint-register fill is known-legal by
-  // construction), and the EXACT-style secondary — including the absent-style case, which
-  // resolve normalizes to exact — wherever softOnCtaPasses says the composite stays over
-  // WCAG 4.5 on every fill state. A failing exact fill keeps the solid pole. Outline keeps
-  // its lead-53 and the no-secondary mirror keeps the brand's.
+  // WHO GETS IT (owner 2026-08-06, tightened 2026-08-29): EVERY non-outline secondary —
+  // default model included — per mode, wherever softOnCtaPasses says the composite stays
+  // over WCAG 4.5 on every fill state. The default model's old unconditional pass was a C47
+  // calibration gap (its dark states were never measured and never passed — see the
+  // CARRIERS note in resolve.ts). A failing fill emits nothing here, so the secondary
+  // body's solid pole stands — the regular button posture. Outline keeps its lead-53 and
+  // the no-secondary mirror keeps the brand's.
   const softOnCta = (mode: 'light' | 'dark'): string[] => {
     if (!secondary || secondaryStyle === 'outline') return []
-    if (secondaryStyle !== 'default' && !softOnCtaPasses(secondary, mode)) return []
+    if (!softOnCtaPasses(secondary, mode)) return []
     const white = mode === 'light' ? secondary.onFillTextIsWhite : secondary.onFillTextIsWhiteDark
     return [`  --${CSS_SECONDARY}-stamp-on: rgba(${white ? '255, 255, 255' : '0, 0, 0'}, ${SOFT_ON_CTA_ALPHA[mode]});`]
   }

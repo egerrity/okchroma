@@ -332,11 +332,14 @@ export function generateNeutralScale(
   scale.ctaPressedDark = nState(11, 'dark', scale.ctaDark, 2)
   // the quiet-fill override above touches only the fill trio — the ink stops (the text
   // register) stay resolver-minted.
-  // the scale-fed neutral cta can't move, so on-text is judgment only: apca profile = pure
-  // apca-pole (its law is the Lc bar); wcag profile = the mixing flip PLUS the conformance
-  // floor — the chosen pole must pass 4.5 (the fill can't re-solve, so the pole flips).
+  // the scale-fed neutral cta can't move, so on-text is judgment only: apca profile keeps
+  // the pure apca-pole PREFERENCE, wcag adds the mixing flip — but the 4.5 conformance
+  // floor rides BOTH profiles (owner 2026-08-29, "apca is the optimizer only; the text
+  // needs to pass WCAG" — the C47 not-a-lane-decision precedent): the chosen pole must
+  // pass, the fill can't re-solve, so the pole flips. (Measured at the flip: zero flips
+  // across the 612-row sweep — the neutral's quiet fills never sit where the poles argue.)
   const onEnforce = contrastProfile !== 'apca'
-  const onFloor = contrastProfile === 'apca' ? undefined : 4.5
+  const onFloor = 4.5
   scale.onFillTextIsWhite = onTextIsWhite(apcaY(scale.cta.r, scale.cta.g, scale.cta.b), scale.cta.L, scale.cta.C, scale.cta.H, onEnforce, onFloor)
   scale.onFillTextIsWhiteDark = onTextIsWhite(apcaY(scale.ctaDark.r, scale.ctaDark.g, scale.ctaDark.b), scale.ctaDark.L, scale.ctaDark.C, scale.ctaDark.H, onEnforce, onFloor)
   return scale
@@ -401,10 +404,14 @@ export function generateSubtleSecondary(
   scale.ctaPressed = st(11, 'light', scale.cta, 2)
   scale.ctaHoverDark = st(10, 'dark', scale.ctaDark, 1)
   scale.ctaPressedDark = st(11, 'dark', scale.ctaDark, 2)
-  // quiet cta, judgment only (same law as the neutral's): wcag = mixing flip + the 4.5
-  // conformance floor (pole flips when the preferred one fails); apca = pure apca-pole.
+  // quiet cta, judgment only (same law as the neutral's): apca keeps the pole PREFERENCE,
+  // wcag adds the mixing flip — the 4.5 conformance floor rides both profiles here (owner
+  // 2026-08-29, "apca is the optimizer only; the text needs to pass WCAG"). NOTE this is
+  // the exported/sweep path: the SHIPPING derived/custom models ride resolveBrand
+  // (resolveTheme's resolveDefaultModel), whose apca-lane pole judgment is the loud Lc
+  // dialect — flooring that lane is a pending owner call (the contrast-profile split).
   const onEnforce = opts?.contrastProfile !== 'apca'
-  const onFloor = opts?.contrastProfile === 'apca' ? undefined : 4.5
+  const onFloor = 4.5
   scale.onFillTextIsWhite = onTextIsWhite(apcaY(scale.cta.r, scale.cta.g, scale.cta.b), scale.cta.L, scale.cta.C, scale.cta.H, onEnforce, onFloor)
   scale.onFillTextIsWhiteDark = onTextIsWhite(apcaY(scale.ctaDark.r, scale.ctaDark.g, scale.ctaDark.b), scale.ctaDark.L, scale.ctaDark.C, scale.ctaDark.H, onEnforce, onFloor)
   return scale

@@ -9,15 +9,25 @@
 //   lead-53               4.5 against paper only          (lead-53 pre guarantee round)
 //   ink   (42/30/0)       4.5 against paper AND wash      (the T10 wash-80 law)
 //
+// Plus the STAMP/ON pairing (owner ruling 2026-08-29): a quiet cta's shipped on-text —
+// the soft composite where softOnCtaPasses gates it in, the solid pole at rest where
+// gated out — measured WCAG in the shipped basis, both solver lanes ("apca is the
+// optimizer only; the text needs to pass WCAG"). GATES: soft (both lanes — the checker's
+// bar is WCAG by the C47 design) and the wcag lane's solid fallback. The APCA lane's
+// solid fallback is REPORT-ONLY: its pole rides the loud Lc dialect (the 2026-07-04
+// profile split) and can dip under 4.5 WCAG — whether that lane's quiet text takes the
+// WCAG floor is a pending owner call.
+//
 // Basis: the SHIPPED 8-bit pair (shippedY both sides — the value every browser and
 // audit tool measures). Sweep: agnostic hue×chroma seeds + the audit fixtures, every
 // family (neutral, brand, derived brand-alt, the four signals), both modes. An ink of
 // family F is checked against the surfaces of F and of the theme's neutral; the
 // neutral's own inks are covered by the same rule (own = neutral).
-import { resolveTheme, signalScalesFor } from '../src/engine/resolve'
+import { resolveTheme, signalScalesFor, softOnCtaPasses, SOFT_ON_CTA_ALPHA } from '../src/engine/resolve'
 import { generateNeutralScale, type GeneratedScale } from '../src/engine/colorEngine'
 import { contrastRatio, shippedY } from '../src/engine/constraints'
 import { oklchToLinearRgb } from '../src/engine/constraints'
+import { srgbEmitChannels } from '../src/engine/colorMath'
 import { FIXTURES } from './fixture'
 
 const enc = (c: number) => { c = Math.max(0, Math.min(1, c)); return c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055 }
@@ -41,6 +51,9 @@ let seeds = 0
 function check(hex: string, tag: string, opts: { exact?: boolean; archetypeOverride?: any; style?: any } = {}) {
   seeds++
   const theme = resolveTheme({ primaryHex: hex, name: 'brand', deriveSecondary: true, ...opts })
+  // the apca-lane resolution, for the stamp/on pairing only (its quiet fills differ; the
+  // five band claims stay measured on the shipped wcag lane as before)
+  const themeApca = resolveTheme({ primaryHex: hex, name: 'brand', deriveSecondary: true, ...opts, contrastProfile: 'apca' })
   const brand = theme.themed.scale
   const neutral = generateNeutralScale(brand.brandH)
   const sig = signalScalesFor()
@@ -87,6 +100,39 @@ function check(hex: string, tag: string, opts: { exact?: boolean; archetypeOverr
       for (const [s, y] of washY) {
         for (const ink of INKS) seen(`ink-${ink === 10 ? 42 : 30} vs wash`, contrastRatio(yOf(arr[ink - 1]), y), where(s), BAR.text)
         if (f.name === 'neutral') seen('ink-0 vs wash', contrastRatio(inkPoleY, y), where(s), BAR.text)
+      }
+    }
+    // stamp/on over the quiet cta fill (owner ruling 2026-08-29): the soft composite is
+    // engine-gated per mode (softOnCtaPasses) — wherever it SHIPS it holds 4.5 on every
+    // fill state, and a gated-off fill's solid pole holds 4.5 at rest, the regular button
+    // law. Both branches measured here in the shipped 8-bit basis so the pairing cannot
+    // silently regress (the round-2 PoC finding: the old default-model bypass shipped a
+    // 2.83:1 dark pressed composite).
+    const q8 = (v: number) => Math.round(Math.min(1, Math.max(0, v)) * 255) / 255
+    const lin = (v: number) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
+    const relY = (r: number, g: number, b: number) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+    const quiet: Array<[string, GeneratedScale]> = [
+      ['neutral', neutral],
+      ...(theme.secondary ? [['brand-alt', theme.secondary.scale] as [string, GeneratedScale]] : []),
+      ...(themeApca.secondary ? [['brand-alt apca', themeApca.secondary.scale] as [string, GeneratedScale]] : []),
+    ]
+    for (const [qn, qs] of quiet) {
+      const white = mode === 'light' ? qs.onFillTextIsWhite : qs.onFillTextIsWhiteDark
+      const pole = white ? 1 : 0
+      const states = mode === 'light' ? [qs.cta, qs.ctaHover, qs.ctaPressed] : [qs.ctaDark, qs.ctaHoverDark, qs.ctaPressedDark]
+      if (softOnCtaPasses(qs, mode)) {
+        const a = SOFT_ON_CTA_ALPHA[mode]
+        states.forEach((st, i) => {
+          const e = srgbEmitChannels(st)
+          const fr = q8(e.r), fg = q8(e.g), fb = q8(e.b)
+          const textY = relY(pole * a + fr * (1 - a), pole * a + fg * (1 - a), pole * a + fb * (1 - a))
+          seen('stamp/on soft vs fill', contrastRatio(textY, relY(fr, fg, fb)), `${tag} ${mode} ${qn} state ${i}`, BAR.text)
+        })
+      } else {
+        // apca lane's solid pole = the Lc dialect (report-only, pending the owner's lane
+        // ruling); the wcag lane's is gated hard at 4.5
+        const cell = qn.includes('apca') ? 'stamp/on solid (apca · report)' : 'stamp/on solid vs fill'
+        seen(cell, contrastRatio(pole, shippedY(states[0].L, states[0].C, states[0].H)), `${tag} ${mode} ${qn} rest`, qn.includes('apca') ? 0 : BAR.text)
       }
     }
   }

@@ -657,7 +657,9 @@ figma.ui.onmessage = async (msg) => {
         { path: 'system/alpha/abs-black-060', light: { r: 0, g: 0, b: 0, a: 0.6 }, dark: { r: 0, g: 0, b: 0, a: 0.6 } },
         // the SOFT ON-CTA primitive (C43 follow-up, owner-named 2026-08-03): the on-text
         // pole at the engine's SOFT_ON_CTA_ALPHA register — black@.75 light,
-        // white@.80 dark. The default-model secondary's stamp/on aliases this row.
+        // white@.80 dark. A quiet cta's stamp/on aliases this row wherever the engine
+        // ships it soft (since 2026-08-29 that is gated per mode — the derived model
+        // ships soft in light, the solid pole in dark).
         { path: 'system/alpha/ink', light: { r: 0, g: 0, b: 0, a: 0.75 }, dark: { r: 1, g: 1, b: 1, a: 0.8 } },
         // the OFFSET LADDER (owner report 2026-08-28: the rungs never reached this
         // plugin — cssRender's comment even said so). Black in light, WHITE in dark,
