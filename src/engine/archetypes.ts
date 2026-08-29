@@ -55,26 +55,28 @@ export function stateStepL(restL: number, _mode: 'light' | 'dark', k: 1 | 2): nu
   return k * STATE_HOVER_K
 }
 
-// The LIGHT ARCHETYPE OVERRIDE (owner 2026-07-28, restoring the original hoverL
-// switch): light mode travels toward black, so a fill already in the near-black /
-// dark archetypes (L below the 'rich' floor, the original 0.40 switch) LIGHTENS
-// instead — it has no dark left to travel into. Bound reads from ARCHETYPES.
-//
-// Dark mode carries NO archetype override any more (owner 2026-07-28). Its old
-// bound — the 'light' archetype floor, 0.85 — declared "no room to lighten" for
-// fills that plainly had room, and yellow was the casualty: warning's dark cta
-// rests at .854 purely because yellow is the most luminous hue, so it flipped and
-// darkened to olive. Under the flat delta the honest test is the RAIL alone: a
-// fill flips only when its full pressed step would overshoot, i.e. above
-// STATE_L_MAX − 2k = 0.88. Nothing in the shipped fleet sits there (0 of 66 ctas,
-// both lanes), so dark fills all lighten — which is the design.
+// The ARCHETYPE OVERRIDES, one per mode, both bounds read from ARCHETYPES: a fill
+// with no real room to travel in its mode's natural direction reverses instead.
+//  · LIGHT (owner 2026-07-28, restoring the original hoverL switch): natural travel
+//    is toward black, so a fill below the 'rich' floor (the original 0.40 switch)
+//    LIGHTENS — it has no dark left to travel into.
+//  · DARK (owner 2026-08-29, the high-rest wash): natural travel is toward white,
+//    and a fill above the 'light' archetype floor DARKENS. Between that floor and
+//    the rail flip (STATE_L_MAX − 2k = 0.88) the L steps still fit but the gamut
+//    does not: the chroma re-clamp at the lifted L collapses the fill toward white
+//    (warning's dark cta rests at .854 — pressed emitted #ffeecc, the hue gone).
+//    Descending reuses the treatment light mode already ships for these fills: the
+//    flipped dark warning trio lands byte-identical to the shipped light trio.
+//    (The 2026-07-28 removal of this same bound answered a different law — under
+//    the retired Weber magnitude the flip travelled ΔL* up to 28 and darkened
+//    yellow to olive; the flat delta moves .05/.10 and keeps the hue.)
 const OVERRIDE_LIGHT_BELOW = ARCHETYPES.find(a => a.name === 'rich')!.min  // 0.40
+const OVERRIDE_DARK_ABOVE = ARCHETYPES.find(a => a.name === 'light')!.min  // 0.85
 
 export function stateFillL(restL: number, mode: 'light' | 'dark', k: 1 | 2): number {
   const natural: 1 | -1 = mode === 'dark' ? 1 : -1 // away from the mode's ground
-  const preferred: 1 | -1 = mode === 'light' && restL < OVERRIDE_LIGHT_BELOW
-    ? (-natural as 1 | -1)
-    : natural
+  const overridden = mode === 'light' ? restL < OVERRIDE_LIGHT_BELOW : restL > OVERRIDE_DARK_ABOVE
+  const preferred: 1 | -1 = overridden ? (-natural as 1 | -1) : natural
   // direction commits on the PRESSED (2×) budget so hover and pressed can never
   // split directions when only the smaller step fits before the rail.
   const fits = (d: 1 | -1) => {
