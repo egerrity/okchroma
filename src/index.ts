@@ -53,6 +53,9 @@ export {
   toHex,
   stopHex,
   OFFSET_ALPHAS,
+  SHADOW_ALPHAS,
+  SCRIM_ALPHA,
+  type ShadowRung,
   ctaNeedsBorder,
   ctaBorderRung,
   pageStopFor,
@@ -92,6 +95,8 @@ export {
   STAMP_EDGE,
   STAMP_ON,
   STAMP_STATE_LEAVES,
+  SYSTEM_LEAF,
+  SURFACE_PLANE_LAW,
 } from './engine/tokenNames'
 export { SIGNAL_EMIT_NAME } from './engine/signals'
 

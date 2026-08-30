@@ -253,6 +253,60 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
   }
 }
 
+// ── THE SYSTEM GROUP (engine worklist B2–B7, 2026-08-29): the requirement-table rows
+// ship through the JS emit now. Ground truth is spelled LITERALLY here — the values the
+// token layer and both plugins carry — so a drifted register constant fails this script
+// instead of silently re-pinning itself (the C40 snapshot lesson).
+{
+  const SURFACE_TRUTH: Record<string, { light: string; dark: string }> = {
+    dim: { light: 'paper-95', dark: 'paper-100' },
+    low: { light: 'paper-97', dark: 'paper-99' },
+    mid: { light: 'paper-99', dark: 'paper-97' },
+    high: { light: 'paper-100', dark: 'paper-95' },
+  }
+  const SHADOW_TRUTH: Record<string, { light: number; dark: number }> = {
+    'shadow-04': { light: 0.04, dark: 0.32 },
+    'shadow-08': { light: 0.08, dark: 0.48 },
+    'shadow-12': { light: 0.12, dark: 0.64 },
+  }
+  for (const mode of ['light', 'dark'] as const) {
+    const m = figma[mode] as any
+    const sys = m.system
+    ok(!!sys, `${mode}.system missing`)
+    if (!sys) continue
+    ok(sys['abs-black']?.$value.hex === '#000000' && sys['abs-black']?.$value.alpha === 1, `${mode}.system.abs-black is not solid black`)
+    ok(sys['abs-white']?.$value.hex === '#ffffff' && sys['abs-white']?.$value.alpha === 1, `${mode}.system.abs-white is not solid white`)
+    // the surface planes: value-equal to the NEUTRAL's own ladder leaf, the four stops
+    // crossed with the mode — paper-100 is always the extreme pole (high light / dim dark)
+    for (const [plane, law] of Object.entries(SURFACE_TRUTH)) {
+      const want = m.neutral[law[mode]]?.$value.hex
+      ok(!!want, `${mode}.neutral.${law[mode]} missing (the surface law's source leaf)`)
+      ok(sys.surface?.[plane]?.$value.hex === want,
+        `${mode}.system.surface.${plane} ${sys.surface?.[plane]?.$value.hex} != neutral ${law[mode]} ${want}`)
+      ok(sys.surface?.[plane]?.$value.alpha === 1, `${mode}.system.surface.${plane} is not opaque`)
+    }
+    const a = sys.alpha
+    ok(a?.transparent?.$value.alpha === 0, `${mode}.system.alpha.transparent is not alpha 0`)
+    ok(a?.['abs-black-060']?.$value.hex === '#000000' && a?.['abs-black-060']?.$value.alpha === 0.6,
+      `${mode}.system.alpha.abs-black-060 is not black@0.60 (the scrim is mode-invariant)`)
+    // the soft on-text pole: black@.75 light / white@.80 dark — must equal the register
+    // the neutral's quiet stamp/on already rides (asserted against SOFT_ON_CTA_ALPHA above)
+    ok(a?.ink?.$value.hex === (mode === 'dark' ? '#ffffff' : '#000000') && a?.ink?.$value.alpha === (mode === 'dark' ? 0.8 : 0.75),
+      `${mode}.system.alpha.ink is not the soft pole register (got ${a?.ink?.$value.hex}@${a?.ink?.$value.alpha})`)
+    // offsets: constant alpha per rung, color flips with the mode (a stroke sits ON the
+    // fill, so unlike the shadows dark does not scale up)
+    for (const [k, alpha] of [['006', 0.06], ['008', 0.08], ['016', 0.16]] as const)
+      ok(a?.[k]?.$value.alpha === alpha && a?.[k]?.$value.hex === (mode === 'light' ? '#000000' : '#ffffff'),
+        `${mode}.system.alpha.${k} is not ${mode === 'light' ? 'black' : 'white'}@${alpha}`)
+    // shadows: pure black, dark heavier by necessity
+    for (const [k, truth] of Object.entries(SHADOW_TRUTH))
+      ok(a?.[k]?.$value.hex === '#000000' && a?.[k]?.$value.alpha === truth[mode],
+        `${mode}.system.alpha.${k} is not black@${truth[mode]}`)
+  }
+  ok(JSON.stringify(keyTree((figma.light as any).system)) === JSON.stringify(keyTree((figma.dark as any).system)),
+    'system keys differ across modes')
+}
+
 // ── THE CTA-BORDER GATE (owner 2026-07-31) ───────────────────────────────────────────────────
 // Until this round NOTHING asserted ctaNeedsBorder: the only regression evidence was an
 // ext-overrides-snapshot diff, which is exactly the blind spot CATALOG C40 was written about —

@@ -87,6 +87,51 @@ export const STAMP_LEAF = {
   ON: STAMP_STATE_LEAVES[STAMP_ON],
 } as const
 
+// ── the SYSTEM rows (engine worklist B2–B7, 2026-08-29): the requirement-table
+// rows that used to have values only in the plugins' STATIC_UTILS and the token
+// layer (tokens/semantic.css). themeToFigma emits them under these paths now, so
+// object consumers ride this roster instead of spelling the strings — the same
+// break-don't-drift contract as STAMP_LEAF. Spellings are the CANONICAL paths
+// tokenDescriptions keys on (its zero-import rule bars it from importing these;
+// desc-audit's coverage walk keeps the two tables honest).
+export const SYSTEM_LEAF = {
+  ABS_BLACK: 'system/abs-black',
+  ABS_WHITE: 'system/abs-white',
+  SURFACE: {
+    DIM: 'system/surface/dim',
+    LOW: 'system/surface/low',
+    MID: 'system/surface/mid',
+    HIGH: 'system/surface/high',
+  },
+  ALPHA: {
+    TRANSPARENT: 'system/alpha/transparent',
+    SCRIM: 'system/alpha/abs-black-060',
+    INK: 'system/alpha/ink',
+    OFFSET_006: 'system/alpha/006',
+    OFFSET_008: 'system/alpha/008',
+    OFFSET_016: 'system/alpha/016',
+    SHADOW_04: 'system/alpha/shadow-04',
+    SHADOW_08: 'system/alpha/shadow-08',
+    SHADOW_12: 'system/alpha/shadow-12',
+  },
+} as const
+
+// THE SURFACE-PLANE LAW (the one per-mode reversal, owner spec 2026-07-24 —
+// prose in tokens/semantic.css): both themes use the SAME four ladder stops in
+// reversed order, elevation always moving toward paper-100's side of the ramp.
+// paper-100 flips white→black with the mode, so it is always the extreme pole —
+// the high in light, the dim in dark. This table is the law's ONE machine-readable
+// home: semantic.css states it as static aliases, the community plugin's
+// aliasElev wires it, and themeToFigma's system group resolves it — consumers
+// must never respell the reversal themselves. Leaf names derive from
+// SHARED_NAMES/PAPER_100 so a stop relabel updates the law for free.
+export const SURFACE_PLANE_LAW: Record<string, { light: string; dark: string }> = {
+  [SYSTEM_LEAF.SURFACE.DIM]: { light: SHARED_NAMES[3], dark: PAPER_100 },
+  [SYSTEM_LEAF.SURFACE.LOW]: { light: SHARED_NAMES[2], dark: SHARED_NAMES[1] },
+  [SYSTEM_LEAF.SURFACE.MID]: { light: SHARED_NAMES[1], dark: SHARED_NAMES[2] },
+  [SYSTEM_LEAF.SURFACE.HIGH]: { light: PAPER_100, dark: SHARED_NAMES[3] },
+}
+
 // (the paper overlays — paper-99-overlay etc, owner round 2026-08-13 — are PARKED:
 // owner 2026-08-18, "remove them for now and come back". Emission is off everywhere;
 // the solve lives on in alphaPapers.ts under audit:alpha; existing rows in files

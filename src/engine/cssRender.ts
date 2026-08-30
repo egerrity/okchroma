@@ -145,6 +145,23 @@ export const offsetTokenPath = (rung: OffsetRung) => `base/alpha/${offsetLeafNam
 // as the property of one token. Nothing about it is cta-specific, so any border that wants the
 // same quiet edge can point at it. Renamed in place via RENAMED_LEAVES so a file that already
 // carries system/alpha/cta-border adopts the row instead of gaining a duplicate.
+// THE SHADOW LADDER + THE SCRIM (engine worklist B3/B4, 2026-08-29): the values
+// tokens/semantic.css and both plugins have carried as literals, single-sourced so
+// the JS emit (figmaRender's system group) and the ext payload cannot drift.
+// Shadows are pure black; dark is heavier by necessity — near black a light-mode
+// alpha vanishes — so the same three roles ride 32/48/64%. The scrim is black at
+// 60% in BOTH modes (spelled by its composition — abs-black-060 — because it is
+// honest across modes; owner export 2026-08-18). plugin/code.ts's STATIC_UTILS
+// stays a literal mirror (the sandbox bundle imports no engine module);
+// figma-verify pins the emitted values so a drift there fails loudly here.
+export const SHADOW_ALPHAS = {
+  4: { light: 0.04, dark: 0.32 },
+  8: { light: 0.08, dark: 0.48 },
+  12: { light: 0.12, dark: 0.64 },
+} as const
+export type ShadowRung = keyof typeof SHADOW_ALPHAS
+export const SCRIM_ALPHA = 0.6
+
 export const TRANSPARENT_VAR = '--alpha-transparent'
 export const offsetRgba = (rung: OffsetRung, mode: 'light' | 'dark'): string =>
   mode === 'light' ? `rgba(0, 0, 0, ${OFFSET_ALPHAS[rung]})` : `rgba(255, 255, 255, ${OFFSET_ALPHAS[rung]})`

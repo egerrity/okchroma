@@ -1,8 +1,8 @@
 
 
-import { toHex, ctaNeedsBorder, pageStopFor, ctaBorderRung, OFFSET_ALPHAS, type OffsetRung } from './cssRender'
+import { toHex, ctaNeedsBorder, pageStopFor, ctaBorderRung, OFFSET_ALPHAS, SHADOW_ALPHAS, SCRIM_ALPHA, type OffsetRung } from './cssRender'
 import { srgbEmitChannels } from './colorMath'
-import { stopTokenName, tokenOrder, STAMP_FILL, STAMP_FILL_HOVER, STAMP_FILL_PRESSED, STAMP_EDGE, STAMP_ON, STAMP_STATE_LEAVES, PAPER_100, INK_0 } from './tokenNames'
+import { stopTokenName, tokenOrder, STAMP_FILL, STAMP_FILL_HOVER, STAMP_FILL_PRESSED, STAMP_EDGE, STAMP_ON, STAMP_STATE_LEAVES, PAPER_100, INK_0, SYSTEM_LEAF, SURFACE_PLANE_LAW } from './tokenNames'
 import { CSS_FAMILY } from './tokenDescriptions'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
 import { OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, SOFT_ON_CTA_ALPHA, softOnCtaPasses, escapeCtaFamily, resolveLinkTrio, resolveLinkInverseTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
@@ -349,6 +349,42 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
         ctaFamily(sig.scale, mode, sig.name),
       )
     }
+    // ── the SYSTEM group (engine worklist B2–B7, 2026-08-29): the requirement-table
+    // rows that had values only in the plugins' STATIC_UTILS and the token layer now
+    // ship through the JS emit — object consumers (MUI, RN) need values, not var()
+    // aliases. Additive tail: every existing consumer picks named groups, so nothing
+    // walks into this unasked. Paths ride SYSTEM_LEAF; values mirror
+    // tokens/semantic.css and both plugins 1:1.
+    const pole = (white: boolean, alpha: number): FigmaColorToken => {
+      const c = white ? 1 : 0
+      return {
+        $type: 'color',
+        $value: { colorSpace: 'srgb', components: [c, c, c], alpha, hex: white ? '#ffffff' : '#000000' },
+      }
+    }
+    putLeaf(g, SYSTEM_LEAF.ABS_BLACK, colorFromHex(false))
+    putLeaf(g, SYSTEM_LEAF.ABS_WHITE, colorFromHex(true))
+    // the surface planes SPLICE the neutral group's own leaves per SURFACE_PLANE_LAW
+    // (tokenNames.ts — the law's one machine-readable home): value-equal to the ramp
+    // by construction, the alias posture expressed as object reuse. paper-100 follows
+    // the neutral posture — an absent pole omits the plane rather than inventing one.
+    for (const [path, law] of Object.entries(SURFACE_PLANE_LAW)) {
+      const tok = neutralGroup[law[mode]]
+      if (tok && '$type' in tok) putLeaf(g, path, tok as FigmaColorToken)
+    }
+    // white@0 like the plugins' row (any fully-transparent value aliases here; the
+    // stamp/edge TRANSPARENT_TOKEN stays black@0 — same pixel, its own posture)
+    putLeaf(g, SYSTEM_LEAF.ALPHA.TRANSPARENT, pole(true, 0))
+    putLeaf(g, SYSTEM_LEAF.ALPHA.SCRIM, pole(false, SCRIM_ALPHA))
+    // the soft on-text pole (C43/C9 register): black in light, white in dark, alpha
+    // per mode — the ONE row every quiet cta's stamp/on aliases
+    putLeaf(g, SYSTEM_LEAF.ALPHA.INK, pole(mode === 'dark', SOFT_ON_CTA_ALPHA[mode]))
+    putLeaf(g, SYSTEM_LEAF.ALPHA.OFFSET_006, OFFSET_TOKEN(6, mode))
+    putLeaf(g, SYSTEM_LEAF.ALPHA.OFFSET_008, OFFSET_TOKEN(8, mode))
+    putLeaf(g, SYSTEM_LEAF.ALPHA.OFFSET_016, OFFSET_TOKEN(16, mode))
+    putLeaf(g, SYSTEM_LEAF.ALPHA.SHADOW_04, pole(false, SHADOW_ALPHAS[4][mode]))
+    putLeaf(g, SYSTEM_LEAF.ALPHA.SHADOW_08, pole(false, SHADOW_ALPHAS[8][mode]))
+    putLeaf(g, SYSTEM_LEAF.ALPHA.SHADOW_12, pole(false, SHADOW_ALPHAS[12][mode]))
     return g
   }
 

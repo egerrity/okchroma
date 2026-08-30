@@ -27,7 +27,7 @@
 import { resolveTheme, signalScalesFor, SOFT_ON_CTA_ALPHA, type ResolvedTheme } from '../src/engine/resolve'
 import { themeToFigma, groupEntries, type FigmaGroup, type FigmaColorToken } from '../src/engine/figmaRender'
 import { SIGNALS } from '../src/engine/signals'
-import { OFFSET_ALPHAS, offsetTokenPath, type OffsetRung } from '../src/engine/cssRender'
+import { OFFSET_ALPHAS, offsetTokenPath, SHADOW_ALPHAS, SCRIM_ALPHA, type OffsetRung } from '../src/engine/cssRender'
 import { neutralTintHue, type ContrastProfile, type NeutralLevel } from '../src/engine/colorEngine'
 import { FAMILIES } from '../src/engine/tokenDescriptions'
 
@@ -133,11 +133,13 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
   const out: FlatTok[] = [
     // shadows + the scrim: utility zone (classic hand-tuned rows — the engine never
     // reads them back; the scrim spelled by its composition, black at 60%, honest in
-    // BOTH modes — owner export 2026-08-18)
-    { path: 'utility/shadow-04', ...K, a: dark ? 0.32 : 0.04 },
-    { path: 'utility/shadow-08', ...K, a: dark ? 0.48 : 0.08 },
-    { path: 'utility/shadow-12', ...K, a: dark ? 0.64 : 0.12 },
-    { path: 'utility/abs-black-060', ...K, a: 0.6 },
+    // BOTH modes — owner export 2026-08-18). Values ride the engine's single-sourced
+    // register (cssRender SHADOW_ALPHAS/SCRIM_ALPHA, worklist B3/B4 2026-08-29) so
+    // this payload and the JS emit's system group cannot drift.
+    { path: 'utility/shadow-04', ...K, a: SHADOW_ALPHAS[4][scheme] },
+    { path: 'utility/shadow-08', ...K, a: SHADOW_ALPHAS[8][scheme] },
+    { path: 'utility/shadow-12', ...K, a: SHADOW_ALPHAS[12][scheme] },
+    { path: 'utility/abs-black-060', ...K, a: SCRIM_ALPHA },
   ]
   flatten(g.neutral as FigmaGroup, 'neutral', out)
   // identity rows re-home to the ABSOLUTES (owner 2026-07-27: the unprocessed inputs
