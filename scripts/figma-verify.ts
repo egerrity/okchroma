@@ -298,6 +298,11 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
     for (const [k, alpha] of [['006', 0.06], ['008', 0.08], ['016', 0.16]] as const)
       ok(a?.[k]?.$value.alpha === alpha && a?.[k]?.$value.hex === (mode === 'light' ? '#000000' : '#ffffff'),
         `${mode}.system.alpha.${k} is not ${mode === 'light' ? 'black' : 'white'}@${alpha}`)
+    // the INVERSE ladder: same rungs, pole flipped — white in light, black in dark
+    // (the wash/edge register for inverted grounds; the reversal is the engine's)
+    for (const [k, alpha] of [['inverse-006', 0.06], ['inverse-008', 0.08], ['inverse-016', 0.16]] as const)
+      ok(a?.[k]?.$value.alpha === alpha && a?.[k]?.$value.hex === (mode === 'light' ? '#ffffff' : '#000000'),
+        `${mode}.system.alpha.${k} is not ${mode === 'light' ? 'white' : 'black'}@${alpha} (the flipped pole)`)
     // shadows: pure black, dark heavier by necessity
     for (const [k, truth] of Object.entries(SHADOW_TRUTH))
       ok(a?.[k]?.$value.hex === '#000000' && a?.[k]?.$value.alpha === truth[mode],

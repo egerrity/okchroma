@@ -159,6 +159,10 @@ const NEUTRAL_ONLY: Record<string, Body> = {
 // both cONtrast and a bare on; "buttons" carried butt-ON-s)
 const ABS: Body = { req: 'extreme poles for CTAs, aliased global endpoints' }
 const OFFSET: Body = { req: 'min APCA visibility', theming: 'offsets CTAs in themes where they sit close to the page' }
+// (wording bound by desc-audit: no label words — wash/edge/hover/pressed are path
+// vocabulary — and no scheme talk; "over inverted backgrounds" is the established
+// phrasing, "state layers" carries the intent without a banned word)
+const OFFSET_INVERSE: Body = { req: 'state layers over inverted backgrounds', theming: 'the offset ladder with its pole flipped, so inverted grounds keep the same rungs' }
 const SHADOW: Body = { req: 'drop shadows' }
 const PLANE = (req: string): Body => ({ req, theming: 'aliased to the gray ramp' })
 // ("text action" reworded 2026-08-28: acti-ON fed the "on" flood; "link" is legal
@@ -195,6 +199,12 @@ const SYSTEM: Record<string, Body> = {
   'system/alpha/006': OFFSET,
   'system/alpha/008': OFFSET,
   'system/alpha/016': OFFSET,
+  // the inverse ladder: the offset rungs with the pole flipped per mode, for
+  // washes and edges over inverted backgrounds ("interaction" avoided in the
+  // bodies: acti-ON would feed the "on" flood)
+  'system/alpha/inverse-006': OFFSET_INVERSE,
+  'system/alpha/inverse-008': OFFSET_INVERSE,
+  'system/alpha/inverse-016': OFFSET_INVERSE,
   'system/alpha/shadow-04': SHADOW,
   'system/alpha/shadow-08': SHADOW,
   'system/alpha/shadow-12': SHADOW,

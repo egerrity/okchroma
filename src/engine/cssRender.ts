@@ -170,6 +170,12 @@ export const alphaRootVars = (mode: 'light' | 'dark'): string[] => [
   ...(Object.keys(OFFSET_ALPHAS) as unknown as OffsetRung[])
     .map(Number).sort((a, b) => a - b)
     .map(r => `  ${offsetVarName(r as OffsetRung)}: ${offsetRgba(r as OffsetRung, mode)};`),
+  // the INVERSE ladder: the same rungs, pole flipped per mode — the wash/edge
+  // register for INVERTED grounds (owner 2026-08-29). One spelling with the
+  // Figma row: --alpha-inverse-006 ↔ system/alpha/inverse-006.
+  ...(Object.keys(OFFSET_ALPHAS) as unknown as OffsetRung[])
+    .map(Number).sort((a, b) => a - b)
+    .map(r => `  --alpha-inverse-${offsetLeafName(r as OffsetRung)}: ${offsetRgba(r as OffsetRung, mode === 'light' ? 'dark' : 'light')};`),
 ]
 
 // |Lc| of the cta against the page. apcaLc is SIGNED and order-sensitive — it branches on which
