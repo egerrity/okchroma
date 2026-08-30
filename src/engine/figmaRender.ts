@@ -382,8 +382,8 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     putLeaf(g, SYSTEM_LEAF.ALPHA.OFFSET_006, OFFSET_TOKEN(6, mode))
     putLeaf(g, SYSTEM_LEAF.ALPHA.OFFSET_008, OFFSET_TOKEN(8, mode))
     putLeaf(g, SYSTEM_LEAF.ALPHA.OFFSET_016, OFFSET_TOKEN(16, mode))
-    // the INVERSE ladder: the same rungs with the pole flipped per mode — the
-    // wash/edge register for INVERTED grounds (owner 2026-08-29). The reversal
+    // the INVERSE ladder: the same rungs with the pole flipped per mode —
+    // state layers for INVERTED grounds (owner 2026-08-29). The reversal
     // lives here, like system/surface/*.
     const inv = mode === 'light' ? 'dark' : 'light'
     putLeaf(g, SYSTEM_LEAF.ALPHA.INVERSE_006, OFFSET_TOKEN(6, inv))

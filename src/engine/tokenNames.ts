@@ -112,9 +112,10 @@ export const SYSTEM_LEAF = {
     OFFSET_016: 'system/alpha/016',
     // the INVERSE offset ladder (owner 2026-08-29, the interaction round): the
     // same rungs with the pole flipped per mode — white in light, black in dark
-    // — for washes and edges on INVERTED grounds, whose polarity is opposite
-    // the page's. The reversal lives in the engine (the system/surface posture):
-    // a consumer on an inverted ground names one token and never picks a pole.
+    // — STATE LAYERS for INVERTED grounds, whose polarity is opposite the
+    // page's. (Never call these a "wash": that word belongs to the tinted band
+    // stops.) The reversal lives in the engine (the system/surface posture): a
+    // consumer on an inverted ground names one token and never picks a pole.
     // Colored fills never ride these; their states stay engine-solved stops.
     INVERSE_006: 'system/alpha/inverse-006',
     INVERSE_008: 'system/alpha/inverse-008',
