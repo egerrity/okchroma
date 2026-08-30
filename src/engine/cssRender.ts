@@ -162,6 +162,13 @@ export const SHADOW_ALPHAS = {
 export type ShadowRung = keyof typeof SHADOW_ALPHAS
 export const SCRIM_ALPHA = 0.6
 
+// THE DISABLED OPACITY (owner 2026-08-29 — the worklist's one value specified
+// nowhere, now blessed): disabled is a COMPONENT-LEVEL opacity; colors stay the
+// enabled ones and never swap. Mode-invariant. An opacity, not a color, so it
+// ships as this constant + the token layer's --disabled-opacity row — never as
+// an emitted color token.
+export const DISABLED_OPACITY = 0.38
+
 export const TRANSPARENT_VAR = '--alpha-transparent'
 export const offsetRgba = (rung: OffsetRung, mode: 'light' | 'dark'): string =>
   mode === 'light' ? `rgba(0, 0, 0, ${OFFSET_ALPHAS[rung]})` : `rgba(255, 255, 255, ${OFFSET_ALPHAS[rung]})`

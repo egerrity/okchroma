@@ -43,6 +43,11 @@
   --shadow-04: rgba(0, 0, 0, 0.04);
   --shadow-08: rgba(0, 0, 0, 0.08);
   --shadow-12: rgba(0, 0, 0, 0.12);
+
+  /* Disabled opacity (owner 2026-08-29): disabled is a COMPONENT-LEVEL opacity —
+     colors stay the enabled ones and never swap. Mode-invariant; mirrors the JS
+     API's DISABLED_OPACITY constant 1:1. */
+  --disabled-opacity: 0.38;
 }
 
 [data-brand][data-theme="dark"] {

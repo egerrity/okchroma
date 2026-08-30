@@ -55,6 +55,7 @@ export {
   OFFSET_ALPHAS,
   SHADOW_ALPHAS,
   SCRIM_ALPHA,
+  DISABLED_OPACITY,
   type ShadowRung,
   ctaNeedsBorder,
   ctaBorderRung,
