@@ -90,6 +90,23 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // Name only, same index, same values; every older mark-vintage source below
   // already points straight at wax-74 (the one-hop rule).
   ['mark-74', 'wax-74'],
+  // link nesting (owner 2026-08-31, the same round family): the flat trio + the
+  // inverse leaves fold into state subgroups — link/{default,inverse}/{enabled,
+  // hover,pressed}. The rest word enabled RETURNS (nesting needs a rest leaf;
+  // default became the group word). Every vintage link source below retargets
+  // straight at the new homes (one hop).
+  ['link/default', 'link/default/enabled'],
+  ['link/hover', 'link/default/hover'],
+  ['link/pressed', 'link/default/pressed'],
+  ['link/inverse', 'link/inverse/enabled'],
+  ['link/inverse-hover', 'link/inverse/hover'],
+  ['link/inverse-pressed', 'link/inverse/pressed'],
+  // the offset ladder regains a word (same 2026-08-31 round): direction relative to
+  // the page background, two-digit rungs harmonizing with shadow-04/08/12. The
+  // vintage offset-XX sources below retarget straight at the new homes (one hop).
+  ['alpha/006', 'alpha/away-from-bg/06'],
+  ['alpha/008', 'alpha/away-from-bg/08'],
+  ['alpha/016', 'alpha/away-from-bg/16'],
   // solid → stamp (same round): the 2026-08-18 solid generation becomes a vintage;
   // the cta-era sources below already re-target straight to stamp/ (one hop).
   ['solid/fill', 'stamp/fill'],
@@ -101,17 +118,18 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // link group (its solo group lasted one day, 2026-08-19..20). Multi-segment
   // leaves — the suffix match carries the group word, so system/link/inverse finds
   // a file's system/link-inverse/default and renames it in place.
-  ['link-inverse/default', 'link/inverse'],
-  ['link-inverse/hover', 'link/inverse-hover'],
-  ['link-inverse/pressed', 'link/inverse-pressed'],
+  ['link-inverse/default', 'link/inverse/enabled'],
+  ['link-inverse/hover', 'link/inverse/hover'],
+  ['link-inverse/pressed', 'link/inverse/pressed'],
   // ── SOLID RENAME + REGROUPS (owner 2026-08-18): the cta words → the solid/ state
   // group (fill/fill-hover/fill-pressed/edge/on); the paper overlays fold into the
   // overlay/ subgroup; planes sunken|base → dim|mid; scrim → abs-black-060; the
   // offset ladder drops its word (006/008/016). These CURRENT-name entries must stay
   // FIRST: they are exactly what a 2026-08-12-era file holds as its real variables.
-  // the link rest state follows the solid group's word change (owner 2026-08-18:
-  // enabled died with the cta words — the rest leaf is default)
-  ['link/enabled', 'link/default'],
+  // the link rest state followed the solid group's word change (owner 2026-08-18:
+  // enabled died with the cta words) — and the word RETURNED with the 2026-08-31
+  // nesting (default became the group, so the rest leaf is enabled again)
+  ['link/enabled', 'link/default/enabled'],
   ['cta/enabled', 'stamp/fill'],
   ['cta/hover', 'stamp/fill-hover'],
   ['cta/pressed', 'stamp/fill-pressed'],
@@ -136,9 +154,9 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // further down — resolution ORDER disambiguates, see the plane-order note there.
   ['surface/base', 'surface/mid'],
   ['alpha/scrim', 'alpha/abs-black-060'],
-  ['alpha/offset-06', 'alpha/006'],
-  ['alpha/offset-08', 'alpha/008'],
-  ['alpha/offset-16', 'alpha/016'],
+  ['alpha/offset-06', 'alpha/away-from-bg/06'],
+  ['alpha/offset-08', 'alpha/away-from-bg/08'],
+  ['alpha/offset-16', 'alpha/away-from-bg/16'],
   // ── BAND FLATTENING (owner 2026-08-12): ramp leaves sit FLAT in the family group
   // again — paper-99, wash-92, wax-74, lead-53 … (band word + hyphen + level, the
   // engine's own token names). The 2026-07-27 band nesting (paper/99 …) is retired; only
@@ -300,9 +318,9 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['pop', 'surface/high'],
   ['transparent', 'alpha/transparent'],
   ['scrim', 'alpha/abs-black-060'],
-  ['link', 'link/default'],
-  ['link-hover', 'link/hover'],
-  ['link-pressed', 'link/pressed'],
+  ['link', 'link/default/enabled'],
+  ['link-hover', 'link/default/hover'],
+  ['link-pressed', 'link/default/pressed'],
 ]
 // Group renames (old path prefix → new), migrated in place like the leaves.
 // History: info-color → blue by identity (2026-07-13); then the signal ROLE
@@ -317,7 +335,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
 // duplicated by the same sandbox rule: an import from cssRender would drag the engine
 // into this bundle). Used by the stamp/edge router to turn a leaf's own alpha into
 // its system/alpha row.
-const RUNG_ALPHAS: Record<string, number> = { '006': 0.06, '008': 0.08, '016': 0.16 }
+const RUNG_ALPHAS: Record<string, number> = { 'away-from-bg/06': 0.06, 'away-from-bg/08': 0.08, 'away-from-bg/16': 0.16 }
 
 const RENAMED_GROUPS: Array<[string, string]> = [
   // the 2026-08-21 family rename: the theme-layer role group brand/secondary → brand/alt
@@ -669,9 +687,9 @@ figma.ui.onmessage = async (msg) => {
         // plugin — cssRender's comment even said so). Black in light, WHITE in dark,
         // constant alpha per rung (a stroke sits on the fill, so unlike the shadows it
         // does not scale up in dark). The stamp/edge writer below aliases these.
-        { path: 'system/alpha/006', light: { r: 0, g: 0, b: 0, a: 0.06 }, dark: { r: 1, g: 1, b: 1, a: 0.06 } },
-        { path: 'system/alpha/008', light: { r: 0, g: 0, b: 0, a: 0.08 }, dark: { r: 1, g: 1, b: 1, a: 0.08 } },
-        { path: 'system/alpha/016', light: { r: 0, g: 0, b: 0, a: 0.16 }, dark: { r: 1, g: 1, b: 1, a: 0.16 } },
+        { path: 'system/alpha/away-from-bg/06', light: { r: 0, g: 0, b: 0, a: 0.06 }, dark: { r: 1, g: 1, b: 1, a: 0.06 } },
+        { path: 'system/alpha/away-from-bg/08', light: { r: 0, g: 0, b: 0, a: 0.08 }, dark: { r: 1, g: 1, b: 1, a: 0.08 } },
+        { path: 'system/alpha/away-from-bg/16', light: { r: 0, g: 0, b: 0, a: 0.16 }, dark: { r: 1, g: 1, b: 1, a: 0.16 } },
         { path: 'system/alpha/shadow-04', light: { r: 0, g: 0, b: 0, a: 0.04 }, dark: { r: 0, g: 0, b: 0, a: 0.32 } },
         { path: 'system/alpha/shadow-08', light: { r: 0, g: 0, b: 0, a: 0.08 }, dark: { r: 0, g: 0, b: 0, a: 0.48 } },
         { path: 'system/alpha/shadow-12', light: { r: 0, g: 0, b: 0, a: 0.12 }, dark: { r: 0, g: 0, b: 0, a: 0.64 } },
@@ -1033,9 +1051,9 @@ figma.ui.onmessage = async (msg) => {
       // link-pressed leaves (third column) — prims are hidden and unbound, renaming
       // them buys nothing.
       const LINK_LEAVES = [
-        ['link/default', 'lead-53', 'link'],
-        ['link/hover', 'ink-42', 'link-hover'],
-        ['link/pressed', 'ink-30', 'link-pressed'],
+        ['link/default/enabled', 'lead-53', 'link'],
+        ['link/default/hover', 'ink-42', 'link-hover'],
+        ['link/default/pressed', 'ink-30', 'link-pressed'],
       ] as const
       // ANY missing leaf triggers the backfill (review-caught: a hand-deleted
       // link-hover/link-pressed pair used to recreate black in other modes unbackfilled)
@@ -1088,9 +1106,9 @@ figma.ui.onmessage = async (msg) => {
       // theme leaves live INSIDE the link group (owner regroup 2026-08-20):
       // link/inverse·inverse-hover·inverse-pressed, six flat leaves with the trio above
       const LINK_INVERSE_LEAVES = [
-        ['link/inverse', 'link'],
-        ['link/inverse-hover', 'link-hover'],
-        ['link/inverse-pressed', 'link-pressed'],
+        ['link/inverse/enabled', 'link'],
+        ['link/inverse/hover', 'link-hover'],
+        ['link/inverse/pressed', 'link-pressed'],
       ] as const
       if (linkInvGrp) {
         const invIsNew = LINK_INVERSE_LEAVES.some(([themeLeaf]) => !themeByName.has(`system/${themeLeaf}`))
@@ -1218,7 +1236,7 @@ figma.ui.onmessage = async (msg) => {
           }
           const neutralTarget = aliasTarget('neutral/paper-99')
           const neutralKey = neutralTarget?.startsWith('system/neutral/') ? neutralTarget.split('/')[2] : null
-          const linkTarget = aliasTarget('link/default')
+          const linkTarget = aliasTarget('link/default/enabled')
           const linkMatch = linkTarget?.match(/^system\/link\/([0-9a-fA-F]{6})\/link$/)
           reconstructed.push({ brand: m.name, primaryHex, altHex, neutralKey, linkSeed: linkMatch?.[1] ?? null, profile })
         }

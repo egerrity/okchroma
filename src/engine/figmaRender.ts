@@ -233,8 +233,9 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     // era leaned on integer-key enumeration putting 100 ahead of 99 inside paper/).
     const p0 = mode === 'light' ? nScale.paper0 : nScale.paper0Dark
     const ramp = rampGroup(nScale[mode], mode === 'light' ? nScale.onFillTextIsWhite : nScale.onFillTextIsWhiteDark, neutralExtra(mode))
-    // ink-0 rides WITH the neutral ramp too (RESOLVED off the pole, owner 2026-08-28 —
-    // the paper-100 treatment; was a plugin-side #000/#fff literal): spliced directly
+    // ink-0 rides WITH the neutral ramp too (the LITERAL pole again — owner 2026-08-31
+    // walked back the 2026-08-28 seam resolver; the engine now mints the #000/#fff the
+    // plugins once hand-wrote, keeping the emission architecture): spliced directly
     // after ink-30 so the flat group keeps ladder order by insertion (flat leaves are
     // never integer keys — see groupEntries). Missing field = the leaf is omitted and
     // the plugins keep whatever the file holds.
@@ -379,16 +380,16 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     // the soft on-text pole (C43/C9 register): black in light, white in dark, alpha
     // per mode — the ONE row every quiet cta's stamp/on aliases
     putLeaf(g, SYSTEM_LEAF.ALPHA.INK, pole(mode === 'dark', SOFT_ON_CTA_ALPHA[mode]))
-    putLeaf(g, SYSTEM_LEAF.ALPHA.OFFSET_006, OFFSET_TOKEN(6, mode))
-    putLeaf(g, SYSTEM_LEAF.ALPHA.OFFSET_008, OFFSET_TOKEN(8, mode))
-    putLeaf(g, SYSTEM_LEAF.ALPHA.OFFSET_016, OFFSET_TOKEN(16, mode))
+    putLeaf(g, SYSTEM_LEAF.ALPHA.AWAY_FROM_BG_06, OFFSET_TOKEN(6, mode))
+    putLeaf(g, SYSTEM_LEAF.ALPHA.AWAY_FROM_BG_08, OFFSET_TOKEN(8, mode))
+    putLeaf(g, SYSTEM_LEAF.ALPHA.AWAY_FROM_BG_16, OFFSET_TOKEN(16, mode))
     // the INVERSE ladder: the same rungs with the pole flipped per mode —
     // state layers for INVERTED grounds (owner 2026-08-29). The reversal
     // lives here, like system/surface/*.
     const inv = mode === 'light' ? 'dark' : 'light'
-    putLeaf(g, SYSTEM_LEAF.ALPHA.INVERSE_006, OFFSET_TOKEN(6, inv))
-    putLeaf(g, SYSTEM_LEAF.ALPHA.INVERSE_008, OFFSET_TOKEN(8, inv))
-    putLeaf(g, SYSTEM_LEAF.ALPHA.INVERSE_016, OFFSET_TOKEN(16, inv))
+    putLeaf(g, SYSTEM_LEAF.ALPHA.TOWARD_BG_06, OFFSET_TOKEN(6, inv))
+    putLeaf(g, SYSTEM_LEAF.ALPHA.TOWARD_BG_08, OFFSET_TOKEN(8, inv))
+    putLeaf(g, SYSTEM_LEAF.ALPHA.TOWARD_BG_16, OFFSET_TOKEN(16, inv))
     putLeaf(g, SYSTEM_LEAF.ALPHA.SHADOW_04, pole(false, SHADOW_ALPHAS[4][mode]))
     putLeaf(g, SYSTEM_LEAF.ALPHA.SHADOW_08, pole(false, SHADOW_ALPHAS[8][mode]))
     putLeaf(g, SYSTEM_LEAF.ALPHA.SHADOW_12, pole(false, SHADOW_ALPHAS[12][mode]))

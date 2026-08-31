@@ -77,7 +77,7 @@ const COLUMNS: Column[] = ['light', 'dark']
 // own decorative strokes when converting a pre-existing raw value to the alias, never to write one.
 // 0.12 is the RETIRED rung (owner 2026-07-31) and stays in the recognise set precisely because
 // files in the wild still hold it — dropping it would leave those raw forever.
-const RUNG_ALPHAS: Record<string, number> = { '006': 0.06, '008': 0.08, '016': 0.16 }
+const RUNG_ALPHAS: Record<string, number> = { 'away-from-bg/06': 0.06, 'away-from-bg/08': 0.08, 'away-from-bg/16': 0.16 }
 const RETIRED_RUNG_ALPHA = 0.12
 
 // RETIRED CANONICAL SIGNAL VALUES (owner report 2026-08-03: "the warning ink-9 [is]
@@ -141,7 +141,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['ink-53-aa', 'lead-53'],
   ['ink-42-aa', 'ink-42'],
   ['ink-30-aaa', 'ink-30'],
-  ['absolute/secondary', 'absolute/alt'],
+  ['absolute/secondary', 'absolute/brand-alt'],
   // ── GUARANTEE-ROUND PASS 1 (owner 2026-08-27): ink-53 → lead-53, the band-word
   // split the group guarantees need. Name only, same index, same values; older
   // ink-53-vintage sources already point straight at lead-53 (the one-hop rule).
@@ -150,6 +150,27 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // Name only, same index, same values; older mark-vintage sources already point
   // straight at wax-74 (the one-hop rule).
   ['mark-74', 'wax-74'],
+  // link nesting (owner 2026-08-31, the same round family): the flat trio + the
+  // inverse leaves fold into state subgroups — link/{default,inverse}/{enabled,
+  // hover,pressed}; enabled returns as the rest leaf (default became the group).
+  // Vintage link sources below retarget straight at the new homes (one hop).
+  ['link/default', 'link/default/enabled'],
+  ['link/hover', 'link/default/hover'],
+  ['link/pressed', 'link/default/pressed'],
+  ['link/inverse', 'link/inverse/enabled'],
+  ['link/inverse-hover', 'link/inverse/hover'],
+  ['link/inverse-pressed', 'link/inverse/pressed'],
+  // the offset ladder regains a word (same 2026-08-31 round): direction relative to
+  // the page background, two-digit rungs harmonizing with shadow-04/08/12. The
+  // vintage offset-XX sources below retarget straight at the new homes (one hop).
+  ['alpha/006', 'alpha/away-from-bg/06'],
+  ['alpha/008', 'alpha/away-from-bg/08'],
+  ['alpha/016', 'alpha/away-from-bg/16'],
+  // the identity absolutes join the family words (same 2026-08-31 round):
+  // primary → brand, alt → brand-alt. The community plugin's system/abs-* rows
+  // deliberately DRIFT (owner: the community build is her sharing mirror only).
+  ['absolute/primary', 'absolute/brand'],
+  ['absolute/alt', 'absolute/brand-alt'],
   // solid → stamp (same round): the 2026-08-18 solid generation becomes a vintage;
   // the cta-era sources below already re-target straight to stamp/ (one hop).
   ['solid/fill', 'stamp/fill'],
@@ -161,9 +182,9 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // link group (its solo group lasted one day, 2026-08-19..20). Multi-segment
   // leaves — the suffix match carries the group word, so base/link/inverse finds
   // a file's base/link-inverse/default and renames it in place.
-  ['link-inverse/default', 'link/inverse'],
-  ['link-inverse/hover', 'link/inverse-hover'],
-  ['link-inverse/pressed', 'link/inverse-pressed'],
+  ['link-inverse/default', 'link/inverse/enabled'],
+  ['link-inverse/hover', 'link/inverse/hover'],
+  ['link-inverse/pressed', 'link/inverse/pressed'],
   // ── SOLID RENAME + OWNERSHIP ZONES (owner 2026-08-18): the cta words → the solid/
   // state group; overlays fold into overlay/; planes sunken|base → dim|mid; scrim →
   // abs-black-060; the offset ladder drops its word; the system rows re-home by zone
@@ -171,7 +192,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // stay FIRST: they are exactly what a 2026-08-12-era file holds as its variables.
   // the link rest state follows the solid group's word change (owner 2026-08-18:
   // enabled died with the cta words — the rest leaf is default)
-  ['link/enabled', 'link/default'],
+  ['link/enabled', 'link/default/enabled'],
   ['cta/enabled', 'stamp/fill'],
   ['cta/hover', 'stamp/fill-hover'],
   ['cta/pressed', 'stamp/fill-pressed'],
@@ -196,16 +217,16 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // ensure ORDER disambiguates (low direct-hits before mid's legacy lookup).
   ['surface/base', 'surface/mid'],
   ['alpha/scrim', 'abs-black-060'],
-  ['alpha/offset-06', 'alpha/006'],
-  ['alpha/offset-08', 'alpha/008'],
-  ['alpha/offset-16', 'alpha/016'],
+  ['alpha/offset-06', 'alpha/away-from-bg/06'],
+  ['alpha/offset-08', 'alpha/away-from-bg/08'],
+  ['alpha/offset-16', 'alpha/away-from-bg/16'],
   ['alpha/shadow-04', 'shadow-04'],
   ['alpha/shadow-08', 'shadow-08'],
   ['alpha/shadow-12', 'shadow-12'],
   ['abs-black', 'absolute/black'],
   ['abs-white', 'absolute/white'],
-  ['abs-primary', 'absolute/primary'],
-  ['abs-secondary', 'absolute/alt'],
+  ['abs-primary', 'absolute/brand'],
+  ['abs-secondary', 'absolute/brand-alt'],
   // ── BAND FLATTENING (owner 2026-08-12): ramp leaves sit FLAT in the family group
   // again — paper-99, wash-92, wax-74, lead-53 … (band word + hyphen + level,
   // the engine's own token names). The 2026-07-27 band nesting (paper/99 …) is
@@ -303,7 +324,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // entry above — candidates are prefix-scoped, and no other path ends in /offset-12. Needed
   // because the row shipped under the old name at b72bfd9, so an already-imported file must
   // adopt it in place rather than gain a duplicate.
-  ['alpha/cta-border', 'alpha/008'],
+  ['alpha/cta-border', 'alpha/away-from-bg/08'],
   // ── THE RUNG LADDER (owner 2026-07-31). offset-12 is retired: the ladder is offset-06 for the
   // secondary, offset-08 for the neutral, offset-16 for the primary and the signals, and no
   // family lands on 12 any more. The NEUTRAL was offset-12's only real consumer (in shipped dist
@@ -315,7 +336,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // does NOT bump createdVars, so seedFresh never runs and the row keeps its old 0.12 under the
   // new name — a token called offset-08 holding 12%. The value-correction pass further down
   // (the RUNG_ALPHAS loop) is what actually re-values it; do not delete one without the other.
-  ['alpha/offset-12', 'alpha/008'],
+  ['alpha/offset-12', 'alpha/away-from-bg/08'],
   // ── THE 2026-07-29 COLLAPSE, under C49 numbering. highlight/9 and highlight/on are
   // DELETED (they ORPHAN — the plugin reports orphans, it never deletes a user's
   // variables). Of C33's three downshift entries only the first survives: C49 gave the
@@ -379,9 +400,9 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['pop', 'surface/high'],
   ['transparent', 'alpha/transparent'],
   ['scrim', 'abs-black-060'],
-  ['link', 'link/default'],
-  ['link-hover', 'link/hover'],
-  ['link-pressed', 'link/pressed'],
+  ['link', 'link/default/enabled'],
+  ['link-hover', 'link/default/hover'],
+  ['link-pressed', 'link/default/pressed'],
 ]
 // Group renames (old prefix → new), same in-place idiom. History: info-color →
 // blue by identity (2026-07-13); then the signal ROLE round (owner 2026-07-27)
@@ -781,8 +802,8 @@ figma.ui.onmessage = async (msg) => {
             // count them as new; and abs-secondary follows the SECONDARY POSTURE
             // (the ensure loop skips it when off — counting it would fire a confirm
             // + extension backfill on every apply, forever). Review-caught 2026-07-27.
-            .filter((p: string) => !(p === 'base/absolute/primary' && baseVars.has('brand-primary/identity')))
-            .filter((p: string) => !(p === 'base/absolute/alt'
+            .filter((p: string) => !(p === 'base/absolute/brand' && baseVars.has('brand-primary/identity')))
+            .filter((p: string) => !(p === 'base/absolute/brand-alt'
               && (baseVars.has('brand-secondary/identity') || !(baseHasSecondary || hasSecondary))))
             // C49: a path an inkUpshift will FILL by rename is not new — and a vacating
             // ink/10 name is new even though a row currently squats on it (the strong
@@ -1059,8 +1080,8 @@ figma.ui.onmessage = async (msg) => {
       // it is retired by this very migration, not renamed by A1); only the TARGETS gain
       // the primitive/system/ prefix.
       for (const [oldPath, newPath] of [
-        ['brand-primary/identity', 'base/absolute/primary'],
-        ['brand-secondary/identity', 'base/absolute/alt'],
+        ['brand-primary/identity', 'base/absolute/brand'],
+        ['brand-secondary/identity', 'base/absolute/brand-alt'],
       ] as const) {
         const v = baseVars.get(oldPath)
         if (v && !baseVars.has(newPath)) {
@@ -1070,7 +1091,7 @@ figma.ui.onmessage = async (msg) => {
         }
       }
       for (const t of baseTokens[activeCols[0]]) { // all columns share the path set
-        if (!withSecondary && (isBrandSecondary(t.path) || t.path === 'base/absolute/alt')) continue
+        if (!withSecondary && (isBrandSecondary(t.path) || t.path === 'base/absolute/brand-alt')) continue
         const before = createdVars
         const v = ensure(t.path)
         if (createdVars > before || rebuildBase) seedFresh(v, t.path) // fresh variable (or a rebuild) → seed every active column
@@ -1299,7 +1320,7 @@ figma.ui.onmessage = async (msg) => {
         // base/link/* with its own resolved values, its primary's ink stops
         // or its custom link seed) and the identity absolutes.
         if (EXT_NON_OVERRIDABLE(t.path)) continue
-        if (secondaryMode === 'none' && (isBrandSecondary(t.path) || t.path === 'base/absolute/alt')) continue
+        if (secondaryMode === 'none' && (isBrandSecondary(t.path) || t.path === 'base/absolute/brand-alt')) continue
         work.push(t.path)
       }
       // The pole aliases resolve through ONE hop (they point at the raw abs rows) —

@@ -157,7 +157,7 @@ function buildTokenGroups(): TokGroup[] {
   const borderCell = (mode: 'light' | 'dark') => {
     if (!border[mode]) return <SwatchCell color="transparent" label="→ base/alpha/transparent" />
     const { color } = alphaSwatch(mode === 'light' ? '#000000' : '#ffffff', OFFSET_ALPHAS[rung])
-    return <SwatchCell color={color} label={`→ base/alpha/${String(rung).padStart(3, '0')}`} />
+    return <SwatchCell color={color} label={`→ base/alpha/away-from-bg/${String(rung).padStart(2, '0')}`} />
   }
   const swatch = (h: string) => <SwatchCell color={h} label={h} />
   const alias = (h: string, arrow: string) => <SwatchCell color={h} label={arrow} />
@@ -181,16 +181,16 @@ function buildTokenGroups(): TokGroup[] {
         { token: 'ink-42', role: 'mid text', guarantee: '6.5:1, on every paper', light: swatch(hex(stopAt(L, 10))), dark: swatch(hex(stopAt(D, 10))) },
         { token: 'ink-30', role: 'strong text, inverted fill', guarantee: '7:1, on every paper', light: swatch(hex(stopAt(L, 11))), dark: swatch(hex(stopAt(D, 11))) },
         { token: 'ink-0', role: 'universal anchor, mode-flipping constant, never resolved', guarantee: '–', light: swatch('#000000'), dark: swatch('#ffffff') },
-        { token: 'abs-black', role: 'literal black pole, an alias target', guarantee: '–', light: swatch('#000000'), dark: swatch('#000000') },
-        { token: 'abs-white', role: 'literal white pole, an alias target', guarantee: '–', light: swatch('#ffffff'), dark: swatch('#ffffff') },
-        { token: 'abs-primary', role: "the primary's identity hex (re-homed from `identity`, Figma only)", guarantee: 'never adjusted', light: swatch(scale.identityHex!), dark: swatch(scale.identityHex!) },
-        { token: 'abs-alt', role: "the secondary's identity hex (the derived pastel shown here; a real secondary re-homes its own hex)", guarantee: 'never adjusted', light: swatch(defaultSecondarySeed(TOKEN_REF_HEX)), dark: swatch(defaultSecondarySeed(TOKEN_REF_HEX)) },
+        { token: 'absolute/black', role: 'literal black pole, an alias target', guarantee: '–', light: swatch('#000000'), dark: swatch('#000000') },
+        { token: 'absolute/white', role: 'literal white pole, an alias target', guarantee: '–', light: swatch('#ffffff'), dark: swatch('#ffffff') },
+        { token: 'absolute/brand', role: "the primary's identity hex (re-homed from `identity`, Figma only)", guarantee: 'never adjusted', light: swatch(scale.identityHex!), dark: swatch(scale.identityHex!) },
+        { token: 'absolute/brand-alt', role: "the secondary's identity hex (the derived pastel shown here; a real secondary re-homes its own hex)", guarantee: 'never adjusted', light: swatch(defaultSecondarySeed(TOKEN_REF_HEX)), dark: swatch(defaultSecondarySeed(TOKEN_REF_HEX)) },
         { token: 'alpha/transparent', role: 'fully transparent', guarantee: '–', light: <SwatchCell {...alphaSwatch('#ffffff', 0)} />, dark: <SwatchCell {...alphaSwatch('#ffffff', 0)} /> },
         { token: 'abs-black-060', role: 'modal scrim, spelled by its composition', guarantee: '–', light: <SwatchCell {...alphaSwatch('#000000', 0.6)} />, dark: <SwatchCell {...alphaSwatch('#000000', 0.6)} /> },
         { token: 'alpha/ink', role: 'the soft on-color pole, at alpha (the neutral and default-style secondary)', guarantee: '–', light: <SwatchCell {...alphaSwatch('#000000', SOFT_ON_CTA_ALPHA.light)} />, dark: <SwatchCell {...alphaSwatch('#ffffff', SOFT_ON_CTA_ALPHA.dark)} /> },
-        { token: 'alpha/006', role: 'stamp-edge rung: the secondary', guarantee: '–', light: <SwatchCell {...alphaSwatch('#000000', OFFSET_ALPHAS[6])} />, dark: <SwatchCell {...alphaSwatch('#ffffff', OFFSET_ALPHAS[6])} /> },
-        { token: 'alpha/008', role: 'stamp-edge rung: the neutral', guarantee: '–', light: <SwatchCell {...alphaSwatch('#000000', OFFSET_ALPHAS[8])} />, dark: <SwatchCell {...alphaSwatch('#ffffff', OFFSET_ALPHAS[8])} /> },
-        { token: 'alpha/016', role: 'stamp-edge rung: the primary and the signals', guarantee: '–', light: <SwatchCell {...alphaSwatch('#000000', OFFSET_ALPHAS[16])} />, dark: <SwatchCell {...alphaSwatch('#ffffff', OFFSET_ALPHAS[16])} /> },
+        { token: 'alpha/away-from-bg/06', role: 'stamp-edge rung: the secondary', guarantee: '–', light: <SwatchCell {...alphaSwatch('#000000', OFFSET_ALPHAS[6])} />, dark: <SwatchCell {...alphaSwatch('#ffffff', OFFSET_ALPHAS[6])} /> },
+        { token: 'alpha/away-from-bg/08', role: 'stamp-edge rung: the neutral', guarantee: '–', light: <SwatchCell {...alphaSwatch('#000000', OFFSET_ALPHAS[8])} />, dark: <SwatchCell {...alphaSwatch('#ffffff', OFFSET_ALPHAS[8])} /> },
+        { token: 'alpha/away-from-bg/16', role: 'stamp-edge rung: the primary and the signals', guarantee: '–', light: <SwatchCell {...alphaSwatch('#000000', OFFSET_ALPHAS[16])} />, dark: <SwatchCell {...alphaSwatch('#ffffff', OFFSET_ALPHAS[16])} /> },
         { token: 'alpha/shadow-04', role: 'drop shadow, lightest', guarantee: '–', light: <SwatchCell {...alphaSwatch('#000000', 0.04)} />, dark: <SwatchCell {...alphaSwatch('#000000', 0.32)} /> },
         { token: 'alpha/shadow-08', role: 'drop shadow, mid', guarantee: '–', light: <SwatchCell {...alphaSwatch('#000000', 0.08)} />, dark: <SwatchCell {...alphaSwatch('#000000', 0.48)} /> },
         { token: 'alpha/shadow-12', role: 'drop shadow, strongest', guarantee: '–', light: <SwatchCell {...alphaSwatch('#000000', 0.12)} />, dark: <SwatchCell {...alphaSwatch('#000000', 0.64)} /> },
@@ -205,12 +205,12 @@ function buildTokenGroups(): TokGroup[] {
         { token: 'stamp/on', role: 'computed button text: solid pole on loud fills, pole-at-alpha .75/.80 on quiet fills (derived secondary, neutral)', guarantee: 'chosen by passing', light: swatch(onCtaColor(scale.onFillTextIsWhite)), dark: swatch(onCtaColor(scale.onFillTextIsWhiteDark)) },
         { token: 'stamp/edge', role: 'low-visibility stroke; transparent above the gate', guarantee: 'appears below APCA |Lc| 15 vs the page (taste, not accessibility)', light: borderCell('light'), dark: borderCell('dark') },
         { token: 'identity', role: 'the exact input hex, for logos', guarantee: 'never adjusted', light: swatch(scale.identityHex!), dark: swatch(scale.identityHex!) },
-        { token: 'link/default', role: "hyperlinks; with no custom seed, aliases the primary's lead-53", guarantee: '4.5:1, on every paper', light: alias(hex(stopAt(L, 9)), '→ lead-53'), dark: alias(hex(stopAt(D, 9)), '→ lead-53') },
-        { token: 'link/hover', role: 'default alias → ink-42', guarantee: '6.5:1, on every paper', light: alias(hex(stopAt(L, 10)), '→ ink-42'), dark: alias(hex(stopAt(D, 10)), '→ ink-42') },
-        { token: 'link/pressed', role: 'default alias → ink-30', guarantee: '7:1, on every paper', light: alias(hex(stopAt(L, 11)), '→ ink-30'), dark: alias(hex(stopAt(D, 11)), '→ ink-30') },
-        { token: 'link/inverse', role: 'hyperlinks on inverted (ink-30) fills; same seed as the link, re-solved against the worst shipped ink-30', guarantee: '4.5:1, on every ink-30', light: swatch(hex(inv.link as never)), dark: swatch(hex(inv.linkDark as never)) },
-        { token: 'link/inverse-hover', role: 'hover state', guarantee: '6.5:1, on every ink-30', light: swatch(hex(inv.linkHover as never)), dark: swatch(hex(inv.linkHoverDark as never)) },
-        { token: 'link/inverse-pressed', role: 'pressed state', guarantee: '7:1, on every ink-30', light: swatch(hex(inv.linkPressed as never)), dark: swatch(hex(inv.linkPressedDark as never)) },
+        { token: 'link/default/enabled', role: "hyperlinks; with no custom seed, aliases the primary's lead-53", guarantee: '4.5:1, on every paper', light: alias(hex(stopAt(L, 9)), '→ lead-53'), dark: alias(hex(stopAt(D, 9)), '→ lead-53') },
+        { token: 'link/default/hover', role: 'default alias → ink-42', guarantee: '6.5:1, on every paper', light: alias(hex(stopAt(L, 10)), '→ ink-42'), dark: alias(hex(stopAt(D, 10)), '→ ink-42') },
+        { token: 'link/default/pressed', role: 'default alias → ink-30', guarantee: '7:1, on every paper', light: alias(hex(stopAt(L, 11)), '→ ink-30'), dark: alias(hex(stopAt(D, 11)), '→ ink-30') },
+        { token: 'link/inverse/enabled', role: 'hyperlinks on inverted (ink-30) fills; same seed as the link, re-solved against the worst shipped ink-30', guarantee: '4.5:1, on every ink-30', light: swatch(hex(inv.link as never)), dark: swatch(hex(inv.linkDark as never)) },
+        { token: 'link/inverse/hover', role: 'hover state', guarantee: '6.5:1, on every ink-30', light: swatch(hex(inv.linkHover as never)), dark: swatch(hex(inv.linkHoverDark as never)) },
+        { token: 'link/inverse/pressed', role: 'pressed state', guarantee: '7:1, on every ink-30', light: swatch(hex(inv.linkPressed as never)), dark: swatch(hex(inv.linkPressedDark as never)) },
         { token: 'surface/dim', role: 'the lowest elevation; always the NEUTRAL, never the themed family', guarantee: '–', light: alias(hex(stopAt(NL, 3)), '→ neutral paper-95'), dark: alias(hex(neutral.paper0Dark!), '→ neutral paper-100') },
         { token: 'surface/low', role: 'the page plane; always the NEUTRAL', guarantee: '–', light: alias(hex(stopAt(NL, 2)), '→ neutral paper-97'), dark: alias(hex(stopAt(ND, 1)), '→ neutral paper-99') },
         { token: 'surface/mid', role: 'raised (cards); always the NEUTRAL', guarantee: '–', light: alias(hex(stopAt(NL, 1)), '→ neutral paper-99'), dark: alias(hex(stopAt(ND, 2)), '→ neutral paper-97') },

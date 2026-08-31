@@ -293,16 +293,16 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
     // the neutral's quiet stamp/on already rides (asserted against SOFT_ON_CTA_ALPHA above)
     ok(a?.ink?.$value.hex === (mode === 'dark' ? '#ffffff' : '#000000') && a?.ink?.$value.alpha === (mode === 'dark' ? 0.8 : 0.75),
       `${mode}.system.alpha.ink is not the soft pole register (got ${a?.ink?.$value.hex}@${a?.ink?.$value.alpha})`)
-    // offsets: constant alpha per rung, color flips with the mode (a stroke sits ON the
-    // fill, so unlike the shadows dark does not scale up)
-    for (const [k, alpha] of [['006', 0.06], ['008', 0.08], ['016', 0.16]] as const)
-      ok(a?.[k]?.$value.alpha === alpha && a?.[k]?.$value.hex === (mode === 'light' ? '#000000' : '#ffffff'),
-        `${mode}.system.alpha.${k} is not ${mode === 'light' ? 'black' : 'white'}@${alpha}`)
-    // the INVERSE ladder: same rungs, pole flipped — white in light, black in dark
-    // (the wash/edge register for inverted grounds; the reversal is the engine's)
-    for (const [k, alpha] of [['inverse-006', 0.06], ['inverse-008', 0.08], ['inverse-016', 0.16]] as const)
-      ok(a?.[k]?.$value.alpha === alpha && a?.[k]?.$value.hex === (mode === 'light' ? '#ffffff' : '#000000'),
-        `${mode}.system.alpha.${k} is not ${mode === 'light' ? 'white' : 'black'}@${alpha} (the flipped pole)`)
+    // the away-from-bg ladder: constant alpha per rung, color flips with the mode (a
+    // stroke sits ON the fill, so unlike the shadows dark does not scale up)
+    for (const [k, alpha] of [['06', 0.06], ['08', 0.08], ['16', 0.16]] as const)
+      ok(a?.['away-from-bg']?.[k]?.$value.alpha === alpha && a?.['away-from-bg']?.[k]?.$value.hex === (mode === 'light' ? '#000000' : '#ffffff'),
+        `${mode}.system.alpha.away-from-bg.${k} is not ${mode === 'light' ? 'black' : 'white'}@${alpha}`)
+    // the toward-bg ladder: same rungs, pole flipped — white in light, black in dark
+    // (the state-layer register for inverted grounds; the reversal is the engine's)
+    for (const [k, alpha] of [['06', 0.06], ['08', 0.08], ['16', 0.16]] as const)
+      ok(a?.['toward-bg']?.[k]?.$value.alpha === alpha && a?.['toward-bg']?.[k]?.$value.hex === (mode === 'light' ? '#ffffff' : '#000000'),
+        `${mode}.system.alpha.toward-bg.${k} is not ${mode === 'light' ? 'white' : 'black'}@${alpha} (the flipped pole)`)
     // shadows: pure black, dark heavier by necessity
     for (const [k, truth] of Object.entries(SHADOW_TRUTH))
       ok(a?.[k]?.$value.hex === '#000000' && a?.[k]?.$value.alpha === truth[mode],
@@ -355,13 +355,13 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
         const measured = ctaPageLc(scale, mode, page!) < 15
         ok(measured === should, `${what}: ${mode}.${fam} gate disagrees with a re-measured |Lc| vs the page`)
         // (1) both emitters reached the same verdict
-        const cssFires = new RegExp(`--${cssFam}-stamp-edge: var\\(--alpha-0`).test(block)
+        const cssFires = new RegExp(`--${cssFam}-stamp-edge: var\\(--alpha-away-from-bg-`).test(block)
         ok(cssFires === should, `${what}: ${mode}.${fam} css says ${cssFires}, gate says ${should}`)
         ok((alpha > 0) === should, `${what}: ${mode}.${fam} figma says ${alpha > 0}, gate says ${should}`)
         // (2) and when it fires, at this family's rung, in both emitters
         if (should) {
           ok(Math.abs(alpha - RUNG[fam]) < 1e-9, `${what}: ${mode}.${fam} figma rung ${alpha}, expected ${RUNG[fam]}`)
-          const want = `--${cssFam}-stamp-edge: var(--alpha-${String(RUNG[fam] * 100).padStart(3, '0')});`
+          const want = `--${cssFam}-stamp-edge: var(--alpha-away-from-bg-${String(RUNG[fam] * 100).padStart(2, '0')});`
           ok(block.includes(want), `${what}: ${mode}.${fam} css missing ${want}`)
         }
       }
@@ -372,8 +372,8 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
   const root = signalsCss('wcag')
   for (const rung of [6, 8, 16])
     for (const mode of ['light', 'dark'] as const)
-      ok(root.includes(`--alpha-${String(rung).padStart(3, '0')}: rgba(${mode === 'light' ? '0, 0, 0' : '255, 255, 255'}`),
-        `system alpha row --alpha-${String(rung).padStart(3, '0')} missing from :root (${mode})`)
+      ok(root.includes(`--alpha-away-from-bg-${String(rung).padStart(2, '0')}: rgba(${mode === 'light' ? '0, 0, 0' : '255, 255, 255'}`),
+        `system alpha row --alpha-away-from-bg-${String(rung).padStart(2, '0')} missing from :root (${mode})`)
 }
 
 if (fails.length) { console.error('FAIL:\n' + fails.map(f => '  - ' + f).join('\n')); process.exit(1) }

@@ -446,7 +446,7 @@ rows share the base/ zone:
 - **ramp stops and plumbing**: a single resolved color, no state. The scale stops
   (`base/neutral/paper-99`, `base/brand/ink-53`, … — flat leaves,
   band flattening 2026-08-12), the system
-  poles and alpha ladder (`base/abs-black`, `base/alpha/016`,
+  poles and alpha ladder (`base/abs-black`, `base/alpha/away-from-bg/16`,
   …).
 - **roles**: a state-carrying usage decision, kept in its natural group. The cta family
   inside its own family group (`base/brand/solid/fill-hover`) and the

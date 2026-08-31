@@ -70,9 +70,9 @@ function check(hex: string, tag: string, opts: { exact?: boolean; archetypeOverr
     const nArr = mode === 'light' ? neutral.light : neutral.dark
     const nP0 = mode === 'light' ? neutral.paper0 : neutral.paper0Dark
     const yOf = (s: { L: number; C: number; H: number }) => shippedY(s.L, s.C, s.H)
-    // ink-0 RESOLVED off the pole 2026-08-28 (near-black light / near-white dark) — the
-    // claim now measures the shipped extreme, not the literal; missing field falls back
-    // to the old pole so a partial build still gates
+    // ink-0 is the LITERAL pole again (owner 2026-08-31, walking back the 2026-08-28
+    // resolver) — the claim measures the shipped field, which now IS the pole; a
+    // missing field falls back to the same pole so a partial build still gates
     const nI0 = mode === 'light' ? neutral.ink0 : neutral.ink0Dark
     const inkPoleY = nI0 ? yOf(nI0) : mode === 'light' ? 0 : 1
     for (const f of fams) {

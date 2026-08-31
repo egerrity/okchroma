@@ -145,8 +145,8 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
   // identity rows re-home to the ABSOLUTES (owner 2026-07-27: the unprocessed inputs
   // sit with the poles; zone spellings 2026-08-18). Brand-overridable like base/link.
   const IDENTITY_HOME: Record<string, string> = {
-    'brand/identity': 'base/absolute/primary',
-    'brand-alt/identity': 'base/absolute/alt',
+    'brand/identity': 'base/absolute/brand',
+    'brand-alt/identity': 'base/absolute/brand-alt',
   }
   const brandRows: FlatTok[] = []
   flatten(g.brand as FigmaGroup, 'brand', brandRows)
@@ -170,9 +170,9 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
   const linkRows: FlatTok[] = []
   flatten(g.link as FigmaGroup, '', linkRows)
   const LINK_STATE: Record<string, string> = {
-    'link': 'base/link/default',
-    'link-hover': 'base/link/hover',
-    'link-pressed': 'base/link/pressed',
+    'link': 'base/link/default/enabled',
+    'link-hover': 'base/link/default/hover',
+    'link-pressed': 'base/link/default/pressed',
   }
   for (const t of linkRows) out.push({ ...t, path: LINK_STATE[t.path] ?? t.path })
   // the INVERSE link trio (owner round 2026-08-19): the link seed re-solved for text on
@@ -183,9 +183,9 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
   const linkInvRows: FlatTok[] = []
   flatten(g['link-inverse'] as FigmaGroup, '', linkInvRows)
   const LINK_INVERSE_STATE: Record<string, string> = {
-    'link': 'base/link/inverse',
-    'link-hover': 'base/link/inverse-hover',
-    'link-pressed': 'base/link/inverse-pressed',
+    'link': 'base/link/inverse/enabled',
+    'link-hover': 'base/link/inverse/hover',
+    'link-pressed': 'base/link/inverse/pressed',
   }
   for (const t of linkInvRows) out.push({ ...t, path: LINK_INVERSE_STATE[t.path] ?? t.path })
   // ── the low-usage tail (owner 2026-08-18: built last, panel bottom) ─────────────

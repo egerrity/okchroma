@@ -42,8 +42,8 @@ const PRIMARY_BAND = [M74, I53, I42, I30]
 const SPOTLIGHT_BAND = [M74, I53]
 const WASHES = [W92, W89, W85, W80]
 const PAPERS = [P99, P97, P95]
-const OFFSET_08 = 'base/alpha/008'
-const OFFSET_16 = 'base/alpha/016'
+const OFFSET_08 = 'base/alpha/away-from-bg/08'
+const OFFSET_16 = 'base/alpha/away-from-bg/16'
 const PAPER_100 = 'base/neutral/' + POLE_PAPER
 
 const n = fam(FAMILY.neutral)

@@ -149,9 +149,9 @@ const SCALE: Record<string, Body> = {
 // ── rows only the neutral carries ────────────────────────────────────────────
 const NEUTRAL_ONLY: Record<string, Body> = {
   'paper-100': { req: 'backgrounds, inverted text', theming: f => TINT[f] },
-  // resolved off the pole 2026-08-28 (the paper-100 posture): it tints like the rest
-  // of the neutral now, so it carries the theming line paper-100 does
-  'ink-0': { req: 'max-emphasis text', contrast: AAA_BODY, theming: f => TINT[f] },
+  // the literal pole again (owner 2026-08-31, walking back the 2026-08-28 resolver):
+  // a pole carries no tint, so no theming line (see the TINT comment's ink-0 clause)
+  'ink-0': { req: 'max-emphasis text', contrast: AAA_BODY },
 }
 
 // ── system rows, keyed by full path ──────────────────────────────────────────
@@ -196,15 +196,15 @@ const SYSTEM: Record<string, Body> = {
   // ("fills" reworded 2026-08-18: fill became a label word and is foreign here;
   // "on-color" reworded 2026-08-28: the bare on fed the "on" flood)
   'system/alpha/ink': { req: 'soft text pole for quiet CTAs' },
-  'system/alpha/006': OFFSET,
-  'system/alpha/008': OFFSET,
-  'system/alpha/016': OFFSET,
+  'system/alpha/away-from-bg/06': OFFSET,
+  'system/alpha/away-from-bg/08': OFFSET,
+  'system/alpha/away-from-bg/16': OFFSET,
   // the inverse ladder: the offset rungs with the pole flipped per mode, for
   // washes and edges over inverted backgrounds ("interaction" avoided in the
   // bodies: acti-ON would feed the "on" flood)
-  'system/alpha/inverse-006': OFFSET_INVERSE,
-  'system/alpha/inverse-008': OFFSET_INVERSE,
-  'system/alpha/inverse-016': OFFSET_INVERSE,
+  'system/alpha/toward-bg/06': OFFSET_INVERSE,
+  'system/alpha/toward-bg/08': OFFSET_INVERSE,
+  'system/alpha/toward-bg/16': OFFSET_INVERSE,
   'system/alpha/shadow-04': SHADOW,
   'system/alpha/shadow-08': SHADOW,
   'system/alpha/shadow-12': SHADOW,
@@ -215,12 +215,12 @@ const SYSTEM: Record<string, Body> = {
   'system/surface/mid': PLANE('raised plane — cards, menus'),
   // ("overlays" reworded 2026-08-13: paper-overlay took the word as a label — the C50 law)
   'system/surface/high': PLANE('topmost plane — modals, dialogs'),
-  'system/link/default': LINK('', AA_BODY),
-  'system/link/hover': LINK(' pointer-over', AA_BODY),
-  'system/link/pressed': LINK(' pressed', AAA_BODY),
-  'system/link/inverse': LINK_INVERSE('', AA_BODY),
-  'system/link/inverse-hover': LINK_INVERSE(' pointer-over', AA_BODY),
-  'system/link/inverse-pressed': LINK_INVERSE(' pressed', AAA_BODY),
+  'system/link/default/enabled': LINK('', AA_BODY),
+  'system/link/default/hover': LINK(' pointer-over', AA_BODY),
+  'system/link/default/pressed': LINK(' pressed', AAA_BODY),
+  'system/link/inverse/enabled': LINK_INVERSE('', AA_BODY),
+  'system/link/inverse/hover': LINK_INVERSE(' pointer-over', AA_BODY),
+  'system/link/inverse/pressed': LINK_INVERSE(' pressed', AAA_BODY),
 }
 
 // Both plugins' user-facing path shapes: the ext base uses brand/…, the community
@@ -246,8 +246,10 @@ const PREFIXES: Array<[string, Family]> = [
 const ZONE_MAP: Array<[string, string]> = [
   ['base/absolute/black', 'system/abs-black'],
   ['base/absolute/white', 'system/abs-white'],
-  ['base/absolute/primary', 'system/abs-primary'],
-  ['base/absolute/alt', 'system/abs-alt'],
+  // brand-alt BEFORE brand: canonicalize is first-match startsWith, and brand is a
+  // prefix of brand-alt (the primary/alt pair never collided this way)
+  ['base/absolute/brand-alt', 'system/abs-alt'],
+  ['base/absolute/brand', 'system/abs-primary'],
   ['base/link/', 'system/link/'],
   ['base/alpha/', 'system/alpha/'],
   ['utility/surface/', 'system/surface/'],

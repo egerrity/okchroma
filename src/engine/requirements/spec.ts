@@ -123,14 +123,8 @@ const groupOf = (stop: number): Group => (stop <= 2 ? 'paper' : stop <= 7 ? 'was
 // dark scale.
 export const PAPER0_DARK_ROOT_L = 0.16    // owner-picked (revised 2026-07-02 from 0.145 — the tighter gap below paper-99 (paper-1))
 
-// ink-0 — the OPPOSITE extreme resolves too (owner 2026-08-28: pure pole text rejected, dark
-// worse than light — the last two literals fall). The ink lane extends past ink-30 by this
-// fraction of its own last seam, in BOTH modes, at ink-30's register tint. The fraction is
-// dark paper-100's shipped overshoot of its neighbor seam, so the two extremes stand off
-// their ladders by the same rule; it re-derives if either anchor moves. Computed in
-// generateScale from the RESOLVED stops 10/11 (an extreme is a relationship to its lane's
-// resolved end, not a scaffold of its own — the paper0-sweep precedent, generalized).
-export const INK0_SEAM_OVERSHOOT = (ROOT_L_DARK[1] - PAPER0_DARK_ROOT_L) / (ROOT_L_DARK[2] - ROOT_L_DARK[1])
+// (INK0_SEAM_OVERSHOOT lived here 2026-08-28..31 — the seam-resolved ink-0. Owner
+// walked it back 2026-08-31: ink-0 is the literal pole again, so the fraction fell.)
 const PL_LADDER: Producer = { hue: 'warm-drift', L: 'perceptual', chroma: 'ladder' }
 const PL_TEXT: Producer = { hue: 'warm-drift', L: 'perceptual', chroma: 'brand' }
 // dark scale uses the LIFT variant (owner-adopted 2026-07-02, the blue-recede fix): the H-K solve may

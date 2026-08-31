@@ -46,11 +46,11 @@ export function stopTokenName(stop: number): string {
 }
 
 // The off-scale ladder EXTREMES — not stops of SHARED_NAMES (index-keyed generation
-// never produces them; they flip with the mode). Both RESOLVE now: paper-100 since
-// the 2026-07-02 paper-0 fall, ink-0 since 2026-08-28 (the ink lane extended past
-// ink-30 — never the literal pole; anything needing a true pole aliases the absolute
-// rows instead). One spelling here; the emitters (cssRender anchors, figmaRender's
-// neutral group) reference these instead of re-spelling them.
+// never produces them; they flip with the mode). paper-100 RESOLVES (the 2026-07-02
+// paper-0 fall); ink-0 is the LITERAL pole (#000 light / #fff dark — owner 2026-08-31,
+// walking back the 2026-08-28 seam resolver). One spelling here; the emitters
+// (cssRender anchors, figmaRender's neutral group) reference these instead of
+// re-spelling them.
 export const PAPER_100 = 'paper-100'
 export const INK_0 = 'ink-0'
 
@@ -107,19 +107,20 @@ export const SYSTEM_LEAF = {
     TRANSPARENT: 'system/alpha/transparent',
     SCRIM: 'system/alpha/abs-black-060',
     INK: 'system/alpha/ink',
-    OFFSET_006: 'system/alpha/006',
-    OFFSET_008: 'system/alpha/008',
-    OFFSET_016: 'system/alpha/016',
-    // the INVERSE offset ladder (owner 2026-08-29, the interaction round): the
-    // same rungs with the pole flipped per mode — white in light, black in dark
-    // — STATE LAYERS for INVERTED grounds, whose polarity is opposite the
-    // page's. (Never call these a "wash": that word belongs to the tinted band
-    // stops.) The reversal lives in the engine (the system/surface posture): a
-    // consumer on an inverted ground names one token and never picks a pole.
-    // Colored fills never ride these; their states stay engine-solved stops.
-    INVERSE_006: 'system/alpha/inverse-006',
-    INVERSE_008: 'system/alpha/inverse-008',
-    INVERSE_016: 'system/alpha/inverse-016',
+    // the DIRECTIONAL ladders (owner 2026-08-31, renaming the 2026-08-18 bare rungs
+    // and the 2026-08-29 inverse ladder): away-from-bg is the page-polarity pole
+    // (black in light, white in dark), toward-bg the flipped pole — STATE LAYERS for
+    // INVERTED grounds, whose polarity is opposite the page's. (Never call toward-bg
+    // a "wash": that word belongs to the tinted band stops.) The reversal lives in
+    // the engine: a consumer on an inverted ground names one token and never picks a
+    // pole. Colored fills never ride these; their states stay engine-solved stops.
+    // Rungs are two-digit percent, harmonizing with shadow-04/08/12.
+    AWAY_FROM_BG_06: 'system/alpha/away-from-bg/06',
+    AWAY_FROM_BG_08: 'system/alpha/away-from-bg/08',
+    AWAY_FROM_BG_16: 'system/alpha/away-from-bg/16',
+    TOWARD_BG_06: 'system/alpha/toward-bg/06',
+    TOWARD_BG_08: 'system/alpha/toward-bg/08',
+    TOWARD_BG_16: 'system/alpha/toward-bg/16',
     SHADOW_04: 'system/alpha/shadow-04',
     SHADOW_08: 'system/alpha/shadow-08',
     SHADOW_12: 'system/alpha/shadow-12',
@@ -159,7 +160,7 @@ export const SURFACE_PLANE_LAW: Record<string, { light: string; dark: string }> 
 export const CONTRACT_INVARIANT_ROWS: ReadonlySet<string> = new Set([
   'base/absolute/black', 'base/absolute/white',
   'base/alpha/transparent', 'base/alpha/ink',
-  'base/alpha/006', 'base/alpha/008', 'base/alpha/016',
+  'base/alpha/away-from-bg/06', 'base/alpha/away-from-bg/08', 'base/alpha/away-from-bg/16',
 ])
 export const EXT_NON_OVERRIDABLE = (p: string): boolean =>
   CONTRACT_INVARIANT_ROWS.has(p) || p.startsWith('utility/')
@@ -169,7 +170,7 @@ export const EXT_NON_OVERRIDABLE = (p: string): boolean =>
 // inverse-pressed, so one prefix covers both trios) and the identity absolutes.
 export const EXT_OVERRIDABLE_SYSTEM = (p: string): boolean =>
   p.startsWith('base/link/')
-  || p === 'base/absolute/primary' || p === 'base/absolute/alt'
+  || p === 'base/absolute/brand' || p === 'base/absolute/brand-alt'
 
 // Canonical emit order, uniform across every ramp (the white-label remap shape,
 // an explicit requirement of the original concept). Paper (1–3), wash (4–7),

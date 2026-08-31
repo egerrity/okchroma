@@ -37,7 +37,7 @@ So: do not go looking for the "real" primitives underneath these, and do not tre
 - `ink-30`: heavy-emphasis text, WCAG AAA for standard body text.
 - The three, read in sequence (`lead-53`, `ink-42`, `ink-30`), ARE the text-style CTA's rest/hover/pressed states. There is no separate cta-ink or ink-cta token; if you see one referenced, it is stale.
 
-**near-poles (neutral only): `paper-100`, `ink-0`.** The scale's extended endpoints, beyond `paper-99` and `ink-30`. Both are engine-resolved and tint with the brand hue like every other stop, not a literal black/white pole (`ink-0` used to be a true pole; it was moved onto the tinted lane in the same round that dropped the conformance suffixes). `ink-0` is the max-emphasis text anchor; prefer `ink-30` for running text. If you need an actual pole, that's `abs-black` / `abs-white` under system tokens, not these.
+**near-poles (neutral only): `paper-100`, `ink-0`.** The scale's extended endpoints, beyond `paper-99` and `ink-30`. `paper-100` is engine-resolved and tints with the brand hue like every other stop. `ink-0` is the literal pole: pure black in light, pure white in dark, no tint (it spent three days on the tinted lane; the owner walked that back 2026-08-31). `ink-0` is the max-emphasis text anchor and flips with the mode; prefer `ink-30` for running text. The mode-invariant poles are `abs-black` / `abs-white` under system tokens.
 
 ## The stamp tokens (the CTA family)
 
@@ -81,10 +81,10 @@ Light theme descends the papers as elevation rises toward white; dark ascends th
 ## System tokens
 
 - `--link`, `--link-hover`, `--link-pressed`: the system link color for text on normal surfaces. `--link-inverse`, `--link-inverse-hover`, `--link-inverse-pressed`: the same seed, re-solved for text on inverted (`ink-30`-filled) surfaces. A link is not a text-style CTA; do not restyle links with the text stops.
-- `--alpha-006/-008/-016`: the alpha rungs `stamp-edge` draws from.
+- `--alpha-away-from-bg-06/-08/-16`: the alpha rungs `stamp-edge` draws from. The `--alpha-toward-bg-` trio is the same ladder with the pole flipped, for state layers on inverted grounds.
 - `--shadow-04/-08/-12`: drop shadow alphas. Shadows are always dark, never glows.
 - scrim, transparent: dimming and aliased off-states.
-- `abs-black` / `abs-white`: the literal poles. `paper-100` and `ink-0` look like poles but are tinted near-poles, not this.
+- `abs-black` / `abs-white`: the mode-invariant literal poles. `paper-100` is a tinted near-pole, not this; `ink-0` is a true pole but flips with the mode, while these never flip.
 
 ## Semantic layer (tokens/semantic.css)
 

@@ -127,13 +127,15 @@ export const OFFSET_ALPHAS = { 6: 0.06, 8: 0.08, 16: 0.16 } as const
 export type OffsetRung = keyof typeof OFFSET_ALPHAS
 export const ctaBorderRung = (prefix: string): OffsetRung =>
   prefix === CSS_NEUTRAL ? 8 : prefix === CSS_SECONDARY ? 6 : 16
-// the offset ladder dropped its word (owner rename round 2026-08-18): the rung IS the
-// name, three digits of percent (006/008/016) — honest in both modes because the alpha
-// is constant and only the color flips. One spelling: CSS --alpha-006, ext Figma row
-// base/alpha/006 (the ext zone home; the community plugin creates no offset rows).
-export const offsetLeafName = (rung: OffsetRung) => String(rung).padStart(3, '0')
-export const offsetVarName = (rung: OffsetRung) => `--alpha-${offsetLeafName(rung)}`
-export const offsetTokenPath = (rung: OffsetRung) => `base/alpha/${offsetLeafName(rung)}`
+// the offset ladder regains a word (owner 2026-08-31): DIRECTION relative to the page
+// background — away-from-bg is the page-polarity pole (black in light, white in dark;
+// the alpha is constant, only the color flips), toward-bg the flipped pole (the state
+// layers for inverted grounds, the 2026-08-29 inverse ladder renamed). Rungs are
+// two-digit percent (06/08/16), harmonizing with shadow-04/08/12 in the same family.
+// One spelling: CSS --alpha-away-from-bg-06 ↔ ext Figma row base/alpha/away-from-bg/06.
+export const offsetLeafName = (rung: OffsetRung) => String(rung).padStart(2, '0')
+export const offsetVarName = (rung: OffsetRung) => `--alpha-away-from-bg-${offsetLeafName(rung)}`
+export const offsetTokenPath = (rung: OffsetRung) => `base/alpha/away-from-bg/${offsetLeafName(rung)}`
 
 // The system alpha VARIABLES, never raw values (owner 2026-07-29: *"the rest of them should get
 // aliased to the transparent variable instead of being raw"*). Both mirror rows the Figma side
@@ -177,13 +179,13 @@ export const alphaRootVars = (mode: 'light' | 'dark'): string[] => [
   ...(Object.keys(OFFSET_ALPHAS) as unknown as OffsetRung[])
     .map(Number).sort((a, b) => a - b)
     .map(r => `  ${offsetVarName(r as OffsetRung)}: ${offsetRgba(r as OffsetRung, mode)};`),
-  // the INVERSE ladder: the same rungs, pole flipped per mode — state layers
-  // for INVERTED grounds (owner 2026-08-29; never called a "wash" — that word
-  // is the tinted band's). One spelling with the Figma row:
-  // --alpha-inverse-006 ↔ system/alpha/inverse-006.
+  // the toward-bg ladder (the 2026-08-29 inverse ladder, renamed 2026-08-31): the
+  // same rungs, pole flipped per mode — state layers for INVERTED grounds (never
+  // called a "wash" — that word is the tinted band's). One spelling with the Figma
+  // row: --alpha-toward-bg-06 ↔ system/alpha/toward-bg/06.
   ...(Object.keys(OFFSET_ALPHAS) as unknown as OffsetRung[])
     .map(Number).sort((a, b) => a - b)
-    .map(r => `  --alpha-inverse-${offsetLeafName(r as OffsetRung)}: ${offsetRgba(r as OffsetRung, mode === 'light' ? 'dark' : 'light')};`),
+    .map(r => `  --alpha-toward-bg-${offsetLeafName(r as OffsetRung)}: ${offsetRgba(r as OffsetRung, mode === 'light' ? 'dark' : 'light')};`),
 ]
 
 // |Lc| of the cta against the page. apcaLc is SIGNED and order-sensitive — it branches on which
@@ -271,9 +273,9 @@ export function neutralCss(selector: string, brandH: number, level: NeutralLevel
   const nPage = (mode: 'light' | 'dark') => ctaBorder ? pageStopFor(s, mode) : undefined
   // The universal paper-100/ink-0 anchors ride along (paper-0/ink-12 pre-Stage-B): any scope
   // that carries the ladder must also carry its mode-flipping extremes (semantic aliases like
-  // --surface-high resolve through them). BOTH are the neutral's resolved extremes now
-  // (ink-0 joined 2026-08-28 — the ink lane extended past ink-30, never the literal pole);
-  // the literals survive only as missing-field fallbacks.
+  // --surface-high resolve through them). paper-100 resolves; ink-0 is the LITERAL pole
+  // again (owner 2026-08-31, walking back the 2026-08-28 seam resolver — #000 light,
+  // #fff dark); the fallbacks below match it by construction.
   const p0 = (st: ColorStop | undefined, fallback: string) => (st ? stopHex(st) : fallback)
   const p3Light = brandKindP3Body(CSS_NEUTRAL, s, 'light')
   const p3Dark = brandKindP3Body(CSS_NEUTRAL, s, 'dark')
@@ -480,10 +482,9 @@ export function brandCss(
   // ladder past its generated stops, flipping with the mode. paper-100 (paper-0
   // pre-Stage-B) is a RESOLVED stop of the neutral ramp (white in light; one
   // seam below paper-99 in dark — never absolute black). ink-0 (ink-12 pre-Stage-B,
-  // the anchor) RESOLVES too since 2026-08-28 (owner: pure pole text rejected, dark
-  // worse than light): the neutral's ink lane extended past ink-30 by the paper-100
-  // seam fraction — near-black light, near-white dark, never #000/#fff. Emitted per
-  // mode block; the literals survive only as missing-field fallbacks.
+  // the anchor) is the LITERAL pole again — owner 2026-08-31 walked back the
+  // 2026-08-28 seam resolver: pure #000 light, pure #fff dark, no tint. Emitted per
+  // mode block; the fallbacks match the pole by construction.
   const p0hex = (s: ColorStop | undefined, fallback: string) => (s ? stopHex(s) : fallback)
   const lightAnchors = [`  --${PAPER_100}: ${p0hex(nScale.paper0, '#ffffff')};`, `  --${INK_0}: ${p0hex(nScale.ink0, '#000000')};`]
   const darkAnchors = [`  --${PAPER_100}: ${p0hex(nScale.paper0Dark, '#000000')};`, `  --${INK_0}: ${p0hex(nScale.ink0Dark, '#ffffff')};`]
