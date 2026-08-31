@@ -3,6 +3,7 @@ import { generateScale, generateNeutralScale } from '../../src/engine/colorEngin
 import { stopHex, ctaNeedsBorder, pageStopFor, ctaBorderRung, OFFSET_ALPHAS } from '../../src/engine/cssRender'
 import { defaultSecondarySeed, SOFT_ON_CTA_ALPHA, resolveLinkInverseTrio } from '../../src/engine/resolve'
 import { emitDtcgRamp } from '../../src/engine/requirements/dtcg'
+import { stopTokenName } from '../../src/engine/tokenNames'
 // Real Unify export data, borrowed for the Motivation page's evidence figures.
 // Labels on anything rendered from it use FAMILY hue words only, never theme
 // names (owner 2026-08-08: the export's theme names carry brand identities).
@@ -44,15 +45,21 @@ const Table = ({ head, rows }: { head: React.ReactNode[]; rows: React.ReactNode[
 )
 
 // ── Live example: real generated ramps, computed by the engine ───────────────
-// The shipped bands: paper 1-3, wash 4-7, mark 8, ink 9-11. Band labels and
+// The shipped bands: paper 1-3, wash 4-7, wax 8, lead 9, ink 10-11. Band labels and
 // stop numbers render ONCE, on top; the hue rows stack under them. Column count
 // derives from the scale (--cols) and the spans are asserted against it, so a
 // band change breaks loudly here instead of drifting.
 const RAMP_GROUPS: Array<{ label: string; span: number }> = [
   { label: 'paper', span: 3 }, { label: 'wash', span: 4 },
-  { label: 'mark', span: 1 }, { label: 'ink', span: 3 },
+  { label: 'wax', span: 1 }, { label: 'lead', span: 1 }, { label: 'ink', span: 2 },
 ]
 const RAMP_SET_HEXES = ['#E93D82', '#C61D1B', '#E08A1E', '#E3B505', '#2E9E3F', '#0BA5C0', '#2C5FC9']
+// the digit a stop actually ships under (paper-99 → 99), off the one name table.
+const stopDigit = (stop: number): string => {
+  const digit = stopTokenName(stop).match(/-(\d+)$/)?.[1]
+  if (!digit) throw new Error(`DocsSite: no shipped digit for stop ${stop}`)
+  return digit
+}
 function RampSet() {
   const scales = RAMP_SET_HEXES.map(hex => ({ hex, scale: generateScale(hex, 'docs', undefined, {}) }))
   const cols = scales[0].scale.light.length
@@ -69,13 +76,16 @@ function RampSet() {
         ))}
       </div>
       <div className="d2-rampset-row d2-ramp-nums">
-        {scales[0].scale.light.map(s => <span key={s.stop}>{s.stop}</span>)}
+        {/* the SHIPPED digit, read off the name table — not the ordinal index. Band word
+            above + digit here spells the real token (paper-99 … lead-53 … ink-30), so the
+            figure can be read straight into code; a renumber follows the table for free. */}
+        {scales[0].scale.light.map(s => <span key={s.stop}>{stopDigit(s.stop)}</span>)}
       </div>
       <div className="d2-rampset-rows">
         {scales.map(({ hex, scale }) => (
           <div key={hex} className="d2-rampset-row">
             {scale.light.map(s => (
-              <div key={s.stop} className="d2-rampset-cell" title={`${hex} · stop ${s.stop} · ${stopHex(s)}`}
+              <div key={s.stop} className="d2-rampset-cell" title={`${hex} · ${stopTokenName(s.stop)} · ${stopHex(s)}`}
                 style={{ background: stopHex(s) }} />
             ))}
           </div>
@@ -166,7 +176,7 @@ function buildTokenGroups(): TokGroup[] {
         { token: 'wash-89', role: 'low-hierarchy fill, interaction, decorative', guarantee: '–', light: swatch(hex(stopAt(L, 5))), dark: swatch(hex(stopAt(D, 5))) },
         { token: 'wash-85', role: 'decorative', guarantee: '–', light: swatch(hex(stopAt(L, 6))), dark: swatch(hex(stopAt(D, 6))) },
         { token: 'wash-80', role: 'decorative', guarantee: '–', light: swatch(hex(stopAt(L, 7))), dark: swatch(hex(stopAt(D, 7))) },
-        { token: 'mark-74', role: 'non-text emphasis: borders, UI elements', guarantee: '3:1, on every paper', light: swatch(hex(stopAt(L, 8))), dark: swatch(hex(stopAt(D, 8))) },
+        { token: 'wax-74', role: 'non-text emphasis: borders, UI elements', guarantee: '3:1, on every paper', light: swatch(hex(stopAt(L, 8))), dark: swatch(hex(stopAt(D, 8))) },
         { token: 'lead-53', role: 'emphasis fill and first text stop', guarantee: '4.5:1, on every paper', light: swatch(hex(stopAt(L, 9))), dark: swatch(hex(stopAt(D, 9))) },
         { token: 'ink-42', role: 'mid text', guarantee: '6.5:1, on every paper', light: swatch(hex(stopAt(L, 10))), dark: swatch(hex(stopAt(D, 10))) },
         { token: 'ink-30', role: 'strong text, inverted fill', guarantee: '7:1, on every paper', light: swatch(hex(stopAt(L, 11))), dark: swatch(hex(stopAt(D, 11))) },
@@ -418,7 +428,7 @@ const generation: Article = {
         is a flat calibrated ladder (apparent-lightness solving in dark makes blue recede; the flat
         ladder is deliberate). Chroma is trimmed so light-mode loudness carries over. A fill that
         lands too dark is floored upward: it lifts, never sinks.</LI>
-        <LI><b>Requirements.</b> Declared floors bind after placement, in both modes: mark-74
+        <LI><b>Requirements.</b> Declared floors bind after placement, in both modes: wax-74
         at WCAG 3:1, lead-53/42-aa/30-aaa at 4.5 / 6.5 / 7:1, each guaranteed on every paper
         the family (and its neutral) can produce. A placement that already clears does not
         move. An unmeetable floor marks the stop <Code>unresolvable</Code> instead of fudging.</LI>
@@ -486,7 +496,7 @@ const tokenSchema: Article = {
         file (raise a contrast target) and the resolver honors the edit.
       </P>
       <P>
-        This is a real token, emitted by the engine right now: light <Code>mark-74</Code>,
+        This is a real token, emitted by the engine right now: light <Code>wax-74</Code>,
         carrying its declared WCAG 3:1 require against paper-95:
       </P>
       <LiveToken hex="#3060C0" tokenKey="8" mode="light"
@@ -599,7 +609,7 @@ function UnifyChipGrid() {
   )
 }
 
-// The four band names, painted with live neutral stops from their own bands.
+// The five band names, painted with live neutral stops from their own bands.
 function BandTiles() {
   const scale = generateScale(TOKEN_REF_HEX, 'docs', undefined, {})
   const neutral = generateNeutralScale(scale.brandH, 'default')
@@ -610,11 +620,12 @@ function BandTiles() {
   const tiles = [
     { band: 'paper', bg: at(1), fg: '#202020' },
     { band: 'wash', bg: at(5), fg: '#202020' },
-    { band: 'mark', bg: at(8), fg: '#202020' },
+    { band: 'wax', bg: at(8), fg: '#202020' },
+    { band: 'lead', bg: at(9), fg: '#ffffff' },
     { band: 'ink', bg: at(11), fg: '#ffffff' },
   ]
   return (
-    <figure className="d2-fig" role="img" aria-label="The four band names, each painted with a live neutral stop from its own band: paper, wash, mark, ink.">
+    <figure className="d2-fig" role="img" aria-label="The five band names, each painted with a live neutral stop from its own band: paper, wash, wax, lead, ink.">
       <div className="d2-chips">
         {tiles.map(t => (
           <div key={t.band} className="d2-chip" style={{ background: t.bg, color: t.fg }}>{t.band}</div>
@@ -792,10 +803,14 @@ const motivation: Article = {
       </P>
       <BandTiles />
       <UL>
-        <LI><i>Paper</i> carries inks and marks</LI>
-        <LI><i>Wash</i> adds a touch of color</LI>
-        <LI><i>Mark</i> calls attention</LI>
-        <LI><i>Ink</i> writes</LI>
+        <LI><i>Paper</i> is the versatile surface group. Paper can accept wax, lead, and ink.</LI>
+        <LI><i>Wash</i> is a limited surface group, for highlighting things by stepping up tint
+        from paper. Think wash over ink. Not compatible with lead or wax.</LI>
+        <LI><i>Wax</i> is for large text, icons, and drawing attention. Think crayon on paper.</LI>
+        <LI><i>Lead</i> is a more subtle foreground color. Think pencil on paper. Not compatible
+        with wash.</LI>
+        <LI><i>Ink</i> is the most flexible foreground group. Think pen on paper. Compatible
+        with wash.</LI>
       </UL>
       <P>
         There is more to the full convention than I'll cover here (it's documented{' '}
