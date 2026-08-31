@@ -8,7 +8,7 @@
 //
 // What it gates (all code-grounded, verified against the real pipeline):
 //   1. BAND ORDER + the on-emphasis guarantee, agnostic hue×chroma×L:
-//      (a) lead-53 clears mark-74 by BAND_ORDER_MARGIN against the shared
+//      (a) lead-53 clears wax-74 by BAND_ORDER_MARGIN against the shared
 //          paper-95 anchor, both modes. This invariant NEVER EXISTED — the ordering was
 //          held by incidental spacing, which is exactly how highlight-9 drifted onto
 //          ink-10 unnoticed (drift handoff 2026-07-29). Baseline at the collapse: worst
@@ -17,7 +17,7 @@
 //          deleted on-highlight solve used to guarantee, now that semantic.css declares
 //          the on-emphasis text as a paper token. Baseline: worst 4.96 light / 8.04 dark.
 //   2. structure on the real fleet — identity === input hex.
-//   2b. non-text contrast — stop 8 (mark-74) clears WCAG 1.4.11 3:1 against PAPER-95
+//   2b. non-text contrast — stop 8 (wax-74) clears WCAG 1.4.11 3:1 against PAPER-95
 //      IN BOTH MODES (spec.ts S8 — one declaration since 2026-07-29), swept agnostically
 //      (worst-case hue×chroma×L is the bar).
 //   3. neutral cta is LOW-HIERARCHY — its REST tracks the scale's own stop 4, so it
@@ -100,7 +100,7 @@ for (let H = 0; H < 360; H += 15) for (const C of [0.04, 0.08, 0.12, 0.16, 0.20]
       const margin = ratioOf(ink9, p3) - ratioOf(hl8, p3)
       if (margin < bandWorst[mode]) { bandWorst[mode] = margin; bandWorst[mode === 'light' ? 'lAt' : 'dAt'] = at }
       ok(margin >= BAND_ORDER_MARGIN,
-        `agnostic ${at} ${mode}: lead-53 clears mark-74 by only ${margin.toFixed(2)} (< ${BAND_ORDER_MARGIN})`)
+        `agnostic ${at} ${mode}: lead-53 clears wax-74 by only ${margin.toFixed(2)} (< ${BAND_ORDER_MARGIN})`)
       // (b) the on-emphasis text token must read on the emphasis fill
       const p0 = mode === 'light' ? sc.paper0 : sc.paper0Dark
       if (p0) {
@@ -114,10 +114,10 @@ for (let H = 0; H < 360; H += 15) for (const C of [0.04, 0.08, 0.12, 0.16, 0.20]
   }
 }
 console.log(`=== agnostic band order + on-emphasis: ${bandN} scales (hue×chroma×L × both lanes) ===`)
-console.log(`  lead-53 over mark-74 (vs paper-95, floor ${BAND_ORDER_MARGIN}) worst — light ${bandWorst.light.toFixed(2)} (${bandWorst.lAt}) | dark ${bandWorst.dark.toFixed(2)} (${bandWorst.dAt})`)
+console.log(`  lead-53 over wax-74 (vs paper-95, floor ${BAND_ORDER_MARGIN}) worst — light ${bandWorst.light.toFixed(2)} (${bandWorst.lAt}) | dark ${bandWorst.dark.toFixed(2)} (${bandWorst.dAt})`)
 console.log(`  paper-100 on lead-53 (floor ${ON_EMPHASIS_BAR}) worst        — light ${emphWorst.light.toFixed(2)} (${emphWorst.lAt}) | dark ${emphWorst.dark.toFixed(2)} (${emphWorst.dAt})`)
 
-// ── 1b. Agnostic non-text contrast — stop 8 (mark-74) clears WCAG 1.4.11 3:1
+// ── 1b. Agnostic non-text contrast — stop 8 (wax-74) clears WCAG 1.4.11 3:1
 // against PAPER-95 IN BOTH MODES (spec.ts S8, one declaration since 2026-07-29). Owner:
 // *"dark stop 8 has the same requirements as light, it is a 3:1 contrast require on
 // paper 3 so inputs can be placed on any paper."* This check read paper-2 for dark until
@@ -309,4 +309,4 @@ if (process.argv.includes('--bless')) {
 
 console.log()
 if (fails.length) { console.error(`FAIL: ${fails.length}\n` + fails.map(s => '  - ' + s).join('\n')); process.exit(1) }
-console.log('PASS — agnostic band order (lead-53 over mark-74) + on-emphasis (paper-100 on lead-53) · stop-8 3:1 vs its declared paper · structure · neutral cta rest=stop4 + state law + the SOFT on-cta composite at 4.5 on every state · signals (both lanes) · snapshot (shipped=apca).')
+console.log('PASS — agnostic band order (lead-53 over wax-74) + on-emphasis (paper-100 on lead-53) · stop-8 3:1 vs its declared paper · structure · neutral cta rest=stop4 + state law + the SOFT on-cta composite at 4.5 on every state · signals (both lanes) · snapshot (shipped=apca).')

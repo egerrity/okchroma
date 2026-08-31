@@ -75,7 +75,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // "aaa" search still lands); brand/secondary → brand/alt rides RENAMED_GROUPS,
   // the per-brand prim groups ride the bespoke mid-segment pass (primByName
   // migration). Same indices, same values — a relabel, not a renumber.
-  ['mark-74-aa', 'mark-74'],
+  ['mark-74-aa', 'wax-74'],
   ['ink-53-aa', 'lead-53'],
   ['ink-42-aa', 'ink-42'],
   ['ink-30-aaa', 'ink-30'],
@@ -86,6 +86,10 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // older ink-53-vintage source above/below already points straight at lead-53
   // (the one-hop rule).
   ['ink-53', 'lead-53'],
+  // ── GUARANTEE-ROUND (owner 2026-08-28): mark-74 → wax-74 (band word mark → wax).
+  // Name only, same index, same values; every older mark-vintage source below
+  // already points straight at wax-74 (the one-hop rule).
+  ['mark-74', 'wax-74'],
   // solid → stamp (same round): the 2026-08-18 solid generation becomes a vintage;
   // the cta-era sources below already re-target straight to stamp/ (one hop).
   ['solid/fill', 'stamp/fill'],
@@ -136,7 +140,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['alpha/offset-08', 'alpha/008'],
   ['alpha/offset-16', 'alpha/016'],
   // ── BAND FLATTENING (owner 2026-08-12): ramp leaves sit FLAT in the family group
-  // again — paper-99, wash-92, mark-74, lead-53 … (band word + hyphen + level, the
+  // again — paper-99, wash-92, wax-74, lead-53 … (band word + hyphen + level, the
   // engine's own token names). The 2026-07-27 band nesting (paper/99 …) is retired; only
   // the cta STATE group still nests. These CURRENT-name entries MUST precede everything
   // below: legacyCandidates tries entries in table order, and the banded spellings are
@@ -149,7 +153,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['wash/89', 'wash-89'],
   ['wash/85', 'wash-85'],
   ['wash/80', 'wash-80'],
-  ['mark/74-aa', 'mark-74'],
+  ['mark/74-aa', 'wax-74'],
   ['ink/53-aa', 'lead-53'],
   ['ink/42-aa', 'ink-42'],
   ['ink/30-aaa', 'ink-30'],
@@ -169,7 +173,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['wash-5', 'wash-89'],
   ['wash-6', 'wash-85'],
   ['wash-7', 'wash-80'],
-  ['highlight-8', 'mark-74'],
+  ['highlight-8', 'wax-74'],
   // highlight-9 / on-highlight are DEAD (the 2026-07-29 collapse orphaned them; no
   // current token answers to either) — kept only so an old file's row is still
   // FOUND (renamed to its retired banded home, then reported as an orphan) rather
@@ -204,7 +208,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['wash/5', 'wash-89'],
   ['wash/6', 'wash-85'],
   ['wash/7', 'wash-80'],
-  ['highlight/8', 'mark-74'],
+  ['highlight/8', 'wax-74'],
   ['ink/9', 'lead-53'],
   ['ink/10', 'ink-42'],
   ['ink/11', 'ink-30'],
@@ -213,7 +217,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // r-floor leaves (mark/74-r300, ink/53-r450, ink/42-r650, ink/30-r700) for part of
   // one day; a file applied under that build carries them as its CURRENT names.
   // One-hop, no chaining: targets follow the final flat homes.
-  ['mark/74-r300', 'mark-74'],
+  ['mark/74-r300', 'wax-74'],
   ['ink/53-r450', 'lead-53'],
   ['ink/42-r650', 'ink-42'],
   ['ink/30-r700', 'ink-30'],
@@ -709,7 +713,7 @@ figma.ui.onmessage = async (msg) => {
       // Write a primitive. on-fill leaves ALIAS a shared invariant (always, so
       // pre-existing raw on-fills get converted on re-apply); cta-border leaves ALIAS
       // per mode — system/alpha/transparent when the fill passes the boundary gate, the
-      // family's own mark-74 when it doesn't (alpha 0 in the payload = transparent);
+      // family's own wax-74 when it doesn't (alpha 0 in the payload = transparent);
       // every other leaf is a raw color, written on create or when `refresh` is set
       // (per-brand ramps).
       // (INK_SIBLING and its value-guarded alias branch DELETED with the cta-ink
@@ -765,15 +769,15 @@ figma.ui.onmessage = async (msg) => {
             v.setValueForMode(pDark, figma.variables.createVariableAlias(transparent))
           }
         } else if (t.path === STAMP_LEAF.EDGE) {
-          const sibling8 = primByName.get(path.slice(0, -STAMP_LEAF.EDGE.length) + 'mark-74')
+          const sibling8 = primByName.get(path.slice(0, -STAMP_LEAF.EDGE.length) + 'wax-74')
           const transparent = primByName.get('system/alpha/transparent')
           // the OFFSET ROUTER (owner report 2026-08-28, the ext strokeFor idiom): a
           // firing edge carries its family's rung IN ITS OWN ALPHA — a value lookup,
           // no family table to drift from cssRender.ctaBorderRung — and aliases the
           // matching ladder row (created in STATIC_UTILS above, so it exists by now).
           // a=0 stays transparent (the gate passed); an OPAQUE leaf is the outline
-          // secondary's posture and keeps its mark-74 alias. Re-aliased every apply,
-          // so a pre-ladder file's loud mark-74 edge heals on the next apply.
+          // secondary's posture and keeps its wax-74 alias. Re-aliased every apply,
+          // so a pre-ladder file's loud wax-74 edge heals on the next apply.
           const rungRow = (a: number | undefined) => {
             const rung = a === undefined ? undefined
               : Object.keys(RUNG_ALPHAS).find(k => Math.abs(RUNG_ALPHAS[k] - a) < 1e-6)

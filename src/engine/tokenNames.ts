@@ -19,7 +19,7 @@ const SHARED_NAMES: Record<number, string> = {
   5: 'wash-89',
   6: 'wash-85',
   7: 'wash-80',
-  8: 'mark-74',
+  8: 'wax-74',
   // THE INK BAND (C49, owner 2026-08-05): the first text stop + emphasis fill (the
   // 2026-07-29 highlight collapse — the old highlight-9 and on-highlight are
   // deleted; this stop carries both jobs, its on-color a paper token), the between
@@ -173,7 +173,7 @@ export const EXT_OVERRIDABLE_SYSTEM = (p: string): boolean =>
 
 // Canonical emit order, uniform across every ramp (the white-label remap shape,
 // an explicit requirement of the original concept). Paper (1–3), wash (4–7),
-// then the focus ring (mark-74 — clamped to WCAG
+// then the focus ring (wax-74 — clamped to WCAG
 // 1.4.11 3:1 non-text contrast vs paper-95) read as one contiguous ladder, then
 // the text stops (lead-53 / ink-42 / ink-30 — the first doubles as the
 // emphasis fill), then the pulled-out off-scale stamp family + stamp-on, then

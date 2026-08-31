@@ -176,7 +176,7 @@ function RampChart({ mode, lines, xTicks, height = 210 }: {
 // space before the first stop, and read as misleading (owner 2026-07-30). Plain log
 // fixed that but left the low end tight and the 8 → 20 tail luxurious; above 8:1 the
 // differences stop mattering, so that tail is condensed and the width goes to
-// 1 → 8 instead. The natural gap between wash-80 and mark-74 absorbs the stretch.
+// 1 → 8 instead. The natural gap between wash-80 and wax-74 absorbs the stretch.
 // 21 is the true WCAG ceiling (pure black on pure white) — the neutral lane plots
 // ink-30, which is exactly that, so the axis has to reach it rather than clamp.
 const DIST_MAX = 21
@@ -464,7 +464,7 @@ export default function UnifyCompare() {
   // This page rendered APCA until 2026-07-29 under a comment claiming apca was the shipped
   // lane. Papers and washes are byte-identical between the lanes, so the change is confined
   // to the emphasis band — and that is the whole subject of the comparison: measured over
-  // the 7 Unify seeds, light mark-74 differed on 7/7 (worst ΔE 0.128, #369c54 vs
+  // the 7 Unify seeds, light wax-74 differed on 7/7 (worst ΔE 0.128, #369c54 vs
   // #62c47a) and dark lead-53 on 7/7 (worst 0.127). The published page was showing a focus
   // ring visibly lighter than the one the WCAG lane actually ships.
   const resolved = useMemo(() => themes.map(t => ({
@@ -570,7 +570,7 @@ export default function UnifyCompare() {
       ],
     }
   }
-  // Every ink/mark require binds against paper-95 in the WCAG lane (resolve.ts
+  // Every ink/wax require binds against paper-95 in the WCAG lane (resolve.ts
   // wcagAnchorStop overrides the paper-97 anchor the declaration carries for apca),
   // so each threshold lands at its target × paper-95's own distance from the page.
   // Targets read from stopTable, never typed in — they have moved twice.
@@ -898,7 +898,7 @@ export default function UnifyCompare() {
             <div data-brand={focus.slug} data-theme={dark ? 'dark' : 'light'}>
               <ForkComposition
                 page={DIST_PAGE[distMode]} heading="var(--brand-lead-53)" body="var(--brand-ink-30)"
-                ring="var(--brand-mark-74)" fill="var(--brand-stamp-fill)" onFill="var(--brand-stamp-on)"
+                ring="var(--brand-wax-74)" fill="var(--brand-stamp-fill)" onFill="var(--brand-stamp-on)"
                 linkC="var(--link)" textBtn="var(--brand-lead-53)" />
             </div>
           </div>

@@ -65,7 +65,7 @@ for (const H of HUES) for (const C of CHROMAS) {
         if (got < sp.require.target - 1e-4) fails.push({ seed: id, mode, check: `separation-stop${sp.stop}`, detail: `ΔE ${got.toFixed(4)} < ${sp.require.target}`, sev: 10 })
       }
     }
-    // 3. monotonic L where the system guarantees it: stops 1–8 (paper→mark-74).
+    // 3. monotonic L where the system guarantees it: stops 1–8 (paper→wax-74).
     const ladder = [1, 2, 3, 4, 5, 6, 7, 8].map(n => byStop(n)!).filter(Boolean)
     for (let i = 1; i < ladder.length; i++) {
       const bad = mode === 'light' ? ladder[i].L > ladder[i - 1].L + 1e-6 : ladder[i].L < ladder[i - 1].L - 1e-6
@@ -84,7 +84,7 @@ for (const H of HUES) for (const C of CHROMAS) {
     const p3Y = wcagY(p3b.L, clampChromaToGamut(p3b.L, p3b.C, p3b.H), p3b.H)
     const vsP3 = (st: typeof s8b) => contrastRatio(wcagY(st.L, clampChromaToGamut(st.L, st.C, st.H), st.H), p3Y)
     if (vsP3(i9) <= vsP3(s8b) + 1e-6)
-      fails.push({ seed: id, mode, check: 'band-order', detail: `lead-53 ${vsP3(i9).toFixed(2)} !> mark-74 ${vsP3(s8b).toFixed(2)} vs paper-95`, sev: 12 })
+      fails.push({ seed: id, mode, check: 'band-order', detail: `lead-53 ${vsP3(i9).toFixed(2)} !> wax-74 ${vsP3(s8b).toFixed(2)} vs paper-95`, sev: 12 })
     // the ink band is strictly monotonic — darker per stop in light, lighter in dark
     // (three stops since C49: 9 the first text, 10 the between, 11 the strong)
     for (const [lo, hi] of [[9, 10], [10, 11]] as const) {

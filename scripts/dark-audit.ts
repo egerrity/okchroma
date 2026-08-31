@@ -34,7 +34,7 @@ const ADJ_RATIO = 0.48
 // A step is a collapse only if it is BOTH proportionally small (< ADJ_RATIO×light)
 // AND absolutely small (< this floor, ~3 JND). The dark-L surface solve (2026-06-29)
 // decoupled dark step sizes from light's for low-boost hues — yellow's solved wash-80
-// rides up toward the placed mark-74 — so a dark step can be < 48% of light's yet
+// rides up toward the placed wax-74 — so a dark step can be < 48% of light's yet
 // still a plainly visible ΔE (e.g. yellow 7→8 #814900→#A35F00, ΔE ~0.09). The floor
 // catches true merges without flagging those intentional, owner-approved shifts.
 const STEP_ABS_FLOOR = 0.06

@@ -158,7 +158,7 @@ The same modules as a table: each piece, where it lives, what it does. Grouped b
 |---|---|---|
 | CSS emitter | `cssRender.ts` | `brandCss`/`signalsCss`, custom properties per family and mode: the scale stops, the cta fill trio (`solid-fill`/`solid-fill-hover`/`solid-fill-pressed`; the text-style cta is the ink stops themselves since the 2026-08-12 cta-ink deletion), `solid-on` (solid pole or the soft pole-at-alpha), the gated `solid-edge` alias onto the system alpha ladder, P3 `@supports` override blocks, the outline secondary's cta shape. Signals emit under their **role names** (`--critical-*`/`--warning-*`/`--positive-*`/`--info-*`); identity names stay engine-internal. |
 | Figma emitter | `figmaRender.ts` | `themeToFigma`, the same theme as Figma variable collections (both plugins consume it). |
-| Token vocabulary | `tokenNames.ts` | The shared naming: paper-99/97/95, wash-92–80, mark-74, ink-53/42-aa/30-aaa, the cta state families, ons; one vocabulary across CSS and Figma. |
+| Token vocabulary | `tokenNames.ts` | The shared naming: paper-99/97/95, wash-92–80, wax-74, ink-53/42-aa/30-aaa, the cta state families, ons; one vocabulary across CSS and Figma. |
 | Public API | `index.ts` | The entry point: `resolveBrand`/`resolveTheme`. |
 
 **Product data & pipelines (`src/`)**
@@ -233,7 +233,7 @@ ResolvedBrand  = { scale, shearDeg, redRepel: {light,dark}|null,
 | 1–2 | `paper-99`, `paper-97` | the page and card planes |
 | 3 | `paper-95` | surface plane (light sunken / dark high), renamed from wash-3, owner 2026-07-24 |
 | 4–7 | `wash-92` … `wash-80` | low-hierarchy fills, borders, decorative |
-| 8 | `mark-74` | WCAG 1.4.11 **3:1** non-text step (borders, UI elements) |
+| 8 | `wax-74` | WCAG 1.4.11 **3:1** non-text step (borders, UI elements) |
 | 9 | `ink-53` | emphasis fill AND first text stop (4.5:1, the 2026-07-29 highlight collapse) |
 | 10 | `ink-42` | the between text stop (6.5:1, C49, promoted from the retired text-cta hover state) |
 | 11 | `ink-30` | strong text (7:1). The three ink stops read as states ARE the text-style cta (rest 53 / hover 42 / pressed 30); the separate `cta-ink` + `cta-ink-strong` alias trios were deleted 2026-08-12 |
@@ -265,14 +265,14 @@ it. Three phases per stop, in order:
   `okchroma-reqtoken@2`; they are the house style *of this resolver*, not portable data.
 - **require**: declared floors, checked and enforced against **resolved** stops (never a
   cached value, so a pushed stop automatically re-solves everything referencing it):
-  - `{ metric: 'wcag', against, target }`: `mark-74` declares `against: 'paper-95'`
+  - `{ metric: 'wcag', against, target }`: `wax-74` declares `against: 'paper-95'`
     directly (3:1), and the resolver honors that anchor as written. `ink-53`,
     `ink-42`, and `ink-30` declare `against: 'paper-97'` in `spec.ts` (4.5 / 6.5 /
     7.0), but the shipped WCAG lane overrides that at resolve time: `resolve.ts`'s
     `wcagAnchorStop` re-anchors every stop from 9 up at paper-95 instead, the nearest
     paper, so the declared paper-97 anchor is what only the apca lane actually reads
     (byte-identical there), while the shipped wcag lane clears paper-95. On top of that,
-    every stop from mark-74 up also clears the worst paper the family's OWN generated
+    every stop from wax-74 up also clears the worst paper the family's OWN generated
     NEUTRAL can produce at any hue (`NEUTRAL_P3_WORST_SHIP_Y`, C44): a brand's own
     paper-95 is not always the nearest paper once the neutral is in scope. Declared in
     **both modes** (light clamps down; dark raises off the paper; a placement that

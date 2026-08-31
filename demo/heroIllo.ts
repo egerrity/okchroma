@@ -1,5 +1,5 @@
 // the designer's test illustration (Downloads/test-illo.svg), painted only from
-// six fixed brand stops: paper-95, wash-89, wash-80, mark-74,
+// six fixed brand stops: paper-95, wash-89, wash-80, wax-74,
 // lead-53, ink-42. It references the live ramp tokens, so it themes
 // light/dark for free. Brand primary only — no secondary, no cta. Shape → token:
 //   phone body + shadow → brand lead-53 (the strong fill; shadow @0.3)

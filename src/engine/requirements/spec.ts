@@ -4,7 +4,7 @@
 // are references to named resolver capabilities, not formulas.
 //
 // NUMBERING TRUTH (owner-flagged; matches the engine): the SCALE is stops 1–10 — paper 1–2, wash 3–7,
-// highlight (mark) 8, ink 9–10 (contiguous). THE HIGHLIGHT BAND COLLAPSED 2026-07-29: highlight-9 is
+// highlight (wax) 8, ink 9–10 (contiguous). THE HIGHLIGHT BAND COLLAPSED 2026-07-29: highlight-9 is
 // deleted and the inks renumbered down onto it (old 10/11 → 9/10). highlight-9 and old ink-10 both
 // solved 4.5 against paper-95 (paper-3) — the same bar against the same anchor — so they landed on
 // top of each other (145 of 360 agnostic seeds within 0.01). lead-53 (ink-9) now carries both
@@ -112,7 +112,7 @@ export type ModeSpec = {
 // would CHANGE generation. Name only.
 // The 'highlight' group is now a single stop (8, the focus ring); 9+ is ink. (The
 // Group enum value itself is an internal grouping label, not an emitted token name —
-// Stage B's highlight→mark word change is scoped to emitted names, not this type.)
+// Stage B's highlight→mark word change, like the 2026-08-28 mark→wax rename, is scoped to emitted names, not this type.)
 const groupOf = (stop: number): Group => (stop <= 2 ? 'paper' : stop <= 7 ? 'wash' : stop === 8 ? 'highlight' : 'ink')
 
 // paper-100 (paper-0 pre-Stage-B) — the ladder extreme BEYOND paper-99 (paper-1), now a resolved
@@ -215,7 +215,7 @@ export const LIGHT: ModeSpec = {
   stops: [
     // paper-100 (paper-0 pre-Stage-B): the resolved ladder extreme — in light it genuinely is white (rootL 1.0, zero chroma)
     { stop: 0, rootL: 1.0, group: 'paper', produce: { hue: 'warm-drift', L: 'fixed', chroma: 'ladder' }, satFraction: SCALE_C_LIGHT[0].sat, baseC: SCALE_C_LIGHT[0].base },
-    // paper/wash/mark-74: perceptual ladder/envelope blend on the geometric ROOT_L_LIGHT scaffold. Separation
+    // paper/wash/wax-74: perceptual ladder/envelope blend on the geometric ROOT_L_LIGHT scaffold. Separation
     // falls out of the shape (see above) — no min-separation require. Only stop 8 carries a require: the WCAG
     // 3:1 vs the resolved paper-97 (paper-2) (re-solves automatically since it references paper-97 (paper-2)).
     ...[1, 2, 3, 4, 5, 6, 7, 8].map((stop): StopReq => ({

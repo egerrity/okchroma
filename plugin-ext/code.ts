@@ -100,8 +100,8 @@ const RETIRED_RUNG_ALPHA = 0.12
 // here, and the four cta-ink keys dropped (their paths died 2026-08-12 — entries could
 // never fire). Zone spellings per the same round's rename.
 const RETIRED_SIGNAL_VALUES: Record<string, string[]> = {
-  'base/critical/mark-74': ['#e06146'],
-  'base/warning/mark-74': ['#c67a00'],
+  'base/critical/wax-74': ['#e06146'],
+  'base/warning/wax-74': ['#c67a00'],
   'base/warning/lead-53': ['#a56000'],
   'base/positive/lead-53': ['#1c7e36'],
   'base/positive/stamp/fill': ['#63c373', '#67c777'],
@@ -137,7 +137,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // conformance, so an "aaa" search lands on descriptions); brand-primary → brand
   // and brand-secondary → brand-alt ride RENAMED_GROUPS below. Same indices, same
   // values — a relabel, not a renumber.
-  ['mark-74-aa', 'mark-74'],
+  ['mark-74-aa', 'wax-74'],
   ['ink-53-aa', 'lead-53'],
   ['ink-42-aa', 'ink-42'],
   ['ink-30-aaa', 'ink-30'],
@@ -146,6 +146,10 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // split the group guarantees need. Name only, same index, same values; older
   // ink-53-vintage sources already point straight at lead-53 (the one-hop rule).
   ['ink-53', 'lead-53'],
+  // ── GUARANTEE-ROUND (owner 2026-08-28): mark-74 → wax-74 (band word mark → wax).
+  // Name only, same index, same values; older mark-vintage sources already point
+  // straight at wax-74 (the one-hop rule).
+  ['mark-74', 'wax-74'],
   // solid → stamp (same round): the 2026-08-18 solid generation becomes a vintage;
   // the cta-era sources below already re-target straight to stamp/ (one hop).
   ['solid/fill', 'stamp/fill'],
@@ -203,7 +207,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['abs-primary', 'absolute/primary'],
   ['abs-secondary', 'absolute/alt'],
   // ── BAND FLATTENING (owner 2026-08-12): ramp leaves sit FLAT in the family group
-  // again — paper-99, wash-92, mark-74, lead-53 … (band word + hyphen + level,
+  // again — paper-99, wash-92, wax-74, lead-53 … (band word + hyphen + level,
   // the engine's own token names). The 2026-07-27 band nesting (paper/99 …) is
   // retired; only the cta STATE group still nests. These CURRENT-name entries MUST
   // precede everything below: candidates are tried in table order and the banded
@@ -220,7 +224,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['wash/89', 'wash-89'],
   ['wash/85', 'wash-85'],
   ['wash/80', 'wash-80'],
-  ['mark/74-aa', 'mark-74'],
+  ['mark/74-aa', 'wax-74'],
   ['ink/53-aa', 'lead-53'],
   ['ink/42-aa', 'ink-42'],
   ['ink/30-aaa', 'ink-30'],
@@ -235,7 +239,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['wash-5', 'wash-89'],
   ['wash-6', 'wash-85'],
   ['wash-7', 'wash-80'],
-  ['highlight-8', 'mark-74'],
+  ['highlight-8', 'wax-74'],
   // ── ink flats, 2026-07-10-numbering vintage (pre-banding files, 07-10 → 07-27).
   // C49 restored the strong ink's and the anchor's pre-C33 numbers, so these map
   // one-hop to homes that are now NUMBER-TRUE for this vintage (the pre-C49 table
@@ -261,7 +265,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['wash/5', 'wash-89'],
   ['wash/6', 'wash-85'],
   ['wash/7', 'wash-80'],
-  ['highlight/8', 'mark-74'],
+  ['highlight/8', 'wax-74'],
   ['ink/9', 'lead-53'],
   ['ink/10', 'ink-42'],
   ['ink/11', 'ink-30'],
@@ -270,7 +274,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // r-floor leaves (mark/74-r300, ink/53-r450, ink/42-r650, ink/30-r700) for part of
   // one day; a file applied under that build carries them as its CURRENT names.
   // One-hop, no chaining: targets follow the final flat homes.
-  ['mark/74-r300', 'mark-74'],
+  ['mark/74-r300', 'wax-74'],
   ['ink/53-r450', 'lead-53'],
   ['ink/42-r650', 'ink-42'],
   ['ink/30-r700', 'ink-30'],

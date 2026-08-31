@@ -133,11 +133,11 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     inkGround && stop >= 9 ? inkGround : refOf(declaredAnchor(req), stop)
   // the CROSS-FAMILY paper bound (owner defect 2026-08-03 — her measured pair was the
   // brand lead-53 (ink-9) on the NEUTRAL paper-95 (paper-3), 4.479:1; her follow-up
-  // caught mark-74 (highlight-8) the same way, 26/72 under 3:1): "usable on every
+  // caught wax-74 (highlight-8) the same way, 26/72 under 3:1): "usable on every
   // paper" includes the per-brand NEUTRAL's papers, and the own-family paper-95 (paper-3)
   // is NOT the nearest paper for green-band brands — their tinted paper carries more Y
   // than the near-gray neutral at the same L. Covers every contrast-required stop from 8
-  // up: the inks are text on any paper, and mark-74 (highlight-8) is the focus-
+  // up: the inks are text on any paper, and wax-74 (highlight-8) is the focus-
   // ring/border register that sits on neutral surfaces (WCAG 1.4.11).
   // The bound is the worst SHIPPED neutral paper-95 (paper-3) Y over hue 0..350 × every NeutralLevel:
   // light min 0.845015 (H260 branded #e8edf8) · dark max 0.014247 (H300 medium #211f23),

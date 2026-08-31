@@ -127,8 +127,8 @@ const SCALE: Record<string, Body> = {
   'wash-85': WASH,
   'wash-80': WASH,
   // ("icons" KEPT through the 2026-08-28 on-flood strip (owner): an "icon" query
-  // landing on the mark rows is worth its ic-ON-s noise — the one surviving body carrier)
-  'mark-74': { req: 'focus rings, icons, large text', contrast: AA_LARGE, theming: solved, collides: true },
+  // landing on the wax rows is worth its ic-ON-s noise — the one surviving body carrier)
+  'wax-74': { req: 'focus rings, icons, large text', contrast: AA_LARGE, theming: solved, collides: true },
   'lead-53': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
   'ink-42': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
   // ("high-emphasis" reworded 2026-08-12: the surface planes took low/high as label

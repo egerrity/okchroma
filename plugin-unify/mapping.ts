@@ -1,8 +1,8 @@
 // The BAKED mapping table (owner-reviewed 2026-08-11) — Unify semantic tokens to
 // okchroma primitive paths. Owner rules: suffix bands per color family — Primary (or
 // the bare token) -> marks + inks of the family (text under the flat hierarchy; focus
-// rings, brand only; icons can take mark-74) · Highlight -> any wash (borders) ·
-// Accent -> any paper · Spotlight -> mark-74 or lead-53. NEVER identity, never
+// rings, brand only; icons can take wax-74) · Highlight -> any wash (borders) ·
+// Accent -> any paper · Spotlight -> wax-74 or lead-53. NEVER identity, never
 // the cta family. Matching is suffix + value based so old and new Unify name vintages
 // both route. Link is parked (the known tricky case) — those land unmatched.
 

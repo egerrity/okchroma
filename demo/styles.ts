@@ -19,7 +19,7 @@ export const STYLE_CSS = /* css */ `
    (owner's 2026-07-27 Figma card set — one 4px flat offset everywhere, the
    SHADOW COLOR fades down the ladder and the stroke fades with it):
      +2 hero    titlebar + brand-black shadow + lead-53 stroke → Customers (high plane)
-     +1 cards   wash-80 grey shadow + mark-74 stroke            → Get started, Activity, sidebar
+     +1 cards   wash-80 grey shadow + wax-74 stroke            → Get started, Activity, sidebar
      −1 metrics surface-high shadow (punched in) + wash-92 stroke    → metric tiles (compact)
      ctas       ink-0 border + lead-53 shadow                      → primary/secondary cta buttons
    Every shadow color is a token (or the brand mix), so DARK FALLS OUT of the
@@ -42,7 +42,7 @@ export const STYLE_CSS = /* css */ `
 /* +1 default: chunky keyline (one stop lighter than the hero's) + grey flat shadow */
 [data-style="retro"] .dash .dash-card,
 [data-style="retro"] .dash .dash-side {
-  border: 2.5px solid var(--neutral-mark-74) !important;
+  border: 2.5px solid var(--neutral-wax-74) !important;
   box-shadow: var(--elev-card) !important;
 }
 /* +2 hero: the full-strength keyline + the brand-black shadow */

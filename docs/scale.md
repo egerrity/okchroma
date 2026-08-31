@@ -1,8 +1,8 @@
 # The scale
 
-One brand color in, a full ramp out: 3 papers, 4 washes, 1 mark, and 3 inks, plus the
+One brand color in, a full ramp out: 3 papers, 4 washes, 1 wax, and 3 inks, plus the
 off-scale solid/fill-hover and their on-text colors. Every name follows one pattern,
-`band-LL` or `band-LL-aa` / `band-LL-aaa`: the band word (`paper`, `wash`, `mark`,
+`band-LL` or `band-LL-aa` / `band-LL-aaa`: the band word (`paper`, `wash`, `wax`,
 `ink`), the stop's visibility (its light rootL times 100, rounded), and, where a WCAG
 level is central to the stop's job, the conformance letters it certifies. The engine
 still carries internal stop indices 1 to 11 for its own scale machinery, but those
@@ -12,14 +12,14 @@ name does the same thing on every brand.
 
 Lightness comes from a declared ladder; chroma is saturation-preserving (a fraction of
 the gamut the step allows, scaled by how saturated the brand is). Names fall in four
-groups: `paper`, `wash`, `mark`, and `ink`, plus the off-scale `solid-fill` roles.
+groups: `paper`, `wash`, `wax`, and `ink`, plus the off-scale `solid-fill` roles.
 
 Stage B (2026-08-07, names only, no color changed) gave every name its own placement: a
 bare number is the stop's light rootL times 100, rounded (`paper-99` sits at rootL ≈
-0.99). A same-day follow-up (2026-08-07, also names only) replaced the mark/ink stops'
+0.99). A same-day follow-up (2026-08-07, also names only) replaced the wax/ink stops'
 ratio-coded suffix with a WCAG conformance letter. A stop whose job is a certified WCAG
-floor carries the suffix `-aa` or `-aaa`: `mark-74` is the rootL-74 stop, its non-text
-1.4.11 gate carried by the band word `mark` itself, certified AA at 3:1; `ink-53` is
+floor carries the suffix `-aa` or `-aaa`: `wax-74` is the rootL-74 stop, its non-text
+1.4.11 gate carried by the band word `wax` itself, certified AA at 3:1; `ink-53` is
 rootL-53, certified AA at 4.5:1 text contrast; `ink-42` is rootL-42, certified against
 a 6.5:1 house floor, stricter than the AA text minimum but short of AAA, so the name
 states the conformance level it clears rather than its own ratio; `ink-30` is rootL-30,
@@ -39,7 +39,7 @@ hyphens, so the token name itself is one flat leaf. Read left to right,
 |---|---|---|
 | register | `primitive` | the extended plugin's wrapper, carried by every row |
 | family | `neutral` | which color family the stop belongs to: neutral, brand, brand-alt, or a signal |
-| band | `ink` | which law the stop serves: `paper`, `wash`, `mark`, or `ink` |
+| band | `ink` | which law the stop serves: `paper`, `wash`, `wax`, or `ink` |
 | visibility | `53` | the stop's light rootL times 100, rounded |
 | conformance | `aa` | the WCAG level this stop certifies, present only where a requirement is central to the stop's job |
 
@@ -67,7 +67,7 @@ one exists), and the accessibility category it carries.
 | `wash-89`           | 0.892  | 0.313 | – | low-hierarchy fill, interaction, decorative |
 | `wash-85`           | 0.852  | 0.348 | – | decorative |
 | `wash-80`           | 0.801  | 0.420 | – | decorative |
-| `mark-74`      | 0.738  | 0.550 | 3:1, on every paper | WCAG 1.4.11 non-text: boundaries, UI elements |
+| `wax-74`      | 0.738  | 0.550 | 3:1, on every paper | WCAG 1.4.11 non-text: boundaries, UI elements |
 | `ink-53`       | 0.530  | 0.767 | 4.5:1, on every paper | first text stop AND emphasis fill (the 2026-07-29 highlight collapse) |
 | `ink-42`       | 0.415  | 0.843 | 6.5:1, on every paper | the between text stop (C49, promoted from the retired text-cta hover state) |
 | `ink-30`       | 0.300  | 0.919 | 7:1, on every paper | strong text, inverted fill |
@@ -81,10 +81,10 @@ still supports a declared `min-separation` requirement for portable specs (see
 seam open, including for low-chroma grays and muted warms, the cases that used to need a
 runtime push (`spec.ts`, the comment directly above the `LIGHT` export).
 
-`mark-74` and the three ink stops do carry a declared WCAG requirement, checked and
+`wax-74` and the three ink stops do carry a declared WCAG requirement, checked and
 enforced against the resolved reference stop on every apply. "On every paper" is a
 deliberately unnamed floor: in the shipped WCAG lane the resolver anchors every stop from
-`mark-74` up at the nearest paper rather than at whichever paper `spec.ts` happens to
+`wax-74` up at the nearest paper rather than at whichever paper `spec.ts` happens to
 name, and separately clears the worst paper the family's own generated neutral can
 produce across all hues. The mechanism, including which stop is actually named where, is
 documented in [architecture.md](architecture.md)'s requirement section.
@@ -104,7 +104,7 @@ documented in [architecture.md](architecture.md)'s requirement section.
   **universal anchor** (literal #000000 light / #ffffff dark, paired with `paper-100`), a
   mode-flipping constant, not a per-brand resolved stop.
 - **Target vs emitted:** stops are H-K-solved from their rootL target (emitted L shifts by
-  hue, see below), then the declared requirements bind: for luminous hues `mark-74`
+  hue, see below), then the declared requirements bind: for luminous hues `wax-74`
   lands well below its 0.738 target.
 
 ## On-fill text
@@ -147,11 +147,11 @@ Example: `ink-53` (target 0.600):
 
 Dark mode runs the same solve, but only where uniform apparent lightness is the stop's
 job: the paper/wash **surfaces** (1–7) and the ink **text** stops (9/10/11) are H-K-solved
-like light, so they read at one perceived lightness on every brand. The **mark stop**
+like light, so they read at one perceived lightness on every brand. The **wax stop**
 (8) is the exception: it stays placed at its `DARK_L` target, because it carries a 3:1
-border (`mark-74`) and is hand-tuned for legibility; solving it would push some hues
+border (`wax-74`) and is hand-tuned for legibility; solving it would push some hues
 into the APCA body-text dead zone (and ride a solved surface up past the placed stop). So
-the mark stop keeps a small per-hue apparent-lightness *wave* by design, legibility over
+the wax stop keeps a small per-hue apparent-lightness *wave* by design, legibility over
 uniformity, and `divergence-audit` reports that residual so it stays visible. (The
 off-scale CTA isn't solved in either mode; it carries the brand fill's own lightness.)
 

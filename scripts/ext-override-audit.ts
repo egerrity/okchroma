@@ -78,7 +78,7 @@ function assertLadderOrder(tokens: FlatTok[], label: string): void {
       // 'lead' joined the band words in the guarantee round (ink-53 → lead-53,
       // owner 2026-08-27) — this regex IS the disarm-detection gate, so it moves
       // with the leaf shape by design (the cta-ink round's lesson)
-      const m = new RegExp(`/${fam}/(?:paper|wash|mark|lead|ink)-(\\d+)(?:-aaa?)?$`).exec(t.path)
+      const m = new RegExp(`/${fam}/(?:paper|wash|wax|lead|ink)-(\\d+)(?:-aaa?)?$`).exec(t.path)
       if (m) nums.push(parseInt(m[1], 10))
     }
     // the gate must never silently disarm again: every family carries a full ladder

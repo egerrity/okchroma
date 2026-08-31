@@ -8,7 +8,7 @@ Every color family emits the same scale: eleven stops plus a small set of pulled
 
 A scale token name reads as `band-lightness`:
 
-- The band word tells you the job (paper, wash, mark, lead, ink).
+- The band word tells you the job (paper, wash, wax, lead, ink).
 - The number is the stop's nominal lightness rung. Higher means lighter.
 - Names carry no WCAG conformance suffix. `-aa`/`-aaa` used to be part of the name; they were dropped because Figma's picker searches the description text too, and the letters were flooding unrelated "on" queries (cONtrast, collisiONs). The guarantee still exists; it is stated in the variable's description, not the name. See the guarantee listed per stop below.
 
@@ -28,7 +28,7 @@ So: do not go looking for the "real" primitives underneath these, and do not tre
 
 **wash: `wash-92`, `wash-89`, `wash-85`, `wash-80`.** Subtle interactive states, decorative borders, illustrations, signal hierarchy. Washes are tinted with the family hue but carry no text guarantee. Do not put body text on or in a wash color.
 
-**mark: `mark-74`.** Focus rings, icons, large text. Guaranteed WCAG AA for large text and UI elements (this also satisfies the 3:1 non-text contrast requirement for UI components against the papers).
+**wax: `wax-74`.** Focus rings, icons, large text. Guaranteed WCAG AA for large text and UI elements (this also satisfies the 3:1 non-text contrast requirement for UI components against the papers).
 
 **text stops: `lead-53`, `ink-42`, `ink-30`.**
 
@@ -65,7 +65,7 @@ The token name is `stamp`. Say "CTA" out loud when talking about these (the engi
 
 Signal families are named by identity, always `critical`/`warning`/`positive`/`info`, never `error`/`success`/`danger`. Signal stops may be shifted slightly from the naive value to stay visually distinct from the brand; that is by design, do not "correct" them.
 
-Example composed names: `--brand-wash-89`, `--critical-ink-42`, `--neutral-mark-74`, `--brand-alt-stamp-fill-hover`.
+Example composed names: `--brand-wash-89`, `--critical-ink-42`, `--neutral-wax-74`, `--brand-alt-stamp-fill-hover`.
 
 ## Elevation planes
 
@@ -91,7 +91,7 @@ Light theme descends the papers as elevation rises toward white; dark ascends th
 If the project consumes the semantic layer, prefer it over raw stops:
 
 - `--fg-default` (`ink-30`), `--fg-subtle` (`lead-53`)
-- `--border-default` (`mark-74`), `--border-subtle` (`wash-89`)
+- `--border-default` (`wax-74`), `--border-subtle` (`wash-89`)
 - `--brand-bg-faint/-subtle/-emphasis` and their hover/pressed variants
 - `--brand-fg`, `--brand-fg-on-emphasis` (`stamp-on`)
 - `--fg-link` and `--fg-link-inverse`, each with hover/pressed pairs

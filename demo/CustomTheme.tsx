@@ -369,7 +369,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   const chipTone: Record<string, React.CSSProperties> = {
     brand: { background: 'var(--brand-wash-92)', color: 'var(--brand-ink-30)' },
     secondary: { background: 'var(--brand-alt-wash-85)', color: 'var(--brand-alt-ink-30)' },
-    outline: { background: 'transparent', color: 'var(--brand-alt-lead-53)', border: '1px solid var(--brand-alt-mark-74)' },
+    outline: { background: 'transparent', color: 'var(--brand-alt-lead-53)', border: '1px solid var(--brand-alt-wax-74)' },
     grey: { background: 'var(--surface-dim)', color: 'var(--fg-subtle)' },
   }
   const styleLabel: Record<SecondaryStyle, string> = { default: 'Custom', outline: 'Outline', exact: 'Exact' }
@@ -619,9 +619,9 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   // eyeballing the ladder. The cta family lives in the deconfliction card below, not
   // here (owner 2026-07-17: keep the top card to the 0–12 scale, reserve the second
   // card for the ctas). Each cell shows the token representatively: surfaces as
-  // plain swatches, mark-74 as a ring (its role IS a stroke), ink as "Aa" text,
+  // plain swatches, wax-74 as a ring (its role IS a stroke), ink as "Aa" text,
   // identity as an "ID" chip. Themes with the page toggle.
-  const SWATCH_STOPS = ['paper-99', 'paper-97', 'paper-95', 'wash-92', 'wash-89', 'wash-85', 'wash-80', 'mark-74', 'lead-53', 'ink-42', 'ink-30']
+  const SWATCH_STOPS = ['paper-99', 'paper-97', 'paper-95', 'wash-92', 'wash-89', 'wash-85', 'wash-80', 'wax-74', 'lead-53', 'ink-42', 'ink-30']
   // column labels = the token name minus the band word ("89", "53aa"), derived from
   // the token strings so a rename cannot desynchronise label and column
   const stopLabel = (s: string) => s.split('-').slice(1).join('')
@@ -635,15 +635,15 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   ]
   const swatchCell = (prefix: string, stop: string) => {
     const cv = (t: string) => `var(--${prefix}-${t})`
-    // chip "Aa" (mark/cta) carries its on-color at a slightly lighter weight;
+    // chip "Aa" (wax/cta) carries its on-color at a slightly lighter weight;
     // ink "Aa" is a big, heavy glyph so it reads as a text swatch, not a chip label.
     const aa: React.CSSProperties = { height: 36, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600 }
-    // mark-74 is the 3:1 NON-TEXT stop (boundaries/strokes) — it carries no on-text, so it
+    // wax-74 is the 3:1 NON-TEXT stop (boundaries/strokes) — it carries no on-text, so it
     // renders AS a stroke: a ring of the color, not a fill.
     // …and it's icon-grade at the same 3:1 (owner 2026-07-24): the ring carries a
-    // plus glyph painted IN mark-74 — non-text contrast serves icons, unlike the
+    // plus glyph painted IN wax-74 — non-text contrast serves icons, unlike the
     // ink text stops.
-    if (stop === 'mark-74') return (
+    if (stop === 'wax-74') return (
       <div style={{ height: 36, borderRadius: 6, boxSizing: 'border-box', border: `2px solid ${cv(stop)}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Plus size={18} strokeWidth={2.5} color={cv(stop)} />
       </div>
@@ -1210,7 +1210,7 @@ function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typ
   const fieldLabel: React.CSSProperties = { fontSize: 11, fontWeight: 600, color: 'var(--fg-subtle)', marginBottom: 4 }
   // the focused state, held statically (mirror of .ct-field:focus-within) so all
   // four cards can show it at once
-  const focusRing: React.CSSProperties = { borderColor: 'var(--brand-mark-74)', boxShadow: '0 0 0 3px var(--brand-wash-89)' }
+  const focusRing: React.CSSProperties = { borderColor: 'var(--brand-wax-74)', boxShadow: '0 0 0 3px var(--brand-wash-89)' }
   const btn: React.CSSProperties = { padding: '8px 16px', borderRadius: 999, border: '1.5px solid transparent', cursor: 'pointer', fontSize: 13, fontWeight: 500, fontFamily: 'inherit' }
   return (
     <section className="dash-card" style={{ background: 'var(--surface-mid)', boxShadow: 'var(--elev-card)', borderRadius: 12, padding: 18 }}>
@@ -1408,7 +1408,7 @@ const PAGE_CSS = `
 /* wordmark (logoipsum placeholder) — the two svg groups' fills wire to the live
    palette: the mark to brand-lead-53 (darkest highlight stop — keeps the mark
    COLOURED yet legible on the light neutral sidebar; ~2.9:1 worst-case for a bright
-   yellow brand, and a logo mark is WCAG-exempt so 3:1 isn't required. cta/mark-74
+   yellow brand, and a logo mark is WCAG-exempt so 3:1 isn't required. cta/wax-74
    wash out for bright brands here), the wordmark to brand-lead-53. A fully-robust
    colour-AND-contrast mark would need an engine-emitted contrast-clamped stop. */
 .dash-logo { display: flex; align-items: center; }
@@ -1502,7 +1502,7 @@ const PAGE_CSS = `
 .ct-alert-warn {
   display: flex; gap: 8px; align-items: flex-start; margin-top: 8px;
   padding: 8px 10px; border-radius: 10px; font-size: 12px; line-height: 1.45;
-  background: var(--warning-wash-92); border: 1px solid var(--warning-mark-74); color: var(--warning-ink-30);
+  background: var(--warning-wash-92); border: 1px solid var(--warning-wax-74); color: var(--warning-ink-30);
 }
 .ct-alert-warn a { color: inherit; font-weight: 600; }
 .ct-alert-text {
@@ -1547,7 +1547,7 @@ const PAGE_CSS = `
   color: var(--fg-subtle); background: transparent;
   border: 1.5px dashed var(--neutral-lead-53); border-radius: 12px;
 }
-.ct-add:hover { color: var(--fg-default); border-color: var(--brand-mark-74); background: var(--brand-paper-97); }
+.ct-add:hover { color: var(--fg-default); border-color: var(--brand-wax-74); background: var(--brand-paper-97); }
 /* STATIC FRAME (owner 2026-07-24): the palette page never scrolls as a page. The
    pane fills the viewport from the measured controls-bar bottom (--ct-dock, set by
    a ResizeObserver — the bar's height varies) down to the bottom bar (54px). The
@@ -1649,7 +1649,7 @@ const PAGE_CSS = `
   background: var(--surface-mid); border: 1px solid var(--neutral-lead-53); border-radius: 12px;
   padding: 9px 12px;
 }
-.ct-field:focus-within { border-color: var(--brand-mark-74); box-shadow: 0 0 0 3px var(--brand-wash-89); }
+.ct-field:focus-within { border-color: var(--brand-wax-74); box-shadow: 0 0 0 3px var(--brand-wash-89); }
 .ct-field input, .ct-field select {
   border: none; outline: none; background: transparent; color: var(--fg-default);
   font-family: inherit; font-size: 14px; flex: 1; min-width: 0;

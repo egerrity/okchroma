@@ -18,7 +18,7 @@ export const FONT_STACK = "'Inter', -apple-system, system-ui, sans-serif"
 //   accented-inverse primary: accent  subtle: brand
 // The "accent" Family is emitted as the `secondary` primitive prefix (the role
 // was renamed in the token rename); prim() maps Family → primitive prefix.
-// Stops are the emitted token names: scale paper/wash, the mark-74 ring, the
+// Stops are the emitted token names: scale paper/wash, the wax-74 ring, the
 // cta/cta-hover/cta-pressed fill trio, lead-53/42-aa/30-aaa text (doubling as the
 // text-style cta — the cta-ink aliases died 2026-08-12),
 // on-cta on-fill text. (on-highlight died with highlight-9, owner 2026-07-29 — the
@@ -30,7 +30,7 @@ function accentModeCss(mode: AccentMode, primary: Family, subtle: Family): strin
   const PRIMARY_ROLES: Array<[string, string]> = [
     ['fg', 'ink-30'], ['fg-hover', 'lead-53'], ['fg-alt', 'lead-53'], ['fg-alt-hover', 'ink-30'], ['fg-on-emphasis', 'stamp-on'],
     ['bg-emphasis', 'stamp-fill'], ['bg-emphasis-hover', 'stamp-fill-hover'], ['bg-emphasis-pressed', 'stamp-fill-pressed'],
-    ['border-default', 'wash-85'], ['border-default-hover', 'mark-74'],
+    ['border-default', 'wash-85'], ['border-default-hover', 'wax-74'],
     ['border-emphasis', 'stamp-fill'], ['border-emphasis-hover', 'stamp-fill-hover'],
   ]
   const SUBTLE_ROLES: Array<[string, string]> = [
@@ -116,16 +116,16 @@ export const COMPONENT_CSS = `
 .u-link:active { color: var(--fg-link-pressed); }
 /* Stop 8 IS the ramp's focus-ring role — never the OS default accent */
 [data-brand] :is(input, select, textarea, button, a):focus-visible {
-  outline: 2px solid var(--brand-mark-74);
+  outline: 2px solid var(--brand-wax-74);
   outline-offset: 1px;
 }
 /* The app-chrome scope is brandless — it carries only the generated neutral
-   (App.tsx neutralCss), so --brand-mark-74 doesn't exist there and the
+   (App.tsx neutralCss), so --brand-wax-74 doesn't exist there and the
    rule above would go invalid at computed-value time (no ring at all on the
    footer controls). Alias the ring source to the chrome's own neutral
-   mark-74 — stop 8 of whichever ramp owns the scope. */
+   wax-74 — stop 8 of whichever ramp owns the scope. */
 [data-brand="chrome"] {
-  --brand-mark-74: var(--neutral-mark-74);
+  --brand-wax-74: var(--neutral-wax-74);
 }
 /* Elevation — demo-layer shadow recipes composing the --shadow-* transparencies
    (tokens/semantic.css; mirrors the plugin's system/alpha/shadow rows). The
@@ -424,12 +424,12 @@ export function Readout({ r }: { r: ResolvedBrand }) {
   )
 }
 
-// The emitted scale — the NAMED stops (paper/wash/mark/ink, contiguous 1–10
+// The emitted scale — the NAMED stops (paper/wash/wax/ink, contiguous 1–10
 // since the 2026-07-29 highlight collapse; the engine emits no numeric
 // --{prefix}-N vars). Kept in emit order; cta stays off-scale and out of the strip.
 export const SCALE_STOP_NAMES = [
   'paper-99', 'paper-97', 'paper-95', 'wash-92', 'wash-89', 'wash-85', 'wash-80',
-  'mark-74', 'lead-53', 'ink-42', 'ink-30',
+  'wax-74', 'lead-53', 'ink-42', 'ink-30',
 ] as const
 
 // Labeled single-row scale strip — used where multiple scales stack tight

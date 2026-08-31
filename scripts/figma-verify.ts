@@ -52,8 +52,8 @@ for (const mode of ['light', 'dark'] as const) {
     // regressed the collapse.
     const isBrand = fam === 'brand' || fam === 'secondary'
     const tokens = isBrand
-      ? ['paper-99', ...CTA_FAMILY, 'mark-74', 'lead-53', 'ink-42', 'ink-30', 'stamp-on', 'identity']
-      : ['paper-99', 'mark-74', ...CTA_FAMILY, 'ink-30', 'stamp-on']
+      ? ['paper-99', ...CTA_FAMILY, 'wax-74', 'lead-53', 'ink-42', 'ink-30', 'stamp-on', 'identity']
+      : ['paper-99', 'wax-74', ...CTA_FAMILY, 'ink-30', 'stamp-on']
     for (const t of tokens) ok(!!leaf(m[fam], t), `${mode}.${fam}.${t} missing`)
     for (const gone of ['highlight-9', 'on-highlight'])
       ok(!leaf(m[fam], gone), `${mode}.${fam}.${gone} is still emitted — the highlight collapse regressed`)
@@ -132,7 +132,7 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
     ok((esc[mode] as any).link['link'].$value.hex === leaf(p, 'lead-53').$value.hex, `${mode} default link should stay on the brand's lead-53`)
     // the RED RESET (owner amendment): under the escape the red group ships CANONICAL —
     // byte-equal to the canonical emit, different from this brand's variant
-    for (const leafName of ['stamp-fill', 'stamp-fill-hover', 'stamp-fill-pressed', 'mark-74', 'lead-53']) {
+    for (const leafName of ['stamp-fill', 'stamp-fill-hover', 'stamp-fill-pressed', 'wax-74', 'lead-53']) {
       ok(leaf((esc[mode] as any).red, leafName).$value.hex === leaf((canon[mode] as any).red, leafName).$value.hex,
         `${mode} escape red/${leafName} ${leaf((esc[mode] as any).red, leafName).$value.hex} != canonical ${leaf((canon[mode] as any).red, leafName).$value.hex} (the escape must reset red)`)
     }
@@ -247,7 +247,7 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
     const sg = (outline[mode] as any).secondary
     ok(leaf(sg, 'stamp-fill').$value.alpha === 0, `${mode} outline cta/enabled should be transparent`)
     ok(!!leaf(sg, 'stamp-edge') && leaf(sg, 'stamp-edge').$value.alpha === 1, `${mode} outline cta/border should carry mark/74-aa (opaque)`)
-    ok(leaf(sg, 'stamp-edge').$value.hex === leaf(sg, 'mark-74').$value.hex, `${mode} outline cta/border != its mark/74-aa`)
+    ok(leaf(sg, 'stamp-edge').$value.hex === leaf(sg, 'wax-74').$value.hex, `${mode} outline cta/border != its mark/74-aa`)
     ok(leaf(sg, 'stamp-on').$value.hex === leaf(sg, 'lead-53').$value.hex, `${mode} outline cta/on should be the family lead-53`)
     ok(!sg['stamp-fill'] || !sg['stamp-fill'].$type, `${mode} outline left a FLAT cta leaf (band regression)`)
   }

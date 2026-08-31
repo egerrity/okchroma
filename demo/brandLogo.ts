@@ -4,7 +4,7 @@
 //   .bl-mark → --brand-lead-53 (darkest highlight stop — keeps the mark COLOURED
 //              yet legible on the light neutral sidebar; ~2.9:1 worst-case for a bright
 //              yellow brand. A logo mark is WCAG-exempt, so 3:1 isn't required; a raw
-//              cta/mark-74/identity fill washes out for bright brands. A mark that
+//              cta/wax-74/identity fill washes out for bright brands. A mark that
 //              is colourful AND always ≥3:1 would need an engine-emitted contrast-
 //              clamped stop. Wired in demo/CustomTheme.tsx PAGE_CSS.)
 //   .bl-type → --brand-lead-53 (the wordmark register)

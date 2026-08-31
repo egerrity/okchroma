@@ -11,7 +11,7 @@ import { AlertCircle, AlertTriangle, CheckCircle, Info } from 'lucide-react'
 //   wash    → the inset surface(s)
 //   cta     → the full-round pill button (brand/alt/neutral) OR, on signals,
 //             the ALERT callout (alerts use cta in signals; the pill is hidden)
-//   scale   → the ladder, stop labels above the chips, with paper/wash/mark/ink brackets
+//   scale   → the ladder, stop labels above the chips, with paper/wash/wax/ink brackets
 //
 // The universal paper-100/ink-0 anchors are NOT shown here — they're one shared
 // white/black pair at the system level, not a per-ramp token.
@@ -106,12 +106,12 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
   // themselves stay clean.
   const scale = [
     'paper-99', 'paper-97', 'paper-95', 'wash-92', 'wash-89', 'wash-85', 'wash-80',
-    'mark-74', 'lead-53', 'ink-42', 'ink-30',
+    'wax-74', 'lead-53', 'ink-42', 'ink-30',
   ]
   const stopLabel = (tok: string): string => tok.split('-').slice(1).join('')
   const groups = [
     { label: 'paper', span: 3 }, { label: 'wash', span: 4 },
-    { label: 'mark', span: 1 }, { label: 'ink', span: 3 },
+    { label: 'wax', span: 1 }, { label: 'ink', span: 3 },
   ]
   // the brackets below share the scale's grid, so their spans have to add up to it
   if (groups.reduce((a, g) => a + g.span, 0) !== scale.length)
@@ -193,7 +193,7 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
         ) : insetControls ? (
           /* the controls box (owner 2026-07-28, unify-compare section 3): chip +
              focused input, so the stops' JOBS read directly — chip = paper-95 fill ·
-             wash-85 border · lead-53 text; the ring is mark-74 with a wash-89 halo
+             wash-85 border · lead-53 text; the ring is wax-74 with a wash-89 halo
              (the collision demo's held-focus idiom) */
           <div style={{ ...box, background: v('paper-97') }}>
             <div style={{ ...boxLabel, color: v('lead-53') }}>chip &middot; focus ring</div>
@@ -206,7 +206,7 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
               <input readOnly value="Focused input" style={{
                 flex: 1, minWidth: 0, boxSizing: 'border-box', padding: '7px 11px', borderRadius: 8,
                 fontSize: 13, fontFamily: 'inherit', background: v('paper-99'), color: v('ink-30'),
-                border: `1.5px solid ${v('mark-74')}`, boxShadow: `0 0 0 3px ${v('wash-89')}`, outline: 'none',
+                border: `1.5px solid ${v('wax-74')}`, boxShadow: `0 0 0 3px ${v('wash-89')}`, outline: 'none',
               }} />
             </div>
           </div>
@@ -250,7 +250,7 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
         ))}
       </div>
       {/* Bracketed group labels — each bracket spans its stops so the
-          paper/wash/mark/ink grouping reads unambiguously.
+          paper/wash/wax/ink grouping reads unambiguously.
           The column count is DERIVED from the scale, never written down: it was a
           hardcoded 11 and the 2026-07-29 collapse took the scale to 10, which left every
           bracket a column short and drifting left of the stops it labelled. A stop change

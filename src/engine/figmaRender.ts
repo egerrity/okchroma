@@ -58,7 +58,7 @@ function colorFromHexString(hex: string): FigmaColorToken {
 
 // LEAF SHAPE (owner 2026-08-12, band flattening; solid rename 2026-08-18): ramp
 // tokens sit FLAT in the family group — paper-99, paper-99-overlay, wash-92,
-// mark-74, lead-53 … ONLY the stamp/ state group nests
+// wax-74, lead-53 … ONLY the stamp/ state group nests
 // (fill/fill-hover/fill-pressed/edge/on, matching system/link's state shape); its
 // table lives in tokenNames.ts — the one flat↔nested source every consumer rides. `identity` stays
 // a flat leaf; the plugins re-home the BIND surfaces to their absolute rows. Both
@@ -71,7 +71,7 @@ function bandedLeaf(flat: string): string {
 // insertion order (ECMA-262 OrdinaryOwnPropertyKeys). paper's leaves (95/97/99/100) and
 // wash's (80/85/89/92) are bare-digit keys, so a plain Object.entries silently reverses
 // them to ascending — defeating the TOKEN_ORDER-derived insertion order rampGroup builds
-// (descending LL, lightest first) without any COLOR changing. mark/ink leaves carry a
+// (descending LL, lightest first) without any COLOR changing. wax/ink leaves carry a
 // a conformance suffix (e.g. '74-aa') so they are not canonical integer keys and are unaffected;
 // this walker treats them the same way anyway so the rule doesn't depend on that
 // incidental shape. Non-digit-leading siblings (band names, cta states, …) keep
@@ -133,7 +133,7 @@ function rampGroup(
   // the background rather than sit on it (owner 2026-07-29, superseding the 2026-07-04 "filled is
   // filled" removal), else transparent. The rule lives in cssRender.ctaNeedsBorder — |Lc| of the
   // fill against the page under 15 — so both emitters decide identically, and the rung comes from
-  // cssRender.ctaBorderRung. The outline secondary still overrides this with its own mark-74
+  // cssRender.ctaBorderRung. The outline secondary still overrides this with its own wax-74
   // unconditionally — there the edge is the button's identity, not a safety.
   if (extra?.cta) putLeaf(g, STAMP_EDGE, extra.ctaBorder ?? TRANSPARENT_TOKEN)
   putLeaf(g, STAMP_ON, colorFromHex(onFillWhite))
@@ -147,7 +147,7 @@ export interface ThemeInput {
 
   // the secondary's mode chip — 'outline' re-expresses the cta pair (mirrors cssRender's
   // outline override): cta transparent, cta-hover/-pressed the cta color at OUTLINE alphas,
-  // cta-border ALWAYS the secondary's own mark-74, on-cta the secondary's lead-53.
+  // cta-border ALWAYS the secondary's own wax-74, on-cta the secondary's lead-53.
   secondaryStyle?: SecondaryStyle
 
   neutralLevel?: NeutralLevel
@@ -251,7 +251,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     const neutralGroup: FigmaGroup = spliceInk0(p0 ? { [PAPER_100]: colorFromStop(p0), ...ramp } : ramp)
     const secondaryGroup = rampGroup(secondary[mode], mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark, brandExtra(secondary, mode, CSS_FAMILY.brandSecondary))
     // outline re-expression (only a real secondary can be outline) — same values cssRender
-    // emits. The hover = mark-74 at OUTLINE_HOVER_ALPHA (the STABLE gated stop the ring
+    // emits. The hover = wax-74 at OUTLINE_HOVER_ALPHA (the STABLE gated stop the ring
     // uses — 9% of the generated subtle cta was imperceptible).
     if (input.secondaryStyle === 'outline' && input.secondary) {
       const s8 = secondary[mode].find(s => s.stop === 8)
