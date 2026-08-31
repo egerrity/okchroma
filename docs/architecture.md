@@ -571,7 +571,7 @@ npm run plugin-ext:build   # the extended plugin   → plugin-ext/dist/*
 ```bash
 npm run typecheck        # tsc --noEmit
 npm run audit            # dark-mode audit        (add :bless to update the snapshot)
-npm run highlight-audit  # highlight/on-fill audit (add :bless)
+npm run band-audit  # band order / emphasis / neutral-cta audit (add :bless)
 npm run audit:divergence # light↔dark + cross-family divergence audit (add :bless)
 npm run req:audit        # the requirement gate: every DECLARED requirement, agnostic sweep, both modes
 npm run smooth           # ramp smoothness audit  (smooth:baseline to re-record)

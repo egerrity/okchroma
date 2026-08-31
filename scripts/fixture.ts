@@ -1,5 +1,5 @@
 // Audit fixture — a small, intentional color set for the engine's own instruments
-// (dark-audit, highlight-audit, divergence-audit, smoothness-audit, ext-override-audit,
+// (dark-audit, band-audit, divergence-audit, smoothness-audit, ext-override-audit,
 // figma-verify). Replaces the old 32-drink representative set (src/brands.ts,
 // src/secondaries.ts — deleted): those fed a hidden demo gallery as well as the audits,
 // so they carried demo-facing concerns (display names, a `demo` flag, a nav picker).

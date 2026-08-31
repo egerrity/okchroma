@@ -4,7 +4,7 @@ export interface StopSpec {
 }
 
 // ── THE STOP-L SCAFFOLDS, KEYED BY STOP NUMBER ────────────────────────────────
-// Stops 1–8 (paper→highlight-8) are a GEOMETRIC ladder — gaps grow ~1.25× per step — so every adjacent
+// Stops 1–8 (paper→wax-74) are a GEOMETRIC ladder — gaps grow ~1.25× per step — so every adjacent
 // stop is distinct by construction and paper-2 falls onto its ID curve with no clamp (owner 2026-07-09,
 // distribution "B"; separation is a shape property, not a delta — see spec.ts).
 // (Normalized 2026-08-05: these were positional arrays carrying two RETIRED slots between stop 8 and
@@ -122,7 +122,7 @@ export const DARK_CTA_C = {
 export type DarkCtaKind = keyof typeof DARK_CTA_C
 // ──────────────────────────────────────────────────────────────────────────────
 
-// Stop 8 (highlight-8) carries the WCAG 1.4.11 non-text 3:1 guarantee — against
+// Stop 8 (wax-74) carries the WCAG 1.4.11 non-text 3:1 guarantee — against
 // PAPER-3 IN BOTH MODES (owner 2026-07-29: "it is a 3:1 contrast require on paper 3
 // so inputs can be placed on any paper"). Paper-3 is the hardest plane in each mode:
 // light's darkest paper, dark's lightest. The light ramp clamps its perceptual rung L

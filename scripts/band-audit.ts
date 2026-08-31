@@ -52,7 +52,7 @@ const hx = (s: ColorStop) => {
 const whiteWcag = (s: ColorStop) => contrastRatio(1.0, wcagY(s.L, s.C, s.H))
 const blackWcag = (s: ColorStop) => contrastRatio(wcagY(s.L, s.C, s.H), 0)
 // APCA Lc of a text pole on a fill (white → txtY 1.0, black → 0.0), mirroring the
-// engine's onTextIsWhite. HL_BODY = APCA body-text floor: the bar the highlight clears.
+// engine's onTextIsWhite. HL_BODY = APCA body-text floor: the bar the emphasis fill (lead-53) clears.
 const onApcaLc = (s: ColorStop, white: boolean | undefined) => Math.abs(apcaLc(white ? 1.0 : 0.0, apcaY(s.r, s.g, s.b)))
 const HL_BODY = 60
 // THE TRUE SPLIT (owner 2026-07-04): each profile is gated by ITS OWN law — apca lane = the
@@ -259,7 +259,7 @@ for (const sig of SIGNALS) {
 // slot is `light[8]`/`dark[8]` — an ARRAY POSITION, which held highlight-9 before the
 // collapse and holds lead-53 after it: same index, successor token. (The rest of
 // the scale is guarded separately by dark-audit.)
-const SNAP_PATH = path.join(process.cwd(), 'scripts', 'highlight-snapshot.json')
+const SNAP_PATH = path.join(process.cwd(), 'scripts', 'band-snapshot.json')
 const TOL = 0.015
 const rungAndCta = (s: GeneratedScale) =>
   // the last six triples were the cta-ink fields (deleted 2026-08-12); they were pure
@@ -304,7 +304,7 @@ if (process.argv.includes('--bless')) {
   drift.slice(0, 8).forEach(s => console.log(`   ${s}`))
   if (drift.length) fails.push('highlight snapshot drift (see above)')
 } else {
-  console.log(`\nno blessed highlight snapshot yet — run highlight-audit:bless after visual approval`)
+  console.log(`\nno blessed band snapshot yet — run band-audit:bless after visual approval`)
 }
 
 console.log()

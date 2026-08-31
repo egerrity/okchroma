@@ -176,7 +176,7 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
       )}
 
       {/* in context — the wash inset, plus the signal alert (signals), the chip +
-          focus-ring controls box (insetControls), or the highlight inset (default) */}
+          focus-ring controls box (insetControls), or the emphasis inset (default) */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 18 }}>
         <div style={{ ...box, background: v('wash-92') }}>
           <div style={{ ...boxLabel, color: v('lead-53') }}>inset &middot; wash</div>

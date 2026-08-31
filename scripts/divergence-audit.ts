@@ -150,7 +150,7 @@ console.log(`  worst dark vivid-stop wave ${f1(worstDark)} L*  ·  dark CTA wave
 // ⚠️ This section reads PAPER-97, which is no longer stop 8's anchor: since 2026-07-29 stop 8
 // declares 3:1 against PAPER-95 in both modes (spec.ts S8) and is placed by that require, not
 // by the scaffold. Paper-97 is the EASIER plane in dark, so the stop-8 row below reads high by
-// the paper-97→paper-95 offset and is NOT the compliance number — highlight-audit §1b owns that.
+// the paper-97→paper-95 offset and is NOT the compliance number — band-audit §1b owns that.
 // The ink rows are still on their declared anchor and unaffected. Left reading paper-97 so the
 // series stays comparable to its own history; read the label, not the bare ratio.
 // find by STOP number — the arrays are contiguous stops 1..10 (highlight-9 deleted and

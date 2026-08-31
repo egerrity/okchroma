@@ -39,7 +39,7 @@ hyphens, so the token name itself is one flat leaf. Read left to right,
 |---|---|---|
 | register | `primitive` | the extended plugin's wrapper, carried by every row |
 | family | `neutral` | which color family the stop belongs to: neutral, brand, brand-alt, or a signal |
-| band | `ink` | which law the stop serves: `paper`, `wash`, `wax`, or `ink` |
+| band | `ink` | which law the stop serves: `paper`, `wash`, `wax`, `lead`, or `ink` |
 | visibility | `53` | the stop's light rootL times 100, rounded |
 | conformance | `aa` | the WCAG level this stop certifies, present only where a requirement is central to the stop's job |
 

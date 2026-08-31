@@ -48,7 +48,7 @@ brand.light
       "mode": "light",
       "stop": 8,
       "rootL": 0.738,
-      "group": "highlight",
+      "group": "wax",
       "produce": { "hue": "warm-drift", "L": "perceptual", "chroma": "ladder" },
       "satFraction": 0.78,
       "baseC": 0.142,
@@ -111,7 +111,7 @@ three ink stops.
 |---|---|---|
 | `stop` | number | Scale position, 0–11. `0` = the paper anchor beyond paper-99 (white in light; one seam below paper-99 in dark). Roles are never stops. |
 | `rootL` | number | The producer's lightness target (the scaffold). For `anchor` roles it is the floor instead. |
-| `group` | `paper` \| `wash` \| `highlight` \| `ink` | The stop's band. |
+| `group` | `paper` \| `wash` \| `wax` \| `lead` \| `ink` | The stop's band (paper 0-3, wash 4-7, wax 8, lead 9, ink 10-11). Bundles exported before 0.1.7 label stop 3 `wash`, stop 8 `highlight`, and stop 9 `ink`; they re-resolve identically (the resolver reads only ink-lane membership, which accepts the legacy word). |
 | `produce` | object | Named producers (see below). |
 | `satFraction` | number? | `ladder` chroma param: envelope saturation fraction. |
 | `baseC` | number? | `ladder` chroma param (light): absolute base chroma for the ladder/envelope blend. |

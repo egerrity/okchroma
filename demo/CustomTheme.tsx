@@ -1406,7 +1406,7 @@ const PAGE_CSS = `
   padding: 18px 14px; display: flex; flex-direction: column; gap: 18px;
 }
 /* wordmark (logoipsum placeholder) — the two svg groups' fills wire to the live
-   palette: the mark to brand-lead-53 (darkest highlight stop — keeps the mark
+   palette: the mark to brand-lead-53 (the lead stop — keeps the mark
    COLOURED yet legible on the light neutral sidebar; ~2.9:1 worst-case for a bright
    yellow brand, and a logo mark is WCAG-exempt so 3:1 isn't required. cta/wax-74
    wash out for bright brands here), the wordmark to brand-lead-53. A fully-robust

@@ -3,8 +3,9 @@
 // (resolve.ts) executes it by calling the real engine functions; producer names ('perceptual', 'warm-torsion')
 // are references to named resolver capabilities, not formulas.
 //
-// NUMBERING TRUTH (owner-flagged; matches the engine): the SCALE is stops 1–10 — paper 1–2, wash 3–7,
-// highlight (wax) 8, ink 9–10 (contiguous). THE HIGHLIGHT BAND COLLAPSED 2026-07-29: highlight-9 is
+// NUMBERING TRUTH (owner-flagged; matches the engine): the SCALE is stops 1–11 — paper 1–3, wash 4–7,
+// wax 8, lead 9, ink 10–11 (contiguous; the C49 between-stop round later took the inks back to
+// 9–11 after the collapse below briefly made the scale 1–10). THE HIGHLIGHT BAND COLLAPSED 2026-07-29: highlight-9 is
 // deleted and the inks renumbered down onto it (old 10/11 → 9/10). highlight-9 and old ink-10 both
 // solved 4.5 against paper-95 (paper-3) — the same bar against the same anchor — so they landed on
 // top of each other (145 of 360 agnostic seeds within 0.01). lead-53 (ink-9) now carries both
@@ -19,8 +20,16 @@ import {
   ROOT_L_LIGHT, ROOT_L_DARK, SCALE_C_LIGHT, SCALE_C_DARK,
   STOP_8_NONTEXT_CONTRAST, INK_9_CONTRAST, INK_10_CONTRAST, INK_11_CONTRAST_FLOOR, DARK_CTA_MIN_L,
 } from '../stopTable'
+// tokenNames is itself zero-import, so this drags nothing else in. It is the single
+// source of truth for the band words — the group labels below DERIVE from it.
+import { stopTokenName, PAPER_100 } from '../tokenNames'
 
-export type Group = 'paper' | 'wash' | 'highlight' | 'ink'
+export type Group = 'paper' | 'wash' | 'wax' | 'lead' | 'ink'
+// The solver's ink-lane membership test (stops 9–11: lead + the two inks). Takes a
+// plain string, not Group, ON PURPOSE: a DTCG bundle exported before 2026-08-31
+// labels stop 9 'ink' (the lane and the label were one word then), and re-resolving
+// it must land in the same lane. No other group label is ever branched on.
+export const inkLane = (g: string): boolean => g === 'lead' || g === 'ink'
 export type Producer = {
   // named hue producers: warm-drift = the light path (spine drift, dynamic cap, red-cool);
   // warm-torsion = the dark path (torsionedHue); constant = the seed's own hue (roles)
@@ -106,14 +115,19 @@ export type ModeSpec = {
   ons: { onFill: OnReq }
 }
 
-// DO NOT align to the paper-3 rename (owner 2026-07-24): stop 3 is PUBLICLY named
-// paper-95 (paper-3 pre-Stage-B) but stays in the internal 'wash' group — this
-// boundary feeds the requirement solver, and moving it to `stop <= 3 ? 'paper'`
-// would CHANGE generation. Name only.
-// The 'highlight' group is now a single stop (8, the focus ring); 9+ is ink. (The
-// Group enum value itself is an internal grouping label, not an emitted token name —
-// Stage B's highlight→mark word change, like the 2026-08-28 mark→wax rename, is scoped to emitted names, not this type.)
-const groupOf = (stop: number): Group => (stop <= 2 ? 'paper' : stop <= 7 ? 'wash' : stop === 8 ? 'highlight' : 'ink')
+// The group label is DERIVED from the stop's shipped token name (owner 2026-08-31:
+// the emitted `group` field — it ships in every DTCG token's $extensions and renders
+// on the docs site — must be true to the band words). No hand-kept ladder: the
+// pre-2026-08-31 labels were exactly that, a parallel spelling that drifted from the
+// names ('wash' on paper-95, 'highlight' on wax-74, 'ink' on lead-53). Deriving from
+// tokenNames kills the drift class — a band rename propagates here for free.
+// LABELS ONLY — the solver's lanes are separate, explicit rules and their spans are
+// unchanged: the text lane is inkLane() (the lead + ink bands — stops 9–11, exactly
+// the old 'ink' span), and the wash-collision span is the stop-number WASH_STOPS
+// table in collision.ts (still 3–7; the 2026-07-24 boundary warning lives there).
+// Pre-2026-08-31 bundles carrying the old labels re-resolve identically: only the
+// ink lane is ever read, and inkLane accepts the legacy word.
+const groupOf = (stop: number): Group => (stop === 0 ? PAPER_100 : stopTokenName(stop)).split('-')[0] as Group
 
 // paper-100 (paper-0 pre-Stage-B) — the ladder extreme BEYOND paper-99 (paper-1), now a resolved
 // stop instead of a hard-coded absolute (it was the last literal value in the system:
@@ -208,7 +222,7 @@ const ONS = { onFill: { metric: 'apca-pole', enforce: true, ratioFloor: 4.5, coE
 export const LIGHT: ModeSpec = {
   stops: [
     // paper-100 (paper-0 pre-Stage-B): the resolved ladder extreme — in light it genuinely is white (rootL 1.0, zero chroma)
-    { stop: 0, rootL: 1.0, group: 'paper', produce: { hue: 'warm-drift', L: 'fixed', chroma: 'ladder' }, satFraction: SCALE_C_LIGHT[0].sat, baseC: SCALE_C_LIGHT[0].base },
+    { stop: 0, rootL: 1.0, group: groupOf(0), produce: { hue: 'warm-drift', L: 'fixed', chroma: 'ladder' }, satFraction: SCALE_C_LIGHT[0].sat, baseC: SCALE_C_LIGHT[0].base },
     // paper/wash/wax-74: perceptual ladder/envelope blend on the geometric ROOT_L_LIGHT scaffold. Separation
     // falls out of the shape (see above) — no min-separation require. Only stop 8 carries a require: the WCAG
     // 3:1 vs the resolved paper-97 (paper-2) (re-solves automatically since it references paper-97 (paper-2)).
@@ -220,9 +234,9 @@ export const LIGHT: ModeSpec = {
     // ink text: perceptual + contrast-required. lead-53 (ink-9) is ALSO the emphasis fill (the
     // highlight-9 collapse, owner 2026-07-29). ink-42 (ink-10) is the between text stop (C49) —
     // a normal stop like its neighbors; the three together are the text-register cta.
-    { stop: 9, rootL: ROOT_L_LIGHT[9], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[9].inkMult, inkMaxC: SCALE_C_LIGHT[9].inkMaxC, chromaFloor: SCALE_C_LIGHT[9].chromaFloor, require: T9 },
-    { stop: 10, rootL: ROOT_L_LIGHT[10], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[10].inkMult, inkMaxC: SCALE_C_LIGHT[10].inkMaxC, chromaFloor: SCALE_C_LIGHT[10].chromaFloor, require: T10 },
-    { stop: 11, rootL: ROOT_L_LIGHT[11], group: 'ink', produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[11].inkMult, inkMaxC: SCALE_C_LIGHT[11].inkMaxC, chromaFloor: SCALE_C_LIGHT[11].chromaFloor, require: T11 },
+    { stop: 9, rootL: ROOT_L_LIGHT[9], group: groupOf(9), produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[9].inkMult, inkMaxC: SCALE_C_LIGHT[9].inkMaxC, chromaFloor: SCALE_C_LIGHT[9].chromaFloor, require: T9 },
+    { stop: 10, rootL: ROOT_L_LIGHT[10], group: groupOf(10), produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[10].inkMult, inkMaxC: SCALE_C_LIGHT[10].inkMaxC, chromaFloor: SCALE_C_LIGHT[10].chromaFloor, require: T10 },
+    { stop: 11, rootL: ROOT_L_LIGHT[11], group: groupOf(11), produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[11].inkMult, inkMaxC: SCALE_C_LIGHT[11].inkMaxC, chromaFloor: SCALE_C_LIGHT[11].chromaFloor, require: T11 },
   ],
   roles: [
     { role: 'cta', produce: { hue: 'constant', L: 'anchor', chroma: 'brand' }, floorL: 0, chromaMult: 1 },
@@ -236,7 +250,7 @@ export const DARK: ModeSpec = {
   stops: [
     // paper-100 (paper-0 pre-Stage-B): the resolved ladder extreme — one seam BELOW paper-99 (paper-1), deep and brand-tinted, never the
     // absolute void (the old hard-coded #000000 was "too much"). Lift applies like the rest of the scale.
-    { stop: 0, rootL: PAPER0_DARK_ROOT_L, group: 'paper', produce: P_LIFT, satFraction: SCALE_C_DARK[0].sat },
+    { stop: 0, rootL: PAPER0_DARK_ROOT_L, group: groupOf(0), produce: P_LIFT, satFraction: SCALE_C_DARK[0].sat },
     // paper/wash 1–7: perceptual on the dark scaffold. stop 8: FIXED at the hand-placed scaffold BUT with the
     // 3:1 non-text require DECLARED (the Stage-5 flip, owner-approved) — the blue-recede failure is prevented
     // BY RULE, not by patch. The require now genuinely PLACES the stop rather than catching a few low-luminance
@@ -249,9 +263,9 @@ export const DARK: ModeSpec = {
     })),
     // ink text: perceptual + the contrast requires DECLARED in dark too (Stage-5 flip): the scaffold already
     // clears them for every hue (the gate proves it), so values don't move — but the guarantee is now a rule.
-    { stop: 9, rootL: ROOT_L_DARK[9], group: 'ink', produce: P_TEXT, chromaMult: SCALE_C_DARK[9].inkMult, inkMaxC: SCALE_C_DARK[9].inkMaxC, chromaFloor: SCALE_C_DARK[9].chromaFloor, require: T9 },
-    { stop: 10, rootL: ROOT_L_DARK[10], group: 'ink', produce: P_TEXT, chromaMult: SCALE_C_DARK[10].inkMult, inkMaxC: SCALE_C_DARK[10].inkMaxC, chromaFloor: SCALE_C_DARK[10].chromaFloor, require: T10 },
-    { stop: 11, rootL: ROOT_L_DARK[11], group: 'ink', produce: P_TEXT, chromaMult: SCALE_C_DARK[11].inkMult, inkMaxC: SCALE_C_DARK[11].inkMaxC, chromaFloor: SCALE_C_DARK[11].chromaFloor, require: T11 },
+    { stop: 9, rootL: ROOT_L_DARK[9], group: groupOf(9), produce: P_TEXT, chromaMult: SCALE_C_DARK[9].inkMult, inkMaxC: SCALE_C_DARK[9].inkMaxC, chromaFloor: SCALE_C_DARK[9].chromaFloor, require: T9 },
+    { stop: 10, rootL: ROOT_L_DARK[10], group: groupOf(10), produce: P_TEXT, chromaMult: SCALE_C_DARK[10].inkMult, inkMaxC: SCALE_C_DARK[10].inkMaxC, chromaFloor: SCALE_C_DARK[10].chromaFloor, require: T10 },
+    { stop: 11, rootL: ROOT_L_DARK[11], group: groupOf(11), produce: P_TEXT, chromaMult: SCALE_C_DARK[11].inkMult, inkMaxC: SCALE_C_DARK[11].inkMaxC, chromaFloor: SCALE_C_DARK[11].chromaFloor, require: T11 },
   ],
   roles: [
     { role: 'cta', produce: { hue: 'constant', L: 'anchor', chroma: 'brand' }, floorL: DARK_CTA_MIN_L, chromaMult: 1 },

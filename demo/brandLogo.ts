@@ -1,7 +1,7 @@
 // Placeholder brand logo (logoipsum) for the demo — replaces the old ◈ glyph +
 // "yourBrand" text spans. Two groups carry classes so the fills wire to the live
 // palette (not the baked-in green) when it lands in CustomTheme:
-//   .bl-mark → --brand-lead-53 (darkest highlight stop — keeps the mark COLOURED
+//   .bl-mark → --brand-lead-53 (the lead stop — keeps the mark COLOURED
 //              yet legible on the light neutral sidebar; ~2.9:1 worst-case for a bright
 //              yellow brand. A logo mark is WCAG-exempt, so 3:1 isn't required; a raw
 //              cta/wax-74/identity fill washes out for bright brands. A mark that

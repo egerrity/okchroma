@@ -350,12 +350,12 @@ export type SecondaryLevel = 'standard' | 'subtle'
 // The secondary's per-field MODE (owner design 2026-07-04: modes decoupled per family — the
 // mockup's chip dropdown). muted/vibrant = the two subtle chroma models (both ride the locked
 // delta curve); outline = the muted ramp with the cta re-resolved (cta transparent, cta-hover the
-// cta color at OUTLINE_HOVER_ALPHA, on-cta the family's ink-9, cta-border always highlight-8); exact = the
+// cta color at OUTLINE_HOVER_ALPHA, on-cta the family's ink-9, cta-border always wax-74); exact = the
 // standard full ramp, advice-only.
 // the offering (owner 2026-07-12, striking the bespoke subtle models: "you either use the
 // derived or you use custom"): 'default' = the derived seed-transform (no hex supplied);
 // 'exact' = the CUSTOM path — your hex ships as a full standard ramp; 'outline' = the exact
-// ramp with the cta re-resolved at the emitters (cta transparent, border = highlight-8).
+// ramp with the cta re-resolved at the emitters (cta transparent, border = wax-74).
 export type SecondaryStyle = 'default' | 'outline' | 'exact'
 // legacy ids: the retired subtle models (tint/pastel and their muted/vibrant renames) map to
 // 'exact' — a supplied hex is honored as custom, never silently re-modeled.

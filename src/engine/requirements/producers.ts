@@ -154,10 +154,10 @@ export function buildContext(hex: string, opts?: ResolveOpts) {
 }
 export type Ctx = ReturnType<typeof buildContext>
 
-// ---- light scale chroma (stops 1–8: paper/wash/highlight-8): ladder/envelope blend, cAt-wrapped.
+// ---- light scale chroma (stops 1–8: paper/wash/wax-74): ladder/envelope blend, cAt-wrapped.
 // The ladder carries the C32 brand bell (ctx.bellAt, L-ramped); the envelope blend is now the
 // muted path only. Stop 9 has its own producer and is deliberately outside the bell — C31 gave
-// the highlight band its own laws and this must not reach them.
+// the lead stop its own laws and this must not reach it.
 // NOTE: unclamped by design — the perceptual solve sees the raw blend; makeStop clamps at emit.
 // boostOverride replaces ctx.chromaBoost in the ladder — used only to price the rung's
 // apparent target at pre-boost (identity) chroma; the emitted chroma always keeps the boost.
@@ -492,7 +492,7 @@ export function deltaLiftChroma(
 ): number {
   const appOf = (s: { L: number; C: number; H: number }) =>
     apparentL(s.L, clampChromaToGamut(s.L, s.C, s.H), s.H)
-  // SURFACE band only (stops 1–7): the highlight stops 8/9 are LAWFULLY lane-dependent
+  // SURFACE band only (stops 1–7): the wax/lead stops 8/9 are LAWFULLY lane-dependent
   // (3:1 vs Lc requires), and including them forked the lanes inside the washes where
   // they were byte-identical by construction (owner-caught 2026-07-27 — apca wash-6 ran
   // over-chromatic). Beyond stop 7's depth the band's own end slope extrapolates.

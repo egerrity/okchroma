@@ -232,7 +232,7 @@ export const LIGHT_DRIFT_COOL_RANGE = 16
 // chromatic as the band deepens, so a constant multiplier hands out MORE help the darker
 // it gets; the ramp is what makes the help diminish instead (owner: "extra in diminishing
 // amounts as the color gets darker"). Applied in lightScaleChromaAt only — stops 1–8;
-// the highlight producer keeps C31's laws.
+// the lead producer keeps C31's laws.
 //
 // Lineage: the engine carried a brand bell until acb6a83 (2026-07-07, C7), at H90 /
 // sigma 35 / amount 1.7 — a narrow, strong spike. This is that idea, moved slightly warm,
@@ -429,7 +429,7 @@ export function makeStop(stop: number, L: number, C: number, H: number, gamut: G
 // under the wcag profile every CHOSEN pole must pass the 4.5 ratio — `ratioFloor` flips to the
 // other pole when the preferred one fails (WCAG 4.5:1 has no dead zone, so the other pole
 // always passes; fills never move). The apca profile carries no ratio floor for LOUD fills —
-// its law is the Lc bar (enforceLc re-solves enforced ctas; the highlight band clears Lc 60
+// its law is the Lc bar (enforceLc re-solves enforced ctas; the lead fill clears Lc 60
 // by placement) — but the QUIET-cta callers (colorEngine) pass the floor in both profiles
 // (owner 2026-08-29, the C47 not-a-lane-decision precedent).
 // Every 4.5 check is D1 legality: legalRatio (both renditions). The Y arg (APCA

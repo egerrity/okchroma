@@ -47,9 +47,9 @@ const LEVEL: Record<NeutralLevel, number> = { pure: 0, default: 0.75, medium: 1,
 // and the shape it used to borrow from SHAPE broke both:
 //   1. "add a bit more chroma to help differentiate" — the elevation planes (paper-1 …
 //      paper-3) must separate from each other, so the tint LIFTS across them.
-//   2. "the hue has to drop off as you get higher" — so it TAPERS through the highlight
-//      and ink band, landing text ~neutral.
-// The borrowed shape did the exact opposite: it rose monotonically through the highlight
+//   2. "the hue has to drop off as you get higher" — so it TAPERS through the
+//      wax, lead, and ink bands, landing text ~neutral.
+// The borrowed shape did the exact opposite: it rose monotonically through the wax/lead
 // band and was still near peak at the inks — least tint on the planes that needed
 // separating, most where it should be clean. Measured cost: the dark strong ink burned
 // ~32% of its available chroma room, so text carried a visible cast, while dark
@@ -75,7 +75,7 @@ const NEUTRAL_TINT_POINTS: Record<'light' | 'dark', readonly TintPoint[]> = {
     [0.892, 1.000], // wash-5   ─┘
     [0.852, 0.842], // wash-6   ─┐
     [0.801, 0.653], // wash-7    │
-    [0.738, 0.505], // highlight-8
+    [0.738, 0.505], // wax-74
     [0.600, 0.400], // knee (ex-scaffold)   the drop-off: hue fades as you climb
     [0.560, 0.347], // knee (ex-scaffold)
     [0.530, 0.295], // first text stop
@@ -89,7 +89,7 @@ const NEUTRAL_TINT_POINTS: Record<'light' | 'dark', readonly TintPoint[]> = {
     [0.313, 1.000], // wash-5
     [0.348, 0.842], // wash-6
     [0.420, 0.653], // wash-7
-    [0.550, 0.505], // highlight-8
+    [0.550, 0.505], // wax-74
     [0.600, 0.400], // knee (ex-scaffold)
     [0.640, 0.347], // knee (ex-scaffold)
     [0.767, 0.295], // first text stop

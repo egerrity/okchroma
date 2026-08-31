@@ -2,11 +2,11 @@
 // 2026-07-09, CATALOG C10: "it shouldn't be stitched together mechanisms… how can we
 // make that stick?"). This audit is the answer: the invariant lives in the suite, not
 // in conversation. It fails when:
-//   1. TABLE SHAPE breaks the owner's register invariant — the highlight band (8–9)
+//   1. TABLE SHAPE breaks the owner's register invariant — the wax/lead pair (8–9)
 //      must share ONE declared base register (the 8|9 "starts and stops" break was a
 //      second constant); the wash run (1–7) must ascend monotonically with a bounded
 //      per-step ratio (no hidden register cliff inside a lightness-adjacent run). The
-//      7|8 step is exempt BY DESIGN: it rides the wash|highlight family boundary and
+//      7|8 step is exempt BY DESIGN: it rides the wash|wax family boundary and
 //      its ~0.15 L drop (the re-bucket seam), not an equal-lightness register jump.
 //   2. SPEC↔TABLE BINDING drifts — every stop's chroma params in MODE_SPECS must be
 //      the SCALE_C table's values (catches a re-inlined constant in spec.ts).
@@ -20,7 +20,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import { SCALE_C_LIGHT, SCALE_C_DARK, DARK_CTA_C, chromaFloorBase } from '../src/engine/stopTable'
-import { MODE_SPECS } from '../src/engine/requirements/spec'
+import { MODE_SPECS, inkLane } from '../src/engine/requirements/spec'
 import { darkCtaTrim } from '../src/engine/darkChromaCurve'
 import { signalScalesFor, resolveBrand } from '../src/engine/resolve'
 
@@ -83,7 +83,7 @@ const ok = (msg: string) => console.log('  ✓ ' + msg)
       if (sp.baseC !== undefined && sp.baseC !== e.base) fail(`${mode} s${sp.stop} baseC ${sp.baseC} != table ${e.base}`)
       if (sp.satFraction !== undefined && sp.satFraction !== e.sat) fail(`${mode} s${sp.stop} satFraction ${sp.satFraction} != table ${e.sat}`)
       if (sp.chromaMult !== undefined && sp.chromaMult !== e.inkMult) fail(`${mode} s${sp.stop} chromaMult ${sp.chromaMult} != table ${e.inkMult}`)
-      if (sp.group === 'ink' && e.inkMult === undefined) fail(`${mode} s${sp.stop} is ink but the table declares no inkMult`)
+      if (inkLane(sp.group) && e.inkMult === undefined) fail(`${mode} s${sp.stop} is ink-lane but the table declares no inkMult`)
       if (sp.chromaFloor !== e.chromaFloor) fail(`${mode} s${sp.stop} chromaFloor ${sp.chromaFloor} != table ${e.chromaFloor}`)
     }
   }

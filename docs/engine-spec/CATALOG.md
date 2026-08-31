@@ -1214,7 +1214,7 @@ holder") covers the top of the band; wash-4/5 text and TokenCards' ink-11-on-hig
 pairing are the open surfaces — accept-and-declare vs a declared ink-vs-wash require is
 her call. (2) DARK s8==s9 CONVERGENCE for yellow-band seeds (18/180 byte-identical: s8's
 3:1 solve vs the lifted paper-2 rises ~17 app and yellow's s9 band floor equals it;
-highlight-audit deliberately does not assert 8/9 ordering) — direct evidence FOR the
+band-audit (then highlight-audit) deliberately does not assert 8/9 ordering) — direct evidence FOR the
 owner's open "collapse 8·9 into one 3:1 stop" idea; equality ships, inversion cannot.
 (3) The dtcg portability lane stays seed-keyed (pre-existing total bypass; the lift
 NARROWS its divergence from shipped — s7 ΔE 0.134→0.049 — it does not widen it).
@@ -1693,7 +1693,7 @@ spacing, which is exactly how highlight-9 drifted onto ink-10 unnoticed. Now dec
 ink-9 clears highlight-8 against the shared paper-3 anchor by BAND_ORDER_MARGIN 1.0
 (worst measured 1.41 light / 3.18 dark), and `--paper-0` clears 4.5 on ink-9 (worst 4.93 /
 8.08). `req:audit`'s dead `dark-8<9` check is replaced by a both-modes band-order check
-stated as contrast rather than L. `highlight-audit`'s stop-8 sweep also now reads its OWN
+stated as contrast rather than L. `band-audit`'s stop-8 sweep also now reads its OWN
 declared anchor per mode (light paper-3, dark paper-2); it read paper-2 in both, which
 since C31 tested the light ring against a lighter plane than its rule names.
 
@@ -1957,7 +1957,7 @@ light's band translated up, and a translation shows up entirely at the boundary.
 
 BLAST RADIUS. 504 of 4,800 values, measured against a git worktree at the true parent: dark
 wash-4/5/7 on all 150 ramps, wash-6 untouched, plus 54 neutral dark cta values because
-`--neutral-cta`'s rest tracks the scale's own stop 4 by design (highlight-audit §3). No light
+`--neutral-cta`'s rest tracks the scale's own stop 4 by design (band-audit §3). No light
 stop, no paper, no highlight-8, no ink, no brand or signal cta. Zero gamut clamping in the
 wash band at any S tried up to 1.40. Band order holds with no inversions and no non-monotone
 steps; the tightest step in the ramp remains paper-1→paper-2 at 2.41 apparent-L, so no seam

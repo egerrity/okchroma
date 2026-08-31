@@ -12,7 +12,7 @@ import { clampChromaToGamut, wcagY, legalRatio, findMaxLForContrast, apcaLc, con
 import { hexToOklch, srgbEmitChannels, redSolveDist, RED_GATE, RED_SOLVE } from '../colorMath'
 import { hoverL, pressedL, stateFillL } from '../archetypes'
 import { ROOT_L_LIGHT, DARK_SIGNAL_WARM_DRIFT, chromaFloorBase } from '../stopTable'
-import { MODE_SPECS, type ModeSpec, type StopReq, type RoleReq, type Require } from './spec'
+import { MODE_SPECS, inkLane, type ModeSpec, type StopReq, type RoleReq, type Require } from './spec'
 import {
   buildContext, buildDarkContext, type Ctx, type DarkCtx, type ResolveOpts,
   lightScaleChromaAt, placeLightScale, placeLightText,
@@ -49,8 +49,8 @@ export type ResolvedRamp = {
 export type { ResolveOpts }
 
 // the loudness cap on the APCA-clearance move (v1 raw-L symmetric budget around the brand fill; owner-tuned
-// from the exhibit marks — plan open item 4). 4.5 is NEVER capped; only the Lc ambition is. No highlight-band
-// clamp: the highlight FILL sits at a mid L (often BELOW the cta), so a black-lighten moves AWAY from it —
+// from the exhibit marks — plan open item 4). 4.5 is NEVER capped; only the Lc ambition is. No emphasis-band
+// clamp: the emphasis fill (lead-53) sits at a mid L (often BELOW the cta), so a black-lighten moves AWAY from it —
 // there is no wash risk to guard, and clamping to it wrongly killed the move.
 // The clearance caps are the POLE caps (owner 2026-07-13 dead-zone ruling: the bar is the
 // goal, not an ambition — the old ±0.16 taste budget capped worst-case dead zones short of
@@ -185,7 +185,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
 
     if (mode === 'light') {
       // LIGHT: verbatim engine producers, dispatched by group
-      if (sp.group === 'ink') {
+      if (inkLane(sp.group)) {
         if (!sp.require) throw new Error(`light ink stop ${sp.stop} must declare a contrast require`)
         placed = placeLightText(ctx, sp.rootL, sp.chromaMult ?? 1, maxLForOf(sp.require, sp.stop, false), INK_DEEPEN, sp.inkMaxC)
         clamped = true
@@ -213,10 +213,10 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     } else {
       // DARK: verbatim engine producers; 'fixed' stays at the hand-placed scaffold, 'perceptual' solves
       const d = dctx!
-      const inkTwin = sp.group === 'ink' && ctx.opts?.deltaCarry && ctx.opts?.chromaCurve
+      const inkTwin = inkLane(sp.group) && ctx.opts?.deltaCarry && ctx.opts?.chromaCurve
         ? ctx.opts.deltaLightStops?.find(s => s.stop === sp.stop) : undefined
       const chromaAt =
-        sp.group === 'ink'
+        inkLane(sp.group)
           // curve-bearing ramps (neutral, derived secondary): ink chroma = the light twin's (the curve's dark
           // branch is keyed to the OLD dark L geography — sampling it at delta ink L's made the 11-jump).
           // Low-chroma inks carry no hue-family risk; L and hue stay dark-native.
@@ -290,7 +290,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         // onto the pure carry, real engine fns only. Only one is set per resolve (one column of the exhibit).
         if (ctx.opts.deltaHKPlace) L = perceptualRungL(sp.rootL, ls.C, ls.H)                                       // old apparent-L placement
         if (ctx.opts.deltaLiftFloor) L = Math.max(L, sp.rootL)                                                     // old lift/recede floor
-        if (ctx.opts.deltaChromaEq && sp.group !== 'ink') C = ctx.cAt('dark', L, perceptualDarkC(L, ls.H, ctx.brandC))  // old H-K chroma equalizer
+        if (ctx.opts.deltaChromaEq && !inkLane(sp.group)) C = ctx.cAt('dark', L, perceptualDarkC(L, ls.H, ctx.brandC))  // old H-K chroma equalizer
         placed = { L, C, H: spineH ?? ls.H }
       } else if (sp.produce.L === 'fixed') {
         placed = ls

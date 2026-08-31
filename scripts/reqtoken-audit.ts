@@ -77,7 +77,7 @@ for (const H of HUES) for (const C of CHROMAS) {
     //    exists. Its successor is stated as CONTRAST against the shared plane both
     //    stops sit on (paper-95 (paper-3 pre-Stage-B)), because contrast is what the two requires are about:
     //    the emphasis fill must read further off the page than the focus ring does.
-    //    Both modes now, not just dark. Margin declared in highlight-audit
+    //    Both modes now, not just dark. Margin declared in band-audit
     //    (BAND_ORDER_MARGIN 1.0); this gate asserts the ORDER, the sweep gate asserts
     //    the margin — a strict-order failure here is the louder signal.
     const s8b = byStop(8)!, i9 = byStop(9)!, p3b = byStop(3)!

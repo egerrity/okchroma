@@ -10,8 +10,10 @@ const SHARED_NAMES: Record<number, string> = {
   2: 'paper-97',
   // stop 3 renamed wash-3 → paper-3 (owner 2026-07-24, elevation round): it is a
   // PLANE in both themes (light sink / dark pop), so it belongs to the surface band.
-  // NAME ONLY — generation is index-keyed and unchanged; the internal wash machinery
-  // (reqtoken groupOf, collision WASH_STOPS) deliberately still spans stops 3–7.
+  // NAME ONLY — generation is index-keyed and unchanged; the wash-collision machinery
+  // (collision.ts WASH_STOPS) deliberately still spans stops 3–7. (The requirement
+  // spec's `group` label followed the band to 'paper' on 2026-08-31 — labels only,
+  // the spans never moved; see spec.ts groupOf.)
   // Stage B (owner 2026-08-07, names only): relabeled to the ROOT_L-derived digit,
   // paper-95 — same band, same index.
   3: 'paper-95',
