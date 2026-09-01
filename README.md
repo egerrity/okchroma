@@ -64,6 +64,10 @@ variable payload, and `emitDtcgRamp` returns DTCG JSON carrying the live require
 `$extensions`. ESM and CJS builds ship with TypeScript declarations. The package bundles
 its one runtime dependency (helmlab), so installing it adds nothing transitive.
 
+**Versioning** (0.x): a patch changes only resolved values, internal fixes, and docs; any
+release that adds, renames, or removes token keys, or changes the emit structure, ships as
+at least a minor. Release notes: [CHANGELOG.md](CHANGELOG.md).
+
 ## How it works (30 seconds)
 
 Every token is a **requirement the engine solves, not a frozen value**. A pure-data
