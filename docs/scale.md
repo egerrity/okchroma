@@ -23,7 +23,7 @@ measured over the seed roster in both modes, no stop straddles a duty.
 |---|---|---|
 | `paper` | 0 · 1 · 3 · 5 | grounds: the surface planes and role backgrounds; no contrast obligation of their own |
 | `highlighter` | 8 · 11 · 15 · 20 | decorative and state grounds (hover, selected, pressed — the highlighter law); never text |
-| `crayon` | 26 | **3:1 on every paper** — WCAG 1.4.11 non-text: borders, focus rings, icons, large text |
+| `crayon` | 26 | **3:1 on every paper**: borders, focus rings, icons, large text. The bar for anything that must be visible to operate the interface ([WCAG non-text contrast](https://www.w3.org/TR/WCAG21/#non-text-contrast)) |
 | `pencil` | 47 | **4.5:1 on every paper** — regular text, AA |
 | `pen` | 58 · 70 · 100 | **4.5:1 on every paper and highlighter of its own family or of the neutral, both directions** — text that must hold on tinted grounds, AA |
 
@@ -100,7 +100,7 @@ one exists), and the accessibility category it carries.
 | `highlighter-11` | 5 | 0.892 | 0.313 | – | selected ground, low-hierarchy fill, decorative |
 | `highlighter-15` | 6 | 0.852 | 0.348 | – | pressed ground, decorative |
 | `highlighter-20` | 7 | 0.801 | 0.420 | – | decorative; the ground pen is cleared against |
-| `crayon-26` | 8 | 0.738 | 0.550 | 3:1 on every paper | WCAG 1.4.11 non-text: boundaries, UI elements, icons, large text |
+| `crayon-26` | 8 | 0.738 | 0.550 | 3:1 on every paper | boundaries, UI elements, icons, large text: what must be visible to operate the interface ([WCAG non-text contrast](https://www.w3.org/TR/WCAG21/#non-text-contrast)) |
 | `pencil-47` | 9 | 0.530 | 0.767 | 4.5:1 on every paper | first text stop AND the emphasis fill |
 | `pen-58` | 10 | 0.415 | 0.843 | 4.5:1 on every paper and highlighter of its own family or of the neutral, both directions (anchored at `highlighter-20`) | the between text stop |
 | `pen-70` | 11 | 0.300 | 0.919 | 4.5:1 guaranteed minimum on the same grounds as `pen-58` | strong text, inverted fill |

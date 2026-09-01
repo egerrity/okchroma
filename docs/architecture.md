@@ -233,7 +233,7 @@ ResolvedBrand  = { scale, shearDeg, redRepel: {light,dark}|null,
 | 1–2 | `paper-1`, `paper-3` | the page and card planes |
 | 3 | `paper-5` | surface plane (light sunken / dark high), renamed from wash-3, owner 2026-07-24 |
 | 4–7 | `highlighter-8` … `highlighter-20` | low-hierarchy fills, borders, decorative |
-| 8 | `crayon-26` | WCAG 1.4.11 **3:1** non-text step (borders, UI elements) |
+| 8 | `crayon-26` | the **3:1** step for what must be visible to operate the interface: borders, UI elements ([WCAG non-text contrast](https://www.w3.org/TR/WCAG21/#non-text-contrast)) |
 | 9 | `pencil-47` | emphasis fill AND first text stop (4.5:1 on every paper, the 2026-07-29 highlight collapse) |
 | 10 | `pen-58` | the between text stop (4.5:1 on every paper and highlighter of its own family or of the neutral, both directions; anchored at `highlighter-20` since the 2026-08-27 guarantee round, the neutral's pens bound the other way since T13, 2026-09-01; C49, promoted from the retired text-cta hover state) |
 | 11 | `pen-70` | strong text (guaranteed minimum 4.5:1 on the same grounds as `pen-58`). The three text stops read as states ARE the text-style cta (rest pencil-47 / hover pen-58 / pressed pen-70); the separate `cta-ink` + `cta-ink-strong` alias trios were deleted 2026-08-12 |
@@ -375,7 +375,7 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
 - **Dark fills lift, never sink**: `dark9L = max(scaleL, DARK_*_MIN_L)` (0.63 / 0.70): a
   too-dark fill lifts to stay visible on a dark background; a vivid fill is never pulled
   down (identity preserved).
-- **Stop-8 = WCAG 1.4.11 3:1, declared in both modes**: `STOP_8_NONTEXT_CONTRAST = 3.0`,
+- **Stop-8 = the 3:1 non-text bar, declared in both modes** ([WCAG non-text contrast](https://www.w3.org/TR/WCAG21/#non-text-contrast)): `STOP_8_NONTEXT_CONTRAST = 3.0`,
   a requirement on the declared stop (`spec.ts`) against `paper-5` directly; light
   iterates a fixed-point clamp down; dark raises a failing hue off the near-black paper.
 - **Text-stop contrast floors, declared in both modes**: `pencil-47` and `pen-70`
