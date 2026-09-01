@@ -333,7 +333,7 @@ const overview: Article = {
       <H2>Output formats</H2>
       <P>The same values ship in two interchangeable forms:</P>
       <UL>
-        <LI><b>CSS custom properties</b>: a light and dark block per brand, consumed through a thin semantic alias layer.</LI>
+        <LI><b>CSS custom properties</b>: a light and dark block per brand.</LI>
         <LI><b>Figma variables</b>: written straight into a Figma file by the plugin.</LI>
       </UL>
       <H2>Reading a token name</H2>

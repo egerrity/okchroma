@@ -18,8 +18,7 @@ Compliance is built into generation (WCAG contrast targets, plus APCA boost for 
 **What it produces:**
 
 - **CSS custom properties:** `brandCss`/`neutralCss` (per family, light + dark) +
-  `dist/signals.css`, the one output `build.ts` writes to disk, which can be aliased into
-  your semantic system or used on their own. Per-brand CSS has no batch step — the demo
+  `dist/signals.css`, the one output `build.ts` writes to disk. Per-brand CSS has no batch step — the demo
   and both plugins call `brandCss` live, on whatever hex they were given.
 - **Figma variables:** written directly into a Figma file by the plugin.
 
@@ -83,7 +82,6 @@ flowchart TD
 
     subgraph Out["Outputs / consumers"]
       BUILD[build.ts → dist/signals.css]
-      SEM[tokens/semantic.css]
       DEMO[demo/* React preview]
       PLUG[plugin/* + plugin-ext/* Figma plugins]
     end
@@ -104,7 +102,7 @@ flowchart TD
     CSS --> TN
     FIG --> TN
     CSS --> BUILD
-    BUILD --> SEM --> DEMO
+    BUILD --> DEMO
     R --> DEMO
     R --> FIG --> PLUG
 ```
@@ -243,10 +241,8 @@ ResolvedBrand  = { scale, shearDeg, redRepel: {light,dark}|null,
 | literal | `identity` | the exact input hex (brand / secondary only) |
 | anchors | `paper-0`, `pen-100` | universal per-scheme extremes (paper-0 = the neutral's resolved stop 0; pen-100 = literal black/white, flipped per mode) |
 
-`tokens/semantic.css` is a **static, hand-authored alias layer** (never generated): it maps
-human role names (`--surface-*`, `--fg-*`, `--border-*`, `--critical-bg-*` and friends)
-onto the emitted primitives. The signal primitives themselves already carry role-name
-prefixes at emit (`--critical-*` etc.); only the primitives change per brand.
+The signal primitives carry role-name prefixes at emit (`--critical-*` and friends);
+only the primitives change per brand.
 
 ### 2b. The requirement schema
 

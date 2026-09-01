@@ -17,7 +17,7 @@ of the 4.5:1 requirement).
 Output comes in two interchangeable forms carrying the same values:
 
 - **CSS custom properties** — per-brand CSS generated live (`brandCss`) + the static
-  `dist/signals.css`, via the semantic layer `tokens/semantic.css`.
+  `dist/signals.css`.
 - **Figma variables** — written into a Figma file by the bundled plugin.
 
 The live demo and the Figma plugin are previews/front-ends; the engine and its output are
@@ -90,7 +90,7 @@ round-trips to DTCG tokens (`$value` fallback + the live requirement in `$extens
 ## The Figma plugin
 
 The bundled plugin runs the same engine inside Figma and writes the resolved system into
-your file as variables: **theme** + **mode** collections whose semantic tokens alias onto
+your file as variables: **theme** + **mode** collections whose tokens alias onto
 shared primitives — per-brand ramps under `brand/<name>`, with neutrals and signals
 deduplicated across brands, light + dark values on every token.
 

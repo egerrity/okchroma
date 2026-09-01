@@ -12,15 +12,15 @@ A scale token name reads as `band-lightness`:
 - The number is `100 − round(light rootL × 100)`: derive, round, invert, in that order and never re-rounded. Bigger means stronger — `paper-0` is white, `pen-100` is black. A future stop names itself the same way.
 - Names carry no WCAG conformance suffix. `-aa`/`-aaa` used to be part of the name; they were dropped because Figma's picker searches the description text too, and the letters were flooding unrelated "on" queries (cONtrast, collisiONs). The guarantee still exists; it is stated in the variable's description, not the name. See the guarantee listed per stop below.
 
-## These are primitives, not semantic tokens
+## These are primitives
 
 In a conventional token architecture, primitives are raw named values (`blue-500`) with no promises attached, and a semantic layer above them assigns meaning and accessibility (`text-primary`). okchroma's scale tokens do not fit that split, and reading them as semantic tokens will mislead you.
 
-Every scale token here is a primitive. What is unusual is that the requirement is built into the primitive itself: the name states a contract (band, lightness rung), and the engine solves the actual color value per brand and per theme so that the contract holds, including a specific WCAG guarantee carried in the description. `pen-58` is not "the text color role"; it is a primitive whose generated value is guaranteed to clear AA body-text contrast against the paper band, whatever seed color the brand supplies.
+Every scale token here is a primitive. What is unusual is that the requirement is built into the primitive itself: the name states a contract (band, lightness rung), and the engine solves the actual color value per brand and per theme so that the contract holds, including a specific WCAG guarantee carried in the description. `pen-58` is not "the text color role"; it is a primitive whose generated value is guaranteed to clear 4.5:1 against the paper band, whatever seed color the brand supplies.
 
 This is what makes theming work over a range of input colors while keeping the output predictable. The names and their guarantees never move; the values are re-solved for each brand seed and theme. An agent can rely on the contract without knowing which brand is active, which theme is active, or what hex the token currently resolves to.
 
-So: do not go looking for the "real" primitives underneath these, and do not treat the requirement in the name as a semantic role assignment. The band-and-rung names are the bottom layer. A thin semantic layer (`--fg-default`, `--border-subtle`, see below) exists above them as optional aliases, and that is the only layer that assigns usage roles.
+So: do not go looking for the "real" primitives underneath these, and do not treat the requirement in the name as a role assignment. The band-and-rung names are the bottom layer.
 
 ## The bands
 
@@ -85,16 +85,6 @@ Light theme descends the papers as elevation rises toward white; dark ascends th
 - `--shadow-04/-08/-12`: drop shadow alphas. Shadows are always dark, never glows.
 - scrim, transparent: dimming and aliased off-states.
 - `abs-black` / `abs-white`: the mode-invariant literal poles. `paper-0` is a tinted near-pole, not this; `pen-100` is a true pole but flips with the mode, while these never flip.
-
-## Semantic layer (tokens/semantic.css)
-
-If the project consumes the semantic layer, prefer it over raw stops:
-
-- `--fg-default` (`pen-70`), `--fg-subtle` (`pencil-47`)
-- `--border-default` (`crayon-26`), `--border-subtle` (`highlighter-11`)
-- `--brand-bg-faint/-subtle/-emphasis` and their hover/pressed variants
-- `--brand-fg`, `--brand-fg-on-emphasis` (`stamp-on`)
-- `--fg-link` and `--fg-link-inverse`, each with hover/pressed pairs
 
 ## Rules for agents
 
