@@ -178,8 +178,8 @@ function buildTokenGroups(): TokGroup[] {
         { token: 'highlighter-20', role: 'decorative', guarantee: '–', light: swatch(hex(stopAt(L, 7))), dark: swatch(hex(stopAt(D, 7))) },
         { token: 'crayon-26', role: 'non-text emphasis: borders, UI elements', guarantee: '3:1, on every paper', light: swatch(hex(stopAt(L, 8))), dark: swatch(hex(stopAt(D, 8))) },
         { token: 'pencil-47', role: 'emphasis fill and first text stop', guarantee: '4.5:1, on every paper', light: swatch(hex(stopAt(L, 9))), dark: swatch(hex(stopAt(D, 9))) },
-        { token: 'pen-58', role: 'mid text', guarantee: '4.5:1, on every highlighter and paper', light: swatch(hex(stopAt(L, 10))), dark: swatch(hex(stopAt(D, 10))) },
-        { token: 'pen-70', role: 'strong text, inverted fill', guarantee: '4.5:1 guaranteed minimum, on every highlighter and paper', light: swatch(hex(stopAt(L, 11))), dark: swatch(hex(stopAt(D, 11))) },
+        { token: 'pen-58', role: 'mid text', guarantee: '4.5:1, on every paper and highlighter of its own family or of the neutral, both directions', light: swatch(hex(stopAt(L, 10))), dark: swatch(hex(stopAt(D, 10))) },
+        { token: 'pen-70', role: 'strong text, inverted fill', guarantee: '4.5:1 guaranteed minimum, on the same grounds as pen-58', light: swatch(hex(stopAt(L, 11))), dark: swatch(hex(stopAt(D, 11))) },
         { token: 'pen-100', role: 'universal anchor, mode-flipping constant, never resolved', guarantee: '–', light: swatch('#000000'), dark: swatch('#ffffff') },
         { token: 'absolute/black', role: 'literal black pole, an alias target', guarantee: '–', light: swatch('#000000'), dark: swatch('#000000') },
         { token: 'absolute/white', role: 'literal white pole, an alias target', guarantee: '–', light: swatch('#ffffff'), dark: swatch('#ffffff') },
@@ -206,8 +206,8 @@ function buildTokenGroups(): TokGroup[] {
         { token: 'stamp/edge', role: 'low-visibility stroke; transparent above the gate', guarantee: 'appears below APCA |Lc| 15 vs the page (taste, not accessibility)', light: borderCell('light'), dark: borderCell('dark') },
         { token: 'identity', role: 'the exact input hex, for logos', guarantee: 'never adjusted', light: swatch(scale.identityHex!), dark: swatch(scale.identityHex!) },
         { token: 'link/default/enabled', role: "hyperlinks; with no custom seed, aliases the primary's pencil-47", guarantee: '4.5:1, on every paper', light: alias(hex(stopAt(L, 9)), '→ pencil-47'), dark: alias(hex(stopAt(D, 9)), '→ pencil-47') },
-        { token: 'link/default/hover', role: 'default alias → pen-58', guarantee: '4.5:1, on every highlighter and paper', light: alias(hex(stopAt(L, 10)), '→ pen-58'), dark: alias(hex(stopAt(D, 10)), '→ pen-58') },
-        { token: 'link/default/pressed', role: 'default alias → pen-70', guarantee: '4.5:1 guaranteed minimum, on every highlighter and paper', light: alias(hex(stopAt(L, 11)), '→ pen-70'), dark: alias(hex(stopAt(D, 11)), '→ pen-70') },
+        { token: 'link/default/hover', role: 'default alias → pen-58', guarantee: '4.5:1, on every paper and highlighter of its own family or of the neutral, both directions', light: alias(hex(stopAt(L, 10)), '→ pen-58'), dark: alias(hex(stopAt(D, 10)), '→ pen-58') },
+        { token: 'link/default/pressed', role: 'default alias → pen-70', guarantee: '4.5:1 guaranteed minimum, on the same grounds as pen-58', light: alias(hex(stopAt(L, 11)), '→ pen-70'), dark: alias(hex(stopAt(D, 11)), '→ pen-70') },
         { token: 'link/inverse/enabled', role: 'hyperlinks on inverted (pen-70) fills; same seed as the link, re-solved against the worst shipped pen-70', guarantee: '4.5:1, on every pen-70', light: swatch(hex(inv.link as never)), dark: swatch(hex(inv.linkDark as never)) },
         { token: 'link/inverse/hover', role: 'hover state', guarantee: '4.5:1, on every pen-70', light: swatch(hex(inv.linkHover as never)), dark: swatch(hex(inv.linkHoverDark as never)) },
         { token: 'link/inverse/pressed', role: 'pressed state', guarantee: '4.5:1 guaranteed minimum, on every pen-70', light: swatch(hex(inv.linkPressed as never)), dark: swatch(hex(inv.linkPressedDark as never)) },
@@ -430,8 +430,9 @@ const generation: Article = {
         lands too dark is floored upward: it lifts, never sinks.</LI>
         <LI><b>Requirements.</b> Declared floors bind after placement, in both modes: crayon-26
         at WCAG 3:1 on every paper, pencil-47 at 4.5:1 on every paper, pen-58 and pen-70 at 4.5:1 on
-        every highlighter — a guaranteed minimum in every case, cleared against every paper
-        the family (and its neutral) can produce. A placement that already clears does not
+        every paper and highlighter of their own family or of the neutral, both directions — a
+        guaranteed minimum in every case, cleared against every paper the family (and its
+        neutral) can produce. A placement that already clears does not
         move. An unmeetable floor marks the stop <Code>unresolvable</Code> instead of fudging.</LI>
         <LI>The cta-related values are generated.
           <UL>
@@ -476,8 +477,8 @@ const generation: Article = {
         secondary or a custom hex, stored as a source) through the same generator with its own
         chroma curve, at four strengths.</LI>
         <LI><b>Your levers.</b> <Code>exact</Code> (fill and identity ship untouched; the ramps
-        and signals still compute), archetype override, style (<Code>deeper</Code> /{' '}
-        <Code>full-chroma</Code>), secondary style, neutral tint source and strength.</LI>
+        and signals still compute), archetype override, style (<Code>deeper</Code>), secondary
+        style, neutral tint source and strength.</LI>
       </OL>
     </>
   ),
@@ -809,7 +810,7 @@ const motivation: Article = {
         from paper. Pen holds on it; pencil and crayon do not.</LI>
         <LI><i>Crayon</i> is for large text, icons, borders, and drawing attention: 3:1 on every paper.</LI>
         <LI><i>Pencil</i> is regular text: 4.5:1 on every paper, but not on highlighter.</LI>
-        <LI><i>Pen</i> is the most flexible foreground group: 4.5:1 on every highlighter and every paper.</LI>
+        <LI><i>Pen</i> is the most flexible foreground group: 4.5:1 on every paper and highlighter of its own family or of the neutral, both directions.</LI>
       </UL>
       <P>
         There is more to the full convention than I'll cover here (it's documented{' '}

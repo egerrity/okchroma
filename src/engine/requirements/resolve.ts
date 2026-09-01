@@ -11,7 +11,7 @@ import { apparentL, perceptualRungL, perceptualDarkC } from '../perceptualL'
 import { clampChromaToGamut, wcagY, legalRatio, findMaxLForContrast, apcaLc, contrastRatio, shippedY } from '../constraints'
 import { hexToOklch, srgbEmitChannels, redSolveDist, RED_GATE, RED_SOLVE } from '../colorMath'
 import { hoverL, pressedL, stateFillL } from '../archetypes'
-import { ROOT_L_LIGHT, DARK_SIGNAL_WARM_DRIFT, chromaFloorBase } from '../stopTable'
+import { ROOT_L_LIGHT, DARK_SIGNAL_WARM_DRIFT, chromaFloorBase, STOP_8_NONTEXT_CONTRAST, PENCIL_9_CONTRAST, PEN_10_CONTRAST } from '../stopTable'
 import { MODE_SPECS, textLane, type ModeSpec, type StopReq, type RoleReq, type Require } from './spec'
 import {
   buildContext, buildDarkContext, type Ctx, type DarkCtx, type ResolveOpts,
@@ -56,6 +56,45 @@ export type { ResolveOpts }
 // goal, not an ambition — the old ±0.16 taste budget capped worst-case dead zones short of
 // legibility and is retired; 4.5 was never capped either way).
 const CTA_CLEARANCE_CAPS: [number, number] = [0.05, 0.92]
+
+// THE CROSS-FAMILY HIGHLIGHTER BOUND ON THE NEUTRAL PENS (T13, owner-caught 2026-09-01).
+// The pen guarantee is symmetric: a pen and a ground are in scope when they share a family
+// or either side is the neutral, both directions. NEUTRAL_W80_WORST_SHIP_Y (inside
+// resolveRamp) bounds every chromatic pen against the neutral's highlighter-20; nothing
+// bounded the NEUTRAL's pens against the chromatics', and neutral pen-58 light read 4.16
+// on info highlighter-20 while guarantee-audit (one direction only) read PASS. Same
+// doctrine as its two siblings: frozen at the worst SHIPPED highlighter-20 Y any theme can
+// put on screen — light min (darkest) / dark max (lightest) over brand seeds L 0.2–0.8 ×
+// C 0.08–0.4 × hue 0–359 in the recommended, exact, deeper and archetypeOverride
+// registers, the derived brand-alt, the four base signals, every per-brand signal
+// override and the audit fixtures (118,972 seeds, resolveTheme → shippedY, 2026-09-01):
+//   light 0.459357  brand stop 7 at seed #2e0f8a (L 0.777 C 0.086 H 281, violet)
+//   dark  0.074936  brand stop 7 at seed #411000, style 'deeper' (L 0.427 C 0.112 H 63)
+// The `full-chroma` register is NOT in the bound: its released cap sinks the violet-band
+// highlighter-20 to 0.392975 light / 0.078646 dark, which would cost the neutral pen-58
+// ≈0.05 L in every theme, so the owner removed its checkbox from both plugins and the demo
+// (2026-09-01); the GenerateOptions lever stays for instruments, outside the guarantee, and
+// guarantee-audit prints its residual as a report cell. generateNeutralScale passes this through opts.crossHighlighterBoundY (the
+// resolver has no neutral flag — scaleName is metadata) and the shipped-pair clamp on
+// stops 10–11 takes it as a third floor; stop 9 (pencil-47) never does, pencil is
+// paper-only by design. Dark clears by construction (neutral dark pen-58 ≥ 5.17 against
+// it) and pen-70 clears in both modes, so only the light neutral pen-58 moves
+// (L ≈0.413 → ≈0.398). RE-DERIVE if the highlighter ladder, the ramp chroma cap or a
+// signal seed moves.
+export const CHROMATIC_W80_WORST_SHIP_Y = { light: 0.459357, dark: 0.074936 } as const
+// THE CROSS-FAMILY PAPER BOUND ON THE NEUTRAL'S CONTRAST STOPS (T13, owner 2026-09-01: "the rule
+// is true for every band"). The paper claims are symmetric the same way: NEUTRAL_P3_WORST_SHIP_Y
+// bounds every chromatic crayon/pencil/pen against the neutral's paper-5; this bounds the
+// NEUTRAL's crayon-26, pencil-47 and pens against the worst CHROMATIC paper-5 — neutral
+// crayon-26 read 2.987 and pencil-47 4.484 on a violet brand's paper-5 (both need ≤0.003 L).
+// Frozen at the worst SHIPPED chromatic paper-5 Y over the same registers and seed sweep as
+// the highlighter bound (72,584 seeds, resolveTheme → shippedY, 2026-09-01):
+//   light 0.836007  brand stop 3 at seed #5233ff (L 0.944 C 0.022 H 278, violet)
+//   dark  0.016041  brand stop 3 at seed #794d00, archetypeOverride near-black (L 0.251 C 0.038 H 87)
+// Each stop is judged at ITS band's claim bar (crayon 3, pencil 4.5, pens 4.5), never the
+// stop's own target. Light only in effect (dark clears: worst 3.015 / 7.5); the pens clear
+// by ladder monotonicity and are declared, not moved. RE-DERIVE with the highlighter bound.
+export const CHROMATIC_P3_WORST_SHIP_Y = { light: 0.836007, dark: 0.016041 } as const
 
 // `spec` defaults to the built-in mode table; a parsed DTCG requirement bundle can be passed instead —
 // the resolver executes whatever declaration it's handed (portability: the token file is the source of truth).
@@ -103,7 +142,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   // apca path, so moving a require's anchor meant editing the engine rather than the
   // declaration. spec.ts is the portable artifact; the anchor belongs in it.
   // highlighter-20 joined the union with the T10 highlighter-20 law (guarantee-groups round, owner
-  // 2026-08-27): the pen group's "usable on every highlighter" claim anchors at the darkest highlighter.
+  // 2026-08-27): the pen group's highlighter claim anchors at the darkest highlighter.
   const AGAINST_STOP: Record<string, number> = { 'paper-1': 1, 'paper-3': 2, 'paper-5': 3, 'highlighter-20': 7 }
   const declaredAnchor = (req: Require): number =>
     req.metric === 'min-separation' ? 1 : AGAINST_STOP[req.against] ?? 2
@@ -386,11 +425,30 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         const own = contrastRatio(y, anchorShipY)
         return paperBound ? Math.min(own, contrastRatio(y, crossBoundY)) : own
       }
-      if (shipRatio(placed.L) < sp.require.target) {
+      // T13: the NEUTRAL's pens (stops 10–11, never pencil-47) also clear the worst CHROMATIC
+      // highlighter-20 (CHROMATIC_W80_WORST_SHIP_Y, set only by generateNeutralScale), judged
+      // at the PEN BAND'S bar — the 4.5 the guarantee states — not at the stop's own target:
+      // pen-70 declares a stricter target against its paper, and judging the highlighter
+      // term there walked a stop that already cleared the claim by 6.6. The inverse pen
+      // ground excludes it the way it excludes the paper bound.
+      const highlighterBoundY = ctx.opts?.crossHighlighterBoundY && sp.stop >= 10 && !textGround
+        ? ctx.opts.crossHighlighterBoundY[mode] : undefined
+      const highlighterRatio = (L: number) => highlighterBoundY === undefined
+        ? Infinity : contrastRatio(shippedY(L, placed.C, placed.H), highlighterBoundY)
+      // and the NEUTRAL's stops 8–11 clear the worst CHROMATIC paper-5 (CHROMATIC_P3_WORST_SHIP_Y,
+      // also set only by generateNeutralScale), each at its own band's claim bar
+      const paperBoundY = ctx.opts?.crossPaperBoundY && sp.stop >= 8 && !textGround
+        ? ctx.opts.crossPaperBoundY[mode] : undefined
+      const paperBar = sp.stop === 8 ? STOP_8_NONTEXT_CONTRAST : sp.stop === 9 ? PENCIL_9_CONTRAST : PEN_10_CONTRAST
+      const paperRatio = (L: number) => paperBoundY === undefined
+        ? Infinity : contrastRatio(shippedY(L, placed.C, placed.H), paperBoundY)
+      const target = sp.require.target
+      const clears = (L: number) => shipRatio(L) >= target && highlighterRatio(L) >= PEN_10_CONTRAST && paperRatio(L) >= paperBar
+      if (!clears(placed.L)) {
         const away = shippedY(placed.L, placed.C, placed.H) < anchorShipY ? -1 : +1
         let L2 = placed.L
-        for (let i = 0; i < 100 && shipRatio(L2) < sp.require.target; i++) L2 += away * 0.001
-        if (shipRatio(L2) >= sp.require.target) { placed = { ...placed, L: L2 }; clamped = true }
+        for (let i = 0; i < 100 && !clears(L2); i++) L2 += away * 0.001
+        if (clears(L2)) { placed = { ...placed, L: L2 }; clamped = true }
       }
       const refY = wcagY(anchor.L, anchor.C, anchor.H)
       const got = Math.min(
@@ -398,6 +456,8 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         shipRatio(placed.L),
       )
       if (got < sp.require.target - 1e-3) unresolvable = `stop ${sp.stop}: contrast ${got.toFixed(2)} < required ${sp.require.target}`
+      else if (highlighterRatio(placed.L) < PEN_10_CONTRAST - 1e-3) unresolvable = `stop ${sp.stop}: contrast ${highlighterRatio(placed.L).toFixed(2)} < required ${PEN_10_CONTRAST} on the worst chromatic highlighter-20`
+      else if (paperRatio(placed.L) < paperBar - 1e-3) unresolvable = `stop ${sp.stop}: contrast ${paperRatio(placed.L).toFixed(2)} < required ${paperBar} on the worst chromatic paper-5`
     } else if (sp.require?.metric === 'apca') {
       const ga = apcaGroundOf(sp.require, sp.stop)
       const refA = apcaYAt(ga.L, ga.C, ga.H)

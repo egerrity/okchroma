@@ -1,4 +1,4 @@
-import { resolveTheme, resolveBrand, signalScalesFor, escapeCtaFamily, resolveLinkTrio, DEFAULT_LINK_HEX, type SecondaryStyle, type ResolvedTheme } from '../src/engine/resolve'
+import { resolveTheme, signalScalesFor, escapeCtaFamily, resolveLinkTrio, DEFAULT_LINK_HEX, type SecondaryStyle, type ResolvedTheme } from '../src/engine/resolve'
 import { redGateDist, RED_GATE } from '../src/engine/collision'
 import { ARCHETYPES, type Archetype } from '../src/engine/archetypes'
 import { generateNeutralScale, neutralTintHue, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
@@ -34,7 +34,7 @@ let contrastProfile: ContrastProfile = 'apca' // APCA = the shipped default; WCA
 // review-caught 2026-07-16), and it can't ride an apply silently either.
 let ctaEscape = false
 let inRedRange = false        // EFFECTIVE gate: the CURRENT posture's red range
-let inRedRangeOffer = false   // OFFER gate: union of both clamp postures (row visibility)
+let inRedRangeOffer = false   // OFFER gate: the row shows when the current posture is red-range
 // the SYSTEM LINK (Phase 4, owner 2026-07-16): ONE link trio per theme — hyperlinks, not
 // per-family. Default aliases the primary's pen stops (9/10/11 as states; was cta-ink
 // until its 2026-08-12 deletion). Custom = the seed below through
@@ -44,7 +44,6 @@ let linkCustom = false
 // the custom link (#0B57D0) — overridable; unticking reverts ONLY an untouched bundle
 let linkBundled = false
 // the VIVIDNESS LEVER (phase 5): default OFF = the shipped dampened registers
-let fullChroma = false
 let pendingName: string | null = null // brand armed for overwrite confirmation
 // The secondary is the demo's THREE-STATE field: none (default — just "+ Add brand-alt") →
 // derived (the input tracks the primary live; the engine derives the default secondary) →
@@ -85,7 +84,6 @@ const neutralOptSecondary = $<HTMLOptionElement>('neutral-opt-secondary')
 const profileBtns     = document.querySelectorAll<HTMLButtonElement>('.seg-btn[data-profile]')
 const ctaEscapeRow    = $<HTMLElement>('cta-escape-row')
 const ctaEscapeBox    = $<HTMLInputElement>('cta-escape')
-const fullChromaBox   = $<HTMLInputElement>('full-chroma')
 const linkHexInput    = $<HTMLInputElement>('link-hex')
 const linkSwatch      = $<HTMLElement>('link-swatch')
 const linkField       = $<HTMLElement>('link-field')
@@ -192,10 +190,6 @@ function themeInput(name: string) {
     deriveSecondary: secondaryMode === 'derived' || undefined,
     secondaryStyle: secondaryMode === 'custom' ? secondaryStyle : undefined,
     contrastProfile: cp,
-    // the VIVIDNESS LEVER (phase 5, owner copy: "Brand ramps are dampened by default to
-    // separate from signals. Turn off for full vividness.") — primary only; the derived
-    // secondary and the signals keep their own registers
-    style: fullChroma ? ('full-chroma' as const) : undefined,
   }
 }
 
@@ -305,20 +299,13 @@ function updatePreview() {
     // the brands the escape is for); the direct gate check catches exact-mode reds.
     // The toggle stays checked-but-inert outside the range (effective = && inRedRange).
     const redCta = signalScalesFor(cp).get('red')!.scale.cta
-    // TWO GATES (owner-caught + review-hardened 2026-07-16): the OFFER (row visibility)
-    // is the union of BOTH clamp postures — membership is NOT monotone in the lever
-    // (probe the OPPOSITE posture; a one-way probe collapsed when the clamp was on), so
-    // the row never appears/disappears with the clamp. The EFFECTIVE flag stays the
-    // CURRENT posture only — the file/css can never carry an escape for a brand whose
-    // shipped posture isn't red-range (the original phase-3 contract).
+    // ONE GATE (the vividness lever's checkbox was removed 2026-09-01, owner; the 2026-07-16
+    // opposite-posture probe went with it): the row shows exactly when the CURRENT posture
+    // is red-range, and the file/css carries an escape only for that posture.
     const rangeOf = (rb: { redRepel: unknown; scale: { cta: { L: number; C: number; H: number } } }) =>
       !!rb.redRepel || redGateDist(rb.scale.cta, redCta) <= RED_GATE.G
     inRedRange = rangeOf(t.themed)
-    inRedRangeOffer = inRedRange || rangeOf(resolveBrand(primaryHex, 'range-probe', {
-      style: fullChroma ? undefined : 'full-chroma', contrastProfile: cp,
-      exact: primaryMode === 'exact' || undefined,
-      archetypeOverride: primaryMode !== 'recommended' && primaryMode !== 'exact' ? primaryMode : undefined,
-    }))
+    inRedRangeOffer = inRedRange
     ctaEscapeRow.style.display = inRedRangeOffer ? '' : 'none'
     // BUNDLE HYGIENE (review-caught): an untouched bundle auto-reverts the moment the
     // escape stops being effective (range exit / posture flip) — the frozen default blue
@@ -675,11 +662,6 @@ ctaEscapeBox.addEventListener('change', () => {
   updatePreview()
 })
 
-fullChromaBox.addEventListener('change', () => {
-  fullChroma = fullChromaBox.checked
-  updatePreview()
-})
-
 // FIELD TAKEOVER (owner Advanced-menu spec): clicking the from-primary hex makes the
 // link custom (prefilled with the default de-conflict blue); ↩ returns to from-primary
 linkField.addEventListener('click', () => {
@@ -765,7 +747,7 @@ type Recipe = {
   secondaryMode: SecondaryMode; secondaryHex: string | null; secondaryStyle: SecondaryStyle
   neutralChoice: NeutralChoice; neutralHex: string | null
   linkCustom: boolean; linkHex: string | null
-  ctaEscape: boolean; fullChroma: boolean; contrastProfile: ContrastProfile
+  ctaEscape: boolean; contrastProfile: ContrastProfile
   approx?: boolean
 }
 type ReconFact = { brand: string; primaryHex: string; altHex: string | null; neutralKey: string | null; linkSeed: string | null; profile: ContrastProfile }
@@ -779,7 +761,7 @@ function currentRecipe(brand: string, primaryNorm: string): Recipe {
     secondaryMode, secondaryHex: secondaryMode === 'custom' ? (secondaryHex ?? null) : null,
     secondaryStyle, neutralChoice, neutralHex: normalizeHex(neutralHexIn.value) || null,
     linkCustom, linkHex: linkCustom ? (normalizeHex(linkHexInput.value) ?? null) : null,
-    ctaEscape, fullChroma, contrastProfile,
+    ctaEscape, contrastProfile,
   }
 }
 
@@ -813,7 +795,6 @@ function loadRecipe(r: Recipe) {
     linkHexInput.value = r.linkHex
     linkHexInput.dispatchEvent(new Event('input'))
   } else if (!r.ctaEscape) { linkCustom = false; linkBundled = false }
-  if (fullChromaBox.checked !== !!r.fullChroma) { fullChromaBox.checked = !!r.fullChroma; fullChromaBox.dispatchEvent(new Event('change')) }
   updatePreview()
 }
 
@@ -868,7 +849,7 @@ function reconToRecipe(f: ReconFact): Recipe {
     secondaryMode: sMode, secondaryHex: sHex, secondaryStyle: 'default',
     neutralChoice: nChoice, neutralHex: nHex,
     linkCustom: !!f.linkSeed, linkHex: f.linkSeed ? `#${f.linkSeed.toUpperCase()}` : null,
-    ctaEscape: false, fullChroma: false,
+    ctaEscape: false,
     contrastProfile: f.profile === 'wcag' ? 'wcag' : 'apca',
     approx: true,
   }

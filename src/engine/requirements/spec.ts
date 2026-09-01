@@ -184,8 +184,10 @@ const S8: Require = { metric: 'wcag', against: 'paper-5', target: STOP_8_NONTEXT
 // count of stops asking for it.
 const T9: Require = { metric: 'wcag', against: 'paper-3', target: PENCIL_9_CONTRAST, level: 'AA' }
 // T10 — THE HIGHLIGHTER-20 LAW (guarantee-groups round, owner 2026-08-27): the between text
-// stop anchors at highlighter-20, its own ramp's darkest highlighter, so the pen group's "usable on
-// every highlighter" claim is declared rather than hoped (see stopTable.ts PEN_10_CONTRAST).
+// stop anchors at highlighter-20, its own ramp's darkest highlighter, so the pen group's claim
+// (4.5 on every paper and highlighter of its own family or of the neutral, both directions)
+// is declared rather than hoped (see stopTable.ts PEN_10_CONTRAST; the neutral's side of it
+// is the resolver's CHROMATIC_W80_WORST_SHIP_Y bound, T13).
 // WCAG lane only in effect: the resolver keeps the apca lane's anchor at paper-3
 // (resolve.ts apcaGroundOf) so the community/apca lane stays byte-identical — the
 // mirror of the wcag lane's own paper-5 pen override.

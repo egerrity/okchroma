@@ -25,16 +25,19 @@ measured over the seed roster in both modes, no stop straddles a duty.
 | `highlighter` | 8 · 11 · 15 · 20 | decorative and state grounds (hover, selected, pressed — the highlighter law); never text |
 | `crayon` | 26 | **3:1 on every paper** — WCAG 1.4.11 non-text: borders, focus rings, icons, large text |
 | `pencil` | 47 | **4.5:1 on every paper** — regular text, AA |
-| `pen` | 58 · 70 · 100 | **4.5:1 on every highlighter and every paper** — text that must hold on tinted grounds, AA |
+| `pen` | 58 · 70 · 100 | **4.5:1 on every paper and highlighter of its own family or of the neutral, both directions** — text that must hold on tinted grounds, AA |
 
 The promise, in one line: **pen writes on paper and highlighter; pencil writes on
 paper; crayon writes large and draws on paper.** That is the whole guarantee — and
 large text is 3:1, which is why it is crayon's.
 
 "On every paper" means the family's own papers and the worst paper the family's
-generated neutral can produce across all hues. Pencil and crayon are cleared against
+generated neutral can produce across all hues; for the neutral's own stops it means the
+neutral's papers and the worst paper any chromatic family can produce. Pencil and crayon are cleared against
 paper only; pen is anchored at `highlighter-20`, the darkest highlighter, and by ladder
-monotonicity therefore clears every paper as well. The promise is a **guaranteed minimum**
+monotonicity therefore clears every paper as well. The pen rule runs both directions: the
+neutral's pens are also cleared against the worst `highlighter-20` any chromatic family
+can produce. The promise is a **guaranteed minimum**
 of 4.5:1 (AA) on every text stop. WCAG has three levels — 3:1, 4.5:1, 7:1 — and 4.5 is
 the one promised; where the engine places a stop above it, the surplus is placement, not
 a promise, and no AAA claim is made anywhere.
@@ -99,8 +102,8 @@ one exists), and the accessibility category it carries.
 | `highlighter-20` | 7 | 0.801 | 0.420 | – | decorative; the ground pen is cleared against |
 | `crayon-26` | 8 | 0.738 | 0.550 | 3:1 on every paper | WCAG 1.4.11 non-text: boundaries, UI elements, icons, large text |
 | `pencil-47` | 9 | 0.530 | 0.767 | 4.5:1 on every paper | first text stop AND the emphasis fill |
-| `pen-58` | 10 | 0.415 | 0.843 | 4.5:1 on every highlighter (anchored at `highlighter-20`) | the between text stop |
-| `pen-70` | 11 | 0.300 | 0.919 | 4.5:1 guaranteed minimum on every highlighter and paper | strong text, inverted fill |
+| `pen-58` | 10 | 0.415 | 0.843 | 4.5:1 on every paper and highlighter of its own family or of the neutral, both directions (anchored at `highlighter-20`) | the between text stop |
+| `pen-70` | 11 | 0.300 | 0.919 | 4.5:1 guaranteed minimum on the same grounds as `pen-58` | strong text, inverted fill |
 | `pen-100` | — | 0.000 | 1.000 | – | the dark pole (black; white in dark): the universal anchor |
 
 Paper and highlighter carry no declared requirement: their seam distinctness is a

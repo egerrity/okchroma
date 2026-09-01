@@ -189,7 +189,6 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   // the custom link — overridable; unticking reverts ONLY an untouched bundle
   const linkBundled = useRef(false)
   // the VIVIDNESS LEVER (Phase 5): default OFF = the shipped dampened registers
-  const [fullChroma, setFullChroma] = useState(false)
   // the cta-border opt-out (owner 2026-07-31) — ON by default, mirrors the plugin's Advanced row
   const [ctaBorder, setCtaBorder] = useState(true)
   const derived = secState === 'derived'
@@ -223,7 +222,6 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
       secondaryStyle: derived ? undefined : secondaryStyle,   // derived has no chip — the default model runs on the primary
       secondaryArchetype: derived ? undefined : (secondaryArchetype ?? undefined),
       contrastProfile: cp,
-      style: fullChroma ? 'full-chroma' : undefined,
     })
     // signals ALWAYS re-emit under the selected profile: the static signals.css now carries the
     // SHIPPED default (apca), so the wcag toggle needs its own override block just like apca did
@@ -236,18 +234,11 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     // css can never carry a stale escape for a non-red brand.
     const redCta = signalScalesFor(cp).get('red')!.scale.cta
     const rangeOf = (rb: ResolvedBrand) => !!rb.redRepel || redGateDist(rb.scale.cta, redCta) <= RED_GATE.G
-    // TWO GATES (owner-caught + review-hardened 2026-07-16): the OFFER (row visibility,
-    // `inRedRange` below) is the union of BOTH clamp postures — membership is NOT
-    // monotone in the lever, so the probe targets the OPPOSITE posture and the row never
-    // flaps with the clamp. The EFFECTIVE flag (`escapeOn`) stays the CURRENT posture
-    // only — the css can never carry an escape for a brand whose shipped posture isn't
-    // red-range (the original phase-3 contract).
+    // ONE GATE (the vividness lever's checkbox was removed 2026-09-01, owner; the 2026-07-16
+    // opposite-posture probe went with it): the row shows exactly when the CURRENT posture
+    // is red-range, and `escapeOn` carries an escape only for that posture.
     const inRedRangeNow = rangeOf(t.themed)
-    const inRedRange = inRedRangeNow || rangeOf(resolveBrand(primary, 'range-probe', {
-      style: fullChroma ? undefined : 'full-chroma', contrastProfile: cp,
-      exact: primaryMode === 'exact' || undefined,
-      archetypeOverride: primaryMode !== 'recommended' && primaryMode !== 'exact' ? primaryMode : undefined,
-    }))
+    const inRedRange = inRedRangeNow
     const linkHex = (linkCustom && normalizeHex(linkInput)) || null
     // the neutral's tint hue, resolved through the ONE engine rule (fallbacks inside:
     // no secondary / no valid custom hex → the primary's hue). Every neutral consumer
@@ -262,7 +253,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     // stops keep the brand's own values under the escape (owner 2026-08-13)
     const linkFromPrimaryHex = stopHex(t.themed.scale.light.find(s => s.stop === 9)!).toUpperCase()
     return { t, r: t.themed, accent: t.secondary?.scale ?? null, css, inRedRange, escapeOn: ctaEscape && inRedRangeNow, linkFromPrimaryHex }
-  }, [primary, secondary, derived, primaryMode, secondaryStyle, secondaryArchetype, neutralChoice, neutralHexInput, profile, ctaEscape, linkCustom, linkInput, fullChroma, ctaBorder])
+  }, [primary, secondary, derived, primaryMode, secondaryStyle, secondaryArchetype, neutralChoice, neutralHexInput, profile, ctaEscape, linkCustom, linkInput, ctaBorder])
 
   // NEUTRAL-SOURCE HYGIENE (the linkBundled idiom): "Match secondary" must not outlive
   // the secondary it matches — removing the secondary reverts the choice to Default
@@ -556,13 +547,6 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
               <span>Use neutral primary cta</span>
             </label>
           )}
-          <label
-            title="Non-cta brand colors are dampened by default to maximize the impact of primary cta and signal messaging. Turn this on for a more vibrant interpretation of the brand color."
-            style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 24, fontSize: 12, fontWeight: 600, cursor: 'pointer', userSelect: 'none', color: 'var(--fg-default)' }}
-          >
-            <input type="checkbox" checked={fullChroma} onChange={e => setFullChroma(e.target.checked)} style={{ accentColor: 'var(--brand-stamp-fill)', width: 14, height: 14, cursor: 'pointer' }} />
-            <span>Remove brightness clamp</span>
-          </label>
           {/* the cta-border opt-out (owner 2026-07-31) — ON by default, mirrors the plugin's
               Advanced row so the demo can preview both postures */}
           <label

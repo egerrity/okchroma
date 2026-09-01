@@ -33,8 +33,8 @@ So: do not go looking for the "real" primitives underneath these, and do not tre
 **text stops: `pencil-47`, `pen-58`, `pen-70`.**
 
 - `pencil-47`: regular text, WCAG AA (4.5:1) on every paper — never on a highlighter. Also serves as the emphasis fill: the first of three states in the text-style CTA below.
-- `pen-58`: regular text, WCAG AA (4.5:1) on every highlighter and every paper — the first stop that holds on a tinted ground.
-- `pen-70`: heavy-emphasis text. Guaranteed minimum 4.5:1 (AA) on every highlighter and paper — the same promise as `pen-58`, placed darker. No AAA claim is made.
+- `pen-58`: regular text, WCAG AA (4.5:1) on every paper and highlighter of its own family or of the neutral, both directions. The first stop that holds on a tinted ground.
+- `pen-70`: heavy-emphasis text. Guaranteed minimum 4.5:1 (AA) on the same grounds as `pen-58`, placed darker. No AAA claim is made.
 - The three, read in sequence (`pencil-47`, `pen-58`, `pen-70`), ARE the text-style CTA's rest/hover/pressed states. There is no separate cta-ink or pen-cta token; if you see one referenced, it is stale.
 
 **near-poles (neutral only): `paper-0`, `pen-100`.** The scale's extended endpoints, beyond `paper-1` and `pen-70`. `paper-0` is engine-resolved: white in light (rootL 1.0, zero chroma) and, in dark, the deep brand-tinted plane one seam below `paper-1`. `pen-100` is the literal pole: pure black in light, pure white in dark, no tint (it spent three days on the tinted lane; the owner walked that back 2026-08-31). `pen-100` is the max-emphasis text anchor and flips with the mode; prefer `pen-70` for running text. The mode-invariant poles are `abs-black` / `abs-white` under system tokens.

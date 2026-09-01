@@ -1,4 +1,4 @@
-import { resolveTheme, resolveBrand, signalScalesFor, escapeCtaFamily, resolveLinkTrio, DEFAULT_LINK_HEX, normalizeSecondaryStyle, type SecondaryStyle, type ResolvedTheme } from '../src/engine/resolve'
+import { resolveTheme, signalScalesFor, escapeCtaFamily, resolveLinkTrio, DEFAULT_LINK_HEX, normalizeSecondaryStyle, type SecondaryStyle, type ResolvedTheme } from '../src/engine/resolve'
 import { redGateDist, RED_GATE } from '../src/engine/collision'
 import { ARCHETYPES, type Archetype } from '../src/engine/archetypes'
 import { generateNeutralScale, neutralTintHue, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
@@ -44,7 +44,7 @@ const isArchetype = (v: string): v is Archetype => ARCHETYPES.some(a => a.name =
 // review-caught 2026-07-16), and it can't ride an apply or recipe silently either.
 let ctaEscape = false
 let inRedRange = false        // EFFECTIVE gate: the CURRENT posture's red range
-let inRedRangeOffer = false   // OFFER gate: union of both clamp postures (row visibility)
+let inRedRangeOffer = false   // OFFER gate: the row shows when the current posture is red-range
 // the SYSTEM LINK (Phase 4, owner 2026-07-16): ONE link trio per theme — hyperlinks, not
 // per-family. Default = the primary's pen-stop values (extensions carry their own).
 // Custom = the seed through the pen register (#0B57D0 default when toggled).
@@ -53,7 +53,6 @@ let linkCustom = false
 // the custom link (#0B57D0) — overridable; unticking reverts ONLY an untouched bundle
 let linkBundled = false
 // the VIVIDNESS LEVER (phase 5): default OFF = the shipped dampened registers
-let fullChroma = false
 // THE CTA-BORDER OPT-OUT (owner 2026-07-31: "on by default but optional"). Default ON, and the
 // spec stores it as `false | undefined` rather than `true | false` so that ABSENT means ON —
 // every recipe written before this flag existed replays with its strokes intact.
@@ -112,7 +111,6 @@ const linkHexInput    = $<HTMLInputElement>('link-hex')
 const linkField       = $<HTMLElement>('link-field')
 const linkResetBtn    = $<HTMLButtonElement>('link-reset')
 const linkHint        = $<HTMLElement>('link-hint')
-const fullChromaBox   = $<HTMLInputElement>('full-chroma')
 const ctaBorderBox    = $<HTMLInputElement>('cta-border')
 const descopeBox      = $<HTMLInputElement>('descope-primitives')
 const linkSwatch      = $<HTMLElement>('link-swatch')
@@ -242,10 +240,6 @@ function themeInput(name: string) {
     // Absent = the primary's hue; payload.lane() resolves via colorEngine.neutralTintHue.
     neutralSource: neutralSourceOf(),
     neutralHex: neutralChoice === 'custom' ? (normalizeHex(neutralHexIn.value) || undefined) : undefined,
-    // the VIVIDNESS LEVER (phase 5, owner copy: "Brand ramps are dampened by default to
-    // separate from signals. Turn off for full vividness.") — primary only; rides the
-    // recipe so "Re-apply all brands" preserves each brand's posture
-    style: fullChroma ? ('full-chroma' as const) : undefined,
     // absent = on (the default). Only the OFF posture is written, so the recipe stays
     // forward-compatible and an older stored spec keeps its strokes.
     ctaBorder: ctaBorder ? undefined : false,
@@ -353,20 +347,13 @@ function updatePreview() {
     // the brands the escape is for); the direct gate check catches exact-mode reds.
     // The toggle stays checked-but-inert outside the range (effective = && inRedRange).
     const redCta = signalScalesFor(undefined).get('red')!.scale.cta
-    // TWO GATES (owner-caught + review-hardened 2026-07-16): the OFFER (row visibility)
-    // is the union of BOTH clamp postures — membership is NOT monotone in the lever
-    // (probe the OPPOSITE posture; a one-way probe collapsed when the clamp was on), so
-    // the row never appears/disappears with the clamp. The EFFECTIVE flag stays the
-    // CURRENT posture only — the file/recipe can never carry an escape for a brand whose
-    // shipped posture isn't red-range (the original phase-3 contract).
+    // ONE GATE (the vividness lever's checkbox was removed 2026-09-01, owner; the 2026-07-16
+    // opposite-posture probe went with it): the row shows exactly when the CURRENT posture
+    // is red-range, and the file carries an escape only for that posture.
     const rangeOf = (rb: { redRepel: unknown; scale: { cta: { L: number; C: number; H: number } } }) =>
       !!rb.redRepel || redGateDist(rb.scale.cta, redCta) <= RED_GATE.G
     inRedRange = rangeOf(t.themed)
-    inRedRangeOffer = inRedRange || rangeOf(resolveBrand(primaryHex, 'range-probe', {
-      style: fullChroma ? undefined : 'full-chroma',
-      exact: primaryMode === 'exact' || undefined,
-      archetypeOverride: primaryMode !== 'recommended' && primaryMode !== 'exact' ? primaryMode : undefined,
-    }))
+    inRedRangeOffer = inRedRange
     ctaEscapeRow.style.display = inRedRangeOffer ? '' : 'none'
     // BUNDLE HYGIENE (review-caught): an untouched bundle auto-reverts the moment the
     // escape stops being effective — the frozen default blue must not outlive the escape
@@ -650,11 +637,6 @@ ctaEscapeBox.addEventListener('change', () => {
     linkCustom = false
     linkBundled = false
   }
-  updatePreview()
-})
-
-fullChromaBox.addEventListener('change', () => {
-  fullChroma = fullChromaBox.checked
   updatePreview()
 })
 
@@ -978,8 +960,6 @@ function populateForm(r: Recipe) {
   primaryHexInput.classList.remove('invalid')
   primaryMode = t.primaryArchetype ?? t.primaryMode ?? 'recommended'
   primaryModeSelect.value = primaryMode
-  fullChroma = t.style === 'full-chroma'
-  fullChromaBox.checked = fullChroma
   ctaBorder = t.ctaBorder !== false // absent = on (the recipe's forward-compat law)
   ctaBorderBox.checked = ctaBorder
   ctaEscape = !!t.ctaEscape // the stored flag is the EFFECTIVE one — red range re-derives in updatePreview
@@ -1022,7 +1002,7 @@ function resetForm() {
   primaryHexInput.classList.remove('invalid')
   primaryMode = 'recommended'
   primaryModeSelect.value = 'recommended'
-  fullChroma = false; fullChromaBox.checked = false
+
   ctaBorder = true; ctaBorderBox.checked = true
   ctaEscape = false; ctaEscapeBox.checked = false
   linkCustom = false; linkBundled = false

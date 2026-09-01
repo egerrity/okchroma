@@ -174,10 +174,12 @@ export const YELLOW_BAND = { centerH: 92, sigmaDeg: 20 }
 // Named by ROLE, not by stop number, so the next renumber cannot make the name lie.
 export const PENCIL_9_CONTRAST = 4.5
 
-// ink-10, the BETWEEN text stop — THE HIGHLIGHTER-20 LAW (guarantee-groups round, owner
-// 2026-08-27): 4.5 anchored at highlighter-20 (stop 7), the darkest highlighter, so "pen-58 is usable
-// on every highlighter" is a guarantee rather than a near-miss (the pre-law worst was 4.25 on
-// highlighter-20, positive lane, light). Replaces the old 6.5-vs-paper-3 declaration, a floor
+// pen-58 (stop 10), the BETWEEN text stop — THE HIGHLIGHTER-20 LAW (guarantee-groups round,
+// owner 2026-08-27): 4.5 anchored at highlighter-20 (stop 7), the darkest highlighter, so the
+// pen claim (4.5 on every paper and highlighter of its own family or of the neutral, both
+// directions) is a guarantee rather than a near-miss (the pre-law worst was 4.25 on
+// highlighter-20, positive lane, light). The neutral's side of the claim is the resolver's
+// CHROMATIC_W80_WORST_SHIP_Y bound (T13, 2026-09-01). Replaces the old 6.5-vs-paper-3 declaration, a floor
 // that never fired on the geometry; the paper-3 fact still holds after this law (the
 // solve only darkens) and guarantee-audit pins the full group matrix. Light-only in
 // effect: the dark scaffold clears everywhere, so dark stays byte-identical.

@@ -235,8 +235,8 @@ ResolvedBrand  = { scale, shearDeg, redRepel: {light,dark}|null,
 | 4–7 | `highlighter-8` … `highlighter-20` | low-hierarchy fills, borders, decorative |
 | 8 | `crayon-26` | WCAG 1.4.11 **3:1** non-text step (borders, UI elements) |
 | 9 | `pencil-47` | emphasis fill AND first text stop (4.5:1 on every paper, the 2026-07-29 highlight collapse) |
-| 10 | `pen-58` | the between text stop (4.5:1 on every highlighter, anchored at `highlighter-20` since the 2026-08-27 guarantee round; C49, promoted from the retired text-cta hover state) |
-| 11 | `pen-70` | strong text (guaranteed minimum 4.5:1 on every highlighter and paper). The three text stops read as states ARE the text-style cta (rest pencil-47 / hover pen-58 / pressed pen-70); the separate `cta-ink` + `cta-ink-strong` alias trios were deleted 2026-08-12 |
+| 10 | `pen-58` | the between text stop (4.5:1 on every paper and highlighter of its own family or of the neutral, both directions; anchored at `highlighter-20` since the 2026-08-27 guarantee round, the neutral's pens bound the other way since T13, 2026-09-01; C49, promoted from the retired text-cta hover state) |
+| 11 | `pen-70` | strong text (guaranteed minimum 4.5:1 on the same grounds as `pen-58`). The three text stops read as states ARE the text-style cta (rest pencil-47 / hover pen-58 / pressed pen-70); the separate `cta-ink` + `cta-ink-strong` alias trios were deleted 2026-08-12 |
 | off-scale roles | `stamp-fill`, `stamp-fill-hover`, `stamp-fill-pressed` | the pulled-out solid button fill and its states |
 | aliases | `stamp-edge` | the gated border onto the system alpha ladder |
 | computed | `stamp-on` | black/white text for the fill (solid pole, or the soft pole-at-alpha on quiet fills) |
@@ -276,7 +276,12 @@ it. Three phases per stop, in order:
     (byte-identical there), while the shipped wcag lane clears paper-5. On top of that,
     every stop from crayon-26 up also clears the worst paper the family's OWN generated
     NEUTRAL can produce at any hue (`NEUTRAL_P3_WORST_SHIP_Y`, C44): a brand's own
-    paper-5 is not always the nearest paper once the neutral is in scope. Declared in
+    paper-5 is not always the nearest paper once the neutral is in scope; the pen stops clear
+    the worst neutral `highlighter-20` the same way (`NEUTRAL_W80_WORST_SHIP_Y`); the
+    neutral's own stops run the same rule the other way, its pens clearing the worst
+    chromatic `highlighter-20` and its crayon-26/pencil-47/pens the worst chromatic paper-5
+    (`CHROMATIC_W80_WORST_SHIP_Y`, `CHROMATIC_P3_WORST_SHIP_Y`, T13, passed in by
+    `generateNeutralScale`). Declared in
     **both modes** (light clamps down; dark raises off the paper; a placement that
     already clears doesn't move).
   - `{ metric: 'min-separation', against, target }`: supported by the resolver for
@@ -335,7 +340,9 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
   alone; the dark cta rides identity hue). It is **brand-only**: the red *signal* keeps its
   identity hue in both modes; signals pass `suppressRedCool: true`.
 - **Style lever** (`deeper` / `full-chroma`): a `GenerateOptions` field, set directly by the
-  caller (the demo exposes `full-chroma` as a toggle; the audit fixture, `scripts/fixture.ts`,
+  caller (no UI exposes `full-chroma` since 2026-09-01: its released cap sinks a violet
+  `highlighter-20` below the pen guarantee's bound, so the checkbox was removed and the
+  register is API-only, outside the guarantee; the audit fixture, `scripts/fixture.ts`,
   carries a `deeper` case). `deeper` pushes toward the cream/brown envelope, gated to the ambiguous semi-muted warm
   band (H 55–100, mid mutedness); a no-op outside it. `full-chroma` releases the vividness
   cap for any seed (the ladder scales with the seed's true chroma; the dark cta rides the

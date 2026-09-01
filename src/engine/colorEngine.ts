@@ -26,7 +26,7 @@ export {
 } from './colorMath'
 export type { ColorStop } from './colorMath'
 
-import { resolveRamp, type ResolvedStop } from './requirements/resolve'
+import { resolveRamp, CHROMATIC_W80_WORST_SHIP_Y, CHROMATIC_P3_WORST_SHIP_Y, type ResolvedStop } from './requirements/resolve'
 import { MODE_SPECS, type ModeSpec } from './requirements/spec'
 import { withProfile, DEFAULT_APCA_LC_MAP, CTA_ONFILL_ENFORCE_LC, type ContrastProfile } from './requirements/profiles'
 import { whiteTextLcAt, findLForWhiteTextLc, APCA_SOLVE_MARGIN_LC } from './requirements/producers'
@@ -169,6 +169,16 @@ export interface GenerateOptions {
   // ground and vice versa (see the cross there). Nothing else in the solve changes — same
   // requires, producers, hue laws, chroma floors and shipped-pair floor. Absent = byte-identical.
   textGround?: { light: { L: number; C: number; H: number }; dark: { L: number; C: number; H: number } }
+  // THE CROSS-FAMILY HIGHLIGHTER BOUND (T13, owner 2026-09-01): the pen guarantee is
+  // symmetric, so the NEUTRAL's pens must clear every chromatic family's highlighter-20,
+  // not only their own ramp's and the neutral bound. The resolver has no neutral flag
+  // (scaleName is metadata), so generateNeutralScale passes the frozen worst chromatic
+  // highlighter-20 Y here and the shipped-pair clamp on stops 10–11 takes it as a third
+  // floor (resolve.ts CHROMATIC_W80_WORST_SHIP_Y). Absent (every other caller) = byte-identical.
+  crossHighlighterBoundY?: { light: number; dark: number }
+  // the same, for the paper claims: the NEUTRAL's crayon-26 / pencil-47 / pens clear the worst
+  // chromatic paper-5 (resolve.ts CHROMATIC_P3_WORST_SHIP_Y), each at its band's bar
+  crossPaperBoundY?: { light: number; dark: number }
 
   deltaHKPlace?: boolean     // place carried C/H by the old apparent-L rung (perceptualRungL @ scaffold), not luminance
   deltaChromaEq?: boolean    // replace carried C with the old H-K chroma equalizer (perceptualDarkC)
@@ -288,6 +298,10 @@ export function generateNeutralScale(
     chromaCurve: curve,
     enforceOnFillContrast: true,
     contrastProfile,
+    // T13: the neutral's pens clear every chromatic family's highlighter-20 (the symmetric
+    // pen guarantee); the chromatic ramps clear the neutral's through NEUTRAL_W80_WORST_SHIP_Y
+    crossHighlighterBoundY: CHROMATIC_W80_WORST_SHIP_Y,
+    crossPaperBoundY: CHROMATIC_P3_WORST_SHIP_Y,
   })
 
   // The neutral cta is LOW-HIERARCHY: unlike a brand/signal cta (a bold off-scale
