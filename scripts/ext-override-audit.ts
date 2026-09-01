@@ -64,7 +64,7 @@ for (const col of COLUMNS) snap.base[col] = base[col].length
 // leaves since the band flattening, owner 2026-08-12 — a shape change that dodges this
 // regex would silently disarm the gate, which is exactly how the banded-era version
 // went dead for one commit during the flatten): the panel contract is descending LL,
-// lightest first (paper-100 leads, ink-0 trails), and nothing else in this file would
+// lightest first (paper-0 leads, pen-100 trails), and nothing else in this file would
 // catch a reversal because no color changes. Guards figmaRender's emit/insertion order
 // + its two consumers (payload.ts flatten(), plugin/code.ts's orderedEntries). The
 // shape is structural, not per-brand-value-dependent — every brand shares the same
@@ -75,10 +75,10 @@ function assertLadderOrder(tokens: FlatTok[], label: string): void {
     for (const t of tokens) {
       // end-anchored (2026-08-18): the flat overlay twins (paper-99-overlay) carry a
       // ladder digit mid-name and must not double-count their paper's rung
-      // 'lead' joined the band words in the guarantee round (ink-53 → lead-53,
+      // 'lead' joined the band words in the guarantee round (ink-53 → pencil-47,
       // owner 2026-08-27) — this regex IS the disarm-detection gate, so it moves
       // with the leaf shape by design (the cta-ink round's lesson)
-      const m = new RegExp(`/${fam}/(?:paper|wash|wax|lead|ink)-(\\d+)(?:-aaa?)?$`).exec(t.path)
+      const m = new RegExp(`/${fam}/(?:paper|highlighter|crayon|pencil|pen)-(\\d+)(?:-aaa?)?$`).exec(t.path)
       if (m) nums.push(parseInt(m[1], 10))
     }
     // the gate must never silently disarm again: every family carries a full ladder
@@ -88,8 +88,10 @@ function assertLadderOrder(tokens: FlatTok[], label: string): void {
       continue
     }
     for (let i = 1; i < nums.length; i++) {
-      if (nums[i] >= nums[i - 1]) {
-        fails.push(`${label} ${fam}: ladder order broken at index ${i} (${nums[i - 1]} → ${nums[i]}, expected strictly descending)`)
+      // instruments rename (2026-08-31): the digit is inverted (100 − rootL), so along the
+      // panel's lightest-first ladder the DIGITS now strictly ASCEND (paper-0 … pen-100)
+      if (nums[i] <= nums[i - 1]) {
+        fails.push(`${label} ${fam}: ladder order broken at index ${i} (${nums[i - 1]} → ${nums[i]}, expected strictly ascending)`)
         break
       }
     }

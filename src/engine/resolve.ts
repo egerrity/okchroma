@@ -4,7 +4,7 @@ import { generateScale, generateSubtleSecondary, type GeneratedScale, type Contr
 import { darkChromaCurve } from './darkChromaCurve'
 import type { Archetype } from './archetypes'
 import { SIGNALS, type SignalDef } from './signals'
-import { DARK_BRAND_FILL_MIN_L, INK_30_GROUND } from './stopTable'
+import { DARK_BRAND_FILL_MIN_L, PEN_70_GROUND } from './stopTable'
 import {
   checkCollision,
   checkHueCollision,
@@ -91,7 +91,7 @@ function hueCollisionPending(scale: GeneratedScale, sigScales: SignalScales): Si
 // cool-first beside warm brands, first-clean-wins in preference order. Clean = the P2 bar
 // (.12 deep / .11 light) + solve-metric release + a passing pole. The variant cta is PINNED
 // (makeStop, never re-enforced — enforcement would collapse it back onto canonical red;
-// generateSubtleSecondary's ctaL pin is the precedent); ramp, washes, inks and the ENTIRE
+// generateSubtleSecondary's ctaL pin is the precedent); ramp, highlighters, pens and the ENTIRE
 // dark side stay canonical red verbatim (the dark canonical carries its own C42 clearance).
 // Returns null = canonical red already stands clean beside this brand.
 const blackLcAt = (L: number, C: number, H: number): number =>
@@ -173,7 +173,7 @@ function redComplementVariant(
   // pinned mints skip the producer's enforce-darken, so the wcag conformance floor rides
   // the pole judge (a light coral variant must flip to black text, not ship white sub-4.5)
   const onFillTextIsWhite = onFillIsWhiteDarkAt(cta.L, cta.C, cta.H, true, contrastProfile === 'apca' ? undefined : 4.5)
-  // the text register rides the canonical red ramp's ink stops — the variant moves only the fill trio
+  // the text register rides the canonical red ramp's pen stops — the variant moves only the fill trio
   return {
     scale: { ...red.scale, cta, ctaHover, ctaPressed, onFillTextIsWhite },
     // naming candidates only — the identity name is the owner's call at bless. No hue suffix:
@@ -212,9 +212,9 @@ export function resolveBrand(
     // DEFAULT_SECONDARY.darkFlatGapApp. Absent for every other caller (the prominence pin holds).
     darkCtaFlatApp?: number
 
-    // internal (resolveLinkInverseTrio): re-anchor this resolve's ink stops at the ink-30
-    // ground instead of a paper — see GenerateOptions.inkGround.
-    inkGround?: { light: { L: number; C: number; H: number }; dark: { L: number; C: number; H: number } }
+    // internal (resolveLinkInverseTrio): re-anchor this resolve's pen stops at the pen-70
+    // ground instead of a paper — see GenerateOptions.textGround.
+    textGround?: { light: { L: number; C: number; H: number }; dark: { L: number; C: number; H: number } }
   }
 ): ResolvedBrand {
   const sigScales = signalScalesFor(opts?.contrastProfile)
@@ -267,7 +267,7 @@ export function resolveBrand(
     // (buildSignalScales/signalShift) — neutral alone stays outside; exact has enforce off.
     apcaClearance: opts?.apcaClearance ?? true,
     darkCtaFlatApp: opts?.darkCtaFlatApp,
-    inkGround: opts?.inkGround,
+    textGround: opts?.textGround,
   }
 
   let scale = generateScale(hex, name, undefined, floor)
@@ -350,12 +350,12 @@ export type SecondaryLevel = 'standard' | 'subtle'
 // The secondary's per-field MODE (owner design 2026-07-04: modes decoupled per family — the
 // mockup's chip dropdown). muted/vibrant = the two subtle chroma models (both ride the locked
 // delta curve); outline = the muted ramp with the cta re-resolved (cta transparent, cta-hover the
-// cta color at OUTLINE_HOVER_ALPHA, on-cta the family's ink-9, cta-border always wax-74); exact = the
+// cta color at OUTLINE_HOVER_ALPHA, on-cta the family's ink-9, cta-border always crayon-26); exact = the
 // standard full ramp, advice-only.
 // the offering (owner 2026-07-12, striking the bespoke subtle models: "you either use the
 // derived or you use custom"): 'default' = the derived seed-transform (no hex supplied);
 // 'exact' = the CUSTOM path — your hex ships as a full standard ramp; 'outline' = the exact
-// ramp with the cta re-resolved at the emitters (cta transparent, border = wax-74).
+// ramp with the cta re-resolved at the emitters (cta transparent, border = crayon-26).
 export type SecondaryStyle = 'default' | 'outline' | 'exact'
 // legacy ids: the retired subtle models (tint/pastel and their muted/vibrant renames) map to
 // 'exact' — a supplied hex is honored as custom, never silently re-modeled.
@@ -427,12 +427,12 @@ export const OUTLINE_PRESSED_ALPHA = 0.18
 // the neutral 2026-08-04 — *"neutral cta on's should also be the alpha"*). A quiet,
 // low-hierarchy cta carries its button text as the on-text POLE AT ALPHA instead of the
 // solid pole — the renderer composites it over whatever the fill's current state is, so
-// hover/pressed carry their own legibility (a solid tinted ink died there: dark hover
+// hover/pressed carry their own legibility (a solid tinted pen died there: dark hover
 // 3.69 / pressed 3.00 against the state fills). Bars: WCAG 4.5 on every state fill plus
 // the Lc-60 on-cta bar at rest.
 //
 // THE CARRIERS, in two tiers:
-//  · KNOWN-LEGAL BY CONSTRUCTION — the NEUTRAL only, whose cta is the scale-fed wash-level
+//  · KNOWN-LEGAL BY CONSTRUCTION — the NEUTRAL only, whose cta is the scale-fed highlighter-level
 //    fill (colorEngine, stop 4): re-measured 2026-08-29, softOnCtaPasses holds across the
 //    agnostic sweep in both modes. It always ships soft.
 //  · CHECKED PER BRAND AND MODE — every non-outline secondary, the default model included
@@ -446,7 +446,7 @@ export const OUTLINE_PRESSED_ALPHA = 0.18
 // The owner picked light .75 / dark .80 by eye on the alpha ladder; every soft carrier
 // shares the ONE register, so all alias the single system/alpha/ink primitive in the plugins.
 // LOUD fills keep the solid pole — brand, the signals, and the cta ESCAPE (whose fill is the
-// neutral's ink register, not this quiet one; owner-confirmed 2026-08-04). Outline keeps its
+// neutral's pen register, not this quiet one; owner-confirmed 2026-08-04). Outline keeps its
 // ink-9 (colored text on a transparent fill — there is no fill to compose over).
 export const SOFT_ON_CTA_ALPHA = { light: 0.75, dark: 0.80 } as const
 
@@ -478,31 +478,31 @@ export function softOnCtaPasses(s: GeneratedScale, mode: 'light' | 'dark'): bool
 
 // ── the NEUTRAL CTA ESCAPE (Phase 3, owner spec 2026-07-16: stakeholders want a
 // neutral cta escape for red collisions): the brand's cta FILL trio swaps to the brand's
-// OWN generated neutral's ink register — near-BLACK in light, near-WHITE in dark. An
+// OWN generated neutral's pen register — near-BLACK in light, near-WHITE in dark. An
 // emitter-level re-resolution exactly like the outline style (same tokens, different
 // values; the solve pipeline is untouched and the flag default-off is byte-identical).
 // Construction (owner-decided at planning): cta ANCHORS at the neutral's resolved STRONG
-// ink — ink-11 since C49 (light root L≈0.30 / dark ≈0.94); cta-hover/cta-pressed
+// pen — ink-11 since C49 (light root L≈0.30 / dark ≈0.94); cta-hover/cta-pressed
 // derive via the same stateFillL machinery every cta fill uses, chroma carried from the
-// anchor (the neutral's ink chroma is a whisper — re-evaluating the curve across a
+// anchor (the neutral's pen chroma is a whisper — re-evaluating the curve across a
 // 0.03–0.09 L move is imperceptible and the curve closure is gone post-generation), hue
 // constant. on-cta re-judges at the escaped fill under the same law as the neutral's own
 // quiet cta (judgment-only — the anchor is pinned): wcag = mixing flip + the 4.5
-// conformance floor; apca = pure apca-pole. The brand's INK STOPS are NOT touched
-// (owner 2026-08-13, reverting the 2026-08-12 ink de-chroma — it shipped unapproved):
-// the escape moves only this fill trio; the ink register keeps the brand's own
+// conformance floor; apca = pure apca-pole. The brand's PEN STOPS are NOT touched
+// (owner 2026-08-13, reverting the 2026-08-12 pen de-chroma — it shipped unapproved):
+// the escape moves only this fill trio; the pen register keeps the brand's own
 // chroma everywhere it appears. UI gates the toggle to brands
 // whose cta sits in red's register (redGateDist ≤ RED_GATE.G — the exact-mode advice
 // check above), but the emitters honor the flag for any brand: the gate is guidance,
 // not law, and a stakeholder override must not silently no-op.
 // ── the SYSTEM LINK token (Phase 4, owner spec 2026-07-16: "link is a system level
-// color… a primitive that internally aliases the primary ink 10 unless it's being
+// color… a primitive that internally aliases the primary pen 10 unless it's being
 // deconflicted from red"). ONE link trio per theme — link / link-hover / link-pressed:
-//   DEFAULT (no custom color): aliases the primary's ink stops 9/10/11 (states ride
+//   DEFAULT (no custom color): aliases the primary's pen stops 9/10/11 (states ride
 //   the alias — same values the deleted cta-ink trio carried, C49 construction).
-//   CUSTOM (the de-conflict): the user's hex runs through the SAME ink register — it is
-//   the SEED of a throwaway resolve and the shipped trio is that resolve's ink stops
-//   (hue kept, L floor-solved per lane and mode by the ink stops' own laws, dark solved
+//   CUSTOM (the de-conflict): the user's hex runs through the SAME pen register — it is
+//   the SEED of a throwaway resolve and the shipped trio is that resolve's pen stops
+//   (hue kept, L floor-solved per lane and mode by the pen stops' own laws, dark solved
 //   dark-native, states + floors free — owner-picked treatment). Default seed when the
 //   toggle turns on: #0B57D0, the conventional link blue (owner-picked; ships light
 //   ≈#375bae / dark ≈#90b2f9 through the wcag register).
@@ -512,11 +512,11 @@ export function resolveLinkTrio(
   contrastProfile?: ContrastProfile,
 ): { link: ColorStop; linkHover: ColorStop; linkPressed: ColorStop; linkDark: ColorStop; linkHoverDark: ColorStop; linkPressedDark: ColorStop } {
   // skipCollisionRules: the link seed is not a brand — no signal machinery, no repel;
-  // just the ramp solve that produces its ink register
+  // just the ramp solve that produces its pen register
   const s = resolveBrand(linkHex, 'link', { skipCollisionRules: true, contrastProfile }).scale
   const at = (arr: ColorStop[], n: number) => {
     const st = arr.find(x => x.stop === n)
-    if (!st) throw new Error(`resolveLinkTrio: the link resolve has no ink stop ${n}`)
+    if (!st) throw new Error(`resolveLinkTrio: the link resolve has no pen stop ${n}`)
     return st
   }
   return {
@@ -526,12 +526,12 @@ export function resolveLinkTrio(
 }
 
 // ── the INVERSE LINK trio (owner round 2026-08-19): the same link family, for text on an
-// INVERTED surface — an ink-30 fill rather than a paper. Reuse was measured and rejected:
-// the existing dark trio read 4.95/6.43/8.99 against the worst light ink-30 (hover short of
-// its 6.5 bar) and the light trio 3.97 against the worst dark ink-30 — under AA. So the
+// INVERTED surface — a pen-70 fill rather than a paper. Reuse was measured and rejected:
+// the existing dark trio read 4.95/6.43/8.99 against the worst light pen-70 (hover short of
+// its 6.5 bar) and the light trio 3.97 against the worst dark pen-70 — under AA. So the
 // family gets its own solve, built exactly like resolveLinkTrio: the seed is the SEED of a
-// throwaway resolve and the shipped trio is that resolve's ink stops. The only thing that
-// moves is the ground the ink requires anchor at (INK_30_GROUND, stopTable.ts).
+// throwaway resolve and the shipped trio is that resolve's pen stops. The only thing that
+// moves is the ground the pen requires anchor at (PEN_70_GROUND, stopTable.ts).
 //
 // THE CROSS: an inverse trio is text with its mode's polarity INVERTED — the light-mode
 // inverse link is light-on-dark, which is the DARK ramp's construction, and the dark-mode
@@ -542,25 +542,25 @@ export function resolveLinkTrio(
 //
 // The seed is the link's: the custom link hex when the link is de-conflicted (the red
 // cta → neutral case bundles DEFAULT_LINK_HEX, so its pushed-in blue feeds this family
-// too), else the brand's own hex — the default link ALIASES the primary's ink stops, but
-// no existing stop is anchored at the ink-30 ground, so the default inverse is a solve on
+// too), else the brand's own hex — the default link ALIASES the primary's pen stops, but
+// no existing stop is anchored at the pen-70 ground, so the default inverse is a solve on
 // the same seed rather than an alias.
 export function resolveLinkInverseTrio(
   seedHex: string,
   contrastProfile?: ContrastProfile,
 ): { link: ColorStop; linkHover: ColorStop; linkPressed: ColorStop; linkDark: ColorStop; linkHoverDark: ColorStop; linkPressedDark: ColorStop } {
-  // the ground is PER LANE (see INK_30_GROUND: a lane's themes only ship that lane's
+  // the ground is PER LANE (see PEN_70_GROUND: a lane's themes only ship that lane's
   // surfaces, so each lane is judged against its own worst)
-  const ground = INK_30_GROUND[contrastProfile === 'apca' ? 'apca' : 'wcag']
+  const ground = PEN_70_GROUND[contrastProfile === 'apca' ? 'apca' : 'wcag']
   const s = resolveBrand(seedHex, 'link-inverse', {
     skipCollisionRules: true,
     contrastProfile,
     // the cross — ramp keyed, ground mode-swapped
-    inkGround: { light: ground.dark, dark: ground.light },
+    textGround: { light: ground.dark, dark: ground.light },
   }).scale
   const at = (arr: ColorStop[], n: number) => {
     const st = arr.find(x => x.stop === n)
-    if (!st) throw new Error(`resolveLinkInverseTrio: the link resolve has no ink stop ${n}`)
+    if (!st) throw new Error(`resolveLinkInverseTrio: the link resolve has no pen stop ${n}`)
     return st
   }
   return {
@@ -577,21 +577,21 @@ export function escapeCtaFamily(
 ): {
   cta: ColorStop; ctaHover: ColorStop; ctaPressed: ColorStop; onFillIsWhite: boolean
 } {
-  // the escape fill anchors on the neutral's STRONG ink — ink-11 since C49 restored
+  // the escape fill anchors on the neutral's STRONG pen — ink-11 since C49 restored
   // its number (the C33-era spelling was ink-10; the stop lookup must follow the VALUE)
-  const strongInk = (mode === 'light' ? nScale.light : nScale.dark).find(s => s.stop === 11)
-  if (!strongInk) throw new Error('escapeCtaFamily: the neutral scale has no ink-11 stop')
-  const mk = (stop: number, L: number) => makeStop(stop, L, strongInk.C, strongInk.H)
-  const cta = mk(9, strongInk.L)
+  const strongText = (mode === 'light' ? nScale.light : nScale.dark).find(s => s.stop === 11)
+  if (!strongText) throw new Error('escapeCtaFamily: the neutral scale has no ink-11 stop')
+  const mk = (stop: number, L: number) => makeStop(stop, L, strongText.C, strongText.H)
+  const cta = mk(9, strongText.L)
   // states via the shared fill rule; the near-white dark register is the archetype
   // override case — its dark states DARKEN (the mirror of everyone else's lighten)
-  const ctaHover = mk(10, stateFillL(strongInk.L, mode, 1))
-  const ctaPressed = mk(11, stateFillL(strongInk.L, mode, 2))
+  const ctaHover = mk(10, stateFillL(strongText.L, mode, 1))
+  const ctaPressed = mk(11, stateFillL(strongText.L, mode, 2))
   const onEnforce = contrastProfile !== 'apca'
   const onFloor = contrastProfile === 'apca' ? undefined : 4.5
   const onFillIsWhite = onTextIsWhite(apcaY(cta.r, cta.g, cta.b), cta.L, cta.C, cta.H, onEnforce, onFloor)
-  // scope (owner 2026-08-13, reverting the 2026-08-12 ink de-chroma): the escape moves
-  // ONLY this fill trio + on-cta. The brand's ink stops 9/10/11 — the text register,
+  // scope (owner 2026-08-13, reverting the 2026-08-12 pen de-chroma): the escape moves
+  // ONLY this fill trio + on-cta. The brand's pen stops 9/10/11 — the text register,
   // and the default link that aliases them — keep the brand's own chroma.
   return { cta, ctaHover, ctaPressed, onFillIsWhite }
 }
@@ -765,12 +765,12 @@ export function resolveTheme(input: {
   // corrected detection for secondaries (C7): the TYPE-1 hue gate at the annotation
   // qualifier, against the THEME's effective (POST-MERGE) signal set — after the collider
   // pass above, a note fires only for the RESIDUALS the machinery could not clear.
-  const signalNotesFor = (scale: GeneratedScale, wording: (name: SignalDef['name'], washDE: number) => string): string[] => {
+  const signalNotesFor = (scale: GeneratedScale, wording: (name: SignalDef['name'], highlighterDE: number) => string): string[] => {
     const out: string[] = []
     for (const def of SIGNALS) {
       if (adoptedForSecondary.has(def.name)) continue
       const h = checkHueCollision(scale, effectiveOf(def.name), def, { minV: SECONDARY_NOTE_MIN_V })
-      if (h.collides) out.push(wording(def.name, Math.min(h.washDeltaE.light, h.washDeltaE.dark)))
+      if (h.collides) out.push(wording(def.name, Math.min(h.highlighterDeltaE.light, h.highlighterDeltaE.dark)))
     }
     return out
   }
@@ -787,7 +787,7 @@ export function resolveTheme(input: {
   //     hex is the seed for the RAMP; only the cta trio comes from the transformed seed. Owner:
   //     "the id is preserved as is, but the cta is generated as if it was a tint of the given
   //     hex". Applying the transform to the whole ramp is what made a saturated orange come
-  //     back as a pale tan — and it took the INK with it (the strong ink's C 0.080 → 0.017, so the text
+  //     back as a pale tan — and it took the PEN with it (the strong pen's C 0.080 → 0.017, so the text
   //     colour went gray-brown). See resolveCustomModel.
   //
   // The hue never rotates on either posture (owner 2026-08-03; C34 had exempted supplied
@@ -812,10 +812,10 @@ export function resolveTheme(input: {
   // untinted cta is the SAME BUTTON (cta ΔE vs primary 0.000); the tint lifts that to 0.39
   // light / 0.24 dark, clear of SECONDARY_DISTINCT_DELTA_E.
   //
-  // the ink stops (the text-register cta, 9/10/11) are deliberately NOT tinted (owner
+  // the pen stops (the text-register cta, 9/10/11) are deliberately NOT tinted (owner
   // ruling 2026-07-29, phrased for cta-ink before its 2026-08-12 deletion): under this
   // model they are the user's colour — a tinted text register would be a pale link on a
-  // pale surface, and would stop matching the ink it is specified to match.
+  // pale surface, and would stop matching the pen it is specified to match.
   //
   // onFillTextIsWhite comes across WITH the cta because it is computed FROM it
   // (colorEngine.ts: onTextIsWhite(…scale.cta…)) and is consumed only as the on-cta token —
@@ -859,7 +859,7 @@ export function resolveTheme(input: {
         notes: [
           `secondary derived from the brand color (default model, seed ${liftedHex})`,
           ...signalNotesFor(scale, (name, dE) =>
-            `derived secondary sits on the ${name} signal's hue (wash ΔE ${dE.toFixed(3)}) — it tracks the brand color`),
+            `derived secondary sits on the ${name} signal's hue (highlighter ΔE ${dE.toFixed(3)}) — it tracks the brand color`),
         ],
         distinctness: ctaDistinctness(primary.scale, scale),
       },
@@ -883,7 +883,7 @@ export function resolveTheme(input: {
         notes: [
           `secondary keeps your color through the ramp; the cta is a tint of it (tint seed ${tintedHex})`,
           ...signalNotesFor(scale, (name, dE) =>
-            `secondary sits on the ${name} signal's hue (wash ΔE ${dE.toFixed(3)}) — it tracks your color`),
+            `secondary sits on the ${name} signal's hue (highlighter ΔE ${dE.toFixed(3)}) — it tracks your color`),
         ],
         distinctness,
       },
@@ -900,7 +900,7 @@ export function resolveTheme(input: {
   const level: SecondaryLevel = 'standard'
   mergeSecondarySignals(scale, input.secondaryHex)
   const secNotes = signalNotesFor(scale, (name, dE) =>
-    `secondary reads close to the ${name} signal (wash ΔE ${dE.toFixed(3)}) — your color ships untouched`)
+    `secondary reads close to the ${name} signal (highlighter ΔE ${dE.toFixed(3)}) — your color ships untouched`)
 
   const distinctness = ctaDistinctness(primary.scale, scale)
   if (distinctness.close)

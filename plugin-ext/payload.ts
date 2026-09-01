@@ -16,7 +16,7 @@
 //
 // Token shape: the operative `brand-` CATEGORY stays in the token name (brand/*,
 // brand-alt/*), the brand's NAME lives on the extension, so a designer reads
-// kirby → base/brand/paper-99. Neutral + signals keep their identity names.
+// kirby → base/brand/paper-1. Neutral + signals keep their identity names.
 // Every path carries an OWNERSHIP-ZONE prefix (owner ruling 2026-08-18, replacing the
 // primitive/ register): base/ = engine-owned rows — hand edits there are NOT rebuilt
 // (the apply path is create-once + conservative refresh), so the zone name is the
@@ -77,7 +77,7 @@ export type ThemeSpec = Omit<Parameters<typeof resolveTheme>[0], 'contrastProfil
   // every recipe stored before this flag existed keeps its strokes on re-apply/backfill.
   ctaBorder?: boolean
   // the SYSTEM LINK's custom seed (Phase 4) — one link per theme; absent = the link rows
-  // carry the primary's ink-stop values (extensions override them per brand)
+  // carry the primary's pen-stop values (extensions override them per brand)
   linkHex?: string | null
   // the NEUTRAL's tint-hue source (owner 2026-08-04): absent = the primary's hue (every
   // stored recipe replays byte-identical). 'secondary' stores the SOURCE, never a frozen
@@ -99,7 +99,7 @@ const isLeaf = (n: FigmaColorToken | FigmaGroup): n is FigmaColorToken => '$type
 function flatten(node: FigmaGroup, prefix: string, out: FlatTok[]): void {
   // groupEntries (figmaRender.ts), not Object.entries: a group of bare-digit leaves is
   // JS integer keys and gets silently re-sorted ascending otherwise, reversing the
-  // TOKEN_ORDER panel contract (adversarial-audit-caught 2026-08-07, when paper/wash
+  // TOKEN_ORDER panel contract (adversarial-audit-caught 2026-08-07, when paper/highlighter
   // leaves WERE bare digits; flat band leaves aren't, but the rule stays cheap).
   for (const [k, v] of groupEntries(node)) {
     const path = prefix ? `${prefix}/${k}` : k
@@ -114,8 +114,8 @@ function flatten(node: FigmaGroup, prefix: string, out: FlatTok[]): void {
 // then the families, then the low-usage machinery tail — link, alpha, absolutes).
 // The utility/surface/dim|low|mid|high planes are NOT here — they are scheme-divergent
 // aliases the plugin creates FIRST (top of the panel) and wires once the neutral
-// exists. neutral/ink-0 (the off-scale anchor) is NO LONGER injected here (it was a
-// pure-pole literal spliced after the last scale ink, 2026-08-12 → 2026-08-28): the
+// exists. neutral/pen-100 (the off-scale anchor) is NO LONGER injected here (it was a
+// pure-pole literal spliced after the last scale pen, 2026-08-12 → 2026-08-28): the
 // engine RESOLVES it now and figmaRender carries it inside the neutral group, already
 // in ladder position, so the generic walk ships it like any other leaf. The
 // alpha/shadow ladder (owner
@@ -162,7 +162,7 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
   for (const s of SIGNALS) flatten(g[s.name] as FigmaGroup, s.emitName, out)
   // the LINK trio (Phase 4): BRAND-OVERRIDABLE (unlike the contract-invariant rows —
   // code.ts carves it out of the override skip via OVERRIDABLE_SYSTEM_ROWS); rows
-  // carry the resolved values (primary's ink stops, or the custom seed's register).
+  // carry the resolved values (primary's pen stops, or the custom seed's register).
   // The engine group's link/link-hover/link-pressed leaves are remapped to the
   // base/link/* STATE names (owner regroup 2026-07-27; zone spelling 2026-08-18 —
   // base zone: engine-GENERATED per brand, the leak that killed the old
@@ -176,7 +176,7 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
   }
   for (const t of linkRows) out.push({ ...t, path: LINK_STATE[t.path] ?? t.path })
   // the INVERSE link trio (owner round 2026-08-19): the link seed re-solved for text on
-  // ink-30 surfaces (engine resolveLinkInverseTrio). Same overridable-system posture and
+  // pen-70 surfaces (engine resolveLinkInverseTrio). Same overridable-system posture and
   // the same engine leaf spelling, remapped to state leaves INSIDE the link group (owner
   // regroup 2026-08-20). Values are always resolved raw — there is no alias posture (no
   // family row carries these values).

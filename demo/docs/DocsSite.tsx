@@ -45,16 +45,16 @@ const Table = ({ head, rows }: { head: React.ReactNode[]; rows: React.ReactNode[
 )
 
 // ── Live example: real generated ramps, computed by the engine ───────────────
-// The shipped bands: paper 1-3, wash 4-7, wax 8, lead 9, ink 10-11. Band labels and
+// The shipped bands: paper 1-3, highlighter 4-7, crayon 8, pencil 9, pen 10-11. Band labels and
 // stop numbers render ONCE, on top; the hue rows stack under them. Column count
 // derives from the scale (--cols) and the spans are asserted against it, so a
 // band change breaks loudly here instead of drifting.
 const RAMP_GROUPS: Array<{ label: string; span: number }> = [
-  { label: 'paper', span: 3 }, { label: 'wash', span: 4 },
-  { label: 'wax', span: 1 }, { label: 'lead', span: 1 }, { label: 'ink', span: 2 },
+  { label: 'paper', span: 3 }, { label: 'highlighter', span: 4 },
+  { label: 'crayon', span: 1 }, { label: 'pencil', span: 1 }, { label: 'pen', span: 2 },
 ]
 const RAMP_SET_HEXES = ['#E93D82', '#C61D1B', '#E08A1E', '#E3B505', '#2E9E3F', '#0BA5C0', '#2C5FC9']
-// the digit a stop actually ships under (paper-99 → 99), off the one name table.
+// the digit a stop actually ships under (paper-1 → 99), off the one name table.
 const stopDigit = (stop: number): string => {
   const digit = stopTokenName(stop).match(/-(\d+)$/)?.[1]
   if (!digit) throw new Error(`DocsSite: no shipped digit for stop ${stop}`)
@@ -77,7 +77,7 @@ function RampSet() {
       </div>
       <div className="d2-rampset-row d2-ramp-nums">
         {/* the SHIPPED digit, read off the name table — not the ordinal index. Band word
-            above + digit here spells the real token (paper-99 … lead-53 … ink-30), so the
+            above + digit here spells the real token (paper-1 … pencil-47 … pen-70), so the
             figure can be read straight into code; a renumber follows the table for free. */}
         {scales[0].scale.light.map(s => <span key={s.stop}>{stopDigit(s.stop)}</span>)}
       </div>
@@ -143,7 +143,7 @@ function buildTokenGroups(): TokGroup[] {
   const scale = generateScale(TOKEN_REF_HEX, 'docs', undefined, {})
   const neutral = generateNeutralScale(scale.brandH, 'default')
   // the inverse link trio — same seed as the default link (the brand hex), re-solved
-  // for ink-30 surfaces; always raw values, never an alias
+  // for pen-70 surfaces; always raw values, never an alias
   const inv = resolveLinkInverseTrio(TOKEN_REF_HEX)
   const L = scale.light, D = scale.dark
   const NL = neutral.light, ND = neutral.dark
@@ -168,19 +168,19 @@ function buildTokenGroups(): TokGroup[] {
     {
       register: 'base/', caption: 'One resolved color, no state: the ramp stops and the system plumbing. Hidden from the picker by default (the descope posture, §2d): the role rows below are what a designer binds to.',
       rows: [
-        { token: 'paper-100', role: "the ladder's universal floor (always the neutral's own stop 0, every family)", guarantee: '–', light: swatch(hex(neutral.paper0!)), dark: swatch(hex(neutral.paper0Dark!)) },
-        { token: 'paper-99', role: 'app background, inverted text', guarantee: '–', light: swatch(hex(stopAt(L, 1))), dark: swatch(hex(stopAt(D, 1))) },
-        { token: 'paper-97', role: 'raised background, inverted text', guarantee: '–', light: swatch(hex(stopAt(L, 2))), dark: swatch(hex(stopAt(D, 2))) },
-        { token: 'paper-95', role: 'surface plane (light dim / dark high)', guarantee: '–', light: swatch(hex(stopAt(L, 3))), dark: swatch(hex(stopAt(D, 3))) },
-        { token: 'wash-92', role: 'low-hierarchy fill, interaction, decorative', guarantee: '–', light: swatch(hex(stopAt(L, 4))), dark: swatch(hex(stopAt(D, 4))) },
-        { token: 'wash-89', role: 'low-hierarchy fill, interaction, decorative', guarantee: '–', light: swatch(hex(stopAt(L, 5))), dark: swatch(hex(stopAt(D, 5))) },
-        { token: 'wash-85', role: 'decorative', guarantee: '–', light: swatch(hex(stopAt(L, 6))), dark: swatch(hex(stopAt(D, 6))) },
-        { token: 'wash-80', role: 'decorative', guarantee: '–', light: swatch(hex(stopAt(L, 7))), dark: swatch(hex(stopAt(D, 7))) },
-        { token: 'wax-74', role: 'non-text emphasis: borders, UI elements', guarantee: '3:1, on every paper', light: swatch(hex(stopAt(L, 8))), dark: swatch(hex(stopAt(D, 8))) },
-        { token: 'lead-53', role: 'emphasis fill and first text stop', guarantee: '4.5:1, on every paper', light: swatch(hex(stopAt(L, 9))), dark: swatch(hex(stopAt(D, 9))) },
-        { token: 'ink-42', role: 'mid text', guarantee: '6.5:1, on every paper', light: swatch(hex(stopAt(L, 10))), dark: swatch(hex(stopAt(D, 10))) },
-        { token: 'ink-30', role: 'strong text, inverted fill', guarantee: '7:1, on every paper', light: swatch(hex(stopAt(L, 11))), dark: swatch(hex(stopAt(D, 11))) },
-        { token: 'ink-0', role: 'universal anchor, mode-flipping constant, never resolved', guarantee: '–', light: swatch('#000000'), dark: swatch('#ffffff') },
+        { token: 'paper-0', role: "the ladder's universal floor (always the neutral's own stop 0, every family)", guarantee: '–', light: swatch(hex(neutral.paper0!)), dark: swatch(hex(neutral.paper0Dark!)) },
+        { token: 'paper-1', role: 'app background, inverted text', guarantee: '–', light: swatch(hex(stopAt(L, 1))), dark: swatch(hex(stopAt(D, 1))) },
+        { token: 'paper-3', role: 'raised background, inverted text', guarantee: '–', light: swatch(hex(stopAt(L, 2))), dark: swatch(hex(stopAt(D, 2))) },
+        { token: 'paper-5', role: 'surface plane (light dim / dark high)', guarantee: '–', light: swatch(hex(stopAt(L, 3))), dark: swatch(hex(stopAt(D, 3))) },
+        { token: 'highlighter-8', role: 'low-hierarchy fill, interaction, decorative', guarantee: '–', light: swatch(hex(stopAt(L, 4))), dark: swatch(hex(stopAt(D, 4))) },
+        { token: 'highlighter-11', role: 'low-hierarchy fill, interaction, decorative', guarantee: '–', light: swatch(hex(stopAt(L, 5))), dark: swatch(hex(stopAt(D, 5))) },
+        { token: 'highlighter-15', role: 'decorative', guarantee: '–', light: swatch(hex(stopAt(L, 6))), dark: swatch(hex(stopAt(D, 6))) },
+        { token: 'highlighter-20', role: 'decorative', guarantee: '–', light: swatch(hex(stopAt(L, 7))), dark: swatch(hex(stopAt(D, 7))) },
+        { token: 'crayon-26', role: 'non-text emphasis: borders, UI elements', guarantee: '3:1, on every paper', light: swatch(hex(stopAt(L, 8))), dark: swatch(hex(stopAt(D, 8))) },
+        { token: 'pencil-47', role: 'emphasis fill and first text stop', guarantee: '4.5:1, on every paper', light: swatch(hex(stopAt(L, 9))), dark: swatch(hex(stopAt(D, 9))) },
+        { token: 'pen-58', role: 'mid text', guarantee: '4.5:1, on every highlighter and paper', light: swatch(hex(stopAt(L, 10))), dark: swatch(hex(stopAt(D, 10))) },
+        { token: 'pen-70', role: 'strong text, inverted fill', guarantee: '4.5:1 guaranteed minimum, on every highlighter and paper', light: swatch(hex(stopAt(L, 11))), dark: swatch(hex(stopAt(D, 11))) },
+        { token: 'pen-100', role: 'universal anchor, mode-flipping constant, never resolved', guarantee: '–', light: swatch('#000000'), dark: swatch('#ffffff') },
         { token: 'absolute/black', role: 'literal black pole, an alias target', guarantee: '–', light: swatch('#000000'), dark: swatch('#000000') },
         { token: 'absolute/white', role: 'literal white pole, an alias target', guarantee: '–', light: swatch('#ffffff'), dark: swatch('#ffffff') },
         { token: 'absolute/brand', role: "the primary's identity hex (re-homed from `identity`, Figma only)", guarantee: 'never adjusted', light: swatch(scale.identityHex!), dark: swatch(scale.identityHex!) },
@@ -205,16 +205,16 @@ function buildTokenGroups(): TokGroup[] {
         { token: 'stamp/on', role: 'computed button text: solid pole on loud fills, pole-at-alpha .75/.80 on quiet fills (derived secondary, neutral)', guarantee: 'chosen by passing', light: swatch(onCtaColor(scale.onFillTextIsWhite)), dark: swatch(onCtaColor(scale.onFillTextIsWhiteDark)) },
         { token: 'stamp/edge', role: 'low-visibility stroke; transparent above the gate', guarantee: 'appears below APCA |Lc| 15 vs the page (taste, not accessibility)', light: borderCell('light'), dark: borderCell('dark') },
         { token: 'identity', role: 'the exact input hex, for logos', guarantee: 'never adjusted', light: swatch(scale.identityHex!), dark: swatch(scale.identityHex!) },
-        { token: 'link/default/enabled', role: "hyperlinks; with no custom seed, aliases the primary's lead-53", guarantee: '4.5:1, on every paper', light: alias(hex(stopAt(L, 9)), '→ lead-53'), dark: alias(hex(stopAt(D, 9)), '→ lead-53') },
-        { token: 'link/default/hover', role: 'default alias → ink-42', guarantee: '6.5:1, on every paper', light: alias(hex(stopAt(L, 10)), '→ ink-42'), dark: alias(hex(stopAt(D, 10)), '→ ink-42') },
-        { token: 'link/default/pressed', role: 'default alias → ink-30', guarantee: '7:1, on every paper', light: alias(hex(stopAt(L, 11)), '→ ink-30'), dark: alias(hex(stopAt(D, 11)), '→ ink-30') },
-        { token: 'link/inverse/enabled', role: 'hyperlinks on inverted (ink-30) fills; same seed as the link, re-solved against the worst shipped ink-30', guarantee: '4.5:1, on every ink-30', light: swatch(hex(inv.link as never)), dark: swatch(hex(inv.linkDark as never)) },
-        { token: 'link/inverse/hover', role: 'hover state', guarantee: '6.5:1, on every ink-30', light: swatch(hex(inv.linkHover as never)), dark: swatch(hex(inv.linkHoverDark as never)) },
-        { token: 'link/inverse/pressed', role: 'pressed state', guarantee: '7:1, on every ink-30', light: swatch(hex(inv.linkPressed as never)), dark: swatch(hex(inv.linkPressedDark as never)) },
-        { token: 'surface/dim', role: 'the lowest elevation; always the NEUTRAL, never the themed family', guarantee: '–', light: alias(hex(stopAt(NL, 3)), '→ neutral paper-95'), dark: alias(hex(neutral.paper0Dark!), '→ neutral paper-100') },
-        { token: 'surface/low', role: 'the page plane; always the NEUTRAL', guarantee: '–', light: alias(hex(stopAt(NL, 2)), '→ neutral paper-97'), dark: alias(hex(stopAt(ND, 1)), '→ neutral paper-99') },
-        { token: 'surface/mid', role: 'raised (cards); always the NEUTRAL', guarantee: '–', light: alias(hex(stopAt(NL, 1)), '→ neutral paper-99'), dark: alias(hex(stopAt(ND, 2)), '→ neutral paper-97') },
-        { token: 'surface/high', role: 'the highest elevation; always the NEUTRAL', guarantee: '–', light: alias(hex(neutral.paper0!), '→ neutral paper-100'), dark: alias(hex(stopAt(ND, 3)), '→ neutral paper-95') },
+        { token: 'link/default/enabled', role: "hyperlinks; with no custom seed, aliases the primary's pencil-47", guarantee: '4.5:1, on every paper', light: alias(hex(stopAt(L, 9)), '→ pencil-47'), dark: alias(hex(stopAt(D, 9)), '→ pencil-47') },
+        { token: 'link/default/hover', role: 'default alias → pen-58', guarantee: '4.5:1, on every highlighter and paper', light: alias(hex(stopAt(L, 10)), '→ pen-58'), dark: alias(hex(stopAt(D, 10)), '→ pen-58') },
+        { token: 'link/default/pressed', role: 'default alias → pen-70', guarantee: '4.5:1 guaranteed minimum, on every highlighter and paper', light: alias(hex(stopAt(L, 11)), '→ pen-70'), dark: alias(hex(stopAt(D, 11)), '→ pen-70') },
+        { token: 'link/inverse/enabled', role: 'hyperlinks on inverted (pen-70) fills; same seed as the link, re-solved against the worst shipped pen-70', guarantee: '4.5:1, on every pen-70', light: swatch(hex(inv.link as never)), dark: swatch(hex(inv.linkDark as never)) },
+        { token: 'link/inverse/hover', role: 'hover state', guarantee: '4.5:1, on every pen-70', light: swatch(hex(inv.linkHover as never)), dark: swatch(hex(inv.linkHoverDark as never)) },
+        { token: 'link/inverse/pressed', role: 'pressed state', guarantee: '4.5:1 guaranteed minimum, on every pen-70', light: swatch(hex(inv.linkPressed as never)), dark: swatch(hex(inv.linkPressedDark as never)) },
+        { token: 'surface/dim', role: 'the lowest elevation; always the NEUTRAL, never the themed family', guarantee: '–', light: alias(hex(stopAt(NL, 3)), '→ neutral paper-5'), dark: alias(hex(neutral.paper0Dark!), '→ neutral paper-0') },
+        { token: 'surface/low', role: 'the page plane; always the NEUTRAL', guarantee: '–', light: alias(hex(stopAt(NL, 2)), '→ neutral paper-3'), dark: alias(hex(stopAt(ND, 1)), '→ neutral paper-1') },
+        { token: 'surface/mid', role: 'raised (cards); always the NEUTRAL', guarantee: '–', light: alias(hex(stopAt(NL, 1)), '→ neutral paper-1'), dark: alias(hex(stopAt(ND, 2)), '→ neutral paper-3') },
+        { token: 'surface/high', role: 'the highest elevation; always the NEUTRAL', guarantee: '–', light: alias(hex(neutral.paper0!), '→ neutral paper-0'), dark: alias(hex(stopAt(ND, 3)), '→ neutral paper-5') },
       ],
     },
   ]
@@ -250,12 +250,12 @@ function TokenTable() {
   )
 }
 
-// ── Naming anatomy: primitive/neutral/lead-53, segment by segment ──────────
+// ── Naming anatomy: primitive/neutral/pencil-47, segment by segment ──────────
 function NamingAnatomy() {
   const cols = [
     { seg: 'primitive', title: 'REGISTER', lines: ['the extended', "plugin's wrapper,", 'every row'] },
     { seg: 'neutral', title: 'FAMILY', lines: ['which color', 'family this is'] },
-    { seg: 'ink', title: 'BAND', lines: ['which law the', 'stop serves'] },
+    { seg: 'pen', title: 'BAND', lines: ['which law the', 'stop serves'] },
     { seg: '53', title: 'VISIBILITY', lines: ['light rootL', '× 100, rounded'] },
     { seg: 'aa', title: 'CONFORMANCE', lines: ['WCAG level', 'this stop clears'] },
   ]
@@ -264,7 +264,7 @@ function NamingAnatomy() {
   const width = cols.length * colW + (cols.length - 1) * gap
   return (
     <figure className="d2-ramp">
-      <svg viewBox={`0 0 ${width} 190`} className="d2-anatomy" role="img" aria-label="Token path anatomy: base/neutral/lead-53">
+      <svg viewBox={`0 0 ${width} 190`} className="d2-anatomy" role="img" aria-label="Token path anatomy: base/neutral/pencil-47">
         {cols.map((c, i) => (
           <g key={c.seg}>
             <rect x={x(i)} y={boxY} width={colW} height={boxH} rx={8} className="d2-anatomy-box" />
@@ -286,7 +286,7 @@ function NamingAnatomy() {
       </svg>
       <figcaption className="d2-ramp-cap">
         The extended plugin's full path for one stop. The plain engine/CSS name drops the
-        first two segments: <Code>lead-53</Code>.
+        first two segments: <Code>pencil-47</Code>.
       </figcaption>
     </figure>
   )
@@ -349,7 +349,7 @@ const overview: Article = {
         the ownership zones <Code>base/</Code> (engine-owned) and <Code>utility/</Code> (team-touchable), grouped by family. Two kinds of rows share base/:
       </P>
       <UL>
-        <LI><b>ramp stops and plumbing</b>: one resolved color, no state, e.g. <Code>base/neutral/paper-99</Code>. Hidden from the color picker by default.</LI>
+        <LI><b>ramp stops and plumbing</b>: one resolved color, no state, e.g. <Code>base/neutral/paper-1</Code>. Hidden from the color picker by default.</LI>
         <LI><b>roles</b>: a state-carrying usage decision, kept where it belongs: the solid bands inside their family, e.g. <Code>base/brand/stamp/fill-hover</Code>, link under base, and the surfaces under utility, e.g. <Code>utility/surface/dim</Code>. Always visible.</LI>
       </UL>
       <P>
@@ -428,8 +428,9 @@ const generation: Article = {
         is a flat calibrated ladder (apparent-lightness solving in dark makes blue recede; the flat
         ladder is deliberate). Chroma is trimmed so light-mode loudness carries over. A fill that
         lands too dark is floored upward: it lifts, never sinks.</LI>
-        <LI><b>Requirements.</b> Declared floors bind after placement, in both modes: wax-74
-        at WCAG 3:1, lead-53/42-aa/30-aaa at 4.5 / 6.5 / 7:1, each guaranteed on every paper
+        <LI><b>Requirements.</b> Declared floors bind after placement, in both modes: crayon-26
+        at WCAG 3:1 on every paper, pencil-47 at 4.5:1 on every paper, pen-58 and pen-70 at 4.5:1 on
+        every highlighter — a guaranteed minimum in every case, cleared against every paper
         the family (and its neutral) can produce. A placement that already clears does not
         move. An unmeetable floor marks the stop <Code>unresolvable</Code> instead of fudging.</LI>
         <LI>The cta-related values are generated.
@@ -443,12 +444,12 @@ const generation: Article = {
             secondary 6%, neutral 8%).</LI>
             <LI>A quiet fill (derived secondary, neutral) carries its text at 75/80% alpha, only
             where the composite clears 4.5 on rest, hover, and pressed.</LI>
-            <LI>The text-style cta is the ink stops read as states: lead-53 rest,
-            ink-42 hover, ink-30 pressed.</LI>
+            <LI>The text-style cta is the pen stops read as states: pencil-47 rest,
+            pen-58 hover, pen-70 pressed.</LI>
           </UL>
         </LI>
         <LI><b>Collision checks.</b> The result is compared to the four signals: red, yellow,
-        green, blue, emitted as critical, warning, positive, info. Two tests: wash hues within 15°
+        green, blue, emitted as critical, warning, positive, info. Two tests: highlighter hues within 15°
         with real vividness (family), and fill ΔE ≤ 0.16 light / 0.10 dark at hues within 30°
         (value). Resolution is per signal:
           <Table
@@ -496,8 +497,8 @@ const tokenSchema: Article = {
         file (raise a contrast target) and the resolver honors the edit.
       </P>
       <P>
-        This is a real token, emitted by the engine right now: light <Code>wax-74</Code>,
-        carrying its declared WCAG 3:1 require against paper-95:
+        This is a real token, emitted by the engine right now: light <Code>crayon-26</Code>,
+        carrying its declared WCAG 3:1 require against paper-5:
       </P>
       <LiveToken hex="#3060C0" tokenKey="8" mode="light"
         caption={<>Live output of <Code>emitDtcgRamp('#3060C0', 'light')</Code>. The <Code>produce</Code> block names the producers; <Code>require</Code> is the declared floor.</>} />
@@ -512,7 +513,7 @@ const tokenSchema: Article = {
       <H2>The rules in one breath</H2>
       <UL>
         <LI><b>A requirement is a floor.</b> A placement that already clears it doesn't move, byte for byte.</LI>
-        <LI><b>Requirements reference resolved stops.</b> Push paper-97 darker and the floors declared against it re-solve automatically.</LI>
+        <LI><b>Requirements reference resolved stops.</b> Push paper-3 darker and the floors declared against it re-solve automatically.</LI>
         <LI><b>Fail loud.</b> An unmeetable requirement marks the stop <Code>unresolvable</Code>; a foreign resolver id is rejected, never guessed at.</LI>
         <LI><b>Producers are names, not formulas.</b> The math lives behind the versioned <Code>resolver</Code> id; the token file stays pure intent.</LI>
       </UL>
@@ -614,18 +615,18 @@ function BandTiles() {
   const scale = generateScale(TOKEN_REF_HEX, 'docs', undefined, {})
   const neutral = generateNeutralScale(scale.brandH, 'default')
   // the inverse link trio — same seed as the default link (the brand hex), re-solved
-  // for ink-30 surfaces; always raw values, never an alias
+  // for pen-70 surfaces; always raw values, never an alias
   const inv = resolveLinkInverseTrio(TOKEN_REF_HEX)
   const at = (stop: number) => stopHex(neutral.light.find(s => s.stop === stop)!)
   const tiles = [
     { band: 'paper', bg: at(1), fg: '#202020' },
-    { band: 'wash', bg: at(5), fg: '#202020' },
-    { band: 'wax', bg: at(8), fg: '#202020' },
-    { band: 'lead', bg: at(9), fg: '#ffffff' },
-    { band: 'ink', bg: at(11), fg: '#ffffff' },
+    { band: 'highlighter', bg: at(5), fg: '#202020' },
+    { band: 'crayon', bg: at(8), fg: '#202020' },
+    { band: 'pencil', bg: at(9), fg: '#ffffff' },
+    { band: 'pen', bg: at(11), fg: '#ffffff' },
   ]
   return (
-    <figure className="d2-fig" role="img" aria-label="The five band names, each painted with a live neutral stop from its own band: paper, wash, wax, lead, ink.">
+    <figure className="d2-fig" role="img" aria-label="The five band names, each painted with a live neutral stop from its own band: paper, highlighter, crayon, pencil, pen.">
       <div className="d2-chips">
         {tiles.map(t => (
           <div key={t.band} className="d2-chip" style={{ background: t.bg, color: t.fg }}>{t.band}</div>
@@ -803,21 +804,19 @@ const motivation: Article = {
       </P>
       <BandTiles />
       <UL>
-        <LI><i>Paper</i> is the versatile surface group. Paper can accept wax, lead, and ink.</LI>
-        <LI><i>Wash</i> is a limited surface group, for highlighting things by stepping up tint
-        from paper. Think wash over ink. Not compatible with lead or wax.</LI>
-        <LI><i>Wax</i> is for large text, icons, and drawing attention. Think crayon on paper.</LI>
-        <LI><i>Lead</i> is a more subtle foreground color. Think pencil on paper. Not compatible
-        with wash.</LI>
-        <LI><i>Ink</i> is the most flexible foreground group. Think pen on paper. Compatible
-        with wash.</LI>
+        <LI><i>Paper</i> is the versatile surface group. Paper can accept crayon, pencil, and pen.</LI>
+        <LI><i>Highlighter</i> is a limited surface group, for highlighting things by stepping up tint
+        from paper. Pen holds on it; pencil and crayon do not.</LI>
+        <LI><i>Crayon</i> is for large text, icons, borders, and drawing attention: 3:1 on every paper.</LI>
+        <LI><i>Pencil</i> is regular text: 4.5:1 on every paper, but not on highlighter.</LI>
+        <LI><i>Pen</i> is the most flexible foreground group: 4.5:1 on every highlighter and every paper.</LI>
       </UL>
       <P>
         There is more to the full convention than I'll cover here (it's documented{' '}
         <A href="https://egerrity.github.io/okchroma/">on the site</A>), but the number
         earns its place too. It is no longer ordinal: it records the stop's real
         lightness target as generated by the engine, its light root L times 100, so
-        lead-53 tells you both what the stop does and where it actually sits. This
+        pencil-47 tells you both what the stop does and where it actually sits. This
         relationship to the real removes the abstraction and, more importantly, tells
         you the token's contractual obligation in plain terms. The rules stop living in
         our heads: the name itself declares what the stop owes.
@@ -968,7 +967,7 @@ const DOCS2_CSS = `
   padding: 16px 18px; overflow-x: auto; margin: 0 0 18px;
 }
 .d2-pre code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; line-height: 1.6; color: var(--fg-default); white-space: pre; }
-.d2-note { font-size: 13.5px; line-height: 1.6; color: var(--fg-subtle); background: var(--surface-dim); border: 1px solid var(--border-subtle); border-left: 3px solid var(--brand-lead-53); border-radius: 8px; padding: 12px 14px; margin: 18px 0; }
+.d2-note { font-size: 13.5px; line-height: 1.6; color: var(--fg-subtle); background: var(--surface-dim); border: 1px solid var(--border-subtle); border-left: 3px solid var(--brand-pencil-47); border-radius: 8px; padding: 12px 14px; margin: 18px 0; }
 .d2-ramp { margin: 22px 0 26px; }
 .d2-ramp-nums { font-size: 10px; color: var(--fg-subtle); margin: 4px 0; }
 .d2-ramp-nums span { text-align: center; }

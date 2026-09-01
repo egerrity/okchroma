@@ -1,13 +1,13 @@
 // The BAKED mapping table (owner-reviewed 2026-08-11) — Unify semantic tokens to
 // okchroma primitive paths. Owner rules: suffix bands per color family — Primary (or
-// the bare token) -> marks + inks of the family (text under the flat hierarchy; focus
-// rings, brand only; icons can take wax-74) · Highlight -> any wash (borders) ·
-// Accent -> any paper · Spotlight -> wax-74 or lead-53. NEVER identity, never
+// the bare token) -> marks + pens of the family (text under the flat hierarchy; focus
+// rings, brand only; icons can take crayon-26) · Highlight -> any highlighter (borders) ·
+// Accent -> any paper · Spotlight -> crayon-26 or pencil-47. NEVER identity, never
 // the cta family. Matching is suffix + value based so old and new Unify name vintages
 // both route. Link is parked (the known tricky case) — those land unmatched.
 
 import { FAMILY } from '../src/engine/tokenDescriptions'
-import { stopTokenName, STAMP_LEAF, PAPER_100 as POLE_PAPER } from '../src/engine/tokenNames'
+import { stopTokenName, STAMP_LEAF, PAPER_0 as POLE_PAPER } from '../src/engine/tokenNames'
 
 // the ladder leaves by stop index (tokenNames SHARED_NAMES — ascending index =
 // descending lightness), so a stop relabel flows from that one table into every
@@ -21,7 +21,7 @@ export interface Rule {
   /** exactly one candidate AND no judgment needed */
   auto?: boolean
   /** owner 2026-08-11: on cta buttons these tokens are ALWAYS the on-cta — clusters
-      with a button-ish ancestor pre-pick cta/on instead of the ink */
+      with a button-ish ancestor pre-pick cta/on instead of the pen */
   onCtaException?: boolean
 }
 
@@ -40,11 +40,11 @@ const fam = (family: string) => (toks: string[]) => toks.map(t => `base/${family
 
 const PRIMARY_BAND = [M74, I53, I42, I30]
 const SPOTLIGHT_BAND = [M74, I53]
-const WASHES = [W92, W89, W85, W80]
+const HIGHLIGHTERS = [W92, W89, W85, W80]
 const PAPERS = [P99, P97, P95]
 const OFFSET_08 = 'base/alpha/away-from-bg/08'
 const OFFSET_16 = 'base/alpha/away-from-bg/16'
-const PAPER_100 = 'base/neutral/' + POLE_PAPER
+const PAPER_0 = 'base/neutral/' + POLE_PAPER
 
 const n = fam(FAMILY.neutral)
 // signal identities live under their ROLE prefixes in the ext register
@@ -75,7 +75,7 @@ export function matchBound(name: string): Rule | 'ignore' | null {
   if (family) {
     const f = fam(FAMILY_PREFIX[family])
     if (s.includes('spotlight')) return { candidates: f(SPOTLIGHT_BAND) }
-    if (s.includes('highlight')) return { candidates: f(WASHES) }
+    if (s.includes('highlight')) return { candidates: f(HIGHLIGHTERS) }
     if (s.includes('accent')) return { candidates: f(PAPERS) }
     return { candidates: f(PRIMARY_BAND) } // Primary or the bare token
   }
@@ -83,7 +83,7 @@ export function matchBound(name: string): Rule | 'ignore' | null {
   // the neutral palettes (Content / Background / Stroke / Merge / Skeleton)
   if (s.includes('scrim')) return { candidates: [] } // suggest-at-runtime
   if (s.includes('content')) {
-    if (s.includes('inverse')) return { candidates: [PAPER_100], auto: true }
+    if (s.includes('inverse')) return { candidates: [PAPER_0], auto: true }
     if (s.includes('tertiary')) return { candidates: n([I53]) }
     // owner 2026-08-11: Content Primary/Secondary are ALWAYS 30/53 — auto, with the
     // one exception: on cta buttons they are always the on-cta (handled per cluster)
@@ -100,8 +100,8 @@ export function matchBound(name: string): Rule | 'ignore' | null {
     return { candidates: [SURFACE('high')], auto: true }
   }
   if (s.includes('stroke')) {
-    if (s.includes('inverse')) return { candidates: [PAPER_100], auto: true }
-    if (s.includes('quaternary') || s.includes('quarternary')) return { candidates: n([W92, W85, W80, M74]) } // wash-92 first: nearest value (owner 2026-08-11)
+    if (s.includes('inverse')) return { candidates: [PAPER_0], auto: true }
+    if (s.includes('quaternary') || s.includes('quarternary')) return { candidates: n([W92, W85, W80, M74]) } // highlighter-8 first: nearest value (owner 2026-08-11)
     if (s.includes('tertiary')) return { candidates: n([M74, W80]) }
     if (s.includes('secondary')) return { candidates: n([I53, M74]) }
     return { candidates: n([I30, I42, I53, M74]) }
@@ -134,27 +134,27 @@ export function matchDetached(hex: string, alpha: number): Rule | 'ignore' | nul
     '#515767': { candidates: n([I53, I42]) },
     '#868FA2': { candidates: n([I53]) },
     '#95979D': { candidates: n([I53]) },
-    '#FFFFFF': { candidates: [PAPER_100], auto: true },
+    '#FFFFFF': { candidates: [PAPER_0], auto: true },
     '#F9FAFB': { candidates: [SURFACE('mid')], auto: true },
     '#EEEFF2': { candidates: [SURFACE('dim'), SURFACE('low')] },
     '#CBCFD7': { candidates: n([M74, W80]) },
     '#E2E4E9': { candidates: n([W85, W80, M74]) },
     '#044BAF': { candidates: fam(FAMILY.brandPrimary)(PRIMARY_BAND) },
     '#4F46E5': { candidates: fam(FAMILY.brandPrimary)(PRIMARY_BAND) }, // archived Violet vintage
-    '#8EB9F5': { candidates: fam(FAMILY.brandPrimary)(WASHES) },
+    '#8EB9F5': { candidates: fam(FAMILY.brandPrimary)(HIGHLIGHTERS) },
     '#E6EFFB': { candidates: fam(FAMILY.brandPrimary)(PAPERS) },
     '#B42318': { candidates: fam(FAMILY.critical)(PRIMARY_BAND) },
-    '#FECDCA': { candidates: fam(FAMILY.critical)(WASHES) },
+    '#FECDCA': { candidates: fam(FAMILY.critical)(HIGHLIGHTERS) },
     '#FEF3F2': { candidates: fam(FAMILY.critical)(PAPERS) },
     '#2A5F26': { candidates: fam(FAMILY.positive)(PRIMARY_BAND) },
     '#277A1F': { candidates: fam(FAMILY.positive)(PRIMARY_BAND) }, // vintage
-    '#A3DB9E': { candidates: fam(FAMILY.positive)(WASHES) },
-    '#AFE9AA': { candidates: fam(FAMILY.positive)(WASHES) },
+    '#A3DB9E': { candidates: fam(FAMILY.positive)(HIGHLIGHTERS) },
+    '#AFE9AA': { candidates: fam(FAMILY.positive)(HIGHLIGHTERS) },
     '#EBF5EA': { candidates: fam(FAMILY.positive)(PAPERS) },
     '#804F00': { candidates: fam(FAMILY.warning)(PRIMARY_BAND) },
     '#B54708': { candidates: fam(FAMILY.warning)(PRIMARY_BAND) }, // vintage
-    '#FFE680': { candidates: fam(FAMILY.warning)(WASHES) },
-    '#FEDF89': { candidates: fam(FAMILY.warning)(WASHES) },
+    '#FFE680': { candidates: fam(FAMILY.warning)(HIGHLIGHTERS) },
+    '#FEDF89': { candidates: fam(FAMILY.warning)(HIGHLIGHTERS) },
     '#FFF9E5': { candidates: fam(FAMILY.warning)(PAPERS) },
     '#FFFAEB': { candidates: fam(FAMILY.warning)(PAPERS) },
   }
@@ -163,11 +163,11 @@ export function matchDetached(hex: string, alpha: number): Rule | 'ignore' | nul
 
 /** Every path any rule can emit — the sandbox inventories these targets per scan. */
 export function allCandidatePaths(): string[] {
-  const out = new Set<string>([PAPER_100, OFFSET_08, OFFSET_16,
+  const out = new Set<string>([PAPER_0, OFFSET_08, OFFSET_16,
     SURFACE('dim'), SURFACE('low'), SURFACE('mid'), SURFACE('high')])
   for (const family of [FAMILY.neutral, FAMILY.brandPrimary, FAMILY.critical, FAMILY.positive, FAMILY.warning]) {
     const f = fam(family)
-    for (const t of [...PRIMARY_BAND, ...WASHES, ...PAPERS]) for (const p of f([t])) out.add(p)
+    for (const t of [...PRIMARY_BAND, ...HIGHLIGHTERS, ...PAPERS]) for (const p of f([t])) out.add(p)
     out.add(CTA_ON(family))
   }
   return [...out]

@@ -7,19 +7,19 @@
 <link rel="icon" type="image/png" href="favicon.png">
 <style>
   :root {
-    --paper: #fffcfc; --ink: #1a1a1a; --sub: #64585c; --card: #ffffff;
-    --brand: #da2c76; --brand-ink: #4d0324; --wash: #fae6eb; --line: #f0e2e7;
+    --paper: #fffcfc; --pen: #1a1a1a; --sub: #64585c; --card: #ffffff;
+    --brand: #da2c76; --brand-pen: #4d0324; --highlighter: #fae6eb; --line: #f0e2e7;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --paper: #191214; --ink: #f2e8ea; --sub: #b09aa1; --card: #221a1d;
-      --brand: #d06387; --brand-ink: #ffe5eb; --wash: #3b2129; --line: #35272c;
+      --paper: #191214; --pen: #f2e8ea; --sub: #b09aa1; --card: #221a1d;
+      --brand: #d06387; --brand-pen: #ffe5eb; --highlighter: #3b2129; --line: #35272c;
     }
   }
   * { box-sizing: border-box; margin: 0; }
   body {
     font-family: Inter, -apple-system, system-ui, sans-serif; background: var(--paper);
-    color: var(--ink); line-height: 1.55; padding: 48px 20px 80px;
+    color: var(--pen); line-height: 1.55; padding: 48px 20px 80px;
   }
   main { max-width: 620px; margin: 0 auto; }
   h1 { font-size: 30px; letter-spacing: -0.02em; margin-bottom: 10px; }
@@ -32,7 +32,7 @@
   .download:hover { filter: brightness(0.94); }
   .fineprint { font-size: 12.5px; color: var(--sub); margin-bottom: 34px; }
   .callout {
-    background: var(--wash); color: var(--brand-ink); border-radius: 12px;
+    background: var(--highlighter); color: var(--brand-pen); border-radius: 12px;
     padding: 12px 16px; font-size: 14px; font-weight: 500; margin-bottom: 34px;
   }
   ol.steps { list-style: none; counter-reset: step; display: flex; flex-direction: column; gap: 14px; padding: 0; margin-bottom: 36px; }
@@ -42,14 +42,14 @@
   }
   ol.steps li::before {
     content: counter(step); position: absolute; left: 16px; top: 16px;
-    width: 26px; height: 26px; border-radius: 999px; background: var(--wash); color: var(--brand-ink);
+    width: 26px; height: 26px; border-radius: 999px; background: var(--highlighter); color: var(--brand-pen);
     font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center;
   }
   ol.steps b { display: block; margin-bottom: 2px; }
   ol.steps .menupath { font-size: 13.5px; color: var(--sub); }
   kbd, code {
     font-family: ui-monospace, "SF Mono", monospace; font-size: 0.9em;
-    background: var(--wash); color: var(--brand-ink); border-radius: 5px; padding: 1px 6px;
+    background: var(--highlighter); color: var(--brand-pen); border-radius: 5px; padding: 1px 6px;
   }
   h2 { font-size: 17px; margin: 0 0 10px; }
   .notes { color: var(--sub); font-size: 14px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 40px; }
@@ -106,7 +106,7 @@
     <span>• The two APCA columns are left exactly as they are. The plugin no longer writes them
       and will not recreate them; delete them whenever you like.</span>
     <span>• The scale also changed shape: <code>highlight-9</code> and <code>on-highlight</code>
-      are gone, and the ink stops renumbered down. The plugin migrates the renamed stops in place.
+      are gone, and the pen stops renumbered down. The plugin migrates the renamed stops in place.
       The two deleted ones are reported so you can remove them yourself — it never deletes a
       variable you might still be using.</span>
   </div>

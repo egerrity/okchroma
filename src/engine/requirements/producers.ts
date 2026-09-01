@@ -114,8 +114,8 @@ export function buildContext(hex: string, opts?: ResolveOpts) {
   // redExcl keys on the SEED hue, so a brand near critical is damped across its whole ramp
   // (not a slice out of each one). It is what keeps the bell from spending the separation
   // the red repel earns: measured on #ff977e, the repel already holds 10.8° of hue between
-  // brand and critical at every wash stop, but the un-excluded bell walked the brand's
-  // wash chroma from 0.0220 to 0.0250 against critical's 0.0255 — a 0.0005 gap. Hue was
+  // brand and critical at every highlighter stop, but the un-excluded bell walked the brand's
+  // highlighter chroma from 0.0220 to 0.0250 against critical's 0.0255 — a 0.0005 gap. Hue was
   // never the failing axis there; chroma was.
   const bellAt = (L: number): number => {
     if (hueIsNoise || opts?.goldBoost) return 1
@@ -142,8 +142,8 @@ export function buildContext(hex: string, opts?: ResolveOpts) {
       : brandH
   // C12 v8 (owner ruling 2026-07-10 + research): the dark CTA does NOT ride the coolRedDark
   // shift — cta red de-collision is C12's alone, and the identity-hue dark cta never fires
-  // the gate (0/1206 measured, the .70 prominence floor is structural). Ramp/ink/paper
-  // riders keep darkH — the wash protection lives in the light redShift via the delta model.
+  // the gate (0/1206 measured, the .70 prominence floor is structural). Ramp/pen/paper
+  // riders keep darkH — the highlighter protection lives in the light redShift via the delta model.
   const darkCtaH = brandH
 
   return {
@@ -154,10 +154,10 @@ export function buildContext(hex: string, opts?: ResolveOpts) {
 }
 export type Ctx = ReturnType<typeof buildContext>
 
-// ---- light scale chroma (stops 1–8: paper/wash/wax-74): ladder/envelope blend, cAt-wrapped.
+// ---- light scale chroma (stops 1–8: paper/highlighter/crayon-26): ladder/envelope blend, cAt-wrapped.
 // The ladder carries the C32 brand bell (ctx.bellAt, L-ramped); the envelope blend is now the
 // muted path only. Stop 9 has its own producer and is deliberately outside the bell — C31 gave
-// the lead stop its own laws and this must not reach it.
+// the pencil stop its own laws and this must not reach it.
 // NOTE: unclamped by design — the perceptual solve sees the raw blend; makeStop clamps at emit.
 // boostOverride replaces ctx.chromaBoost in the ladder — used only to price the rung's
 // apparent target at pre-boost (identity) chroma; the emitted chroma always keeps the boost.
@@ -269,19 +269,19 @@ export function placeLightText(
   ctx: Ctx, rootL: number, cMult: number, maxLFor: (C: number, H: number) => number, deepen: number,
   maxC = Infinity,
 ): { L: number; C: number; H: number } {
-  // ink chroma NORMALIZED to the text register (C9/C11): the ID-relative multiplier is
+  // pen chroma NORMALIZED to the text register (C9/C11): the ID-relative multiplier is
   // ceiled at the declared band register, and the H-K anchor solve consumes the
   // normalized value — the solve target stops moving with the seed's chroma.
-  const inkC = Math.min(cMult * ctx.brandC, maxC)
-  const anchorL = perceptualRungL(rootL, clampChromaToGamut(rootL, inkC, ctx.lightHueAt(rootL)), ctx.lightHueAt(rootL))
+  const textC = Math.min(cMult * ctx.brandC, maxC)
+  const anchorL = perceptualRungL(rootL, clampChromaToGamut(rootL, textC, ctx.lightHueAt(rootL)), ctx.lightHueAt(rootL))
   let H = ctx.lightHueAt(anchorL)
-  let C = clampChromaToGamut(anchorL, inkC, H)
+  let C = clampChromaToGamut(anchorL, textC, H)
   let L = Math.min(anchorL, maxLFor(C, H))
   H = ctx.lightHueAt(L)
-  C = clampChromaToGamut(L, inkC, H)
+  C = clampChromaToGamut(L, textC, H)
   L = Math.min(anchorL, maxLFor(C, H))
   L = Math.min(L - deepen, maxLFor(C, ctx.lightHueAt(L - deepen)))
-  return { L, C: ctx.cAt('light', L, inkC), H: ctx.lightHueAt(L) }
+  return { L, C: ctx.cAt('light', L, textC), H: ctx.lightHueAt(L) }
 }
 
 // (placeLightHighlight DELETED with highlight-9, owner 2026-07-29.)
@@ -326,13 +326,13 @@ export const darkScaleChromaAt = (ctx: Ctx, dctx: DarkCtx, stopIndex: number, mu
     ? ctx.opts.darkChromaCurve(L, dctx.darkHueAtL(L), ctx.brandC, dctx.darkC9)
     : applyChromaFloor(ctx.subtleC, multiplier, chromaFloorBase(stopIndex), ctx.darkFloorStrength))
 
-// dark ink chroma: the TEXT-TIER EXEMPTION (C9). The H-K fill policy (perceptualDarkC via
-// opts.darkChromaCurve) is a FILL equalizer — at ink lightness it pumps maximum chroma
+// dark pen chroma: the TEXT-TIER EXEMPTION (C9). The H-K fill policy (perceptualDarkC via
+// opts.darkChromaCurve) is a FILL equalizer — at pen lightness it pumps maximum chroma
 // into the lowest-H-K hues (the yellow-green neon). The text tier keeps its native
 // ID-relative chroma, normalized to the declared text register — perceptualDarkC's
 // documented band limit, realized at the consumer. floorBase = the row's declared floor
 // value (SCALE_C_*.chromaFloor).
-export const darkInkChromaAt = (ctx: Ctx, dctx: DarkCtx, floorBase: number, multiplier: number, maxC = Infinity) => (L: number): number =>
+export const darkTextChromaAt = (ctx: Ctx, dctx: DarkCtx, floorBase: number, multiplier: number, maxC = Infinity) => (L: number): number =>
   ctx.cAt('dark', L, Math.min(applyChromaFloor(ctx.brandC, multiplier, floorBase, ctx.darkFloorStrength), maxC))
 
 // (darkHighlightChromaAt DELETED with highlight-9, owner 2026-07-29.)
@@ -412,7 +412,7 @@ export function cuspDarknessW(H: number): number {
 // FULL-parity stops (T=1, the papers) the parity is hue-blind AND photometric — every
 // family anchors to the ACHROMATIC light scaffold's luminance depth (grayLightL) and
 // lands at the same Y, tinted by its own C/H. The τ·w blend below keeps serving the
-// washes, where the H-K credit is real (w was calibrated on her wash marks); composed
+// highlighters, where the H-K credit is real (w was calibrated on her highlighter marks); composed
 // onto the papers it scattered them per hue (blue got parity, yellow didn't), and the
 // credited-apparent depth carry scattered them further — her "the pop looks lighter
 // than all the other paper-3s" catch. Chroma still samples the τ-blend effective depth
@@ -458,11 +458,11 @@ export function deltaDarkPlace(
 // The per-stop lift for the surface band 1–7, COMPUTED from light's own distribution
 // instead of declared (retires stopTable's DARK_BAND_LIFT six-value table). Law: in
 // shipped-Y contrast space over the achromatic scaffolds, the dark band's
-// log-contrast shares between the ground (paper-100's dark scaffold) and the held
-// top (wash-80 at DARK_BAND_TOP_LIFT, the C37 solve, verbatim) equal light's shares
-// between white and wash-80. Expressed as a lift so deltaDarkPlace's C28 photometric
+// log-contrast shares between the ground (paper-0's dark scaffold) and the held
+// top (highlighter-20 at DARK_BAND_TOP_LIFT, the C37 solve, verbatim) equal light's shares
+// between white and highlighter-20. Expressed as a lift so deltaDarkPlace's C28 photometric
 // dialect — and its chroma-at-depth sampling — is unchanged. Papers included: the
-// C27 pin is retired, the paper-95→wash-92 concentration dissolves, and every family
+// C27 pin is retired, the paper-5→highlighter-8 concentration dissolves, and every family
 // (neutral too) shares the one achromatic ladder.
 const yOfLstar = (l: number) => (l > 8 ? ((l + 16) / 116) ** 3 : l / 903.2962962)
 let smoothedLifts: Record<number, number> | null = null
@@ -492,8 +492,8 @@ export function deltaLiftChroma(
 ): number {
   const appOf = (s: { L: number; C: number; H: number }) =>
     apparentL(s.L, clampChromaToGamut(s.L, s.C, s.H), s.H)
-  // SURFACE band only (stops 1–7): the wax/lead stops 8/9 are LAWFULLY lane-dependent
-  // (3:1 vs Lc requires), and including them forked the lanes inside the washes where
+  // SURFACE band only (stops 1–7): the crayon/pencil stops 8/9 are LAWFULLY lane-dependent
+  // (3:1 vs Lc requires), and including them forked the lanes inside the highlighters where
   // they were byte-identical by construction (owner-caught 2026-07-27 — apca wash-6 ran
   // over-chromatic). Beyond stop 7's depth the band's own end slope extrapolates.
   const pairs = lightStops

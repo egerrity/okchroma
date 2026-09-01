@@ -94,7 +94,7 @@ export function meanBoost(rootL: number, C: number, gamut: Gamut = MASTER_GAMUT)
 // be priced at a different chroma than the solve emits: the goldBoost shine must not
 // inflate the rung's lightness target (at the H-K minimum the extra chroma buys no
 // apparent pop, so the solver could only cover the inflated target with true L —
-// warning's washes floated above the other signals').
+// warning's highlighters floated above the other signals').
 export function perceptualRungL(rootL: number, C: number, H: number, keep = KEEP_LIGHT, gamut: Gamut = MASTER_GAMUT, targetC = C): number {
   return solveLForApparent(grayApparentL(rootL, gamut) + keep * meanBoost(rootL, targetC, gamut), C, H, gamut)
 }
@@ -102,8 +102,8 @@ export function perceptualRungL(rootL: number, C: number, H: number, keep = KEEP
 // The dark FILL policy: equalize apparent-brightness boost across hues. By
 // construction it pumps maximum chroma into the lowest-H-K hues exactly where
 // near-white room is biggest — correct for fills, WRONG for text (the C9
-// yellow-green ink neon). The text tier (the ink stops) is therefore EXEMPT:
-// darkInkChromaAt keeps native ID-relative chroma normalized to the declared
+// yellow-green pen neon). The text tier (the pen stops) is therefore EXEMPT:
+// darkTextChromaAt keeps native ID-relative chroma normalized to the declared
 // text register and never calls this. (The band limit this comment used to
 // promise was never in the code — C9 archaeology; the exemption now lives at
 // the consumer.)

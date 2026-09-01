@@ -1,34 +1,34 @@
 // Emphasis-band + off-scale-cta audit. Validates the tokens around the focus ring and
-// the first ink stop, plus the off-scale cta family.
+// the first pen stop, plus the off-scale cta family.
 //
 // THE BAND COLLAPSED (owner 2026-07-29): highlight-9 and on-highlight are deleted and
-// lead-53 (ink-9 pre-Stage-B, the old ink-10) carries the emphasis fill as well as
+// pencil-47 (ink-9 pre-Stage-B, the old ink-10) carries the emphasis fill as well as
 // the first text register. The two checks that named them are REPLACED, not dropped —
 // a deleted solve leaves a property that now has to be asserted instead of computed:
 //
 // What it gates (all code-grounded, verified against the real pipeline):
 //   1. BAND ORDER + the on-emphasis guarantee, agnostic hue×chroma×L:
-//      (a) lead-53 clears wax-74 by BAND_ORDER_MARGIN against the shared
-//          paper-95 anchor, both modes. This invariant NEVER EXISTED — the ordering was
+//      (a) pencil-47 clears crayon-26 by BAND_ORDER_MARGIN against the shared
+//          paper-5 anchor, both modes. This invariant NEVER EXISTED — the ordering was
 //          held by incidental spacing, which is exactly how highlight-9 drifted onto
 //          ink-10 unnoticed (drift handoff 2026-07-29). Baseline at the collapse: worst
 //          1.41 light / 3.18 dark.
-//      (b) --paper-100 clears 4.5 against lead-53, both modes — the property the
+//      (b) --paper-0 clears 4.5 against pencil-47, both modes — the property the
 //          deleted on-highlight solve used to guarantee, now that semantic.css declares
 //          the on-emphasis text as a paper token. Baseline: worst 4.96 light / 8.04 dark.
 //   2. structure on the real fleet — identity === input hex.
-//   2b. non-text contrast — stop 8 (wax-74) clears WCAG 1.4.11 3:1 against PAPER-95
+//   2b. non-text contrast — stop 8 (crayon-26) clears WCAG 1.4.11 3:1 against PAPER-95
 //      IN BOTH MODES (spec.ts S8 — one declaration since 2026-07-29), swept agnostically
 //      (worst-case hue×chroma×L is the bar).
 //   3. neutral cta is LOW-HIERARCHY — its REST tracks the scale's own stop 4, so it
-//      FLIPS per mode (near-white wash in light, dark wash in dark) and on-cta stays
+//      FLIPS per mode (near-white highlighter in light, dark highlighter in dark) and on-cta stays
 //      legible. DARK additionally lifts the rest to clear NEUTRAL_CTA_DARK_POP_CLEARANCE
-//      vs the resolved dark paper-95 (the POP plane — owner 2026-07-27: clearance reads
+//      vs the resolved dark paper-5 (the POP plane — owner 2026-07-27: clearance reads
 //      against pop, never black). Hover/pressed ride the shared fill-state law
 //      (owner 2026-07-28): ΔL = k/(nearness-to-ground+0.1) mode-mirrored, pressed 2×,
 //      light darkens / dark lightens with the archetype override at the terminal bands.
 //   4. signal cta legible + clean 12-stop scale.
-//   5. blessed-snapshot regression on lead-53 + off-scale cta (L,C,H).
+//   5. blessed-snapshot regression on pencil-47 + off-scale cta (L,C,H).
 
 import { FIXTURES, FIXTURE_SECONDARIES } from './fixture'
 import { SIGNALS } from '../src/engine/signals'
@@ -52,7 +52,7 @@ const hx = (s: ColorStop) => {
 const whiteWcag = (s: ColorStop) => contrastRatio(1.0, wcagY(s.L, s.C, s.H))
 const blackWcag = (s: ColorStop) => contrastRatio(wcagY(s.L, s.C, s.H), 0)
 // APCA Lc of a text pole on a fill (white → txtY 1.0, black → 0.0), mirroring the
-// engine's onTextIsWhite. HL_BODY = APCA body-text floor: the bar the emphasis fill (lead-53) clears.
+// engine's onTextIsWhite. HL_BODY = APCA body-text floor: the bar the emphasis fill (pencil-47) clears.
 const onApcaLc = (s: ColorStop, white: boolean | undefined) => Math.abs(apcaLc(white ? 1.0 : 0.0, apcaY(s.r, s.g, s.b)))
 const HL_BODY = 60
 // THE TRUE SPLIT (owner 2026-07-04): each profile is gated by ITS OWN law — apca lane = the
@@ -95,29 +95,29 @@ for (let H = 0; H < 360; H += 15) for (const C of [0.04, 0.08, 0.12, 0.16, 0.20]
     const at = `H${H} C${C} L${L} ${lane}`
     for (const mode of ['light', 'dark'] as const) {
       const arr = mode === 'light' ? sc.light : sc.dark
-      const hl8 = arr[7], ink9 = arr[8], p3 = arr[2]
+      const hl8 = arr[7], pencil9 = arr[8], p3 = arr[2]
       // (a) band order — both stops read against the plane they sit on
-      const margin = ratioOf(ink9, p3) - ratioOf(hl8, p3)
+      const margin = ratioOf(pencil9, p3) - ratioOf(hl8, p3)
       if (margin < bandWorst[mode]) { bandWorst[mode] = margin; bandWorst[mode === 'light' ? 'lAt' : 'dAt'] = at }
       ok(margin >= BAND_ORDER_MARGIN,
-        `agnostic ${at} ${mode}: lead-53 clears wax-74 by only ${margin.toFixed(2)} (< ${BAND_ORDER_MARGIN})`)
+        `agnostic ${at} ${mode}: pencil-47 clears crayon-26 by only ${margin.toFixed(2)} (< ${BAND_ORDER_MARGIN})`)
       // (b) the on-emphasis text token must read on the emphasis fill
       const p0 = mode === 'light' ? sc.paper0 : sc.paper0Dark
       if (p0) {
-        const r = ratioOf(ink9, p0)
+        const r = ratioOf(pencil9, p0)
         if (r < emphWorst[mode]) { emphWorst[mode] = r; emphWorst[mode === 'light' ? 'lAt' : 'dAt'] = at }
         ok(r >= ON_EMPHASIS_BAR,
-          `agnostic ${at} ${mode}: paper-100 on lead-53 reads ${r.toFixed(2)} (< ${ON_EMPHASIS_BAR}) — -fg-on-emphasis is unusable`)
+          `agnostic ${at} ${mode}: paper-0 on pencil-47 reads ${r.toFixed(2)} (< ${ON_EMPHASIS_BAR}) — -fg-on-emphasis is unusable`)
       }
     }
     bandN++
   }
 }
 console.log(`=== agnostic band order + on-emphasis: ${bandN} scales (hue×chroma×L × both lanes) ===`)
-console.log(`  lead-53 over wax-74 (vs paper-95, floor ${BAND_ORDER_MARGIN}) worst — light ${bandWorst.light.toFixed(2)} (${bandWorst.lAt}) | dark ${bandWorst.dark.toFixed(2)} (${bandWorst.dAt})`)
-console.log(`  paper-100 on lead-53 (floor ${ON_EMPHASIS_BAR}) worst        — light ${emphWorst.light.toFixed(2)} (${emphWorst.lAt}) | dark ${emphWorst.dark.toFixed(2)} (${emphWorst.dAt})`)
+console.log(`  pencil-47 over crayon-26 (vs paper-5, floor ${BAND_ORDER_MARGIN}) worst — light ${bandWorst.light.toFixed(2)} (${bandWorst.lAt}) | dark ${bandWorst.dark.toFixed(2)} (${bandWorst.dAt})`)
+console.log(`  paper-0 on pencil-47 (floor ${ON_EMPHASIS_BAR}) worst        — light ${emphWorst.light.toFixed(2)} (${emphWorst.lAt}) | dark ${emphWorst.dark.toFixed(2)} (${emphWorst.dAt})`)
 
-// ── 1b. Agnostic non-text contrast — stop 8 (wax-74) clears WCAG 1.4.11 3:1
+// ── 1b. Agnostic non-text contrast — stop 8 (crayon-26) clears WCAG 1.4.11 3:1
 // against PAPER-95 IN BOTH MODES (spec.ts S8, one declaration since 2026-07-29). Owner:
 // *"dark stop 8 has the same requirements as light, it is a 3:1 contrast require on
 // paper 3 so inputs can be placed on any paper."* This check read paper-2 for dark until
@@ -138,13 +138,13 @@ for (let H = 0; H < 360; H += 15) for (const C of [0.04, 0.08, 0.12, 0.16, 0.20,
   const cl = vsDeclaredPaper(s, 'light'), cd = vsDeclaredPaper(s, 'dark')
   if (cl < s8c.light) { s8c.light = cl; s8c.lAt = `H${H} C${C} L${L}` }
   if (cd < s8c.dark) { s8c.dark = cd; s8c.dAt = `H${H} C${C} L${L}` }
-  ok(cl >= NONTEXT, `agnostic H${H} C${C} L${L} light stop-8 below 3:1 vs paper-95 (${cl.toFixed(2)})`)
-  ok(cd >= NONTEXT, `agnostic H${H} C${C} L${L} dark stop-8 below 3:1 vs paper-95 (${cd.toFixed(2)})`)
+  ok(cl >= NONTEXT, `agnostic H${H} C${C} L${L} light stop-8 below 3:1 vs paper-5 (${cl.toFixed(2)})`)
+  ok(cd >= NONTEXT, `agnostic H${H} C${C} L${L} dark stop-8 below 3:1 vs paper-5 (${cd.toFixed(2)})`)
   s8n++
 }
-console.log(`=== agnostic non-text 3:1 (stop 8 vs paper-95, both modes): ${s8n} points · worst light ${s8c.light.toFixed(2)}:1 (${s8c.lAt}) · dark ${s8c.dark.toFixed(2)}:1 (${s8c.dAt}) ===`)
+console.log(`=== agnostic non-text 3:1 (stop 8 vs paper-5, both modes): ${s8n} points · worst light ${s8c.light.toFixed(2)}:1 (${s8c.lAt}) · dark ${s8c.dark.toFixed(2)}:1 (${s8c.dAt}) ===`)
 
-// ── 2. Real fleet — structure (identity) + printout of the emphasis fill (lead-53) ──
+// ── 2. Real fleet — structure (identity) + printout of the emphasis fill (pencil-47) ──
 interface Item { name: string; hex: string; scale: GeneratedScale }
 const items: Item[] = []
 for (const b of FIXTURES) items.push({ name: b.name, hex: b.hex, scale: resolveBrand(b.hex, b.slug, { exact: b.exact, archetypeOverride: b.archetypeOverride, style: b.style, contrastProfile: SHIPPED_PROFILE }).scale })
@@ -154,10 +154,10 @@ for (const slug of Object.keys(FIXTURE_SECONDARIES)) {
 }
 
 console.log(`\n=== emphasis-fill structure across ${items.length} brand+secondary ramps ===`)
-console.log('  ramp                    H     yel | LIGHT lead-53    | DARK  lead-53')
+console.log('  ramp                    H     yel | LIGHT pencil-47    | DARK  pencil-47')
 for (const { name, hex, scale } of items) {
   const l9 = scale.light[8], d9 = scale.dark[8]
-  if (!l9 || !d9) { fails.push(`${name}: missing lead-53 stop`); continue }
+  if (!l9 || !d9) { fails.push(`${name}: missing pencil-47 stop`); continue }
   ok(scale.identityHex === hex.toUpperCase(), `${name}: identity ${scale.identityHex} != input ${hex.toUpperCase()}`)
   console.log(`  ${name.padEnd(22)} ${scale.brandH.toFixed(0).padStart(3)}   ${isYellow(scale) ? 'Y' : '·'}  | ${hx(l9)} L${f(l9.L)} w${whiteWcag(l9).toFixed(1)} | ${hx(d9)} L${f(d9.L)} w${whiteWcag(d9).toFixed(1)}`)
 }
@@ -165,7 +165,7 @@ for (const { name, hex, scale } of items) {
 // ── 3. Neutral — low-hierarchy cta REST tracks the scale's own stop 4, flips per
 // mode. DARK POP CLEARANCE (owner 2026-07-27): the dark rest is stop-FED then
 // lifted until the cta clears NEUTRAL_CTA_DARK_POP_CLEARANCE vs the resolved
-// dark paper-95 (the POP plane its buttons sit on — never black). Light stays
+// dark paper-5 (the POP plane its buttons sit on — never black). Light stays
 // exactly stop-fed (already ~1.25 vs its white pop). STATES (owner 2026-07-28,
 // "same delta, every family" + the magnitude correction): hover/pressed ride the
 // shared stateFillL law — ΔL = k/(nearness-to-ground+0.1) mode-mirrored, pressed
@@ -185,7 +185,7 @@ for (const { h, s } of neutralByHue) {
   ok(Math.abs((ctaL.L - s.ctaPressed.L) - stateStepL(ctaL.L, 'light', 2)) < 1e-6, `neutral h${h} light pressed step off the law (${f(ctaL.L - s.ctaPressed.L)})`)
   // DARK: fed + uniform pop-clearance lift — clears the bar, never sinks below
   // its fed stop, minimal (no over-lift), and the state STEPS stay the stops'.
-  const p3D = s.dark[2] // paper-95 — the POP plane (generated-pop candidate retired, owner 2026-07-28)
+  const p3D = s.dark[2] // paper-5 — the POP plane (generated-pop candidate retired, owner 2026-07-28)
   const popRatio = contrastRatio(wcagY(ctaD.L, ctaD.C, ctaD.H), wcagY(p3D.L, p3D.C, p3D.H))
   ok(popRatio >= NEUTRAL_CTA_DARK_POP_CLEARANCE - 0.005, `neutral h${h} cta dark below pop clearance (${popRatio.toFixed(3)} vs ${NEUTRAL_CTA_DARK_POP_CLEARANCE})`)
   ok(ctaD.L >= s.dark[3].L - 1e-6, `neutral h${h} cta dark sank below its fed stop4`)
@@ -253,17 +253,17 @@ for (const sig of SIGNALS) {
   }
 }
 
-// ── 5. Blessed-snapshot regression — the emphasis fill (lead-53) + off-scale cta ──
+// ── 5. Blessed-snapshot regression — the emphasis fill (pencil-47) + off-scale cta ──
 // --bless records L,C,H per ramp (both modes) after visual approval; the default run
 // diffs against it so future engine changes can't silently move these tokens. The
 // slot is `light[8]`/`dark[8]` — an ARRAY POSITION, which held highlight-9 before the
-// collapse and holds lead-53 after it: same index, successor token. (The rest of
+// collapse and holds pencil-47 after it: same index, successor token. (The rest of
 // the scale is guarded separately by dark-audit.)
 const SNAP_PATH = path.join(process.cwd(), 'scripts', 'band-snapshot.json')
 const TOL = 0.015
 const rungAndCta = (s: GeneratedScale) =>
   // the last six triples were the cta-ink fields (deleted 2026-08-12); they were pure
-  // references onto ink stops 9/10/11 so the SAME VALUES are read from the arrays —
+  // references onto pen stops 9/10/11 so the SAME VALUES are read from the arrays —
   // blessed snapshots stay byte-comparable, no re-bless
   [s.light[8], s.dark[8],
     s.cta, s.ctaHover, s.ctaPressed, s.ctaDark, s.ctaHoverDark, s.ctaPressedDark,
@@ -275,7 +275,7 @@ const rungAndCta = (s: GeneratedScale) =>
 const RUNG_CTA_NAMES = [
   'light stop-9', 'dark stop-9',
   'cta', 'cta-hover', 'cta-pressed', 'cta-dark', 'cta-hover-dark', 'cta-pressed-dark',
-  'lead-53', 'ink-42', 'ink-30', 'lead-53-dark', 'ink-42-dark', 'ink-30-dark',
+  'pencil-47', 'pen-58', 'pen-70', 'pencil-47-dark', 'pen-58-dark', 'pen-70-dark',
 ]
 const snapshot = (): Record<string, number[]> => {
   const o: Record<string, number[]> = {}
@@ -309,4 +309,4 @@ if (process.argv.includes('--bless')) {
 
 console.log()
 if (fails.length) { console.error(`FAIL: ${fails.length}\n` + fails.map(s => '  - ' + s).join('\n')); process.exit(1) }
-console.log('PASS — agnostic band order (lead-53 over wax-74) + on-emphasis (paper-100 on lead-53) · stop-8 3:1 vs its declared paper · structure · neutral cta rest=stop4 + state law + the SOFT on-cta composite at 4.5 on every state · signals (both lanes) · snapshot (shipped=apca).')
+console.log('PASS — agnostic band order (pencil-47 over crayon-26) + on-emphasis (paper-0 on pencil-47) · stop-8 3:1 vs its declared paper · structure · neutral cta rest=stop4 + state law + the SOFT on-cta composite at 4.5 on every state · signals (both lanes) · snapshot (shipped=apca).')

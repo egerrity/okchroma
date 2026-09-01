@@ -2,11 +2,11 @@
 // 2026-07-09, CATALOG C10: "it shouldn't be stitched together mechanisms… how can we
 // make that stick?"). This audit is the answer: the invariant lives in the suite, not
 // in conversation. It fails when:
-//   1. TABLE SHAPE breaks the owner's register invariant — the wax/lead pair (8–9)
+//   1. TABLE SHAPE breaks the owner's register invariant — the crayon/pencil pair (8–9)
 //      must share ONE declared base register (the 8|9 "starts and stops" break was a
-//      second constant); the wash run (1–7) must ascend monotonically with a bounded
+//      second constant); the highlighter run (1–7) must ascend monotonically with a bounded
 //      per-step ratio (no hidden register cliff inside a lightness-adjacent run). The
-//      7|8 step is exempt BY DESIGN: it rides the wash|wax family boundary and
+//      7|8 step is exempt BY DESIGN: it rides the highlighter|crayon family boundary and
 //      its ~0.15 L drop (the re-bucket seam), not an equal-lightness register jump.
 //   2. SPEC↔TABLE BINDING drifts — every stop's chroma params in MODE_SPECS must be
 //      the SCALE_C table's values (catches a re-inlined constant in spec.ts).
@@ -20,7 +20,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import { SCALE_C_LIGHT, SCALE_C_DARK, DARK_CTA_C, chromaFloorBase } from '../src/engine/stopTable'
-import { MODE_SPECS, inkLane } from '../src/engine/requirements/spec'
+import { MODE_SPECS, textLane } from '../src/engine/requirements/spec'
 import { darkCtaTrim } from '../src/engine/darkChromaCurve'
 import { signalScalesFor, resolveBrand } from '../src/engine/resolve'
 
@@ -35,13 +35,13 @@ const ok = (msg: string) => console.log('  ✓ ' + msg)
   // owner 2026-07-29: highlight-9 is deleted, so stop 8 is the whole band and there is
   // no pair to hold together. Its replacement guards the thing the collapse put at
   // risk instead — see the chroma-floor check below.)
-  // wash run 1→7: strictly ascending, per-step ratio bounded (the historical ladder's
+  // highlighter run 1→7: strictly ascending, per-step ratio bounded (the historical ladder's
   // own max step is the bound — a bigger jump means a register cliff crept in)
-  const MAX_WASH_STEP = 2.6 // paper 1→2 is ×2.5 by design (0.004→0.010); wash steps run ≤ ×1.8
+  const MAX_HIGHLIGHTER_STEP = 2.6 // paper 1→2 is ×2.5 by design (0.004→0.010); highlighter steps run ≤ ×1.8
   for (let i = 1; i < 7; i++) {
     const a = t[i].base!, b = t[i + 1].base!
     if (!(b > a)) fail(`light base must ascend ${i}→${i + 1}: ${a} → ${b}`)
-    if (b / a > MAX_WASH_STEP) fail(`light base step ${i}→${i + 1} exceeds ×${MAX_WASH_STEP}: ${a} → ${b}`)
+    if (b / a > MAX_HIGHLIGHTER_STEP) fail(`light base step ${i}→${i + 1} exceeds ×${MAX_HIGHLIGHTER_STEP}: ${a} → ${b}`)
   }
   ok('light 1–7 ascend with bounded steps')
   const d = SCALE_C_DARK
@@ -51,25 +51,25 @@ const ok = (msg: string) => console.log('  ✓ ' + msg)
   }
   ok('dark ladders shaped')
 
-  // THE INK CHROMA FLOORS ARE FROZEN VALUES (normalized 2026-08-05 from the pinned-index
+  // THE PEN CHROMA FLOORS ARE FROZEN VALUES (normalized 2026-08-05 from the pinned-index
   // form). The first-text and strong floors have sat at the ladder law's rungs 10/11
   // since before two renumbers — the values are the invariant, declared per row
-  // precisely so a stop renumber has nothing left to move. ink-42 (the C49 between
+  // precisely so a stop renumber has nothing left to move. pen-58 (the C49 between
   // stop) inherits the first-text rung value: the retired hover law it replaces
-  // evaluated lead-53's register, floor included. This check fails if a row's
+  // evaluated pencil-47's register, floor included. This check fails if a row's
   // declared floor drifts off its historical value.
-  const INK_FLOOR_VALUES: Record<number, number> = { 9: chromaFloorBase(10), 10: chromaFloorBase(10), 11: chromaFloorBase(11) }
+  const TEXT_FLOOR_VALUES: Record<number, number> = { 9: chromaFloorBase(10), 10: chromaFloorBase(10), 11: chromaFloorBase(11) }
   for (const [label, tbl] of [['light', t], ['dark', d]] as const) {
-    for (const [stopStr, expected] of Object.entries(INK_FLOOR_VALUES)) {
+    for (const [stopStr, expected] of Object.entries(TEXT_FLOOR_VALUES)) {
       const stop = Number(stopStr)
       const e = tbl[stop]
-      if (!e) { fail(`${label} ink stop ${stop} missing from SCALE_C`); continue }
-      if (e.inkMult === undefined || e.inkMaxC === undefined) fail(`${label} ink stop ${stop} must declare inkMult + inkMaxC`)
+      if (!e) { fail(`${label} pen stop ${stop} missing from SCALE_C`); continue }
+      if (e.textMult === undefined || e.textMaxC === undefined) fail(`${label} pen stop ${stop} must declare textMult + textMaxC`)
       if (e.chromaFloor !== expected)
-        fail(`${label} ink stop ${stop} chromaFloor is ${e.chromaFloor}, must stay ${expected} (the frozen historical rung value)`)
+        fail(`${label} pen stop ${stop} chromaFloor is ${e.chromaFloor}, must stay ${expected} (the frozen historical rung value)`)
     }
   }
-  ok('ink chroma floors stay frozen at the historical rung values (a renumber cannot move them)')
+  ok('text chroma floors stay frozen at the historical rung values (a renumber cannot move them)')
 }
 
 // ── 2. spec ↔ table binding ──────────────────────────────────────────────────
@@ -82,8 +82,8 @@ const ok = (msg: string) => console.log('  ✓ ' + msg)
       if (!e) { fail(`${mode} stop ${sp.stop} has no SCALE_C entry`); continue }
       if (sp.baseC !== undefined && sp.baseC !== e.base) fail(`${mode} s${sp.stop} baseC ${sp.baseC} != table ${e.base}`)
       if (sp.satFraction !== undefined && sp.satFraction !== e.sat) fail(`${mode} s${sp.stop} satFraction ${sp.satFraction} != table ${e.sat}`)
-      if (sp.chromaMult !== undefined && sp.chromaMult !== e.inkMult) fail(`${mode} s${sp.stop} chromaMult ${sp.chromaMult} != table ${e.inkMult}`)
-      if (inkLane(sp.group) && e.inkMult === undefined) fail(`${mode} s${sp.stop} is ink-lane but the table declares no inkMult`)
+      if (sp.chromaMult !== undefined && sp.chromaMult !== e.textMult) fail(`${mode} s${sp.stop} chromaMult ${sp.chromaMult} != table ${e.textMult}`)
+      if (textLane(sp.group) && e.textMult === undefined) fail(`${mode} s${sp.stop} is text-lane but the table declares no textMult`)
       if (sp.chromaFloor !== e.chromaFloor) fail(`${mode} s${sp.stop} chromaFloor ${sp.chromaFloor} != table ${e.chromaFloor}`)
     }
   }
@@ -97,7 +97,7 @@ const ok = (msg: string) => console.log('  ✓ ' + msg)
   const banned: [RegExp, string][] = [
     [/\bLIGHT_BASE_C\b/, 'LIGHT_BASE_C (the old 1–8 ladder)'],
     [/\bDARK_SUBTLE_CHROMA_MULT\b/, 'DARK_SUBTLE_CHROMA_MULT (the old dark ladder)'],
-    [/\bSTOP_11\b|\bSTOP_12\b|\bDARK_STOP_11\b|\bDARK_STOP_12\b/, 'the old per-stop ink constants'],
+    [/\bSTOP_11\b|\bSTOP_12\b|\bDARK_STOP_11\b|\bDARK_STOP_12\b/, 'the old per-stop pen constants'],
     [/HIGHLIGHT_(LIGHT|DARK)\s*=\s*\{[^}]*(baseC|satFraction)/s, 'chroma params on HIGHLIGHT_* (the old band constant)'],
     [/\bloudCta\b/, 'loudCta (the retired hidden cta-chroma boolean — policy lives in DARK_CTA_C)'],
   ]

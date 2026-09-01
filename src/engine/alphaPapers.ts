@@ -10,17 +10,17 @@
 //   ground's apparent + K × (the paper's light delta over white) + a half-step lift.
 //   K = mean dark plane seam / mean light plane seam (apparent, the neutral papers) —
 //   the system's own dark loudness, derived per theme.
-// - ink = the paper's hue at a chroma that is the larger of the 1/alpha dilution
+// - pen = the paper's hue at a chroma that is the larger of the 1/alpha dilution
 //   compensation and the VISIBILITY floor (the composite must clear `sep` OKLab ΔE —
 //   the house stopDeltaE — against every neutral paper field; sRGB gamut caps it).
 //   As C rises, L re-solves DOWN through the Nayatani instrument so the target
 //   apparent holds: C carries visibility, L carries the rhythm.
 // - alpha = the minimum keeping the composite within TOL apparent of the target on
-//   all four fields; ink and alpha iterate to convergence.
-// - the dark half-step lift is GATED by the paper/ink law: bisected down wherever
-//   lead-53/42/30 would lose 4.5/6.5/7.0 (shipped 8-bit basis, the QUANTIZED rgba)
+//   all four fields; pen and alpha iterate to convergence.
+// - the dark half-step lift is GATED by the paper/pen law: bisected down wherever
+//   pencil-47/42/30 would lose 4.5/6.5/7.0 (shipped 8-bit basis, the QUANTIZED rgba)
 //   against the lightest lifted overlay composited on the lightest field. The same
-//   gate runs in LIGHT against the darkest composite (the thin neutral lead-53 margin).
+//   gate runs in LIGHT against the darkest composite (the thin neutral pencil-47 margin).
 // - the NEUTRAL family is exempt from the visibility floor (a grey distinguishes by
 //   lightness only; the floor at its tint hue turns it pastel) but carries everything
 //   else.
@@ -39,12 +39,12 @@ export type AlphaMode = 'light' | 'dark'
 export interface AlphaPaper {
   stop: number          // 1/2/3 — the paper rung this overlays
   name: string          // paper-99-overlay / -97 / -95
-  overlayHex: string    // the ink
+  overlayHex: string    // the pen
   alpha: number         // 0..1, quantized to 1%
   // set when the visibility floor could not be reached: 'gamut' = the sRGB ceiling
-  // (the near-white physics), 'ink-bars' = the paper/ink law bound the chroma boost
+  // (the near-white physics), 'text-bars' = the paper/pen law bound the chroma boost
   // (the law outranks the look — owner: the contrast rules are not overwritable)
-  capped?: 'gamut' | 'ink-bars'
+  capped?: 'gamut' | 'text-bars'
 }
 
 const OVERLAY_NAMES: Record<number, string> = { 1: 'paper-99-overlay', 2: 'paper-97-overlay', 3: 'paper-95-overlay' }
@@ -85,7 +85,7 @@ export const compositeHex = (fg: string, bg: string, a: number) =>
 const stopAt = (scale: GeneratedScale, mode: AlphaMode, stop: number): ColorStop => {
   if (stop === 0) {
     const p = mode === 'light' ? scale.paper0 : scale.paper0Dark
-    if (!p) throw new Error(`alphaPapers: missing paper-100 extreme on ${scale.name} ${mode}`)
+    if (!p) throw new Error(`alphaPapers: missing paper-0 extreme on ${scale.name} ${mode}`)
     return p
   }
   const s = (mode === 'light' ? scale.light : scale.dark)[stop - 1]
@@ -128,33 +128,33 @@ export function alphaPapersFor(
     // memoized per rung (targetApp and hue are fixed here): the bisections evaluate
     // the same candidate chromas repeatedly, and each miss costs a 34-step Nayatani
     // L-solve — the plugin-sandbox freeze lived in this line
-    const inkMemo = new Map<number, ColorStop>()
-    const mkInk = (c: number): ColorStop => {
-      const hit = inkMemo.get(c)
+    const textMemo = new Map<number, ColorStop>()
+    const mkText = (c: number): ColorStop => {
+      const hit = textMemo.get(c)
       if (hit) return hit
       const L = solveLForApparent(targetApp, c, base.H)
       const v = { ...base, L, C: clampChromaToGamut(L, c, base.H, 'srgb') }
-      inkMemo.set(c, v)
+      textMemo.set(c, v)
       return v
     }
     // the chroma boost trades photometric Y for H-K shine (L re-solves down at equal
-    // apparent), and WCAG lives on Y — so the floor's search is CEILINGED by the ink
+    // apparent), and WCAG lives on Y — so the floor's search is CEILINGED by the pen
     // bars measured on this rung's own composite over the extreme paper. The law
     // outranks the look: a rung that cannot reach the bar under that ceiling ships
     // bar-capped, exactly like the near-white gamut cap.
     const extremeField = fieldHexes[3]
     const barsClearAtC = (c: number, a2: number): boolean => {
-      const o = hexToOklch(compositeHex(stopHex(mkInk(c)), extremeField, Math.ceil(a2 * 100) / 100))
+      const o = hexToOklch(compositeHex(stopHex(mkText(c)), extremeField, Math.ceil(a2 * 100) / 100))
       const bgY = shippedY(o.L, o.C, o.H)
-      return INK_BARS.every(([st, bar]) => {
-        const ink = stopAt(scale, mode, st)
-        return contrastRatio(shippedY(ink.L, ink.C, ink.H), bgY) >= bar
+      return TEXT_BARS.every(([st, bar]) => {
+        const pen = stopAt(scale, mode, st)
+        return contrastRatio(shippedY(pen.L, pen.C, pen.H), bgY) >= bar
       })
     }
-    let a = 1, inkC = base.C
+    let a = 1, textC = base.C
     let capped: AlphaPaper['capped']
     for (let iter = 0; iter < 3; iter++) {
-      const ih = stopHex(mkInk(inkC))
+      const ih = stopHex(mkText(textC))
       a = 0
       for (const fHex of fieldHexes) {
         let lo = 0, hi = 1
@@ -165,9 +165,9 @@ export function alphaPapersFor(
         a = Math.max(a, hi)
       }
       const minDE = (c: number) => Math.min(...fieldHexes.map(fHex =>
-        stopDeltaE(hexToOklch(compositeHex(stopHex(mkInk(c)), fHex, a)) as ColorStop, hexToOklch(fHex) as ColorStop)))
+        stopDeltaE(hexToOklch(compositeHex(stopHex(mkText(c)), fHex, a)) as ColorStop, hexToOklch(fHex) as ColorStop)))
       const c0 = Math.min(base.C / Math.max(a, 0.05), 0.4)
-      // the bar ceiling: the largest chroma in [c0, 0.4] the ink law allows
+      // the bar ceiling: the largest chroma in [c0, 0.4] the pen law allows
       let cBar = 0.4
       if (!barsClearAtC(0.4, a)) {
         if (!barsClearAtC(c0, a)) cBar = c0
@@ -182,7 +182,7 @@ export function alphaPapersFor(
       if (!isNeutral && minDE(c) < sep) {
         if (minDE(cBar) < sep) {
           c = cBar
-          capped = cBar < 0.4 - 1e-6 ? 'ink-bars' : 'gamut'
+          capped = cBar < 0.4 - 1e-6 ? 'text-bars' : 'gamut'
         } else {
           let lo = c, hi = cBar
           for (let j = 0; j < 18; j++) { const m = (lo + hi) / 2; minDE(m) < sep ? (lo = m) : (hi = m) }
@@ -190,33 +190,33 @@ export function alphaPapersFor(
         }
       }
       // converged: an unchanged chroma reproduces the identical bisections next pass
-      const prev = inkC
-      inkC = c
+      const prev = textC
+      textC = c
       if (Math.abs(c - prev) < 1e-9) break
     }
-    return { stop: sN, name: OVERLAY_NAMES[sN], overlayHex: stopHex(mkInk(inkC)), alpha: Math.ceil(a * 100) / 100, ...(capped ? { capped } : {}) }
+    return { stop: sN, name: OVERLAY_NAMES[sN], overlayHex: stopHex(mkText(textC)), alpha: Math.ceil(a * 100) / 100, ...(capped ? { capped } : {}) }
   })
 
-  if (mode === 'light') return gateInks(buildTwins(0), scale, neutral, 'light')
-  // the ink-gated half-step lift, dark (one build reused — the gate never clamped a
+  if (mode === 'light') return gateText(buildTwins(0), scale, neutral, 'light')
+  // the pen-gated half-step lift, dark (one build reused — the gate never clamped a
   // real theme, so the fast path is the whole cost)
   const half = ALPHA_LIFT_FRACTION * stepApp
   const atHalf = buildTwins(half)
-  if (inkBarsClear(atHalf, scale, neutral, 'dark')) return gateInks(atHalf, scale, neutral, 'dark')
+  if (textBarsClear(atHalf, scale, neutral, 'dark')) return gateText(atHalf, scale, neutral, 'dark')
   let lo = 0, hi = half
   for (let i = 0; i < 10; i++) {
     const m = (lo + hi) / 2
-    inkBarsClear(buildTwins(m), scale, neutral, 'dark') ? (lo = m) : (hi = m)
+    textBarsClear(buildTwins(m), scale, neutral, 'dark') ? (lo = m) : (hi = m)
   }
-  return gateInks(buildTwins(lo), scale, neutral, 'dark')
+  return gateText(buildTwins(lo), scale, neutral, 'dark')
 }
 
-// the paper/ink law as a gate: lead-53/42/30 must keep 4.5/6.5/7.0 (shipped basis,
+// the paper/pen law as a gate: pencil-47/42/30 must keep 4.5/6.5/7.0 (shipped basis,
 // the quantized rgba) against the WORST composite — the lightest overlay on the
 // lightest field in dark, the darkest overlay on the darkest field in light
-const INK_BARS: Array<[number, number]> = [[9, 4.5], [10, 6.5], [11, 7.0]]
+const TEXT_BARS: Array<[number, number]> = [[9, 4.5], [10, 6.5], [11, 7.0]]
 function worstBgY(twins: AlphaPaper[], neutral: GeneratedScale, mode: AlphaMode): number {
-  const fieldStop = mode === 'dark' ? 3 : 3 // dark: high (lightest); light: sunken (darkest) — both are neutral paper-95
+  const fieldStop = mode === 'dark' ? 3 : 3 // dark: high (lightest); light: sunken (darkest) — both are neutral paper-5
   const fHex = stopHex(stopAt(neutral, mode, fieldStop))
   const ys = twins.map(tw => {
     const o = hexToOklch(compositeHex(tw.overlayHex, fHex, tw.alpha))
@@ -224,24 +224,24 @@ function worstBgY(twins: AlphaPaper[], neutral: GeneratedScale, mode: AlphaMode)
   })
   return mode === 'dark' ? Math.max(...ys) : Math.min(...ys)
 }
-function inkBarsClear(twins: AlphaPaper[], scale: GeneratedScale, neutral: GeneratedScale, mode: AlphaMode): boolean {
+function textBarsClear(twins: AlphaPaper[], scale: GeneratedScale, neutral: GeneratedScale, mode: AlphaMode): boolean {
   const bgY = worstBgY(twins, neutral, mode)
-  return INK_BARS.every(([st, bar]) => {
-    const ink = stopAt(scale, mode, st)
-    return contrastRatio(shippedY(ink.L, ink.C, ink.H), bgY) >= bar
+  return TEXT_BARS.every(([st, bar]) => {
+    const pen = stopAt(scale, mode, st)
+    return contrastRatio(shippedY(pen.L, pen.C, pen.H), bgY) >= bar
   })
 }
 // light has no lift to bisect; a bar failure clamps the overlay's downward deviation
 // by raising its alpha until the pair holds (the composite converges on the solid,
-// which passes by the ink's own require)
-function gateInks(twins: AlphaPaper[], scale: GeneratedScale, neutral: GeneratedScale, mode: AlphaMode): AlphaPaper[] {
-  if (inkBarsClear(twins, scale, neutral, mode)) return twins
+// which passes by the pen's own require)
+function gateText(twins: AlphaPaper[], scale: GeneratedScale, neutral: GeneratedScale, mode: AlphaMode): AlphaPaper[] {
+  if (textBarsClear(twins, scale, neutral, mode)) return twins
   const out = twins.map(t => ({ ...t }))
   // walk to convergence — alpha 1.0 is the guaranteed ceiling (the composite IS the
-  // solid there, and the solid pair passes by the ink's own require + shipped floor).
+  // solid there, and the solid pair passes by the pen's own require + shipped floor).
   // The step cap must reach 1.0 from any base; a short walk returned a still-failing
   // set silently (alpha-audit caught it on the achromatic seed).
-  while (!inkBarsClear(out, scale, neutral, mode) && out.some(t => t.alpha < 1))
+  while (!textBarsClear(out, scale, neutral, mode) && out.some(t => t.alpha < 1))
     for (const t of out) t.alpha = Math.min(1, Math.round((t.alpha + 0.01) * 100) / 100)
   return out
 }

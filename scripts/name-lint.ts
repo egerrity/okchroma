@@ -46,7 +46,7 @@ for (const p of extNames) {
   if (c.startsWith('brand/')) communityNames.push('brand/primary/' + c.slice('brand/'.length))
   if (c.startsWith('brand-alt/')) communityNames.push('brand/alt/' + c.slice('brand-alt/'.length))
 }
-communityNames.push('system/ink-0')
+communityNames.push('system/pen-100')
 
 // ── the CSS grammar: every var name the emitters declare, base seed posture ──
 const cssVarNames = (css: string): string[] =>

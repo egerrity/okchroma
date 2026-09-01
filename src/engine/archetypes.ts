@@ -60,7 +60,7 @@ export function stateStepL(restL: number, _mode: 'light' | 'dark', k: 1 | 2): nu
 //  · LIGHT (owner 2026-07-28, restoring the original hoverL switch): natural travel
 //    is toward black, so a fill below the 'rich' floor (the original 0.40 switch)
 //    LIGHTENS — it has no dark left to travel into.
-//  · DARK (owner 2026-08-29, the high-rest wash): natural travel is toward white,
+//  · DARK (owner 2026-08-29, the high-rest highlighter): natural travel is toward white,
 //    and a fill above the 'light' archetype floor DARKENS. Between that floor and
 //    the rail flip (STATE_L_MAX − 2k = 0.88) the L steps still fit but the gamut
 //    does not: the chroma re-clamp at the lifted L collapses the fill toward white

@@ -172,7 +172,7 @@ const clusterHtml = (b: TokenBucket, c: Cluster): string => {
 
 // the full target list, grouped by family — the escape hatch when the shortlist
 // doesn't carry the right answer (owner 2026-08-11: "stroke quaternary is closest
-// to wash 92 but i can't select that")
+// to highlighter 92 but i can't select that")
 function morePanelHtml(clusterId: string): string {
   const fams = new Map<string, OkTarget[]>()
   for (const t of okValues.values()) {

@@ -100,7 +100,7 @@ export function legalRatio(L: number, C: number, H: number, otherY: number): num
 // relative luminance of the 8-bit sRGB HEX rendition — sRGB gamut clamp, gamma encode,
 // round to /255, decode — the value every browser and audit tool measures. legalRatio's
 // reference side stays the analytic Y under the assumption its anchors are near-neutral;
-// that broke when the ink anchor moved to the chromatic paper-3 (2026-07-28). Contrast
+// that broke when the pen anchor moved to the chromatic paper-3 (2026-07-28). Contrast
 // checks on the pair that ships use THIS on both sides.
 export function shippedY(L: number, C: number, H: number): number {
   const cS = clampChromaToGamut(L, C, H, 'srgb')

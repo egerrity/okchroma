@@ -12,7 +12,7 @@
 // THE REGISTER (A1 regroup 2026-08-07; flattened 2026-08-11, owner: the semantic/
 // grouping confused designers): every path payload.ts emits carries the single
 // primitive/ prefix (payload.registerPath) — primitive/system/*, primitive/<fam>/
-// {paper,wash,mark,ink}/N and the ctas in their families primitive/<fam>/{cta,cta-ink,
+// {paper,highlighter,mark,pen}/N and the ctas in their families primitive/<fam>/{cta,cta-ink,
 // cta-ink-strong}/*, the link trio at primitive/system/link/*. The elevation planes are
 // code.ts's own rows (payload never emits them), created at primitive/system/surface/*.
 // RENAMED_GROUPS' strips (below) recover every earlier spelling — pre-A1 flat AND the
@@ -38,6 +38,12 @@ const SPEC_KEY = 'okchroma-ext-spec'
 // NAME is display, free for the user to edit in the variables panel; every lookup
 // resolves the stamp first (the collections' rename-proof idiom, applied to variables).
 const PATH_KEY = 'okchroma-ext-path'
+// Generation stamp (instruments rename, 2026-08-31; mirror of plugin/code.ts). The
+// inverted digits brought two pre-Stage-B INDEX spellings back as live names: paper-1
+// (same stop then and now) and paper-3 (index 3 = the 0.95 stop then; the 0.97 stop
+// now). A row is ours only if it carries the current generation — see ensure().
+const GEN_KEY = 'okchroma-ext-gen'
+const GEN_CURRENT = 'instruments-2026-08-31'
 // The base's solve-column → modeId map (JSON), stamped every apply — the modes'
 // rename-proofing (owner 2026-07-27): display names are the user's to change,
 // the stored ids are the contract (the collections' tag idiom, extended to modes).
@@ -88,7 +94,7 @@ const RETIRED_RUNG_ALPHA = 0.12
 // base value that EXACTLY matches a retired canonical is OURS and refreshes to the
 // payload's current value; anything else is a designer's edit and is never touched.
 // Eras covered: C42 (the clearance law moved the positive/info cta trios) and C44 (the
-// shipped-pair law moved the warning/positive inks + the warning/critical highlight-8).
+// shipped-pair law moved the warning/positive pens + the warning/critical highlight-8).
 // Derivation 2026-08-03: SIGNAL_SCALES diffed at e8eff89 → dbac539 → HEAD. Extend this
 // map whenever an engine round moves canonical signal values. Keys are matched against
 // the CANONICAL path (the post-migration map key, independent of any user display
@@ -100,10 +106,10 @@ const RETIRED_RUNG_ALPHA = 0.12
 // here, and the four cta-ink keys dropped (their paths died 2026-08-12 — entries could
 // never fire). Zone spellings per the same round's rename.
 const RETIRED_SIGNAL_VALUES: Record<string, string[]> = {
-  'base/critical/wax-74': ['#e06146'],
-  'base/warning/wax-74': ['#c67a00'],
-  'base/warning/lead-53': ['#a56000'],
-  'base/positive/lead-53': ['#1c7e36'],
+  'base/critical/crayon-26': ['#e06146'],
+  'base/warning/crayon-26': ['#c67a00'],
+  'base/warning/pencil-47': ['#a56000'],
+  'base/positive/pencil-47': ['#1c7e36'],
   'base/positive/stamp/fill': ['#63c373', '#67c777'],
   'base/positive/stamp/fill-hover': ['#52b364', '#77d786'],
   'base/positive/stamp/fill-pressed': ['#42a355', '#87e896'],
@@ -130,26 +136,43 @@ const DARK_COLUMNS = new Set<Column>(['dark'])
 // (ascending) order and each migration self-deletes its consumed key. An UPWARD
 // renumber (C49) CANNOT ride this table at all — ensure() matches the exact name
 // before any candidate, so the ascending walk would hand the vacating row to the
-// wrong stop; see the inkUpshifts pre-pass in the apply handler.
+// wrong stop; see the textUpshifts pre-pass in the apply handler.
 const RENAMED_LEAVES: Array<[string, string]> = [
+  // ── THE INSTRUMENTS RENAME (owner 2026-08-31, mirror of plugin/code.ts): band words
+  // → instruments, the digit inverted (100 − the previous digit). Names only, same
+  // indices, same values. CURRENT-name entries stay FIRST; every older vintage below
+  // already re-targets straight at the new homes (one hop).
+  ['paper-100', 'paper-0'],
+  ['paper-99', 'paper-1'],
+  ['paper-97', 'paper-3'],
+  ['paper-95', 'paper-5'],
+  ['wash-92', 'highlighter-8'],
+  ['wash-89', 'highlighter-11'],
+  ['wash-85', 'highlighter-15'],
+  ['wash-80', 'highlighter-20'],
+  ['wax-74', 'crayon-26'],
+  ['lead-53', 'pencil-47'],
+  ['ink-42', 'pen-58'],
+  ['ink-30', 'pen-70'],
+  ['ink-0', 'pen-100'],
   // ── CONFORMANCE-SUFFIX DROP + FAMILY RENAME (owner 2026-08-21): the aa/aaa
   // signifiers leave the NAMES (the Contrast description lines still carry the
   // conformance, so an "aaa" search lands on descriptions); brand-primary → brand
   // and brand-secondary → brand-alt ride RENAMED_GROUPS below. Same indices, same
   // values — a relabel, not a renumber.
-  ['mark-74-aa', 'wax-74'],
-  ['ink-53-aa', 'lead-53'],
-  ['ink-42-aa', 'ink-42'],
-  ['ink-30-aaa', 'ink-30'],
+  ['mark-74-aa', 'crayon-26'],
+  ['ink-53-aa', 'pencil-47'],
+  ['ink-42-aa', 'pen-58'],
+  ['ink-30-aaa', 'pen-70'],
   ['absolute/secondary', 'absolute/brand-alt'],
-  // ── GUARANTEE-ROUND PASS 1 (owner 2026-08-27): ink-53 → lead-53, the band-word
+  // ── GUARANTEE-ROUND PASS 1 (owner 2026-08-27): ink-53 → pencil-47, the band-word
   // split the group guarantees need. Name only, same index, same values; older
-  // ink-53-vintage sources already point straight at lead-53 (the one-hop rule).
-  ['ink-53', 'lead-53'],
-  // ── GUARANTEE-ROUND (owner 2026-08-28): mark-74 → wax-74 (band word mark → wax).
+  // ink-53-vintage sources already point straight at pencil-47 (the one-hop rule).
+  ['ink-53', 'pencil-47'],
+  // ── GUARANTEE-ROUND (owner 2026-08-28): mark-74 → crayon-26 (band word mark → crayon).
   // Name only, same index, same values; older mark-vintage sources already point
-  // straight at wax-74 (the one-hop rule).
-  ['mark-74', 'wax-74'],
+  // straight at crayon-26 (the one-hop rule).
+  ['mark-74', 'crayon-26'],
   // link nesting (owner 2026-08-31, the same round family): the flat trio + the
   // inverse leaves fold into state subgroups — link/{default,inverse}/{enabled,
   // hover,pressed}; enabled returns as the rest leaf (default became the group).
@@ -207,9 +230,9 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['paper-overlay-99', 'paper-99-overlay'],
   ['paper-overlay-97', 'paper-97-overlay'],
   ['paper-overlay-95', 'paper-95-overlay'],
-  ['overlay/paper-99', 'paper-99-overlay'],
-  ['overlay/paper-97', 'paper-97-overlay'],
-  ['overlay/paper-95', 'paper-95-overlay'],
+  ['overlay/paper-1', 'paper-99-overlay'],
+  ['overlay/paper-3', 'paper-97-overlay'],
+  ['overlay/paper-5', 'paper-95-overlay'],
   ['surface/sunken', 'surface/dim'],
   // ⚠️ the word base's THIRD life (page plane pre-08-12 → raised plane to 08-18 →
   // retired): consumes an 08-12-era file's base row into mid; a pre-08-12 file's base
@@ -228,7 +251,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['abs-primary', 'absolute/brand'],
   ['abs-secondary', 'absolute/brand-alt'],
   // ── BAND FLATTENING (owner 2026-08-12): ramp leaves sit FLAT in the family group
-  // again — paper-99, wash-92, wax-74, lead-53 … (band word + hyphen + level,
+  // again — paper-1, highlighter-8, crayon-26, pencil-47 … (band word + hyphen + level,
   // the engine's own token names). The 2026-07-27 band nesting (paper/99 …) is
   // retired; only the cta STATE group still nests. These CURRENT-name entries MUST
   // precede everything below: candidates are tried in table order and the banded
@@ -237,80 +260,78 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // which is how one flat spelling (ink-11, ink-12) can mean different stops in
   // different vintages — the earlier-target ensure eats its own vintage's row first,
   // freeing the name for the later one.
-  ['paper/100', 'paper-100'],
-  ['paper/99', 'paper-99'],
-  ['paper/97', 'paper-97'],
-  ['paper/95', 'paper-95'],
-  ['wash/92', 'wash-92'],
-  ['wash/89', 'wash-89'],
-  ['wash/85', 'wash-85'],
-  ['wash/80', 'wash-80'],
-  ['mark/74-aa', 'wax-74'],
-  ['ink/53-aa', 'lead-53'],
-  ['ink/42-aa', 'ink-42'],
-  ['ink/30-aaa', 'ink-30'],
-  ['ink/0', 'ink-0'],
+  ['paper/100', 'paper-0'],
+  ['paper/99', 'paper-1'],
+  ['paper/97', 'paper-3'],
+  ['paper/95', 'paper-5'],
+  ['wash/92', 'highlighter-8'],
+  ['wash/89', 'highlighter-11'],
+  ['wash/85', 'highlighter-15'],
+  ['wash/80', 'highlighter-20'],
+  ['mark/74-aa', 'crayon-26'],
+  ['ink/53-aa', 'pencil-47'],
+  ['ink/42-aa', 'pen-58'],
+  ['ink/30-aaa', 'pen-70'],
+  ['ink/0', 'pen-100'],
   // ── the pre-banding flat vintage (leaf shapes before 2026-07-27; every target below
   // points STRAIGHT at the final flat home — the one-hop rule).
-  ['paper-0', 'paper-100'],
-  ['paper-1', 'paper-99'],
-  ['paper-2', 'paper-97'],
-  ['paper-3', 'paper-95'],
-  ['wash-4', 'wash-92'],
-  ['wash-5', 'wash-89'],
-  ['wash-6', 'wash-85'],
-  ['wash-7', 'wash-80'],
-  ['highlight-8', 'wax-74'],
-  // ── ink flats, 2026-07-10-numbering vintage (pre-banding files, 07-10 → 07-27).
-  // C49 restored the strong ink's and the anchor's pre-C33 numbers, so these map
+  ['paper-2', 'paper-3'],
+  ['paper-3', 'paper-5'],
+  ['wash-4', 'highlighter-8'],
+  ['wash-5', 'highlighter-11'],
+  ['wash-6', 'highlighter-15'],
+  ['wash-7', 'highlighter-20'],
+  ['highlight-8', 'crayon-26'],
+  // ── pen flats, 2026-07-10-numbering vintage (pre-banding files, 07-10 → 07-27).
+  // C49 restored the strong pen's and the anchor's pre-C33 numbers, so these map
   // one-hop to homes that are now NUMBER-TRUE for this vintage (the pre-C49 table
   // had homed flat ink-10 — that era's FIRST text stop — onto the then-strong
   // ink/10, a wrong-by-one latent C46's sweep class predicted).
-  ['ink-9', 'lead-53'],
-  ['ink-10', 'lead-53'],
-  ['ink-11', 'ink-30'],
-  ['ink-12', 'ink-0'],
+  ['ink-9', 'pencil-47'],
+  ['ink-10', 'pencil-47'],
+  ['ink-11', 'pen-70'],
+  ['ink-12', 'pen-100'],
   // ── STAGE-B BANDED ENTRIES for the pre-Stage-B banded digit vintage (2026-07-27 →
   // 2026-08-07; the flattening batch at the top covers the Stage-B spellings
   // themselves). Ordering note kept from Stage B: a banded-digit file holds both
   // ink/9 (first text) and ink/10 (the between stop) as two DIFFERENT real variables
   // sharing a leaf-string family with the OLD-KEY 'ink/10' the collapse-era entry
-  // further down ALSO targets. Resolving lead-53 (stop 9) must consume this
+  // further down ALSO targets. Resolving pencil-47 (stop 9) must consume this
   // batch's ink/9 BEFORE the collapse-era ink/10 entry ever gets a chance to
   // (wrongly) claim a real between-stop row.
-  ['paper/0', 'paper-100'],
-  ['paper/1', 'paper-99'],
-  ['paper/2', 'paper-97'],
-  ['paper/3', 'paper-95'],
-  ['wash/4', 'wash-92'],
-  ['wash/5', 'wash-89'],
-  ['wash/6', 'wash-85'],
-  ['wash/7', 'wash-80'],
-  ['highlight/8', 'wax-74'],
-  ['ink/9', 'lead-53'],
-  ['ink/10', 'ink-42'],
-  ['ink/11', 'ink-30'],
-  ['ink/12', 'ink-0'],
+  ['paper/0', 'paper-0'],
+  ['paper/1', 'paper-1'],
+  ['paper/2', 'paper-3'],
+  ['paper/3', 'paper-5'],
+  ['wash/4', 'highlighter-8'],
+  ['wash/5', 'highlighter-11'],
+  ['wash/6', 'highlighter-15'],
+  ['wash/7', 'highlighter-20'],
+  ['highlight/8', 'crayon-26'],
+  ['ink/9', 'pencil-47'],
+  ['ink/10', 'pen-58'],
+  ['ink/11', 'pen-70'],
+  ['ink/12', 'pen-100'],
   // ── REQUIREMENT-CODE HEAL (owner 2026-08-07, names only): C54 shipped the banded
   // r-floor leaves (mark/74-r300, ink/53-r450, ink/42-r650, ink/30-r700) for part of
   // one day; a file applied under that build carries them as its CURRENT names.
   // One-hop, no chaining: targets follow the final flat homes.
-  ['mark/74-r300', 'wax-74'],
-  ['ink/53-r450', 'lead-53'],
-  ['ink/42-r650', 'ink-42'],
-  ['ink/30-r700', 'ink-30'],
+  ['mark/74-r300', 'crayon-26'],
+  ['ink/53-r450', 'pencil-47'],
+  ['ink/42-r650', 'pen-58'],
+  ['ink/30-r700', 'pen-70'],
   ['cta', 'stamp/fill'],
   ['cta-hover', 'stamp/fill-hover'],
   ['cta-pressed', 'stamp/fill-pressed'],
   ['cta-border', 'stamp/edge'],
   ['on-cta', 'stamp/on'],
-  // cta-ink DIED 2026-08-12 (the trio was pure aliases onto the ink stops; deleted
+  // cta-ink DIED 2026-08-12 (the trio was pure aliases onto the pen stops; deleted
   // with the band flattening). These entries keep their RETIRED banded homes on
   // purpose — the highlight-9 precedent: an ancient flat row is still FOUND and
   // renamed to a recognizable retired name (then reported as an orphan) rather than
   // silently left. Nothing emits or refreshes cta-ink any more; existing rows are
-  // aliases onto the ink stops and keep resolving. The footer HEAL converts their
-  // node applications to the matching ink stops (owner 2026-08-12).
+  // aliases onto the pen stops and keep resolving. The footer HEAL converts their
+  // node applications to the matching pen stops (owner 2026-08-12).
   ['cta-ink', 'cta-ink/enabled'],
   ['cta-ink-hover', 'cta-ink/hover'],
   ['cta-ink-pressed', 'cta-ink/pressed'],
@@ -340,24 +361,24 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // ── THE 2026-07-29 COLLAPSE, under C49 numbering. highlight/9 and highlight/on are
   // DELETED (they ORPHAN — the plugin reports orphans, it never deletes a user's
   // variables). Of C33's three downshift entries only the first survives: C49 gave the
-  // strong ink and the anchor their pre-C33 names back, so a pre-C33-banded file's
+  // strong pen and the anchor their pre-C33 names back, so a pre-C33-banded file's
   // ink/11 and ink/12 rows are ALREADY correctly named — an entry would be an identity
   // mapping at best and a hijack at worst. This entry catches a pre-C33 file's ink/10
   // (that vintage's FIRST TEXT stop), which is a DIFFERENT thing than a banded-era
   // file's ink/10 (the between stop, C49); the Stage-B batch above resolves
-  // lead-53 off such a file's own ink/9 FIRST, so this entry is only ever reached
+  // pencil-47 off such a file's own ink/9 FIRST, so this entry is only ever reached
   // once that candidate is absent — it never gets a chance to steal a real
   // between-stop row.
-  ['ink/10', 'lead-53'],
+  ['ink/10', 'pencil-47'],
   // ── pre-banding flat names from BEFORE the 2026-07-10 renumber (two renumbers back:
   // first text = ink-11, strong = ink-12, anchor = ink-13). Vintage disambiguation vs
-  // the 07-10 flats above is by ensure order + consumption: lead-53 (ensured first)
-  // eats an old-old file's ink-11 — a 07-10 file's ink-11 survives for ink-30
-  // because lead-53 consumed that file's ink-10 instead — then ink-30 falls
-  // through its own-name candidate to this vintage's ink-12, and ink-0 to ink-13.
-  ['ink-11', 'lead-53'],
-  ['ink-12', 'ink-30'],
-  ['ink-13', 'ink-0'],
+  // the 07-10 flats above is by ensure order + consumption: pencil-47 (ensured first)
+  // eats an old-old file's ink-11 — a 07-10 file's ink-11 survives for pen-70
+  // because pencil-47 consumed that file's ink-10 instead — then pen-70 falls
+  // through its own-name candidate to this vintage's ink-12, and pen-100 to ink-13.
+  ['ink-11', 'pencil-47'],
+  ['ink-12', 'pen-70'],
+  ['ink-13', 'pen-100'],
   // blue-signal variant relabels (2026-07-13, info-color → blue): variant leaf =
   // label + resolved light-cta hex (variantKey), so the relabel needs per-lane entries.
   ['magenta-de8df6', 'magenta-side-de8df6'],
@@ -370,7 +391,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['cta-2', 'stamp/fill-hover'],
   // stop-3 rename (owner 2026-07-24) retargeted to its final flat home. Pure
   // relabel, same color.
-  ['wash-3', 'paper-95'],
+  ['wash-3', 'paper-5'],
   // ── ELEVATION-PLANE RENAME (owner 2026-08-12): sink|base|lift|pop →
   // sunken|low|base|high — the old "base" gave the PAGE plane too much semantic
   // weight when components actually sit on the raised plane. ⚠️ 'base' SURVIVES BUT
@@ -709,10 +730,10 @@ figma.ui.onmessage = async (msg) => {
       const baseVars = baseMatch ? await varsByName(baseMatch.id) : new Map<string, figma.Variable>()
       // posture probe reads through the rename history (a pre-banding base still
       // spells it brand-secondary/paper-1; read-only, no renames here). The live leaf
-      // is flat paper-99 (band flattening, owner 2026-08-12) — legacyCandidates
+      // is flat paper-1 (band flattening, owner 2026-08-12) — legacyCandidates
       // still recovers every older spelling behind it.
-      const baseHasSecondary = baseVars.has('base/brand-alt/paper-99')
-        || legacyCandidates('base/brand-alt/paper-99').some(p => baseVars.has(p))
+      const baseHasSecondary = baseVars.has('base/brand-alt/paper-1')
+        || legacyCandidates('base/brand-alt/paper-1').some(p => baseVars.has(p))
       const extsOfBase = baseMatch ? extensions.filter(e => e.rootVariableCollectionId === baseMatch!.id) : []
       // case-insensitive identity: "l1-near-black" typed by hand must overwrite
       // L1-near-black, never create a sibling that differs only by case
@@ -734,19 +755,19 @@ figma.ui.onmessage = async (msg) => {
         return
       }
 
-// Maps the inkUpshift pre-pass's PRE-Stage-B leaf spelling ('ink/10'|'ink/11'|'ink/12'
+// Maps the textUpshift pre-pass's PRE-Stage-B leaf spelling ('ink/10'|'ink/11'|'ink/12'
       // — stop index, not display name) to the CURRENT payload leaf (flat since the band
       // flattening, owner 2026-08-12; was the Stage B banded leaf), for comparing an
       // upshift's from/to against a fresh payload path below. Index-keyed, not a payload
       // value-import (keeps the engine out of the sandbox bundle — see the header
       // comment). Anything else passes through unchanged.
-      const STAGE_B_INK_LEAF: Record<string, string> = { '10': 'ink-42', '11': 'ink-30', '12': 'ink-0' }
+      const STAGE_B_INK_LEAF: Record<string, string> = { '10': 'pen-58', '11': 'pen-70', '12': 'pen-100' }
       const stageBInkLeaf = (oldSpelling: string): string => {
-        const m = /\/ink\/(10|11|12)$/.exec(oldSpelling)
+        const m = /\/pen\/(10|11|12)$/.exec(oldSpelling)
         return m ? oldSpelling.slice(0, -m[0].length) + '/' + STAGE_B_INK_LEAF[m[1]] : oldSpelling
       }
 
-      // ── C49 UPWARD RENUMBER (owner 2026-08-05): the strong ink goes ink/10 → ink/11 and
+      // ── C49 UPWARD RENUMBER (owner 2026-08-05): the strong pen goes ink/10 → ink/11 and
       // the anchor neutral/ink/11 → neutral/ink/12 (their pre-C33 names back), freeing
       // ink/10 for the new between text stop. An upward shift cannot ride RENAMED_LEAVES:
       // ensure() matches the exact name before any legacy candidate, so the ascending
@@ -758,15 +779,15 @@ figma.ui.onmessage = async (msg) => {
       // (Detection below stays in the OLD pre-A1, pre-Stage-B spelling on purpose — it
       // targets a narrow historical vintage that predates both renames; see stageBInkLeaf
       // above for where the comparison against the CURRENT payload path happens.)
-      const inkUpshifts: Array<[string, string]> = []
+      const textUpshifts: Array<[string, string]> = []
       if (baseMatch) {
         if (baseVars.has('neutral/ink/11') && !baseVars.has('neutral/ink/12') && baseVars.has('neutral/ink/10'))
-          inkUpshifts.push(['neutral/ink/11', 'neutral/ink/12'])
+          textUpshifts.push(['neutral/ink/11', 'neutral/ink/12'])
         for (const p of [...baseVars.keys()].filter(k => k.endsWith('/ink/10')).sort()) {
           const fam = p.slice(0, -'/ink/10'.length)
           const strongAlreadyAt11 = baseVars.has(`${fam}/ink/11`)
-            && !inkUpshifts.some(([from]) => from === `${fam}/ink/11`)
-          if (!strongAlreadyAt11) inkUpshifts.push([p, `${fam}/ink/11`])
+            && !textUpshifts.some(([from]) => from === `${fam}/ink/11`)
+          if (!strongAlreadyAt11) textUpshifts.push([p, `${fam}/ink/11`])
         }
       }
 
@@ -805,24 +826,24 @@ figma.ui.onmessage = async (msg) => {
             .filter((p: string) => !(p === 'base/absolute/brand' && baseVars.has('brand-primary/identity')))
             .filter((p: string) => !(p === 'base/absolute/brand-alt'
               && (baseVars.has('brand-secondary/identity') || !(baseHasSecondary || hasSecondary))))
-            // C49: a path an inkUpshift will FILL by rename is not new — and a vacating
+            // C49: a path an textUpshift will FILL by rename is not new — and a vacating
             // ink/10 name is new even though a row currently squats on it (the strong
-            // ink moves out; the between stop that replaces it needs the full new-row
+            // pen moves out; the between stop that replaces it needs the full new-row
             // treatment: confirm + extension backfill so every brand carries its own).
-            // ⚠️ inkUpshifts entries are OLD-spelling ('<fam>/ink/N', pre-register — the
+            // ⚠️ textUpshifts entries are OLD-spelling ('<fam>/pen/N', pre-register — the
             // vintage this C49 detection targets predates A1) while p here is the
-            // REGISTERIZED emitted path; ink rows are always primitive/ (a scale row, never
+            // REGISTERIZED emitted path; pen rows are always primitive/ (a scale row, never
             // a semantic band), so the comparison hardcodes the prefix rather than value-
             // importing payload.registerPath (would drag the engine into the sandbox bundle
             // — see the header comment).
-            // Stage B (owner 2026-08-07, names only): inkUpshifts still computes in the
+            // Stage B (owner 2026-08-07, names only): textUpshifts still computes in the
             // PRE-Stage-B leaf spelling above (ink/10, ink/11, ink/12 — stop index, not
             // display name; the detection predates A1, untouched). p, though, is the
             // CURRENT payload path — Stage-B-leaf-spelled. Map the upshift leaf through
             // the Stage B rename before comparing; small local map (index-keyed), no
             // payload value-import (keeps the engine out of the sandbox bundle).
-            .filter((p: string) => !inkUpshifts.some(([, to]) => 'base/' + stageBInkLeaf(to) === p))
-            .filter((p: string) => inkUpshifts.some(([from]) => 'base/' + stageBInkLeaf(from) === p)
+            .filter((p: string) => !textUpshifts.some(([, to]) => 'base/' + stageBInkLeaf(to) === p))
+            .filter((p: string) => textUpshifts.some(([from]) => 'base/' + stageBInkLeaf(from) === p)
               || (!baseVars.has(p) && !legacyCandidates(p).some(lp => baseVars.has(lp))))
         : []
 
@@ -946,6 +967,11 @@ figma.ui.onmessage = async (msg) => {
       let createdVars = 0
       const ensure = (path: string): figma.Variable => {
         let v = baseVars.get(path)
+        // An exact `paper-3` hit that lacks the current generation is a pre-Stage-B
+        // index-era row (stop 3 = today's paper-5), not ours: drop it so the legacy
+        // candidates claim paper-2 → paper-3 first, and paper-5's own lookup then
+        // claims this row through its ['paper-3', 'paper-5'] vintage (ladder order).
+        if (v && path.endsWith('/paper-3') && v.getPluginData(GEN_KEY) !== GEN_CURRENT) v = undefined
         // a direct hit (usually via stamp) whose display name is any ENGINE spelling
         // of this path — a stale generation or invisibly-off — heals to canonical;
         // a genuinely custom name stays (isEngineSpelling, the doctrine's other half)
@@ -958,7 +984,7 @@ figma.ui.onmessage = async (msg) => {
           }
         }
         if (!v) { v = figma.variables.createVariable(path, base, 'COLOR'); baseVars.set(path, v); createdVars++ }
-        v.setPluginData(PATH_KEY, path) // identity stamp — a panel rename survives future lookups
+        v.setPluginData(PATH_KEY, path); v.setPluginData(GEN_KEY, GEN_CURRENT) // identity stamp — a panel rename survives future lookups
         // the CROSS-PLUGIN stamp (owner 2026-08-11): pluginData is namespaced per plugin,
         // so the Mapper (plugin-unify) can't read the private stamp above. Same identity,
         // shared namespace; restamped every apply exactly like the private one.
@@ -976,10 +1002,10 @@ figma.ui.onmessage = async (msg) => {
       // construction — alias them to the primitive/system/abs-* rows so the
       // chip READS as the pole and the poles stay single-source. Emit-layer
       // representation only: a non-pole value (an outline secondary's on-cta rides
-      // its lead-53) falls back to a raw write, so the alias never constrains the
+      // its pencil-47) falls back to a raw write, so the alias never constrains the
       // solve — the engine still picks the pole per family × column.
       // (highlight/on dropped from this list 2026-07-29 with the token; the neutral
-      // anchor base/neutral/ink-0 dropped 2026-08-28 — the engine RESOLVES it off the
+      // anchor base/neutral/pen-100 dropped 2026-08-28 — the engine RESOLVES it off the
       // pole now, so it writes raw like any scale leaf. An existing file's pole ALIAS
       // on that row stands until a base rebuild — create-once is the base contract.)
       const POLE_LEAVES = (path: string) =>
@@ -1028,7 +1054,7 @@ figma.ui.onmessage = async (msg) => {
       }
       // (INK_SIBLING / the text-cta sibling aliasing DELETED with the cta-ink register,
       // owner 2026-08-12: the payload no longer carries text-cta reference leaves — the
-      // text register IS the ink stops. The footer HEAL converts old files' cta-ink
+      // text register IS the pen stops. The footer HEAL converts old files' cta-ink
       // node applications onto those stops.)
       const chEq = (a: { r: number; g: number; b: number; a?: number } | undefined,
         b: { r: number; g: number; b: number; a?: number } | undefined): boolean =>
@@ -1046,14 +1072,14 @@ figma.ui.onmessage = async (msg) => {
         }
       }
       // C49 upward renumber, EXECUTED (computed + confirmed above): anchor first
-      // (its entry is first in the array), then each family's strong ink — the
+      // (its entry is first in the array), then each family's strong pen — the
       // rename keeps the variable id, so user bindings ride to the new name and the
       // vacated ink/10 is created fresh below with the between stop's value.
-      for (const [from, to] of inkUpshifts) {
+      for (const [from, to] of textUpshifts) {
         const v = baseVars.get(from)
         if (v && !baseVars.has(to)) {
           if (v.name === from) v.name = to // custom display names stay; the stamp moves identity
-          v.setPluginData(PATH_KEY, to)
+          v.setPluginData(PATH_KEY, to); v.setPluginData(GEN_KEY, GEN_CURRENT)
           baseVars.set(to, v); baseVars.delete(from)
         }
       }
@@ -1086,7 +1112,7 @@ figma.ui.onmessage = async (msg) => {
         const v = baseVars.get(oldPath)
         if (v && !baseVars.has(newPath)) {
           if (v.name === oldPath) v.name = newPath // custom display names stay; the stamp moves identity
-          v.setPluginData(PATH_KEY, newPath)
+          v.setPluginData(PATH_KEY, newPath); v.setPluginData(GEN_KEY, GEN_CURRENT)
           baseVars.set(newPath, v); baseVars.delete(oldPath)
         }
       }
@@ -1251,14 +1277,14 @@ figma.ui.onmessage = async (msg) => {
       // (owner 2026-08-07, names only) relabeled the four leaves; the wiring below is
       // unchanged — same stop index maps to the same JS variable, only the lookup
       // string moved:
-      //   sink → neutral/paper-95 light · neutral/paper-100 dark   (was paper-3/paper-0)
-      //   base → neutral/paper-97 light · neutral/paper-99 dark    (was paper-2/paper-1)
-      //   lift → neutral/paper-99 light · neutral/paper-97 dark    (was paper-1/paper-2)
-      //   pop  → neutral/paper-100 light · neutral/paper-95 dark   (was paper-0/paper-3)
-      const p0 = baseVars.get('base/neutral/paper-100')
-      const p1 = baseVars.get('base/neutral/paper-99')
-      const p2 = baseVars.get('base/neutral/paper-97')
-      const p3 = baseVars.get('base/neutral/paper-95')
+      //   sink → neutral/paper-5 light · neutral/paper-0 dark   (was paper-3/paper-0)
+      //   base → neutral/paper-3 light · neutral/paper-1 dark    (was paper-2/paper-1)
+      //   lift → neutral/paper-1 light · neutral/paper-3 dark    (was paper-1/paper-2)
+      //   pop  → neutral/paper-0 light · neutral/paper-5 dark   (was paper-0/paper-3)
+      const p0 = baseVars.get('base/neutral/paper-0')
+      const p1 = baseVars.get('base/neutral/paper-1')
+      const p2 = baseVars.get('base/neutral/paper-3')
+      const p3 = baseVars.get('base/neutral/paper-5')
       if (p0 && p1 && p2 && p3) {
         const planes: Array<[string, figma.Variable, figma.Variable]> = [
           ['utility/surface/dim', p3, p0], ['utility/surface/low', p2, p1],
@@ -1317,7 +1343,7 @@ figma.ui.onmessage = async (msg) => {
         // primitive/system/* is contract-invariant and skipped — EXCEPT the brand-varying
         // rows OVERRIDABLE_SYSTEM names: the link trio (Phase 4, owner: "link is a system
         // level color. It can still be extended" — each brand's extension overrides
-        // base/link/* with its own resolved values, its primary's ink stops
+        // base/link/* with its own resolved values, its primary's pen stops
         // or its custom link seed) and the identity absolutes.
         if (EXT_NON_OVERRIDABLE(t.path)) continue
         if (secondaryMode === 'none' && (isBrandSecondary(t.path) || t.path === 'base/absolute/brand-alt')) continue

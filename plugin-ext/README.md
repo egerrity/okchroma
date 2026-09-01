@@ -28,11 +28,11 @@ On any other plan the plugin detects the missing API and reports it instead of w
   - `primitive/brand/*`, `primitive/brand-alt/*` (only if the file uses a
     secondary) including their `cta/*` states in the same family group — the
     operative `brand-` category is in the token name; the brand's NAME lives on the
-    extension, so a designer reads `kirby → primitive/brand/paper-99` (ramp
+    extension, so a designer reads `kirby → primitive/brand/paper-1` (ramp
     leaves are flat since the band flattening 2026-08-12). Every
     path carries the single `primitive/` register prefix (A1 regroup 2026-08-07,
     flattened to one register 2026-08-11).
-  - `primitive/neutral/*` (paper-100 … ink-0 in ladder order), `primitive/critical/*
+  - `primitive/neutral/*` (paper-0 … pen-100 in ladder order), `primitive/critical/*
     primitive/warning/* primitive/positive/* primitive/info/*` with their cta states in
     the family, and `primitive/system/*`: abs poles, transparent, scrim,
     `system/surface/*` (the scheme-divergent sunken/low/base/high elevation-plane

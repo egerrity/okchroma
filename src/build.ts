@@ -8,7 +8,7 @@ import { signalsCss } from './engine/cssRender'
 // use APCA for design decisions, and this round removed its last exposure (the enterprise
 // plugin's column pair). Generated CSS now matches the lane actually in use.
 // ⚠️ This MOVES generated colour, independently of the highlight collapse: the two lanes
-// place the focus ring and the cta differently (the washes are identical). withProfile is
+// place the focus ring and the cta differently (the highlighters are identical). withProfile is
 // still the identity for 'wcag', so the engine is unchanged — only which lane is emitted.
 const SHIPPED_PROFILE = 'wcag' as const
 

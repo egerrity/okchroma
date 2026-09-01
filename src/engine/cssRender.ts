@@ -3,7 +3,7 @@
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
 import { srgbEmitChannels, masterEmitChannels } from './colorMath'
 import { clampChromaToGamut, apcaY, apcaLc } from './constraints'
-import { stopTokenName, tokenOrder, PAPER_100, INK_0 } from './tokenNames'
+import { stopTokenName, tokenOrder, PAPER_0, PEN_100 } from './tokenNames'
 import { signalScalesFor, OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, SOFT_ON_CTA_ALPHA, softOnCtaPasses, escapeCtaFamily, resolveLinkTrio, resolveLinkInverseTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
 import { SIGNALS, SIGNAL_EMIT_NAME } from './signals'
 import { CSS_FAMILY } from './tokenDescriptions'
@@ -77,8 +77,8 @@ const onColor = (white: boolean) => (white ? '#ffffff' : '#000000')
 // pop." So: a fill under Lc 15 against the page earns a stroke, and the stroke lands inside 15-30.
 // This does not reopen the wcag lane; see the C39 entry and the wcag-only standing rule.
 //
-// THE REFERENCE IS THE PAGE, not the family's own paper: neutral paper-97 (paper-2) in light,
-// paper-99 (paper-1) in dark (the demo's --surface-low, which swaps between modes). One ruler
+// THE REFERENCE IS THE PAGE, not the family's own paper: neutral paper-3 (paper-2) in light,
+// paper-1 (paper-1) in dark (the demo's --surface-low, which swaps between modes). One ruler
 // for every family.
 // The light/dark branch C39 hand-wrote is GONE — |Lc| is absolute, so mirroring falls out.
 export const CTA_BORDER_LC_FLOOR = 15
@@ -97,7 +97,7 @@ export function pageStopFor(neutral: GeneratedScale, mode: 'light' | 'dark'): Co
 //   · it is BRAND-INDEPENDENT, so each rung lives in the base collection as one system row and
 //     costs ZERO per-brand overrides. Sourcing it from the family's ramp instead cost 88 — the
 //     neutral is brand-hue-tinted, so its border differed per brand (measured).
-//   · it cannot fight the fill's hue, which a same-family wash stop can.
+//   · it cannot fight the fill's hue, which a same-family highlighter stop can.
 //
 // C39 asserted the alpha "does not scale up in dark the way the shadow set does … if dark ever
 // needs more, it is this one constant." THAT CLAIM IS MEASURABLY WRONG and the 2026-07-31 round
@@ -181,7 +181,7 @@ export const alphaRootVars = (mode: 'light' | 'dark'): string[] => [
     .map(r => `  ${offsetVarName(r as OffsetRung)}: ${offsetRgba(r as OffsetRung, mode)};`),
   // the toward-bg ladder (the 2026-08-29 inverse ladder, renamed 2026-08-31): the
   // same rungs, pole flipped per mode — state layers for INVERTED grounds (never
-  // called a "wash" — that word is the tinted band's). One spelling with the Figma
+  // called a "highlighter" — that word is the tinted band's). One spelling with the Figma
   // row: --alpha-toward-bg-06 ↔ system/alpha/toward-bg/06.
   ...(Object.keys(OFFSET_ALPHAS) as unknown as OffsetRung[])
     .map(Number).sort((a, b) => a - b)
@@ -211,12 +211,12 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
   const f = ctaFamilyOf(s, mode)
   const onCta = mode === 'light' ? s.onFillTextIsWhite : s.onFillTextIsWhiteDark
   // cta-border: the gated stroke at THIS family's rung, else the transparent variable. The
-  // OUTLINE secondary keeps its own unconditional wax-74 override at the emitter — there
+  // OUTLINE secondary keeps its own unconditional crayon-26 override at the emitter — there
   // the border is the button's identity, not a safety. Renamed from cta-stroke (owner 2026-07-09);
   // the Figma side renamed with it — plugins migrate existing variables in place.
   // cta family SEMANTIC-named (owner ruling 2026-07-16): cta/cta-hover/cta-pressed.
   // (The cta-ink + cta-ink-strong trios DELETED, owner 2026-08-12: they were pure
-  // var() references onto the ink stops — the text-register cta is the ink stops
+  // var() references onto the pen stops — the text-register cta is the pen stops
   // themselves; the ESCAPE posture de-chromas those stops after this body.)
   const border = ctaNeedsBorder(s, mode, page)
   // the scale block: ramp stops + the paper-overlay leaves, interleaved by the
@@ -231,7 +231,7 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
     `  --${prefix}-stamp-fill-pressed: ${stopHex(f.ctaPressed)};`,
     `  --${prefix}-stamp-edge: var(${border ? offsetVarName(ctaBorderRung(prefix)) : TRANSPARENT_VAR});`,
     // the SOFT on-cta (owner 2026-08-04: "neutral cta on's should also be the alpha"): the
-    // neutral's cta is the scale-fed WASH-level fill, the system's other quiet cta, so its
+    // neutral's cta is the scale-fed HIGHLIGHTER-level fill, the system's other quiet cta, so its
     // button text takes the pole AT ALPHA like the default-model secondary's — composited
     // over whatever state the fill is in, so hover/pressed carry their own legibility. Same
     // register both families (SOFT_ON_CTA_ALPHA), so both alias the ONE system/alpha/ink
@@ -271,9 +271,9 @@ export function brandKindP3Body(prefix: string, s: GeneratedScale, mode: 'light'
 export function neutralCss(selector: string, brandH: number, level: NeutralLevel = 'default', contrastProfile?: ContrastProfile, ctaBorder = true): string {
   const s = generateNeutralScale(brandH, level, contrastProfile)
   const nPage = (mode: 'light' | 'dark') => ctaBorder ? pageStopFor(s, mode) : undefined
-  // The universal paper-100/ink-0 anchors ride along (paper-0/ink-12 pre-Stage-B): any scope
+  // The universal paper-0/pen-100 anchors ride along (paper-0/ink-12 pre-Stage-B): any scope
   // that carries the ladder must also carry its mode-flipping extremes (semantic aliases like
-  // --surface-high resolve through them). paper-100 resolves; ink-0 is the LITERAL pole
+  // --surface-high resolve through them). paper-0 resolves; pen-100 is the LITERAL pole
   // again (owner 2026-08-31, walking back the 2026-08-28 seam resolver — #000 light,
   // #fff dark); the fallbacks below match it by construction.
   const p0 = (st: ColorStop | undefined, fallback: string) => (st ? stopHex(st) : fallback)
@@ -281,16 +281,16 @@ export function neutralCss(selector: string, brandH: number, level: NeutralLevel
   const p3Dark = brandKindP3Body(CSS_NEUTRAL, s, 'dark')
   return [
     `${selector} {`,
-    `  --${PAPER_100}: ${p0(s.paper0, '#ffffff')};`,
-    `  --${INK_0}: ${p0(s.ink0, '#000000')};`,
+    `  --${PAPER_0}: ${p0(s.paper0, '#ffffff')};`,
+    `  --${PEN_100}: ${p0(s.pen100, '#000000')};`,
     // the neutral IS the page, so it is judged against its own paper stop
     // the neutral's overlays never read the visibility bar (the exempt family), so
     // the brandless chrome context passes 0
     ...brandKindBody(CSS_NEUTRAL, s, 'light', nPage('light')),
     `}`,
     `${selector}[data-theme="dark"] {`,
-    `  --${PAPER_100}: ${p0(s.paper0Dark, '#000000')};`,
-    `  --${INK_0}: ${p0(s.ink0Dark, '#ffffff')};`,
+    `  --${PAPER_0}: ${p0(s.paper0Dark, '#000000')};`,
+    `  --${PEN_100}: ${p0(s.pen100Dark, '#ffffff')};`,
     ...brandKindBody(CSS_NEUTRAL, s, 'dark', nPage('dark')),
     `}`,
     ...(p3Light.length || p3Dark.length ? [
@@ -311,7 +311,7 @@ export function neutralCss(selector: string, brandH: number, level: NeutralLevel
 // P3 light block re-declares out-of-sRGB stops under bare `:root` (0,1,0) LATER in the file, and
 // at equal specificity source order wins, so a flat `[data-theme="dark"]` (0,1,0) dark base lost
 // every var the P3 dark block omits to its LIGHT display-p3 rendition on a root-themed page
-// (near-white red washes inside dark UI). Same bug class as the owner-caught outline P3 pop
+// (near-white red highlighters inside dark UI). Same bug class as the owner-caught outline P3 pop
 // (2026-07-11, see brandCss) — brandCss/neutralCss were always immune because their dark
 // selectors compound the base selector. The bare `[data-theme="dark"]` stays in the list for
 // scoped carriers (the demo rides the attribute on divs, which `:root` P3 light never matches).
@@ -405,15 +405,15 @@ export function brandCss(
   // scales inside `r` were already resolved under it by resolveBrand)
   contrastProfile?: ContrastProfile,
   // the secondary's mode chip: 'outline' re-resolves the fill trio — cta transparent, cta-hover the
-  // cta color at OUTLINE_HOVER_ALPHA (the tinted hover), on-cta lead-53, cta-border ALWAYS the
-  // gated wax-74. Same tokens, different resolution — no component changes needed.
+  // cta color at OUTLINE_HOVER_ALPHA (the tinted hover), on-cta pencil-47, cta-border ALWAYS the
+  // gated crayon-26. Same tokens, different resolution — no component changes needed.
   secondaryStyle?: SecondaryStyle,
   // the NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): the brand's cta FILL trio + on-cta
-  // re-resolve from the brand-neutral's ink register (near-black light / near-white dark) —
+  // re-resolve from the brand-neutral's pen register (near-black light / near-white dark) —
   // the red-collision de-conflict. Same outline idiom; default off = byte-identical.
   ctaEscape?: boolean,
   // the SYSTEM LINK (Phase 4, owner 2026-07-16): one link trio per theme. Absent =
-  // --link aliases the primary's cta-ink trio; a custom seed = its ink-register
+  // --link aliases the primary's cta-ink trio; a custom seed = its pen-register
   // resolution ships raw (the red de-conflict for links).
   linkHex?: string | null,
   // THE CTA-BORDER OPT-OUT (owner 2026-07-31: "this should be on by default but optional").
@@ -478,24 +478,24 @@ export function brandCss(
     ? `  --${CSS_SECONDARY}-identity: ${secondary.identityHex};`
     : `  --${CSS_SECONDARY}-identity: var(--${CSS_BRAND}-identity);`
 
-  // Universal scale anchors — the two off-scale ends that extend the paper→ink
-  // ladder past its generated stops, flipping with the mode. paper-100 (paper-0
+  // Universal scale anchors — the two off-scale ends that extend the paper→pen
+  // ladder past its generated stops, flipping with the mode. paper-0 (paper-0
   // pre-Stage-B) is a RESOLVED stop of the neutral ramp (white in light; one
-  // seam below paper-99 in dark — never absolute black). ink-0 (ink-12 pre-Stage-B,
+  // seam below paper-1 in dark — never absolute black). pen-100 (ink-12 pre-Stage-B,
   // the anchor) is the LITERAL pole again — owner 2026-08-31 walked back the
   // 2026-08-28 seam resolver: pure #000 light, pure #fff dark, no tint. Emitted per
   // mode block; the fallbacks match the pole by construction.
   const p0hex = (s: ColorStop | undefined, fallback: string) => (s ? stopHex(s) : fallback)
-  const lightAnchors = [`  --${PAPER_100}: ${p0hex(nScale.paper0, '#ffffff')};`, `  --${INK_0}: ${p0hex(nScale.ink0, '#000000')};`]
-  const darkAnchors = [`  --${PAPER_100}: ${p0hex(nScale.paper0Dark, '#000000')};`, `  --${INK_0}: ${p0hex(nScale.ink0Dark, '#ffffff')};`]
+  const lightAnchors = [`  --${PAPER_0}: ${p0hex(nScale.paper0, '#ffffff')};`, `  --${PEN_100}: ${p0hex(nScale.pen100, '#000000')};`]
+  const darkAnchors = [`  --${PAPER_0}: ${p0hex(nScale.paper0Dark, '#000000')};`, `  --${PEN_100}: ${p0hex(nScale.pen100Dark, '#ffffff')};`]
 
   // outline re-resolution: emitted AFTER the secondary body so the cascade takes these values.
-  // cta-hover = wax-74 at OUTLINE_HOVER_ALPHA (pressed doubles it) — the STABLE contrast-gated stop, the same one
+  // cta-hover = crayon-26 at OUTLINE_HOVER_ALPHA (pressed doubles it) — the STABLE contrast-gated stop, the same one
   // the ring aliases (owner: 9% of the generated subtle cta was imperceptible — it's a very
   // light/dark color; the hover must reference a stable value).
-  // the SYSTEM LINK trio: default aliases the primary's ink stops directly (mode-blind —
+  // the SYSTEM LINK trio: default aliases the primary's pen stops directly (mode-blind —
   // the var chain resolves per block; was the cta-ink trio until its 2026-08-12 deletion,
-  // same values by C49 construction); a custom seed ships its ink-register resolution raw
+  // same values by C49 construction); a custom seed ships its pen-register resolution raw
   const linkTrio = linkHex ? resolveLinkTrio(linkHex, contrastProfile) : null
   const link = (mode: 'light' | 'dark'): string[] => linkTrio
     ? (mode === 'light'
@@ -507,9 +507,9 @@ export function brandCss(
       `  --link-pressed: var(--${CSS_BRAND}-${stopTokenName(11)});`,
     ]
   // the custom trio's P3 renditions (review-caught 2026-07-16): the DEFAULT posture rides
-  // the ink stops' own P3 overrides through the alias chain, but a custom trio ships
+  // the pen stops' own P3 overrides through the alias chain, but a custom trio ships
   // raw hexes — without these lines an out-of-sRGB custom link renders visibly duller
-  // than the same-register ink text beside it. --link is its own property, so
+  // than the same-register pen text beside it. --link is its own property, so
   // there is no cascade-pop hazard (the escape/outline drop classes don't apply).
   const linkP3 = (mode: 'light' | 'dark'): string[] => {
     if (!linkTrio) return []
@@ -520,12 +520,12 @@ export function brandCss(
   }
 
   // the INVERSE link trio (owner round 2026-08-19): the same link seed re-solved for text
-  // on ink-30 surfaces (resolve.resolveLinkInverseTrio — the ink register anchored at
-  // INK_30_GROUND, modes crossed). No alias posture exists: no emitted stop is anchored at
-  // the ink-30 ground, so the default seeds from the brand's own hex and the trio always
+  // on pen-70 surfaces (resolve.resolveLinkInverseTrio — the pen register anchored at
+  // PEN_70_GROUND, modes crossed). No alias posture exists: no emitted stop is anchored at
+  // the pen-70 ground, so the default seeds from the brand's own hex and the trio always
   // ships raw hexes — which also means it always needs its own P3 lines (the custom-link
   // rationale above applies to every posture here).
-  // (identityHex is typed optional but generateScale always sets it; the ink-stop
+  // (identityHex is typed optional but generateScale always sets it; the pen-stop
   // fallback keeps a hand-built scale on its own hue rather than throwing)
   const inverseSeed = linkHex ?? scale.identityHex
     ?? stopHex(scale.light.find(x => x.stop === 9)!)
@@ -545,8 +545,8 @@ export function brandCss(
   const escape = (mode: 'light' | 'dark'): string[] => {
     if (!ctaEscape) return []
     const esc = escapeCtaFamily(nScale, mode, contrastProfile)
-    // FILL TRIO ONLY (owner 2026-08-13, reverting the 2026-08-12 ink de-chroma): the
-    // brand's ink stops — the text register, and --link's default alias onto them —
+    // FILL TRIO ONLY (owner 2026-08-13, reverting the 2026-08-12 pen de-chroma): the
+    // brand's pen stops — the text register, and --link's default alias onto them —
     // keep the brand's own chroma under the escape.
     return [
       `  --${CSS_BRAND}-stamp-fill: ${stopHex(esc.cta)};`,
@@ -564,7 +564,7 @@ export function brandCss(
   // over WCAG 4.5 on every fill state. The default model's old unconditional pass was a C47
   // calibration gap (its dark states were never measured and never passed — see the
   // CARRIERS note in resolve.ts). A failing fill emits nothing here, so the secondary
-  // body's solid pole stands — the regular button posture. Outline keeps its lead-53 and
+  // body's solid pole stands — the regular button posture. Outline keeps its pencil-47 and
   // the no-secondary mirror keeps the brand's.
   const softOnCta = (mode: 'light' | 'dark'): string[] => {
     if (!secondary || secondaryStyle === 'outline') return []
@@ -603,7 +603,7 @@ export function brandCss(
   // same P3-pop class for the ESCAPE (the owner-caught outline lesson, 2026-07-11): the
   // escaped fill trio ships the neutral's whisper chroma — an out-of-sRGB BRAND cta's P3
   // override sitting last in the cascade would pop the brand fill back in over it. The
-  // ink stops keep the brand's chroma under the escape, so their P3 lines stay.
+  // pen stops keep the brand's chroma under the escape, so their P3 lines stay.
   const dropEscapeCta = (lines: string[]): string[] =>
     ctaEscape
       ? lines.filter(l => !new RegExp(`^  --${CSS_BRAND}-stamp-fill(-hover|-pressed)?:`).test(l))

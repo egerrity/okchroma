@@ -48,10 +48,10 @@ const LEVEL: Record<NeutralLevel, number> = { pure: 0, default: 0.75, medium: 1,
 //   1. "add a bit more chroma to help differentiate" — the elevation planes (paper-1 …
 //      paper-3) must separate from each other, so the tint LIFTS across them.
 //   2. "the hue has to drop off as you get higher" — so it TAPERS through the
-//      wax, lead, and ink bands, landing text ~neutral.
-// The borrowed shape did the exact opposite: it rose monotonically through the wax/lead
-// band and was still near peak at the inks — least tint on the planes that needed
-// separating, most where it should be clean. Measured cost: the dark strong ink burned
+//      crayon, pencil, and pen bands, landing text ~neutral.
+// The borrowed shape did the exact opposite: it rose monotonically through the crayon/pencil
+// band and was still near peak at the pens — least tint on the planes that needed
+// separating, most where it should be clean. Measured cost: the dark strong pen burned
 // ~32% of its available chroma room, so text carried a visible cast, while dark
 // paper-1/2 sat at ~.002/.003 and read flat.
 //
@@ -71,11 +71,11 @@ const NEUTRAL_TINT_POINTS: Record<'light' | 'dark', readonly TintPoint[]> = {
     [0.987, 0.474], // paper-1  ─┐
     [0.970, 0.684], // paper-2   │ the differentiation lift: tint grows with elevation
     [0.950, 0.895], // paper-3  ─┘
-    [0.924, 1.000], // wash-4   ─┐ peak: the mid-wash band, the neutral's most-branded moment
+    [0.924, 1.000], // wash-4   ─┐ peak: the mid-highlighter band, the neutral's most-branded moment
     [0.892, 1.000], // wash-5   ─┘
     [0.852, 0.842], // wash-6   ─┐
     [0.801, 0.653], // wash-7    │
-    [0.738, 0.505], // wax-74
+    [0.738, 0.505], // crayon-26
     [0.600, 0.400], // knee (ex-scaffold)   the drop-off: hue fades as you climb
     [0.560, 0.347], // knee (ex-scaffold)
     [0.530, 0.295], // first text stop
@@ -89,7 +89,7 @@ const NEUTRAL_TINT_POINTS: Record<'light' | 'dark', readonly TintPoint[]> = {
     [0.313, 1.000], // wash-5
     [0.348, 0.842], // wash-6
     [0.420, 0.653], // wash-7
-    [0.550, 0.505], // wax-74
+    [0.550, 0.505], // crayon-26
     [0.600, 0.400], // knee (ex-scaffold)
     [0.640, 0.347], // knee (ex-scaffold)
     [0.767, 0.295], // first text stop

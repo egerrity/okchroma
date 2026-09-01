@@ -72,11 +72,11 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
     // MODEL rather than a note-text spot check:
     //   i.   the shape is still the default model's (style 'default', subtle, never demoted)
     //   ii.  the RAMP is byte-identical to the exact posture's — the user's colour is preserved
-    //        across every stop, papers through inks. This is the guard that catches a
+    //        across every stop, papers through pens. This is the guard that catches a
     //        regression back to transforming the whole ramp.
     //   iii. the CTA is NOT the exact posture's — it is the tint, and it must actually differ,
     //        or the posture has silently collapsed into exact.
-    //   iv.  cta-ink is NOT tinted (owner ruling): it stays the own ramp's, matching lead-53/ink-42.
+    //   iv.  cta-ink is NOT tinted (owner ruling): it stays the own ramp's, matching pencil-47/pen-58.
     const tf = resolveTheme({ primaryHex: pHex, secondaryHex: sHex, secondaryStyle: 'default', contrastProfile: cp })
     const secF = tf.secondary!
     const secX = resolveTheme({ primaryHex: pHex, secondaryHex: sHex, secondaryStyle: 'exact', contrastProfile: cp }).secondary!
@@ -91,8 +91,8 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
     if (JSON.stringify(secF.scale.cta) === JSON.stringify(secX.scale.cta))
       fails.push({ theme: id, check: 'custom-cta-tinted', detail: 'custom cta equals the exact cta — the tint did not apply' })
     // (the custom-ctaink-untinted check DELETED with the cta-ink fields, owner 2026-08-12:
-    // the text register is the ink stops, and the ramp-preserved check above already
-    // asserts every stop — inks included — matches the exact posture)
+    // the text register is the pen stops, and the ramp-preserved check above already
+    // asserts every stop — pens included — matches the exact posture)
 
     // LANE 2 — the EXACT style (the owner model: standard IS exact — user's color ships as a
     // full ramp, hands off): the invariant is ADVICE — every signal collision must be annotated,

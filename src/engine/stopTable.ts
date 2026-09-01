@@ -4,17 +4,17 @@ export interface StopSpec {
 }
 
 // ── THE STOP-L SCAFFOLDS, KEYED BY STOP NUMBER ────────────────────────────────
-// Stops 1–8 (paper→wax-74) are a GEOMETRIC ladder — gaps grow ~1.25× per step — so every adjacent
+// Stops 1–8 (paper→crayon-26) are a GEOMETRIC ladder — gaps grow ~1.25× per step — so every adjacent
 // stop is distinct by construction and paper-2 falls onto its ID curve with no clamp (owner 2026-07-09,
 // distribution "B"; separation is a shape property, not a delta — see spec.ts).
 // (Normalized 2026-08-05: these were positional arrays carrying two RETIRED slots between stop 8 and
-// the inks, kept alive as control points for the neutral tint interpolation. The tint curves now own
+// the pens, kept alive as control points for the neutral tint interpolation. The tint curves now own
 // their control points — neutralCurve.ts NEUTRAL_TINT_POINTS / SHAPE_POINTS, values verbatim — so the
 // scaffolds are plain per-stop declarations and a renumber moves keys, never meanings.)
-// Dark ink scaffolds dimmed 0.800/0.940 → 0.767/0.919 (owner midpoint pick, 2026-07-20): the shipped
-// dark inks ran ~1.9× their light twins' WCAG contrast and the ink hierarchy flattened. Neutral
+// Dark pen scaffolds dimmed 0.800/0.940 → 0.767/0.919 (owner midpoint pick, 2026-07-20): the shipped
+// dark pens ran ~1.9× their light twins' WCAG contrast and the pen hierarchy flattened. Neutral
 // midpoint = #b3b3b3 / #e4e4e4; every family re-solves off the scaffold through the perceptual
-// placement, with the declared ink requires (spec.ts) as the floor.
+// placement, with the declared pen requires (spec.ts) as the floor.
 // ink-10 (owner 2026-08-05, C49): the between text stop — the value cta-ink-hover used to
 // generate bespokely, promoted to a normal stop the family aliases. Its rootLs are the
 // midpoints of its neighbors' ((0.530+0.300)/2, (0.767+0.919)/2): the retired state-step
@@ -33,7 +33,7 @@ export const ROOT_L_DARK: Record<number, number> = {
 // The dark chroma-floor LADDER LAW: the floor a dark stop may not drop under, as a
 // function of ladder depth (×floorStrength at runtime — applyChromaFloor, colorMath.ts).
 // The surface band derives its floor from this law at its own depth (stop − 1, aligned by
-// construction); the ink rows DECLARE their floors as values below, frozen at the rungs
+// construction); the pen rows DECLARE their floors as values below, frozen at the rungs
 // they have always occupied.
 export const chromaFloorBase = (idx: number): number => 0.02 + (0.04 - 0.02) * (idx / 7)
 
@@ -48,24 +48,24 @@ export const chromaFloorBase = (idx: number): number => 0.02 + (0.04 - 0.02) * (
 // Fields: base = the register curve the H-K placement solve consumes (its C(L)
 // input); sat = the per-stop share of the room envelope (brandSat × maxChromaAt —
 // ALL hue awareness is generative: the room envelope, the gamut ceiling, and the
-// contrast requires; the base is deliberately hue-agnostic); inkMult = the ink
-// stops' ID-relative multiplier semantics, declared here pending the C9/C11 ink
-// round (which may normalize ink to a text register).
-// KEYED BY STOP NUMBER, so the 2026-07-29 collapse re-keyed the ink rows down with
+// contrast requires; the base is deliberately hue-agnostic); textMult = the pen
+// stops' ID-relative multiplier semantics, declared here pending the C9/C11 pen
+// round (which may normalize pen to a text register).
+// KEYED BY STOP NUMBER, so the 2026-07-29 collapse re-keyed the pen rows down with
 // the stops (old 10/11 → 9/10) and deleted the old highlight-9 row. The VALUES did
 // not move.
-// inkMaxC = the TEXT REGISTER ceiling (C9/C11 ink round): ink chroma is the ID-relative
-// multiplier NORMALIZED to the band register — min(inkMult × brandC, inkMaxC) — and the
+// textMaxC = the TEXT REGISTER ceiling (C9/C11 pen round): pen chroma is the ID-relative
+// multiplier NORMALIZED to the band register — min(textMult × brandC, textMaxC) — and the
 // H-K placement solve consumes the normalized value, so lightness placement and apparent
 // register follow from the pipeline (no emit-side cap). Muted brands sit below the
 // ceiling untouched; the ceiling only trims the big-room hues (yellow-green worst).
-// chromaFloor = the dark ink chroma floor, DECLARED AS THE VALUE ITSELF (normalized
+// chromaFloor = the dark pen chroma floor, DECLARED AS THE VALUE ITSELF (normalized
 // 2026-08-05; applyChromaFloor takes it verbatim, ×strength at runtime). It used to be
 // an index into the band ladder formula — pinned at the physical rungs 10/11 across two
 // renumbers, a deliberate stop-number mismatch (the 2026-07-10 trap). Declaring the
 // value kills the index: there is nothing left for a renumber to move. The expressions
 // preserve the exact historical floats (= chromaFloorBase(10) / chromaFloorBase(11)).
-export interface ScaleChroma { base?: number; sat?: number; inkMult?: number; inkMaxC?: number; chromaFloor?: number }
+export interface ScaleChroma { base?: number; sat?: number; textMult?: number; textMaxC?: number; chromaFloor?: number }
 export const SCALE_C_LIGHT: Record<number, ScaleChroma> = {
   0: { base: 0.000, sat: 0.00 },
   1: { base: 0.004, sat: 0.50 },
@@ -76,12 +76,12 @@ export const SCALE_C_LIGHT: Record<number, ScaleChroma> = {
   6: { base: 0.068, sat: 0.85 },
   7: { base: 0.086, sat: 0.78 },
   8: { base: 0.142, sat: 0.78 },
-  9: { inkMult: 0.95, inkMaxC: 0.150, chromaFloor: chromaFloorBase(10) },
+  9: { textMult: 0.95, textMaxC: 0.150, chromaFloor: chromaFloorBase(10) },
   // ink-10 keeps the FIRST-text register (ink-9's row, C49): the retired hover law
   // evaluated ink-9's chroma register at the between L, so the same params reproduce it;
   // the damped strong register below belongs to the top text stop alone.
-  10: { inkMult: 0.95, inkMaxC: 0.150, chromaFloor: chromaFloorBase(10) },
-  11: { inkMult: 0.50, inkMaxC: 0.080, chromaFloor: chromaFloorBase(11) },
+  10: { textMult: 0.95, textMaxC: 0.150, chromaFloor: chromaFloorBase(10) },
+  11: { textMult: 0.50, textMaxC: 0.080, chromaFloor: chromaFloorBase(11) },
 }
 // Dark: sat = the dark subtle-chroma ladder (values verbatim — the fold is
 // structure-only, byte-identical by contract).
@@ -95,9 +95,9 @@ export const SCALE_C_DARK: Record<number, ScaleChroma> = {
   6: { sat: 0.76 },
   7: { sat: 0.80 },
   8: { sat: 0.84 },
-  9: { inkMult: 0.95, inkMaxC: 0.120, chromaFloor: chromaFloorBase(10) },
-  10: { inkMult: 0.95, inkMaxC: 0.120, chromaFloor: chromaFloorBase(10) },
-  11: { inkMult: 0.62, inkMaxC: 0.045, chromaFloor: chromaFloorBase(11) },
+  9: { textMult: 0.95, textMaxC: 0.120, chromaFloor: chromaFloorBase(10) },
+  10: { textMult: 0.95, textMaxC: 0.120, chromaFloor: chromaFloorBase(10) },
+  11: { textMult: 0.62, textMaxC: 0.045, chromaFloor: chromaFloorBase(11) },
 }
 // ── the DARK CTA chroma register (CATALOG C16, owner ruling 2026-07-12: "declare,
 // don't change"). The cta is off-scale, so the SCALE_C tables never covered it; its
@@ -122,11 +122,11 @@ export const DARK_CTA_C = {
 export type DarkCtaKind = keyof typeof DARK_CTA_C
 // ──────────────────────────────────────────────────────────────────────────────
 
-// Stop 8 (wax-74) carries the WCAG 1.4.11 non-text 3:1 guarantee — against
+// Stop 8 (crayon-26) carries the WCAG 1.4.11 non-text 3:1 guarantee — against
 // PAPER-3 IN BOTH MODES (owner 2026-07-29: "it is a 3:1 contrast require on paper 3
 // so inputs can be placed on any paper"). Paper-3 is the hardest plane in each mode:
 // light's darkest paper, dark's lightest. The light ramp clamps its perceptual rung L
-// down to this ceiling — the same kind of contrast bound the ink stops use
+// down to this ceiling — the same kind of contrast bound the pen stops use
 // (findMaxLForContrast); dark solves the same law as a declared require. ONE rule,
 // one anchor, one number, both modes (reqtoken spec S8; the old dark-only S8_DARK at
 // paper-2 is deleted).
@@ -138,16 +138,16 @@ export type DarkCtaKind = keyof typeof DARK_CTA_C
 export const STOP_8_NONTEXT_CONTRAST = 3.0
 
 // ── THE DARK BAND ANCHOR (owner round 2026-08-13, the smoothing) ──────────────
-// The six per-stop solved lifts (C24 marks → C28 half-strength → C37 wash
-// redistribution) are RETIRED. C37 declared washes 4–7 in contrast space at one S so
+// The six per-stop solved lifts (C24 marks → C28 half-strength → C37 highlighter
+// redistribution) are RETIRED. C37 declared highlighters 4–7 in contrast space at one S so
 // their seam ratios match light's by algebra, but with the papers pinned (C27) the
-// whole raise landed on the single paper-95→wash-92 seam (contrast 1.107 → 1.295,
+// whole raise landed on the single paper-5→highlighter-8 seam (contrast 1.107 → 1.295,
 // recorded then as the accepted cost). This round extends the same law across the
 // WHOLE band, papers included, every family including the neutral (owner: "one rule
 // for everything"): the interior is placed by light's log-contrast distribution
 // (shipped-Y, achromatic scaffold — the C28 one-dialect basis) between two held
-// anchors, the dark ground (paper-100's scaffold) and the band top. The constant
-// below IS the top anchor: wash-80's shipped C37 stop-7 lift, verbatim — wash-80
+// anchors, the dark ground (paper-0's scaffold) and the band top. The constant
+// below IS the top anchor: highlighter-20's shipped C37 stop-7 lift, verbatim — highlighter-20
 // does not move. The interior lifts are COMPUTED (producers.smoothedBandLift), so
 // there is nothing left to hand-maintain: this one number sets the band's loudness,
 // and the shape comes out analogous to light's by construction. The C27 paper pin
@@ -164,7 +164,7 @@ export const YELLOW_BAND = { centerH: 92, sigmaDeg: 20 }
 // the stop's L-axis scaffold; the L values live on only as tint-curve control points —
 // neutralCurve.ts NEUTRAL_TINT_POINTS. DARK_NEUTRAL_L and its 0.66/0.72 mid anchors
 // deleted with the 2026-08-05 normalization: the anchors sat in the two retired
-// positions the dark spec never read — the dark neutral's ink rootLs come from
+// positions the dark spec never read — the dark neutral's pen rootLs come from
 // ROOT_L_DARK like everything else.)
 
 // INK-9 (owner 2026-07-29) is BOTH the first text stop and the emphasis FILL — the role
@@ -172,30 +172,30 @@ export const YELLOW_BAND = { centerH: 92, sigmaDeg: 20 }
 // on-color is no longer solved; it is a paper token (semantic.css `-fg-on-emphasis` →
 // --paper-0, measured worst 4.96 light / 8.04 dark over the 360-seed agnostic sweep).
 // Named by ROLE, not by stop number, so the next renumber cannot make the name lie.
-export const INK_9_CONTRAST = 4.5
+export const PENCIL_9_CONTRAST = 4.5
 
-// ink-10, the BETWEEN text stop — THE WASH-80 LAW (guarantee-groups round, owner
-// 2026-08-27): 4.5 anchored at wash-80 (stop 7), the darkest wash, so "ink-42 is usable
-// on every wash" is a guarantee rather than a near-miss (the pre-law worst was 4.25 on
-// wash-80, positive lane, light). Replaces the old 6.5-vs-paper-97 declaration, a floor
-// that never fired on the geometry; the paper-97 fact still holds after this law (the
+// ink-10, the BETWEEN text stop — THE HIGHLIGHTER-20 LAW (guarantee-groups round, owner
+// 2026-08-27): 4.5 anchored at highlighter-20 (stop 7), the darkest highlighter, so "pen-58 is usable
+// on every highlighter" is a guarantee rather than a near-miss (the pre-law worst was 4.25 on
+// highlighter-20, positive lane, light). Replaces the old 6.5-vs-paper-3 declaration, a floor
+// that never fired on the geometry; the paper-3 fact still holds after this law (the
 // solve only darkens) and guarantee-audit pins the full group matrix. Light-only in
 // effect: the dark scaffold clears everywhere, so dark stays byte-identical.
-export const INK_10_CONTRAST = 4.5
+export const PEN_10_CONTRAST = 4.5
 
-export const INK_11_CONTRAST_FLOOR = 7.0
+export const PEN_11_CONTRAST_FLOOR = 7.0
 
-// THE INK-30 GROUND (owner round 2026-08-19): the inverse link family is text on an
-// INVERTED surface — an ink-30 fill, not a paper — so its ink requires anchor here
+// THE PEN-70 GROUND (owner round 2026-08-19): the inverse link family is text on an
+// INVERTED surface — a pen-70 fill, not a paper — so its pen requires anchor here
 // instead of at a paper of their own ramp. Same doctrine as NEUTRAL_P3_WORST_SHIP_Y
 // (requirements/resolve.ts): a cross-family bound frozen at the worst surface any theme
-// can put on screen, so "the inverse link is usable on every ink-30" is a law rather
+// can put on screen, so "the inverse link is usable on every pen-70" is a law rather
 // than a per-theme hope. Stored as the COLOR, not a Y — each lane derives its own
 // measure (shippedY for wcag, apcaY for apca) and the shipped-pair floor needs the
 // anchor's own 8-bit rendition.
-//   light = the LIGHTEST light-mode ink-30 — light text on it is the binding case, and
+//   light = the LIGHTEST light-mode pen-70 — light text on it is the binding case, and
 //           clearing the lightest ground clears every darker one.
-//   dark  = the DARKEST dark-mode ink-30 — the mirror.
+//   dark  = the DARKEST dark-mode pen-70 — the mirror.
 // PER LANE (like signalScalesFor — a lane's themes only ever ship that lane's surfaces,
 // so each lane is judged against its own worst; one shared bound was tried and the wcag
 // lane's darker dark-worst put the apca pressed bar, Lc for the strong text rung, past
@@ -204,11 +204,11 @@ export const INK_11_CONTRAST_FLOOR = 7.0
 // a divergence is a value edit, not a shape change.
 // Measured 2026-08-19 over hue 0..355 x C 0.02..0.24 x L 0.40..0.90, every NeutralLevel x
 // hue, and the signal set, per lane, via resolveBrand/generateNeutralScale -> stopHex.
-// RE-DERIVE if the ink ladder, the ink chroma floors, or the neutral curve moves —
+// RE-DERIVE if the pen ladder, the pen chroma floors, or the neutral curve moves —
 // reqtoken-audit's ground-bound tripwire catches an escape on its own sweep.
 // Shipped renditions: light #3c3800 (Y 0.037890) both lanes · dark wcag #e1dbfc
 // (Y 0.736989) · dark apca #ceedd6 (Y 0.785452).
-export const INK_30_GROUND = {
+export const PEN_70_GROUND = {
   wcag: {
     light: { L: 0.3334966864733433, C: 0.07399966383476321, H: 104.26776675496032 },
     dark: { L: 0.907688606079988, C: 0.045, H: 293.66431934911327 },

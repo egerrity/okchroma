@@ -12,12 +12,12 @@ import { clampChromaToGamut, wcagY, legalRatio, findMaxLForContrast, apcaLc, con
 import { hexToOklch, srgbEmitChannels, redSolveDist, RED_GATE, RED_SOLVE } from '../colorMath'
 import { hoverL, pressedL, stateFillL } from '../archetypes'
 import { ROOT_L_LIGHT, DARK_SIGNAL_WARM_DRIFT, chromaFloorBase } from '../stopTable'
-import { MODE_SPECS, inkLane, type ModeSpec, type StopReq, type RoleReq, type Require } from './spec'
+import { MODE_SPECS, textLane, type ModeSpec, type StopReq, type RoleReq, type Require } from './spec'
 import {
   buildContext, buildDarkContext, type Ctx, type DarkCtx, type ResolveOpts,
   lightScaleChromaAt, placeLightScale, placeLightText,
   separationClampLight,
-  darkScaleChromaAt, darkInkChromaAt, placeDark, placeDarkDelta, deltaDarkTargetL, deltaLiftChroma, deltaDarkPlace, flatDarkCtaL, smoothedBandLift,
+  darkScaleChromaAt, darkTextChromaAt, placeDark, placeDarkDelta, deltaDarkTargetL, deltaLiftChroma, deltaDarkPlace, flatDarkCtaL, smoothedBandLift,
   onFillIsWhiteLight, onFillIsWhiteDarkAt, ctaLightL, ctaDarkEnforcedL,
   ctaLightLApca, ctaDarkEnforcedLApca, solveBrandExit, solveDarkCtaExit, ctaDualGateL, ctaDarkDualGateL,
   apcaYAt, findMaxLForApcaLc, APCA_SOLVE_MARGIN_LC, APCA_TOL_LC, APCA_ENFORCE_MARGIN_LC,
@@ -37,21 +37,21 @@ export type ResolvedRamp = {
   mode: 'light' | 'dark'
   seed: Seed
   stops: ResolvedStop[]
-  // the cta FILL trio. (The ink trio DELETED, owner 2026-08-12 — the text-register
-  // cta is the ink stops 9/10/11 read directly from `stops`.)
+  // the cta FILL trio. (The pen trio DELETED, owner 2026-08-12 — the text-register
+  // cta is the pen stops 9/10/11 read directly from `stops`.)
   roles: {
     cta: ResolvedRole; ctaHover: ResolvedRole; ctaPressed: ResolvedRole
   }
   // one on-color left: the cta's own text pole. onHighlightIsWhite died with the
-  // highlight band (owner 2026-07-29) — lead-53's on-color is a paper token now.
+  // highlight band (owner 2026-07-29) — pencil-47's on-color is a paper token now.
   ons: { onFillIsWhite: boolean }
 }
 export type { ResolveOpts }
 
 // the loudness cap on the APCA-clearance move (v1 raw-L symmetric budget around the brand fill; owner-tuned
 // from the exhibit marks — plan open item 4). 4.5 is NEVER capped; only the Lc ambition is. No emphasis-band
-// clamp: the emphasis fill (lead-53) sits at a mid L (often BELOW the cta), so a black-lighten moves AWAY from it —
-// there is no wash risk to guard, and clamping to it wrongly killed the move.
+// clamp: the emphasis fill (pencil-47) sits at a mid L (often BELOW the cta), so a black-lighten moves AWAY from it —
+// there is no highlighter risk to guard, and clamping to it wrongly killed the move.
 // The clearance caps are the POLE caps (owner 2026-07-13 dead-zone ruling: the bar is the
 // goal, not an ambition — the old ±0.16 taste budget capped worst-case dead zones short of
 // legibility and is retired; 4.5 was never capped either way).
@@ -64,12 +64,12 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   const ctx = buildContext(hex, opts)
   spec ??= MODE_SPECS[mode]
   // THE INVERSE LANE KEEPS ITS OWN LADDER (guarantee-groups round, owner 2026-08-27):
-  // T10's wash-80 law is a claim about washes, which the inverse lane never ships — its
-  // ink register is text on an ink-30 fill, judged against INK_30_GROUND at the
-  // 4.5 / 6.5 / 7.0 ladder the inverse round froze. On the inkGround path stop 10's
+  // T10's highlighter-20 law is a claim about highlighters, which the inverse lane never ships — its
+  // pen register is text on a pen-70 fill, judged against PEN_70_GROUND at the
+  // 4.5 / 6.5 / 7.0 ladder the inverse round froze. On the textGround path stop 10's
   // target therefore stays 6.5 (the anchor is moot there: groundOf overrides every
-  // ink stop's ground to inkGround).
-  if (ctx.opts?.inkGround) {
+  // pen stop's ground to textGround).
+  if (ctx.opts?.textGround) {
     spec = {
       ...spec,
       stops: spec.stops.map(s => (s.stop === 10 && s.require?.metric === 'wcag'
@@ -99,47 +99,47 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   // Reference measures are taken off the resolved GROUND (groundOf / apcaGroundOf below) —
   // wcagY for the wcag lane, apcaYAt (the APCA screen-luminance model) for the apca lane.
   // THE DECLARED ANCHOR (owner 2026-07-28): `require.against` is now AUTHORITATIVE —
-  // it used to be documentation while the resolver hardcoded paper-97 (paper-2) here and in the
+  // it used to be documentation while the resolver hardcoded paper-3 (paper-2) here and in the
   // apca path, so moving a require's anchor meant editing the engine rather than the
   // declaration. spec.ts is the portable artifact; the anchor belongs in it.
-  // wash-80 joined the union with the T10 wash-80 law (guarantee-groups round, owner
-  // 2026-08-27): the ink group's "usable on every wash" claim anchors at the darkest wash.
-  const AGAINST_STOP: Record<string, number> = { 'paper-99': 1, 'paper-97': 2, 'paper-95': 3, 'wash-80': 7 }
+  // highlighter-20 joined the union with the T10 highlighter-20 law (guarantee-groups round, owner
+  // 2026-08-27): the pen group's "usable on every highlighter" claim anchors at the darkest highlighter.
+  const AGAINST_STOP: Record<string, number> = { 'paper-1': 1, 'paper-3': 2, 'paper-5': 3, 'highlighter-20': 7 }
   const declaredAnchor = (req: Require): number =>
     req.metric === 'min-separation' ? 1 : AGAINST_STOP[req.against] ?? 2
-  // THE INK ANCHOR (owner rule 2026-07-28: "ink-10 can only be used on papers" — and it
-  // must PASS on all of them): in the WCAG lane the ink requires (the ink stops
-  // 9–11) anchor at paper-95 (paper-3), the NEAREST paper (light's darkest, dark's
+  // THE PEN ANCHOR (owner rule 2026-07-28: "ink-10 can only be used on papers" — and it
+  // must PASS on all of them): in the WCAG lane the pen requires (the pen stops
+  // 9–11) anchor at paper-5 (paper-3), the NEAREST paper (light's darkest, dark's
   // lightest), so clearing the bar there clears every paper. The apca lane keeps its
-  // paper-97 (paper-2) anchor — its Lc solve already clears paper-95 with margin everywhere
+  // paper-3 (paper-2) anchor — its Lc solve already clears paper-5 with margin everywhere
   // (agnostic sweep worst 5.28 wcag-ratio, 0/216 under 4.5) and stays byte-identical.
   // Lane-specific, so it stays an override on top of the declaration rather than in it.
-  // Threshold moved 10 → 9 with the 2026-07-29 renumber: the ink band starts at 9 now.
-  // This IS why the collapse is visually cheap — it is the rule that made lead-53 (then
-  // ink-10) land on top of highlight-9, both solving 4.5 against paper-95 (paper-3).
-  // The override applies only when the declaration names a PAPER: a declared wash anchor
-  // (T10's wash-80 law) is already darker than every paper and must be honored as-is.
+  // Threshold moved 10 → 9 with the 2026-07-29 renumber: the pen band starts at 9 now.
+  // This IS why the collapse is visually cheap — it is the rule that made pencil-47 (then
+  // ink-10) land on top of highlight-9, both solving 4.5 against paper-5 (paper-3).
+  // The override applies only when the declaration names a PAPER: a declared highlighter anchor
+  // (T10's highlighter-20 law) is already darker than every paper and must be honored as-is.
   const wcagAnchorStop = (req: Require, stop: number) =>
     (stop >= 9 && declaredAnchor(req) <= 3 ? 3 : declaredAnchor(req))
-  // THE INVERSE INK GROUND (owner round 2026-08-19, opts.inkGround): the ink stops solve
+  // THE INVERSE PEN GROUND (owner round 2026-08-19, opts.textGround): the pen stops solve
   // against an EXTERNAL color rather than a stop of their own ramp — the inverse link family
-  // is text on an ink-30 fill. Everything downstream reads its ground through these two, so
+  // is text on a pen-70 fill. Everything downstream reads its ground through these two, so
   // the override lands once and the wcag/apca/shipped-pair paths cannot drift apart. Absent
   // (every other caller) = the declared/lane anchor, byte-identical.
-  const inkGround = ctx.opts?.inkGround?.[mode]
+  const textGround = ctx.opts?.textGround?.[mode]
   const groundOf = (req: Require, stop: number): { L: number; C: number; H: number } =>
-    inkGround && stop >= 9 ? inkGround : refOf(wcagAnchorStop(req, stop), stop)
+    textGround && stop >= 9 ? textGround : refOf(wcagAnchorStop(req, stop), stop)
   const apcaGroundOf = (req: Require, stop: number): { L: number; C: number; H: number } =>
-    inkGround && stop >= 9 ? inkGround : refOf(declaredAnchor(req), stop)
+    textGround && stop >= 9 ? textGround : refOf(declaredAnchor(req), stop)
   // the CROSS-FAMILY paper bound (owner defect 2026-08-03 — her measured pair was the
-  // brand lead-53 (ink-9) on the NEUTRAL paper-95 (paper-3), 4.479:1; her follow-up
-  // caught wax-74 (highlight-8) the same way, 26/72 under 3:1): "usable on every
-  // paper" includes the per-brand NEUTRAL's papers, and the own-family paper-95 (paper-3)
+  // brand pencil-47 (ink-9) on the NEUTRAL paper-5 (paper-3), 4.479:1; her follow-up
+  // caught crayon-26 (highlight-8) the same way, 26/72 under 3:1): "usable on every
+  // paper" includes the per-brand NEUTRAL's papers, and the own-family paper-5 (paper-3)
   // is NOT the nearest paper for green-band brands — their tinted paper carries more Y
   // than the near-gray neutral at the same L. Covers every contrast-required stop from 8
-  // up: the inks are text on any paper, and wax-74 (highlight-8) is the focus-
+  // up: the pens are text on any paper, and crayon-26 (highlight-8) is the focus-
   // ring/border register that sits on neutral surfaces (WCAG 1.4.11).
-  // The bound is the worst SHIPPED neutral paper-95 (paper-3) Y over hue 0..350 × every NeutralLevel:
+  // The bound is the worst SHIPPED neutral paper-5 (paper-3) Y over hue 0..350 × every NeutralLevel:
   // light min 0.845015 (H260 branded #e8edf8) · dark max 0.014247 (H300 medium #211f23),
   // measured 2026-08-03 via generateNeutralScale → stopHex; re-derived 2026-08-11 for the
   // default-tint retune (default 0.75x + the medium rung) — both worsts UNCHANGED, the dark
@@ -147,18 +147,18 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   // scope here (the ramp resolves per family), so the floor clears the worst neutral any
   // theme can generate. RE-DERIVE if the neutral curve or the paper ladder moves.
   const NEUTRAL_P3_WORST_SHIP_Y = { light: 0.845015, dark: 0.014247 } as const
-  // The same doctrine for the wash-80 anchor (T10's wash-80 law, owner 2026-08-27): the
-  // ink group's claim spans its own family AND the neutral, so the bound is the worst
-  // SHIPPED neutral wash-80 Y over hue 0..350 × every NeutralLevel — light min (darkest)
+  // The same doctrine for the highlighter-20 anchor (T10's highlighter-20 law, owner 2026-08-27): the
+  // pen group's claim spans its own family AND the neutral, so the bound is the worst
+  // SHIPPED neutral highlighter-20 Y over hue 0..350 × every NeutralLevel — light min (darkest)
   // H290 branded, dark max (lightest) H30 branded, measured 2026-08-27 via
   // generateNeutralScale → shippedY (scratchpad derive-w80-bound). RE-DERIVE if the
-  // neutral curve or the wash ladder moves. A wash-80-anchored stop needs no paper bound:
-  // clearing the darkest wash clears every paper of both ramps by ladder monotonicity.
+  // neutral curve or the highlighter ladder moves. A highlighter-20-anchored stop needs no paper bound:
+  // clearing the darkest highlighter clears every paper of both ramps by ladder monotonicity.
   const NEUTRAL_W80_WORST_SHIP_Y = { light: 0.506433, dark: 0.074262 } as const
   // the light contrast solves are metric-blind: the resolver hands the producer a maxLFor closure built
   // from the declared require. wcag closures call findMaxLForContrast with the exact old arguments
   // (float-identical — the wcag profile stays byte-for-byte); apca closures swap in the Lc bisection.
-  // `withMargin` mirrors the wcag idiom: the scale solve carries the emit margin, the ink solve doesn't.
+  // `withMargin` mirrors the wcag idiom: the scale solve carries the emit margin, the pen solve doesn't.
   const maxLForOf = (req: Require, forWhom: number, withMargin: boolean): ((C: number, H: number) => number) => {
     if (req.metric === 'wcag') {
       const g = groundOf(req, forWhom)
@@ -175,9 +175,9 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     throw new Error(`stop ${forWhom}: ${req.metric} is not a contrast require`)
   }
   // (the stop10DeepenL/stop11DeepenL opts were DELETED 2026-07-29: no caller in the repo
-  // ever set either, so the ink solve always ran at deepen 0. Removing them rather than
+  // ever set either, so the pen solve always ran at deepen 0. Removing them rather than
   // renumbering them keeps a dead knob from naming a stop that no longer means what it said.)
-  const INK_DEEPEN = 0
+  const TEXT_DEEPEN = 0
 
   for (const sp of spec.stops) {
     let placed: { L: number; C: number; H: number }
@@ -185,9 +185,9 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
 
     if (mode === 'light') {
       // LIGHT: verbatim engine producers, dispatched by group
-      if (inkLane(sp.group)) {
-        if (!sp.require) throw new Error(`light ink stop ${sp.stop} must declare a contrast require`)
-        placed = placeLightText(ctx, sp.rootL, sp.chromaMult ?? 1, maxLForOf(sp.require, sp.stop, false), INK_DEEPEN, sp.inkMaxC)
+      if (textLane(sp.group)) {
+        if (!sp.require) throw new Error(`light pen stop ${sp.stop} must declare a contrast require`)
+        placed = placeLightText(ctx, sp.rootL, sp.chromaMult ?? 1, maxLForOf(sp.require, sp.stop, false), TEXT_DEEPEN, sp.textMaxC)
         clamped = true
       } else if (sp.produce.L === 'fixed') {
         // fixed light stop (paper-0): sits exactly at its declared extreme
@@ -202,7 +202,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         placed = placeLightScale(ctx, sp.rootL, chromaAt, contrastReq ? maxLForOf(contrastReq, sp.stop, true) : undefined, targetChromaAt)
         clamped = !!contrastReq
         if (sp.require?.metric === 'min-separation') {
-          const refStop = sp.require.against === 'paper-99' ? 1 : sp.stop - 1
+          const refStop = sp.require.against === 'paper-1' ? 1 : sp.stop - 1
           const ref = stops.find(s => s.stop === refStop)
           if (!ref) throw new Error(`stop ${sp.stop}: min-separation against stop ${refStop} but it is not resolved yet`)
           const before = placed.L
@@ -213,25 +213,25 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     } else {
       // DARK: verbatim engine producers; 'fixed' stays at the hand-placed scaffold, 'perceptual' solves
       const d = dctx!
-      const inkTwin = inkLane(sp.group) && ctx.opts?.deltaCarry && ctx.opts?.chromaCurve
+      const textTwin = textLane(sp.group) && ctx.opts?.deltaCarry && ctx.opts?.chromaCurve
         ? ctx.opts.deltaLightStops?.find(s => s.stop === sp.stop) : undefined
       const chromaAt =
-        inkLane(sp.group)
-          // curve-bearing ramps (neutral, derived secondary): ink chroma = the light twin's (the curve's dark
-          // branch is keyed to the OLD dark L geography — sampling it at delta ink L's made the 11-jump).
-          // Low-chroma inks carry no hue-family risk; L and hue stay dark-native.
+        textLane(sp.group)
+          // curve-bearing ramps (neutral, derived secondary): pen chroma = the light twin's (the curve's dark
+          // branch is keyed to the OLD dark L geography — sampling it at delta pen L's made the 11-jump).
+          // Low-chroma pens carry no hue-family risk; L and hue stay dark-native.
           // THE CHROMA FLOOR IS A DECLARED VALUE (sp.chromaFloor, from the stop's SCALE_C_* row) —
           // normalized 2026-08-05 from a ladder index that had to be pinned across renumbers (the
           // 2026-07-10 trap). A portable spec without the field falls back to the ladder law at the
           // stop's own depth, which is what an index-less spec means.
-          ? (inkTwin ? ((_L: number) => inkTwin.C) : darkInkChromaAt(ctx, d, sp.chromaFloor ?? chromaFloorBase(sp.stop), sp.chromaMult ?? 1, sp.inkMaxC))
-        // chroma-floor index clamps at 0: stop 0 shares paper-99's (paper-1's) tint treatment
+          ? (textTwin ? ((_L: number) => textTwin.C) : darkTextChromaAt(ctx, d, sp.chromaFloor ?? chromaFloorBase(sp.stop), sp.chromaMult ?? 1, sp.textMaxC))
+        // chroma-floor index clamps at 0: stop 0 shares paper-1's (paper-1's) tint treatment
         : darkScaleChromaAt(ctx, d, Math.max(0, sp.stop - 1), sp.satFraction ?? 1)
-      // DELTA-KEYED: derive dark from the resolved light twin for the SURFACE stops 1–8 (papers, washes,
-      // focus ring). INKS 9–11 are dark-native (owner 2026-07-09): text INVERTS across modes — there is
-      // no "same color, re-referenced" for a stop that crosses the paper; carrying a dark-gold ink's hue up
+      // DELTA-KEYED: derive dark from the resolved light twin for the SURFACE stops 1–8 (papers, highlighters,
+      // focus ring). PENS 9–11 are dark-native (owner 2026-07-09): text INVERTS across modes — there is
+      // no "same color, re-referenced" for a stop that crosses the paper; carrying a dark-gold pen's hue up
       // ~0.3 L lands in a different hue family (gold→orange). The C9/C11 dark text register + the
-      // T9/T10/T11 requires own the inks, on the seed-keyed path below.
+      // T9/T10/T11 requires own the pens, on the seed-keyed path below.
       // C28 SIGNAL WARM DRIFT: the re-derived hue for this stop (signals only), else null
       let spineH: number | null = null
       const dl = ctx.opts?.deltaLightStops
@@ -241,18 +241,18 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         // THE CARRY: hue carried verbatim from the light twin; chroma verbatim at ×1 and resampled from
         // the light ladder's chroma-at-depth under a C24 band lift — for EVERY ramp kind (OKLab C is
         // near-uniform in perceived chroma; a saturation/gamut-ratio floor was tried and REJECTED — sRGB
-        // geometry made blue→red washes hyper-chromatic; evaluating a declared chromaCurve at the DARK L was
+        // geometry made blue→red highlighters hyper-chromatic; evaluating a declared chromaCurve at the DARK L was
         // tried and REJECTED — the curves are keyed to the OLD dark's L geography, so the delta's paper L's
-        // landed in their wash-tint region and tinted the papers 8×, owner-caught). Lightness re-referenced
+        // landed in their highlighter-tint region and tinted the papers 8×, owner-caught). Lightness re-referenced
         // to the dark ground in APPARENT space (deltaDarkTargetL).
-        // REQUIREMENT stops (s8) carry their RECIPE, not a parity: light places s8 BY the 3:1-vs-paper-97
-        // (paper-2) clamp, so dark re-solves that same law against the dark paper-97 (paper-2) exactly (the require block below
+        // REQUIREMENT stops (s8) carry their RECIPE, not a parity: light places s8 BY the 3:1-vs-paper-3
+        // (paper-2) clamp, so dark re-solves that same law against the dark paper-3 (paper-2) exactly (the require block below
         // does the solve from the ground up). appL parity would land off-law and the floor's hue-dependent
         // correction was the residual sRGB-shaped wobble (fired 84/108; whole-band 6.90 vs 0.72 for 1–7).
         // THE SMOOTHED BAND (owner round 2026-08-13): the whole surface band 1–7 —
         // papers included, the C27 pin retired — lands on the C28 photometric dialect
         // at the COMPUTED band lift: light's log-contrast distribution between the
-        // held ground and the held wash-80 (producers.smoothedBandLift). Require
+        // held ground and the held highlighter-20 (producers.smoothedBandLift). Require
         // stops (8) still solve from the sentinel by their own law.
         const lift = smoothedBandLift(sp.stop)
         let C = ls.C
@@ -290,14 +290,14 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         // onto the pure carry, real engine fns only. Only one is set per resolve (one column of the exhibit).
         if (ctx.opts.deltaHKPlace) L = perceptualRungL(sp.rootL, ls.C, ls.H)                                       // old apparent-L placement
         if (ctx.opts.deltaLiftFloor) L = Math.max(L, sp.rootL)                                                     // old lift/recede floor
-        if (ctx.opts.deltaChromaEq && !inkLane(sp.group)) C = ctx.cAt('dark', L, perceptualDarkC(L, ls.H, ctx.brandC))  // old H-K chroma equalizer
+        if (ctx.opts.deltaChromaEq && !textLane(sp.group)) C = ctx.cAt('dark', L, perceptualDarkC(L, ls.H, ctx.brandC))  // old H-K chroma equalizer
         placed = { L, C, H: spineH ?? ls.H }
       } else if (sp.produce.L === 'fixed') {
         placed = ls
           ? placeDarkDelta(d, sp.rootL, chromaAt!, ls)
           : { L: sp.rootL, C: chromaAt!(sp.rootL), H: d.darkHueAtL(sp.rootL) }
       } else {
-        // Dark inks are SCAFFOLD-PLACED (owner revert 2026-08-13): the 53-peak ink
+        // Dark pens are SCAFFOLD-PLACED (owner revert 2026-08-13): the 53-peak pen
         // mirror shipped and was reverted same day — light's L-geometry transplanted
         // near white compressed 42→30 in apparent terms. Do not resurrect without a
         // new owner direction. The T10/T11 floors below still guarantee the bars.
@@ -325,7 +325,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
           isApca ? Math.abs(apcaLc(apcaYAt(L, C, H), refMeasY)) : legalRatio(L, C, H, refMeasY)
         const reqTarget = isApca ? req.targetLc : req.target
         // wcag trigger tightened 1e-3 → 1e-5 (2026-07-09): the dark contrast requirement is enforced to the
-        // bar, not within a 0.001 slack. Catches delta-carry inks that inherit light's exactly-on-bar solve and
+        // bar, not within a 0.001 slack. Catches delta-carry pens that inherit light's exactly-on-bar solve and
         // land ~0.0001 under. Keeps a float-noise guard (not 0). apca path (APCA_TOL_LC) unchanged.
         const tol = isApca ? APCA_TOL_LC : 1e-5
         const got0 = measure(placed.L, clampChromaToGamut(placed.L, placed.C, placed.H), placed.H)
@@ -344,26 +344,26 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         }
       }
       // (The C24 8-vs-7 BAND-ORDER FLOOR is DELETED — owner 2026-07-29. It floored stop 8 at
-      // wash-80's (wash-7's) apparent plus light's own 7→8 apparent gap, written when the C24 lift was
-      // ×1.75 and a lifted wash-80 (wash-7) could overshoot an achromatic ramp's low-riding 3:1 solve.
+      // highlighter-20's (wash-7's) apparent plus light's own 7→8 apparent gap, written when the C24 lift was
+      // ×1.75 and a lifted highlighter-20 (wash-7) could overshoot an achromatic ramp's low-riding 3:1 solve.
       // C28 then halved the lift and the guard was never re-checked. Measured at the shipped
       // lift: it fired on 366/366 ramps — not a guard but THE placement rule for dark stop 8,
       // supplying 0.056–0.157 of its L and every bit of the gap between its law (3.05 vs
-      // paper-97/paper-2) and where it shipped (4.65). The inversion it was written for cannot occur:
-      // without it stop 8 still sits 5.35–6.85 apparent-L above wash-80 (wash-7) on every ramp, 0 of 366
+      // paper-3/paper-2) and where it shipped (4.65). The inversion it was written for cannot occur:
+      // without it stop 8 still sits 5.35–6.85 apparent-L above highlighter-20 (wash-7) on every ramp, 0 of 366
       // inverting. It also chained an ACCESSIBILITY BORDER to an ILLUSTRATION STOP — moving
-      // wash-80 (wash-7) for an illustration silently repositioned the stop carrying WCAG 1.4.11. Stop 8
-      // is now placed by its own require, anchored at paper-95 (paper-3) in both modes; see spec.ts S8.)
+      // highlighter-20 (wash-7) for an illustration silently repositioned the stop carrying WCAG 1.4.11. Stop 8
+      // is now placed by its own require, anchored at paper-5 (paper-3) in both modes; see spec.ts S8.)
     }
 
     // verify any declared require against the emitted (gamut-clamped) values — total, fail loud
     if (sp.require?.metric === 'wcag') {
-      // THE SHIPPED-PAIR FLOOR (owner defect 2026-08-03 — #43B02A lead-53 (ink-9) read
-      // 4.44:1 on paper-95 (paper-3)): the analytic solve lands exactly on the bar, and the
+      // THE SHIPPED-PAIR FLOOR (owner defect 2026-08-03 — #43B02A pencil-47 (ink-9) read
+      // 4.44:1 on paper-5 (paper-3)): the analytic solve lands exactly on the bar, and the
       // sRGB encode plus 8-bit hex quantization of BOTH sides then eats up to ~0.08 of ratio.
       // legalRatio covers the fill's renditions, but its reference side is the ANALYTIC
-      // anchor Y — whose "near-neutral, sub-tolerance" assumption broke when the ink anchor
-      // moved to the chromatic paper-95 (paper-3), on a solve that carries no margin. The law is the pair
+      // anchor Y — whose "near-neutral, sub-tolerance" assumption broke when the pen anchor
+      // moved to the chromatic paper-5 (paper-3), on a solve that carries no margin. The law is the pair
       // that ships: if the 8-bit sRGB rendition of stop-vs-anchor reads under target,
       // walk L away from the anchor (chroma re-clamps inside shippedY; C/H otherwise
       // held — the dark floor's delta-purity idiom, and the moves are ≤ ~0.01 L) until
@@ -373,11 +373,11 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       const anchorShipY = shippedY(anchor.L, anchor.C, anchor.H)
       // stops 8+ also clear the worst neutral paper (the cross-family bound above) —
       // the min-ratio anchor, since the binding paper is whichever sits nearest in Y.
-      // EXCEPT on the inverse ink ground: that text sits on an ink-30 fill, never on a
+      // EXCEPT on the inverse pen ground: that text sits on a pen-70 fill, never on a
       // paper, so the paper bound is not its law — its own frozen worst IS the bound.
-      const paperBound = sp.stop >= 8 && !(inkGround && sp.stop >= 9)
-      // the cross-family bound follows the anchor's band: a wash-anchored stop (T10's
-      // wash-80 law) reads against the worst neutral WASH-80, which dominates the paper
+      const paperBound = sp.stop >= 8 && !(textGround && sp.stop >= 9)
+      // the cross-family bound follows the anchor's band: a highlighter-anchored stop (T10's
+      // highlighter-20 law) reads against the worst neutral HIGHLIGHTER-20, which dominates the paper
       // bound on both ramps (ladder monotonicity, see the constant above)
       const crossBoundY = wcagAnchorStop(sp.require, sp.stop) === 7
         ? NEUTRAL_W80_WORST_SHIP_Y[mode] : NEUTRAL_P3_WORST_SHIP_Y[mode]
@@ -404,7 +404,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       const got = Math.abs(apcaLc(apcaYAt(placed.L, clampChromaToGamut(placed.L, placed.C, placed.H), placed.H), refA))
       if (got < sp.require.targetLc - APCA_TOL_LC) unresolvable = `stop ${sp.stop}: |Lc| ${got.toFixed(1)} < required ${sp.require.targetLc}`
     } else if (sp.require?.metric === 'min-separation') {
-      const ref = stops.find(s => s.stop === (sp.require!.against === 'paper-99' ? 1 : sp.stop - 1))!
+      const ref = stops.find(s => s.stop === (sp.require!.against === 'paper-1' ? 1 : sp.stop - 1))!
       const rad = (h: number) => (h * Math.PI) / 180
       const gC = clampChromaToGamut(placed.L, placed.C, placed.H)
       const got = Math.sqrt((placed.L - ref.L) ** 2
@@ -613,12 +613,12 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
 
   // (the cta-ink trio DELETED, owner 2026-08-12. C49 had already reduced it to pure
   // references onto stops 9/10/11 — every legibility guarantee rides the stops' own
-  // requires (T9/T10/T11); the text-register cta is the ink stops read directly.)
+  // requires (T9/T10/T11); the text-register cta is the pen stops read directly.)
 
   // (on-highlight DELETED, owner 2026-07-29. It was solved here, judged at the emitted
   // highlight-9 and never fed back into the fill. C31 had already reduced it to a
   // per-mode constant; the collapse removes the fill it named. The successor is a
-  // declaration in the semantic layer, `-fg-on-emphasis` → --paper-100 (--paper-0 pre-Stage-B).)
+  // declaration in the semantic layer, `-fg-on-emphasis` → --paper-0 (--paper-0 pre-Stage-B).)
 
   return { mode, seed, stops, roles: { cta, ctaHover, ctaPressed }, ons: { onFillIsWhite } }
 }

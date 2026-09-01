@@ -3,9 +3,9 @@
 **A color-system engine.** Give it one (or two) brand color(s) and it generates a complete,
 accessible, theme-ready color system around it.
 
-Each color family is a light and dark ramp built from pre-reserved roles — 2 papers,
-5 washes, 2 highlights, and 2 inks — plus a solid CTA resting/hover pair and their
-on-text colors, for each brand hex inputted. Alongside the brand color(s), it generates neutral, info-color, and red/yellow/green signal color scales. The inputted hex color(s) is/are preserved in identity swatches for logos or other brand identity moments.
+Each color family is a light and dark ramp built from pre-reserved roles — 3 papers,
+4 highlighters, 1 crayon, 1 pencil, and 2 pens — plus the stamp fill with its hover and
+pressed states and its on-text color, for each brand hex inputted. Alongside the brand color(s), it generates a neutral and the critical / warning / positive / info signal scales. The inputted hex color(s) is/are preserved in identity swatches for logos or other brand identity moments.
 
 The point is **white-label predictability**: every ramps's stops land at the same
 perceived lightness and play the same role, so you map your design tokens to step
@@ -100,7 +100,7 @@ then Figma → Plugins → Development → **Import plugin from manifest** →
 `plugin/manifest.json`.
 
 > The hosted download for **this** plugin is **withdrawn** as of 2026-07-29. The scale
-> changed shape in that round — `highlight-9` and `on-highlight` were removed and the ink
+> changed shape in that round — `highlight-9` and `on-highlight` were removed and the pen
 > stops renumbered — and this plugin does not yet carry the rename table that migrates an
 > existing Figma file across it, so updating an installed copy would orphan its variable
 > bindings. Building from source is unaffected: a fresh file gets the new shape correctly.

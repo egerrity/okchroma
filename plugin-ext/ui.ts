@@ -37,7 +37,7 @@ const isArchetype = (v: string): v is Archetype => ARCHETYPES.some(a => a.name =
 // The profile machinery itself stays dormant in src/engine/requirements/profiles.ts (the wcag path
 // is a passthrough), so re-enabling is a column list, not a rebuild.
 // the NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): red-range brands can swap the cta
-// fill trio to the brand-neutral's ink register (near-black light / near-white dark).
+// fill trio to the brand-neutral's pen register (near-black light / near-white dark).
 // The toggle is VISIBLE only in red range, and the EFFECTIVE flag is ctaEscape &&
 // inRedRange — outside the range the checkbox is inert, never force-cleared (clearing
 // on every keystroke wiped the toggle through 3-digit intermediate parses like "#EA3",
@@ -46,8 +46,8 @@ let ctaEscape = false
 let inRedRange = false        // EFFECTIVE gate: the CURRENT posture's red range
 let inRedRangeOffer = false   // OFFER gate: union of both clamp postures (row visibility)
 // the SYSTEM LINK (Phase 4, owner 2026-07-16): ONE link trio per theme — hyperlinks, not
-// per-family. Default = the primary's ink-stop values (extensions carry their own).
-// Custom = the seed through the ink register (#0B57D0 default when toggled).
+// per-family. Default = the primary's pen-stop values (extensions carry their own).
+// Custom = the seed through the pen register (#0B57D0 default when toggled).
 let linkCustom = false
 // the escape BUNDLE (owner 2026-07-16): ticking "Use neutral primary cta" auto-enables
 // the custom link (#0B57D0) — overridable; unticking reverts ONLY an untouched bundle
@@ -286,8 +286,8 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     cells.push(row.idHex
       ? `<div class="mx-aa" style="background:${row.idHex};color:${idText(row.idHex)};font-weight:700;font-size:10px" title="identity">ID</div>`
       : `<div class="mx-cell"></div>`)
-    // the ink stops keep the brand's own chroma under the escape (owner 2026-08-13,
-    // reverting the 2026-08-12 ink de-chroma) — the scale cells render raw
+    // the pen stops keep the brand's own chroma under the escape (owner 2026-08-13,
+    // reverting the 2026-08-12 pen de-chroma) — the scale cells render raw
     for (const s of row.scale.light) {
       const n = s.stop
       const h = hx(s)
@@ -306,14 +306,14 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
       // outline's re-expressed fill trio: transparent + ring + the stop-9 label (the stop
       // the emitted on-cta rides — the variable name was stale post-C33); hover/pressed =
       // the STABLE stop-8 at 9%/18% (the same stop the ring uses; pressed doubles hover)
-      const ink9 = hx(st(9))
+      const pencil9 = hx(st(9))
       const c8 = st(8)
       const rgb = `${Math.round(c8.r * 255)},${Math.round(c8.g * 255)},${Math.round(c8.b * 255)}`
-      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink9}" title="cta (outline)">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink9};background:rgba(${rgb},0.09)" title="cta-hover (outline)">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${ink9};background:rgba(${rgb},0.18)" title="cta-pressed (outline)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${pencil9}" title="cta (outline)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${pencil9};background:rgba(${rgb},0.09)" title="cta-hover (outline)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${pencil9};background:rgba(${rgb},0.18)" title="cta-pressed (outline)">Aa</div>`)
     } else if (row.escape) {
-      // the neutral cta escape: the fill trio previews the brand-neutral's ink register
+      // the neutral cta escape: the fill trio previews the brand-neutral's pen register
       const esc = escapeCtaFamily(nScale, 'light', undefined)
       const on = pole(esc.onFillIsWhite)
       cells.push(`<div class="mx-aa" style="background:${hx(esc.cta)};color:${on}" title="cta/enabled (neutral escape)">Aa</div>`)
@@ -327,7 +327,7 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
       cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaPressed)};color:${on}" title="cta/pressed">Aa</div>`)
     }
     // (the cta-ink + cta-ink-strong preview columns DELETED with their tokens, owner
-    // 2026-08-12: the text-style cta is the ink stops, already rendered as scale cells
+    // 2026-08-12: the text-style cta is the pen stops, already rendered as scale cells
     // above — escaped values included via effStop.)
     return cells.join('')
   }
@@ -378,7 +378,7 @@ function updatePreview() {
       linkBundled = false
     }
 
-    // the link FIELD previews the RESOLVED system link: custom seed through the ink
+    // the link FIELD previews the RESOLVED system link: custom seed through the pen
     // register, else the primary's ink-53. The from-primary posture shows
     // the resolved hex GREYED + read-only; clicking the hex takes it over (owner
     // Advanced-menu spec 2026-07-16).
@@ -426,13 +426,13 @@ function updatePreview() {
       }
     }
 
-    // chip TONES (Figma spec): the family's own wash/ink; outline = the outline treatment;
+    // chip TONES (Figma spec): the family's own highlighter/pen; outline = the outline treatment;
     // exact = neutral-grey "hands off". Stops looked up by IDENTITY, never array position
     // (positions shift when the stop set changes — the stop-10 deletion lesson).
     const hxs = (s: { r: number; g: number; b: number }) => toHex(s.r, s.g, s.b)
     // NAME the miss (2026-07-29): `at` used a bare non-null assertion, so a stop that no longer
     // exists returned undefined and surfaced as "Cannot read properties of undefined (reading
-    // 'r')" from inside hxs — unattributable. Both chips asked for stop 11, which C33's ink
+    // 'r')" from inside hxs — unattributable. Both chips asked for stop 11, which C33's pen
     // renumber removed from the array (it emits as an off-scale literal), so BOTH chip colours
     // threw on every render and the throw skipped syncInfoLines below it. Fail loudly instead.
     const at = (arr: ColorStop[], n: number) => {
@@ -639,7 +639,7 @@ linkPicker.addEventListener('input', () => {
 ctaEscapeBox.addEventListener('change', () => {
   ctaEscape = ctaEscapeBox.checked
   // the BUNDLE (owner 2026-07-16): a neutralized cta family shouldn't leave links riding
-  // grey neutral ink — ticking the escape auto-enables the custom de-conflict blue.
+  // grey neutral pen — ticking the escape auto-enables the custom de-conflict blue.
   // Overridable: edit the hex or ↩ back; unticking reverts ONLY an untouched bundle.
   if (ctaEscape && !linkCustom) {
     linkCustom = true

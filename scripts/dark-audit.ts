@@ -33,8 +33,8 @@ const SIGNAL_SCALES = signalScalesFor(SHIPPED_PROFILE)
 const ADJ_RATIO = 0.48
 // A step is a collapse only if it is BOTH proportionally small (< ADJ_RATIO×light)
 // AND absolutely small (< this floor, ~3 JND). The dark-L surface solve (2026-06-29)
-// decoupled dark step sizes from light's for low-boost hues — yellow's solved wash-80
-// rides up toward the placed wax-74 — so a dark step can be < 48% of light's yet
+// decoupled dark step sizes from light's for low-boost hues — yellow's solved highlighter-20
+// rides up toward the placed crayon-26 — so a dark step can be < 48% of light's yet
 // still a plainly visible ΔE (e.g. yellow 7→8 #814900→#A35F00, ΔE ~0.09). The floor
 // catches true merges without flagging those intentional, owner-approved shifts.
 const STEP_ABS_FLOOR = 0.06
@@ -53,7 +53,7 @@ const findings: Record<string, Finding[]> = {
   'A adjacent-step collapse': [],
   'B subtle-bg invisibility': [],
   'C chroma washout': [],
-  'D ink 9/10 convergence': [],
+  'D pen 9/10 convergence': [],
   'E dark error collision': [],
   'F on-cta APCA legibility (Lc 60, shipped lane — HARD)': [],
 }
@@ -89,14 +89,14 @@ function audit(name: string, hex: string, scale: GeneratedScale, redRepelled = f
       detail: `dark keeps ${(retention * 100).toFixed(0)}% of light chroma (stops 1–8)`,
     })
   }
-  // D: ink 9/10 separation (find by STOP — contiguous stops 1..10 after the
-  // 2026-07-29 highlight collapse renumbered the inks down from 10/11)
+  // D: pen 9/10 separation (find by STOP — contiguous stops 1..10 after the
+  // 2026-07-29 highlight collapse renumbered the pens down from 10/11)
   const li10 = scale.light.find(s => s.stop === 9)!, li11 = scale.light.find(s => s.stop === 10)!
   const da10 = scale.dark.find(s => s.stop === 9)!, da11 = scale.dark.find(s => s.stop === 10)!
   const sepL = stopDeltaE(li10, li11)
   const sepD = stopDeltaE(da10, da11)
   if (sepD < sepL * TEXTSEP_RATIO) {
-    findings['D ink 9/10 convergence'].push({
+    findings['D pen 9/10 convergence'].push({
       name, hex, severity: sepL * TEXTSEP_RATIO - sepD,
       detail: `ΔE(11,12): dark ${sepD.toFixed(3)} vs light ${sepL.toFixed(3)}`,
     })

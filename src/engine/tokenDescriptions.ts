@@ -7,7 +7,7 @@
 //
 // FORMAT (owner 2026-08-05):
 //   title        the row's own spaced name — the one place its own digit may appear; the
-//                literal spaced string is what makes a "wash 4" query land
+//                literal spaced string is what makes a "highlighter 4" query land
 //   Req for:      the requirement the stop was DESIGNED to satisfy — documented roles only,
 //                 never editorial ("not what the variable COULD be for")
 //   (conformance) an UNLABELED line, only where a floor exists — one of the owner's
@@ -25,8 +25,9 @@
 
 // The owner's conformance phrases — the only way contrast is ever stated.
 const AA_LARGE = 'AA large text and UI elements'
-const AA_BODY = 'AA standard body text & Level AAA large text'
-const AAA_BODY = 'AAA standard body text'
+// The guaranteed MINIMUM, stated as the WCAG level (owner 2026-09-01): text stops
+// promise AA (4.5:1) and nothing above it — no AAA claim, no house ratio.
+const AA_BODY = 'AA standard body text'
 
 // ── THE FAMILY ROSTER — the one definition of the family path words. Every other
 // roster site imports it (plugin-ext/payload.ts prefixes, scripts/ext-override-audit.ts
@@ -65,7 +66,7 @@ export const CSS_FAMILY = {
 // the critical family. Legal under the foreign-label rule: the role round removed
 // every identity word from the paths, so none of these is a token label. white/black
 // are deliberately absent — the absolutes answer those searches by NAME, and any
-// other row saying them would lie across modes (ink-0, the poles) or advertise an
+// other row saying them would lie across modes (pen-100, the poles) or advertise an
 // on-text choice the on rows must never make.
 const TINT: Record<Family, string> = {
   [FAMILY.neutral]: 'tints carry neutral hue (gray)',
@@ -102,9 +103,9 @@ const PAPER: Body = { req: 'backgrounds, inverted text', theming: f => TINT[f], 
 // label word only when it is in its OWN path. The 2026-08-18 solid rename flipped this
 // word: edge became the label (stamp/edge) and border stopped being one.
 // ("interaction" → interactive 2026-08-28: interacti-ON fed the "on" flood)
-const WASH: Body = { req: 'subtle interactive states, decorative borders, illos, signal hierarchy', theming: f => TINT[f], collides: true }
+const HIGHLIGHTER: Body = { req: 'subtle interactive states, decorative borders, illos, signal hierarchy', theming: f => TINT[f], collides: true }
 const solved = (f: Family) => `${TINT[f]}; re-solved to clear its floor`
-// (Leaf keys are FLAT — band flattening 2026-08-12: paper-99, never paper/99 — except
+// (Leaf keys are FLAT — band flattening 2026-08-12: paper-1, never paper/99 — except
 // the stamp/ state group, keyed by its nested spelling.)
 // the overlay rows (owner round 2026-08-13) are PARKED (owner 2026-08-18) — not
 // emitted, so these bodies are dormant; kept for the comeback. Translucent twins of
@@ -116,25 +117,25 @@ const OVERLAY: Body = {
   collides: true,
 }
 const SCALE: Record<string, Body> = {
-  'paper-99': PAPER,
+  'paper-1': PAPER,
   'paper-99-overlay': OVERLAY,
-  'paper-97': PAPER,
+  'paper-3': PAPER,
   'paper-97-overlay': OVERLAY,
-  'paper-95': { req: 'backgrounds, inverted text', theming: f => `${TINT[f]}. Worst background text stops must clear.`, collides: true },
+  'paper-5': { req: 'backgrounds, inverted text', theming: f => `${TINT[f]}. Worst background text stops must clear.`, collides: true },
   'paper-95-overlay': OVERLAY,
-  'wash-92': WASH,
-  'wash-89': WASH,
-  'wash-85': WASH,
-  'wash-80': WASH,
+  'highlighter-8': HIGHLIGHTER,
+  'highlighter-11': HIGHLIGHTER,
+  'highlighter-15': HIGHLIGHTER,
+  'highlighter-20': HIGHLIGHTER,
   // ("icons" KEPT through the 2026-08-28 on-flood strip (owner): an "icon" query
-  // landing on the wax rows is worth its ic-ON-s noise — the one surviving body carrier)
-  'wax-74': { req: 'focus rings, icons, large text', contrast: AA_LARGE, theming: solved, collides: true },
-  'lead-53': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
-  'ink-42': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
+  // landing on the crayon rows is worth its ic-ON-s noise — the one surviving body carrier)
+  'crayon-26': { req: 'focus rings, icons, large text', contrast: AA_LARGE, theming: solved, collides: true },
+  'pencil-47': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
+  'pen-58': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
   // ("high-emphasis" reworded 2026-08-12: the surface planes took low/high as label
   // words, and a body carrying either floods that token's picker search — the C50 law;
   // "strong-emphasis" reworded 2026-08-28: str-ON-g fed the "on" flood)
-  'ink-30': { req: 'heavy-emphasis text, inverted backgrounds', contrast: AAA_BODY, theming: solved, collides: true },
+  'pen-70': { req: 'heavy-emphasis text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
   // the stamp family (cta words → solid 2026-08-18, solid → stamp 2026-08-27). "CTA" stays in
   // these bodies on purpose: it stopped being a token label, so it floods nothing,
   // and a designer's "cta" query still lands on these rows.
@@ -148,10 +149,10 @@ const SCALE: Record<string, Body> = {
 
 // ── rows only the neutral carries ────────────────────────────────────────────
 const NEUTRAL_ONLY: Record<string, Body> = {
-  'paper-100': { req: 'backgrounds, inverted text', theming: f => TINT[f] },
+  'paper-0': { req: 'backgrounds, inverted text', theming: f => TINT[f] },
   // the literal pole again (owner 2026-08-31, walking back the 2026-08-28 resolver):
-  // a pole carries no tint, so no theming line (see the TINT comment's ink-0 clause)
-  'ink-0': { req: 'max-emphasis text', contrast: AAA_BODY },
+  // a pole carries no tint, so no theming line (see the TINT comment's pen-100 clause)
+  'pen-100': { req: 'max-emphasis text', contrast: AA_BODY },
 }
 
 // ── system rows, keyed by full path ──────────────────────────────────────────
@@ -159,7 +160,7 @@ const NEUTRAL_ONLY: Record<string, Body> = {
 // both cONtrast and a bare on; "buttons" carried butt-ON-s)
 const ABS: Body = { req: 'extreme poles for CTAs, aliased global endpoints' }
 const OFFSET: Body = { req: 'min APCA visibility', theming: 'offsets CTAs in themes where they sit close to the page' }
-// (wording bound by desc-audit: no label words — wash/edge/hover/pressed are path
+// (wording bound by desc-audit: no label words — highlighter/edge/hover/pressed are path
 // vocabulary — and no scheme talk; "over inverted backgrounds" is the established
 // phrasing, "state layers" carries the intent without a banned word)
 const OFFSET_INVERSE: Body = { req: 'state layers over inverted backgrounds', theming: 'the offset ladder with its pole flipped, so inverted grounds keep the same rungs' }
@@ -172,7 +173,7 @@ const LINK = (state: string, contrast: string): Body => ({
   contrast,
   theming: 'rides the theme’s link color; custom seed re-solves; overridable per theme',
 })
-// ("ink" stays out of these bodies — it is a label word elsewhere and would flood
+// ("pen" stays out of these bodies — it is a label word elsewhere and would flood
 // that search; "inverted backgrounds" is the established phrasing for the surface)
 const LINK_INVERSE = (state: string, contrast: string): Body => ({
   req: 'links over inverted backgrounds' + state,
@@ -183,7 +184,7 @@ const LINK_INVERSE = (state: string, contrast: string): Body => ({
 const SYSTEM: Record<string, Body> = {
   'system/abs-black': ABS,
   'system/abs-white': ABS,
-  // (the community system/ink-0 row RETIRED 2026-08-28 with its STATIC_UTILS entry:
+  // (the community system/pen-100 row RETIRED 2026-08-28 with its STATIC_UTILS entry:
   // the anchor is engine-resolved and rides the neutral in BOTH plugins now —
   // NEUTRAL_ONLY above. Old files' static rows orphan unwritten.)
 
@@ -200,7 +201,7 @@ const SYSTEM: Record<string, Body> = {
   'system/alpha/away-from-bg/08': OFFSET,
   'system/alpha/away-from-bg/16': OFFSET,
   // the inverse ladder: the offset rungs with the pole flipped per mode, for
-  // washes and edges over inverted backgrounds ("interaction" avoided in the
+  // highlighters and edges over inverted backgrounds ("interaction" avoided in the
   // bodies: acti-ON would feed the "on" flood)
   'system/alpha/toward-bg/06': OFFSET_INVERSE,
   'system/alpha/toward-bg/08': OFFSET_INVERSE,
@@ -217,10 +218,10 @@ const SYSTEM: Record<string, Body> = {
   'system/surface/high': PLANE('topmost plane — modals, dialogs'),
   'system/link/default/enabled': LINK('', AA_BODY),
   'system/link/default/hover': LINK(' pointer-over', AA_BODY),
-  'system/link/default/pressed': LINK(' pressed', AAA_BODY),
+  'system/link/default/pressed': LINK(' pressed', AA_BODY),
   'system/link/inverse/enabled': LINK_INVERSE('', AA_BODY),
   'system/link/inverse/hover': LINK_INVERSE(' pointer-over', AA_BODY),
-  'system/link/inverse/pressed': LINK_INVERSE(' pressed', AAA_BODY),
+  'system/link/inverse/pressed': LINK_INVERSE(' pressed', AA_BODY),
 }
 
 // Both plugins' user-facing path shapes: the ext base uses brand/…, the community

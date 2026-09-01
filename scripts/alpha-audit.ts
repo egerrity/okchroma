@@ -1,13 +1,13 @@
 // alpha-audit — the paper-overlay law gates (owner round 2026-08-13), fixture-sweep wide.
 //
 // HARD GATES, per theme × family × mode:
-//   1. ink bars on the QUANTIZED rgba: lead-53/42/30 keep 4.5/6.5/7.0 (shipped 8-bit
+//   1. pen bars on the QUANTIZED rgba: pencil-47/42/30 keep 4.5/6.5/7.0 (shipped 8-bit
 //      basis) against the worst overlay composite — the lightest on the lightest
 //      paper in dark, the darkest on the darkest paper in light.
 //   2. the TOL bound, observed: each rung's composite apparent L* spans ≤ 2×TOL
 //      across the four neutral papers (both within ±TOL of one target).
 //   3. the visibility floor: a non-neutral rung's worst-field ΔE ≥ the theme bar,
-//      OR its ink chroma sits at the sRGB ceiling (the reported near-white cap).
+//      OR its pen chroma sits at the sRGB ceiling (the reported near-white cap).
 //   4. snapshot: every overlay value byte-stable vs the blessed build (--bless).
 //
 // REPORTS (no gate): dark step evenness vs K × light steps · the canonical-vs-theme
@@ -50,7 +50,7 @@ function familiesFor(hex: string): { fams: Fam[]; neutral: GeneratedScale } {
 const stopAt = (s: GeneratedScale, mode: 'light' | 'dark', stop: number): ColorStop =>
   stop === 0 ? (mode === 'light' ? s.paper0! : s.paper0Dark!) : (mode === 'light' ? s.light : s.dark)[stop - 1]
 
-const INK_BARS: Array<[number, number]> = [[9, 4.5], [10, 6.5], [11, 7.0]]
+const TEXT_BARS: Array<[number, number]> = [[9, 4.5], [10, 6.5], [11, 7.0]]
 let hardFails = 0
 const fail = (msg: string) => { hardFails++; console.log(`  ✗ ${msg}`) }
 const snapshot: Record<string, string> = {}
@@ -64,13 +64,13 @@ for (const fx of FIXTURES) {
     for (const { name, scale } of fams) {
       const twins = alphaPapersFor(scale, neutral, mode, sep)
       snapshot[`${fx.name}|${mode}|${name}`] = twins.map(t => `${t.overlayHex}@${t.alpha}`).join(' ')
-      // 1: ink bars on the worst composite
+      // 1: pen bars on the worst composite
       const ys = twins.map(t => { const o = hexToOklch(compositeHex(t.overlayHex, fields[3], t.alpha)); return shippedY(o.L, o.C, o.H) })
       const worstY = mode === 'dark' ? Math.max(...ys) : Math.min(...ys)
-      for (const [st, bar] of INK_BARS) {
-        const ink = stopAt(scale, mode, st)
-        const r = contrastRatio(shippedY(ink.L, ink.C, ink.H), worstY)
-        if (r < bar) fail(`${fx.name} ${mode} ${name}: ink bar ${bar} vs worst overlay = ${r.toFixed(2)}`)
+      for (const [st, bar] of TEXT_BARS) {
+        const pen = stopAt(scale, mode, st)
+        const r = contrastRatio(shippedY(pen.L, pen.C, pen.H), worstY)
+        if (r < bar) fail(`${fx.name} ${mode} ${name}: pen bar ${bar} vs worst overlay = ${r.toFixed(2)}`)
       }
       for (const t of twins) {
         const comps = fields.map(f => compositeHex(t.overlayHex, f, t.alpha))
@@ -78,13 +78,13 @@ for (const fx of FIXTURES) {
         const apps = comps.map(appHex)
         const span = Math.max(...apps) - Math.min(...apps)
         if (span > 2 * ALPHA_TOL_APP + 0.2) fail(`${fx.name} ${mode} ${name} ${t.name}: apparent span ${span.toFixed(2)} across the papers`)
-        // 3: the visibility floor, or a declared cap (gamut near white, or the ink
+        // 3: the visibility floor, or a declared cap (gamut near white, or the pen
         // law's chroma ceiling — the law outranks the look). A capped rung must SAY
         // so; a silent shortfall fails.
         if (name !== 'neutral') {
           const minDE = Math.min(...comps.map((c, i) => stopDeltaE(hexToOklch(c) as ColorStop, hexToOklch(fields[i]) as ColorStop)))
-          const ink = hexToOklch(t.overlayHex)
-          const gamutCapped = ink.C >= clampChromaToGamut(ink.L, 0.4, ink.H, 'srgb') - 1e-3
+          const pen = hexToOklch(t.overlayHex)
+          const gamutCapped = pen.C >= clampChromaToGamut(pen.L, 0.4, pen.H, 'srgb') - 1e-3
           if (minDE < sep - 0.002 && !t.capped && !gamutCapped)
             fail(`${fx.name} ${mode} ${name} ${t.name}: ΔE ${minDE.toFixed(3)} under the bar with no declared cap`)
         }
@@ -118,7 +118,7 @@ for (const fx of FIXTURES) {
         })
       }
   }
-  console.log(`canonical signal overlay spread vs 6 themes: max alpha Δ ${maxA.toFixed(2)}, max ink ΔE ${maxDE.toFixed(3)}`)
+  console.log(`canonical signal overlay spread vs 6 themes: max alpha Δ ${maxA.toFixed(2)}, max pen ΔE ${maxDE.toFixed(3)}`)
 }
 console.log(`dark step unevenness (|Δstep| on the ground): worst ${Math.max(...evenness).toFixed(2)} apparent`)
 

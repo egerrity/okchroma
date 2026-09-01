@@ -10,7 +10,7 @@ export const FONT_STACK = "'Inter', -apple-system, system-ui, sans-serif"
 
 // Secondary display modes are a 2×2: which family fills the PRIMARY
 // register (emphasis fills, accent text, links) × which fills the SUBTLE
-// register (tinted surfaces). Overrides reference PRIMITIVES (--brand-alt-ink),
+// register (tinted surfaces). Overrides reference PRIMITIVES (--brand-alt-pen),
 // never the other role's var — role-to-role references would cycle.
 //   default          primary: brand   subtle: brand   (no override)
 //   accented         primary: brand   subtle: accent
@@ -18,24 +18,24 @@ export const FONT_STACK = "'Inter', -apple-system, system-ui, sans-serif"
 //   accented-inverse primary: accent  subtle: brand
 // The "accent" Family is emitted as the `secondary` primitive prefix (the role
 // was renamed in the token rename); prim() maps Family → primitive prefix.
-// Stops are the emitted token names: scale paper/wash, the wax-74 ring, the
-// cta/cta-hover/cta-pressed fill trio, lead-53/42-aa/30-aaa text (doubling as the
+// Stops are the emitted token names: scale paper/highlighter, the crayon-26 ring, the
+// cta/cta-hover/cta-pressed fill trio, pencil-47/42-aa/30-aaa text (doubling as the
 // text-style cta — the cta-ink aliases died 2026-08-12),
 // on-cta on-fill text. (on-highlight died with highlight-9, owner 2026-07-29 — the
-// on-emphasis text is --paper-100 in the semantic layer now.)
+// on-emphasis text is --paper-0 in the semantic layer now.)
 type Family = 'brand' | 'accent'
 function accentModeCss(mode: AccentMode, primary: Family, subtle: Family): string {
   const other = (f: Family): Family => (f === 'brand' ? 'accent' : 'brand')
   const prim = (f: Family): string => (f === 'brand' ? 'brand' : 'secondary')
   const PRIMARY_ROLES: Array<[string, string]> = [
-    ['fg', 'ink-30'], ['fg-hover', 'lead-53'], ['fg-alt', 'lead-53'], ['fg-alt-hover', 'ink-30'], ['fg-on-emphasis', 'stamp-on'],
+    ['fg', 'pen-70'], ['fg-hover', 'pencil-47'], ['fg-alt', 'pencil-47'], ['fg-alt-hover', 'pen-70'], ['fg-on-emphasis', 'stamp-on'],
     ['bg-emphasis', 'stamp-fill'], ['bg-emphasis-hover', 'stamp-fill-hover'], ['bg-emphasis-pressed', 'stamp-fill-pressed'],
-    ['border-default', 'wash-85'], ['border-default-hover', 'wax-74'],
+    ['border-default', 'highlighter-15'], ['border-default-hover', 'crayon-26'],
     ['border-emphasis', 'stamp-fill'], ['border-emphasis-hover', 'stamp-fill-hover'],
   ]
   const SUBTLE_ROLES: Array<[string, string]> = [
-    ['bg-faint', 'paper-97'], ['bg-subtle', 'wash-89'], ['bg-subtle-hover', 'wash-85'],
-    ['border-subtle', 'wash-92'], ['border-subtle-hover', 'wash-89'],
+    ['bg-faint', 'paper-3'], ['bg-subtle', 'highlighter-11'], ['bg-subtle-hover', 'highlighter-15'],
+    ['border-subtle', 'highlighter-8'], ['border-subtle-hover', 'highlighter-11'],
   ]
   const lines: string[] = [`[data-accent-mode="${mode}"][data-brand] {`]
   for (const [suffix, tok] of PRIMARY_ROLES) {
@@ -50,8 +50,8 @@ function accentModeCss(mode: AccentMode, primary: Family, subtle: Family): strin
   // not re-point them): --fg-link rides --link from semantic.css, no per-mode override
   lines.push(`}`)
   if (subtle !== primary) {
-    lines.push(`[data-accent-mode="${mode}"] .u-btn-subtle { color: var(--${prim(subtle)}-ink-30); }`)
-    lines.push(`[data-accent-mode="${mode}"] .u-btn-ghost:hover { color: var(--${prim(subtle)}-ink-30); }`)
+    lines.push(`[data-accent-mode="${mode}"] .u-btn-subtle { color: var(--${prim(subtle)}-pen-70); }`)
+    lines.push(`[data-accent-mode="${mode}"] .u-btn-ghost:hover { color: var(--${prim(subtle)}-pen-70); }`)
   }
   return lines.join('\n')
 }
@@ -116,16 +116,16 @@ export const COMPONENT_CSS = `
 .u-link:active { color: var(--fg-link-pressed); }
 /* Stop 8 IS the ramp's focus-ring role — never the OS default accent */
 [data-brand] :is(input, select, textarea, button, a):focus-visible {
-  outline: 2px solid var(--brand-wax-74);
+  outline: 2px solid var(--brand-crayon-26);
   outline-offset: 1px;
 }
 /* The app-chrome scope is brandless — it carries only the generated neutral
-   (App.tsx neutralCss), so --brand-wax-74 doesn't exist there and the
+   (App.tsx neutralCss), so --brand-crayon-26 doesn't exist there and the
    rule above would go invalid at computed-value time (no ring at all on the
    footer controls). Alias the ring source to the chrome's own neutral
-   wax-74 — stop 8 of whichever ramp owns the scope. */
+   crayon-26 — stop 8 of whichever ramp owns the scope. */
 [data-brand="chrome"] {
-  --brand-wax-74: var(--neutral-wax-74);
+  --brand-crayon-26: var(--neutral-crayon-26);
 }
 /* Elevation — demo-layer shadow recipes composing the --shadow-* transparencies
    (tokens/semantic.css; mirrors the plugin's system/alpha/shadow rows). The
@@ -389,10 +389,10 @@ export function Showcase(props: {
         <section>
           <SectionLabel>Typography</SectionLabel>
           <p style={{ margin: 0, lineHeight: 1.6, color: 'var(--fg-default)' }}>
-            Default body text uses <strong>neutral-ink-30</strong> for maximum readability.{' '}
-            <a href="#" className="u-link">Link text uses brand-lead-53</a>,
+            Default body text uses <strong>neutral-pen-70</strong> for maximum readability.{' '}
+            <a href="#" className="u-link">Link text uses brand-pencil-47</a>,
             which meets 4.5:1 AA contrast.{' '}
-            <span style={{ color: 'var(--fg-subtle)' }}>Subtle text uses neutral-lead-53 for secondary information.</span>
+            <span style={{ color: 'var(--fg-subtle)' }}>Subtle text uses neutral-pencil-47 for secondary information.</span>
           </p>
         </section>
 
@@ -424,12 +424,12 @@ export function Readout({ r }: { r: ResolvedBrand }) {
   )
 }
 
-// The emitted scale — the NAMED stops (paper/wash/wax/ink, contiguous 1–10
+// The emitted scale — the NAMED stops (paper/highlighter/crayon/pen, contiguous 1–10
 // since the 2026-07-29 highlight collapse; the engine emits no numeric
 // --{prefix}-N vars). Kept in emit order; cta stays off-scale and out of the strip.
 export const SCALE_STOP_NAMES = [
-  'paper-99', 'paper-97', 'paper-95', 'wash-92', 'wash-89', 'wash-85', 'wash-80',
-  'wax-74', 'lead-53', 'ink-42', 'ink-30',
+  'paper-1', 'paper-3', 'paper-5', 'highlighter-8', 'highlighter-11', 'highlighter-15', 'highlighter-20',
+  'crayon-26', 'pencil-47', 'pen-58', 'pen-70',
 ] as const
 
 // Labeled single-row scale strip — used where multiple scales stack tight

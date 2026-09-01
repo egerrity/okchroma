@@ -6,23 +6,23 @@
 // call site already passed 'brand'.)
 
 const SHARED_NAMES: Record<number, string> = {
-  1: 'paper-99',
-  2: 'paper-97',
+  1: 'paper-1',
+  2: 'paper-3',
   // stop 3 renamed wash-3 → paper-3 (owner 2026-07-24, elevation round): it is a
   // PLANE in both themes (light sink / dark pop), so it belongs to the surface band.
-  // NAME ONLY — generation is index-keyed and unchanged; the wash-collision machinery
-  // (collision.ts WASH_STOPS) deliberately still spans stops 3–7. (The requirement
+  // NAME ONLY — generation is index-keyed and unchanged; the highlighter-collision machinery
+  // (collision.ts HIGHLIGHTER_STOPS) deliberately still spans stops 3–7. (The requirement
   // spec's `group` label followed the band to 'paper' on 2026-08-31 — labels only,
   // the spans never moved; see spec.ts groupOf.)
   // Stage B (owner 2026-08-07, names only): relabeled to the ROOT_L-derived digit,
-  // paper-95 — same band, same index.
-  3: 'paper-95',
-  4: 'wash-92',
-  5: 'wash-89',
-  6: 'wash-85',
-  7: 'wash-80',
-  8: 'wax-74',
-  // THE INK BAND (C49, owner 2026-08-05): the first text stop + emphasis fill (the
+  // paper-5 — same band, same index.
+  3: 'paper-5',
+  4: 'highlighter-8',
+  5: 'highlighter-11',
+  6: 'highlighter-15',
+  7: 'highlighter-20',
+  8: 'crayon-26',
+  // THE PEN BAND (C49, owner 2026-08-05): the first text stop + emphasis fill (the
   // 2026-07-29 highlight collapse — the old highlight-9 and on-highlight are
   // deleted; this stop carries both jobs, its on-color a paper token), the between
   // text stop (a value the retired text-cta hover state used to generate bespokely,
@@ -31,9 +31,9 @@ const SHARED_NAMES: Record<number, string> = {
   // two pre-collapse stop INDICES (11, and the off-scale anchor's 12 — emitted as a
   // literal in cssRender, not through this table) with the between stop taking the
   // vacated index 10; the indices (9/10/11) are unchanged since.
-  9: 'lead-53',
-  10: 'ink-42',
-  11: 'ink-30',
+  9: 'pencil-47',
+  10: 'pen-58',
+  11: 'pen-70',
 }
 
 // How many stops a ramp array carries — DERIVED from the name table, so a band collapse or a
@@ -48,13 +48,13 @@ export function stopTokenName(stop: number): string {
 }
 
 // The off-scale ladder EXTREMES — not stops of SHARED_NAMES (index-keyed generation
-// never produces them; they flip with the mode). paper-100 RESOLVES (the 2026-07-02
-// paper-0 fall); ink-0 is the LITERAL pole (#000 light / #fff dark — owner 2026-08-31,
+// never produces them; they flip with the mode). paper-0 RESOLVES (the 2026-07-02
+// paper-0 fall); pen-100 is the LITERAL pole (#000 light / #fff dark — owner 2026-08-31,
 // walking back the 2026-08-28 seam resolver). One spelling here; the emitters
 // (cssRender anchors, figmaRender's neutral group) reference these instead of
 // re-spelling them.
-export const PAPER_100 = 'paper-100'
-export const INK_0 = 'ink-0'
+export const PAPER_0 = 'paper-0'
+export const PEN_100 = 'pen-100'
 
 // THE SOLID FAMILY (owner rename round 2026-08-18, replacing the cta words —
 // stakeholder ruling: cta read as a semantic token). Flat engine identity =
@@ -113,7 +113,7 @@ export const SYSTEM_LEAF = {
     // and the 2026-08-29 inverse ladder): away-from-bg is the page-polarity pole
     // (black in light, white in dark), toward-bg the flipped pole — STATE LAYERS for
     // INVERTED grounds, whose polarity is opposite the page's. (Never call toward-bg
-    // a "wash": that word belongs to the tinted band stops.) The reversal lives in
+    // a "highlighter": that word belongs to the tinted band stops.) The reversal lives in
     // the engine: a consumer on an inverted ground names one token and never picks a
     // pole. Colored fills never ride these; their states stay engine-solved stops.
     // Rungs are two-digit percent, harmonizing with shadow-04/08/12.
@@ -131,18 +131,18 @@ export const SYSTEM_LEAF = {
 
 // THE SURFACE-PLANE LAW (the one per-mode reversal, owner spec 2026-07-24 —
 // prose in tokens/semantic.css): both themes use the SAME four ladder stops in
-// reversed order, elevation always moving toward paper-100's side of the ramp.
-// paper-100 flips white→black with the mode, so it is always the extreme pole —
+// reversed order, elevation always moving toward paper-0's side of the ramp.
+// paper-0 flips white→black with the mode, so it is always the extreme pole —
 // the high in light, the dim in dark. This table is the law's ONE machine-readable
 // home: semantic.css states it as static aliases, the community plugin's
 // aliasElev wires it, and themeToFigma's system group resolves it — consumers
 // must never respell the reversal themselves. Leaf names derive from
-// SHARED_NAMES/PAPER_100 so a stop relabel updates the law for free.
+// SHARED_NAMES/PAPER_0 so a stop relabel updates the law for free.
 export const SURFACE_PLANE_LAW: Record<string, { light: string; dark: string }> = {
-  [SYSTEM_LEAF.SURFACE.DIM]: { light: SHARED_NAMES[3], dark: PAPER_100 },
+  [SYSTEM_LEAF.SURFACE.DIM]: { light: SHARED_NAMES[3], dark: PAPER_0 },
   [SYSTEM_LEAF.SURFACE.LOW]: { light: SHARED_NAMES[2], dark: SHARED_NAMES[1] },
   [SYSTEM_LEAF.SURFACE.MID]: { light: SHARED_NAMES[1], dark: SHARED_NAMES[2] },
-  [SYSTEM_LEAF.SURFACE.HIGH]: { light: PAPER_100, dark: SHARED_NAMES[3] },
+  [SYSTEM_LEAF.SURFACE.HIGH]: { light: PAPER_0, dark: SHARED_NAMES[3] },
 }
 
 // (the paper overlays — paper-99-overlay etc, owner round 2026-08-13 — are PARKED:
@@ -168,17 +168,17 @@ export const EXT_NON_OVERRIDABLE = (p: string): boolean =>
   CONTRACT_INVARIANT_ROWS.has(p) || p.startsWith('utility/')
 // Brand-VARYING system-descended rows — the only non-family base/ paths extensions
 // may override: the link trio with its inverse leaves (owner regroup 2026-08-20:
-// the ink-30 inverse lives INSIDE the link group as inverse/inverse-hover/
+// the pen-70 inverse lives INSIDE the link group as inverse/inverse-hover/
 // inverse-pressed, so one prefix covers both trios) and the identity absolutes.
 export const EXT_OVERRIDABLE_SYSTEM = (p: string): boolean =>
   p.startsWith('base/link/')
   || p === 'base/absolute/brand' || p === 'base/absolute/brand-alt'
 
 // Canonical emit order, uniform across every ramp (the white-label remap shape,
-// an explicit requirement of the original concept). Paper (1–3), wash (4–7),
-// then the focus ring (wax-74 — clamped to WCAG
-// 1.4.11 3:1 non-text contrast vs paper-95) read as one contiguous ladder, then
-// the text stops (lead-53 / ink-42 / ink-30 — the first doubles as the
+// an explicit requirement of the original concept). Paper (1–3), highlighter (4–7),
+// then the focus ring (crayon-26 — clamped to WCAG
+// 1.4.11 3:1 non-text contrast vs paper-5) read as one contiguous ladder, then
+// the text stops (pencil-47 / pen-58 / pen-70 — the first doubles as the
 // emphasis fill), then the pulled-out off-scale stamp family + stamp-on, then
 // identity. A ramp skips tokens it doesn't have. Emitters sort by this, not by
 // stop number.

@@ -35,7 +35,7 @@ brand.light
 └─ "cta-pressed"
 ```
 
-## Example: a scale stop (light wax-74, seed #3060C0)
+## Example: a scale stop (light crayon-26, seed #3060C0)
 
 ```json
 {
@@ -48,19 +48,19 @@ brand.light
       "mode": "light",
       "stop": 8,
       "rootL": 0.738,
-      "group": "wax",
+      "group": "crayon",
       "produce": { "hue": "warm-drift", "L": "perceptual", "chroma": "ladder" },
       "satFraction": 0.78,
       "baseC": 0.142,
-      "require": { "metric": "wcag", "against": "paper-95", "target": 3, "level": "AA" }
+      "require": { "metric": "wcag", "against": "paper-5", "target": 3, "level": "AA" }
     }
   }
 }
 ```
 
-Most stops carry no `require` at all: the paper/wash seams are guaranteed by the ladder's
-shape, not by declared floors. The declared requires today: wax-74 (above) and the
-three ink stops.
+Most stops carry no `require` at all: the paper/highlighter seams are guaranteed by the ladder's
+shape, not by declared floors. The declared requires today: crayon-26 (above),
+pencil-47, and the two pens.
 
 ## Example: an off-scale role (dark cta)
 
@@ -109,9 +109,9 @@ three ink stops.
 
 | field | type | meaning |
 |---|---|---|
-| `stop` | number | Scale position, 0–11. `0` = the paper anchor beyond paper-99 (white in light; one seam below paper-99 in dark). Roles are never stops. |
+| `stop` | number | Scale position, 0–11. `0` = the paper anchor beyond paper-1 (white in light; one seam below paper-1 in dark). Roles are never stops. |
 | `rootL` | number | The producer's lightness target (the scaffold). For `anchor` roles it is the floor instead. |
-| `group` | `paper` \| `wash` \| `wax` \| `lead` \| `ink` | The stop's band (paper 0-3, wash 4-7, wax 8, lead 9, ink 10-11). Bundles exported before 0.1.7 label stop 3 `wash`, stop 8 `highlight`, and stop 9 `ink`; they re-resolve identically (the resolver reads only ink-lane membership, which accepts the legacy word). |
+| `group` | `paper` \| `highlighter` \| `crayon` \| `pencil` \| `pen` | The stop's band (paper 0-3, highlighter 4-7, crayon 8, pencil 9, pen 10-11). Bundles exported before 0.1.7 label stop 3 `highlighter`, stop 8 `highlight`, and stop 9 `pen`; they re-resolve identically (the resolver reads only text-lane membership, which accepts the legacy word). |
 | `produce` | object | Named producers (see below). |
 | `satFraction` | number? | `ladder` chroma param: envelope saturation fraction. |
 | `baseC` | number? | `ladder` chroma param (light): absolute base chroma for the ladder/envelope blend. |
@@ -122,7 +122,7 @@ three ink stops.
 
 | field | type | meaning |
 |---|---|---|
-| `role` | `solid-fill` \| `solid-fill-hover` \| `solid-fill-pressed` | The role name. Off the numbered scale by design. |
+| `role` | `stamp-fill` \| `stamp-fill-hover` \| `stamp-fill-pressed` | The role name. Off the numbered scale by design. |
 | `produce` | object | `{ hue: "constant", L: "anchor" \| "hover" \| "pressed", chroma: "brand" }`: the fill carries the seed's own hue and lightness; `hover`/`pressed` derive from the resolved cta. |
 | `floorL` | number | The anchor floor (0 = none). Dark fills must not sink. The on-fill enforcement re-solve may legitimately pass it: the floor governs the anchor, not the enforced result. |
 | `chromaMult` | number | Multiplier on the seed's chroma. |
@@ -136,7 +136,7 @@ three ink stops.
 | | `constant` | The seed's own hue (roles). |
 | `L` | `perceptual` | Nayatani apparent-lightness solve toward `rootL`. |
 | | `perceptual-lift` | The same solve **floored at `rootL`**: lift, never sink (the dark scale; the blue-recede rule). |
-| | `fixed` | Exactly `rootL` (hand-placed bands, the light paper-100 extreme). |
+| | `fixed` | Exactly `rootL` (hand-placed bands, the light paper-0 extreme). |
 | | `anchor` / `hover` | Roles only: the seed's own lightness (floored) / the hover derivation of the resolved cta. |
 | `chroma` | `ladder` | baseC/envelope blend (light) or the multiplier ladder with the chroma floor (dark). |
 | | `brand` | `chromaMult` × the seed's chroma. |
@@ -150,9 +150,9 @@ be fake portability. Changing producer behavior requires a resolver version bump
 
 | variant | fields | meaning |
 |---|---|---|
-| WCAG contrast | `{ "metric": "wcag", "against": "paper-99" \| "paper-97" \| "paper-95", "target": n, "level": "AA" \| "AAA" }` | The stop must hold `target`:1 against the RESOLVED reference stop named by `against`. Declared in both modes: light clamps lightness down; dark raises a failing hue off the paper. In use: wax-74 at 3.0, ink-53 at 4.5, ink-42 at 6.5, ink-30 at 7.0, each guaranteed on every paper. The anchor actually used by the shipped WCAG lane is not always the one named here; see architecture.md's requirement section for the resolver-level override. |
+| WCAG contrast | `{ "metric": "wcag", "against": "paper-1" \| "paper-3" \| "paper-5" \| "highlighter-20", "target": n, "level": "AA" \| "AAA" }` | The stop must hold `target`:1 against the RESOLVED reference stop named by `against`. Declared in both modes: light clamps lightness down; dark raises a failing hue off the paper. In use: crayon-26 at 3.0, pencil-47 at 4.5, pen-58 at 6.5, pen-70 at 7.0, each guaranteed on every paper. The anchor actually used by the shipped WCAG lane is not always the one named here; see architecture.md's requirement section for the resolver-level override. |
 | APCA contrast | `{ "metric": "apca", "against": …, "targetLc": n }` | The stop must read \|APCA Lc\| ≥ `targetLc` against the RESOLVED reference stop. Same solve shape as wcag. Never hand-declared in the built-in specs; produced by the contrast-profile compiler (below). |
-| Min separation | `{ "metric": "min-separation", "against": "paper-99" \| "prev", "target": n }` | OKLab ΔE floor from the resolved reference stop (`prev` = the stop's predecessor). Supported for portable specs; **the shipped spec no longer declares any**: the identity-curve paper/wash shape guarantees the seams instead (see the comment directly above the `LIGHT` export in `spec.ts`). |
+| Min separation | `{ "metric": "min-separation", "against": "paper-1" \| "prev", "target": n }` | OKLab ΔE floor from the resolved reference stop (`prev` = the stop's predecessor). Supported for portable specs; **the shipped spec no longer declares any**: the identity-curve paper/highlighter shape guarantees the seams instead (see the comment directly above the `LIGHT` export in `spec.ts`). |
 
 ### Contrast profiles (opt-in)
 

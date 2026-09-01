@@ -7,13 +7,13 @@ import { AlertCircle, AlertTriangle, CheckCircle, Info } from 'lucide-react'
 // --surface-mid plane), so it lifts off the page consistently in both modes.
 //
 // Roles demonstrated in context, not as abstract chips:
-//   ink     → the heading + body copy ("ink family" called out in lead-53)
-//   wash    → the inset surface(s)
+//   pen     → the heading + body copy ("pen family" called out in pencil-47)
+//   highlighter    → the inset surface(s)
 //   cta     → the full-round pill button (brand/alt/neutral) OR, on signals,
 //             the ALERT callout (alerts use cta in signals; the pill is hidden)
-//   scale   → the ladder, stop labels above the chips, with paper/wash/wax/ink brackets
+//   scale   → the ladder, stop labels above the chips, with paper/highlighter/crayon/pen brackets
 //
-// The universal paper-100/ink-0 anchors are NOT shown here — they're one shared
+// The universal paper-0/pen-100 anchors are NOT shown here — they're one shared
 // white/black pair at the system level, not a per-ramp token.
 export type RampKind = 'brand' | 'neutral' | 'signal'
 
@@ -30,7 +30,7 @@ const SIGNAL_ICON: Record<string, typeof AlertCircle> = {
 // single glance: the brand cta pair, the secondary cta pair (when one exists),
 // the quiet neutral cta, and all four signal ctas (critical / warning /
 // positive / info). Each family renders its cta | cta-hover | cta-pressed trio as one seamed
-// pill in on-cta text, with the text-style cta (the ink stops read as rest/hover/pressed
+// pill in on-cta text, with the text-style cta (the pen stops read as rest/hover/pressed
 // — cta-ink until its 2026-08-12 deletion) right
 // beneath it. Reads the live vars, so the per-brand signal overrides the
 // resolved theme carries show up here automatically; names the theme shifted
@@ -57,9 +57,9 @@ export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; 
       border: `1.5px solid var(--${prefix}-stamp-edge)`,
     }}>Aa</div>
   )
-  // the TEXT-style cta (the ink stops — the action color's 4.5 text rendition) rendered
+  // the TEXT-style cta (the pen stops — the action color's 4.5 text rendition) rendered
   // on the card, so its rest / hover / pressed sit right under the fill cta trio
-  const inkCell = (prefix: string, tok: 'lead-53' | 'ink-42' | 'ink-30') => (
+  const textCell = (prefix: string, tok: 'pencil-47' | 'pen-58' | 'pen-70') => (
     <div title={`--${prefix}-${tok}`} style={{
       flex: 1, textAlign: 'center', fontSize: 15, fontWeight: 800, color: `var(--${prefix}-${tok})`,
     }}>Aa</div>
@@ -74,9 +74,9 @@ export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; 
             {cell(f.prefix, 'stamp-fill-pressed')}
           </div>
           <div style={{ display: 'flex', marginTop: 7 }}>
-            {inkCell(f.prefix, 'lead-53')}
-            {inkCell(f.prefix, 'ink-42')}
-            {inkCell(f.prefix, 'ink-30')}
+            {textCell(f.prefix, 'pencil-47')}
+            {textCell(f.prefix, 'pen-58')}
+            {textCell(f.prefix, 'pen-70')}
           </div>
           <div style={{ marginTop: 6, fontSize: 11, textAlign: 'center', color: 'var(--fg-default)', fontWeight: 600 }}>
             {f.label}
@@ -105,13 +105,13 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
   // (owner 2026-08-11): the suffixed names outgrew the chip, and the swatches
   // themselves stay clean.
   const scale = [
-    'paper-99', 'paper-97', 'paper-95', 'wash-92', 'wash-89', 'wash-85', 'wash-80',
-    'wax-74', 'lead-53', 'ink-42', 'ink-30',
+    'paper-1', 'paper-3', 'paper-5', 'highlighter-8', 'highlighter-11', 'highlighter-15', 'highlighter-20',
+    'crayon-26', 'pencil-47', 'pen-58', 'pen-70',
   ]
   const stopLabel = (tok: string): string => tok.split('-').slice(1).join('')
   const groups = [
-    { label: 'paper', span: 3 }, { label: 'wash', span: 4 },
-    { label: 'wax', span: 1 }, { label: 'ink', span: 3 },
+    { label: 'paper', span: 3 }, { label: 'highlighter', span: 4 },
+    { label: 'crayon', span: 1 }, { label: 'pencil', span: 1 }, { label: 'pen', span: 2 },
   ]
   // the brackets below share the scale's grid, so their spans have to add up to it
   if (groups.reduce((a, g) => a + g.span, 0) !== scale.length)
@@ -129,19 +129,19 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
       {hasIdentity && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 14 }}>
           <span style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0, background: v('identity') }} />
-          <span style={{ fontSize: 13, fontWeight: 600, color: v('lead-53') }}>identity</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: v('pencil-47') }}>identity</span>
         </div>
       )}
 
-      {/* ink in context — heading + body, "ink family" called out in lead-53 */}
-      <div style={{ fontSize: 24, fontWeight: 700, color: v('ink-30'), lineHeight: 1.15, marginBottom: 8 }}>Aa Heading</div>
-      <p style={{ fontSize: 15, lineHeight: 1.5, color: v('ink-30'), margin: '0 0 16px' }}>
-        The <span style={{ color: v('lead-53') }}>ink family</span> is designed to contrast with the paper and wash stops and is perfect for text. It can also be used as an inverted fill.
+      {/* pen in context — heading + body, "pen family" called out in pencil-47 */}
+      <div style={{ fontSize: 24, fontWeight: 700, color: v('pen-70'), lineHeight: 1.15, marginBottom: 8 }}>Aa Heading</div>
+      <p style={{ fontSize: 15, lineHeight: 1.5, color: v('pen-70'), margin: '0 0 16px' }}>
+        The <span style={{ color: v('pencil-47') }}>pen family</span> is designed to contrast with the paper and highlighter stops and is perfect for text. It can also be used as an inverted fill.
       </p>
 
       {/* cta in context — the pill (hidden on signals, where cta lives in the alert).
           Hover swaps stamp-fill → stamp-fill-hover; holding the button shows stamp-fill-pressed. Beside it,
-          the TEXT-STYLE cta (the ink stops as states — the action color's 4.5 text
+          the TEXT-STYLE cta (the pen stops as states — the action color's 4.5 text
           rendition, a text button; never underlined, never a hyperlink — links are the
           SYSTEM --link). */}
       {!isSignal && (
@@ -166,21 +166,21 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
             onMouseLeave={() => setLinkState('rest')}
             onMouseDown={() => setLinkState('pressed')}
             onMouseUp={() => setLinkState('hover')}
-            title={`--${prefix}-${linkState === 'pressed' ? 'ink-30' : linkState === 'hover' ? 'ink-42' : 'lead-53'}`}
+            title={`--${prefix}-${linkState === 'pressed' ? 'pen-70' : linkState === 'hover' ? 'pen-58' : 'pencil-47'}`}
             style={{
               background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
               fontSize: 15, fontWeight: 600, padding: '12px 10px',
-              color: linkState === 'pressed' ? v('ink-30') : linkState === 'hover' ? v('ink-42') : v('lead-53'),
+              color: linkState === 'pressed' ? v('pen-70') : linkState === 'hover' ? v('pen-58') : v('pencil-47'),
             }}>Text action</button>
         </div>
       )}
 
-      {/* in context — the wash inset, plus the signal alert (signals), the chip +
+      {/* in context — the highlighter inset, plus the signal alert (signals), the chip +
           focus-ring controls box (insetControls), or the emphasis inset (default) */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 18 }}>
-        <div style={{ ...box, background: v('wash-92') }}>
-          <div style={{ ...boxLabel, color: v('lead-53') }}>inset &middot; wash</div>
-          <div style={{ ...boxBody, color: v('ink-30') }}>Body copy in ink on a wash fill.</div>
+        <div style={{ ...box, background: v('highlighter-8') }}>
+          <div style={{ ...boxLabel, color: v('pencil-47') }}>inset &middot; highlighter</div>
+          <div style={{ ...boxBody, color: v('pen-70') }}>Body copy in pen on a highlighter fill.</div>
         </div>
         {isSignal ? (
           <div style={{ ...box, background: v('stamp-fill'), display: 'flex', gap: 10, alignItems: 'flex-start' }}>
@@ -192,34 +192,34 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
           </div>
         ) : insetControls ? (
           /* the controls box (owner 2026-07-28, unify-compare section 3): chip +
-             focused input, so the stops' JOBS read directly — chip = paper-95 fill ·
-             wash-85 border · lead-53 text; the ring is wax-74 with a wash-89 halo
+             focused input, so the stops' JOBS read directly — chip = paper-5 fill ·
+             highlighter-15 border · pencil-47 text; the ring is crayon-26 with a highlighter-11 halo
              (the collision demo's held-focus idiom) */
-          <div style={{ ...box, background: v('paper-97') }}>
-            <div style={{ ...boxLabel, color: v('lead-53') }}>chip &middot; focus ring</div>
+          <div style={{ ...box, background: v('paper-3') }}>
+            <div style={{ ...boxLabel, color: v('pencil-47') }}>chip &middot; focus ring</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{
                 display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 6,
                 fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap',
-                background: v('paper-95'), color: v('lead-53'), border: `1px solid ${v('wash-85')}`,
+                background: v('paper-5'), color: v('pencil-47'), border: `1px solid ${v('highlighter-15')}`,
               }}>chip</span>
               <input readOnly value="Focused input" style={{
                 flex: 1, minWidth: 0, boxSizing: 'border-box', padding: '7px 11px', borderRadius: 8,
-                fontSize: 13, fontFamily: 'inherit', background: v('paper-99'), color: v('ink-30'),
-                border: `1.5px solid ${v('wax-74')}`, boxShadow: `0 0 0 3px ${v('wash-89')}`, outline: 'none',
+                fontSize: 13, fontFamily: 'inherit', background: v('paper-1'), color: v('pen-70'),
+                border: `1.5px solid ${v('crayon-26')}`, boxShadow: `0 0 0 3px ${v('highlighter-11')}`, outline: 'none',
               }} />
             </div>
           </div>
         ) : (
-          <div style={{ ...box, background: v('lead-53') }}>
-            <div style={{ ...boxLabel, color: 'var(--paper-100)' }}>inset &middot; emphasis</div>
-            {/* the emphasis inset is the INVERTED fill: lead-53 (the emphasis fill since the
-                2026-07-29 collapse) carrying --paper-100, over an ink-30 panel with paper-99 text.
+          <div style={{ ...box, background: v('pencil-47') }}>
+            <div style={{ ...boxLabel, color: 'var(--paper-0)' }}>inset &middot; emphasis</div>
+            {/* the emphasis inset is the INVERTED fill: pencil-47 (the emphasis fill since the
+                2026-07-29 collapse) carrying --paper-0, over a pen-70 panel with paper-1 text.
                 The link on it is the INVERSE trio (owner round 2026-08-19) — the link seed
                 re-solved for exactly this ground; the system --link is illegible here. */}
-            <div style={{ background: v('ink-30'), borderRadius: 8, padding: '10px 12px' }}>
-              <div style={{ ...boxBody, color: v('paper-99') }}>
-                Emphasis copy in paper-99 text with an{' '}
+            <div style={{ background: v('pen-70'), borderRadius: 8, padding: '10px 12px' }}>
+              <div style={{ ...boxBody, color: v('paper-1') }}>
+                Emphasis copy in paper-1 text with an{' '}
                 <a
                   href="#"
                   onClick={e => e.preventDefault()}
@@ -250,7 +250,7 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
         ))}
       </div>
       {/* Bracketed group labels — each bracket spans its stops so the
-          paper/wash/wax/ink grouping reads unambiguously.
+          paper/highlighter/crayon/pen grouping reads unambiguously.
           The column count is DERIVED from the scale, never written down: it was a
           hardcoded 11 and the 2026-07-29 collapse took the scale to 10, which left every
           bracket a column short and drifting left of the stops it labelled. A stop change

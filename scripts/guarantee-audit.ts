@@ -1,13 +1,13 @@
 // guarantee-audit — THE GROUP GUARANTEES AS A GATE (guarantee-groups round, owner
 // 2026-08-27). The five bands each carry ONE flat claim, no caveats, scoped to the
 // stop's OWN family plus the NEUTRAL (blanket any-on-any is owner-rejected — a sibling
-// family's wash-80 sits structurally out of reach):
+// family's highlighter-20 sits structurally out of reach):
 //
-//   paper (100/99/97/95)  passes wax-74 at 3:1 and every ink at 4.5
-//   wash  (92/89/85/80)   passes the ink group (42/30/0) at 4.5
-//   wax-74               3:1 against paper only
-//   lead-53               4.5 against paper only          (lead-53 pre guarantee round)
-//   ink   (42/30/0)       4.5 against paper AND wash      (the T10 wash-80 law)
+//   paper (100/99/97/95)  passes crayon-26 at 3:1 and every pen at 4.5
+//   highlighter  (92/89/85/80)   passes the pen group (42/30/0) at 4.5
+//   crayon-26               3:1 against paper only
+//   pencil-47               4.5 against paper only          (pencil-47 pre guarantee round)
+//   pen   (42/30/0)       4.5 against paper AND highlighter      (the T10 highlighter-20 law)
 //
 // Plus the STAMP/ON pairing (owner ruling 2026-08-29): a quiet cta's shipped on-text —
 // the soft composite where softOnCtaPasses gates it in, the solid pole at rest where
@@ -20,9 +20,9 @@
 //
 // Basis: the SHIPPED 8-bit pair (shippedY both sides — the value every browser and
 // audit tool measures). Sweep: agnostic hue×chroma seeds + the audit fixtures, every
-// family (neutral, brand, derived brand-alt, the four signals), both modes. An ink of
+// family (neutral, brand, derived brand-alt, the four signals), both modes. A pen of
 // family F is checked against the surfaces of F and of the theme's neutral; the
-// neutral's own inks are covered by the same rule (own = neutral).
+// neutral's own pens are covered by the same rule (own = neutral).
 import { resolveTheme, signalScalesFor, softOnCtaPasses, SOFT_ON_CTA_ALPHA } from '../src/engine/resolve'
 import { generateNeutralScale, type GeneratedScale } from '../src/engine/colorEngine'
 import { contrastRatio, shippedY } from '../src/engine/constraints'
@@ -33,11 +33,11 @@ import { FIXTURES } from './fixture'
 const enc = (c: number) => { c = Math.max(0, Math.min(1, c)); return c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055 }
 const seedHex = (L: number, C: number, H: number) => '#' + oklchToLinearRgb(L, C, H).map(c => Math.round(enc(c) * 255).toString(16).padStart(2, '0')).join('')
 
-// surfaces (array index = stop-1) and wax stops, by the guarantee bands
-const PAPERS = [1, 2, 3] as const          // paper-99 / 97 / 95 (paper-100 poles below)
-const WASHES = [4, 5, 6, 7] as const       // wash-92 / 89 / 85 / 80
-const WAX = 8, LEAD = 9, INKS = [10, 11] as const   // + ink-0, the resolved extreme (below)
-const BAR = { wax: 3.0, text: 4.5 }
+// surfaces (array index = stop-1) and crayon stops, by the guarantee bands
+const PAPERS = [1, 2, 3] as const          // paper-1 / 97 / 95 (paper-0 poles below)
+const HIGHLIGHTERS = [4, 5, 6, 7] as const       // highlighter-8 / 89 / 85 / 80
+const CRAYON = 8, PENCIL = 9, PENS = [10, 11] as const   // + pen-100, the resolved extreme (below)
+const BAR = { crayon: 3.0, text: 4.5 }
 
 type Worst = { r: number; where: string }
 const cells: Record<string, Worst> = {}
@@ -70,11 +70,11 @@ function check(hex: string, tag: string, opts: { exact?: boolean; archetypeOverr
     const nArr = mode === 'light' ? neutral.light : neutral.dark
     const nP0 = mode === 'light' ? neutral.paper0 : neutral.paper0Dark
     const yOf = (s: { L: number; C: number; H: number }) => shippedY(s.L, s.C, s.H)
-    // ink-0 is the LITERAL pole again (owner 2026-08-31, walking back the 2026-08-28
+    // pen-100 is the LITERAL pole again (owner 2026-08-31, walking back the 2026-08-28
     // resolver) — the claim measures the shipped field, which now IS the pole; a
     // missing field falls back to the same pole so a partial build still gates
-    const nI0 = mode === 'light' ? neutral.ink0 : neutral.ink0Dark
-    const inkPoleY = nI0 ? yOf(nI0) : mode === 'light' ? 0 : 1
+    const nI0 = mode === 'light' ? neutral.pen100 : neutral.pen100Dark
+    const penPoleY = nI0 ? yOf(nI0) : mode === 'light' ? 0 : 1
     for (const f of fams) {
       const arr = mode === 'light' ? f.scale.light : f.scale.dark
       // the claim's scope: the stop's own family's surfaces + the neutral's
@@ -87,19 +87,19 @@ function check(hex: string, tag: string, opts: { exact?: boolean; archetypeOverr
         return out
       }
       const paperY = surfaces(PAPERS)
-      if (f.name === 'neutral' && nP0) paperY.push(['paper-100', yOf(nP0)])
-      const washY = surfaces(WASHES)
-      const waxY = yOf(arr[WAX - 1]), leadY = yOf(arr[LEAD - 1])
+      if (f.name === 'neutral' && nP0) paperY.push(['paper-0', yOf(nP0)])
+      const highlighterY = surfaces(HIGHLIGHTERS)
+      const crayonY = yOf(arr[CRAYON - 1]), pencilY = yOf(arr[PENCIL - 1])
       const where = (s: string) => `${tag} ${mode} ${f.name} on ${s}`
       for (const [s, y] of paperY) {
-        seen('wax-74 vs paper', contrastRatio(waxY, y), where(s), BAR.wax)
-        seen('lead-53 vs paper', contrastRatio(leadY, y), where(s), BAR.text)
-        for (const ink of INKS) seen(`ink-${ink === 10 ? 42 : 30} vs paper`, contrastRatio(yOf(arr[ink - 1]), y), where(s), BAR.text)
-        if (f.name === 'neutral') seen('ink-0 vs paper', contrastRatio(inkPoleY, y), where(s), BAR.text)
+        seen('crayon-26 vs paper', contrastRatio(crayonY, y), where(s), BAR.crayon)
+        seen('pencil-47 vs paper', contrastRatio(pencilY, y), where(s), BAR.text)
+        for (const pen of PENS) seen(`pen-${pen === 10 ? 42 : 30} vs paper`, contrastRatio(yOf(arr[pen - 1]), y), where(s), BAR.text)
+        if (f.name === 'neutral') seen('pen-100 vs paper', contrastRatio(penPoleY, y), where(s), BAR.text)
       }
-      for (const [s, y] of washY) {
-        for (const ink of INKS) seen(`ink-${ink === 10 ? 42 : 30} vs wash`, contrastRatio(yOf(arr[ink - 1]), y), where(s), BAR.text)
-        if (f.name === 'neutral') seen('ink-0 vs wash', contrastRatio(inkPoleY, y), where(s), BAR.text)
+      for (const [s, y] of highlighterY) {
+        for (const pen of PENS) seen(`pen-${pen === 10 ? 42 : 30} vs highlighter`, contrastRatio(yOf(arr[pen - 1]), y), where(s), BAR.text)
+        if (f.name === 'neutral') seen('pen-100 vs highlighter', contrastRatio(penPoleY, y), where(s), BAR.text)
       }
     }
     // stamp/on over the quiet cta fill (owner ruling 2026-08-29): the soft composite is
@@ -150,4 +150,4 @@ if (fails.length) {
   console.log('\nGATE: FAIL')
   process.exit(1)
 }
-console.log('\nGATE: PASS — every band claim holds at its bar (wax 3:1, text 4.5), own family + neutral, both modes')
+console.log('\nGATE: PASS — every band claim holds at its bar (crayon 3:1, text 4.5), own family + neutral, both modes')

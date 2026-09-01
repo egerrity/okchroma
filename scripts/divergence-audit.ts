@@ -13,7 +13,7 @@
 //   C. dark-L apparent wave  REPORT-ONLY: per-hue apparent-lightness spread,
 //      (REPORT)              light (≈flat) vs dark (waves). The fix is a separate
 //                            effort; this ships its gate.
-//   D. dark text contrast    REPORT: dark stop 8/10/11 vs paper-97, both modes,
+//   D. dark text contrast    REPORT: dark stop 8/10/11 vs paper-3, both modes,
 //      (REPORT)              swept agnostically. Drives the W2 decision.
 //
 // Failures print worst-first with the input. `--bless` records the matrix after
@@ -52,7 +52,7 @@ const ok = (cond: boolean, msg: string) => { if (!cond) fails.push(msg) }
 // A chromaCurve-bearing scale (the neutral) must emit the DECLARED chroma at every stop:
 //   LIGHT: the curve's chroma at the stop's own L (as always).
 //   DARK (the delta model, owner 2026-07-09): every dark stop CARRIES the light twin's emitted chroma
-//     (re-clamped at the dark L) — curve ramps included, inks included (the curves' dark branches are keyed
+//     (re-clamped at the dark L) — curve ramps included, pens included (the curves' dark branches are keyed
 //     to the OLD dark L geography; evaluating them at delta L's tinted the papers — owner-caught).
 //
 // ⚠️ THE DARK PREMISE IS APPROXIMATE FOR LIFTED STOPS, and this tolerance absorbs the error.
@@ -60,7 +60,7 @@ const ok = (cond: boolean, msg: string) => { if (!cond) fails.push(msg) }
 // at the SCALED depth and its chroma comes from the light ladder's chroma-at-depth relationship
 // there (deltaLiftChroma, stopTable.ts). So the gap this check measures GROWS WITH LIFT SIZE by
 // design, and the tolerance is quietly doubling as a bound on how much lift is allowed.
-// Widened 0.004 → 0.005 (owner-approved 2026-07-29) when the washes were redeclared at a flat
+// Widened 0.004 → 0.005 (owner-approved 2026-07-29) when the highlighters were redeclared at a flat
 // S=1.20 and the steeper wash-4/5 lift took `branded h270 dark stop 5` to a 0.0042 gap — 1 stop
 // of 120, on a chroma of 0.012 vs 0.016, which is one near-neutral gray against another. The
 // same stops already read 0.0026–0.0031 at the old lift, so this is the same behaviour further
@@ -145,17 +145,17 @@ console.log(`  CTA  |    ${f1(ctaSpread.light.hi - ctaSpread.light.lo).padStart(
 console.log(`  worst dark vivid-stop wave ${f1(worstDark)} L*  ·  dark CTA wave ${f1(ctaSpread.dark.hi - ctaSpread.dark.lo)} L*`)
 
 // ── D. dark text-stop contrast (REPORT) — drives the W2 decision ──────────────
-// Light clamps stop 8 to 3:1, the inks 9/10 to 4.5/7. Sweep agnostically; report the worst
+// Light clamps stop 8 to 3:1, the pens 9/10 to 4.5/7. Sweep agnostically; report the worst
 // dark ratio so W2 decides whether a dark clamp is needed or the scaffold already clears.
 // ⚠️ This section reads PAPER-97, which is no longer stop 8's anchor: since 2026-07-29 stop 8
 // declares 3:1 against PAPER-95 in both modes (spec.ts S8) and is placed by that require, not
 // by the scaffold. Paper-97 is the EASIER plane in dark, so the stop-8 row below reads high by
-// the paper-97→paper-95 offset and is NOT the compliance number — band-audit §1b owns that.
-// The ink rows are still on their declared anchor and unaffected. Left reading paper-97 so the
+// the paper-3→paper-5 offset and is NOT the compliance number — band-audit §1b owns that.
+// The pen rows are still on their declared anchor and unaffected. Left reading paper-3 so the
 // series stays comparable to its own history; read the label, not the bare ratio.
 // find by STOP number — the arrays are contiguous stops 1..10 (highlight-9 deleted and
-// the inks renumbered down 2026-07-29)
-const vsPaper2 = (arr: ColorStop[], stop: number) => {
+// the pens renumbered down 2026-07-29)
+const vsPaper3 = (arr: ColorStop[], stop: number) => {
   const st = arr.find(s => s.stop === stop)!
   const p2 = arr.find(s => s.stop === 2)!
   return contrastRatio(wcagY(st.L, st.C, st.H), wcagY(p2.L, p2.C, p2.H))
@@ -163,22 +163,22 @@ const vsPaper2 = (arr: ColorStop[], stop: number) => {
 const dark = { s8: 999, s8at: '', s10: 999, s10at: '', s11: 999, s11at: '' }
 for (let H = 0; H < 360; H += 15) for (const C of [0.04, 0.10, 0.16, 0.22]) for (const L of [0.45, 0.6, 0.7, 0.82]) {
   const s = generateScale(synthHex(L, C, H), `dc-h${H}c${C}l${L}`, undefined, BRAND_FLOOR)
-  const c8 = vsPaper2(s.dark, 8), c10 = vsPaper2(s.dark, 9), c11 = vsPaper2(s.dark, 10)
+  const c8 = vsPaper3(s.dark, 8), c10 = vsPaper3(s.dark, 9), c11 = vsPaper3(s.dark, 10)
   if (c8 < dark.s8) { dark.s8 = c8; dark.s8at = `H${H} C${C} L${L}` }
   if (c10 < dark.s10) { dark.s10 = c10; dark.s10at = `H${H} C${C} L${L}` }
   if (c11 < dark.s11) { dark.s11 = c11; dark.s11at = `H${H} C${C} L${L}` }
 }
-console.log(`\n=== D. dark text contrast vs paper-97 (agnostic worst) — REPORT ===`)
+console.log(`\n=== D. dark text contrast vs paper-3 (agnostic worst) — REPORT ===`)
 console.log(`  stop 8  worst ${dark.s8.toFixed(2)}:1 (${dark.s8at})  [floor 3.0 — but vs PAPER-95, not this plane]`)
-console.log(`  lead-53   worst ${dark.s10.toFixed(2)}:1 (${dark.s10at})  [light floor 4.5]`)
-console.log(`  ink-42  worst ${dark.s11.toFixed(2)}:1 (${dark.s11at})  [light floor 7.0]`)
+console.log(`  pencil-47   worst ${dark.s10.toFixed(2)}:1 (${dark.s10at})  [light floor 4.5]`)
+console.log(`  pen-58  worst ${dark.s11.toFixed(2)}:1 (${dark.s11at})  [light floor 7.0]`)
 
 // ── Snapshot — full family × mode × stop L/C/H (the regression + provenance gate)
 const SNAP_PATH = path.join(process.cwd(), 'scripts', 'divergence-snapshot.json')
 const TOL = 0.015
 const matrix = (s: GeneratedScale): number[] =>
   // the last six triples were the cta-ink fields (deleted 2026-08-12); they were pure
-  // references onto ink stops 9/10/11 so the SAME VALUES are read from the arrays —
+  // references onto pen stops 9/10/11 so the SAME VALUES are read from the arrays —
   // blessed snapshots stay byte-comparable, no re-bless
   [...s.light.slice(0, 11), ...s.dark.slice(0, 11),
     s.cta, s.ctaHover, s.ctaPressed, s.ctaDark, s.ctaHoverDark, s.ctaPressedDark,

@@ -53,9 +53,9 @@ export interface GeneratedScale {
   ctaPressedDark: ColorStop
 
   // (the cta-ink trio DELETED, owner 2026-08-12: it was pure references onto stops
-  // 9/10/11 since C49 — the text-register cta IS the ink stops; consumers read them
+  // 9/10/11 since C49 — the text-register cta IS the pen stops; consumers read them
   // from light[]/dark[]. Under the neutral-cta escape the emitters de-chroma the
-  // ink stops themselves instead of swapping a separate register.)
+  // pen stops themselves instead of swapping a separate register.)
 
   // C12 value repel: per-mode fired flags (the cta exited red's register) — annotation/audit data
   ctaRepelled?: { light: boolean; dark: boolean }
@@ -67,11 +67,11 @@ export interface GeneratedScale {
   // dark — never absolute black). OFF the light[]/dark[] arrays: consumers index [0] as stop 1.
   paper0?: ColorStop
   paper0Dark?: ColorStop
-  // ink-0: the LITERAL pole (owner 2026-08-31, walking back the 2026-08-28 seam
+  // pen-100: the LITERAL pole (owner 2026-08-31, walking back the 2026-08-28 seam
   // resolver): pure black in light, pure white in dark — C=0, no register tint.
   // OFF the arrays like paper0; emitted only where the anchors ship (the neutral).
-  ink0?: ColorStop
-  ink0Dark?: ColorStop
+  pen100?: ColorStop
+  pen100Dark?: ColorStop
 }
 
 export interface GenerateOptions {
@@ -155,20 +155,20 @@ export interface GenerateOptions {
   // DELTA-KEYED dark (THE dark model, owner 2026-07-09): the resolved LIGHT stops, injected into the DARK
   // resolve — dark is a live function of light (hue carried for surfaces 1-9; lightness re-referenced to
   // the dark ground in apparent space at the band's DARK_BAND_LIFT factor, chroma resampled at the lifted
-  // depth — C24; inks dark-native; cta prominence-floored). generateScale always sets
+  // depth — C24; pens dark-native; cta prominence-floored). generateScale always sets
   // these; direct resolveRamp callers opt in per call.
   deltaLightStops?: { stop: number; L: number; C: number; H: number }[]
   deltaCarry?: boolean
   // per-bolt-on instruments (not shipped): layer exactly ONE old dark mechanism onto the pure carry, so the
   // eye can see what that piece does. Each is a REAL engine fn (no reimplementation); default off = identical.
-  // THE INVERSE INK GROUND (owner round 2026-08-19): re-anchor THIS ramp's ink requires
+  // THE INVERSE PEN GROUND (owner round 2026-08-19): re-anchor THIS ramp's pen requires
   // (stops 9–11) at an external color instead of a paper of its own ramp — the inverse link
-  // family is text on an ink-30 fill, so the paper anchor is the wrong ground. Keyed BY RAMP,
+  // family is text on a pen-70 fill, so the paper anchor is the wrong ground. Keyed BY RAMP,
   // not by the surface's mode: the light-mode inverse trio is light-on-dark text, which is the
   // DARK ramp's construction, so resolveLinkInverseTrio hands the dark ramp the LIGHT-mode
   // ground and vice versa (see the cross there). Nothing else in the solve changes — same
   // requires, producers, hue laws, chroma floors and shipped-pair floor. Absent = byte-identical.
-  inkGround?: { light: { L: number; C: number; H: number }; dark: { L: number; C: number; H: number } }
+  textGround?: { light: { L: number; C: number; H: number }; dark: { L: number; C: number; H: number } }
 
   deltaHKPlace?: boolean     // place carried C/H by the old apparent-L rung (perceptualRungL @ scaffold), not luminance
   deltaChromaEq?: boolean    // replace carried C with the old H-K chroma equalizer (perceptualDarkC)
@@ -215,11 +215,11 @@ export function generateScale(
   const p0Light = lightRamp.stops.find(s => s.stop === 0)
   const p0Dark = darkRamp.stops.find(s => s.stop === 0)
 
-  // ink-0: the literal pole (owner 2026-08-31 — the 2026-08-28 seam resolver walked
+  // pen-100: the literal pole (owner 2026-08-31 — the 2026-08-28 seam resolver walked
   // back): L pinned to the mode's extreme, C=0 so no register tint survives; H rides
   // along inert. Guarded on stop 11 so a hand-built partial scale omits the leaf
   // rather than minting a pole the ladder doesn't reach.
-  const inkPole = (arr: ColorStop[], L: 0 | 1): ColorStop | undefined =>
+  const penPole = (arr: ColorStop[], L: 0 | 1): ColorStop | undefined =>
     arr.find(s => s.stop === 11) ? makeStop(12, L, 0, arr.find(s => s.stop === 11)!.H) : undefined
 
   const cta = makeStop(9, lightRamp.roles.cta.L, lightRamp.roles.cta.C, lightRamp.roles.cta.H)
@@ -241,8 +241,8 @@ export function generateScale(
     identityHex: hex.toUpperCase(),
     paper0: p0Light ? makeStop(0, p0Light.L, p0Light.C, p0Light.H) : undefined,
     paper0Dark: p0Dark ? makeStop(0, p0Dark.L, p0Dark.C, p0Dark.H) : undefined,
-    ink0: inkPole(light, 0),
-    ink0Dark: inkPole(dark, 1),
+    pen100: penPole(light, 0),
+    pen100Dark: penPole(dark, 1),
   }
 }
 
@@ -291,13 +291,13 @@ export function generateNeutralScale(
   })
 
   // The neutral cta is LOW-HIERARCHY: unlike a brand/signal cta (a bold off-scale
-  // fill), it reads at the quiet wash level, so its REST fill stays fed from the
+  // fill), it reads at the quiet highlighter level, so its REST fill stays fed from the
   // scale's own stop 4 — which flips via ROOT_L_LIGHT/ROOT_L_DARK (light ~0.936, dark ~0.285).
   // on-cta is recomputed so the text stays legible in each mode.
   const asCta = (stop: number, src: ColorStop) => makeStop(stop, src.L, src.C, src.H)
   scale.cta = asCta(9, scale.light[3])
   scale.ctaDark = asCta(9, scale.dark[3])
-  // DARK POP CLEARANCE (owner 2026-07-27): the fed dark washes pack near black, so
+  // DARK POP CLEARANCE (owner 2026-07-27): the fed dark highlighters pack near black, so
   // the quiet fill sat ~1.07 vs the HIGH plane (dark paper-3 — post-C27 the one-level
   // highest background; a generated pop candidate was tried and RETIRED, owner
   // 2026-07-28: once the papers share a photometric level, pop = paper-3 is the
@@ -327,7 +327,7 @@ export function generateNeutralScale(
   scale.ctaPressed = nState(11, 'light', scale.cta, 2)
   scale.ctaHoverDark = nState(10, 'dark', scale.ctaDark, 1)
   scale.ctaPressedDark = nState(11, 'dark', scale.ctaDark, 2)
-  // the quiet-fill override above touches only the fill trio — the ink stops (the text
+  // the quiet-fill override above touches only the fill trio — the pen stops (the text
   // register) stay resolver-minted.
   // the scale-fed neutral cta can't move, so on-text is judgment only: apca profile keeps
   // the pure apca-pole PREFERENCE, wcag adds the mixing flip — but the 4.5 conformance
@@ -348,7 +348,7 @@ export function generateNeutralScale(
 // not the loud off-scale fill. This is both the user-facing `secondaryLevel: 'subtle'` AND the
 // automatic yield move when a secondary collides with a signal (resolveTheme). Note the red
 // case: the primary's rung-1 goes DARK; this goes LIGHTER + lower chroma — the mirror falls out
-// of the wash-register cta, no extra machinery.
+// of the highlighter-register cta, no extra machinery.
 export function generateSubtleSecondary(
   hex: string,
   opts?: {

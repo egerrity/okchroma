@@ -149,16 +149,16 @@ The same modules as a table: each piece, where it lives, what it does. Grouped b
 |---|---|---|
 | Scale generator | `colorEngine.ts` | `generateScale`, the adapter over the resolver, plus the `GeneratedScale` contract, `generateNeutralScale`, `neutralTintHue` (the C48 tint-hue source rule), and `GenerateOptions`. |
 | Brand & theme resolver | `resolve.ts` | `resolveBrand`/`resolveTheme`, the top of the engine. Per-profile signal sets, collision machinery, the red complement variant, C12 `ctaSolve` injection, and the secondary offering: derived (`DEFAULT_SECONDARY` seed transform + gap registers), the same transform on a supplied seed, exact (full standard ramp), or outline (exact ramp, cta re-resolved at emit). |
-| Collision gates | `collision.ts` | Type-1 hue-family detection (wash hues within 15° + vividness qualifier) and the value test (hue gate + ΔE gate) deciding signal collisions and annotation. |
+| Collision gates | `collision.ts` | Type-1 hue-family detection (highlighter hues within 15° + vividness qualifier) and the value test (hue gate + ΔE gate) deciding signal collisions and annotation. |
 | Signal shifts | `signalShift.ts` | Per-brand signal adjustments: yellow's lemon shift and the green/blue swap variants, split-keyed by the brand's hue. |
 
 **Emit: the output (`src/engine/`, `src/`)**
 
 | Piece | Location | What it does |
 |---|---|---|
-| CSS emitter | `cssRender.ts` | `brandCss`/`signalsCss`, custom properties per family and mode: the scale stops, the cta fill trio (`solid-fill`/`solid-fill-hover`/`solid-fill-pressed`; the text-style cta is the ink stops themselves since the 2026-08-12 cta-ink deletion), `solid-on` (solid pole or the soft pole-at-alpha), the gated `solid-edge` alias onto the system alpha ladder, P3 `@supports` override blocks, the outline secondary's cta shape. Signals emit under their **role names** (`--critical-*`/`--warning-*`/`--positive-*`/`--info-*`); identity names stay engine-internal. |
+| CSS emitter | `cssRender.ts` | `brandCss`/`signalsCss`, custom properties per family and mode: the scale stops, the cta fill trio (`stamp-fill`/`stamp-fill-hover`/`stamp-fill-pressed`; the text-style cta is the pen stops themselves since the 2026-08-12 cta-ink deletion), `stamp-on` (solid pole or the soft pole-at-alpha), the gated `stamp-edge` alias onto the system alpha ladder, P3 `@supports` override blocks, the outline secondary's cta shape. Signals emit under their **role names** (`--critical-*`/`--warning-*`/`--positive-*`/`--info-*`); identity names stay engine-internal. |
 | Figma emitter | `figmaRender.ts` | `themeToFigma`, the same theme as Figma variable collections (both plugins consume it). |
-| Token vocabulary | `tokenNames.ts` | The shared naming: paper-99/97/95, wash-92–80, wax-74, ink-53/42-aa/30-aaa, the cta state families, ons; one vocabulary across CSS and Figma. |
+| Token vocabulary | `tokenNames.ts` | The shared naming: paper-0/1/3/5, highlighter-8/11/15/20, crayon-26, pencil-47, pen-58/70/100, the cta state families, ons; one vocabulary across CSS and Figma. |
 | Public API | `index.ts` | The entry point: `resolveBrand`/`resolveTheme`. |
 
 **Product data & pipelines (`src/`)**
@@ -173,7 +173,7 @@ demo-only concerns that had no reason to live next to the engine. Their audit-fi
 now `scripts/fixture.ts`, a small named color set with no display names or demo flag — it
 exists only to exercise the engine's instruments. The demo's one illustration
 (`demo/heroIllo.ts`) now themes itself directly: its SVG markup references the live CSS
-custom properties (`var(--brand-ink-53)` etc.), so it re-themes with the rest of the page
+custom properties (`var(--brand-pencil-47)` etc.), so it re-themes with the rest of the page
 for free, no recolor step.
 
 Around the engine sit the audit gates in `scripts/` (with their blessed snapshots, driven by
@@ -188,7 +188,7 @@ variables.
 | 1 | Decode + context | `producers.ts` · `buildContext` | hex + opts → OKLCH seed, archetype, and the aesthetic state (chroma boost, mutedness, cream gate, warm-drift caps, red-repel weights) |
 | 2 | Compile | `colorEngine.ts` · `generateScale` (adapter) | caller opts + the built-in declaration → a per-mode `ModeSpec` for the resolver |
 | 3 | Resolve stops | `resolve.ts` · `resolveRamp` | per declared stop: **produce** (hue → chroma → `perceptualRungL`) → **require** (declared contrast floors bind: down-clamp in light, raise-off-paper in dark) → **refine** (chroma yields to gamut). Stops resolve in order, so a require can reference an already-resolved stop |
-| 4 | Resolve roles + ons | `resolve.ts` | off-scale `solid-fill`/`solid-fill-hover`/`solid-fill-pressed` roles (anchor = the brand's own lightness, floored in dark; the on-fill enforce re-solve last); the `solid-on` pole chosen by the declared `ons` rule, never feeding back into a fill except through the enforce |
+| 4 | Resolve roles + ons | `resolve.ts` | off-scale `stamp-fill`/`stamp-fill-hover`/`stamp-fill-pressed` roles (anchor = the brand's own lightness, floored in dark; the on-fill enforce re-solve last); the `stamp-on` pole chosen by the declared `ons` rule, never feeding back into a fill except through the enforce |
 | 5 | Assemble | `colorEngine.ts` adapter | resolved ramps → the `GeneratedScale` contract (light[], dark[], the six cta state fills, on-booleans) |
 | 6 | **Policy** | `resolve.ts` (engine) · `resolveBrand` | runs collisions; may re-call the engine with new options; computes signal overrides |
 | 7 | Emit | `cssRender.ts` / `figmaRender.ts` + `tokenNames.ts` | `GeneratedScale` → named CSS vars or Figma variable tree |
@@ -230,18 +230,18 @@ ResolvedBrand  = { scale, shearDeg, redRepel: {light,dark}|null,
 
 | Stops | Token names | Role |
 |---|---|---|
-| 1–2 | `paper-99`, `paper-97` | the page and card planes |
-| 3 | `paper-95` | surface plane (light sunken / dark high), renamed from wash-3, owner 2026-07-24 |
-| 4–7 | `wash-92` … `wash-80` | low-hierarchy fills, borders, decorative |
-| 8 | `wax-74` | WCAG 1.4.11 **3:1** non-text step (borders, UI elements) |
-| 9 | `ink-53` | emphasis fill AND first text stop (4.5:1, the 2026-07-29 highlight collapse) |
-| 10 | `ink-42` | the between text stop (6.5:1, C49, promoted from the retired text-cta hover state) |
-| 11 | `ink-30` | strong text (7:1). The three ink stops read as states ARE the text-style cta (rest 53 / hover 42 / pressed 30); the separate `cta-ink` + `cta-ink-strong` alias trios were deleted 2026-08-12 |
-| off-scale roles | `solid-fill`, `solid-fill-hover`, `solid-fill-pressed` | the pulled-out solid button fill and its states |
-| aliases | `solid-edge` | the gated border onto the system alpha ladder |
-| computed | `solid-on` | black/white text for the fill (solid pole, or the soft pole-at-alpha on quiet fills) |
+| 1–2 | `paper-1`, `paper-3` | the page and card planes |
+| 3 | `paper-5` | surface plane (light sunken / dark high), renamed from wash-3, owner 2026-07-24 |
+| 4–7 | `highlighter-8` … `highlighter-20` | low-hierarchy fills, borders, decorative |
+| 8 | `crayon-26` | WCAG 1.4.11 **3:1** non-text step (borders, UI elements) |
+| 9 | `pencil-47` | emphasis fill AND first text stop (4.5:1 on every paper, the 2026-07-29 highlight collapse) |
+| 10 | `pen-58` | the between text stop (4.5:1 on every highlighter, anchored at `highlighter-20` since the 2026-08-27 guarantee round; C49, promoted from the retired text-cta hover state) |
+| 11 | `pen-70` | strong text (guaranteed minimum 4.5:1 on every highlighter and paper). The three text stops read as states ARE the text-style cta (rest pencil-47 / hover pen-58 / pressed pen-70); the separate `cta-ink` + `cta-ink-strong` alias trios were deleted 2026-08-12 |
+| off-scale roles | `stamp-fill`, `stamp-fill-hover`, `stamp-fill-pressed` | the pulled-out solid button fill and its states |
+| aliases | `stamp-edge` | the gated border onto the system alpha ladder |
+| computed | `stamp-on` | black/white text for the fill (solid pole, or the soft pole-at-alpha on quiet fills) |
 | literal | `identity` | the exact input hex (brand / secondary only) |
-| anchors | `paper-100`, `ink-0` | universal per-scheme extremes (paper-100 = the neutral's resolved stop 0; ink-0 = literal black/white, flipped per mode) |
+| anchors | `paper-0`, `pen-100` | universal per-scheme extremes (paper-0 = the neutral's resolved stop 0; pen-100 = literal black/white, flipped per mode) |
 
 `tokens/semantic.css` is a **static, hand-authored alias layer** (never generated): it maps
 human role names (`--surface-*`, `--fg-*`, `--border-*`, `--critical-bg-*` and friends)
@@ -265,23 +265,25 @@ it. Three phases per stop, in order:
   `okchroma-reqtoken@2`; they are the house style *of this resolver*, not portable data.
 - **require**: declared floors, checked and enforced against **resolved** stops (never a
   cached value, so a pushed stop automatically re-solves everything referencing it):
-  - `{ metric: 'wcag', against, target }`: `wax-74` declares `against: 'paper-95'`
-    directly (3:1), and the resolver honors that anchor as written. `ink-53`,
-    `ink-42`, and `ink-30` declare `against: 'paper-97'` in `spec.ts` (4.5 / 6.5 /
-    7.0), but the shipped WCAG lane overrides that at resolve time: `resolve.ts`'s
-    `wcagAnchorStop` re-anchors every stop from 9 up at paper-95 instead, the nearest
-    paper, so the declared paper-97 anchor is what only the apca lane actually reads
-    (byte-identical there), while the shipped wcag lane clears paper-95. On top of that,
-    every stop from wax-74 up also clears the worst paper the family's OWN generated
+  - `{ metric: 'wcag', against, target }`: `crayon-26` declares `against: 'paper-5'`
+    directly (3:1), and the resolver honors that anchor as written. `pencil-47` and
+    `pen-70` declare `against: 'paper-3'` in `spec.ts` and `pen-58` declares
+    `against: 'highlighter-20'` (4.5, the darkest highlighter — honored as written, since
+    it is already darker than every paper); for the paper-declared text stops the shipped
+    WCAG lane overrides the anchor at resolve time: `resolve.ts`'s
+    `wcagAnchorStop` re-anchors them at paper-5 instead, the nearest
+    paper, so the declared paper-3 anchor is what only the apca lane actually reads
+    (byte-identical there), while the shipped wcag lane clears paper-5. On top of that,
+    every stop from crayon-26 up also clears the worst paper the family's OWN generated
     NEUTRAL can produce at any hue (`NEUTRAL_P3_WORST_SHIP_Y`, C44): a brand's own
-    paper-95 is not always the nearest paper once the neutral is in scope. Declared in
+    paper-5 is not always the nearest paper once the neutral is in scope. Declared in
     **both modes** (light clamps down; dark raises off the paper; a placement that
     already clears doesn't move).
   - `{ metric: 'min-separation', against, target }`: supported by the resolver for
     portable specs; **the shipped spec no longer declares any** (the identity-curve
-    paper/wash shape guarantees the seams instead, see the comment directly above the
+    paper/highlighter shape guarantees the seams instead, see the comment directly above the
     `LIGHT` export in `spec.ts`).
-  - the `ons` block: the `solid-on` pole choice (`apca-pole` preference) with the law
+  - the `ons` block: the `stamp-on` pole choice (`apca-pole` preference) with the law
     `{ ratioFloor: 4.5, coEnforceLc: 65 }`: the chosen pole must pass WCAG 4.5 or the
     fill re-solves, and the fill co-clears APCA Lc 65 (critical rides 50). On-text is
     chosen on one criterion: it passes.
@@ -326,9 +328,9 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
   `RED_PIVOT_EXIT_DEG = 14°` floor near the pivot; warm of the pivot, the same magnitude
   pushes **warmer** ("tomato goes orange-er", fading out by ≈ H50), so a warm-of-red brand
   is never dragged through the signal. Applied to the scale stops in both modes: light in
-  `lightHueAt`; dark via `coolRedDark` on `darkH`, and the dark washes also inherit the
+  `lightHueAt`; dark via `coolRedDark` on `darkH`, and the dark highlighters also inherit the
   light shift through the delta model, which is why even exact mode's tints still repel
-  (measured 2026-08-06: #D22B2B exact, wash-89 at H 16.9 in both modes, cta untouched).
+  (measured 2026-08-06: #D22B2B exact, highlighter-11 at H 16.9 in both modes, cta untouched).
   The CTA is exempt on both sides (C12 v8: cta red de-collision belongs to the joint solve
   alone; the dark cta rides identity hue). It is **brand-only**: the red *signal* keeps its
   identity hue in both modes; signals pass `suppressRedCool: true`.
@@ -355,7 +357,7 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
   measured L, a low-boost hue (yellow-green) higher, so every step reads the same across
   brands. **The light ramp solves every stop this way. Dark rides its calibrated ladder**
   (deliberate: apparent-lightness solving in dark makes blue recede), with the C24 band
-  lift and the C37 wash lift declared in contrast space. `divergence-audit` gates the
+  lift and the C37 highlighter lift declared in contrast space. `divergence-audit` gates the
   residual per family × mode × stop. (The off-scale CTA is never solved; it carries the
   brand fill's own lightness.)
 - **Dark-mode "dimmer"**: `perceptualDarkC` solves the *chroma* whose apparent lightness
@@ -367,15 +369,17 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
   too-dark fill lifts to stay visible on a dark background; a vivid fill is never pulled
   down (identity preserved).
 - **Stop-8 = WCAG 1.4.11 3:1, declared in both modes**: `STOP_8_NONTEXT_CONTRAST = 3.0`,
-  a requirement on the declared stop (`spec.ts`) against `paper-95` directly; light
+  a requirement on the declared stop (`spec.ts`) against `paper-5` directly; light
   iterates a fixed-point clamp down; dark raises a failing hue off the near-black paper.
-- **Text-stop contrast floors, declared in both modes**: `ink-53` at 4.5:1, `ink-42`
-  at 6.5:1, `ink-30` at 7:1, declared in `spec.ts` against `paper-97` but resolved by
-  the shipped WCAG lane against paper-95, the nearest paper (`resolve.ts`'s
+- **Text-stop contrast floors, declared in both modes**: `pencil-47` and `pen-70`
+  declared in `spec.ts` against `paper-3`, `pen-58` against `highlighter-20`; the
+  promise on every text stop is a guaranteed minimum of 4.5:1 (AA), the declared
+  targets being engine mechanism; the paper-declared ones resolved by
+  the shipped WCAG lane against paper-5, the nearest paper (`resolve.ts`'s
   `wcagAnchorStop`), and additionally cleared against the worst paper the family's own
   generated neutral produces at any hue (C44's `NEUTRAL_P3_WORST_SHIP_Y`). See §2b for the
   full mechanism.
-- **Seams by construction**: the paper/wash ladder rides an identity-curve shape that
+- **Seams by construction**: the paper/highlighter ladder rides an identity-curve shape that
   keeps every seam open for any seed (low-chroma grays and muted warms were the failure
   cases); the resolver still supports declared `min-separation` floors for portable specs,
   but the shipped spec no longer needs any (`spec.ts`, the comment above the `LIGHT`
@@ -387,7 +391,7 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
   pole **at alpha** (`SOFT_ON_CTA_ALPHA` .75/.80), gated per brand by a WCAG 4.5 pass on
   all three fill states in the shipped 8-bit basis (`softOnCtaPasses`).
 - **Low-visibility cta border** (C41): every family's cta fill is judged against the page
-  by APCA; below \|Lc\| 15 the family's `solid-edge` resolves to a system alpha-ladder
+  by APCA; below \|Lc\| 15 the family's `stamp-edge` resolves to a system alpha-ladder
   stroke (primary 016, secondary 006, neutral 008), otherwise to the
   transparent variable. Components always carry the border, so layout never shifts.
   Default on, per-brand opt-out.
@@ -397,7 +401,7 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
 - **Four canonical signals** (red / yellow / green / blue), generated once, named by
   identity in the engine and emitted under role names (critical / warning / positive /
   info; owner 2026-07-27).
-- **Collision tests**: `checkHueCollision` (wash hues within 15° + vividness qualifier)
+- **Collision tests**: `checkHueCollision` (highlighter hues within 15° + vividness qualifier)
   for family collisions; `checkCollision` (hue gate ≤ 30° plus OKLab ΔE ≤ 0.16 light /
   ≤ 0.10 dark) for value collisions between rendered fills.
 - **Red collision, the joint solve (C12 v8)**: a brand whose cta sits inside the
@@ -427,9 +431,9 @@ These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
   primary by default, the secondary's seed hue followed live, or a custom hex's hue.
   Tint levels `pure` / `default` / `medium` / `branded` scale the tint at every stop in
   both modes (`medium` keeps the pre-2026-08-11 default strength; `default` is 0.75x of it).
-  Its `solid-fill` is intentionally **low-hierarchy**, tracking the scale's own stop 4 (cta) /
-  stop 5 (hover) so it **flips per mode**: a near-white wash in light, a dark wash in
-  dark, with `solid-on` recomputed for legibility in each (shipped soft, at alpha).
+  Its `stamp-fill` is intentionally **low-hierarchy**, tracking the scale's own stop 4 (cta) /
+  stop 5 (hover) so it **flips per mode**: a near-white highlighter in light, a dark highlighter in
+  dark, with `stamp-on` recomputed for legibility in each (shipped soft, at alpha).
 
 ### 2d. The extended plugin's ownership zones and descope posture
 
@@ -444,7 +448,7 @@ the CSS build and the community plugin (`plugin/`) have no notion of it. Two kin
 rows share the base/ zone:
 
 - **ramp stops and plumbing**: a single resolved color, no state. The scale stops
-  (`base/neutral/paper-99`, `base/brand/ink-53`, … — flat leaves,
+  (`base/neutral/paper-1`, `base/brand/pencil-47`, … — flat leaves,
   band flattening 2026-08-12), the system
   poles and alpha ladder (`base/abs-black`, `base/alpha/away-from-bg/16`,
   …).
@@ -452,7 +456,7 @@ rows share the base/ zone:
   inside its own family group (`base/brand/solid/fill-hover`) and the
   system rows `base/link/*` (default/hover/pressed plus the inverse leaves
   inverse/inverse-hover/inverse-pressed: the same link seed re-solved for
-  text on ink-30 surfaces via `resolveLinkInverseTrio`, anchored at `INK_30_GROUND`), and
+  text on pen-70 surfaces via `resolveLinkInverseTrio`, anchored at `PEN_70_GROUND`), and
   `base/surface/dim|low|base|high`.
 
 **The seam.** `payload.registerPath(path)` (`plugin-ext/payload.ts`) is the one function
@@ -497,10 +501,10 @@ wires each as a scheme-divergent alias onto the NEUTRAL's own resolved paper sto
 
 | plane | light aliases | dark aliases |
 |---|---|---|
-| `system/surface/dim` | `neutral/paper-95` | `neutral/paper-100` |
-| `system/surface/low` | `neutral/paper-97` | `neutral/paper-99` |
-| `system/surface/mid` | `neutral/paper-99` | `neutral/paper-97` |
-| `system/surface/high`  | `neutral/paper-100` | `neutral/paper-95` |
+| `system/surface/dim` | `neutral/paper-5` | `neutral/paper-0` |
+| `system/surface/low` | `neutral/paper-3` | `neutral/paper-1` |
+| `system/surface/mid` | `neutral/paper-1` | `neutral/paper-3` |
+| `system/surface/high`  | `neutral/paper-0` | `neutral/paper-5` |
 
 **Apply never deletes.** A path in an existing base file that the current payload no
 longer emits (an orphan, left behind by a deleted or renamed token) is counted and

@@ -68,39 +68,39 @@ export function checkCollision(
 
 // ── TYPE-1: HUE (family) collision — CATALOG C7, owner decision 2026-07-07 ──────
 // Two phenomena, two gates. A near-hue chromatic pair collides at EVERY scaffolded
-// register (the L scaffold + normalized chroma leave hue as the wash register's only
+// register (the L scaffold + normalized chroma leave hue as the highlighter register's only
 // differentiator), so whole-ramp remedies (signal swap, brand repel) gate HERE — on hue
-// proximity measured where it collides (the wash, after spine drift) plus a chroma
+// proximity measured where it collides (the highlighter, after spine drift) plus a chroma
 // qualifier (muted brands at the signal hue don't family-collide). checkCollision above
 // stays the TYPE-2 gate: specific stops coinciding at distinguishable hues — value moves
-// only (rung-1, the muted dark collider). Lane-global by construction: wash L/C/H are
+// only (rung-1, the muted dark collider). Lane-global by construction: highlighter L/C/H are
 // lane-invariant (measured identical across wcag/apca).
 
 // The C6 yardstick is ΔH 11–13; the gate sits at 15 because the ΔE-per-ΔH slope varies by
-// band (violet washes reach ΔE 0.005 at ΔH 13 — sweep-measured) — firing at 15 lets the
-// remedy provide the separation instead of the boundary seed keeping a sub-bar wash.
-export const HUE_COLLISION_WASH_DEG = 15
+// band (violet highlighters reach ΔE 0.005 at ΔH 13 — sweep-measured) — firing at 15 lets the
+// remedy provide the separation instead of the boundary seed keeping a sub-bar highlighter.
+export const HUE_COLLISION_HIGHLIGHTER_DEG = 15
 export const HUE_COLLISION_MIN_V = 0.5            // vividness qualifier (provisional — owner eye-check)
 export const SECONDARY_NOTE_MIN_V = HUE_NOISE_C / VIVID_C   // annotations: any real hue qualifies
 
 // DO NOT drop stop 3 for the paper-3 rename (owner 2026-07-24): it is publicly named
 // paper-3 now but is the same color it always was — the collision gate must keep
-// measuring it, or wash-band proximity silently loses its lowest rung.
-const WASH_STOPS = [3, 4, 5, 6, 7]
+// measuring it, or highlighter-band proximity silently loses its lowest rung.
+const HIGHLIGHTER_STOPS = [3, 4, 5, 6, 7]
 
 export interface HueCollisionCheck {
   signal: SignalDef['name']
-  dHueWash: { light: number; dark: number }
-  washDeltaE: { light: number; dark: number }
+  dHueHighlighter: { light: number; dark: number }
+  highlighterDeltaE: { light: number; dark: number }
   vividness: number
   collides: boolean
 }
 
-function washProximity(brand: GeneratedScale, sig: GeneratedScale, mode: Mode): { dH: number; dE: number } {
+function highlighterProximity(brand: GeneratedScale, sig: GeneratedScale, mode: Mode): { dH: number; dE: number } {
   const b = mode === 'light' ? brand.light : brand.dark
   const s = mode === 'light' ? sig.light : sig.dark
   let dH = Infinity, dE = Infinity
-  for (const k of WASH_STOPS) {
+  for (const k of HIGHLIGHTER_STOPS) {
     const bs = b.find(x => x.stop === k), ss = s.find(x => x.stop === k)
     if (!bs || !ss) continue
     dH = Math.min(dH, hueDistance(bs.H, ss.H))
@@ -115,16 +115,16 @@ export function checkHueCollision(
   signalDef: SignalDef,
   opts?: { minV?: number }
 ): HueCollisionCheck {
-  const l = washProximity(brand, signalScale, 'light')
-  const d = washProximity(brand, signalScale, 'dark')
+  const l = highlighterProximity(brand, signalScale, 'light')
+  const d = highlighterProximity(brand, signalScale, 'dark')
   const vividness = Math.min(1, brand.brandC / VIVID_C)
   return {
     signal: signalDef.name,
-    dHueWash: { light: l.dH, dark: d.dH },
-    washDeltaE: { light: l.dE, dark: d.dE },
+    dHueHighlighter: { light: l.dH, dark: d.dH },
+    highlighterDeltaE: { light: l.dE, dark: d.dE },
     vividness,
     collides: vividness >= (opts?.minV ?? HUE_COLLISION_MIN_V)
-      && Math.min(l.dH, d.dH) <= HUE_COLLISION_WASH_DEG,
+      && Math.min(l.dH, d.dH) <= HUE_COLLISION_HIGHLIGHTER_DEG,
   }
 }
 

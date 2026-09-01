@@ -35,21 +35,21 @@ export const DEFAULT_APCA_LC_MAP: LcMap = { 3: 30, 4.5: 75, 6.5: 85, 7: 90 }
 function toApca(req: Require, lcMap: LcMap): Require {
   if (req.metric !== 'wcag') return req
   // THE APCA-LANE FREEZE (D3, guarantee-groups round, owner direction 2026-08-27): the
-  // wash-80 law is a WCAG-lane guarantee. Its apca twin stays the pre-law declaration —
-  // paper-97 at Lc 85, the 6.5-era slot — so the apca lane remains byte-identical (the
+  // highlighter-20 law is a WCAG-lane guarantee. Its apca twin stays the pre-law declaration —
+  // paper-3 at Lc 85, the 6.5-era slot — so the apca lane remains byte-identical (the
   // placement already cleared 85; a floor that holds does not move). The lane re-anchors,
   // if ever, in its own measured round ("provisional until the apca lane is next
   // measured", the map note above).
-  if (req.against === 'wash-80') return { metric: 'apca', against: 'paper-97', targetLc: 85 }
+  if (req.against === 'highlighter-20') return { metric: 'apca', against: 'paper-3', targetLc: 85 }
   const targetLc = lcMap[req.target]
   if (targetLc === undefined) throw new Error(`apca profile: no Lc mapping for wcag target ${req.target}`)
   return { metric: 'apca', against: req.against, targetLc }
 }
 
 // The cta/on-fill enforcement bar — DECOUPLED from the 4.5 text slot. OWNER SPEC (2026-07-10,
-// typo-corrected same day): apca = the 7:1 ink Lc 90 · the 4.5 ink Lc 75 · ON-CTA Lc 60; wcag =
-// 7:1 · 4.5 · on-cta 4.5. (Those inks are ink-11 / ink-9 under C49 numbering.) The map
-// slots carry the inks; this constant carries on-cta. wcag lane unaffected (returns the spec
+// typo-corrected same day): apca = the 7:1 pen Lc 90 · the 4.5 pen Lc 75 · ON-CTA Lc 60; wcag =
+// 7:1 · 4.5 · on-cta 4.5. (Those pens are ink-11 / ink-9 under C49 numbering.) The map
+// slots carry the pens; this constant carries on-cta. wcag lane unaffected (returns the spec
 // unchanged above).
 export const CTA_ONFILL_ENFORCE_LC = 60
 
@@ -66,7 +66,7 @@ export function withProfile(spec: ModeSpec, profile: ContrastProfile, lcMap: LcM
     // (The stop-9 CARVE-OUT is gone with the stop, owner 2026-07-29. It existed because
     // highlight-9's require was a fill-vs-its-own-plane bar with no honest slot in a map
     // of TEXT bars — 3 → 30 non-text, 4.5 → 75 body, 7 → 90 — so the apca lane kept its
-    // own hl-9 placement instead. Today's stop 9 is an INK stop: 4.5 is a text bar, the
+    // own hl-9 placement instead. Today's stop 9 is a PEN stop: 4.5 is a text bar, the
     // 75 slot is its correct translation, and it maps like every other require.)
     stops: spec.stops.map((s): StopReq => (s.require ? { ...s, require: toApca(s.require, lcMap) } : s)),
     ons: {

@@ -2,7 +2,7 @@
 
 import { toHex, ctaNeedsBorder, pageStopFor, ctaBorderRung, OFFSET_ALPHAS, SHADOW_ALPHAS, SCRIM_ALPHA, type OffsetRung } from './cssRender'
 import { srgbEmitChannels } from './colorMath'
-import { stopTokenName, tokenOrder, STAMP_FILL, STAMP_FILL_HOVER, STAMP_FILL_PRESSED, STAMP_EDGE, STAMP_ON, STAMP_STATE_LEAVES, PAPER_100, INK_0, SYSTEM_LEAF, SURFACE_PLANE_LAW } from './tokenNames'
+import { stopTokenName, tokenOrder, STAMP_FILL, STAMP_FILL_HOVER, STAMP_FILL_PRESSED, STAMP_EDGE, STAMP_ON, STAMP_STATE_LEAVES, PAPER_0, PEN_100, SYSTEM_LEAF, SURFACE_PLANE_LAW } from './tokenNames'
 import { CSS_FAMILY } from './tokenDescriptions'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
 import { OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, SOFT_ON_CTA_ALPHA, softOnCtaPasses, escapeCtaFamily, resolveLinkTrio, resolveLinkInverseTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
@@ -57,8 +57,8 @@ function colorFromHexString(hex: string): FigmaColorToken {
 }
 
 // LEAF SHAPE (owner 2026-08-12, band flattening; solid rename 2026-08-18): ramp
-// tokens sit FLAT in the family group — paper-99, paper-99-overlay, wash-92,
-// wax-74, lead-53 … ONLY the stamp/ state group nests
+// tokens sit FLAT in the family group — paper-1, paper-99-overlay, highlighter-8,
+// crayon-26, pencil-47 … ONLY the stamp/ state group nests
 // (fill/fill-hover/fill-pressed/edge/on, matching system/link's state shape); its
 // table lives in tokenNames.ts — the one flat↔nested source every consumer rides. `identity` stays
 // a flat leaf; the plugins re-home the BIND surfaces to their absolute rows. Both
@@ -69,9 +69,9 @@ function bandedLeaf(flat: string): string {
 // Order-aware entries for a FigmaGroup (adversarial-audit-caught 2026-08-07): JS
 // enumerates integer-index string keys ascending, before any string keys, REGARDLESS of
 // insertion order (ECMA-262 OrdinaryOwnPropertyKeys). paper's leaves (95/97/99/100) and
-// wash's (80/85/89/92) are bare-digit keys, so a plain Object.entries silently reverses
+// highlighter's (80/85/89/92) are bare-digit keys, so a plain Object.entries silently reverses
 // them to ascending — defeating the TOKEN_ORDER-derived insertion order rampGroup builds
-// (descending LL, lightest first) without any COLOR changing. wax/ink leaves carry a
+// (descending LL, lightest first) without any COLOR changing. crayon/pen leaves carry a
 // a conformance suffix (e.g. '74-aa') so they are not canonical integer keys and are unaffected;
 // this walker treats them the same way anyway so the rule doesn't depend on that
 // incidental shape. Non-digit-leading siblings (band names, cta states, …) keep
@@ -133,7 +133,7 @@ function rampGroup(
   // the background rather than sit on it (owner 2026-07-29, superseding the 2026-07-04 "filled is
   // filled" removal), else transparent. The rule lives in cssRender.ctaNeedsBorder — |Lc| of the
   // fill against the page under 15 — so both emitters decide identically, and the rung comes from
-  // cssRender.ctaBorderRung. The outline secondary still overrides this with its own wax-74
+  // cssRender.ctaBorderRung. The outline secondary still overrides this with its own crayon-26
   // unconditionally — there the edge is the button's identity, not a safety.
   if (extra?.cta) putLeaf(g, STAMP_EDGE, extra.ctaBorder ?? TRANSPARENT_TOKEN)
   putLeaf(g, STAMP_ON, colorFromHex(onFillWhite))
@@ -147,7 +147,7 @@ export interface ThemeInput {
 
   // the secondary's mode chip — 'outline' re-expresses the cta pair (mirrors cssRender's
   // outline override): cta transparent, cta-hover/-pressed the cta color at OUTLINE alphas,
-  // cta-border ALWAYS the secondary's own wax-74, on-cta the secondary's lead-53.
+  // cta-border ALWAYS the secondary's own crayon-26, on-cta the secondary's pencil-47.
   secondaryStyle?: SecondaryStyle
 
   neutralLevel?: NeutralLevel
@@ -165,15 +165,15 @@ export interface ThemeInput {
   contrastProfile?: ContrastProfile
 
   // the NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): the brand's cta FILL trio +
-  // on-cta re-resolve from the brand-neutral's ink register (near-black light /
+  // on-cta re-resolve from the brand-neutral's pen register (near-black light /
   // near-white dark) — the red-collision de-conflict. Same tokens, different values
-  // (the outline idiom); default off = byte-identical. The brand's INK STOPS are NOT
-  // touched (owner 2026-08-13, reverting the 2026-08-12 ink de-chroma).
+  // (the outline idiom); default off = byte-identical. The brand's PEN STOPS are NOT
+  // touched (owner 2026-08-13, reverting the 2026-08-12 pen de-chroma).
   ctaEscape?: boolean
 
   // the SYSTEM LINK (Phase 4, owner 2026-07-16): a custom link seed — when set, the
-  // emitted link group carries ITS ink-register resolution (the red de-conflict);
-  // absent = the link group carries the primary's ink stops (the plugins alias them).
+  // emitted link group carries ITS pen-register resolution (the red de-conflict);
+  // absent = the link group carries the primary's pen stops (the plugins alias them).
   linkHex?: string | null
 
   // THE CTA-BORDER OPT-OUT (owner 2026-07-31: "on by default but optional"). DEFAULT ON —
@@ -212,20 +212,20 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
   // custom link seed resolved ONCE (both modes read it)
   const lt = input.linkHex ? resolveLinkTrio(input.linkHex, input.contrastProfile) : null
   // the INVERSE link trio (owner round 2026-08-19): the same link seed re-solved for
-  // text on ink-30 surfaces (resolve.resolveLinkInverseTrio — the ink register anchored
-  // at INK_30_GROUND, modes crossed). Unlike the link there is NO alias posture: no
-  // existing stop is anchored at the ink-30 ground, so the default seeds from the
+  // text on pen-70 surfaces (resolve.resolveLinkInverseTrio — the pen register anchored
+  // at PEN_70_GROUND, modes crossed). Unlike the link there is NO alias posture: no
+  // existing stop is anchored at the pen-70 ground, so the default seeds from the
   // brand's own hex and the values always ship raw. (identityHex is typed optional but
-  // generateScale always sets it; the ink-stop fallback keeps a hand-built scale on its
+  // generateScale always sets it; the pen-stop fallback keeps a hand-built scale on its
   // own hue rather than throwing.)
   const invSeed = input.linkHex ?? scale.identityHex
     ?? (() => { const s9 = scale.light.find(x => x.stop === 9)!; const e = srgbEmitChannels(s9); return toHex(e.r, e.g, e.b) })()
   const invLt = resolveLinkInverseTrio(invSeed, input.contrastProfile)
   // (the neutral's STRONG text-cta mirror DELETED with the cta-ink register, owner
-  // 2026-08-12 — it was the same three ink stops descending; consumers read them directly)
+  // 2026-08-12 — it was the same three pen stops descending; consumers read them directly)
   const neutralExtra = (mode: 'light' | 'dark') => ctaFamily(nScale, mode, CSS_FAMILY.neutral)
   const build = (mode: 'light' | 'dark'): FigmaGroup => {
-    // paper-100 (paper-0 pre-Stage-B) rides WITH the neutral ramp at paper-100 (its dark value is
+    // paper-0 (paper-0 pre-Stage-B) rides WITH the neutral ramp at paper-0 (its dark value is
     // neutral-tinted, so it dedups and aliases through the same per-tint
     // machinery as the rest of the neutral — never a global absolute). It leads the
     // group — the ladder is descending LL, lightest first — by INSERTION now: flat
@@ -233,26 +233,26 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     // era leaned on integer-key enumeration putting 100 ahead of 99 inside paper/).
     const p0 = mode === 'light' ? nScale.paper0 : nScale.paper0Dark
     const ramp = rampGroup(nScale[mode], mode === 'light' ? nScale.onFillTextIsWhite : nScale.onFillTextIsWhiteDark, neutralExtra(mode))
-    // ink-0 rides WITH the neutral ramp too (the LITERAL pole again — owner 2026-08-31
+    // pen-100 rides WITH the neutral ramp too (the LITERAL pole again — owner 2026-08-31
     // walked back the 2026-08-28 seam resolver; the engine now mints the #000/#fff the
     // plugins once hand-wrote, keeping the emission architecture): spliced directly
-    // after ink-30 so the flat group keeps ladder order by insertion (flat leaves are
+    // after pen-70 so the flat group keeps ladder order by insertion (flat leaves are
     // never integer keys — see groupEntries). Missing field = the leaf is omitted and
     // the plugins keep whatever the file holds.
-    const i0 = mode === 'light' ? nScale.ink0 : nScale.ink0Dark
-    const spliceInk0 = (g: FigmaGroup): FigmaGroup => {
+    const i0 = mode === 'light' ? nScale.pen100 : nScale.pen100Dark
+    const splicePen100 = (g: FigmaGroup): FigmaGroup => {
       if (!i0) return g
       const out: FigmaGroup = {}
       for (const [k, v] of Object.entries(g)) {
         out[k] = v
-        if (k === stopTokenName(11)) out[INK_0] = colorFromStop(i0)
+        if (k === stopTokenName(11)) out[PEN_100] = colorFromStop(i0)
       }
       return out
     }
-    const neutralGroup: FigmaGroup = spliceInk0(p0 ? { [PAPER_100]: colorFromStop(p0), ...ramp } : ramp)
+    const neutralGroup: FigmaGroup = splicePen100(p0 ? { [PAPER_0]: colorFromStop(p0), ...ramp } : ramp)
     const secondaryGroup = rampGroup(secondary[mode], mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark, brandExtra(secondary, mode, CSS_FAMILY.brandSecondary))
     // outline re-expression (only a real secondary can be outline) — same values cssRender
-    // emits. The hover = wax-74 at OUTLINE_HOVER_ALPHA (the STABLE gated stop the ring
+    // emits. The hover = crayon-26 at OUTLINE_HOVER_ALPHA (the STABLE gated stop the ring
     // uses — 9% of the generated subtle cta was imperceptible).
     if (input.secondaryStyle === 'outline' && input.secondary) {
       const s8 = secondary[mode].find(s => s.stop === 8)
@@ -269,9 +269,9 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
         putLeaf(secondaryGroup, STAMP_FILL_PRESSED, alphaTint(OUTLINE_PRESSED_ALPHA))
       }
       if (s8) putLeaf(secondaryGroup, STAMP_EDGE, colorFromStop(s8))
-      // outline re-expresses the FILL trio only — the ramp's ink stops (the text register)
+      // outline re-expresses the FILL trio only — the ramp's pen stops (the text register)
       // are already emitted by rampGroup and stay untouched
-      // stamp/on = the family's lead-53, NOT a pole — the plugin aliases non-pole on-colors to the sibling lead-53
+      // stamp/on = the family's pencil-47, NOT a pole — the plugin aliases non-pole on-colors to the sibling pencil-47
       if (s9) putLeaf(secondaryGroup, STAMP_ON, colorFromStop(s9))
     }
     // the SOFT on-cta — THE QUIET-FILL RULE: a low-hierarchy cta's button text is the
@@ -301,8 +301,8 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
       softOnCta(secondaryGroup, mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark)
     const brandGroup = rampGroup(scale[mode], mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark, brandExtra(scale, mode, CSS_FAMILY.brandPrimary))
     // neutral cta escape re-expression (mirrors the outline block above): the brand's
-    // FILL trio + on-cta swap to the brand-neutral's ink register — the ink stops keep
-    // the brand's own chroma (owner 2026-08-13, reverting the 2026-08-12 ink de-chroma).
+    // FILL trio + on-cta swap to the brand-neutral's pen register — the pen stops keep
+    // the brand's own chroma (owner 2026-08-13, reverting the 2026-08-12 pen de-chroma).
     // With NO real secondary the secondary group MIRRORS the brand (secondary = scale
     // above), so the escape applies there too — the un-escaped raw trio must not
     // survive in the mirror (review-caught latent divergence).
@@ -315,19 +315,19 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
         putLeaf(g, STAMP_ON, colorFromHex(esc.onFillIsWhite))
       }
     }
-    // the SYSTEM LINK trio (Phase 4): ONE per theme. Custom seed → its ink-register
-    // resolution; default → the primary's ink stops verbatim (value-equal to what the
+    // the SYSTEM LINK trio (Phase 4): ONE per theme. Custom seed → its pen-register
+    // resolution; default → the primary's pen stops verbatim (value-equal to what the
     // plugins alias, so the emitted structure never lies about the shipped color).
-    const scaleInkAt = (n: number) => {
+    const scaleTextAt = (n: number) => {
       const s = scale[mode].find(x => x.stop === n)
-      if (!s) throw new Error(`themeToFigma link: the brand scale has no ink stop ${n}`)
+      if (!s) throw new Error(`themeToFigma link: the brand scale has no pen stop ${n}`)
       return s
     }
     const linkGroup: FigmaGroup = lt
       ? (mode === 'light'
         ? { 'link': colorFromStop(lt.link), 'link-hover': colorFromStop(lt.linkHover), 'link-pressed': colorFromStop(lt.linkPressed) }
         : { 'link': colorFromStop(lt.linkDark), 'link-hover': colorFromStop(lt.linkHoverDark), 'link-pressed': colorFromStop(lt.linkPressedDark) })
-      : { 'link': colorFromStop(scaleInkAt(9)), 'link-hover': colorFromStop(scaleInkAt(10)), 'link-pressed': colorFromStop(scaleInkAt(11)) }
+      : { 'link': colorFromStop(scaleTextAt(9)), 'link-hover': colorFromStop(scaleTextAt(10)), 'link-pressed': colorFromStop(scaleTextAt(11)) }
     // the INVERSE trio's group mirrors the link group's leaf spelling so both plugins'
     // state-name remaps stay one shared shape
     const linkInverseGroup: FigmaGroup = mode === 'light'
@@ -367,7 +367,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     putLeaf(g, SYSTEM_LEAF.ABS_WHITE, colorFromHex(true))
     // the surface planes SPLICE the neutral group's own leaves per SURFACE_PLANE_LAW
     // (tokenNames.ts — the law's one machine-readable home): value-equal to the ramp
-    // by construction, the alias posture expressed as object reuse. paper-100 follows
+    // by construction, the alias posture expressed as object reuse. paper-0 follows
     // the neutral posture — an absent pole omits the plane rather than inventing one.
     for (const [path, law] of Object.entries(SURFACE_PLANE_LAW)) {
       const tok = neutralGroup[law[mode]]
