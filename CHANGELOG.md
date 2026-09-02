@@ -8,7 +8,7 @@ structure, ships as at least a minor.
 
 Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git log.
 
-## Unreleased (0.3.0)
+## 0.3.0 — 2026-09-02
 
 - The DTCG requirement tokens name the off-scale roles by their shipped spelling:
   `stamp-fill`, `stamp-fill-hover`, `stamp-fill-pressed` (the group keys and the `role`
