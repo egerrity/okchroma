@@ -19,11 +19,16 @@ import { RED_GATE, redGateDist, checkCollision, stopDeltaE } from '../src/engine
 import { p2Diff, P2_D_UP } from '../src/engine/p2'
 import { wcagY, contrastRatio, apcaY, apcaLc } from '../src/engine/constraints'
 import type { GeneratedScale } from '../src/engine/colorEngine'
+import { MODE_SPECS } from '../src/engine/requirements/spec'
+import { CRITICAL_CLEARANCE_LC } from '../src/engine/requirements/profiles'
 
-// This audit (and its blessed snapshot) tracks the SHIPPED profile — apca since the true
-// wcag/apca split (owner 2026-07-04, default flipped so the page keeps the perceptual look).
-const SHIPPED_PROFILE = 'apca' as const
+// This audit (and its blessed snapshot) tracks the SHIPPED profile: wcag (build.ts
+// SHIPPED_PROFILE, owner 2026-07-29). It pinned the apca solve from the 2026-07-04 split
+// until 2026-09-02, so its snapshot guarded a lane nothing ships; re-pointed and re-blessed.
+const SHIPPED_PROFILE = 'wcag' as const
 const SIGNAL_SCALES = signalScalesFor(SHIPPED_PROFILE)
+// the stamp legibility booster's bar (spec ons.coEnforceLc; the critical signal rides its own)
+const BOOSTER_LC = MODE_SPECS.light.ons.onFill.coEnforceLc!
 
 // Parity tolerances: dark metric must reach this fraction of light's.
 // 0.55 → 0.48 (2026-06-10): the envelope-chroma light model widened
@@ -55,7 +60,7 @@ const findings: Record<string, Finding[]> = {
   'C chroma washout': [],
   'D pen 9/10 convergence': [],
   'E dark error collision': [],
-  'F on-cta APCA legibility (Lc 60, shipped lane — HARD)': [],
+  'F on-cta legibility (the stamp booster: Lc 65, critical 50 — HARD)': [],
 }
 
 function audit(name: string, hex: string, scale: GeneratedScale, redRepelled = false) {
@@ -101,22 +106,21 @@ function audit(name: string, hex: string, scale: GeneratedScale, redRepelled = f
       detail: `ΔE(11,12): dark ${sepD.toFixed(3)} vs light ${sepL.toFixed(3)}`,
     })
   }
-  // F: on-cta APCA legibility, HARD (owner 2026-07-11, the #E93D82 case: Lc 45 was never a
-  // text bar — APCA's own guidance puts 45 at very-large/bold headline minimums; cta labels
-  // live in the Lc-60 band, which is the lane's actual contract and what the pole-symmetric
-  // enforce now delivers with margin). This audit sweeps the SHIPPED (apca) profile, so the
-  // assertion is the apca lane's: chosen-pole Lc ≥ 60 on the cta, both modes. The wcag 4.5
-  // ratio is the WCAG lane's own contract (req:audit asserts it per-lane) — reported here
-  // informationally only when it also under-reads.
+  // F: on-cta legibility, HARD. The shipped lane's law on the stamp text is WCAG 4.5 (req:audit
+  // asserts it); on top of it the stamp legibility BOOSTER nudges the fill until the chosen pole
+  // reads APCA Lc 65, the critical signal 50 (spec ons.coEnforceLc / CRITICAL_CLEARANCE_LC,
+  // owner 2026-08-02). This gate asserts the booster delivered, both modes; the wcag ratio is
+  // printed beside it for the read.
   for (const mode of ['light', 'dark'] as const) {
     const cta = mode === 'light' ? scale.cta : scale.ctaDark  // on-fill sits on the off-scale cta
     const white = mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark
     const fillY = wcagY(cta.L, cta.C, cta.H)
     const wcag = white ? contrastRatio(1.0, fillY) : contrastRatio(fillY, 0)
     const lc = Math.abs(apcaLc(white ? 1.0 : 0.0, apcaY(cta.r, cta.g, cta.b)))
-    if (lc < 60) {
-      findings['F on-cta APCA legibility (Lc 60, shipped lane — HARD)'].push({
-        name, hex, severity: (60 - lc) / 100,
+    const bar = name === 'red' ? CRITICAL_CLEARANCE_LC : BOOSTER_LC
+    if (lc < bar) {
+      findings['F on-cta legibility (the stamp booster: Lc 65, critical 50 — HARD)'].push({
+        name, hex, severity: (bar - lc) / 100,
         detail: `${mode}: ${white ? 'white' : 'black'} on fill L ${cta.L.toFixed(2)} — APCA Lc ${lc.toFixed(1)} (wcag ratio ${wcag.toFixed(2)}:1)`,
       })
     }

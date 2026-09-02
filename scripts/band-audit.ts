@@ -38,7 +38,8 @@ import { YELLOW_BAND, DARK_BRAND_FILL_MIN_L, NEUTRAL_CTA_DARK_POP_CLEARANCE } fr
 import { SCALE_STOP_COUNT } from '../src/engine/tokenNames'
 import { generateNeutralScale, generateScale, type GeneratedScale, type ColorStop } from '../src/engine/colorEngine'
 import { darkChromaCurve } from '../src/engine/darkChromaCurve'
-import { CTA_ONFILL_ENFORCE_LC } from '../src/engine/requirements/profiles'
+import { CRITICAL_CLEARANCE_LC } from '../src/engine/requirements/profiles'
+import { MODE_SPECS } from '../src/engine/requirements/spec'
 import { oklabDist, srgbEmitChannels } from '../src/engine/colorMath'
 import { stateStepL } from '../src/engine/archetypes'
 import * as fs from 'fs'
@@ -52,14 +53,15 @@ const hx = (s: ColorStop) => {
 const whiteWcag = (s: ColorStop) => contrastRatio(1.0, wcagY(s.L, s.C, s.H))
 const blackWcag = (s: ColorStop) => contrastRatio(wcagY(s.L, s.C, s.H), 0)
 // APCA Lc of a text pole on a fill (white → txtY 1.0, black → 0.0), mirroring the
-// engine's onTextIsWhite. HL_BODY = APCA body-text floor: the bar the emphasis fill (pencil-47) clears.
+// engine's onTextIsWhite.
 const onApcaLc = (s: ColorStop, white: boolean | undefined) => Math.abs(apcaLc(white ? 1.0 : 0.0, apcaY(s.r, s.g, s.b)))
-const HL_BODY = 60
-// THE TRUE SPLIT (owner 2026-07-04): each profile is gated by ITS OWN law — apca lane = the
-// Lc-60 body-text bar (the shipped default look); wcag lane = the chosen pole passes 4.5
-// (the ratioFloor flip guarantees it; this lane asserts the guarantee holds).
-const SHIPPED_PROFILE = 'apca' as const
+// THE SHIPPED PROFILE is wcag (build.ts, owner 2026-07-29). This audit and its snapshot pinned
+// the apca solve from the 2026-07-04 split until 2026-09-02 — a lane nothing ships; re-pointed
+// and re-blessed. The signals' on-cta is gated by the shipped lane's two laws: the WCAG 4.5
+// ratio on the chosen pole, and the stamp legibility booster (Lc 65, critical 50).
+const SHIPPED_PROFILE = 'wcag' as const
 const SIGNAL_SCALES = signalScalesFor(SHIPPED_PROFILE)
+const BOOSTER_LC = MODE_SPECS.light.ons.onFill.coEnforceLc!
 // (onWcag DELETED 2026-08-04: its only caller was the neutral's solid-pole on-cta check, and
 // the neutral now ships the SOFT pole — see softOnFill in §3, which measures the composite.
 // The signals still read whiteWcag/blackWcag directly; their on-cta stays solid.)
@@ -173,7 +175,7 @@ for (const { name, hex, scale } of items) {
 // rest feeding + pop clearance (minimal, never below the fed stop) + the state
 // steps and directions against stateStepL itself. ──
 const NEUTRAL_HUES = [30, 90, 143, 210, 270, 320]
-// apca lane = the shipped default (structure + the Lc bar); wcag lane = the legal ratios
+// the shipped lane: structure, the pop clearance and the state law
 const neutralByHue = NEUTRAL_HUES.map(h => ({ h, s: generateNeutralScale(h, 'default', SHIPPED_PROFILE) }))
 const neutralWcag = NEUTRAL_HUES.map(h => ({ h, s: generateNeutralScale(h, 'default') }))
 console.log(`\n=== neutral cta (rest = stop 4; states ride the mirrored k/(nearness+.1) law; dark lifts to clear ${NEUTRAL_CTA_DARK_POP_CLEARANCE} vs pop) — ${NEUTRAL_HUES.length} hues × both profiles ===`)
@@ -231,16 +233,15 @@ for (const { h, s } of neutralWcag) {
   }
 }
 
-// ── 4. Signals — on-cta legible under each profile's own law, clean 12-stop scale ──
+// ── 4. Signals — on-cta legible under the shipped lane's two laws, clean 12-stop scale ──
 const SIGNALS_WCAG = signalScalesFor(undefined)
 for (const sig of SIGNALS) {
-  // apca lane (shipped): the enforcement guarantees the WHITE pole. Bar = the DECLARED
-  // CTA_ONFILL_ENFORCE_LC (owner ruling 2026-07-10: base ctas enforce to Lc 60, large-text —
-  // the hardcoded 74 was the Lc-75 era's shadow), minus the same 1-Lc solve slack.
+  // the stamp legibility booster: the chosen pole reads Lc 65 (critical 50), minus a 1-Lc
+  // read slack — the shipped lane's own delivery, not the unshipped apca solve's
   const s = SIGNAL_SCALES.get(sig.name)!.scale
+  const bar = sig.name === 'red' ? CRITICAL_CLEARANCE_LC : BOOSTER_LC
   for (const [mode, st, pol] of [['light', s.cta, s.onFillTextIsWhite], ['dark', s.ctaDark, s.onFillTextIsWhiteDark]] as const) {
-    if (pol) ok(onApcaLc(st, true) >= CTA_ONFILL_ENFORCE_LC - 1, `signal ${sig.name} ${mode} apca: enforced white on-cta below Lc ${CTA_ONFILL_ENFORCE_LC - 1} (${onApcaLc(st, true).toFixed(1)})`)
-    else ok(onApcaLc(st, false) >= onApcaLc(st, true), `signal ${sig.name} ${mode} apca: black pole chosen but white reads better`)
+    ok(onApcaLc(st, !!pol) >= bar - 1, `signal ${sig.name} ${mode}: chosen pole below the booster's bar Lc ${bar - 1} (${onApcaLc(st, !!pol).toFixed(1)})`)
   }
   // stop count DERIVED (the gamut-sweep lesson, 2026-07-29): hardcoding it fails on
   // every seed the moment a stop lands or dies
@@ -309,4 +310,4 @@ if (process.argv.includes('--bless')) {
 
 console.log()
 if (fails.length) { console.error(`FAIL: ${fails.length}\n` + fails.map(s => '  - ' + s).join('\n')); process.exit(1) }
-console.log('PASS — agnostic band order (pencil-47 over crayon-26) + on-emphasis (paper-0 on pencil-47) · stop-8 3:1 vs its declared paper · structure · neutral cta rest=stop4 + state law + the SOFT on-cta composite at 4.5 on every state · signals (both lanes) · snapshot (shipped=apca).')
+console.log('PASS — agnostic band order (pencil-47 over crayon-26) + on-emphasis (paper-0 on pencil-47) · stop-8 3:1 vs its declared paper · structure · neutral cta rest=stop4 + state law + the SOFT on-cta composite at 4.5 on every state · signals (the 4.5 ratio + the booster) · snapshot (shipped=wcag).')
