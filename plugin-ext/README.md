@@ -13,7 +13,7 @@ It is not listed on Figma Community. Install it by download from the site's inst
 
 - **Brand = which extension is applied.** One extension collection per brand, so the
   frame-side collection picker stays a flat list (`theme, acme, …`).
-- **Mode = the base's columns:** `light` and `dark`, solved in the WCAG lane. Every apply
+- **Mode = the base's columns:** `light` and `dark`, solved under WCAG. Every apply
   writes both; there is no profile picker. Files written when the columns were
   `wcag · wcag-dark · apca · apca-dark` are adopted in place: the first pair is renamed to
   `light` and `dark` (the mode ids survive, so bindings do), and the two APCA columns are

@@ -6,7 +6,6 @@ import * as output from './pages/output'
 import * as guarantees from './pages/guarantees'
 import * as generation from './pages/generation'
 import * as signals from './pages/signals'
-import * as tokens from './pages/tokens'
 import * as reference from './pages/reference'
 // pages/motivation.tsx holds the origin essay (owner prose, unpublished 2026-08-14);
 // it is deliberately absent from ARTICLES. Re-add it here to publish it.
@@ -25,7 +24,7 @@ import * as reference from './pages/reference'
 // ─────────────────────────────────────────────────────────────────────────────
 
 type Article = { slug: string; title: string; Body: () => React.ReactNode }
-const ARTICLES: Article[] = [overview, install, output, guarantees, generation, signals, tokens, reference]
+const ARTICLES: Article[] = [overview, install, output, guarantees, generation, signals, reference]
 
 export default function DocsSite({ dark: _dark }: { dark: boolean }) {
   // the hash is the one source of truth for which page and section are showing

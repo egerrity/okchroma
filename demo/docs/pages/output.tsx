@@ -64,7 +64,7 @@ export function Body() {
       <Table
         head={['token', 'what it is', 'rule']}
         rows={[
-          [<Code>{STAMP_FILL}</Code>, 'the solid button fill', "the seed's own lightness and hue, moved only by the on-fill law, the APCA clearance, and the red collision solve; floored in dark so it lifts, never sinks"],
+          [<Code>{STAMP_FILL}</Code>, 'the solid button fill', "the seed's own lightness and hue, moved only by the on-fill law, the legibility booster, and the red collision solve; floored in dark so it lifts, never sinks"],
           [<Code>{STAMP_FILL_HOVER}</Code>, 'hover state', 'a flat step of 0.05 L away from the mode’s ground (toward black in light, white in dark), reversed for fills that sit near the far pole'],
           [<Code>{STAMP_FILL_PRESSED}</Code>, 'pressed state', 'the same direction, twice the step'],
           [<Code>{STAMP_EDGE}</Code>, 'a low-visibility stroke', <>the alpha ladder rung for the family (primary and signals <K v={OFFSET_ALPHAS[ctaBorderRung('brand')]} pct d={0} />, secondary <K v={OFFSET_ALPHAS[ctaBorderRung(CSS_FAMILY.brandSecondary)]} pct d={0} />, neutral <K v={OFFSET_ALPHAS[ctaBorderRung(CSS_FAMILY.neutral)]} pct d={0} />) when the fill reads under APCA |Lc| <K v={CTA_BORDER_LC_FLOOR} d={0} /> against the page; otherwise the transparent variable. Always render it, so layout never shifts</>],

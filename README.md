@@ -2,7 +2,7 @@
 
 **A color-system engine.** Give it one brand hex, or two, and it resolves a complete
 light and dark token system whose contrast requirements are solved during generation,
-then emits it as CSS custom properties, Figma variables, or DTCG requirement tokens.
+then emits it as CSS custom properties or Figma variables.
 
 Every family (neutral, brand, brand-alt, critical, warning, positive, info) carries the
 same scale: 3 papers, 4 highlighters, 1 crayon, 1 pencil, 2 pens, plus the stamp (the
@@ -10,10 +10,10 @@ solid fill with its hover and pressed states, its edge, and its text). The neutr
 the two poles. Light and dark resolve together and ship on the same names, so a token is
 mapped once and holds for any brand.
 
-Contrast is built into the math, not checked afterwards: `crayon-26` reads on every paper
-at 3:1 (the non-text bar), `pencil-47` at 4.5:1, `pen-58` and `pen-70` at 4.5:1 on every
-paper and highlighter in both directions; the stamp's text passes 4.5:1 on the fill and
-brand and signal fills clear APCA Lc 65 on top. Each claim, its scope, and the audit that
+Contrast is built into the math, not checked afterwards: crayon reads on every paper at
+3:1 (the non-text bar), pencil at 4.5:1, pen at 4.5:1 on every paper and highlighter in
+both directions; the stamp's text passes 4.5:1 on its fill. APCA is used once, as a booster
+that nudges the stamp fill until its text reads at Lc 65. Each claim, its scope, and the audit that
 proves it: [Guarantees](https://egerrity.github.io/okchroma/#/docs/guarantees).
 
 > The reserved-role-per-stop model is a conceptual nod to
@@ -41,8 +41,7 @@ const css = brandCss('acme', 'Acme', theme.themed, theme.secondary?.scale ?? nul
 // and data-theme="dark" on it for dark mode
 ```
 
-The Figma tree comes from `themeToFigma`, the DTCG requirement tokens from
-`emitDtcgRamp`. Signatures, the full input, and an end-to-end example:
+The Figma tree comes from `themeToFigma`. Signatures, the full input, and an end-to-end example:
 [Install and API](https://egerrity.github.io/okchroma/#/docs/install).
 
 ## Run from source
@@ -67,12 +66,12 @@ The docs site is the source: [egerrity.github.io/okchroma/#/docs](https://egerri
 - [Output contract](https://egerrity.github.io/okchroma/#/docs/output): the naming grammar, families and prefixes, modes and selectors, a live CSS block and Figma tree.
 - [Guarantees](https://egerrity.github.io/okchroma/#/docs/guarantees): every claim stated exactly, and how it is verified.
 - [How the theme is generated](https://egerrity.github.io/okchroma/#/docs/generation): the pipeline in execution order, with the constants and the code that runs each step.
-- [Signals and companions](https://egerrity.github.io/okchroma/#/docs/signals), [Requirement tokens](https://egerrity.github.io/okchroma/#/docs/token-schema), [Reference](https://egerrity.github.io/okchroma/#/docs/reference).
+- [Signals and companions](https://egerrity.github.io/okchroma/#/docs/signals) and the [Reference](https://egerrity.github.io/okchroma/#/docs/reference): glossary, constants, option types.
 
 In the repo: [docs/architecture.md](docs/architecture.md) (the maintainer's map: modules,
 pipeline stages, data structures, the extended plugin's zones),
 [docs/scale.md](docs/scale.md) (the scale and its declared targets),
-[docs/schema.md](docs/schema.md) (the requirement-token format in the repo),
+[docs/schema.md](docs/schema.md) (the format of the experimental DTCG export),
 [docs/agents.md](docs/agents.md) (how a coding agent consuming the tokens should read
 them), and [CHANGELOG.md](CHANGELOG.md).
 

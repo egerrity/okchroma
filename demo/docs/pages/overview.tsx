@@ -16,7 +16,7 @@ export function Body() {
       <Lead>
         okchroma is a color-system engine. Give it one brand hex, or two, and it resolves a complete
         light and dark token system whose contrast requirements are solved during generation, then
-        emits it as CSS custom properties, Figma variables, or DTCG requirement tokens.
+        emits it as CSS custom properties or Figma variables.
       </Lead>
 
       <H2>What goes in, what comes out</H2>
@@ -31,34 +31,34 @@ export function Body() {
         positive, info), each carrying the same <K v={SCALE_STOP_COUNT} d={0} />-stop scale plus its
         stamp roles; the neutral adds the two poles, <Code>{PAPER_0}</Code> and <Code>{PEN_100}</Code>;
         system rows carry the link trios, the alpha ladders, shadows, the scrim, and the four surface
-        planes. Light and dark resolve together and ship on the same names. The three emitters carry
+        planes. Light and dark resolve together and ship on the same names. The two emitters carry
         the same values:
       </P>
       <UL>
         <LI><b>CSS custom properties</b>: <Code>brandCss</Code> emits a light block and a dark block per brand; <Code>signalsCss</Code> emits the brand-independent root block once.</LI>
         <LI><b>Figma variables</b>: <Code>themeToFigma</Code> emits a light and a dark group tree; the extended plugin writes it into a file.</LI>
-        <LI><b>DTCG requirement tokens</b>: <Code>emitDtcgRamp</Code> emits a ramp whose tokens carry a frozen value and the live requirement that produced it. API only; no shipped pipeline writes this file.</LI>
       </UL>
       <RampSet />
 
       <H2>What the engine guarantees</H2>
       <P>
-        Every family's scale is the same law, so a stop name means the same thing on every brand.
-        Each band carries one flat claim, checked on the pair that ships (8-bit sRGB), against the
-        family's own grounds and the neutral's, in both modes:
+        Every family's scale is the same law, so a band means the same thing on every brand. Each band
+        carries one flat claim, checked on the pair that ships (8-bit sRGB), against the family's own
+        grounds and the neutral's, in both modes:
       </P>
       <UL>
-        <LI><b>paper</b> (paper-1, paper-3, paper-5, and the neutral's paper-0): grounds. No contrast claim of their own; every contrast stop is cleared against them.</LI>
-        <LI><b>highlighter</b> (highlighter-8 to highlighter-20): grounds for subtle states and decoration, never text. The pens are cleared against them.</LI>
-        <LI><b>crayon-26</b>: <K v={STOP_8_NONTEXT_CONTRAST} d={1} />:1 on every paper. The bar for anything that must be visible to operate the interface: focus rings, icons, borders, large text.</LI>
-        <LI><b>pencil-47</b>: <K v={PENCIL_9_CONTRAST} d={1} />:1 on every paper. Regular text and the emphasis fill.</LI>
-        <LI><b>pen-58, pen-70</b>: <K v={PEN_10_CONTRAST} d={1} />:1 on every paper and every highlighter, both directions. Text that must hold on tinted grounds.</LI>
+        <LI><b>paper</b>: grounds. No contrast claim of their own; every contrast band is cleared against them.</LI>
+        <LI><b>highlighter</b>: grounds for subtle states and decoration, never text. The pen band is cleared against them.</LI>
+        <LI><b>crayon</b>: <K v={STOP_8_NONTEXT_CONTRAST} d={1} />:1 on every paper. The bar for anything that must be visible to operate the interface: focus rings, icons, borders, large text.</LI>
+        <LI><b>pencil</b>: <K v={PENCIL_9_CONTRAST} d={1} />:1 on every paper. Regular text and the emphasis fill.</LI>
+        <LI><b>pen</b>: <K v={PEN_10_CONTRAST} d={1} />:1 on every paper and every highlighter, both directions. Text that must hold on tinted grounds.</LI>
       </UL>
       <P>
-        The stamp fill's text passes 4.5:1 on the fill, and brand and signal fills additionally clear
-        APCA Lc <K v={CO_LC} d={0} /> (critical <K v={CRITICAL_CLEARANCE_LC} d={0} />). The exact
-        statements, the frozen worst-case bounds behind "every paper", what is not promised, and the
-        audit scripts that prove it are on the <DocLink page="guarantees">Guarantees</DocLink> page.
+        The stamp's text passes 4.5:1 on its fill. On top of that law, the engine uses APCA in one
+        place, as a legibility booster on the stamp: the fill is nudged until its text reads at Lc{' '}
+        <K v={CO_LC} d={0} /> (critical <K v={CRITICAL_CLEARANCE_LC} d={0} />). The exact statements,
+        the frozen worst-case bounds behind "every paper", what is not promised, and the audit scripts
+        that prove it are on the <DocLink page="guarantees">Guarantees</DocLink> page.
       </P>
 
       <H2>Three things it does differently</H2>
@@ -74,7 +74,7 @@ export function Body() {
           states the WCAG level it clears.
         </LI>
         <LI>
-          <b>Contrast is solved during generation.</b> The requirements are declared per stop and enforced while the
+          <b>Contrast is solved during generation.</b> The requirements are declared per band and enforced while the
           ramp resolves, against the resolved grounds, not checked afterwards when a semantic layer aliases the stops.
         </LI>
       </UL>
@@ -93,7 +93,7 @@ export function Body() {
         <LI><DocLink page="output">Output contract</DocLink>: the naming grammar, families and prefixes, modes and selectors, a live CSS block and Figma tree.</LI>
         <LI><DocLink page="guarantees">Guarantees</DocLink>: every claim stated exactly, and how it is verified.</LI>
         <LI><DocLink page="generation">How the theme is generated</DocLink>: the pipeline in execution order, with the constants and the code that runs each step.</LI>
-        <LI><DocLink page="token-schema">Requirement tokens</DocLink>: the DTCG format, field by field.</LI>
+        <LI><DocLink page="signals">Signals and companions</DocLink> and the <DocLink page="reference">Reference</DocLink>: glossary, constants, option types.</LI>
       </UL>
     </>
   )

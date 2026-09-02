@@ -102,9 +102,8 @@ supports a declared minimum-separation requirement for portable specs, but the s
 declaration carries none.
 
 `crayon-26`, `pencil-47`, and the two pens carry a declared WCAG requirement, enforced
-against the resolved reference stop on every resolve. The declaration names the anchor; in
-the shipped WCAG lane the resolver re-anchors a text stop declared against a paper onto
-`paper-5`, the nearest paper (`crayon-26` declares `paper-5` itself), and every stop from the
+against the resolved reference stop on every resolve. The declaration names the anchor; the
+resolver re-anchors a text stop declared against a paper onto `paper-5`, the nearest paper (`crayon-26` declares `paper-5` itself), and every stop from the
 crayon up is additionally held against the worst paper the family's generated neutral can
 produce (the frozen bounds in
 [`requirements/resolve.ts`](../src/engine/requirements/resolve.ts)).
@@ -128,13 +127,12 @@ produce (the frozen bounds in
 ## On-fill text
 
 A fill that carries text ships its text color: `stamp/on`, the one on-fill token every family
-emits. The only criterion is that it passes. The preference is perceptual (the pole with the
-larger APCA |Lc| on the fill, `onTextIsWhite` in
-[`colorMath.ts`](../src/engine/colorMath.ts)); the law is WCAG 4.5:1 on the chosen pole,
-with the fill re-solving darker only when white is preferred and cannot be flipped. Brand
-and signal fills also clear APCA Lc 65 (critical 50). White and black are the contrast
-extremes under WCAG, so for any fill at least one of them clears 4.5:1; APCA is what has a
-dead zone on mid-lightness chromatic fills, which is why the clearance can move a fill.
+emits. The only criterion is that it passes. The preference is which pole reads better on the fill
+(judged with APCA, `onTextIsWhite` in [`colorMath.ts`](../src/engine/colorMath.ts)); the
+law is WCAG 4.5:1 on the chosen pole, with the fill re-solving darker only when white is
+preferred and cannot be flipped. On top of the law, APCA is used once, as a booster: brand
+and signal fills are nudged until the text reads at Lc 65 (critical 50). White and black
+are the contrast extremes under WCAG, so for any fill at least one of them clears 4.5:1.
 Declared per mode as the `ons` block of the spec.
 
 ## The Helmholtz-Kohlrausch solve

@@ -10,7 +10,7 @@ explains the mechanisms with values rendered from the engine:
 
 OKChroma is a color-system engine. It resolves a themeable color system around a primary
 seed color (and optionally a secondary), in light and dark together, with the contrast
-requirements solved during generation, and emits it three ways from one resolved theme:
+requirements solved during generation, and emits it from one resolved theme:
 
 - **CSS custom properties**: `brandCss` / `neutralCss` (per family, light + dark blocks)
   and `signalsCss` (the brand-independent `:root` block, the one static output
@@ -18,8 +18,9 @@ requirements solved during generation, and emits it three ways from one resolved
   caller resolves a hex; there is no brand roster.
 - **Figma variables**: `themeToFigma` returns a light and a dark group tree; the extended
   plugin writes it into a file.
-- **DTCG requirement tokens**: `emitDtcgRamp` serializes one ramp with a frozen value and
-  the live requirement per token. API only; no shipped pipeline writes the file.
+- An experimental export, `emitDtcgRamp`, serializes one ramp as DTCG tokens carrying the
+  declaration that produced each value; no shipped pipeline writes it (the format is in
+  [schema.md](schema.md)).
 
 The demo (`demo/`) and the plugins (`plugin-ext/`, `plugin/`, `plugin-unify/`) are
 front-ends. The product is the engine and what it emits.
@@ -45,7 +46,7 @@ flowchart TD
       SPEC[requirements/spec.ts · the declaration]
       RES[requirements/resolve.ts · produce → require → refine, roles, ons]
       PROD[requirements/producers.ts · named producers, the dark carry, the stamp solvers]
-      PROF[requirements/profiles.ts · the wcag→apca compiler]
+      PROF[requirements/profiles.ts · an alternate solve, unexposed; the booster's critical bar]
       CM[colorMath.ts · OKLCH, onTextIsWhite, red metrics]
       CON[constraints.ts · P3 master gamut, WCAG, APCA, legality]
       PL[perceptualL.ts · Helmholtz-Kohlrausch]
@@ -115,9 +116,9 @@ flowchart TD
 | Piece | Location | What it does |
 |---|---|---|
 | Declaration | `spec.ts` | The declaration as pure data: every stop with its producers by name, its parameters, and its requirement; the stamp roles; the on-color rule. `MODE_SPECS.light` and `.dark`. |
-| Resolver | `resolve.ts` | `resolveRamp`: per stop, produce → require → refine, stops in declared order; the anchor rules (`declaredAnchor`, the shipped lane's `wcagAnchorStop`, the inverse link's `textGround`); the frozen cross-family bounds and the shipped-pair walk; the stamp roles in evaluation order (pole, enforce, clearance, exit, states, the final pole floor). |
+| Resolver | `resolve.ts` | `resolveRamp`: per stop, produce → require → refine, stops in declared order; the anchor rules (`declaredAnchor`, `wcagAnchorStop`, the inverse link's `textGround`); the frozen cross-family bounds and the shipped-pair walk; the stamp roles in evaluation order (pole, enforce, booster, exit, states, the final pole floor). |
 | Producers | `producers.ts` | `buildContext` (the per-seed state), the light placements (`placeLightScale`, `placeLightText`, `lightScaleChromaAt`), the dark carry (`deltaDarkPlace`, `deltaLiftChroma`, `smoothedBandLift`), the dark placements, the stamp solvers (`ctaLightL`, `ctaDualGateL`, the dark twins), the red exits (`solveBrandExit`, `solveDarkCtaExit`). |
-| Profiles | `profiles.ts` | `withProfile`: the same declaration re-solved under APCA (`DEFAULT_APCA_LC_MAP`, `CTA_ONFILL_ENFORCE_LC`, `CRITICAL_CLEARANCE_LC`). `'wcag'` is the identity and the shipped lane. |
+| Profiles | `profiles.ts` | `withProfile`: an alternate solve of the declaration under APCA targets, not exposed in the docs, the shipped output or the plugins; `'wcag'` is the identity. Also home to `CRITICAL_CLEARANCE_LC`, the booster's bar for the critical signal. |
 | Portability | `dtcg.ts` | `emitDtcgRamp` / `resolveDtcgRamp` / `parseToken`; the role names ride `tokenNames.ts`, and the pre-rename words are accepted on parse. |
 
 **The theme layer (`src/engine/`)**
@@ -136,7 +137,7 @@ flowchart TD
 | CSS emitter | `cssRender.ts` | `brandCss`, `neutralCss`, `signalsCss`, `stopHex`, the P3 override blocks, the stamp edge gate (`ctaNeedsBorder`, `ctaBorderRung`, `pageStopFor`), the alpha ladders, shadows, scrim, `DISABLED_OPACITY`, the outline and escape re-expressions, the quiet fill's soft on-text. |
 | Figma emitter | `figmaRender.ts` | `themeToFigma` (the same theme as light and dark group trees, with the system group), `groupEntries`, `putLeaf`. |
 | Public API | `index.ts` | What the npm package exports. |
-| Token build | `build.ts` | Writes `dist/signals.css` under the shipped lane. |
+| Token build | `build.ts` | Writes `dist/signals.css`. |
 
 Around the engine sit the audit gates in `scripts/` (with their blessed snapshots, driven by
 `scripts/fixture.ts`) and the consumers: the demo, the plugins. `research/` holds parked
@@ -147,10 +148,10 @@ scripts that nothing imports.
 | # | Stage | File · function | In → Out |
 |---|---|---|---|
 | 1 | Decode and context | `producers.ts` · `buildContext` | hex + options → the OKLCH seed, the archetype, the aesthetic state (vividness, mutedness, the warm weight, the red repel, the bell) |
-| 2 | Compile | `colorEngine.ts` · `generateScale` | options + the built-in declaration → a per-mode `ModeSpec` (the profile compiler is the identity for `'wcag'`) |
+| 2 | Compile | `colorEngine.ts` · `generateScale` | options + the built-in declaration → a per-mode `ModeSpec` |
 | 3 | Resolve the light stops | `requirements/resolve.ts` · `resolveRamp('light')` | per declared stop: produce (hue → chroma → the apparent-lightness solve) → require (the declared floor clamps L down, the shipped-pair walk) → refine (chroma yields to gamut). In declared order, so a floor references a resolved ground |
 | 4 | Resolve the dark stops | `resolveRamp('dark', { deltaLightStops, deltaCarry })` | paper and highlighter stops by luminance parity with the computed band lift, hue carried and chroma resampled from light; the crayon placed by its 3:1 solve; the pens solved dark-native to the dark scaffold then floored |
-| 5 | Resolve the stamp and its text | `resolveRamp`, the roles block | the pole judged, the enforce re-solve, the clearance, the red exit, the states, the final pole floor; dark anchored at max(seed L, floor) |
+| 5 | Resolve the stamp and its text | `resolveRamp`, the roles block | the pole judged, the enforce re-solve, the booster, the red exit, the states, the final pole floor; dark anchored at max(seed L, floor) |
 | 6 | Assemble | `colorEngine.ts` adapter | resolved ramps → the `GeneratedScale` contract |
 | 7 | Policy | `resolve.ts` · `resolveBrand` | the hue collision test, the red complement, the signal shifts → `signalOverrides`; `resolveTheme` adds the secondary and merges its collisions |
 | 8 | Emit | `cssRender.ts` / `figmaRender.ts` / `dtcg.ts` + `tokenNames.ts` | the theme → named CSS custom properties, Figma group trees, or DTCG tokens; the neutral and the inverse link resolve here |
@@ -204,10 +205,9 @@ require, refine. The field-by-field format is on the site
 summarized in [schema.md](schema.md). Three resolver facts a maintainer needs:
 
 - **The declared anchor is read, with one override.** `require.against` names the ground.
-  In the shipped WCAG lane a text stop (index 9 and up) declared against a paper is
-  re-anchored at `paper-5`, the nearest paper (`wcagAnchorStop`); a declared highlighter
-  anchor is honored; the inverse link family replaces every pen ground with `PEN_70_GROUND`
-  (`textGround`). The APCA lane reads the declaration as written.
+  A text stop (index 9 and up) declared against a paper is re-anchored at `paper-5`, the
+  nearest paper (`wcagAnchorStop`); a declared highlighter anchor is honored; the inverse
+  link family replaces every pen ground with `PEN_70_GROUND` (`textGround`).
 - **The cross-family bounds.** A ramp resolves per family, so the neutral it pairs with is
   not in view. The resolver holds every stop from the crayon up against the worst neutral
   paper-5 any theme ships (`NEUTRAL_P3_WORST_SHIP_Y`), the highlighter-anchored pen against
@@ -272,14 +272,16 @@ mechanism; the constants are rendered live on the site's
 - **The crayon's 3:1, both modes.** `crayon-26` declares the non-text bar against `paper-5`
   in both modes; light clamps down, dark solves up from the ground.
 - **The text floors, both modes.** `pencil-47` at 4.5 and `pen-70` at 7 (declared against
-  `paper-3`, solved against `paper-5` in the shipped lane), `pen-58` at 4.5 against
+  `paper-3`, solved against `paper-5`), `pen-58` at 4.5 against
   `highlighter-20`. The promise on every text stop is AA; the surplus is placement.
 - **Seams by shape.** The paper and highlighter targets grow apart geometrically, about
   1.25× per step, so every seam stays open without a separation floor.
-- **On-fill text by one criterion: it passes.** `onTextIsWhite` prefers the pole with the
-  larger APCA |Lc|; the chosen pole must pass 4.5:1 or it flips; the fill darkens only when
-  white is preferred and cannot be flipped. Brand and signal fills also clear APCA Lc 65
-  (critical 50), moving in the chosen pole's direction.
+- **On-fill text by one criterion: it passes.** `onTextIsWhite` prefers the pole that reads
+  better (judged with APCA); the chosen pole must pass 4.5:1 or it flips; the fill darkens
+  only when white is preferred and cannot be flipped.
+- **The booster.** The one use of APCA: once the law is met, brand and signal fills are
+  nudged in the chosen pole's direction until the text reads at APCA Lc 65 (critical 50).
+  A legibility nudge on the stamp, never a claim.
 - **Quiet fills.** The neutral's stamp, and a secondary's where the composite stays legal
   on every state, carry the pole at alpha (0.75 light, 0.80 dark; `softOnCtaPasses`).
 - **The stamp edge.** A stroke from the alpha ladder (16 / 6 / 8 by family) when the fill
@@ -317,7 +319,7 @@ mechanism; the constants are rendered live on the site's
 ## 7. The extended plugin's write path
 
 The extended plugin (`plugin-ext/`, Figma Enterprise) writes one base collection
-(`theme`, modes `light` and `dark`, the WCAG lane) and one extension collection per brand
+(`theme`, modes `light` and `dark`, solved under WCAG) and one extension collection per brand
 that overrides only the rows that differ. `plugin-ext/payload.ts` builds the rows from the
 engine (`resolveTheme` → `themeToFigma` → `toFlat`); `plugin-ext/code.ts` writes them.
 
@@ -412,7 +414,7 @@ npm run plugin:build       # the community plugin  → plugin/dist/*
 
 ```bash
 npm run typecheck        # tsc --noEmit
-npm run req:audit        # every declared requirement, agnostic sweep, both modes and lanes
+npm run req:audit        # every declared requirement, agnostic sweep, both modes
 npm run audit:guarantee  # the five band claims on the shipped 8-bit pair
 npm run audit            # dark-mode parity + the blessed snapshot (add :bless to update)
 npm run band-audit       # band order, the crayon's 3:1, the neutral stamp, snapshot

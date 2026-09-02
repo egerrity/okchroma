@@ -11,6 +11,7 @@ import { ARCHETYPES, type Archetype } from '../src/engine/archetypes'
 import { brandCss, signalsCss, stopHex } from '../src/engine/cssRender'
 import { generateNeutralScale, neutralTintHue, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
 import { wcagY, contrastRatio } from '../src/engine/constraints'
+import { PAPER_0, PEN_100 } from '../src/engine/tokenNames'
 import { HERO_ILLO } from './heroIllo'
 import { BRAND_LOGO } from './brandLogo'
 import {
@@ -714,9 +715,9 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     <div className="ct-colorblock" style={{ background: 'var(--surface-high)' }}>
       {/* stop labels ride ABOVE the columns (owner 2026-08-11) — the old corner badges
           can't hold the suffixed names. The end columns label the global anchors,
-          paper-0 / pen-100, hence the * footnote. */}
+          paper-0 / pen-100 (digits read off the name table), hence the * footnote. */}
       <div style={{ display: 'grid', gridTemplateColumns: `repeat(${SWATCH_STOPS.length + 2}, minmax(0, 1fr))`, gap: 6, marginBottom: 6 }}>
-        {['100*', ...SWATCH_STOPS.map(stopLabel), '0*'].map(l => (
+        {[`${PAPER_0.split('-')[1]}*`, ...SWATCH_STOPS.map(stopLabel), `${PEN_100.split('-')[1]}*`].map(l => (
           <div key={l} style={{ textAlign: 'center', fontSize: 10.5, fontWeight: 600, color: 'var(--fg-default)' }}>{l}</div>
         ))}
       </div>
@@ -745,7 +746,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
         </div>
       ))}
       {/* the global disclaimer rides the card's bottom-right corner (owner 2026-07-24) */}
-      <div style={{ textAlign: 'right', fontSize: 9.5, color: 'var(--fg-subtle)', marginTop: 8 }}>*100, 0 = global</div>
+      <div style={{ textAlign: 'right', fontSize: 9.5, color: 'var(--fg-subtle)', marginTop: 8 }}>*{PAPER_0.split('-')[1]}, {PEN_100.split('-')[1]} = global</div>
     </div>
   )
 
@@ -849,7 +850,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
                 signals (critical/warning/positive/info, with this brand's overrides)
                 so a colliding pair is visible in one glance */}
             <div className="ct-colorblock">
-              <div className="ct-label" style={{ marginBottom: 8 }}>All ctas — deconfliction row</div>
+              <div className="ct-label" style={{ marginBottom: 8 }}>All stamps: deconfliction row</div>
               <CtaRow hasSecondary={!!secondary || derived}
                 shifted={computed.r.signalOverrides.filter(o => !(computed.escapeOn && o.name === 'red')).map(o => SIGNAL_EMIT_NAME[o.name])} />
             </div>

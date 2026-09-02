@@ -46,8 +46,7 @@ const theme = resolveTheme({
           [<Code>secondaryArchetype</Code>, <Code>Archetype</Code>, 'the anchor, for the secondary'],
           [<Code>deriveSecondary</Code>, 'boolean', 'with no secondaryHex: derive one from the primary'],
           [<Code>style</Code>, <Code>'default' | 'deeper' | 'full-chroma'</Code>, 'deeper pushes semi-muted warm seeds toward the cream/brown envelope; full-chroma releases the vividness cap (API only, outside the guarantees)'],
-          [<Code>contrastProfile</Code>, <Code>'wcag' | 'apca'</Code>, "the solver lane; 'wcag' is the shipped default and the only lane the guarantees cover"],
-          [<Code>apcaClearance</Code>, 'boolean', 'the APCA legibility clearance on the stamp fill; default on'],
+          [<Code>apcaClearance</Code>, 'boolean', 'the stamp legibility booster (the fill is nudged until its text reads at APCA Lc 65); default on, off is for instruments'],
           [<Code>exact</Code>, 'boolean', 'legacy: applies exact to both families when the per-family modes are absent'],
         ]}
       />
@@ -62,7 +61,7 @@ const css = brandCss(
   theme.secondary?.scale ?? null,// GeneratedScale | null
   '',                            // note suffix (comment only)
   'default',                     // NeutralLevel: 'pure' | 'default' | 'medium' | 'branded'
-  undefined,                     // ContrastProfile; undefined = 'wcag'
+  undefined,                     // reserved; leave undefined
   theme.secondary?.style,        // SecondaryStyle
   false,                         // ctaEscape: the neutral stamp escape for red collisions
   null,                          // linkHex: a custom link seed, else the link aliases the primary's pen stops
@@ -94,21 +93,14 @@ const { light, dark } = themeToFigma(theme.themed, {
         Each leaf is a DTCG-shaped color (<Code>{'{ $type: "color", $value: { colorSpace: "srgb", components, alpha, hex } }'}</Code>).
         The extended Figma plugin flattens this tree into variable paths; the leaf order is the panel order.
       </P>
-      <H3>Emit DTCG requirement tokens</H3>
-      <Pre>{`import { emitDtcgRamp, resolveDtcgRamp } from 'okchroma'
-
-const group = emitDtcgRamp('#E93D82', 'light', 'brand.light')   // one ramp: seed + 12 stops + 3 stamp roles
-const ramp = resolveDtcgRamp(group)                              // re-resolve from the requirements, ignoring $value`}</Pre>
-      <P>
-        The format is documented field by field on the <DocLink page="token-schema">Requirement tokens</DocLink> page.
-      </P>
       <H3>The engine beneath the theme</H3>
       <UL>
         <LI><Code>resolveBrand(hex, name, opts)</Code>: one family with the signal policy (collisions, shifts, the red complement) but no secondary.</LI>
         <LI><Code>generateScale(hex, name, forcedArchetype, opts)</Code>: the pure scale, no signal policy. Returns a <Code>GeneratedScale</Code>: <Code>light[]</Code>, <Code>dark[]</Code>, the stamp trio per mode, the on-fill booleans, the poles, <Code>identityHex</Code>.</LI>
-        <LI><Code>generateNeutralScale(brandH, level, contrastProfile)</Code>: the neutral for a tint hue.</LI>
+        <LI><Code>generateNeutralScale(brandH, level)</Code>: the neutral for a tint hue.</LI>
         <LI><Code>resolveLinkTrio(hex)</Code>, <Code>resolveLinkInverseTrio(hex)</Code>: the link states from a seed, on papers and on pen-70 fills.</LI>
         <LI><Code>stopHex(stop)</Code>: the sRGB hex a stop ships as. Token rosters (<Code>stopTokenName</Code>, <Code>STAMP_FILL</Code>, <Code>SYSTEM_LEAF</Code>, <Code>SURFACE_PLANE_LAW</Code>) are exported so a consumer never spells a token name; a rename then breaks the build instead of mis-mapping.</LI>
+        <LI><Code>emitDtcgRamp(hex, mode, groupName)</Code> and <Code>resolveDtcgRamp(group)</Code>: an experimental export that serializes one ramp as DTCG color tokens carrying the declaration that produced each value, and re-resolves such a group. No shipped pipeline writes this file; the format is documented in the repo at <Code>docs/schema.md</Code>.</LI>
       </UL>
 
       <H2>Run from source</H2>

@@ -3,8 +3,8 @@ import { H2, H3, P, Code, Lead, Table, DocLink, K } from '../prose'
 import { ROOT_L_LIGHT, ROOT_L_DARK, STOP_8_NONTEXT_CONTRAST, PENCIL_9_CONTRAST, PEN_10_CONTRAST, PEN_11_CONTRAST_FLOOR, DARK_CTA_MIN_L, DARK_BRAND_FILL_MIN_L, DARK_BAND_TOP_LIFT, DARK_SIGNAL_WARM_DRIFT, NEUTRAL_CTA_DARK_POP_CLEARANCE, GOLD_SPINE, WARM_TORSION, DARK_CTA_C, YELLOW_BAND } from '../../../src/engine/stopTable'
 import { PAPER0_DARK_ROOT_L, MODE_SPECS } from '../../../src/engine/requirements/spec'
 import { NEUTRAL_P3_WORST_SHIP_Y, NEUTRAL_W80_WORST_SHIP_Y, CHROMATIC_P3_WORST_SHIP_Y, CHROMATIC_W80_WORST_SHIP_Y, CTA_CLEARANCE_CAPS } from '../../../src/engine/requirements/resolve'
-import { APCA_ENFORCE_MARGIN_LC, APCA_SOLVE_MARGIN_LC, APCA_TOL_LC } from '../../../src/engine/requirements/producers'
-import { DEFAULT_APCA_LC_MAP, CTA_ONFILL_ENFORCE_LC, CRITICAL_CLEARANCE_LC } from '../../../src/engine/requirements/profiles'
+import { APCA_ENFORCE_MARGIN_LC, APCA_SOLVE_MARGIN_LC } from '../../../src/engine/requirements/producers'
+import { CRITICAL_CLEARANCE_LC } from '../../../src/engine/requirements/profiles'
 import { VIVID_C, HUE_NOISE_C, MUTED_BLEND_DENOM, SPINE_OFFPATH_SIGMA, LIGHT_DRIFT_COOL_HI, LIGHT_DRIFT_COOL_RANGE, BRAND_BELL_H, BRAND_BELL_SIGMA, BRAND_BELL_AMOUNT, BRAND_BELL_L_HI, BRAND_BELL_L_LO, BRAND_BELL_RED_H, BRAND_BELL_RED_SIGMA, CREAM_UPPER_H, CREAM_UPPER_SOFTNESS, DEEPER_BAND_H_LO, DEEPER_BAND_H_HI, DEEPER_BAND_U_LO, DEEPER_BAND_U_HI, DEEPER_STRENGTH, RED_PIVOT_H, RED_COOL_DEG, RED_PIVOT_EXIT_DEG, RED_TORSION_CENTER_H, RED_TORSION_SOFTNESS, RED_BAND_LO_H, RED_WARM_EXIT_H, RED_GATE, RED_SOLVE, RED_KEEP_BOX, DARK_FLOOR_FULL_C, DARK_FLOOR_MUTED_MAX_C } from '../../../src/engine/colorMath'
 import { MASTER_GAMUT } from '../../../src/engine/constraints'
 import { ARCHETYPES, stateStepL } from '../../../src/engine/archetypes'
@@ -44,14 +44,13 @@ export function Body() {
           ['produce, require, refine', 'the three phases a stop resolves through: the producers place it (hue, chroma, lightness), a declared floor binds, chroma yields to the gamut at emit'],
           ['producer', 'a named placement rule (warm-drift, perceptual, ladder). A reference to a versioned resolver capability, never a formula in the token file'],
           ['requirement (floor)', 'a declared contrast the stop must clear against a resolved ground. A floor: a placement that already clears does not move'],
-          ['anchor, ground', 'the resolved stop a requirement is judged against. The declaration names the anchor; the shipped lane may re-anchor a text stop at the nearest paper'],
+          ['anchor, ground', 'the resolved stop a requirement is judged against. The declaration names the anchor; the resolver may re-anchor a text stop at the nearest paper'],
           ['bound', 'a frozen worst-case ground (the darkest neutral paper any theme ships, and so on) the resolver holds a stop against, because the paired family is not in view during a solve'],
-          ['lane, profile', "the contrast metric the declaration is solved under: 'wcag' (shipped) or 'apca' (in code, unshipped)"],
           ['seam', 'the lightness gap between adjacent stops. Held open by the ladder shape, not by a floor'],
           ['pole', 'pure white or pure black. The on-text candidates; also the two ladder extremes'],
           ['stamp', 'the pulled-out solid fill and its states, edge and text. Off the scale; the one per-family differentiator. The engine\'s internal fields still call it cta'],
           ['quiet fill', "a stamp that sits near the page: the neutral's, and the derived secondary's. Its text is the pole at alpha"],
-          ['clearance', 'the APCA legibility bar on the stamp text, solved alongside the WCAG floor'],
+          ['booster', 'the one use of APCA: a legibility nudge on the stamp fill, applied after the WCAG law is met; never a claim'],
           ['archetype', "one of six lightness bands a seed falls in. An override pins the stamp to the band's median"],
           ['identity', 'the exact input hex, emitted untouched for logos'],
           ['carry (delta)', 'the dark model: the dark ramp derived from the resolved light ramp'],
@@ -87,7 +86,7 @@ export function Body() {
         [<Code>DARK_CTA_C</Code>, <>brand: trim {k(DARK_CTA_C.brand.globalTrim, 2)}, lobes {DARK_CTA_C.brand.lobes.map(l => `${l.center}°/${l.width}/${l.depth}`).join(', ')}; signal: identity</>, 'the dark stamp chroma register'],
         [<Code>YELLOW_BAND</Code>, <>center {k(YELLOW_BAND.centerH, 0)}°, σ {k(YELLOW_BAND.sigmaDeg, 0)}°</>, 'the yellow hue band the audits scope checks to'],
       ] as Row[]} />
-      <H3>requirements/spec.ts, resolve.ts, producers.ts, profiles.ts</H3>
+      <H3>requirements/spec.ts, resolve.ts, producers.ts</H3>
       <Table head={['name', 'value', 'what it is']} rows={[
         [<Code>PAPER0_DARK_ROOT_L</Code>, k(PAPER0_DARK_ROOT_L, 2), `dark ${PAPER_0}'s target`],
         [<Code>ons.onFill</Code>, <>enforce {String(MODE_SPECS.light.ons.onFill.enforce)}, ratioFloor {k(MODE_SPECS.light.ons.onFill.ratioFloor!, 1)}, coEnforceLc {k(MODE_SPECS.light.ons.onFill.coEnforceLc!, 0)}</>, 'the on-fill law'],
@@ -96,12 +95,9 @@ export function Body() {
         [<Code>CHROMATIC_P3_WORST_SHIP_Y</Code>, <>light {k(CHROMATIC_P3_WORST_SHIP_Y.light, 6)}, dark {k(CHROMATIC_P3_WORST_SHIP_Y.dark, 6)}</>, `the worst chromatic ${stopTokenName(3)}`],
         [<Code>CHROMATIC_W80_WORST_SHIP_Y</Code>, <>light {k(CHROMATIC_W80_WORST_SHIP_Y.light, 6)}, dark {k(CHROMATIC_W80_WORST_SHIP_Y.dark, 6)}</>, `the worst chromatic ${stopTokenName(7)}`],
         [<Code>CTA_CLEARANCE_CAPS</Code>, `L ${CTA_CLEARANCE_CAPS[0]} to ${CTA_CLEARANCE_CAPS[1]}`, 'the lightness range the clearance may move a fill within'],
-        [<Code>APCA_ENFORCE_MARGIN_LC</Code>, k(APCA_ENFORCE_MARGIN_LC, 1), 'the fire margin above an Lc bar'],
-        [<Code>APCA_SOLVE_MARGIN_LC</Code>, k(APCA_SOLVE_MARGIN_LC, 1), 'the solve margin past an Lc bar'],
-        [<Code>APCA_TOL_LC</Code>, k(APCA_TOL_LC, 2), 'the verify tolerance in Lc'],
-        [<Code>DEFAULT_APCA_LC_MAP</Code>, Object.entries(DEFAULT_APCA_LC_MAP).map(([r, lc]) => `${r}:1 → Lc ${lc}`).join(', '), "the APCA lane's ratio-to-Lc map"],
-        [<Code>CTA_ONFILL_ENFORCE_LC</Code>, k(CTA_ONFILL_ENFORCE_LC, 0), "the APCA lane's on-fill bar"],
-        [<Code>CRITICAL_CLEARANCE_LC</Code>, k(CRITICAL_CLEARANCE_LC, 0), "the critical signal's clearance bar"],
+        [<Code>APCA_ENFORCE_MARGIN_LC</Code>, k(APCA_ENFORCE_MARGIN_LC, 1), "the booster's fire margin above its bar"],
+        [<Code>APCA_SOLVE_MARGIN_LC</Code>, k(APCA_SOLVE_MARGIN_LC, 1), "the booster's solve margin past its bar"],
+        [<Code>CRITICAL_CLEARANCE_LC</Code>, k(CRITICAL_CLEARANCE_LC, 0), "the booster's bar for the critical signal"],
       ] as Row[]} />
       <H3>colorMath.ts, constraints.ts</H3>
       <Table head={['name', 'value', 'what it is']} rows={[
@@ -159,9 +155,8 @@ export function Body() {
       <H3>GenerateOptions (generateScale, resolveRamp)</H3>
       <Table head={['field', 'meaning']} rows={[
         [<Code>style</Code>, "'default' | 'deeper' | 'full-chroma'"],
-        [<Code>contrastProfile</Code>, "'wcag' | 'apca'"],
         [<Code>enforceOnFillContrast</Code>, 'the on-fill law; generateScale defaults it off, resolveBrand turns it on except in exact mode'],
-        [<Code>apcaClearance</Code>, 'the legibility clearance (default on for brand-kind resolution); apcaClearanceLc overrides the bar per call'],
+        [<Code>apcaClearance</Code>, 'the stamp legibility booster (default on for brand-kind resolution); apcaClearanceLc overrides its bar per call'],
         [<Code>darkFillMinL</Code>, 'the dark stamp floor'],
         [<Code>darkCtaC</Code>, "'brand' (trimmed) | 'signal' (identity): the dark stamp chroma register"],
         [<Code>coolRedDark</Code>, 'the red repel on the dark hue path (brands)'],
@@ -186,7 +181,6 @@ export function Body() {
         [<Code>neutralLevel</Code>, "'pure' | 'default' | 'medium' | 'branded'"],
         [<Code>neutralH</Code>, 'the resolved tint hue (neutralTintHue); absent = the primary’s'],
         [<Code>signals</Code>, 'the four signal scales, overrides applied'],
-        [<Code>contrastProfile</Code>, 'the lane the theme was resolved under'],
         [<Code>ctaEscape</Code>, 'the brand stamp re-expressed from the neutral’s strong pen'],
         [<Code>linkHex</Code>, 'a custom link seed'],
         [<Code>ctaBorder</Code>, 'the edge gate, default on'],

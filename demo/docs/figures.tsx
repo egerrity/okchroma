@@ -4,7 +4,6 @@ import { stopHex, brandCss, signalsCss } from '../../src/engine/cssRender'
 import { resolveTheme, SIGNAL_SCALES } from '../../src/engine/resolve'
 import { neutralTintHue } from '../../src/engine/colorEngine'
 import { themeToFigma, groupEntries, type FigmaGroup, type FigmaColorToken } from '../../src/engine/figmaRender'
-import { emitDtcgRamp } from '../../src/engine/requirements/dtcg'
 import { stopTokenName, PAPER_0, PEN_100, SURFACE_PLANE_LAW, SCALE_STOP_COUNT } from '../../src/engine/tokenNames'
 import { describeToken, canonicalize, FAMILY, CSS_FAMILY, type Family } from '../../src/engine/tokenDescriptions'
 import { SIGNALS } from '../../src/engine/signals'
@@ -248,17 +247,6 @@ export function NamingAnatomy() {
         its number are one flat leaf (a hyphen). The engine and CSS name drops the first two segments:{' '}
         <Code>{stopTokenName(PENCIL)}</Code>, the custom property <Code>--{CSS_FAMILY.neutral}-{stopTokenName(PENCIL)}</Code>.
       </figcaption>
-    </figure>
-  )
-}
-
-// ── Live example: a real requirement token, emitted by the engine right now ──
-export function LiveToken({ hex, tokenKey, mode, caption }: { hex: string; tokenKey: string; mode: 'light' | 'dark'; caption: React.ReactNode }) {
-  const group = emitDtcgRamp(hex, mode, `brand.${mode}`)
-  return (
-    <figure className="d2-ramp">
-      <Pre>{JSON.stringify(group[tokenKey], null, 2)}</Pre>
-      <figcaption className="d2-ramp-cap">{caption}</figcaption>
     </figure>
   )
 }
