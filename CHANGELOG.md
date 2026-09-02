@@ -8,7 +8,7 @@ structure, ships as at least a minor.
 
 Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git log.
 
-## Unreleased
+## 0.3.1 — 2026-09-02
 
 - The declaration names `paper-5` as the ground of `pencil-47` and `pen-70` (it spelled
   `paper-3`, which the resolver mapped onto `paper-5` before solving). Shipped values are
