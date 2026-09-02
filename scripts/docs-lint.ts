@@ -40,6 +40,7 @@ const RULES: Rule[] = [
   { name: 'retired-register', re: /\b(?:solid|primitive)\//g, why: 'retired register word; the zones are base/ and utility/, the family is stamp/' },
   { name: 'retired-token', re: /\b(?:cta-border|on-cta|cta-ink|highlight-9|on-highlight|cta-stroke)\b/g, why: 'retired token name' },
   { name: 'retired-plane', re: /\bsunken\b/g, why: 'retired plane word; the planes are dim/low/mid/high' },
+  { name: 'criterion-number', re: /\bWCAG ?\d\.\d+\.\d+\b|\b1\.4\.(?:1|3|6|11)\b/g, why: 'state the requirement in plain English (the 4.5:1 text bar, the 3:1 non-text bar); link the clause if citing it' },
   { name: 'round-id', re: /\b[CT]\d{1,3}\b/g, why: 'internal round ID; state the mechanism, link CATALOG if history is needed' },
   { name: 'owner-jargon', re: /\(owner\b|\bowner(?:'s)? (?:ruling|rule|call|decision|directive|spec|mark|pick|correction)\b|\bowner[ -]20\d\d\b/gi, why: 'internal decision jargon; state the rule, not who ruled it' },
 ]
