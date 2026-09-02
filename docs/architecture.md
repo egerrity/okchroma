@@ -1,607 +1,439 @@
-# OKChroma: System documentation
+# OKChroma: system documentation
 
-> Status: written 2026-06-29 from a skeptical, code-first read; re-verified claim-by-claim
-> against `main` on 2026-08-06. The **code is the source of truth**; where older comments
-> or docs disagreed, the code won. File references are `path:line` against main.
+The maintainer's map: what each module does, the pipeline stage by stage, the data
+structures that flow through it, and the extended plugin's write path. The code is the
+source of truth; where a claim here and the code disagree, the code wins. The docs site
+explains the mechanisms with values rendered from the engine:
+[egerrity.github.io/okchroma/#/docs](https://egerrity.github.io/okchroma/#/docs).
 
-## 1. System Overview
+## 1. System overview
 
-**OKChroma is a color-system engine.** It generates a themeable color system around a primary seed color.
+OKChroma is a color-system engine. It resolves a themeable color system around a primary
+seed color (and optionally a secondary), in light and dark together, with the contrast
+requirements solved during generation, and emits it three ways from one resolved theme:
 
-The key features of the system are:
-- **perceptually uniform stops:** every step is the same same *perceived* lightness. regardless of hue. 
-- **thoughtful stop groups:** okchroma acknowledges that primitives are broad but **not** agnostic. Each stop group has requirements that enable contrast-aware pairing.
-- **accessibility-first construction:**
-Compliance is built into generation (WCAG contrast targets, plus APCA boost for ctas) so you can be confident in every theme.
+- **CSS custom properties**: `brandCss` / `neutralCss` (per family, light + dark blocks)
+  and `signalsCss` (the brand-independent `:root` block, the one static output
+  `src/build.ts` writes to `dist/signals.css`). Per-brand CSS is generated live by whichever
+  caller resolves a hex; there is no brand roster.
+- **Figma variables**: `themeToFigma` returns a light and a dark group tree; the extended
+  plugin writes it into a file.
+- **DTCG requirement tokens**: `emitDtcgRamp` serializes one ramp with a frozen value and
+  the live requirement per token. API only; no shipped pipeline writes the file.
 
+The demo (`demo/`) and the plugins (`plugin-ext/`, `plugin/`, `plugin-unify/`) are
+front-ends. The product is the engine and what it emits.
 
-**What it produces:**
-
-- **CSS custom properties:** `brandCss`/`neutralCss` (per family, light + dark) +
-  `dist/signals.css`, the one output `build.ts` writes to disk. Per-brand CSS has no batch step — the demo
-  and both plugins call `brandCss` live, on whatever hex they were given.
-- **Figma variables:** written directly into a Figma file by the plugin.
-
----
-
-## 2. Core Architecture
-
-### The story in one paragraph
-
-One hex enters `resolveBrand`. That function calls `generateScale`, which is a thin
-adapter over the **requirement-token core** (`src/engine/requirements/`): a pure-data
-**declaration** (`spec.ts`: per-stop producers, requirements, and roles) executed by a
-**resolver** (`resolve.ts` + `producers.ts`) in three phases per stop: **produce** (hue →
-chroma → lightness), **require** (declared floors: contrast), **refine** (chroma yields to
-gamut). `resolveBrand` then layers **policy** on top: collision checks against the four
-signals, signal shifts, the red complement. The resolved result is handed to an **emitter**
-(CSS or Figma) that maps the computed color stops onto named tokens and chooses light vs
-dark. There is no batch roster: `build.ts` writes only the brand-independent
-`dist/signals.css`; the demo and both plugins call the exact same functions live, on
-whatever hex they were handed.
-
-### 2a. Architecture details
-
-#### (A) Module map
+## 2. Module map
 
 ```mermaid
 flowchart TD
     subgraph Inputs["Inputs"]
       B[caller-supplied hex · demo input, plugin form, or scripts/fixture.ts for audits]
-      SIG[signals.ts · 4 canonical hexes]
+      SIG[signals.ts · 4 canonical seeds]
     end
 
-    subgraph Policy["Policy layer"]
+    subgraph Policy["Theme layer"]
+      RT[resolve.ts · resolveTheme]
       R[resolve.ts · resolveBrand]
-      COL[collision.ts]
+      COL[collision.ts · checkHueCollision]
       SH[signalShift.ts]
     end
 
-    subgraph Core["Requirement-token core: generateScale adapter"]
-      CE[colorEngine.ts · adapter + neutral]
-      SPEC[requirements/spec.ts · the DECLARATION]
-      RES[requirements/resolve.ts · produce → require → refine]
-      PROD[requirements/producers.ts · named producers]
-      DTCG[requirements/dtcg.ts · DTCG $extensions round-trip]
-      CM[colorMath.ts · shared math + onTextIsWhite]
-      CON[constraints.ts · OKLCH / gamut / WCAG / APCA]
-      PL[perceptualL.ts · Helmholtz–Kohlrausch]
+    subgraph Core["Requirement-token core"]
+      CE[colorEngine.ts · generateScale adapter, generateNeutralScale]
+      SPEC[requirements/spec.ts · the declaration]
+      RES[requirements/resolve.ts · produce → require → refine, roles, ons]
+      PROD[requirements/producers.ts · named producers, the dark carry, the stamp solvers]
+      PROF[requirements/profiles.ts · the wcag→apca compiler]
+      CM[colorMath.ts · OKLCH, onTextIsWhite, red metrics]
+      CON[constraints.ts · P3 master gamut, WCAG, APCA, legality]
+      PL[perceptualL.ts · Helmholtz-Kohlrausch]
       P2[p2.ts · side-by-side metric]
-      PROF[requirements/profiles.ts · wcag→apca compiler]
-      ST[stopTable.ts · L tables + constants]
+      ST[stopTable.ts · ladders, chroma tables, constants]
       AR[archetypes.ts]
-      DCC[darkChromaCurve.ts]
       NC[neutralCurve.ts]
+      DCC[darkChromaCurve.ts]
     end
 
     subgraph Emit["Emitters"]
       CSS[cssRender.ts]
       FIG[figmaRender.ts]
-      TN[tokenNames.ts]
+      DTCG[requirements/dtcg.ts]
+      TN[tokenNames.ts · tokenDescriptions.ts]
     end
 
     subgraph Out["Outputs / consumers"]
       BUILD[build.ts → dist/signals.css]
-      DEMO[demo/* React preview]
-      PLUG[plugin/* + plugin-ext/* Figma plugins]
+      DEMO[demo/* preview]
+      PLUG[plugin-ext/* Figma plugin]
     end
 
-    B --> R
+    B --> RT --> R --> CE
     SIG --> R
-    R --> CE
-    R --> COL
-    R --> SH
+    R --> COL & SH
     CE --> RES
     SPEC --> RES
-    RES --> PROD
-    SPEC <--> DTCG
-    PROD --> CM & CON & PL & P2 & ST & AR & DCC
     PROF --> RES
+    RES --> PROD
+    PROD --> CM & CON & PL & P2 & ST & AR & DCC
     CE --> NC
-    R --> CSS & FIG
+    SPEC --> DTCG
+    RT --> CSS & FIG
     CSS --> TN
     FIG --> TN
-    CSS --> BUILD
-    BUILD --> DEMO
-    R --> DEMO
-    R --> FIG --> PLUG
+    CSS --> BUILD --> DEMO
+    RT --> DEMO
+    FIG --> PLUG
 ```
 
+### Module inventory
 
-#### (A1) Module inventory
-
-The same modules as a table: each piece, where it lives, what it does. Grouped bottom-up.
-
-**Foundations: color math & perception (`src/engine/`)**
+**Foundations: color math and perception (`src/engine/`)**
 
 | Piece | Location | What it does |
 |---|---|---|
-| Color math core | `colorMath.ts` | Shared leaf module: OKLCH↔RGB, `makeStop` (gamut-clamped stop constructor), the on-text pole judge (`onTextIsWhite`, max-\|Lc\| preference, profile-law floors), the red-region metrics (`redGateDist` P1 + `redSolveDist`/`RED_GATE`/`RED_SOLVE`), `maxChromaAt`. No formula changes without a parity check. |
-| Gamut & contrast constraints | `constraints.ts` | The master-gamut layer (P3): every generation-side judgment (chroma clamp, WCAG Y/ratio, APCA Y/Lc) runs in the master basis; emit-side hex stays sRGB: the render/emit split. |
-| Perceptual lightness | `perceptualL.ts` | Nayatani Helmholtz–Kohlrausch apparent lightness: `apparentL`, the solvers (`solveLForApparent`, `solveCForApparent`), `perceptualRungL`, `perceptualDarkC`, `grayApparentL`. The space every placement solve works in. |
-| P2 metric | `p2.ts` | The "truly different side-by-side" distance (C12) with bars `P2_D`/`P2_D_UP`, distinct from P1's at-a-glance confusion. Drives the dark cta exit and the red complement. Imports `helmlab` (the engine's one runtime dependency). |
+| Color math | `colorMath.ts` | OKLCH ↔ sRGB (`hexToOklch`, `oklchToSrgbUnclamped`), `makeStop` (the gamut-clamped stop constructor), `srgbEmitChannels` / `masterEmitChannels` (the emit split), the on-text pole judge `onTextIsWhite`, the red metrics (`redGateDist`, `redSolveDist`, `RED_GATE`, `RED_SOLVE`, the keep box and brick band), `redRepelShiftDeg`, the spine and torsion helpers, `maxChromaAt` and `medianGamutCAt`, and the declared aesthetic constants (the brand bell, the deeper band, the vividness reference). |
+| Gamut and contrast | `constraints.ts` | The master gamut (`MASTER_GAMUT = 'p3'`): every generation-side judgement (chroma clamp, WCAG luminance, APCA luminance) runs in it; emit clamps down to sRGB. `legalRatio` (a ratio judged on both renditions), `shippedY` (the 8-bit sRGB rendition's luminance), the contrast solvers (`findMaxLForContrast`, `findLForContrast`, `findLForContrastUp`), `apcaY` / `apcaLc`. |
+| Perceptual lightness | `perceptualL.ts` | The Nayatani (1997) Helmholtz-Kohlrausch model: `apparentL`, `grayApparentL`, `meanBoost`, the solvers `solveLForApparent` / `solveCForApparent`, `perceptualRungL` (the light placement solve) and `perceptualDarkC` (the dark chroma equalizer, used for dark paper-0 and as the stamp trim's gate). |
+| Side-by-side metric | `p2.ts` | `p2Diff`, the adjacent-pair distinctness distance (helmlab, the one bundled dependency) with its bars `P2_D` / `P2_D_UP`. Drives the dark stamp exit and the red complement. |
 
-**Declared registers: the data (`src/engine/`)**
-
-| Piece | Location | What it does |
-|---|---|---|
-| Stop tables | `stopTable.ts` | The declared numbers: L scaffolds, `SCALE_C_LIGHT`/`SCALE_C_DARK` chroma tables (one table per mode, C10), `DARK_CTA_C` (the C16 cta chroma register: brand = trimmed, signal = identity), stop-8's 3:1 bound, `GOLD_SPINE`/`WARM_TORSION`, dark fill floors. |
-| Dark chroma policy | `darkChromaCurve.ts` | `darkChromaCurve` (the H-K fill equalizer) and `darkCtaTrim` (the brand dark-cta trim, computed from `DARK_CTA_C`). |
-| Signal identities | `signals.ts` | The four signals by identity: red, yellow, green, blue (renamed from info-color 2026-07-13), seed hexes + per-signal dark floors. |
-| Archetypes | `archetypes.ts` | The six lightness anchors (near-black → light), `classifyArchetype`, the hover rule (`hoverL`). |
-| Neutral curve | `neutralCurve.ts` | The neutral's chroma shape: the neutral is generated from a tint hue at four tint levels. |
-
-**The requirement-token resolver (`src/engine/requirements/`)**
+**Declared data (`src/engine/`)**
 
 | Piece | Location | What it does |
 |---|---|---|
-| Declaration | `spec.ts` | The requirement declaration as pure serializable data: every stop and role with its producer by name, contrast requires, register bindings. No math. |
-| Resolver | `resolve.ts` | Executes the declaration: per stop, producer (hue→chroma→L) → require (contrast clamp, iterated) → refine (chroma yields to gamut at emit). Assembles the cta roles: enforce re-solves (wcag 4.5 / apca lane Lc bar, pole-symmetric), the C12 exits, the prominence floor and its C16 flat-register exception. |
-| Producers | `producers.ts` | The named producer implementations: light/dark placement, the delta model (dark = f(light) in apparent space), cta anchors, APCA enforcement solvers, `solveBrandExit`/`solveDarkCtaExit`, `flatDarkCtaL` (the derived secondary's dark register). |
-| Profiles | `profiles.ts` | The contrast-profile compiler: `withProfile` maps every declared wcag require onto its APCA equivalent. **WCAG is the shipped lane** (`SHIPPED_PROFILE`, `src/build.ts`, owner 2026-07-29); the apca lane exists in code, nothing ships through it. |
-| Portability | `dtcg.ts` | Serializes the declaration to DTCG color tokens (frozen `$value` + the requirement in `$extensions`) and parses it back. |
+| Stop tables | `stopTable.ts` | `ROOT_L_LIGHT` / `ROOT_L_DARK`, `SCALE_C_LIGHT` / `SCALE_C_DARK` (one chroma table per mode), `DARK_CTA_C` (the dark stamp chroma register: brand trimmed, signal identity), the contrast bars, `DARK_BAND_TOP_LIFT`, `GOLD_SPINE` and `WARM_TORSION`, the dark fill floors, `PEN_70_GROUND`, `NEUTRAL_CTA_DARK_POP_CLEARANCE`. |
+| Dark chroma policy | `darkChromaCurve.ts` | `darkChromaCurve` (the equalizer) and `darkCtaTrim` (computed from `DARK_CTA_C`). |
+| Signal identities | `signals.ts` | The four signals by identity (red, yellow, green, blue) with their role names, seeds, hue shifts and dark floors; `SIGNAL_EMIT_NAME`. |
+| Archetypes | `archetypes.ts` | The six lightness bands, `classifyArchetype`, and the state rule `stateFillL` (the flat step, reversed near the far pole). |
+| Neutral curve | `neutralCurve.ts` | `neutralChromaCurve` (the tint shape, the warm damp, the four levels) and the subtle secondary's curve. |
+| Token vocabulary | `tokenNames.ts` | The one name table: the stops, the poles, the stamp leaves (flat and nested), `SYSTEM_LEAF`, `SURFACE_PLANE_LAW`, the extended plugin's ownership rosters, `tokenOrder`. Zero imports, so both plugin sandboxes can bundle it. |
+| Descriptions | `tokenDescriptions.ts` | The `FAMILY` and `CSS_FAMILY` rosters, the per-variable Figma description text, `canonicalize` (zone paths onto canonical paths). Zero imports; `desc-audit` enforces the text rules. |
 
-**Theme layer (`src/engine/`)**
-
-| Piece | Location | What it does |
-|---|---|---|
-| Scale generator | `colorEngine.ts` | `generateScale`, the adapter over the resolver, plus the `GeneratedScale` contract, `generateNeutralScale`, `neutralTintHue` (the C48 tint-hue source rule), and `GenerateOptions`. |
-| Brand & theme resolver | `resolve.ts` | `resolveBrand`/`resolveTheme`, the top of the engine. Per-profile signal sets, collision machinery, the red complement variant, C12 `ctaSolve` injection, and the secondary offering: derived (`DEFAULT_SECONDARY` seed transform + gap registers), the same transform on a supplied seed, exact (full standard ramp), or outline (exact ramp, cta re-resolved at emit). |
-| Collision gates | `collision.ts` | Type-1 hue-family detection (highlighter hues within 15° + vividness qualifier) and the value test (hue gate + ΔE gate) deciding signal collisions and annotation. |
-| Signal shifts | `signalShift.ts` | Per-brand signal adjustments: yellow's lemon shift and the green/blue swap variants, split-keyed by the brand's hue. |
-
-**Emit: the output (`src/engine/`, `src/`)**
+**The requirement-token core (`src/engine/requirements/`)**
 
 | Piece | Location | What it does |
 |---|---|---|
-| CSS emitter | `cssRender.ts` | `brandCss`/`signalsCss`, custom properties per family and mode: the scale stops, the cta fill trio (`stamp-fill`/`stamp-fill-hover`/`stamp-fill-pressed`; the text-style cta is the pen stops themselves since the 2026-08-12 cta-ink deletion), `stamp-on` (solid pole or the soft pole-at-alpha), the gated `stamp-edge` alias onto the system alpha ladder, P3 `@supports` override blocks, the outline secondary's cta shape. Signals emit under their **role names** (`--critical-*`/`--warning-*`/`--positive-*`/`--info-*`); identity names stay engine-internal. |
-| Figma emitter | `figmaRender.ts` | `themeToFigma`, the same theme as Figma variable collections (both plugins consume it). |
-| Token vocabulary | `tokenNames.ts` | The shared naming: paper-0/1/3/5, highlighter-8/11/15/20, crayon-26, pencil-47, pen-58/70/100, the cta state families, ons; one vocabulary across CSS and Figma. |
-| Public API | `index.ts` | The entry point: `resolveBrand`/`resolveTheme`. |
+| Declaration | `spec.ts` | The declaration as pure data: every stop with its producers by name, its parameters, and its requirement; the stamp roles; the on-color rule. `MODE_SPECS.light` and `.dark`. |
+| Resolver | `resolve.ts` | `resolveRamp`: per stop, produce → require → refine, stops in declared order; the anchor rules (`declaredAnchor`, the shipped lane's `wcagAnchorStop`, the inverse link's `textGround`); the frozen cross-family bounds and the shipped-pair walk; the stamp roles in evaluation order (pole, enforce, clearance, exit, states, the final pole floor). |
+| Producers | `producers.ts` | `buildContext` (the per-seed state), the light placements (`placeLightScale`, `placeLightText`, `lightScaleChromaAt`), the dark carry (`deltaDarkPlace`, `deltaLiftChroma`, `smoothedBandLift`), the dark placements, the stamp solvers (`ctaLightL`, `ctaDualGateL`, the dark twins), the red exits (`solveBrandExit`, `solveDarkCtaExit`). |
+| Profiles | `profiles.ts` | `withProfile`: the same declaration re-solved under APCA (`DEFAULT_APCA_LC_MAP`, `CTA_ONFILL_ENFORCE_LC`, `CRITICAL_CLEARANCE_LC`). `'wcag'` is the identity and the shipped lane. |
+| Portability | `dtcg.ts` | `emitDtcgRamp` / `resolveDtcgRamp` / `parseToken`; the role names ride `tokenNames.ts`, and the pre-rename words are accepted on parse. |
 
-**Product data & pipelines (`src/`)**
+**The theme layer (`src/engine/`)**
 
 | Piece | Location | What it does |
 |---|---|---|
-| Token build | `build.ts` | The `npm run generate` entry: writes the one static output, `dist/signals.css`, under `SHIPPED_PROFILE = 'wcag'`. There is no brand roster in `src/` and no batch loop: per-brand CSS is generated live by whichever consumer calls `resolveBrand`/`brandCss` on a hex it was handed (the demo's hex input, a plugin's form field). |
+| Scale generator | `colorEngine.ts` | `generateScale`, the adapter over the resolver (light, then dark from light), the `GeneratedScale` contract, `generateNeutralScale` (the tint-hue seed, the curve, the quiet stamp, the symmetric bounds), `neutralTintHue`, `generateSubtleSecondary` (an exported model no shipped path uses), `GenerateOptions`. |
+| Brand and theme | `resolve.ts` | `resolveBrand` (one family with the signal policy: the joint solve's inputs, hue collisions, the red complement, the signal shifts), `resolveTheme` (the secondary's three postures, the secondary as a collider, exact-mode advice), the cached signal scales, the link trios, the stamp escape, the quiet-fill rule (`softOnCtaPasses`). |
+| Collision test | `collision.ts` | `checkHueCollision` (the test that decides). `checkCollision`, the stamp ΔE test, is exported but used only by `scripts/dark-audit.ts`. |
+| Signal shifts | `signalShift.ts` | `SHIFT_RULES` (yellow's lemon, the green and blue swap variants by hue split), `pickSignalShift`, `signalSwapVariants`. |
 
-The old `brands.ts` / `secondaries.ts` drink-set roster and `illustration.ts` (an SVG
-legend-hex swap) are gone (owner 2026-08-11): nothing shipped consumed them, so they carried
-demo-only concerns that had no reason to live next to the engine. Their audit-fixture role is
-now `scripts/fixture.ts`, a small named color set with no display names or demo flag — it
-exists only to exercise the engine's instruments. The demo's one illustration
-(`demo/heroIllo.ts`) now themes itself directly: its SVG markup references the live CSS
-custom properties (`var(--brand-pencil-47)` etc.), so it re-themes with the rest of the page
-for free, no recolor step.
+**Emit (`src/engine/`, `src/`)**
+
+| Piece | Location | What it does |
+|---|---|---|
+| CSS emitter | `cssRender.ts` | `brandCss`, `neutralCss`, `signalsCss`, `stopHex`, the P3 override blocks, the stamp edge gate (`ctaNeedsBorder`, `ctaBorderRung`, `pageStopFor`), the alpha ladders, shadows, scrim, `DISABLED_OPACITY`, the outline and escape re-expressions, the quiet fill's soft on-text. |
+| Figma emitter | `figmaRender.ts` | `themeToFigma` (the same theme as light and dark group trees, with the system group), `groupEntries`, `putLeaf`. |
+| Public API | `index.ts` | What the npm package exports. |
+| Token build | `build.ts` | Writes `dist/signals.css` under the shipped lane. |
 
 Around the engine sit the audit gates in `scripts/` (with their blessed snapshots, driven by
-`scripts/fixture.ts`) and the consumers: the demo preview, the two Figma plugins. The product
-boundary is the layers above: declaration in, resolved theme out, emitted as CSS or Figma
-variables.
+`scripts/fixture.ts`) and the consumers: the demo, the plugins. `research/` holds parked
+scripts that nothing imports.
 
-#### (B) Pipeline stages
+## 3. Pipeline stages
 
 | # | Stage | File · function | In → Out |
-|---|-------|-----------------|----------|
-| 1 | Decode + context | `producers.ts` · `buildContext` | hex + opts → OKLCH seed, archetype, and the aesthetic state (chroma boost, mutedness, cream gate, warm-drift caps, red-repel weights) |
-| 2 | Compile | `colorEngine.ts` · `generateScale` (adapter) | caller opts + the built-in declaration → a per-mode `ModeSpec` for the resolver |
-| 3 | Resolve stops | `resolve.ts` · `resolveRamp` | per declared stop: **produce** (hue → chroma → `perceptualRungL`) → **require** (declared contrast floors bind: down-clamp in light, raise-off-paper in dark) → **refine** (chroma yields to gamut). Stops resolve in order, so a require can reference an already-resolved stop |
-| 4 | Resolve roles + ons | `resolve.ts` | off-scale `stamp-fill`/`stamp-fill-hover`/`stamp-fill-pressed` roles (anchor = the brand's own lightness, floored in dark; the on-fill enforce re-solve last); the `stamp-on` pole chosen by the declared `ons` rule, never feeding back into a fill except through the enforce |
-| 5 | Assemble | `colorEngine.ts` adapter | resolved ramps → the `GeneratedScale` contract (light[], dark[], the six cta state fills, on-booleans) |
-| 6 | **Policy** | `resolve.ts` (engine) · `resolveBrand` | runs collisions; may re-call the engine with new options; computes signal overrides |
-| 7 | Emit | `cssRender.ts` / `figmaRender.ts` + `tokenNames.ts` | `GeneratedScale` → named CSS vars or Figma variable tree |
-| 8 | Drive | `build.ts` (static) / demo / plugin (live) | writes `dist/signals.css` / renders preview / writes Figma |
+|---|---|---|---|
+| 1 | Decode and context | `producers.ts` · `buildContext` | hex + options → the OKLCH seed, the archetype, the aesthetic state (vividness, mutedness, the warm weight, the red repel, the bell) |
+| 2 | Compile | `colorEngine.ts` · `generateScale` | options + the built-in declaration → a per-mode `ModeSpec` (the profile compiler is the identity for `'wcag'`) |
+| 3 | Resolve the light stops | `requirements/resolve.ts` · `resolveRamp('light')` | per declared stop: produce (hue → chroma → the apparent-lightness solve) → require (the declared floor clamps L down, the shipped-pair walk) → refine (chroma yields to gamut). In declared order, so a floor references a resolved ground |
+| 4 | Resolve the dark stops | `resolveRamp('dark', { deltaLightStops, deltaCarry })` | paper and highlighter stops by luminance parity with the computed band lift, hue carried and chroma resampled from light; the crayon placed by its 3:1 solve; the pens solved dark-native to the dark scaffold then floored |
+| 5 | Resolve the stamp and its text | `resolveRamp`, the roles block | the pole judged, the enforce re-solve, the clearance, the red exit, the states, the final pole floor; dark anchored at max(seed L, floor) |
+| 6 | Assemble | `colorEngine.ts` adapter | resolved ramps → the `GeneratedScale` contract |
+| 7 | Policy | `resolve.ts` · `resolveBrand` | the hue collision test, the red complement, the signal shifts → `signalOverrides`; `resolveTheme` adds the secondary and merges its collisions |
+| 8 | Emit | `cssRender.ts` / `figmaRender.ts` / `dtcg.ts` + `tokenNames.ts` | the theme → named CSS custom properties, Figma group trees, or DTCG tokens; the neutral and the inverse link resolve here |
+| 9 | Drive | `build.ts` (static) / demo / plugin (live) | writes `dist/signals.css` / renders the preview / writes Figma |
 
-Structural facts worth stating plainly:
+Facts worth stating plainly:
 
-- The public API is `resolveBrand`/`resolveTheme` (policy entry) and `generateScale`
-  (engine entry); consumers, the plugins included, never see the reqtoken internals.
-- The engine runs **~6× per brand** (brand, secondary, neutral, and the cached signal
-  scales). The four **signal scales are generated once at module load** (`SIGNAL_SCALES`,
-  `resolve.ts:43`) and reused everywhere.
-- **Light/dark is computed together, chosen at render.** Both ramps resolve from their
-  declared `ModeSpec` and land on one `GeneratedScale`. `brandKindBody(prefix, scale, mode)`
-  (`cssRender.ts`) picks `scale.light` vs `scale.dark` per mode; CSS emits a
-  `[data-brand]` block (light) and a `[data-brand][data-theme="dark"]` block (dark).
-- **Stops carry numbers; the cta is a named role with no number**: in the declaration
-  they are literally different kinds, so a stop/cta confusion cannot recur.
+- The public API is `resolveTheme` / `resolveBrand` (the policy entries) and
+  `generateScale` (the engine entry); consumers, the plugins included, never see the
+  requirement internals.
+- Per theme the engine resolves the primary, the secondary (two resolves for the custom
+  posture), the neutral at emit, the inverse link at emit, a custom link when set, and a red
+  complement candidate when needed. The four signal scales are generated once at module load
+  (`SIGNAL_SCALES`) and re-generated only as collision variants.
+- Light and dark are computed together and chosen at emit: `brandKindBody(prefix, scale, mode)`
+  picks `scale.light` or `scale.dark`; CSS emits a `[data-brand]` block (light) and a
+  `[data-brand][data-theme="dark"]` block (dark).
+- Stops carry numbers; the stamp is a named role with no number. In the declaration they are
+  different kinds, so a stop and the fill cannot be confused.
 
-The data structures that flow through everything:
+## 4. Data structures
 
 ```ts
 // the declaration (pure data, src/engine/requirements/spec.ts)
-ModeSpec       = { stops: StopReq[], roles: RoleReq[], ons: { onFill } }
-StopReq        = { stop, rootL, group, produce: {hue, L, chroma}, satFraction?/baseC?/chromaMult?, require? }
-RoleReq        = { role: 'stamp-fill'|'stamp-fill-hover'|'stamp-fill-pressed', produce, floorL, chromaMult }
+ModeSpec       = { stops: StopReq[], roles: RoleReq[], ons: { onFill: OnReq } }
+StopReq        = { stop, rootL, group, produce: { hue, L, chroma }, satFraction?, baseC?, chromaMult?, textMaxC?, chromaFloor?, require? }
+RoleReq        = { role: 'stamp-fill' | 'stamp-fill-hover' | 'stamp-fill-pressed', produce, floorL, chromaMult }
+OnReq          = { metric: 'apca-pole', enforce, ratioFloor?, coEnforceLc?, enforceLc? }
 
-// the resolved output (the public contract)
-ColorStop      = { stop, L, C, H, r, g, b }
-GeneratedScale = { name, archetype, brandL/C/H,
-                   onFillTextIsWhite(+Dark), light[], dark[],
-                   cta, ctaHover, ctaPressed (+Dark ×3),
-                   identityHex? }
-ResolvedBrand  = { scale, shearDeg, redRepel: {light,dark}|null,
-                   warningVariant, pending[], signalOverrides[] }
+// the resolved output (the public contract, src/engine/colorEngine.ts)
+ColorStop      = { stop, L, C, H, r, g, b }            // r/g/b in the master (P3) basis; hex via stopHex
+GeneratedScale = { name, archetype, brandL, brandC, brandH,
+                   onFillTextIsWhite, onFillTextIsWhiteDark,
+                   light[], dark[],                      // stops 1..11
+                   cta, ctaHover, ctaPressed, ctaDark, ctaHoverDark, ctaPressedDark,   // the stamp trio (internal field names)
+                   ctaRepelled?, identityHex?,
+                   paper0?, paper0Dark?, pen100?, pen100Dark? }   // the poles, off the arrays
+ResolvedBrand  = { scale, shearDeg, redRepel, warningVariant, pending[], signalOverrides[] }
+ResolvedTheme  = { primary, themed, secondary: ResolvedSecondary | null, signalOverrides[], notes[] }
+ThemeInput     = { secondary?, secondaryStyle?, neutralLevel?, neutralH?, signals, contrastProfile?, ctaEscape?, linkHex?, ctaBorder? }   // themeToFigma
 ```
 
-#### (C) Output token vocabulary (`tokenNames.ts`)
+The internal `GeneratedScale` fields keep the `cta` spelling; every emitted name says
+`stamp`. Nothing outside the engine reads the internal names.
 
-| Stops | Token names | Role |
-|---|---|---|
-| 1–2 | `paper-1`, `paper-3` | the page and card planes |
-| 3 | `paper-5` | surface plane (light sunken / dark high), renamed from wash-3, owner 2026-07-24 |
-| 4–7 | `highlighter-8` … `highlighter-20` | low-hierarchy fills, borders, decorative |
-| 8 | `crayon-26` | the **3:1** step for what must be visible to operate the interface: borders, UI elements ([WCAG non-text contrast](https://www.w3.org/TR/WCAG21/#non-text-contrast)) |
-| 9 | `pencil-47` | emphasis fill AND first text stop (4.5:1 on every paper, the 2026-07-29 highlight collapse) |
-| 10 | `pen-58` | the between text stop (4.5:1 on every paper and highlighter of its own family or of the neutral, both directions; anchored at `highlighter-20` since the 2026-08-27 guarantee round, the neutral's pens bound the other way since T13, 2026-09-01; C49, promoted from the retired text-cta hover state) |
-| 11 | `pen-70` | strong text (guaranteed minimum 4.5:1 on the same grounds as `pen-58`). The three text stops read as states ARE the text-style cta (rest pencil-47 / hover pen-58 / pressed pen-70); the separate `cta-ink` + `cta-ink-strong` alias trios were deleted 2026-08-12 |
-| off-scale roles | `stamp-fill`, `stamp-fill-hover`, `stamp-fill-pressed` | the pulled-out solid button fill and its states |
-| aliases | `stamp-edge` | the gated border onto the system alpha ladder |
-| computed | `stamp-on` | black/white text for the fill (solid pole, or the soft pole-at-alpha on quiet fills) |
-| literal | `identity` | the exact input hex (brand / secondary only) |
-| anchors | `paper-0`, `pen-100` | universal per-scheme extremes (paper-0 = the neutral's resolved stop 0; pen-100 = literal black/white, flipped per mode) |
+## 5. The requirement schema
 
-The signal primitives carry role-name prefixes at emit (`--critical-*` and friends);
-only the primitives change per brand.
+The declaration is pure data; the resolver executes it in three phases per stop: produce,
+require, refine. The field-by-field format is on the site
+([Requirement tokens](https://egerrity.github.io/okchroma/#/docs/token-schema)) and
+summarized in [schema.md](schema.md). Three resolver facts a maintainer needs:
 
-### 2b. The requirement schema
+- **The declared anchor is read, with one override.** `require.against` names the ground.
+  In the shipped WCAG lane a text stop (index 9 and up) declared against a paper is
+  re-anchored at `paper-5`, the nearest paper (`wcagAnchorStop`); a declared highlighter
+  anchor is honored; the inverse link family replaces every pen ground with `PEN_70_GROUND`
+  (`textGround`). The APCA lane reads the declaration as written.
+- **The cross-family bounds.** A ramp resolves per family, so the neutral it pairs with is
+  not in view. The resolver holds every stop from the crayon up against the worst neutral
+  paper-5 any theme ships (`NEUTRAL_P3_WORST_SHIP_Y`), the highlighter-anchored pen against
+  the worst neutral highlighter-20 (`NEUTRAL_W80_WORST_SHIP_Y`), and, for the neutral's own
+  stops, against the worst chromatic paper-5 and highlighter-20 (`CHROMATIC_P3_WORST_SHIP_Y`,
+  `CHROMATIC_W80_WORST_SHIP_Y`, passed in by `generateNeutralScale`). The bounds are frozen
+  measurements; re-derive them when a ladder, the neutral curve, or a signal seed moves.
+- **The shipped pair.** After the analytic solve, the 8-bit sRGB rendition of stop and
+  ground is checked (`shippedY`) and the stop walks away from its ground in 0.001 L steps
+  until it clears. A stop that still misses is marked `unresolvable`, and `req:audit` fails.
 
-> Field-by-field reference for the serialized token format, with real emitted JSON
-> examples, lives in **[schema.md](schema.md)**. This section is the conceptual model.
+The producer labels in the declaration describe the direct-resolver path. The shipped dark
+ramp is resolved from the resolved light ramp (the delta carry, always set by
+`generateScale`), which places the paper and highlighter stops by luminance parity and the
+crayon by its requirement; the dark `perceptual-lift` and `fixed` labels on stops 1 to 8 are
+what a direct `resolveRamp` call without the light stops does.
 
-The engine's core idea: **a token is a requirement the engine solves, not a frozen value.**
-The declaration (`src/engine/requirements/spec.ts`) is pure, serializable data; the resolver executes
-it. Three phases per stop, in order:
+## 6. Design decisions
 
-- **produce**: the forward formula. Named producers, referenced by name in the data:
-  `hue: 'warm-drift' | 'warm-torsion' | 'constant'`, `L: 'perceptual' | 'fixed'` (plus
-  `'anchor'`/`'hover'`/`'pressed'` for roles), `chroma: 'ladder' | 'brand'`. The producer
-  *implementations* (the Nayatani solve, the warm drift, the chroma ladder/envelope
-  blend, the aesthetic state) live in `producers.ts` under the resolver id
-  `okchroma-reqtoken@2`; they are the house style *of this resolver*, not portable data.
-- **require**: declared floors, checked and enforced against **resolved** stops (never a
-  cached value, so a pushed stop automatically re-solves everything referencing it):
-  - `{ metric: 'wcag', against, target }`: `crayon-26` declares `against: 'paper-5'`
-    directly (3:1), and the resolver honors that anchor as written. `pencil-47` and
-    `pen-70` declare `against: 'paper-3'` in `spec.ts` and `pen-58` declares
-    `against: 'highlighter-20'` (4.5, the darkest highlighter — honored as written, since
-    it is already darker than every paper); for the paper-declared text stops the shipped
-    WCAG lane overrides the anchor at resolve time: `resolve.ts`'s
-    `wcagAnchorStop` re-anchors them at paper-5 instead, the nearest
-    paper, so the declared paper-3 anchor is what only the apca lane actually reads
-    (byte-identical there), while the shipped wcag lane clears paper-5. On top of that,
-    every stop from crayon-26 up also clears the worst paper the family's OWN generated
-    NEUTRAL can produce at any hue (`NEUTRAL_P3_WORST_SHIP_Y`, C44): a brand's own
-    paper-5 is not always the nearest paper once the neutral is in scope; the pen stops clear
-    the worst neutral `highlighter-20` the same way (`NEUTRAL_W80_WORST_SHIP_Y`); the
-    neutral's own stops run the same rule the other way, its pens clearing the worst
-    chromatic `highlighter-20` and its crayon-26/pencil-47/pens the worst chromatic paper-5
-    (`CHROMATIC_W80_WORST_SHIP_Y`, `CHROMATIC_P3_WORST_SHIP_Y`, T13, passed in by
-    `generateNeutralScale`). Declared in
-    **both modes** (light clamps down; dark raises off the paper; a placement that
-    already clears doesn't move).
-  - `{ metric: 'min-separation', against, target }`: supported by the resolver for
-    portable specs; **the shipped spec no longer declares any** (the identity-curve
-    paper/highlighter shape guarantees the seams instead, see the comment directly above the
-    `LIGHT` export in `spec.ts`).
-  - the `ons` block: the `stamp-on` pole choice (`apca-pole` preference) with the law
-    `{ ratioFloor: 4.5, coEnforceLc: 65 }`: the chosen pole must pass WCAG 4.5 or the
-    fill re-solves, and the fill co-clears APCA Lc 65 (critical rides 50). On-text is
-    chosen on one criterion: it passes.
-  A require the resolver cannot meet yields an explicit `unresolvable` marker, never a
-  silent fudge.
-- **refine**: chroma yields to the sRGB gamut at emit.
+The deliberate adjustments layered onto a naive ramp, by goal. Each is stated as its
+mechanism; the constants are rendered live on the site's
+[generation](https://egerrity.github.io/okchroma/#/docs/generation) and
+[reference](https://egerrity.github.io/okchroma/#/docs/reference) pages.
 
-**The spec/resolver line** (what's portable vs what isn't): stop identity, rootL ladders,
-per-stop chroma params, producer *names*, and every requirement are data; they serialize
-to DTCG tokens (`dtcg.ts`: frozen `$value` fallback for any DTCG tool + the live
-requirement in `$extensions['org.okchroma.requirement']`, round-trip-proven by
-`research/reqtoken/reqtoken-portability.ts`, parked research, not run by CI; editing a
-requirement in the token file changes the
-re-resolved value). The producer implementations and their constants stay behind the
-versioned resolver id: twenty aesthetic constants in a token file would be fake
-portability.
+**Brand fidelity**
 
-**The gate:** `npm run req:audit` resolves an agnostic 24-hue × 3-chroma sweep in both
-modes and verifies every *declared* requirement plus structural invariants (totality,
-monotonic ladder, gamut, role floors, on-pole validity). Requirement-satisfaction is the
-contract; the blessed snapshots remain the value-regression pin.
+- **OKLCH in a P3 master.** Every judgement runs in Display P3 (`MASTER_GAMUT`); the hex
+  is the sRGB clamp-down by chroma reduction at constant L and H, and a stop whose chroma
+  exceeds sRGB ships a `color(display-p3)` override in CSS.
+- **The warm drift and torsion.** Warm seeds rotate toward the clean warm hue at each
+  lightness (`GOLD_SPINE`), 0.55 of the difference, weighted by a gaussian at 83° plus the
+  muted-warm term, fading out between H 88 and 104, capped at 24 + 8u degrees (light,
+  `lightHueAt`); the dark twin is `torsionedHue` on `WARM_TORSION`, anchored at the dark
+  stamp. Dark gold and orange stay gold instead of going olive or brown.
+- **The red repel, nearest side.** A seed near the red signal's hue (33.3°) rotates its
+  stops away from it, cooler below the pivot and warmer above, 10.8° scaled by a fading
+  weight with a 14° floor at the pivot (`redRepelShiftDeg`). The stamp is exempt (identity
+  hue); the signals are exempt.
+- **The vividness reference reads the gamut.** The chroma ladder scales with
+  min(1, C / reference), reference = min(0.13, the gamut's median chroma capacity at the
+  seed's lightness), so a pastel at its own ceiling keeps a vivid ramp.
+- **The brand bell.** A declared chroma lift for warm brands (H 95, σ 55°, up to +60%,
+  ramped in with lightness, tapered out around red). Signals take the gold boost instead.
+- **The style lever.** `deeper` raises the envelope weight for semi-muted warm seeds
+  (H 55 to 100, mid mutedness); `full-chroma` releases the vividness cap and is API only.
 
-### 2c. Design decisions (the "design touches")
+**Accessibility**
 
-These are the deliberate adjustments layered onto a naive ramp, grouped by goal.
+- **The apparent-lightness solve.** Every light stop is placed where its
+  Helmholtz-Kohlrausch-corrected apparent lightness equals a shared target
+  (`perceptualRungL`), so a high-boost hue sits lower and a low-boost hue higher and the
+  stop reads the same across brands.
+- **The dark model.** Dark is derived from light: the paper and highlighter stops land on
+  the achromatic scaffold's luminance ladder with a computed band lift
+  (`smoothedBandLift`, the top held at `DARK_BAND_TOP_LIFT`), hue carried and chroma
+  resampled; the crayon is placed by its 3:1 solve from a sentinel; the pens solve
+  dark-native to the dark scaffold and are floored. `divergence-audit` reports the residual
+  apparent-lightness spread.
+- **Dark fills lift, never sink.** The dark stamp anchors at max(seed L, floor):
+  `DARK_BRAND_FILL_MIN_L` for brands, `DARK_CTA_MIN_L` by default, per-signal floors for
+  green and blue. Brand chroma is trimmed (`darkCtaTrim`); signals keep identity chroma.
+- **The crayon's 3:1, both modes.** `crayon-26` declares the non-text bar against `paper-5`
+  in both modes; light clamps down, dark solves up from the ground.
+- **The text floors, both modes.** `pencil-47` at 4.5 and `pen-70` at 7 (declared against
+  `paper-3`, solved against `paper-5` in the shipped lane), `pen-58` at 4.5 against
+  `highlighter-20`. The promise on every text stop is AA; the surplus is placement.
+- **Seams by shape.** The paper and highlighter targets grow apart geometrically, about
+  1.25× per step, so every seam stays open without a separation floor.
+- **On-fill text by one criterion: it passes.** `onTextIsWhite` prefers the pole with the
+  larger APCA |Lc|; the chosen pole must pass 4.5:1 or it flips; the fill darkens only when
+  white is preferred and cannot be flipped. Brand and signal fills also clear APCA Lc 65
+  (critical 50), moving in the chosen pole's direction.
+- **Quiet fills.** The neutral's stamp, and a secondary's where the composite stays legal
+  on every state, carry the pole at alpha (0.75 light, 0.80 dark; `softOnCtaPasses`).
+- **The stamp edge.** A stroke from the alpha ladder (16 / 6 / 8 by family) when the fill
+  reads under APCA |Lc| 15 against the page; a taste gate, not an accessibility claim.
 
-#### Aesthetics / brand fidelity
+**Differentiation (brand versus signals)**
 
-- **OKLCH throughout** (`constraints.ts`): a perceptual space, so steps look evenly
-  spaced and a ramp holds one hue from light to dark.
-- **Warm-hue spine drift**: `GOLD_SPINE` (a 6-point L→H table, 47° dark to 110° light,
-  `stopTable.ts`) + `WARM_TORSION` (weight curve `[[40,0],[50,1],[88,1],[104,0]]`, travel
-  0.55, cap ±24°). Warm stops rotate toward the clean warm hue at each lightness, weighted
-  by the brand's distance from that path (gaussian, σ 20°), so **dark gold/orange stays
-  gold instead of going olive or brown**. The cool edge fades to zero by ≈ H104: lemon
-  keeps its identity hue. Light applies it through the inline spine drift
-  (`producers.ts`, dynamic cap 24+8u), dark through `torsionedHue`.
-- **Red-signal repel, nearest side**: `redRepelShiftDeg` (`colorMath.ts`): a brand ramp
-  near the red signal's hue rotates its stops away from the signal, exiting by the nearest
-  side of the pivot `RED_PIVOT_H = 33.3°` (the signal hue; ties exit cool). Cool of the
-  pivot, the shipped curve is `RED_COOL_DEG = 10.8°` × `redCoolWeight`, with a
-  `RED_PIVOT_EXIT_DEG = 14°` floor near the pivot; warm of the pivot, the same magnitude
-  pushes **warmer** ("tomato goes orange-er", fading out by ≈ H50), so a warm-of-red brand
-  is never dragged through the signal. Applied to the scale stops in both modes: light in
-  `lightHueAt`; dark via `coolRedDark` on `darkH`, and the dark highlighters also inherit the
-  light shift through the delta model, which is why even exact mode's tints still repel
-  (measured 2026-08-06: #D22B2B exact, highlighter-11 at H 16.9 in both modes, cta untouched).
-  The CTA is exempt on both sides (C12 v8: cta red de-collision belongs to the joint solve
-  alone; the dark cta rides identity hue). It is **brand-only**: the red *signal* keeps its
-  identity hue in both modes; signals pass `suppressRedCool: true`.
-- **Style lever** (`deeper` / `full-chroma`): a `GenerateOptions` field, set directly by the
-  caller (no UI exposes `full-chroma` since 2026-09-01: its released cap sinks a violet
-  `highlighter-20` below the pen guarantee's bound, so the checkbox was removed and the
-  register is API-only, outside the guarantee; the audit fixture, `scripts/fixture.ts`,
-  carries a `deeper` case). `deeper` pushes toward the cream/brown envelope, gated to the ambiguous semi-muted warm
-  band (H 55–100, mid mutedness); a no-op outside it. `full-chroma` releases the vividness
-  cap for any seed (the ladder scales with the seed's true chroma; the dark cta rides the
-  identity chroma policy instead of the brand trim); gamut clamps still bound the emit.
-- **Vividness reads the gamut's capacity** (C51, `producers.ts`): the chroma ladder's
-  reference is `min(VIVID_C, medianGamutCAt(brandL))`, hue-agnostic: the gamut's chroma
-  ceiling collapses toward the poles, so a pastel near its achievable ceiling measures
-  vivid and keeps a vivid ramp instead of being read as a gray.
-- **Chroma boost** near hue ≈ 90° (`chromaBoost`, `producers.ts`) for luminous warm
-  hues that would otherwise read flat.
+- **Four canonical signals**, generated once, named by identity in the engine and emitted
+  under role names.
+- **One collision test.** `checkHueCollision`: the smallest highlighter hue distance (stops
+  3 to 7, either mode) within 15° and the brand vivid enough (at least 0.5 of the vividness
+  reference). The stamp ΔE test (`checkCollision`) is audit-only.
+- **The red joint solve.** A brand whose stamp sits inside the red region
+  (`redSolveDist` within `RED_GATE.G`, or the brick band) exits by the nearest release edge
+  with a passing pole, under the direction rules; the red signal complements from the far
+  side of the brand's final stamp, from its deep core or light edge tier, when canonical red
+  would still vibrate beside it (the side-by-side metric). Dark runs the same exit keyed on
+  the side-by-side metric alone.
+- **Signal shifts.** Yellow to lemon below H 96; green's teal-side or yellow-side variant
+  split at 147°; blue's cyan-side variant at or above 273° (the magenta side is unreachable
+  with the shipped seeds).
+- **The secondary de-conflicts too**, at lower priority: a variant is adopted only if it
+  clears both brand colors; the primary wins ties; residual overlaps ship as notes.
 
-#### Accessibility
+**The generated neutral**
 
-- **Helmholtz–Kohlrausch lightness solve**: at equal measured luminance, a saturated
-  color *looks* brighter than gray, by a hue-dependent amount (large for blue/red/violet,
-  small for yellow-green). `perceptualL.ts` implements the **Nayatani (1997)** model
-  (`apparentL`); `perceptualRungL` solves the *measured* L at which each stop's *apparent*
-  lightness matches a common target. → A high-boost hue (blue) is placed at a lower
-  measured L, a low-boost hue (yellow-green) higher, so every step reads the same across
-  brands. **The light ramp solves every stop this way. Dark rides its calibrated ladder**
-  (deliberate: apparent-lightness solving in dark makes blue recede), with the C24 band
-  lift and the C37 highlighter lift declared in contrast space. `divergence-audit` gates the
-  residual per family × mode × stop. (The off-scale CTA is never solved; it carries the
-  brand fill's own lightness.)
-- **Dark-mode "dimmer"**: `perceptualDarkC` solves the *chroma* whose apparent lightness
-  matches gray + boost at the dark rung's fixed L (this is the live `darkChromaCurve`). On
-  top of that, `darkCtaTrim` trims the **brand** dark-fill chroma (with extra damping near
-  blue 265° and red-magenta 345°). The signals ride the identity register instead
-  (`DARK_CTA_C`: brand = trimmed, signal = identity, C16).
-- **Dark fills lift, never sink**: `dark9L = max(scaleL, DARK_*_MIN_L)` (0.63 / 0.70): a
-  too-dark fill lifts to stay visible on a dark background; a vivid fill is never pulled
-  down (identity preserved).
-- **Stop-8 = the 3:1 non-text bar, declared in both modes** ([WCAG non-text contrast](https://www.w3.org/TR/WCAG21/#non-text-contrast)): `STOP_8_NONTEXT_CONTRAST = 3.0`,
-  a requirement on the declared stop (`spec.ts`) against `paper-5` directly; light
-  iterates a fixed-point clamp down; dark raises a failing hue off the near-black paper.
-- **Text-stop contrast floors, declared in both modes**: `pencil-47` and `pen-70`
-  declared in `spec.ts` against `paper-3`, `pen-58` against `highlighter-20`; the
-  promise on every text stop is a guaranteed minimum of 4.5:1 (AA), the declared
-  targets being engine mechanism; the paper-declared ones resolved by
-  the shipped WCAG lane against paper-5, the nearest paper (`resolve.ts`'s
-  `wcagAnchorStop`), and additionally cleared against the worst paper the family's own
-  generated neutral produces at any hue (C44's `NEUTRAL_P3_WORST_SHIP_Y`). See §2b for the
-  full mechanism.
-- **Seams by construction**: the paper/highlighter ladder rides an identity-curve shape that
-  keeps every seam open for any seed (low-chroma grays and muted warms were the failure
-  cases); the resolver still supports declared `min-separation` floors for portable specs,
-  but the shipped spec no longer needs any (`spec.ts`, the comment above the `LIGHT`
-  export).
-- **On-fill text by one criterion: it passes**. `onTextIsWhite` (`colorMath.ts`) picks
-  black or white; the chosen pole must pass WCAG 4.5 or the **fill moves** (never the
-  text), and the fill co-clears APCA Lc 65 in both modes (critical 50; exact fills and
-  exact secondaries are inert). Quiet fills (the derived secondary, the neutral) carry the
-  pole **at alpha** (`SOFT_ON_CTA_ALPHA` .75/.80), gated per brand by a WCAG 4.5 pass on
-  all three fill states in the shipped 8-bit basis (`softOnCtaPasses`).
-- **Low-visibility cta border** (C41): every family's cta fill is judged against the page
-  by APCA; below \|Lc\| 15 the family's `stamp-edge` resolves to a system alpha-ladder
-  stroke (primary 016, secondary 006, neutral 008), otherwise to the
-  transparent variable. Components always carry the border, so layout never shifts.
-  Default on, per-brand opt-out.
+- A near-gray seed at the tint hue through the same generator with its own chroma curve
+  (`neutralChromaCurve`: lifts across the papers, peaks at the first highlighters, tapers
+  through the pens, warm hues damped), at four strengths (pure, default, medium, branded).
+  The tint hue is a stored source, never a frozen value (`neutralTintHue`).
+- Its stamp is quiet: the rest fill is the scale's own `highlighter-8`, lifted in dark until
+  it clears 1.2:1 against the dark `paper-3`; hover and pressed step from the rest by the
+  shared state rule; the on-text is always the pole at alpha.
 
-#### Differentiation (brand vs. status signals)
+## 7. The extended plugin's write path
 
-- **Four canonical signals** (red / yellow / green / blue), generated once, named by
-  identity in the engine and emitted under role names (critical / warning / positive /
-  info; owner 2026-07-27).
-- **Collision tests**: `checkHueCollision` (highlighter hues within 15° + vividness qualifier)
-  for family collisions; `checkCollision` (hue gate ≤ 30° plus OKLab ΔE ≤ 0.16 light /
-  ≤ 0.10 dark) for value collisions between rendered fills.
-- **Red collision, the joint solve (C12 v8)**: a brand whose cta sits inside the
-  owner-calibrated true-red region exits by its nearest edge (deep and vivid reds go
-  deeper, into burgundy when needed, pinks lighten, vivid oranges brighten; `RED_SOLVE`,
-  `solveBrandExit`), and the red signal complements from the error-credible range on the
-  opposite side of the brand when canonical red would still sit too close
-  (`redComplementVariant`). Where no clean complement exists, canonical red ships plus
-  outline advice for destructive controls. The older rung-1 darken, muted dark float, and
-  `errorComponentRule` are deleted.
-- **Signal shifts**: `pickSignalShift` (`signalShift.ts`): yellow → cooler *lemon*;
-  green → teal-side / yellow-side; blue → cyan-side. The direction depends on which side of
-  a hue split the brand sits, so the signal stays distinct. (Blue's magenta side is
-  unreachable since the 2026-07-11 seed lift, an accepted loss, CATALOG C17; the signal
-  was renamed from `info-color` to `blue` once only blue directions remained.)
-- **The secondary de-conflicts too** (C45): a real secondary is checked against the
-  signals the same way. Red and yellow offer no variants, so a colliding secondary yields
-  to the subtle treatment; green/blue variants are adopted only if they clear **both**
-  brand colors; the primary wins ties. Residual overlaps ship as advice (`pending[]`),
-  never a silent move.
+The extended plugin (`plugin-ext/`, Figma Enterprise) writes one base collection
+(`theme`, modes `light` and `dark`, the WCAG lane) and one extension collection per brand
+that overrides only the rows that differ. `plugin-ext/payload.ts` builds the rows from the
+engine (`resolveTheme` → `themeToFigma` → `toFlat`); `plugin-ext/code.ts` writes them.
 
-#### Generated neutral
+**Zones.** Every path starts with an ownership zone: `base/` marks engine-owned rows, where
+a hand edit is deliberately not rebuilt by a re-apply; `utility/` marks team-touchable rows
+the engine never reads back (the surface planes, the shadows, the scrim), written last so
+they shelve together. `payload.registerPath` applies the family zone as the final step of
+`toFlat`, after the identity and link rows have been re-homed; system-descended rows are
+built with their zone spelling directly. The zone is stripped from the Web code syntax, so a
+developer's name matches the CSS custom property.
 
-- The neutral is **generated from a tint hue** (`generateNeutralScale`): a near-gray
-  (C ≈ 0.006) at the tint hue, run back through `generateScale` with a `neutralChromaCurve`.
-  The tint hue is a **stored source, never a frozen value** (C48, `neutralTintHue`):
-  primary by default, the secondary's seed hue followed live, or a custom hex's hue.
-  Tint levels `pure` / `default` / `medium` / `branded` scale the tint at every stop in
-  both modes (`medium` keeps the pre-2026-08-11 default strength; `default` is 0.75x of it).
-  Its `stamp-fill` is intentionally **low-hierarchy**, tracking the scale's own stop 4 (cta) /
-  stop 5 (hover) so it **flips per mode**: a near-white highlighter in light, a dark highlighter in
-  dark, with `stamp-on` recomputed for legibility in each (shipped soft, at alpha).
+**Roles and the picker.** Inside `base/`, the ramp stops and the alpha and absolute
+plumbing are single resolved colors with no state; the roles are the state-carrying rows:
+`stamp/` inside each family, `base/link/` (default and inverse), and `utility/surface/`
+(`isRoleRow` in `code.ts`). The descope posture (the "Hide primitive scale from pickers"
+checkbox, default on) sets every non-role variable's scopes to none and keeps the roles at
+all scopes. It is file state on the base collection, re-stamped on every apply, so a scope
+hand-edited in Figma reverts on the next run.
 
-### 2d. The extended plugin's ownership zones and descope posture
+**Identity stamps.** A variable's canonical path lives in plugin data (`PATH_KEY`); the
+display name is the user's to edit. A generation stamp (`GEN_KEY`) marks rows written under
+the current name table. Each apply stamps its input recipe on the extension (`SPEC_KEY`),
+which powers "Re-apply all brands" and the collection-wide secondary check. The base stores
+its seed color (`BASE_SEED_KEY`), the mode ids (`COLS_KEY`), and the descope posture
+(`DESCOPE_KEY`).
 
-The extended Figma plugin (`plugin-ext/`, Enterprise-only) prefixes every emitted
-variable path with an OWNERSHIP ZONE (2026-08-18, replacing the earlier register
-prefixes): `base/` marks engine-owned rows, where hand edits are deliberately not
-rebuilt by a re-apply, and `utility/` marks team-touchable rows (the surface planes,
-shadows, the scrim) that the engine never reads back, written last so they shelve
-together in the panel. The zone segment is stripped from every WEB code syntax, so
-dev-facing names match the CSS custom properties. This is a plugin-side concern only:
-the CSS build and the community plugin (`plugin/`) have no notion of it. Two kinds of
-rows share the base/ zone:
+**Create-once and refresh.** The base is populated once from the default seed
+(`payload.BASE_SEED_HEX`, the derived brand-alt, the canonical signals); later applies add
+missing rows and restamp descriptions and scopes, and refresh a base row only when its value
+exactly matches a retired canonical value the engine itself wrote (`RETIRED_SIGNAL_VALUES`),
+never a designer's edit. "Rebuild base theme" re-seeds every base row from the current
+engine at a chosen seed and re-applies every brand against it.
 
-- **ramp stops and plumbing**: a single resolved color, no state. The scale stops
-  (`base/neutral/paper-1`, `base/brand/pencil-47`, … — flat leaves,
-  band flattening 2026-08-12), the system
-  poles and alpha ladder (`base/abs-black`, `base/alpha/away-from-bg/16`,
-  …).
-- **roles**: a state-carrying usage decision, kept in its natural group. The cta family
-  inside its own family group (`base/brand/solid/fill-hover`) and the
-  system rows `base/link/*` (default/hover/pressed plus the inverse leaves
-  inverse/inverse-hover/inverse-pressed: the same link seed re-solved for
-  text on pen-70 surfaces via `resolveLinkInverseTrio`, anchored at `PEN_70_GROUND`), and
-  `base/surface/dim|low|base|high`.
+**Healing old files.** Renames migrate in place, so bindings survive: `RENAMED_LEAVES`
+(old leaf → new leaf) and `RENAMED_GROUPS` (old prefix → new prefix) compose through
+`legacyCandidates`, one hop only, so every table points straight at the final spelling; a
+display name that spells any engine vintage is recognized as engine-owned
+(`isEngineSpelling`), never as a custom name. A path the current payload no longer emits
+is counted and reported as an orphan, never deleted; the designer removes it.
 
-**The seam.** `payload.registerPath(path)` (`plugin-ext/payload.ts`) is the one function
-that applies the prefix, as the FINAL step of `toFlat()`, after every other rename
-(identity re-homing, link-state remapping) has already settled the path. It prefixes
-`system/*` rows and every path matching `FAMILY_PREFIXES` (which color family a path
-belongs to), and leaves anything unknown untouched. One function, one seam: nothing else
-in the payload or the plugin decides a path's spelling at this level. `ROLE_BANDS`
-(`cta/`) survives beside it as the descope posture's
-visibility line, mirrored in `code.ts` as `isRoleRow`.
-
-**Healing old files.** A file saved before 2026-08-07 has no register prefix, and a file
-from the 2026-08-07..11 window carries the retired two-register spellings
-(`semantic/<family>/cta/*`, `semantic/link/*`, `semantic/surface/*`). `code.ts`'s
-`legacyCandidates()` recovers both: `RENAMED_GROUPS` carries the universal strip
-(`'' → 'base/'`), the system-root strip (`'' → 'base/'`), the
-register swap (`'semantic/' → 'base/'`) and exact entries re-homing the semantic-era
-link/surface rows (`'semantic/link/' → 'base/link/'`,
-`'semantic/surface/' → 'base/surface/'`), composed with the existing per-role
-and per-leaf rename tables (`RENAMED_LEAVES`, the signal role renames) so a file untouched
-since before the role rename, the Stage B leaf relabel, or the register era can still
-resolve to its current path in one `ensure()` call. The rule stays one-hop: a chained
-old→mid→new table would strand a file on the middle name, so every table points straight
-at the final spelling.
-
-**Descope posture.** The ramp stops and plumbing rows are implementation detail; a
-designer should bind to the role names instead. The base collection stores this as file
-state (`okchroma-ext-descope` plugin data on the base collection, not per-brand): when on
-(the default; absent reads as on), `ensure()` sets every non-role variable's `scopes` to
-`[]`, hiding it from every Figma color picker, while the role rows (`isRoleRow`: the cta
-bands, `system/link/*`, `system/surface/*`) always keep `ALL_SCOPES`. The UI's checkbox
-reads this on load (the `file-state` handshake) and every apply, single or roster,
-re-stamps it and re-applies the scopes, so a scope a designer hand-edited in Figma's own
-panel always reverts on the next apply.
-
-**Hand-authored rows.** Nearly every row is generated from the resolved theme via
-`payload.toFlat()`. The one exception is the four elevation planes,
-`base/surface/dim|low|base|high`: `code.ts` creates these itself
-(`ensure('base/surface/dim')`, etc.), outside the payload token stream, then
-wires each as a scheme-divergent alias onto the NEUTRAL's own resolved paper stops
-(`base/neutral/paper/*`), never onto the family being themed:
+**Hand-authored rows.** The four surface planes are created by the plugin itself, outside
+the payload, and aliased onto the neutral's own papers per `SURFACE_PLANE_LAW`
+(`tokenNames.ts`), never onto the family being themed:
 
 | plane | light aliases | dark aliases |
 |---|---|---|
-| `system/surface/dim` | `neutral/paper-5` | `neutral/paper-0` |
-| `system/surface/low` | `neutral/paper-3` | `neutral/paper-1` |
-| `system/surface/mid` | `neutral/paper-1` | `neutral/paper-3` |
-| `system/surface/high`  | `neutral/paper-0` | `neutral/paper-5` |
+| `utility/surface/dim` | `base/neutral/paper-5` | `base/neutral/paper-0` |
+| `utility/surface/low` | `base/neutral/paper-3` | `base/neutral/paper-1` |
+| `utility/surface/mid` | `base/neutral/paper-1` | `base/neutral/paper-3` |
+| `utility/surface/high` | `base/neutral/paper-0` | `base/neutral/paper-5` |
 
-**Apply never deletes.** A path in an existing base file that the current payload no
-longer emits (an orphan, left behind by a deleted or renamed token) is counted and
-reported to the UI, never removed: `ensure()` only creates or renames variables it
-recognizes, so a designer's own variables, and any row the plugin has stopped writing,
-are left exactly alone. The remedy for a genuinely wrong row is the designer's own delete;
-the next apply reseeds whatever it's supposed to own.
+The `toward-bg` alpha ladder (emitted by `themeToFigma` under `system/alpha/toward-bg/`
+and by `signalsCss`) is not written by the extended plugin.
 
----
+## 8. Dependencies
 
-## 3. Key Dependencies
+The published package declares no dependencies: helmlab (the side-by-side metric in
+`p2.ts`) is bundled in at build time. Everything else in `src/` is hand-written: OKLCH ↔
+sRGB, gamut clamping, WCAG and APCA luminance, the Helmholtz-Kohlrausch model.
 
-The engine has **one runtime dependency: `helmlab`** (imported by `p2.ts` for the
-side-by-side perceptual distance metric that drives the dark cta exit and the red
-complement). Everything else in `src/` is hand-written: OKLCH ↔ sRGB conversion, gamut
-clamping, WCAG/APCA luminance, and the Helmholtz–Kohlrausch model live in
-`constraints.ts` and `perceptualL.ts`. There is no color library.
+| Package | Why it is here |
+|---|---|
+| helmlab | the side-by-side perceptual distance (`p2.ts`); bundled into the package |
+| esbuild | the only build tool: the token generator, the demo, the plugins, the library, the audit scripts |
+| typescript, @types/* | `npm run typecheck` |
+| react, react-dom, lucide-react | the demo only; the engine never imports them |
 
-The other packages exist for **tooling and the demo**, not the engine:
+All are `devDependencies`. The scripts under `scripts/` are the audit gates; they are not
+part of the engine.
 
-| Package | Type | Why it's here |
-|---|---|---|
-| **helmlab** | dep | The P2 side-by-side metric (`p2.ts`), the engine's one runtime dependency. |
-| **esbuild** | dev | The only build tool: bundles the Node token generator, the browser demo, and the plugins; provides `--watch`. |
-| **typescript** + **@types/*** | dev | The codebase is TypeScript; `npm run typecheck` runs `tsc --noEmit`. |
-| **react** + **react-dom** | dev | Power the **demo preview app only**. The engine never imports them. |
-| **lucide-react** | dep | Icons in the **demo only**. *(A candidate to move to `devDependencies`.)* |
+## 9. Setup
 
-The scripts under `scripts/` are internal diagnostics/audits (contrast sweeps, smoothness
-checks, Figma verification). They are **not part of the engine** and aren't needed to
-build or use it.
-
----
-
-## 4. Setup Guide (run locally from scratch)
-
-**Prerequisites:** Node 18+ (the build targets `node18`; CI uses Node 20) and npm.
+**Prerequisites:** Node 18 or later (CI uses Node 20) and npm.
 
 ```bash
-# 1. Install
 npm install
-
-# 2. Build everything: bundles the generator, runs it to produce dist/signals.css,
-#    and bundles the demo (dist/demo.js). Per-brand CSS is generated live in-browser.
-npm run demo:build
-
-# 3. View the demo. Serve the repo ROOT (demo/index.html references ../dist and ../tokens):
-npx serve .
-#    then open  http://localhost:3000/demo/index.html
-```
-
-**Live editing**
-
-```bash
-npm run dev        # esbuild --watch: rebuilds the demo on save (refresh the browser)
+npm run demo:build      # bundles the generator, runs it to write dist/signals.css, bundles the demo
+npx serve .             # serve the repo root; open http://localhost:3000/demo/index.html
+npm run dev             # esbuild --watch: rebuilds the demo on save
 ```
 
 **Figma plugins**
 
 ```bash
-npm run plugin:build       # the community plugin  → plugin/dist/*
 npm run plugin-ext:build   # the extended plugin   → plugin-ext/dist/*
-# In Figma: Plugins → Development → Import plugin from manifest… → pick the plugin's manifest.json
+npm run plugin:build       # the community plugin  → plugin/dist/*
+# Figma desktop → Plugins → Development → Import plugin from manifest… → the plugin's manifest.json
 ```
 
-**Verification / diagnostics** (the full audit set lives in `package.json`)
+**Verification** (the full set is in `package.json`; what each proves is on the site's
+[Guarantees](https://egerrity.github.io/okchroma/#/docs/guarantees/how-it-is-verified) page)
 
 ```bash
 npm run typecheck        # tsc --noEmit
-npm run audit            # dark-mode audit        (add :bless to update the snapshot)
-npm run band-audit  # band order / emphasis / neutral-cta audit (add :bless)
-npm run audit:divergence # light↔dark + cross-family divergence audit (add :bless)
-npm run req:audit        # the requirement gate: every DECLARED requirement, agnostic sweep, both modes
-npm run smooth           # ramp smoothness audit  (smooth:baseline to re-record)
-npm run figma:verify     # validates the Figma emitter output
-npm run generate         # regenerate dist/signals.css only (requires a prior build)
+npm run req:audit        # every declared requirement, agnostic sweep, both modes and lanes
+npm run audit:guarantee  # the five band claims on the shipped 8-bit pair
+npm run audit            # dark-mode parity + the blessed snapshot (add :bless to update)
+npm run band-audit       # band order, the crayon's 3:1, the neutral stamp, snapshot
+npm run audit:divergence # the neutral curve, red hue fidelity, snapshot
+npm run smooth           # ramp smoothness against the recorded baseline
+npm run figma:verify     # the Figma tree's shape and spot values
+npm run audit:ext        # the extended plugin's override sets
+npm run docs:lint        # the docs' vocabulary rules
+npm run generate         # regenerate dist/signals.css only (needs a prior build)
 ```
 
-> Note: `npm run build` and `npm run demo:build` run the exact same script
-> (`node esbuild.config.js`, no flags): bundle `src/build.ts`, run it to produce the token
-> CSS, then bundle the demo. There is no `--full` mode; `esbuild.config.js` only branches
-> on `--watch`, `--plugin`, and `--plugin-ext`. `demo:build` is the one-stop command;
-> `build` is its alias.
+`npm run build` and `npm run demo:build` run the same script.
 
-**Deploy:** `.github/workflows/pages.yml` deploys the demo to GitHub Pages on push to
-`main` (or manual dispatch): `npm ci` → `npm run demo:build` → flatten `dist/` + `tokens/`
-into `_site/` (rewriting `../` paths for the `/okchroma/` project subpath) → publish.
+**Deploy:** `.github/workflows/pages.yml` runs on every push to `main`: `npm ci`, the docs
+lint, `npm run demo:build`, the three plugin builds, then assembles the site (the demo at the
+root, the extended plugin and the Mapper zipped for manual install beside `install.html`)
+and publishes it to GitHub Pages. The workflow builds; it does not run the audit gates.
 
----
+## Known limitations (intentional)
 
-## Known limitations (intentional, not bugs)
-
-1. **Blue's magenta-side variant is unreachable** with the current signal seeds (the
-   2026-07-11 seed lift), an accepted loss, tracked as CATALOG C17.
-2. **Residual advisory overlaps ship as annotations** (`pending[]`), not silent moves:
-   after the automatic solves (red joint solve, signal variants, the C45 secondary
-   de-confliction), whatever remains is the owner's call by design.
+1. Blue's magenta-side variant is unreachable with the current signal seeds; the machinery
+   is kept.
+2. Residual advisory overlaps ship as notes, never silent moves: after the automatic solves,
+   whatever remains is a decision for the theme's owner.

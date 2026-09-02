@@ -4,6 +4,55 @@ Fresh tracker. The previous CATALOG was archived with the whole old docs tree in
 ("clean-slate rewrite" 2026-06-27); entries here are code-grounded, logged at find-time,
 fixed holistically after owner sign-off.
 
+## C57 — the docs contradicted the code on every surface (FIXED, the engineering docs rewrite, 2026-09-02)
+
+Found by the claims audit that opened the rewrite: every sentence on the four site pages
+and in README, architecture.md, scale.md, schema.md, agents.md and plugin-ext/README.md
+checked against main at 0d694fc (the sheet lived at scratch/docs-audit/claims.md). The
+classes, with the truth that replaced them:
+
+- The dark model was told three different ways (site: a flat calibrated ladder; scale.md:
+  every stop H-K solved like light with the crayon fixed; architecture.md: a calibrated
+  ladder with declared band lifts). The code: the delta carry (colorEngine.ts always passes
+  deltaLightStops + deltaCarry); stops 1–7 by luminance parity on the achromatic scaffold
+  with a COMPUTED band lift (producers.ts smoothedBandLift, the top held at
+  DARK_BAND_TOP_LIFT); the crayon placed by its 3:1 solve from a 0.05 sentinel; the pens
+  solved dark-native to ROOT_L_DARK then floored. spec.ts's dark producer labels
+  (perceptual-lift / fixed on stops 1–8) describe only the direct-resolver path.
+- The live-edit promise on `against` was stated as universal; the shipped lane re-anchors
+  the paper-declared text stops at paper-5 (requirements/resolve.ts wcagAnchorStop) and the
+  inverse link replaces every pen ground (textGround). Editing `target` is honored everywhere.
+- The stamp ΔE "value" collision test (collision.ts checkCollision) was documented as the
+  second resolution test; engine/resolve.ts imports it and never calls it; its only consumer
+  is scripts/dark-audit.ts.
+- scale.md said WCAG has a pole dead zone; it cannot (ratio(white) × ratio(black) = 21 for
+  any fill, so both cannot miss 4.5). APCA has the dead zone.
+- schema.md said enforceLc comes from the Lc map's 4.5 slot; profiles.ts sets it to
+  CTA_ONFILL_ENFORCE_LC (60). spec.ts:98 carried the same stale comment (fixed in E1).
+- The DTCG emitter still named the roles cta / cta-hover / cta-pressed while every other
+  output said stamp-fill (fixed 0359ea5; parseToken accepts the old words, proven identical
+  over six seeds both modes); $value.components were unrounded doubles (fixed 62a6c5f).
+- Retired vocabulary and internal history across the docs (solid/, primitive/, the -aa
+  suffix, round IDs, owner dates); the live naming diagram spelled primitive/neutral/pen/53/aa
+  with a CONFORMANCE segment that no longer exists.
+- helmlab and lucide-react were listed as dependencies; package.json declares none (both
+  devDependencies; helmlab bundled into the package).
+- The scrim and the absolute poles were listed as CSS tokens; they exist in the Figma output
+  only. --surface-* and --shadow-* come from tokens/semantic.css, never from brandCss.
+- plugin-ext/README.md described the four-column era, the primitive/ register and an
+  Enterprise smoke test that no longer exists.
+
+Closed by construction rather than by review: every number and name on the site renders
+from the engine (the K primitive; the roster read from the extended plugin's own payload
+via buildBaseColumns; the constants imported), and scripts/docs-lint.ts, now a step of the
+Pages workflow, fails a push on em dashes, retired vocabulary, round IDs and decision
+jargon in any doc surface. Export-only engine touches for the live values: SHIFT_RULES,
+CTA_CLEARANCE_CAPS, NEUTRAL_P3_WORST_SHIP_Y, NEUTRAL_W80_WORST_SHIP_Y (gates byte-identical).
+Not linted: this file, CHANGELOG.md, research/, code comments. Still stale in code
+comments for a later cleanup: plugin-ext/code.ts's header block (the primitive/ register,
+mark/pen, cta-ink) and the dark producer comments in spec.ts; engine/resolve.ts imports
+checkCollision without using it.
+
 ## C56 — hardcoded token-name literals drift silently across renames (FIXED IN ROUND, 2026-08-18)
 
 Found by the 2026-08-18 name sweep (554 quoted-literal hits verdicted against a

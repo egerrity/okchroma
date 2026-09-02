@@ -29,6 +29,11 @@ jobs:
 
       - run: npm ci
 
+      # The docs' vocabulary rules (scripts/docs-lint.ts): em dashes, retired token
+      # words, internal round IDs and decision jargon fail the deploy so a stale
+      # phrase cannot ship to the site or the repo docs.
+      - run: npm run docs:lint
+
       # Bundles the engine + demo and generates the token CSS into dist/.
       - run: npm run demo:build
 

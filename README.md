@@ -1,138 +1,95 @@
 # OKChroma
 
-**A color-system engine.** Give it one (or two) brand color(s) and it generates a complete,
-accessible, theme-ready color system around it.
+**A color-system engine.** Give it one brand hex, or two, and it resolves a complete
+light and dark token system whose contrast requirements are solved during generation,
+then emits it as CSS custom properties, Figma variables, or DTCG requirement tokens.
 
-Each color family is a light and dark ramp built from pre-reserved roles — 3 papers,
-4 highlighters, 1 crayon, 1 pencil, and 2 pens — plus the stamp fill with its hover and
-pressed states and its on-text color, for each brand hex inputted. Alongside the brand color(s), it generates a neutral and the critical / warning / positive / info signal scales. The inputted hex color(s) is/are preserved in identity swatches for logos or other brand identity moments.
+Every family (neutral, brand, brand-alt, critical, warning, positive, info) carries the
+same scale: 3 papers, 4 highlighters, 1 crayon, 1 pencil, 2 pens, plus the stamp (the
+solid fill with its hover and pressed states, its edge, and its text). The neutral adds
+the two poles. Light and dark resolve together and ship on the same names, so a token is
+mapped once and holds for any brand.
 
-The point is **white-label predictability**: every ramps's stops land at the same
-perceived lightness and play the same role, so you map your design tokens to step
-**numbers** once and they hold for any color scale. Contrast is built into the math, not
-bolted on after: the system solves against **WCAG** ratios (every text color guaranteed
-to pass), with **APCA** as an added legibility floor on CTA text (Lc 65 clearance on top
-of the 4.5:1 requirement).
+Contrast is built into the math, not checked afterwards: `crayon-26` reads on every paper
+at 3:1 (the non-text bar), `pencil-47` at 4.5:1, `pen-58` and `pen-70` at 4.5:1 on every
+paper and highlighter in both directions; the stamp's text passes 4.5:1 on the fill and
+brand and signal fills clear APCA Lc 65 on top. Each claim, its scope, and the audit that
+proves it: [Guarantees](https://egerrity.github.io/okchroma/#/docs/guarantees).
 
-Output comes in two interchangeable forms carrying the same values:
-
-- **CSS custom properties** — per-brand CSS generated live (`brandCss`) + the static
-  `dist/signals.css`.
-- **Figma variables** — written into a Figma file by the bundled plugin.
-
-The live demo and the Figma plugin are previews/front-ends; the engine and its output are
-the product.
-
-> The "reserved role per step" model is a conceptual nod to
+> The reserved-role-per-stop model is a conceptual nod to
 > [Radix Colors](https://www.radix-ui.com/colors/docs/palette-composition/understanding-the-scale).
-> It is **not** a dependency and does not affect the math — all color computation is original.
+> It is not a dependency and does not touch the math; the color computation is original.
 
-## Quick start
-
-```bash
-npm install
-npm run demo:build      # generate token CSS + bundle the demo
-npx serve .             # then open http://localhost:3000/demo/index.html
-```
-
-Live editing: `npm run dev` (watch mode). Build the Figma plugin: `npm run plugin:build`,
-then import `plugin/manifest.json` in Figma.
-
-## Use as an npm package
+## Install
 
 ```bash
 npm install okchroma
 ```
 
-```ts
-import { resolveTheme, brandCss, signalsCss } from 'okchroma'
+ESM and CommonJS builds with TypeScript declarations; no runtime dependencies (the one
+perceptual-distance library the engine uses is bundled in).
 
-const t = resolveTheme({ primaryHex: '#E93D82', name: 'Acme' })
-const css = brandCss('acme', 'Acme', t.themed) + '\n' + signalsCss()
+```ts
+import { resolveTheme, brandCss, signalsCss, neutralTintHue } from 'okchroma'
+
+const theme = resolveTheme({ primaryHex: '#E93D82', name: 'acme', deriveSecondary: true })
+const neutralH = neutralTintHue(theme.themed.scale.brandH)
+const css = brandCss('acme', 'Acme', theme.themed, theme.secondary?.scale ?? null,
+  '', 'default', undefined, theme.secondary?.style, false, null, true, neutralH)
+  + '\n' + signalsCss()
+// put css in a stylesheet; set data-brand="acme" on the themed root,
+// and data-theme="dark" on it for dark mode
 ```
 
-`resolveTheme` solves the full system for a seed (primary, optional secondary, neutral
-source, signal policy). `brandCss` emits the solved light and dark values as CSS custom
-properties scoped to `[data-brand="acme"]`, with dark values under
-`[data-brand="acme"][data-theme="dark"]`; the per-brand neutral is included in the same
-block. Variables are named `--brand-<token>`, `--neutral-<token>`, and
-`--<signal>-<token>`. Inject the string into a `<style>` tag at runtime or write it to a
-file at build time; `signalsCss()` is brand-independent and emitted once.
+The Figma tree comes from `themeToFigma`, the DTCG requirement tokens from
+`emitDtcgRamp`. Signatures, the full input, and an end-to-end example:
+[Install and API](https://egerrity.github.io/okchroma/#/docs/install).
 
-The same resolved theme feeds the other emitters: `themeToFigma` returns the Figma
-variable payload, and `emitDtcgRamp` returns DTCG JSON carrying the live requirement in
-`$extensions`. ESM and CJS builds ship with TypeScript declarations. The package bundles
-its one runtime dependency (helmlab), so installing it adds nothing transitive.
-
-**Versioning** (0.x): a patch changes only resolved values, internal fixes, and docs; any
-release that adds, renames, or removes token keys, or changes the emit structure, ships as
-at least a minor. Release notes: [CHANGELOG.md](CHANGELOG.md).
-
-## How it works (30 seconds)
-
-Every token is a **requirement the engine solves, not a frozen value**. A pure-data
-declaration (`src/engine/requirements/spec.ts`) states each stop's producer (perceptual
-placement, warm drift, chroma ladder) and its requirements (contrast floors, seam
-separations, on-text rules); a resolver executes it per seed — **produce → require →
-refine**. `resolveBrand(hex)` runs that engine, applies **policy** (status-color
-collisions, signal shifts), and an **emitter** (`cssRender` / `figmaRender`) maps the
-resolved stops onto named tokens and picks light vs dark. The declaration also
-round-trips to DTCG tokens (`$value` fallback + the live requirement in `$extensions`).
-
-- **Engine:** `src/engine/*` — pure TypeScript with one runtime dependency (helmlab,
-  the P2 adjacency metric), bundled into the npm package at build time.
-- **Entry points:** `resolveBrand` (`src/engine/resolve.ts`) and `generateScale`
-  (`src/engine/colorEngine.ts`, an adapter over the resolver — same signature as always).
-- **Build:** `src/build.ts` writes the one static output, `dist/signals.css`. There is no
-  brand roster: per-brand CSS is generated live by whichever caller resolves a hex (the
-  demo's hex input, a plugin's form field).
-
-## The Figma plugin
-
-The bundled plugin runs the same engine inside Figma and writes the resolved system into
-your file as variables: **theme** + **mode** collections whose tokens alias onto
-shared primitives — per-brand ramps under `brand/<name>`, with neutrals and signals
-deduplicated across brands, light + dark values on every token.
-
-**Install** — from source:
+## Run from source
 
 ```bash
-npm install && npm run plugin:build
+npm install
+npm run demo:build      # writes dist/signals.css and bundles the demo
+npx serve .             # open http://localhost:3000/demo/index.html
+npm run dev             # watch mode
 ```
 
-then Figma → Plugins → Development → **Import plugin from manifest** →
-`plugin/manifest.json`.
-
-> The hosted download for **this** plugin is **withdrawn** as of 2026-07-29. The scale
-> changed shape in that round — `highlight-9` and `on-highlight` were removed and the pen
-> stops renumbered — and this plugin does not yet carry the rename table that migrates an
-> existing Figma file across it, so updating an installed copy would orphan its variable
-> bindings. Building from source is unaffected: a fresh file gets the new shape correctly.
->
-> The **extended collections** plugin (Figma Enterprise) does carry the migration and is
-> published as normal — **[install it here](https://egerrity.github.io/okchroma/install.html)**.
-
-**Use** — name the brand, pick a primary, and Apply. Optional before applying:
-
-- **Secondary color** — "+ Add secondary" starts on *From primary* (a pastel derived from
-  your primary); type any hex for a custom secondary in **Tint / Pastel / Outline / Exact**
-  style.
-- **Neutral color** — *Default* (a touch of primary hue), *Medium* (slightly more tint), *Intense*, or *True grey*.
-- **Contrast standard** — **APCA** (default) or **WCAG**. One profile per collection pair:
-  applying the other profile to an existing file forks a clearly-labeled second pair
-  (`theme-wcag`/`mode-wcag`) instead of ever mixing values.
-
-Re-applying the same brand name updates it in place (after a confirm); a new name adds a
-brand to the same collections — two applies with two brand colors is a multi-brand system
-on shared foundations.
+`npm run typecheck` runs the compiler; the audit gates (`npm run req:audit`,
+`npm run audit:guarantee`, and the rest of `package.json`) each sweep agnostic seeds and
+fail on the worst case. What each proves:
+[How it is verified](https://egerrity.github.io/okchroma/#/docs/guarantees/how-it-is-verified).
 
 ## Documentation
 
-Full system documentation — overview, architecture (data flow + design decisions),
-dependencies, setup — is in **[docs/architecture.md](docs/architecture.md)**.
-The scale model and its per-stop targets are in **[docs/scale.md](docs/scale.md)**.
-The requirement-token schema — the DTCG token format, field by field, with real
-emitted examples — is in **[docs/schema.md](docs/schema.md)**.
+The docs site is the source: [egerrity.github.io/okchroma/#/docs](https://egerrity.github.io/okchroma/#/docs).
+
+- [Overview](https://egerrity.github.io/okchroma/#/docs/overview): what goes in, what comes out, the token roster.
+- [Output contract](https://egerrity.github.io/okchroma/#/docs/output): the naming grammar, families and prefixes, modes and selectors, a live CSS block and Figma tree.
+- [Guarantees](https://egerrity.github.io/okchroma/#/docs/guarantees): every claim stated exactly, and how it is verified.
+- [How the theme is generated](https://egerrity.github.io/okchroma/#/docs/generation): the pipeline in execution order, with the constants and the code that runs each step.
+- [Signals and companions](https://egerrity.github.io/okchroma/#/docs/signals), [Requirement tokens](https://egerrity.github.io/okchroma/#/docs/token-schema), [Reference](https://egerrity.github.io/okchroma/#/docs/reference).
+
+In the repo: [docs/architecture.md](docs/architecture.md) (the maintainer's map: modules,
+pipeline stages, data structures, the extended plugin's zones),
+[docs/scale.md](docs/scale.md) (the scale and its declared targets),
+[docs/schema.md](docs/schema.md) (the requirement-token format in the repo),
+[docs/agents.md](docs/agents.md) (how a coding agent consuming the tokens should read
+them), and [CHANGELOG.md](CHANGELOG.md).
+
+## The Figma plugins
+
+- **OKChroma Extended** (`plugin-ext/`) is the shipped Figma front-end. It requires the
+  Figma desktop app and a Figma Enterprise plan: it writes extended variable collections,
+  one base collection with light and dark modes plus one extension per brand that
+  overrides only what differs. Download and install steps:
+  [install page](https://egerrity.github.io/okchroma/install.html). Build from source with
+  `npm run plugin-ext:build`; see [plugin-ext/README.md](plugin-ext/README.md).
+- **OKChroma** (`plugin/`, the community plugin) is withdrawn from download until it
+  carries the rename table that migrates an existing file across the scale change of July
+  2026. It still builds from source with `npm run plugin:build` and imports from
+  `plugin/manifest.json`; a fresh file gets the current shape.
+
+The demo and the plugins are front-ends. The product is the engine and what it emits.
 
 ## License
 
