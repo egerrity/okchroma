@@ -16,7 +16,8 @@ interface SignalShiftRule {
   atOrAbove: Side
 }
 
-const SHIFT_RULES: Partial<Record<SignalDef['name'], SignalShiftRule>> = {
+// exported (2026-09-02) so the docs site renders the splits and variant seeds live
+export const SHIFT_RULES: Partial<Record<SignalDef['name'], SignalShiftRule>> = {
 
   yellow: {
     splitH: YELLOW_SPLIT_H,

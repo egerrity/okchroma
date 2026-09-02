@@ -56,7 +56,8 @@ export type { ResolveOpts }
 // The clearance caps are the POLE caps (owner 2026-07-13 dead-zone ruling: the bar is the
 // goal, not an ambition — the old ±0.16 taste budget capped worst-case dead zones short of
 // legibility and is retired; 4.5 was never capped either way).
-const CTA_CLEARANCE_CAPS: [number, number] = [0.05, 0.92]
+// (exported 2026-09-02 so the docs site renders the caps live; value and use unchanged)
+export const CTA_CLEARANCE_CAPS: [number, number] = [0.05, 0.92]
 
 // THE CROSS-FAMILY HIGHLIGHTER BOUND ON THE NEUTRAL PENS (T13, owner-caught 2026-09-01).
 // The pen guarantee is symmetric: a pen and a ground are in scope when they share a family
