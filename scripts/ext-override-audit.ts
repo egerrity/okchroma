@@ -114,8 +114,8 @@ for (const b of FIXTURES) {
   snap.brands[b.slug] = overridesFor(tokens, base, b.slug)
 }
 
-// The bulk roster (plugin-ext/roster.ts) goes through the same gate — exactly what the
-// roster button sends, so the plugin's batch totals reconcile against this snapshot.
+// The brand set in plugin-ext/roster.ts goes through the same gate. The plugin's bulk-apply
+// button is gone, so this audit is now that set's only consumer — it exists for coverage.
 for (const e of ROSTER) {
   const tokens = buildBrandColumns(rosterSpec(e), e.neutralLevel ?? 'default')
   snap.roster[e.name] = overridesFor(tokens, base, `roster/${e.name}`)

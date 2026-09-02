@@ -890,7 +890,7 @@ figma.ui.onmessage = async (msg) => {
       // column from it (the file-state handshake), so diffs stay against THIS base
       if (rebuildBase && typeof baseSeedHex === 'string') base.setPluginData(BASE_SEED_KEY, baseSeedHex)
       // the DESCOPE POSTURE (owner 2026-08-07): the UI sends its checkbox on every apply —
-      // single, roster, re-apply, rebuild, backfill all carry it — so this branch is the
+      // single, re-apply, rebuild, backfill all carry it — so this branch is the
       // live path; stamp it as this file's new posture and use it. The absent case only
       // guards a hand-crafted message (an older UI build): fall back to
       // whatever is already stamped, defaulting ON (primitives hidden) if nothing ever was.

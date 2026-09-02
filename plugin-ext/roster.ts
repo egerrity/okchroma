@@ -1,9 +1,9 @@
-// The bulk test roster (owner-settled 2026-07-07, second revision): the edge-case brand
-// set applied in one batch from the plugin's roster button. Names ARE the extension
-// names, and they are DESIGNED FOR THE SIDEBAR'S ALPHABETICAL SORT — f < L < m < t < v
-// yields the owner's group order with no visible ordering numbers:
+// The edge-case brand set (owner-settled 2026-07-07, second revision). This was the
+// plugin's bulk-apply roster; that button is gone, so the set now exists only as the
+// audit's brand coverage (scripts/ext-override-audit.ts is its one consumer). Names
+// are free of the old sidebar-ordering constraint, and sort e < L < m < t < v:
 //
-//   fis-eggplant                 the one standalone real theme (planned secondary recorded)
+//   eggplant                     the one standalone real theme (planned secondary recorded)
 //   L1…L6-*                      one pure exemplar per archetype band (L IS the band axis;
 //                                the digit is the band order; all verified shift-free)
 //   monochrome                   achromatic primary + true-grey neutral
@@ -36,8 +36,8 @@ export interface RosterEntry {
   hex: string
   neutralLevel?: NeutralLevel
   style?: 'default' | 'deeper' | 'full-chroma'
-  // A real secondary the bulk action APPLIES (activated 2026-07-07 — fis is the
-  // group-add exerciser: the batch's first apply flips the base's secondary posture on).
+  // A real secondary (activated 2026-07-07). eggplant is the group-add exerciser: it is
+  // the entry that makes a brand-alt group appear where the base has none.
   secondaryHex?: string
   // The secondary's render mode. NOTE THE OVERLOADED ID: `'default'` means the DERIVED posture
   // when no secondary is supplied at all, and the UI's "Custom" chip when one is — the id was
@@ -52,7 +52,7 @@ export interface RosterEntry {
 }
 
 export const ROSTER: RosterEntry[] = [
-  { name: 'fis-eggplant', hex: '#532371', secondaryHex: '#4BCD3E', secondaryStyle: 'default', note: 'real theme + real secondary, from-brand (adds the group)' },
+  { name: 'eggplant', hex: '#532371', secondaryHex: '#4BCD3E', secondaryStyle: 'default', note: 'real theme + real secondary, from-brand (adds the group)' },
   { name: 'L1-near-black', hex: '#07074F', style: 'deeper', secondaryHex: '#C8A35D', secondaryStyle: 'default', note: 'near-black band + deeper (dark-roast accent)' },
   { name: 'L2-dark', hex: '#003359', style: 'deeper', secondaryHex: '#B3863D', secondaryStyle: 'default', note: 'dark band + deeper (espresso accent)' },
   { name: 'L3-rich', hex: '#A50034', secondaryHex: '#6DCDB8', secondaryStyle: 'default', note: 'rich band (cranberry)' },
@@ -70,9 +70,9 @@ export const ROSTER: RosterEntry[] = [
   { name: 'vs-yellow', hex: '#F5B301', note: 'yellow → lemon' },
 ]
 
-// The ThemeSpec the bulk action resolves. Brands without a secondaryHex fall back to
-// the DERIVED default-model secondary inside buildBrandColumns (written only when the file's
-// posture is on — which fis's first apply turns on).
+// The ThemeSpec each entry resolves to. Brands without a secondaryHex fall back to the
+// DERIVED default-model secondary inside buildBrandColumns (written only when the file's
+// posture is on).
 export const rosterSpec = (e: RosterEntry): ThemeSpec => ({
   primaryHex: e.hex,
   name: e.name,

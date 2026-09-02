@@ -1168,7 +1168,7 @@ dark-band exhibits; candidate "B · washes"), pending owner eyeball + snapshot r
 **Symptom.** Owner-caught on the Unify comparison chip rows: okchroma's dark tints read
 low-contrast beside Unify's hand-flipped dark ramps. Measured: the delta model is
 delta-PRESERVING (dark mirrors light's apparent separations exactly — fill-page 3.6/3.6,
-border-fill 9.2/9.4 on FIS) while the dark-surround eye compresses contrast
+border-fill 9.2/9.4 on eggplant) while the dark-surround eye compresses contrast
 (Bartleson–Breneman; the same physics as the blue-recede = contrast finding). Unify's
 hand picks encode ~2× border deltas in dark — too loud (owner), but directionally right.
 
@@ -1264,7 +1264,7 @@ delta away from each other" — refined by two owner corrections on the landing)
 darkens, dark lightens), with THE ARCHETYPE OVERRIDE (correction 1: the original
 hoverL 0.40 switch was a deliberate visibility rule, not an accident) — a fill
 already in its travel direction's TERMINAL band flips: light mode, L below the
-'rich' floor (0.40: FIS, deep seeds, the light escape) lightens; dark mode, L
+'rich' floor (0.40: eggplant, deep seeds, the light escape) lightens; dark mode, L
 at/above the 'light' archetype floor (0.85: chamomile dark, the yellow signal at
 .854, the dark escape) darkens. Both bounds read from ARCHETYPES. Direction
 commits on the pressed budget (the pair can never split at a rail); the rail-fit
@@ -1289,7 +1289,7 @@ the NEAR-BLACK archetype (< .25) the trio's ENDPOINT clamps at the override
 boundary (.40) — pressed caps there, and a hover that would reach the capped
 pressed compresses to the midpoint so the pair stays ordered. Pure black now
 0 → .30 (#2e2e2e) → .40 (#484848); rests above the band never travel that far
-(FIS .365 → .429/.494, the shipped hoverL register verbatim). Dark side uncapped —
+(eggplant .365 → .429/.494, the shipped hoverL register verbatim). Dark side uncapped —
 its overridden fills darken off near-white, where the compression works the
 other way (escape .926 → .75 → .58). Fleet impact: one family (a near-black rest's
 pressed trimmed .403 → .400).
