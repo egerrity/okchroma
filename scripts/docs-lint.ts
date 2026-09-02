@@ -23,6 +23,7 @@ const SURFACES: Surface[] = [
   { path: 'demo/docs/pages/generation.tsx', kind: 'tsx' },
   { path: 'demo/docs/pages/signals.tsx', kind: 'tsx' },
   { path: 'demo/docs/pages/tokens.tsx', kind: 'tsx' },
+  { path: 'demo/docs/pages/reference.tsx', kind: 'tsx' },
   { path: 'demo/docs/pages/motivation.tsx', kind: 'tsx' },
   { path: 'README.md', kind: 'md' },
   { path: 'docs/architecture.md', kind: 'md' },
