@@ -4,38 +4,92 @@
     {
       "name": "demo",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8322", "--directory", "."],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8322",
+        "--directory",
+        "."
+      ],
       "port": 8322
     },
     {
       "name": "demo-b",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8326", "--directory", "."],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8326",
+        "--directory",
+        "."
+      ],
       "port": 8326
     },
     {
       "name": "demo-c",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8327", "--directory", "."],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8327",
+        "--directory",
+        "."
+      ],
       "port": 8327
     },
     {
       "name": "portfolio",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "--prefix", "/Users/emilygerrity/emily-portfolio", "dev"],
+      "runtimeArgs": [
+        "run",
+        "--prefix",
+        "/Users/emilygerrity/emily-portfolio",
+        "dev"
+      ],
       "port": 5173
     },
     {
       "name": "material-poc",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "--prefix", "/Users/emilygerrity/okchroma-material", "dev", "--", "--port", "5176"],
+      "runtimeArgs": [
+        "run",
+        "--prefix",
+        "/Users/emilygerrity/okchroma-material",
+        "dev",
+        "--",
+        "--port",
+        "5176"
+      ],
       "port": 5176
     },
     {
       "name": "base-poc",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "--prefix", "/Users/emilygerrity/okchroma-base", "dev", "--", "--port", "5175"],
+      "runtimeArgs": [
+        "run",
+        "--prefix",
+        "/Users/emilygerrity/okchroma-base",
+        "dev",
+        "--",
+        "--port",
+        "5175"
+      ],
       "port": 5175
+    },
+    {
+      "name": "portfolio-alt",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "--prefix",
+        "/Users/emilygerrity/emily-portfolio",
+        "dev",
+        "--",
+        "--port",
+        "5177",
+        "--strictPort"
+      ],
+      "port": 5177
     }
   ]
 }
