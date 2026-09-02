@@ -175,12 +175,11 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   const declaredAnchor = (req: Require): number =>
     req.metric === 'min-separation' ? 1 : AGAINST_STOP[req.against] ?? 2
   // THE PEN ANCHOR (owner rule 2026-07-28: "ink-10 can only be used on papers" — and it
-  // must PASS on all of them): in the WCAG lane the pen requires (the pen stops
-  // 9–11) anchor at paper-5 (paper-3), the NEAREST paper (light's darkest, dark's
-  // lightest), so clearing the bar there clears every paper. The apca lane keeps its
-  // paper-3 (paper-2) anchor — its Lc solve already clears paper-5 with margin everywhere
-  // (agnostic sweep worst 5.28 wcag-ratio, 0/216 under 4.5) and stays byte-identical.
-  // Lane-specific, so it stays an override on top of the declaration rather than in it.
+  // must PASS on all of them): a text stop (9–11) declared against ANY paper solves against
+  // paper-5, the NEAREST paper (light's darkest, dark's lightest), so clearing the bar there
+  // clears every paper. Since 2026-09-02 the declaration itself names paper-5 (spec.ts T9/T11),
+  // so this is a guard for portable bundles that spell another paper; the shipped lane is
+  // byte-identical either way.
   // Threshold moved 10 → 9 with the 2026-07-29 renumber: the pen band starts at 9 now.
   // This IS why the collapse is visually cheap — it is the rule that made pencil-47 (then
   // ink-10) land on top of highlight-9, both solving 4.5 against paper-5 (paper-3).

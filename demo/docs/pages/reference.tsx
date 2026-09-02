@@ -44,7 +44,7 @@ export function Body() {
           ['produce, require, refine', 'the three phases a stop resolves through: the producers place it (hue, chroma, lightness), a declared floor binds, chroma yields to the gamut at emit'],
           ['producer', 'a named placement rule (warm-drift, perceptual, ladder). A reference to a versioned resolver capability, never a formula in the token file'],
           ['requirement (floor)', 'a declared contrast the stop must clear against a resolved ground. A floor: a placement that already clears does not move'],
-          ['anchor, ground', 'the resolved stop a requirement is judged against. The declaration names the anchor; the resolver may re-anchor a text stop at the nearest paper'],
+          ['anchor, ground', 'the resolved stop a requirement is solved against: paper-5 for the crayon, the pencil and pen-70; highlighter-20 for pen-58'],
           ['bound', 'a frozen worst-case ground (the darkest neutral paper any theme ships, and so on) the resolver holds a stop against, because the paired family is not in view during a solve'],
           ['seam', 'the lightness gap between adjacent stops. Held open by the ladder shape, not by a floor'],
           ['pole', 'pure white or pure black. The on-text candidates; also the two ladder extremes'],

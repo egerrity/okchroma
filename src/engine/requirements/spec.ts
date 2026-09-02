@@ -176,17 +176,17 @@ const P_TEXT: Producer = { hue: 'warm-torsion', L: 'perceptual', chroma: 'brand'
 // law — worst 3.04 over 360 agnostic seeds + 6 neutrals, clearing 3:1 on every paper in
 // both modes from one rule.
 const S8: Require = { metric: 'wcag', against: 'paper-5', target: STOP_8_NONTEXT_CONTRAST, level: 'AA' }
-// PEN ANCHOR NOTE (owner 2026-07-28): in the WCAG lane the resolver anchors pen
-// requires (the pen stops 9–11) at paper-5 (paper-3) — the nearest paper —
-// so "pencil-47 is usable on every paper" is a law, not a hope (resolve.ts
-// wcagAnchorStop). That override is LANE-SPECIFIC, so it stays in the resolver; the
-// apca lane keeps paper-3 (paper-2) (clears paper-5 with margin, byte-identical) and
-// reads it from the declaration below.
+// THE TEXT-STOP GROUND IS PAPER-5 (owner 2026-09-02): pencil-47 and pen-70 declare the
+// nearest paper directly, so "usable on every paper" is the declaration, not a resolver
+// override. (They spelled paper-3 until this date while resolve.ts's wcagAnchorStop mapped
+// any paper anchor on a text stop onto paper-5 before the solve — paper-5 is what has
+// always shipped; the mapping stays in the resolver as a guard for portable bundles that
+// name another paper.)
 // T9 IS ALSO THE EMPHASIS-FILL BAR (owner 2026-07-29): the deleted highlight-9 declared
-// exactly this — 4.5 against paper-3 (paper-5) — which is why the two stops collided
-// and why one of them can carry both jobs. Nothing about the number changed; only the
-// count of stops asking for it.
-const T9: Require = { metric: 'wcag', against: 'paper-3', target: PENCIL_9_CONTRAST, level: 'AA' }
+// exactly this — 4.5 against paper-5 — which is why the two stops collided and why one of
+// them can carry both jobs. Nothing about the number changed; only the count of stops
+// asking for it.
+const T9: Require = { metric: 'wcag', against: 'paper-5', target: PENCIL_9_CONTRAST, level: 'AA' }
 // T10 — THE HIGHLIGHTER-20 LAW (guarantee-groups round, owner 2026-08-27): the between text
 // stop anchors at highlighter-20, its own ramp's darkest highlighter, so the pen group's claim
 // (4.5 on every paper and highlighter of its own family or of the neutral, both directions)
@@ -196,7 +196,7 @@ const T9: Require = { metric: 'wcag', against: 'paper-3', target: PENCIL_9_CONTR
 // (resolve.ts apcaGroundOf) so the community/apca lane stays byte-identical — the
 // mirror of the wcag lane's own paper-5 pen override.
 const T10: Require = { metric: 'wcag', against: 'highlighter-20', target: PEN_10_CONTRAST, level: 'AA' }
-const T11: Require = { metric: 'wcag', against: 'paper-3', target: PEN_11_CONTRAST_FLOOR, level: 'AAA' }
+const T11: Require = { metric: 'wcag', against: 'paper-5', target: PEN_11_CONTRAST_FLOOR, level: 'AAA' }
 
 // ONE on-color left (owner 2026-07-29). `onHighlight` is deleted with the band it named:
 // C31 had already reduced it to a constant (white in light, black in dark, every family)

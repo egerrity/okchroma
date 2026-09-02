@@ -175,15 +175,15 @@ run the carry.
 
 | variant | fields | meaning |
 |---|---|---|
-| WCAG contrast | `{ metric: "wcag", against, target, level }` | the stop must hold `target`:1 against the resolved stop named by `against` (`paper-1` \| `paper-3` \| `paper-5` \| `highlighter-20`). Light clamps lightness down; dark raises it off the ground. Declared today: `crayon-26` at 3 against `paper-5`, `pencil-47` at 4.5 against `paper-3`, `pen-58` at 4.5 against `highlighter-20`, `pen-70` at 7 against `paper-3` |
+| WCAG contrast | `{ metric: "wcag", against, target, level }` | the stop must hold `target`:1 against the resolved stop named by `against` (`paper-1` \| `paper-3` \| `paper-5` \| `highlighter-20`). Light clamps lightness down; dark raises it off the ground. Declared today: `crayon-26` at 3 against `paper-5`, `pencil-47` at 4.5 against `paper-5`, `pen-58` at 4.5 against `highlighter-20`, `pen-70` at 7 against `paper-5` |
 | minimum separation | `{ metric: "min-separation", against: "paper-1" \| "prev", target }` | an OKLab ΔE floor from a resolved stop. Supported for portable specs; the shipped declaration carries none, since the ladder shape holds every seam open by construction |
 
-**The anchor caveat.** The resolver reads `against`, with one override: a text stop (9 and
-up) declared against a paper is solved against `paper-5`, the nearest paper, and every stop
-from the crayon up is additionally held against frozen cross-family bounds (the site's
+**The anchor caveat.** A text stop (9 and up) always solves against `paper-5` when its
+`against` names a paper: a bundle edited to name another paper there is mapped back onto
+`paper-5` before the solve. Every stop from the crayon up is additionally held against frozen
+cross-family bounds (the site's
 [Guarantees](https://egerrity.github.io/okchroma/#/docs/guarantees/what-every-paper-means)
-page). So editing `against` in a bundle changes the result for `crayon-26` but not for the
-pen stops; editing `target` is honored everywhere.
+page). Editing `target` is honored everywhere.
 
 ### The on-color rule (group level)
 

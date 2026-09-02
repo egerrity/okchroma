@@ -84,19 +84,20 @@ export function Body() {
 
       <H2>Declared target versus promise</H2>
       <P>
-        The declaration (<Code>spec.ts</Code>) names a target and an anchor per stop. Two things sit between the
-        declaration and the promise: the resolver re-anchors a text stop declared against a paper onto{' '}
-        {stopTokenName(3)}, the nearest paper, so clearing it clears every paper; and a declared target can be
-        stricter than the claim, in which case the surplus is placement, not a promise.
+        Each contrast stop is solved against one ground: the crayon and the pencil against {stopTokenName(3)}, the
+        nearest paper, so clearing it clears every paper; {stopTokenName(10)} against {stopTokenName(7)}, the darkest
+        highlighter; {stopTokenName(11)} against {stopTokenName(3)}, and it clears the highlighters by sitting past{' '}
+        {stopTokenName(10)}. A declared target can be stricter than the claim, in which case the surplus is
+        placement, not a promise.
       </P>
       <Table
-        head={['stop', 'declared target', 'declared anchor', 'resolved against', 'the promise']}
+        head={['stop', 'declared target', 'solved against', 'the promise']}
         rows={[
-          [stopTokenName(8), <><K v={R8.target} d={1} />:1 ({R8.level})</>, R8.against, `${R8.against}, plus the neutral bound`, <><K v={STOP_8_NONTEXT_CONTRAST} d={1} />:1 on every paper</>],
-          [stopTokenName(9), <><K v={R9.target} d={1} />:1 ({R9.level})</>, R9.against, `${stopTokenName(3)} (re-anchored), plus the neutral bound`, <><K v={PENCIL_9_CONTRAST} d={1} />:1 on every paper</>],
-          [stopTokenName(10), <><K v={R10.target} d={1} />:1 ({R10.level})</>, R10.against, `${R10.against} (honored: a highlighter is darker than every paper), plus the neutral highlighter bound`, <><K v={PEN_10_CONTRAST} d={1} />:1 on every paper and highlighter</>],
-          [stopTokenName(11), <><K v={R11.target} d={1} />:1 ({R11.level})</>, R11.against, `${stopTokenName(3)} (re-anchored), plus the neutral bound`, <><K v={PEN_10_CONTRAST} d={1} />:1 on every paper and highlighter; it clears highlighters by sitting past {stopTokenName(10)}</>],
-          [PEN_100, 'none (the literal pole)', '', '', <><K v={PEN_10_CONTRAST} d={1} />:1 on every paper and highlighter (neutral only)</>],
+          [stopTokenName(8), <><K v={R8.target} d={1} />:1 ({R8.level})</>, `${stopTokenName(3)}, plus the neutral paper bound`, <><K v={STOP_8_NONTEXT_CONTRAST} d={1} />:1 on every paper</>],
+          [stopTokenName(9), <><K v={R9.target} d={1} />:1 ({R9.level})</>, `${stopTokenName(3)}, plus the neutral paper bound`, <><K v={PENCIL_9_CONTRAST} d={1} />:1 on every paper</>],
+          [stopTokenName(10), <><K v={R10.target} d={1} />:1 ({R10.level})</>, `${R10.against}, plus the neutral highlighter bound`, <><K v={PEN_10_CONTRAST} d={1} />:1 on every paper and highlighter</>],
+          [stopTokenName(11), <><K v={R11.target} d={1} />:1 ({R11.level})</>, `${stopTokenName(3)}, plus the neutral paper bound`, <><K v={PEN_10_CONTRAST} d={1} />:1 on every paper and highlighter; it clears highlighters by sitting past {stopTokenName(10)}</>],
+          [PEN_100, 'none (the literal pole)', '', <><K v={PEN_10_CONTRAST} d={1} />:1 on every paper and highlighter (neutral only)</>],
         ]}
       />
       <P>

@@ -215,7 +215,7 @@ export function Body() {
           reqText(MODE_SPECS.dark.stops.find(s => s.stop === i)?.require)])}
       />
       <UL>
-        <LI><b>Anchors.</b> The declared anchor is read by the resolver, with one override: a text stop declared against a paper is re-anchored at {stopTokenName(3)}, the nearest paper, so clearing it clears every paper. {stopTokenName(10)}'s highlighter anchor is honored as written. The inverse link family replaces every pen ground with the worst shipped {stopTokenName(11)}.</LI>
+        <LI><b>Grounds.</b> The crayon and the pencil solve against {stopTokenName(3)}, the nearest paper, so clearing it clears every paper; {stopTokenName(10)} against {stopTokenName(7)}, the darkest highlighter; {stopTokenName(11)} against {stopTokenName(3)}. The inverse link family replaces every pen ground with the worst shipped {stopTokenName(11)}.</LI>
         <LI><b>Light.</b> The floor clamps lightness down: L = min(L, the highest L that clears the ratio against the ground's luminance), iterated to a fixed point (up to six passes, since chroma and hue move with L). The scale solve carries a +0.05 ratio margin so the gamut-trimmed emit still clears; the pen solve does not.</LI>
         <LI><b>Dark.</b> The floor raises lightness: if the placement misses the target, bisection walks L up until it clears (+0.05). The crayon solves from the ground up every time; the pens usually clear from the scaffold.</LI>
         <LI><b>Legality on both renditions.</b> The ratio a floor judges is the minimum over the P3 rendition and the sRGB clamp-down (<Code>legalRatio</Code>), so a pass holds on any display.</LI>

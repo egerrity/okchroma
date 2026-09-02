@@ -8,6 +8,13 @@ structure, ships as at least a minor.
 
 Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git log.
 
+## Unreleased
+
+- The declaration names `paper-5` as the ground of `pencil-47` and `pen-70` (it spelled
+  `paper-3`, which the resolver mapped onto `paper-5` before solving). Shipped values are
+  byte-identical; the DTCG `against` field on those two tokens now reads `paper-5`. The
+  dark-parity and band audits' snapshots, which pin the unshipped APCA solve, are re-blessed.
+
 ## 0.3.0 — 2026-09-02
 
 - The DTCG requirement tokens name the off-scale roles by their shipped spelling:

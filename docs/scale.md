@@ -89,9 +89,9 @@ from; the emitted lightness differs per hue.
 | `highlighter-15` | 6 | 0.852 | 0.348 | – | the same |
 | `highlighter-20` | 7 | 0.801 | 0.420 | – | the same; the ground `pen-58` is cleared against |
 | `crayon-26` | 8 | 0.738 | 0.550 | 3:1 against `paper-5` | focus rings, icons, large text |
-| `pencil-47` | 9 | 0.530 | 0.767 | 4.5:1 against `paper-3` (solved against `paper-5`) | regular text, inverted backgrounds; the emphasis fill |
+| `pencil-47` | 9 | 0.530 | 0.767 | 4.5:1 against `paper-5` | regular text, inverted backgrounds; the emphasis fill |
 | `pen-58` | 10 | 0.415 | 0.843 | 4.5:1 against `highlighter-20` | regular text, inverted backgrounds |
-| `pen-70` | 11 | 0.300 | 0.919 | 7:1 against `paper-3` (solved against `paper-5`; the promise is 4.5) | heavy-emphasis text, inverted backgrounds |
+| `pen-70` | 11 | 0.300 | 0.919 | 7:1 against `paper-5` (the promise is 4.5) | heavy-emphasis text, inverted backgrounds |
 | `pen-100` | 12 | 0.000 | 1.000 | – | the literal pole: black in light, white in dark (neutral only) |
 
 Paper and highlighter carry no declared requirement: their seam distinctness is a property
@@ -102,11 +102,10 @@ supports a declared minimum-separation requirement for portable specs, but the s
 declaration carries none.
 
 `crayon-26`, `pencil-47`, and the two pens carry a declared WCAG requirement, enforced
-against the resolved reference stop on every resolve. The declaration names the anchor; the
-resolver re-anchors a text stop declared against a paper onto `paper-5`, the nearest paper (`crayon-26` declares `paper-5` itself), and every stop from the
-crayon up is additionally held against the worst paper the family's generated neutral can
-produce (the frozen bounds in
-[`requirements/resolve.ts`](../src/engine/requirements/resolve.ts)).
+against the resolved ground on every resolve: `paper-5`, the nearest paper, for the crayon,
+the pencil and `pen-70`; `highlighter-20` for `pen-58`. Every stop from the crayon up is
+additionally held against the worst paper the family's generated neutral can produce (the
+frozen bounds in [`requirements/resolve.ts`](../src/engine/requirements/resolve.ts)).
 
 - A requirement is a floor, not a re-placement: a hue whose produced placement already
   clears it does not move. In light the floors clamp L down (the lightest L that still

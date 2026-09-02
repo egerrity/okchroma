@@ -204,10 +204,10 @@ require, refine. The field-by-field format is on the site
 ([Requirement tokens](https://egerrity.github.io/okchroma/#/docs/token-schema)) and
 summarized in [schema.md](schema.md). Three resolver facts a maintainer needs:
 
-- **The declared anchor is read, with one override.** `require.against` names the ground.
-  A text stop (index 9 and up) declared against a paper is re-anchored at `paper-5`, the
-  nearest paper (`wcagAnchorStop`); a declared highlighter anchor is honored; the inverse
-  link family replaces every pen ground with `PEN_70_GROUND` (`textGround`).
+- **The grounds.** The crayon, the pencil and `pen-70` solve against `paper-5`, the nearest
+  paper; `pen-58` against `highlighter-20`. `wcagAnchorStop` maps any paper anchor on a text
+  stop onto `paper-5` before the solve, a guard for portable bundles that spell another paper.
+  The inverse link family replaces every pen ground with `PEN_70_GROUND` (`textGround`).
 - **The cross-family bounds.** A ramp resolves per family, so the neutral it pairs with is
   not in view. The resolver holds every stop from the crayon up against the worst neutral
   paper-5 any theme ships (`NEUTRAL_P3_WORST_SHIP_Y`), the highlighter-anchored pen against
@@ -271,8 +271,8 @@ mechanism; the constants are rendered live on the site's
   green and blue. Brand chroma is trimmed (`darkCtaTrim`); signals keep identity chroma.
 - **The crayon's 3:1, both modes.** `crayon-26` declares the non-text bar against `paper-5`
   in both modes; light clamps down, dark solves up from the ground.
-- **The text floors, both modes.** `pencil-47` at 4.5 and `pen-70` at 7 (declared against
-  `paper-3`, solved against `paper-5`), `pen-58` at 4.5 against
+- **The text floors, both modes.** `pencil-47` at 4.5 and `pen-70` at 7 against `paper-5`,
+  `pen-58` at 4.5 against
   `highlighter-20`. The promise on every text stop is AA; the surplus is placement.
 - **Seams by shape.** The paper and highlighter targets grow apart geometrically, about
   1.25× per step, so every seam stays open without a separation floor.

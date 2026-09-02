@@ -308,7 +308,7 @@
             "chromaFloor": 0.04857142857142857,
             "require": {
               "metric": "wcag",
-              "against": "paper-3",
+              "against": "paper-5",
               "target": 4.5,
               "level": "AA"
             }
@@ -382,7 +382,7 @@
             "chromaFloor": 0.051428571428571435,
             "require": {
               "metric": "wcag",
-              "against": "paper-3",
+              "against": "paper-5",
               "target": 7,
               "level": "AAA"
             }
@@ -798,7 +798,7 @@
             "chromaFloor": 0.04857142857142857,
             "require": {
               "metric": "wcag",
-              "against": "paper-3",
+              "against": "paper-5",
               "target": 4.5,
               "level": "AA"
             }
@@ -872,7 +872,7 @@
             "chromaFloor": 0.051428571428571435,
             "require": {
               "metric": "wcag",
-              "against": "paper-3",
+              "against": "paper-5",
               "target": 7,
               "level": "AAA"
             }
