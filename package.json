@@ -53,7 +53,8 @@
     "audit:desc": "esbuild scripts/desc-audit.ts --bundle --platform=node --outfile=dist/desc-audit.js && node dist/desc-audit.js",
     "name-lint": "esbuild scripts/name-lint.ts --bundle --platform=node --outfile=dist/name-lint.js && node dist/name-lint.js",
     "typecheck": "tsc --noEmit",
-    "typecheck:ext": "tsc --noEmit -p plugin-ext"
+    "typecheck:ext": "tsc --noEmit -p plugin-ext",
+    "docs:lint": "esbuild scripts/docs-lint.ts --bundle --platform=node --outfile=dist/docs-lint.js && node dist/docs-lint.js"
   },
   "devDependencies": {
     "@types/node": "^25.9.2",

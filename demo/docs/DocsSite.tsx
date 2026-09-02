@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { generateScale, generateNeutralScale } from '../../src/engine/colorEngine'
 import { stopHex, ctaNeedsBorder, pageStopFor, ctaBorderRung, OFFSET_ALPHAS } from '../../src/engine/cssRender'
 import { defaultSecondarySeed, SOFT_ON_CTA_ALPHA, resolveLinkInverseTrio } from '../../src/engine/resolve'
@@ -26,8 +26,30 @@ import { UNIFY_SIGNALS, UNIFY_THEMES, UNIFY_GRAY } from '../unify-compare/unifyD
 // the generation flow is ONE numbered article in execution order (owner's edit).
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── URL routing ──────────────────────────────────────────────────────────────
+// #/docs/<slug>[/<section>]. The sidebar writes the slug, an H2's anchor link writes
+// the section, and a pasted link reads both back, so any page or section can be shared.
+const DOCS_HASH = '#/docs'
+function parseDocsHash(hash: string): { slug: string; section?: string } {
+  const parts = hash.startsWith(DOCS_HASH) ? hash.slice(DOCS_HASH.length).split('/').filter(Boolean) : []
+  return { slug: parts[0] ?? '', section: parts[1] }
+}
+const docsHref = (slug: string, section?: string) => `${DOCS_HASH}/${slug}${section ? `/${section}` : ''}`
+// a section id from its heading text: lowercase, words joined by hyphens
+const sectionId = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+
 // ── Prose primitives ─────────────────────────────────────────────────────────
-const H2 = ({ children }: { children: React.ReactNode }) => <h2 className="d2-h2">{children}</h2>
+// H2 carries an id (derived from its text, or given) and an anchor link to itself,
+// so every section of every page has a URL.
+const H2 = ({ id, children }: { id?: string; children: React.ReactNode }) => {
+  const sid = id ?? (typeof children === 'string' ? sectionId(children) : undefined)
+  return (
+    <h2 className="d2-h2" id={sid}>
+      {children}
+      {sid && <a className="d2-anchor" href={docsHref(parseDocsHash(window.location.hash).slug, sid)} aria-label={`Link to section: ${typeof children === 'string' ? children : sid}`}>#</a>}
+    </h2>
+  )
+}
 const H3 = ({ children }: { children: React.ReactNode }) => <h3 className="d2-h3">{children}</h3>
 const P = ({ children }: { children: React.ReactNode }) => <p className="d2-p">{children}</p>
 const OL = ({ children }: { children: React.ReactNode }) => <ol className="d2-ol">{children}</ol>
@@ -910,8 +932,21 @@ const ARTICLES: Article[] = [overview, install, generation, tokenSchema]
 
 // ── Layout ───────────────────────────────────────────────────────────────────
 export default function DocsSite({ dark: _dark }: { dark: boolean }) {
-  const [slug, setSlug] = useState(ARTICLES[0].slug)
+  // the hash is the one source of truth for which page and section are showing
+  const [hash, setHash] = useState(() => window.location.hash)
+  useEffect(() => {
+    const onHash = () => setHash(window.location.hash)
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
+  const { slug, section } = useMemo(() => parseDocsHash(hash), [hash])
   const active = ARTICLES.find(a => a.slug === slug) ?? ARTICLES[0]
+  // after the page renders: jump to the named section, else to the top
+  useEffect(() => {
+    const el = section ? document.getElementById(section) : null
+    if (el) el.scrollIntoView()
+    else window.scrollTo(0, 0)
+  }, [active.slug, section])
   return (
     <div className="d2">
       <style>{DOCS2_CSS}</style>
@@ -919,9 +954,9 @@ export default function DocsSite({ dark: _dark }: { dark: boolean }) {
         <nav>
           <div className="d2-side-group">
             {ARTICLES.map(a => (
-              <button key={a.slug} className={`d2-side-link${a.slug === slug ? ' active' : ''}`} onClick={() => setSlug(a.slug)}>
+              <a key={a.slug} className={`d2-side-link${a.slug === active.slug ? ' active' : ''}`} href={docsHref(a.slug)}>
                 {a.title}
-              </button>
+              </a>
             ))}
           </div>
         </nav>
@@ -946,7 +981,10 @@ const DOCS2_CSS = `
 .d2-side-link {
   display: block; width: 100%; text-align: left; border: none; background: none; cursor: pointer;
   font-family: inherit; font-size: 13.5px; color: var(--fg-subtle); padding: 6px 10px; border-radius: 7px;
+  text-decoration: none; box-sizing: border-box;
 }
+.d2-anchor { margin-left: 8px; font-weight: 400; color: var(--fg-subtle); text-decoration: none; opacity: 0; }
+.d2-h2:hover .d2-anchor, .d2-anchor:focus { opacity: 1; }
 .d2-side-link:hover { background: var(--surface-mid); color: var(--fg-default); }
 .d2-side-link.active { background: var(--brand-bg-subtle); color: var(--fg-default); font-weight: 600; }
 .d2-main { padding: 40px 0; min-width: 0; }

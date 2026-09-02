@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { neutralCss } from '../src/engine/cssRender'
 import { STYLE_CSS, STYLE_OPTIONS, type DemoStyle } from './styles'
 import { COMPONENT_CSS, FONT_STACK } from './shared'
@@ -21,8 +21,25 @@ const VIEWS: Array<[View, string]> = [
 //   BOTTOM bar = "look at the demo" controls (Palette | Preview + light/dark).
 // The Palette/Preview switch used to live inside CustomTheme's own navbar; it's
 // lifted here so it can share the bottom bar with the dark toggle.
+// The URL hash carries the view, so a docs page is a shareable link:
+//   #/docs              the docs site (its first page)
+//   #/docs/<slug>       one docs page; DocsSite reads and writes the slug
+//   anything else       Home
+// (#/unify-compare is routed before App mounts, in demo/index.tsx.)
+const viewFromHash = (): View => (window.location.hash.startsWith('#/docs') ? 'docs' : 'custom')
+
 export default function App() {
-  const [view, setView] = useState<View>('custom')
+  const [view, setViewState] = useState<View>(viewFromHash)
+  useEffect(() => {
+    const onHash = () => setViewState(viewFromHash())
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
+  const setView = (v: View) => {
+    if (v === 'docs') window.location.hash = '#/docs'
+    else history.pushState(null, '', window.location.pathname + window.location.search)
+    setViewState(v)
+  }
   const [dark, setDark] = useState(false)
   const [paletteView, setPaletteView] = useState<'palette' | 'preview'>('palette')
   // the STYLE LEVER (initiative goal): one token set, restyled by dressing only.
