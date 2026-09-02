@@ -14,11 +14,20 @@ import * as fs from 'fs'
 type Surface = { path: string; kind: 'md' | 'tsx' }
 const SURFACES: Surface[] = [
   { path: 'demo/docs/DocsSite.tsx', kind: 'tsx' },
+  { path: 'demo/docs/prose.tsx', kind: 'tsx' },
+  { path: 'demo/docs/figures.tsx', kind: 'tsx' },
+  { path: 'demo/docs/pages/overview.tsx', kind: 'tsx' },
+  { path: 'demo/docs/pages/install.tsx', kind: 'tsx' },
+  { path: 'demo/docs/pages/output.tsx', kind: 'tsx' },
+  { path: 'demo/docs/pages/generation.tsx', kind: 'tsx' },
+  { path: 'demo/docs/pages/tokens.tsx', kind: 'tsx' },
+  { path: 'demo/docs/pages/motivation.tsx', kind: 'tsx' },
   { path: 'README.md', kind: 'md' },
   { path: 'docs/architecture.md', kind: 'md' },
   { path: 'docs/scale.md', kind: 'md' },
   { path: 'docs/schema.md', kind: 'md' },
   { path: 'docs/agents.md', kind: 'md' },
+  { path: 'plugin-ext/README.md', kind: 'md' },
 ]
 
 type Rule = { name: string; re: RegExp; why: string }
