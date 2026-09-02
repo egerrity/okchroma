@@ -30,9 +30,9 @@ brand.light
 ├─ seed            plain color token, the brand input
 ├─ $extensions     group-level: resolver id + the on-color rules (ons)
 ├─ "0" … "11"      scale stop tokens, keyed by stop NUMBER
-├─ "cta"           off-scale role tokens, keyed by role NAME
-├─ "cta-hover"     (roles are never numbered, cta is not a stop)
-└─ "cta-pressed"
+├─ "stamp-fill"          off-scale role tokens, keyed by role NAME
+├─ "stamp-fill-hover"    (roles are never numbered; the fill is not a stop)
+└─ "stamp-fill-pressed"
 ```
 
 ## Example: a scale stop (light crayon-26, seed #3060C0)
@@ -62,7 +62,7 @@ Most stops carry no `require` at all: the paper/highlighter seams are guaranteed
 shape, not by declared floors. The declared requires today: crayon-26 (above),
 pencil-47, and the two pens.
 
-## Example: an off-scale role (dark cta)
+## Example: an off-scale role (dark stamp-fill)
 
 ```json
 {
@@ -73,7 +73,7 @@ pencil-47, and the two pens.
       "resolver": "okchroma-reqtoken@2",
       "seed": "{brand.dark.seed}",
       "mode": "dark",
-      "role": "cta",
+      "role": "stamp-fill",
       "produce": { "hue": "constant", "L": "anchor", "chroma": "brand" },
       "floorL": 0.63,
       "chromaMult": 1

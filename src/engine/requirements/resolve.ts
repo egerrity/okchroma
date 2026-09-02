@@ -1,7 +1,7 @@
 // resolve.ts — the requirement-token RESOLVER. Executes the pure declaration (spec.ts) by dispatching each
 // stop/role to a NAMED producer implementation (producers.ts — verbatim engine math). Per scale stop:
 // PRODUCER (hue → chroma → L) → REQUIRE (contrast clamp, iterated) → REFINE (chroma yields to gamut at emit).
-// Off-scale ROLES (cta / cta-hover) and the on-color booleans follow the engine's exact evaluation order:
+// Off-scale ROLES (stamp-fill / stamp-fill-hover / stamp-fill-pressed) and the on-color booleans follow the engine's exact evaluation order:
 // dark cta anchor BEFORE the dark stops (the torsion anchors at it), on-fill judged PRE-enforcement, the
 // enforce re-solve last. Total: an unmet require yields an explicit `unresolvable`, never a silent fudge.
 //
@@ -10,8 +10,9 @@
 import { apparentL, perceptualRungL, perceptualDarkC } from '../perceptualL'
 import { clampChromaToGamut, wcagY, legalRatio, findMaxLForContrast, apcaLc, contrastRatio, shippedY } from '../constraints'
 import { hexToOklch, srgbEmitChannels, redSolveDist, RED_GATE, RED_SOLVE } from '../colorMath'
-import { hoverL, pressedL, stateFillL } from '../archetypes'
+import { stateFillL } from '../archetypes'
 import { ROOT_L_LIGHT, DARK_SIGNAL_WARM_DRIFT, chromaFloorBase, STOP_8_NONTEXT_CONTRAST, PENCIL_9_CONTRAST, PEN_10_CONTRAST } from '../stopTable'
+import { STAMP_FILL, STAMP_FILL_HOVER, STAMP_FILL_PRESSED } from '../tokenNames'
 import { MODE_SPECS, textLane, type ModeSpec, type StopReq, type RoleReq, type Require } from './spec'
 import {
   buildContext, buildDarkContext, type Ctx, type DarkCtx, type ResolveOpts,
@@ -115,10 +116,10 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         ? { ...s, require: { ...s.require, target: 6.5 } } : s)),
     }
   }
-  const ctaReq = spec.roles.find(r => r.role === 'cta')
-  const hoverReq = spec.roles.find(r => r.role === 'cta-hover')
-  const pressedReq = spec.roles.find(r => r.role === 'cta-pressed')
-  if (!ctaReq) throw new Error('spec has no cta role')
+  const ctaReq = spec.roles.find(r => r.role === STAMP_FILL)
+  const hoverReq = spec.roles.find(r => r.role === STAMP_FILL_HOVER)
+  const pressedReq = spec.roles.find(r => r.role === STAMP_FILL_PRESSED)
+  if (!ctaReq) throw new Error(`spec has no ${STAMP_FILL} role`)
   // enforce: caller opts override the spec's declared default (the declaration is the source of truth; the
   // cutover adapter always passes the flag explicitly, preserving generateScale's opts semantics).
   const onFillEnforce = ctx.opts?.enforceOnFillContrast ?? spec.ons.onFill.enforce
@@ -554,13 +555,13 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         repelled = true
       }
     }
-    cta = emitRole('cta', light9L, ctaCFor(light9L) * ctaCMul, ctaH)
+    cta = emitRole(STAMP_FILL,light9L, ctaCFor(light9L) * ctaCMul, ctaH)
     const hCFor = (L: number) => ctx.cAt('light', L, (hoverReq?.chromaMult ?? 1) * ctx.brandC) * ctaCMul
     const pCFor = (L: number) => ctx.cAt('light', L, (pressedReq?.chromaMult ?? 1) * ctx.brandC) * ctaCMul
     const hL = stateFillL(light9L, 'light', 1)
     const pL = stateFillL(light9L, 'light', 2)
-    ctaHover = emitRole('cta-hover', hL, hCFor(hL), ctaH)
-    ctaPressed = emitRole('cta-pressed', pL, pCFor(pL), ctaH)
+    ctaHover = emitRole(STAMP_FILL_HOVER,hL, hCFor(hL), ctaH)
+    ctaPressed = emitRole(STAMP_FILL_PRESSED,pL, pCFor(pL), ctaH)
     if (light9L !== ctx.scaleL) { cta.enforced = true; ctaHover.enforced = true; ctaPressed.enforced = true }
     if (repelled) {
       cta.repelled = true; ctaHover.repelled = true; ctaPressed.repelled = true
@@ -593,21 +594,21 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     const dCFor = (L: number) => ctx.cAt('dark', L, d.darkC9)
     const dTrio = (baseL: number): [number, number] =>
       [stateFillL(baseL, 'dark', 1), stateFillL(baseL, 'dark', 2)]
-    cta = emitRole('cta', cta9L, dCFor(cta9L), ctx.darkCtaH)
+    cta = emitRole(STAMP_FILL,cta9L, dCFor(cta9L), ctx.darkCtaH)
     {
       const [hL, pL] = dTrio(cta9L)
-      ctaHover = emitRole('cta-hover', hL, dCFor(hL), ctx.darkCtaH)
-      ctaPressed = emitRole('cta-pressed', pL, dCFor(pL), ctx.darkCtaH)
+      ctaHover = emitRole(STAMP_FILL_HOVER,hL, dCFor(hL), ctx.darkCtaH)
+      ctaPressed = emitRole(STAMP_FILL_PRESSED,pL, dCFor(pL), ctx.darkCtaH)
     }
     onFillIsWhite = onFillIsWhiteDarkAt(cta.L, cta.C, cta.H, enforceLc !== undefined ? false : onFillEnforce)
     const enforcedL = enforceLc !== undefined
       ? ctaDarkEnforcedLApca(ctx, cta, onFillIsWhite, onFillEnforce, enforceLc)
       : ctaDarkEnforcedL(ctx, cta, onFillIsWhite, onFillEnforce)
     if (enforcedL !== null) {
-      cta = emitRole('cta', enforcedL, dCFor(enforcedL), ctx.darkCtaH)
+      cta = emitRole(STAMP_FILL,enforcedL, dCFor(enforcedL), ctx.darkCtaH)
       const [hL, pL] = dTrio(enforcedL)
-      ctaHover = emitRole('cta-hover', hL, dCFor(hL), ctx.darkCtaH)
-      ctaPressed = emitRole('cta-pressed', pL, dCFor(pL), ctx.darkCtaH)
+      ctaHover = emitRole(STAMP_FILL_HOVER,hL, dCFor(hL), ctx.darkCtaH)
+      ctaPressed = emitRole(STAMP_FILL_PRESSED,pL, dCFor(pL), ctx.darkCtaH)
       cta.enforced = true; ctaHover.enforced = true; ctaPressed.enforced = true
     }
     // C42 — the DARK clearance (owner 2026-08-02): dark ctas carry the same Lc law as light
@@ -618,10 +619,10 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       const [capLoL, capHiL] = CTA_CLEARANCE_CAPS
       const clearedL = ctaDarkDualGateL(cta, ctx.darkCtaH, onFillIsWhite, onFillEnforce, coLc + APCA_ENFORCE_MARGIN_LC, capLoL, capHiL)
       if (Math.abs(clearedL - cta.L) > 1e-9) {
-        cta = emitRole('cta', clearedL, dCFor(clearedL), ctx.darkCtaH)
+        cta = emitRole(STAMP_FILL,clearedL, dCFor(clearedL), ctx.darkCtaH)
         const [hL, pL] = dTrio(clearedL)
-        ctaHover = emitRole('cta-hover', hL, dCFor(hL), ctx.darkCtaH)
-        ctaPressed = emitRole('cta-pressed', pL, dCFor(pL), ctx.darkCtaH)
+        ctaHover = emitRole(STAMP_FILL_HOVER,hL, dCFor(hL), ctx.darkCtaH)
+        ctaPressed = emitRole(STAMP_FILL_PRESSED,pL, dCFor(pL), ctx.darkCtaH)
         cta.enforced = true; ctaHover.enforced = true; ctaPressed.enforced = true
       }
     }
@@ -635,10 +636,10 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     if (ctx.opts?.ctaSolve) {
       const exitL = solveDarkCtaExit(cta, dCFor, ctx.darkCtaH, ctx.opts.ctaSolve.redDark, enforceLc, coLc)
       if (exitL !== null) {
-        cta = emitRole('cta', exitL, dCFor(exitL), ctx.darkCtaH)
+        cta = emitRole(STAMP_FILL,exitL, dCFor(exitL), ctx.darkCtaH)
         const [hL, pL] = dTrio(exitL)
-        ctaHover = emitRole('cta-hover', hL, dCFor(hL), ctx.darkCtaH)
-        ctaPressed = emitRole('cta-pressed', pL, dCFor(pL), ctx.darkCtaH)
+        ctaHover = emitRole(STAMP_FILL_HOVER,hL, dCFor(hL), ctx.darkCtaH)
+        ctaPressed = emitRole(STAMP_FILL_PRESSED,pL, dCFor(pL), ctx.darkCtaH)
         cta.enforced = true; ctaHover.enforced = true; ctaPressed.enforced = true
         cta.repelled = true; ctaHover.repelled = true; ctaPressed.repelled = true
         // the pole re-judged AT the exited fill (mirrors the light repelled re-judge: wcag

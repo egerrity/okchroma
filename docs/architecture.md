@@ -212,7 +212,7 @@ The data structures that flow through everything:
 // the declaration (pure data, src/engine/requirements/spec.ts)
 ModeSpec       = { stops: StopReq[], roles: RoleReq[], ons: { onFill } }
 StopReq        = { stop, rootL, group, produce: {hue, L, chroma}, satFraction?/baseC?/chromaMult?, require? }
-RoleReq        = { role: 'cta'|'cta-hover'|'cta-pressed', produce, floorL, chromaMult }
+RoleReq        = { role: 'stamp-fill'|'stamp-fill-hover'|'stamp-fill-pressed', produce, floorL, chromaMult }
 
 // the resolved output (the public contract)
 ColorStop      = { stop, L, C, H, r, g, b }

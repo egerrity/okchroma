@@ -22,7 +22,7 @@ import {
 } from '../stopTable'
 // tokenNames is itself zero-import, so this drags nothing else in. It is the single
 // source of truth for the band words — the group labels below DERIVE from it.
-import { stopTokenName, PAPER_0 } from '../tokenNames'
+import { stopTokenName, PAPER_0, STAMP_FILL, STAMP_FILL_HOVER, STAMP_FILL_PRESSED } from '../tokenNames'
 
 export type Group = 'paper' | 'highlighter' | 'crayon' | 'pencil' | 'pen'
 // The solver's text-lane membership test (stops 9–11: pencil + the two pens). Takes a
@@ -71,15 +71,18 @@ export type StopReq = {
   require?: Require
 }
 
-// off-scale roles — the SIX-token cta family (owner respec 2026-07-16). The FILL trio
-// (cta / cta-hover / cta-pressed): anchor = the seed's OWN lightness floored at floorL
-// (product intent: dark fills must not sink; light has no floor); hue constant (the cta
-// carries brand identity, no torsion); hover = hoverL() of the resolved cta, pressed =
-// pressedL() (hover's direction, doubled).
-// (The PEN trio DELETED, owner 2026-08-12: C49 had already reduced it to references
-// onto stops 9/10/11 with no declaration here; the token itself is gone now — the
-// text-register cta is the pen stops, whose guarantees ride their own requires.)
-export type RoleName = 'cta' | 'cta-hover' | 'cta-pressed'
+// off-scale roles — the stamp FILL trio (stamp-fill / stamp-fill-hover / stamp-fill-pressed,
+// the emitted spelling since 2026-09-02; the internal ResolvedRamp/GeneratedScale fields keep
+// their cta property names, which never surface in any output): anchor = the seed's OWN
+// lightness floored at floorL (product intent: dark fills must not sink; light has no floor);
+// hue constant (the fill carries brand identity, no torsion); hover/pressed = stateFillL()
+// of the resolved fill (a flat ±0.05 / ±0.10 step away from the mode's ground, reversed
+// near the far pole — archetypes.ts).
+// (The PEN trio was deleted 2026-08-12: the text-register cta is the pen stops 9/10/11,
+// whose guarantees ride their own requires.)
+// Role NAMES ride tokenNames.ts so a rename cannot drift from the emitted vocabulary;
+// dtcg.ts still accepts the pre-rename words (cta / cta-hover / cta-pressed) on parse.
+export type RoleName = typeof STAMP_FILL | typeof STAMP_FILL_HOVER | typeof STAMP_FILL_PRESSED
 export type RoleReq = {
   role: RoleName
   produce: {
@@ -95,7 +98,8 @@ export type RoleReq = {
 // with the larger |APCA Lc|; enforce adds the legibility fallback. Under the shipped wcag profile that
 // fallback is WCAG-4.5 (flip pole only if the other pole clears 4.5 AND |Lc| ≥ 45 — okchroma's
 // onTextIsWhite enforce branch; the cta fill re-solves to 4.5 when neither works). Under the apca profile
-// `enforceLc` is set (by withProfile, from the map's 4.5 slot): the pole flip is a no-op (max-|Lc| already
+// `enforceLc` is set (by withProfile, to CTA_ONFILL_ENFORCE_LC = 60, decoupled from the map's slots —
+// profiles.ts): the pole flip is a no-op (max-|Lc| already
 // wins its own metric) and the cta fill re-solves until the white pole reads ≥ enforceLc. On-text itself
 // never feeds back into a scale stop.
 // `ratioFloor` (the TRUE wcag/apca split, owner 2026-07-04): under the wcag profile the CHOSEN pole must
@@ -243,9 +247,9 @@ export const LIGHT: ModeSpec = {
     { stop: 11, rootL: ROOT_L_LIGHT[11], group: groupOf(11), produce: PL_TEXT, chromaMult: SCALE_C_LIGHT[11].textMult, textMaxC: SCALE_C_LIGHT[11].textMaxC, chromaFloor: SCALE_C_LIGHT[11].chromaFloor, require: T11 },
   ],
   roles: [
-    { role: 'cta', produce: { hue: 'constant', L: 'anchor', chroma: 'brand' }, floorL: 0, chromaMult: 1 },
-    { role: 'cta-hover', produce: { hue: 'constant', L: 'hover', chroma: 'brand' }, floorL: 0, chromaMult: 1 },
-    { role: 'cta-pressed', produce: { hue: 'constant', L: 'pressed', chroma: 'brand' }, floorL: 0, chromaMult: 1 },
+    { role: STAMP_FILL, produce: { hue: 'constant', L: 'anchor', chroma: 'brand' }, floorL: 0, chromaMult: 1 },
+    { role: STAMP_FILL_HOVER, produce: { hue: 'constant', L: 'hover', chroma: 'brand' }, floorL: 0, chromaMult: 1 },
+    { role: STAMP_FILL_PRESSED, produce: { hue: 'constant', L: 'pressed', chroma: 'brand' }, floorL: 0, chromaMult: 1 },
   ],
   ons: ONS,
 }
@@ -272,9 +276,9 @@ export const DARK: ModeSpec = {
     { stop: 11, rootL: ROOT_L_DARK[11], group: groupOf(11), produce: P_TEXT, chromaMult: SCALE_C_DARK[11].textMult, textMaxC: SCALE_C_DARK[11].textMaxC, chromaFloor: SCALE_C_DARK[11].chromaFloor, require: T11 },
   ],
   roles: [
-    { role: 'cta', produce: { hue: 'constant', L: 'anchor', chroma: 'brand' }, floorL: DARK_CTA_MIN_L, chromaMult: 1 },
-    { role: 'cta-hover', produce: { hue: 'constant', L: 'hover', chroma: 'brand' }, floorL: DARK_CTA_MIN_L, chromaMult: 1 },
-    { role: 'cta-pressed', produce: { hue: 'constant', L: 'pressed', chroma: 'brand' }, floorL: DARK_CTA_MIN_L, chromaMult: 1 },
+    { role: STAMP_FILL, produce: { hue: 'constant', L: 'anchor', chroma: 'brand' }, floorL: DARK_CTA_MIN_L, chromaMult: 1 },
+    { role: STAMP_FILL_HOVER, produce: { hue: 'constant', L: 'hover', chroma: 'brand' }, floorL: DARK_CTA_MIN_L, chromaMult: 1 },
+    { role: STAMP_FILL_PRESSED, produce: { hue: 'constant', L: 'pressed', chroma: 'brand' }, floorL: DARK_CTA_MIN_L, chromaMult: 1 },
   ],
   ons: ONS,
 }

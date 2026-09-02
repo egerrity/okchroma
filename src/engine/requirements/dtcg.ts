@@ -4,11 +4,14 @@
 //   $extensions['org.okchroma.requirement'] — the live requirement data + a NAMED resolver reference
 // A requirement-aware resolver ignores $value and re-resolves from the extension; a dumb tool uses the
 // fallback. Per DTCG Format 2025.10, unknown $extensions entries MUST be preserved by tools.
-// Scale stops are keyed by number ('0'..'10'); off-scale roles by name ('cta', 'cta-hover') — the numbering
-// truth (the cta is a ROLE, never a scale stop) survives serialization.
-import type { StopReq, RoleReq, ModeSpec, OnReq } from './spec'
-import { resolveRamp, type ResolvedRamp } from './resolve'
+// Scale stops are keyed by number ('0'..'11'); off-scale roles by name (stamp-fill / stamp-fill-hover /
+// stamp-fill-pressed, the shipped spelling every other emitter uses) — the numbering truth (the fill is a
+// ROLE, never a scale stop) survives serialization. Bundles emitted before 2026-09-02 named the roles
+// cta / cta-hover / cta-pressed; parseToken maps those onto the stamp names, so they still re-resolve.
+import type { StopReq, RoleReq, ModeSpec, OnReq, RoleName } from './spec'
+import { resolveRamp, type ResolvedRamp, type ResolvedRole } from './resolve'
 import { MODE_SPECS } from './spec'
+import { STAMP_FILL, STAMP_FILL_HOVER, STAMP_FILL_PRESSED } from '../tokenNames'
 
 export const EXT_KEY = 'org.okchroma.requirement'
 export const RESOLVER_ID = 'okchroma-reqtoken@2'   // named resolver capability (DTCG "computed source" model)
@@ -25,6 +28,11 @@ export type DtcgRampGroup = {
   seed: DtcgSeedToken
   $extensions?: { [EXT_KEY]: { resolver: string; ons: ModeSpec['ons'] } }
   [key: string]: unknown
+}
+
+// the pre-2026-09-02 role words, accepted on parse only (never emitted)
+const LEGACY_ROLE_NAMES: Record<string, RoleName> = {
+  'cta': STAMP_FILL, 'cta-hover': STAMP_FILL_HOVER, 'cta-pressed': STAMP_FILL_PRESSED,
 }
 
 const hexToValue = (hex: string): DtcgColorValue => {
@@ -47,9 +55,9 @@ export function emitDtcgRamp(hex: string, mode: 'light' | 'dark', groupName: str
     const st = ramp.stops.find(s => s.stop === sp.stop)!
     group[String(sp.stop)] = { $type: 'color', $value: hexToValue(st.hex), $extensions: { [EXT_KEY]: { resolver: RESOLVER_ID, seed: seedRef, mode, ...sp } } }
   }
-  const roleVal = {
-    'cta': ramp.roles.cta, 'cta-hover': ramp.roles.ctaHover, 'cta-pressed': ramp.roles.ctaPressed,
-  } as const
+  const roleVal: Record<RoleName, ResolvedRole> = {
+    [STAMP_FILL]: ramp.roles.cta, [STAMP_FILL_HOVER]: ramp.roles.ctaHover, [STAMP_FILL_PRESSED]: ramp.roles.ctaPressed,
+  }
   for (const rr of spec.roles) {
     const rv = roleVal[rr.role]
     group[rr.role] = { $type: 'color', $value: hexToValue(rv.hex), $extensions: { [EXT_KEY]: { resolver: RESOLVER_ID, seed: seedRef, mode, ...rr } } }
@@ -66,6 +74,8 @@ export function parseToken(token: DtcgRequirementToken): { req: StopReq | RoleRe
   const isRole = 'role' in req
   if (!isRole) for (const k of ['stop', 'rootL', 'group', 'produce'] as const) if ((req as StopReq)[k] === undefined) throw new Error(`stop requirement missing "${k}"`)
   if (isRole) for (const k of ['role', 'produce', 'floorL', 'chromaMult'] as const) if ((req as RoleReq)[k] === undefined) throw new Error(`role requirement missing "${k}"`)
+  // a bundle written under the old role words re-resolves as the stamp trio
+  if (isRole && LEGACY_ROLE_NAMES[(req as RoleReq).role]) (req as RoleReq).role = LEGACY_ROLE_NAMES[(req as RoleReq).role]
   return { req: req as StopReq | RoleReq, seedRef: seed, mode }
 }
 

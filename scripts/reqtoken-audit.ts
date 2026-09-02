@@ -3,6 +3,7 @@
 // Checks are driven FROM the declaration (MODE_SPECS): a require declared = a require verified.
 // The whole sweep runs under BOTH contrast profiles (wcag = the shipped default, apca = the opt-in
 // re-solve); the gate passes only if every declared require holds under its own metric in both.
+import { STAMP_FILL } from '../src/engine/tokenNames'
 import { resolveRamp } from '../src/engine/requirements/resolve'
 import { MODE_SPECS } from '../src/engine/requirements/spec'
 import { withProfile, type ContrastProfile } from '../src/engine/requirements/profiles'
@@ -102,7 +103,7 @@ for (const H of HUES) for (const C of CHROMAS) {
     //    the ANCHOR: the on-fill enforcement re-solve may legitimately move the fill past it, but then the
     //    enforcement's own guarantee (chosen-pole text 4.5) must hold — that's what we verify.
     const { cta, ctaHover } = r.roles
-    const floor = spec.roles.find(x => x.role === 'cta')!.floorL
+    const floor = spec.roles.find(x => x.role === STAMP_FILL)!.floorL
     if (cta.L < floor - 1e-6 && !cta.enforced) fails.push({ seed: id, mode, check: 'cta-floor', detail: `L${cta.L.toFixed(3)} < floor ${floor} without enforcement`, sev: 10 })
     if (cta.enforced) {
       if (spec.ons.onFill.enforceLc !== undefined) {

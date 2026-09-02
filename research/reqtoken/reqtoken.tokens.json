@@ -111,7 +111,7 @@
             "mode": "light",
             "stop": 3,
             "rootL": 0.95,
-            "group": "wash",
+            "group": "paper",
             "produce": {
               "hue": "warm-drift",
               "L": "perceptual",
@@ -141,7 +141,7 @@
             "mode": "light",
             "stop": 4,
             "rootL": 0.924,
-            "group": "wash",
+            "group": "highlighter",
             "produce": {
               "hue": "warm-drift",
               "L": "perceptual",
@@ -171,7 +171,7 @@
             "mode": "light",
             "stop": 5,
             "rootL": 0.892,
-            "group": "wash",
+            "group": "highlighter",
             "produce": {
               "hue": "warm-drift",
               "L": "perceptual",
@@ -201,7 +201,7 @@
             "mode": "light",
             "stop": 6,
             "rootL": 0.852,
-            "group": "wash",
+            "group": "highlighter",
             "produce": {
               "hue": "warm-drift",
               "L": "perceptual",
@@ -231,7 +231,7 @@
             "mode": "light",
             "stop": 7,
             "rootL": 0.801,
-            "group": "wash",
+            "group": "highlighter",
             "produce": {
               "hue": "warm-drift",
               "L": "perceptual",
@@ -247,12 +247,12 @@
         "$value": {
           "colorSpace": "srgb",
           "components": [
-            0.36470588235294116,
-            0.5450980392156862,
-            0.8901960784313725
+            0.34509803921568627,
+            0.5254901960784314,
+            0.8666666666666667
           ],
           "alpha": 1,
-          "hex": "#5d8be3"
+          "hex": "#5886dd"
         },
         "$extensions": {
           "org.okchroma.requirement": {
@@ -261,7 +261,7 @@
             "mode": "light",
             "stop": 8,
             "rootL": 0.738,
-            "group": "highlight",
+            "group": "crayon",
             "produce": {
               "hue": "warm-drift",
               "L": "perceptual",
@@ -271,7 +271,7 @@
             "baseC": 0.142,
             "require": {
               "metric": "wcag",
-              "against": "paper-2",
+              "against": "paper-5",
               "target": 3,
               "level": "AA"
             }
@@ -279,36 +279,6 @@
         }
       },
       "9": {
-        "$type": "color",
-        "$value": {
-          "colorSpace": "srgb",
-          "components": [
-            0.27450980392156865,
-            0.4470588235294118,
-            0.7843137254901961
-          ],
-          "alpha": 1,
-          "hex": "#4672c8"
-        },
-        "$extensions": {
-          "org.okchroma.requirement": {
-            "resolver": "okchroma-reqtoken@2",
-            "seed": "{brand.light.seed}",
-            "mode": "light",
-            "stop": 9,
-            "rootL": 0.6,
-            "group": "highlight",
-            "produce": {
-              "hue": "warm-drift",
-              "L": "perceptual",
-              "chroma": "ladder"
-            },
-            "satFraction": 0.75,
-            "baseC": 0.142
-          }
-        }
-      },
-      "10": {
         "$type": "color",
         "$value": {
           "colorSpace": "srgb",
@@ -325,19 +295,57 @@
             "resolver": "okchroma-reqtoken@2",
             "seed": "{brand.light.seed}",
             "mode": "light",
-            "stop": 10,
+            "stop": 9,
             "rootL": 0.53,
-            "group": "ink",
+            "group": "pencil",
             "produce": {
               "hue": "warm-drift",
               "L": "perceptual",
               "chroma": "brand"
             },
             "chromaMult": 0.95,
-            "inkMaxC": 0.15,
+            "textMaxC": 0.15,
+            "chromaFloor": 0.04857142857142857,
             "require": {
               "metric": "wcag",
-              "against": "paper-2",
+              "against": "paper-3",
+              "target": 4.5,
+              "level": "AA"
+            }
+          }
+        }
+      },
+      "10": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.054901960784313725,
+            0.2196078431372549,
+            0.5568627450980392
+          ],
+          "alpha": 1,
+          "hex": "#0e388e"
+        },
+        "$extensions": {
+          "org.okchroma.requirement": {
+            "resolver": "okchroma-reqtoken@2",
+            "seed": "{brand.light.seed}",
+            "mode": "light",
+            "stop": 10,
+            "rootL": 0.415,
+            "group": "pen",
+            "produce": {
+              "hue": "warm-drift",
+              "L": "perceptual",
+              "chroma": "brand"
+            },
+            "chromaMult": 0.95,
+            "textMaxC": 0.15,
+            "chromaFloor": 0.04857142857142857,
+            "require": {
+              "metric": "wcag",
+              "against": "highlighter-20",
               "target": 4.5,
               "level": "AA"
             }
@@ -363,17 +371,18 @@
             "mode": "light",
             "stop": 11,
             "rootL": 0.3,
-            "group": "ink",
+            "group": "pen",
             "produce": {
               "hue": "warm-drift",
               "L": "perceptual",
               "chroma": "brand"
             },
             "chromaMult": 0.5,
-            "inkMaxC": 0.08,
+            "textMaxC": 0.08,
+            "chromaFloor": 0.051428571428571435,
             "require": {
               "metric": "wcag",
-              "against": "paper-2",
+              "against": "paper-3",
               "target": 7,
               "level": "AAA"
             }
@@ -400,17 +409,13 @@
             "onFill": {
               "metric": "apca-pole",
               "enforce": true,
-              "coEnforceLc": 60
-            },
-            "onHighlight": {
-              "metric": "apca-pole",
-              "enforce": false,
-              "ratioFloor": 4.5
+              "ratioFloor": 4.5,
+              "coEnforceLc": 65
             }
           }
         }
       },
-      "cta": {
+      "stamp-fill": {
         "$type": "color",
         "$value": {
           "colorSpace": "srgb",
@@ -427,7 +432,7 @@
             "resolver": "okchroma-reqtoken@2",
             "seed": "{brand.light.seed}",
             "mode": "light",
-            "role": "cta",
+            "role": "stamp-fill",
             "produce": {
               "hue": "constant",
               "L": "anchor",
@@ -438,24 +443,24 @@
           }
         }
       },
-      "cta-hover": {
+      "stamp-fill-hover": {
         "$type": "color",
         "$value": {
           "colorSpace": "srgb",
           "components": [
             0.13333333333333333,
             0.3176470588235294,
-            0.6901960784313725
+            0.6862745098039216
           ],
           "alpha": 1,
-          "hex": "#2251b0"
+          "hex": "#2251af"
         },
         "$extensions": {
           "org.okchroma.requirement": {
             "resolver": "okchroma-reqtoken@2",
             "seed": "{brand.light.seed}",
             "mode": "light",
-            "role": "cta-hover",
+            "role": "stamp-fill-hover",
             "produce": {
               "hue": "constant",
               "L": "hover",
@@ -466,112 +471,28 @@
           }
         }
       },
-      "cta-pressed": {
+      "stamp-fill-pressed": {
         "$type": "color",
         "$value": {
           "colorSpace": "srgb",
           "components": [
             0.0784313725490196,
             0.25882352941176473,
-            0.6274509803921569
+            0.6235294117647059
           ],
           "alpha": 1,
-          "hex": "#1442a0"
+          "hex": "#14429f"
         },
         "$extensions": {
           "org.okchroma.requirement": {
             "resolver": "okchroma-reqtoken@2",
             "seed": "{brand.light.seed}",
             "mode": "light",
-            "role": "cta-pressed",
+            "role": "stamp-fill-pressed",
             "produce": {
               "hue": "constant",
               "L": "pressed",
               "chroma": "brand"
-            },
-            "floorL": 0,
-            "chromaMult": 1
-          }
-        }
-      },
-      "cta-ink": {
-        "$type": "color",
-        "$value": {
-          "colorSpace": "srgb",
-          "components": [
-            0.1803921568627451,
-            0.3568627450980392,
-            0.7058823529411765
-          ],
-          "alpha": 1,
-          "hex": "#2e5bb4"
-        },
-        "$extensions": {
-          "org.okchroma.requirement": {
-            "resolver": "okchroma-reqtoken@2",
-            "seed": "{brand.light.seed}",
-            "mode": "light",
-            "role": "cta-ink",
-            "produce": {
-              "hue": "ink",
-              "L": "ink-anchor",
-              "chroma": "ink"
-            },
-            "floorL": 0,
-            "chromaMult": 1
-          }
-        }
-      },
-      "cta-ink-hover": {
-        "$type": "color",
-        "$value": {
-          "colorSpace": "srgb",
-          "components": [
-            0.12941176470588237,
-            0.2980392156862745,
-            0.6392156862745098
-          ],
-          "alpha": 1,
-          "hex": "#214ca3"
-        },
-        "$extensions": {
-          "org.okchroma.requirement": {
-            "resolver": "okchroma-reqtoken@2",
-            "seed": "{brand.light.seed}",
-            "mode": "light",
-            "role": "cta-ink-hover",
-            "produce": {
-              "hue": "ink",
-              "L": "ink-hover",
-              "chroma": "ink"
-            },
-            "floorL": 0,
-            "chromaMult": 1
-          }
-        }
-      },
-      "cta-ink-pressed": {
-        "$type": "color",
-        "$value": {
-          "colorSpace": "srgb",
-          "components": [
-            0.07058823529411765,
-            0.23921568627450981,
-            0.5764705882352941
-          ],
-          "alpha": 1,
-          "hex": "#123d93"
-        },
-        "$extensions": {
-          "org.okchroma.requirement": {
-            "resolver": "okchroma-reqtoken@2",
-            "seed": "{brand.light.seed}",
-            "mode": "light",
-            "role": "cta-ink-pressed",
-            "produce": {
-              "hue": "ink",
-              "L": "ink-pressed",
-              "chroma": "ink"
             },
             "floorL": 0,
             "chromaMult": 1
@@ -686,7 +607,7 @@
             "mode": "dark",
             "stop": 3,
             "rootL": 0.252,
-            "group": "wash",
+            "group": "paper",
             "produce": {
               "hue": "warm-torsion",
               "L": "perceptual-lift",
@@ -715,7 +636,7 @@
             "mode": "dark",
             "stop": 4,
             "rootL": 0.285,
-            "group": "wash",
+            "group": "highlighter",
             "produce": {
               "hue": "warm-torsion",
               "L": "perceptual-lift",
@@ -744,7 +665,7 @@
             "mode": "dark",
             "stop": 5,
             "rootL": 0.313,
-            "group": "wash",
+            "group": "highlighter",
             "produce": {
               "hue": "warm-torsion",
               "L": "perceptual-lift",
@@ -773,7 +694,7 @@
             "mode": "dark",
             "stop": 6,
             "rootL": 0.348,
-            "group": "wash",
+            "group": "highlighter",
             "produce": {
               "hue": "warm-torsion",
               "L": "perceptual-lift",
@@ -802,7 +723,7 @@
             "mode": "dark",
             "stop": 7,
             "rootL": 0.42,
-            "group": "wash",
+            "group": "highlighter",
             "produce": {
               "hue": "warm-torsion",
               "L": "perceptual-lift",
@@ -831,7 +752,7 @@
             "mode": "dark",
             "stop": 8,
             "rootL": 0.55,
-            "group": "highlight",
+            "group": "crayon",
             "produce": {
               "hue": "warm-torsion",
               "L": "fixed",
@@ -840,7 +761,7 @@
             "satFraction": 0.84,
             "require": {
               "metric": "wcag",
-              "against": "paper-2",
+              "against": "paper-5",
               "target": 3,
               "level": "AA"
             }
@@ -852,12 +773,12 @@
         "$value": {
           "colorSpace": "srgb",
           "components": [
-            0.3137254901960784,
-            0.49019607843137253,
-            0.8313725490196079
+            0.5019607843137255,
+            0.6588235294117647,
+            0.9607843137254902
           ],
           "alpha": 1,
-          "hex": "#507dd4"
+          "hex": "#80a8f5"
         },
         "$extensions": {
           "org.okchroma.requirement": {
@@ -865,15 +786,22 @@
             "seed": "{brand.dark.seed}",
             "mode": "dark",
             "stop": 9,
-            "rootL": 0.6,
-            "group": "highlight",
+            "rootL": 0.767,
+            "group": "pencil",
             "produce": {
               "hue": "warm-torsion",
-              "L": "fixed",
-              "chroma": "ladder"
+              "L": "perceptual",
+              "chroma": "brand"
             },
-            "satFraction": 0.75,
-            "baseC": 0.142
+            "chromaMult": 0.95,
+            "textMaxC": 0.12,
+            "chromaFloor": 0.04857142857142857,
+            "require": {
+              "metric": "wcag",
+              "against": "paper-3",
+              "target": 4.5,
+              "level": "AA"
+            }
           }
         }
       },
@@ -882,12 +810,12 @@
         "$value": {
           "colorSpace": "srgb",
           "components": [
-            0.5411764705882353,
-            0.7019607843137254,
+            0.6470588235294118,
+            0.7725490196078432,
             1
           ],
           "alpha": 1,
-          "hex": "#8ab3ff"
+          "hex": "#a5c5ff"
         },
         "$extensions": {
           "org.okchroma.requirement": {
@@ -895,18 +823,19 @@
             "seed": "{brand.dark.seed}",
             "mode": "dark",
             "stop": 10,
-            "rootL": 0.8,
-            "group": "ink",
+            "rootL": 0.843,
+            "group": "pen",
             "produce": {
               "hue": "warm-torsion",
               "L": "perceptual",
               "chroma": "brand"
             },
             "chromaMult": 0.95,
-            "inkMaxC": 0.12,
+            "textMaxC": 0.12,
+            "chromaFloor": 0.04857142857142857,
             "require": {
               "metric": "wcag",
-              "against": "paper-2",
+              "against": "highlighter-20",
               "target": 4.5,
               "level": "AA"
             }
@@ -918,12 +847,12 @@
         "$value": {
           "colorSpace": "srgb",
           "components": [
-            0.8666666666666667,
-            0.9137254901960784,
+            0.8156862745098039,
+            0.8823529411764706,
             1
           ],
           "alpha": 1,
-          "hex": "#dde9ff"
+          "hex": "#d0e1ff"
         },
         "$extensions": {
           "org.okchroma.requirement": {
@@ -931,18 +860,19 @@
             "seed": "{brand.dark.seed}",
             "mode": "dark",
             "stop": 11,
-            "rootL": 0.94,
-            "group": "ink",
+            "rootL": 0.919,
+            "group": "pen",
             "produce": {
               "hue": "warm-torsion",
               "L": "perceptual",
               "chroma": "brand"
             },
             "chromaMult": 0.62,
-            "inkMaxC": 0.045,
+            "textMaxC": 0.045,
+            "chromaFloor": 0.051428571428571435,
             "require": {
               "metric": "wcag",
-              "against": "paper-2",
+              "against": "paper-3",
               "target": 7,
               "level": "AAA"
             }
@@ -969,17 +899,13 @@
             "onFill": {
               "metric": "apca-pole",
               "enforce": true,
-              "coEnforceLc": 60
-            },
-            "onHighlight": {
-              "metric": "apca-pole",
-              "enforce": false,
-              "ratioFloor": 4.5
+              "ratioFloor": 4.5,
+              "coEnforceLc": 65
             }
           }
         }
       },
-      "cta": {
+      "stamp-fill": {
         "$type": "color",
         "$value": {
           "colorSpace": "srgb",
@@ -996,7 +922,7 @@
             "resolver": "okchroma-reqtoken@2",
             "seed": "{brand.dark.seed}",
             "mode": "dark",
-            "role": "cta",
+            "role": "stamp-fill",
             "produce": {
               "hue": "constant",
               "L": "anchor",
@@ -1007,24 +933,24 @@
           }
         }
       },
-      "cta-hover": {
+      "stamp-fill-hover": {
         "$type": "color",
         "$value": {
           "colorSpace": "srgb",
           "components": [
-            0.20392156862745098,
-            0.39215686274509803,
-            0.7686274509803922
+            0.30980392156862746,
+            0.5058823529411764,
+            0.8980392156862745
           ],
           "alpha": 1,
-          "hex": "#3464c4"
+          "hex": "#4f81e5"
         },
         "$extensions": {
           "org.okchroma.requirement": {
             "resolver": "okchroma-reqtoken@2",
             "seed": "{brand.dark.seed}",
             "mode": "dark",
-            "role": "cta-hover",
+            "role": "stamp-fill-hover",
             "produce": {
               "hue": "constant",
               "L": "hover",
@@ -1035,114 +961,30 @@
           }
         }
       },
-      "cta-pressed": {
+      "stamp-fill-pressed": {
         "$type": "color",
         "$value": {
           "colorSpace": "srgb",
           "components": [
-            0.15294117647058825,
-            0.33725490196078434,
-            0.7098039215686275
+            0.36470588235294116,
+            0.5686274509803921,
+            0.9647058823529412
           ],
           "alpha": 1,
-          "hex": "#2756b5"
+          "hex": "#5d91f6"
         },
         "$extensions": {
           "org.okchroma.requirement": {
             "resolver": "okchroma-reqtoken@2",
             "seed": "{brand.dark.seed}",
             "mode": "dark",
-            "role": "cta-pressed",
+            "role": "stamp-fill-pressed",
             "produce": {
               "hue": "constant",
               "L": "pressed",
               "chroma": "brand"
             },
             "floorL": 0.63,
-            "chromaMult": 1
-          }
-        }
-      },
-      "cta-ink": {
-        "$type": "color",
-        "$value": {
-          "colorSpace": "srgb",
-          "components": [
-            0.5411764705882353,
-            0.7019607843137254,
-            1
-          ],
-          "alpha": 1,
-          "hex": "#8ab3ff"
-        },
-        "$extensions": {
-          "org.okchroma.requirement": {
-            "resolver": "okchroma-reqtoken@2",
-            "seed": "{brand.dark.seed}",
-            "mode": "dark",
-            "role": "cta-ink",
-            "produce": {
-              "hue": "ink",
-              "L": "ink-anchor",
-              "chroma": "ink"
-            },
-            "floorL": 0,
-            "chromaMult": 1
-          }
-        }
-      },
-      "cta-ink-hover": {
-        "$type": "color",
-        "$value": {
-          "colorSpace": "srgb",
-          "components": [
-            0.4980392156862745,
-            0.6588235294117647,
-            0.9568627450980393
-          ],
-          "alpha": 1,
-          "hex": "#7fa8f4"
-        },
-        "$extensions": {
-          "org.okchroma.requirement": {
-            "resolver": "okchroma-reqtoken@2",
-            "seed": "{brand.dark.seed}",
-            "mode": "dark",
-            "role": "cta-ink-hover",
-            "produce": {
-              "hue": "ink",
-              "L": "ink-hover",
-              "chroma": "ink"
-            },
-            "floorL": 0,
-            "chromaMult": 1
-          }
-        }
-      },
-      "cta-ink-pressed": {
-        "$type": "color",
-        "$value": {
-          "colorSpace": "srgb",
-          "components": [
-            0.4549019607843137,
-            0.615686274509804,
-            0.9098039215686274
-          ],
-          "alpha": 1,
-          "hex": "#749de8"
-        },
-        "$extensions": {
-          "org.okchroma.requirement": {
-            "resolver": "okchroma-reqtoken@2",
-            "seed": "{brand.dark.seed}",
-            "mode": "dark",
-            "role": "cta-ink-pressed",
-            "produce": {
-              "hue": "ink",
-              "L": "ink-pressed",
-              "chroma": "ink"
-            },
-            "floorL": 0,
             "chromaMult": 1
           }
         }

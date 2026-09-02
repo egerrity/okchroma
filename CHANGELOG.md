@@ -8,6 +8,14 @@ structure, ships as at least a minor.
 
 Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git log.
 
+## Unreleased (0.3.0)
+
+- The DTCG requirement tokens name the off-scale roles by their shipped spelling:
+  `stamp-fill`, `stamp-fill-hover`, `stamp-fill-pressed` (the group keys and the `role`
+  field; they were `cta`, `cta-hover`, `cta-pressed`, the one output that had not taken
+  the stamp rename). `parseToken` still accepts the old words, so a bundle emitted before
+  this release re-resolves identically. Values do not move.
+
 ## 0.2.2 — 2026-09-01
 
 - The pen and paper contrast guarantees now hold in the neutral's direction too:

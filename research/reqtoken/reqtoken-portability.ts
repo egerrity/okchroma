@@ -1,10 +1,11 @@
 // reqtoken-portability.ts — the PORTABILITY gate. Proves the requirement declaration survives a DTCG
 // round-trip as the LIVE source of truth:
 //   1. round-trip fidelity: emit → JSON → parse → re-resolve is bit-identical to direct resolution
-//      (all 12 scale stops + the off-scale cta/cta-hover roles + the on-color booleans)
+//      (all 12 scale stops + the off-scale stamp fill trio + the on-color booleans)
 //   2. $value fallback validity: every frozen fallback equals the resolved color at emit time
 //   3. the requirement is LIVE: editing a target in the JSON changes the re-resolved output (and meets it)
 //   4. fail-loud: a corrupted bundle throws, never silently falls back
+import { STAMP_FILL, STAMP_FILL_HOVER, STAMP_FILL_PRESSED } from '../../src/engine/tokenNames'
 import { resolveRamp } from '../../src/engine/requirements/resolve'
 import { emitDtcgRamp, resolveDtcgRamp, parseToken, EXT_KEY, type DtcgRampGroup, type DtcgRequirementToken } from '../../src/engine/requirements/dtcg'
 import { wcagY, contrastRatio } from '../../src/engine/constraints'
@@ -27,15 +28,15 @@ for (const hex of SEEDS) for (const mode of ['light', 'dark'] as const) {
 
   // 1. round-trip fidelity: stops + roles + ons
   const rt = resolveDtcgRamp(parsed)
-  const ROLE_KEYS = ['cta', 'ctaHover', 'ctaPressed', 'ctaInk', 'ctaInkHover', 'ctaInkPressed'] as const
-  const ROLE_NAMES = ['cta', 'cta-hover', 'cta-pressed', 'cta-ink', 'cta-ink-hover', 'cta-ink-pressed'] as const
+  const ROLE_KEYS = ['cta', 'ctaHover', 'ctaPressed'] as const
+  const ROLE_NAMES = [STAMP_FILL, STAMP_FILL_HOVER, STAMP_FILL_PRESSED] as const
   const stopsOk = rt.stops.every((s, i) => s.hex === direct.stops[i].hex)
   const rolesOk = ROLE_KEYS.every(k => rt.roles[k].hex === direct.roles[k].hex)
   const onsOk = rt.ons.onFillIsWhite === direct.ons.onFillIsWhite
   check(`${label} round-trip bit-identical`, stopsOk && rolesOk && onsOk,
     stopsOk && rolesOk && onsOk ? '' : `stops:${stopsOk} roles:${rolesOk} ons:${onsOk}`)
 
-  // 2. $value fallback = resolved value at emit time (stops + roles — the full six-role family)
+  // 2. $value fallback = resolved value at emit time (stops + the fill trio)
   const fallbacksOk =
     direct.stops.every(s => (parsed[String(s.stop)] as DtcgRequirementToken).$value.hex === s.hex) &&
     ROLE_NAMES.every((n, i) => (parsed[n] as DtcgRequirementToken).$value.hex === direct.roles[ROLE_KEYS[i]].hex)
@@ -48,7 +49,7 @@ for (const hex of SEEDS) for (const mode of ['light', 'dark'] as const) {
   const group: DtcgRampGroup = JSON.parse(JSON.stringify(emitDtcgRamp(hex, 'light', 'brand-light')))
   const t8 = group['8'] as DtcgRequirementToken
   const before = resolveDtcgRamp(group)
-  ;(t8.$extensions[EXT_KEY] as any).require = { metric: 'wcag', against: 'paper-97', target: 4.5, level: 'AA' }
+  ;(t8.$extensions[EXT_KEY] as any).require = { metric: 'wcag', against: 'paper-3', target: 4.5, level: 'AA' }
   const after = resolveDtcgRamp(group)
   const s8 = after.stops.find(s => s.stop === 8)!, p2 = after.stops.find(s => s.stop === 2)!
   const got = contrastRatio(wcagY(s8.L, s8.C, s8.H), wcagY(p2.L, p2.C, p2.H))
@@ -64,7 +65,7 @@ for (const hex of SEEDS) for (const mode of ['light', 'dark'] as const) {
   let threw = false
   try { parseToken(t3) } catch { threw = true }
   check('corrupted stop bundle throws (no silent fallback)', threw)
-  const cta = group['cta'] as DtcgRequirementToken
+  const cta = group[STAMP_FILL] as DtcgRequirementToken
   delete (cta.$extensions[EXT_KEY] as any).floorL
   let threwRole = false
   try { parseToken(cta) } catch { threwRole = true }
@@ -77,8 +78,8 @@ for (const hex of SEEDS) for (const mode of ['light', 'dark'] as const) {
 }
 
 // show one emitted token so the artifact shape is reviewable
-const sample = emitDtcgRamp('#3060c0', 'light', 'brand-light')['cta']
-console.log('\n=== sample emitted cta ROLE token (off-scale — no stop number) ===')
+const sample = emitDtcgRamp('#3060c0', 'light', 'brand-light')[STAMP_FILL]
+console.log('\n=== sample emitted stamp-fill ROLE token (off-scale — no stop number) ===')
 console.log(JSON.stringify(sample, null, 2))
 
 console.log(`\n=== portability spike: ${pass} pass, ${fail} fail ===`)
