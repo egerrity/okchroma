@@ -96,6 +96,32 @@ export const CHROMATIC_W80_WORST_SHIP_Y = { light: 0.459357, dark: 0.074936 } as
 // stop's own target. Light only in effect (dark clears: worst 3.015 / 7.5); the pens clear
 // by ladder monotonicity and are declared, not moved. RE-DERIVE with the highlighter bound.
 export const CHROMATIC_P3_WORST_SHIP_Y = { light: 0.836007, dark: 0.016041 } as const
+// the CROSS-FAMILY paper bound (owner defect 2026-08-03 — her measured pair was the
+// brand pencil-47 (ink-9) on the NEUTRAL paper-5 (paper-3), 4.479:1; her follow-up
+// caught crayon-26 (highlight-8) the same way, 26/72 under 3:1): "usable on every
+// paper" includes the per-brand NEUTRAL's papers, and the own-family paper-5 (paper-3)
+// is NOT the nearest paper for green-band brands — their tinted paper carries more Y
+// than the near-gray neutral at the same L. Covers every contrast-required stop from 8
+// up: the pens are text on any paper, and crayon-26 (highlight-8) is the focus-
+// ring/border register that sits on neutral surfaces (WCAG 1.4.11).
+// The bound is the worst SHIPPED neutral paper-5 (paper-3) Y over hue 0..350 × every NeutralLevel:
+// light min 0.845015 (H260 branded #e8edf8) · dark max 0.014247 (H300 medium #211f23),
+// measured 2026-08-03 via generateNeutralScale → stopHex; re-derived 2026-08-11 for the
+// default-tint retune (default 0.75x + the medium rung) — both worsts UNCHANGED, the dark
+// worst simply renamed with its level (medium = the old default). A per-theme neutral is not in
+// scope here (the ramp resolves per family), so the floor clears the worst neutral any
+// theme can generate. RE-DERIVE if the neutral curve or the paper ladder moves.
+// (Module-scope and exported since 2026-09-02 so the docs site renders the bound live;
+// the value and its use are unchanged.)
+export const NEUTRAL_P3_WORST_SHIP_Y = { light: 0.845015, dark: 0.014247 } as const
+// The same doctrine for the highlighter-20 anchor (T10's highlighter-20 law, owner 2026-08-27): the
+// pen group's claim spans its own family AND the neutral, so the bound is the worst
+// SHIPPED neutral highlighter-20 Y over hue 0..350 × every NeutralLevel — light min (darkest)
+// H290 branded, dark max (lightest) H30 branded, measured 2026-08-27 via
+// generateNeutralScale → shippedY (scratchpad derive-w80-bound). RE-DERIVE if the
+// neutral curve or the highlighter ladder moves. A highlighter-20-anchored stop needs no paper bound:
+// clearing the darkest highlighter clears every paper of both ramps by ladder monotonicity.
+export const NEUTRAL_W80_WORST_SHIP_Y = { light: 0.506433, dark: 0.074262 } as const
 
 // `spec` defaults to the built-in mode table; a parsed DTCG requirement bundle can be passed instead —
 // the resolver executes whatever declaration it's handed (portability: the token file is the source of truth).
@@ -171,30 +197,6 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     textGround && stop >= 9 ? textGround : refOf(wcagAnchorStop(req, stop), stop)
   const apcaGroundOf = (req: Require, stop: number): { L: number; C: number; H: number } =>
     textGround && stop >= 9 ? textGround : refOf(declaredAnchor(req), stop)
-  // the CROSS-FAMILY paper bound (owner defect 2026-08-03 — her measured pair was the
-  // brand pencil-47 (ink-9) on the NEUTRAL paper-5 (paper-3), 4.479:1; her follow-up
-  // caught crayon-26 (highlight-8) the same way, 26/72 under 3:1): "usable on every
-  // paper" includes the per-brand NEUTRAL's papers, and the own-family paper-5 (paper-3)
-  // is NOT the nearest paper for green-band brands — their tinted paper carries more Y
-  // than the near-gray neutral at the same L. Covers every contrast-required stop from 8
-  // up: the pens are text on any paper, and crayon-26 (highlight-8) is the focus-
-  // ring/border register that sits on neutral surfaces (WCAG 1.4.11).
-  // The bound is the worst SHIPPED neutral paper-5 (paper-3) Y over hue 0..350 × every NeutralLevel:
-  // light min 0.845015 (H260 branded #e8edf8) · dark max 0.014247 (H300 medium #211f23),
-  // measured 2026-08-03 via generateNeutralScale → stopHex; re-derived 2026-08-11 for the
-  // default-tint retune (default 0.75x + the medium rung) — both worsts UNCHANGED, the dark
-  // worst simply renamed with its level (medium = the old default). A per-theme neutral is not in
-  // scope here (the ramp resolves per family), so the floor clears the worst neutral any
-  // theme can generate. RE-DERIVE if the neutral curve or the paper ladder moves.
-  const NEUTRAL_P3_WORST_SHIP_Y = { light: 0.845015, dark: 0.014247 } as const
-  // The same doctrine for the highlighter-20 anchor (T10's highlighter-20 law, owner 2026-08-27): the
-  // pen group's claim spans its own family AND the neutral, so the bound is the worst
-  // SHIPPED neutral highlighter-20 Y over hue 0..350 × every NeutralLevel — light min (darkest)
-  // H290 branded, dark max (lightest) H30 branded, measured 2026-08-27 via
-  // generateNeutralScale → shippedY (scratchpad derive-w80-bound). RE-DERIVE if the
-  // neutral curve or the highlighter ladder moves. A highlighter-20-anchored stop needs no paper bound:
-  // clearing the darkest highlighter clears every paper of both ramps by ladder monotonicity.
-  const NEUTRAL_W80_WORST_SHIP_Y = { light: 0.506433, dark: 0.074262 } as const
   // the light contrast solves are metric-blind: the resolver hands the producer a maxLFor closure built
   // from the declared require. wcag closures call findMaxLForContrast with the exact old arguments
   // (float-identical — the wcag profile stays byte-for-byte); apca closures swap in the Lc bisection.
