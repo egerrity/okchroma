@@ -15,6 +15,8 @@ Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git lo
   field; they were `cta`, `cta-hover`, `cta-pressed`, the one output that had not taken
   the stamp rename). `parseToken` still accepts the old words, so a bundle emitted before
   this release re-resolves identically. Values do not move.
+- The DTCG `$value.components` are rounded to four decimals (they were full doubles of
+  the 8-bit channel over 255); `hex` is unchanged and is what re-resolution reads.
 
 ## 0.2.2 — 2026-09-01
 

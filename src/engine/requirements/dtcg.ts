@@ -35,9 +35,12 @@ const LEGACY_ROLE_NAMES: Record<string, RoleName> = {
   'cta': STAMP_FILL, 'cta-hover': STAMP_FILL_HOVER, 'cta-pressed': STAMP_FILL_PRESSED,
 }
 
+// components are the 8-bit channels over 255, rounded to four decimals: adjacent 8-bit values stay
+// distinct (1/255 = 0.0039) and the file stays readable. hex is the exact value; re-resolution reads
+// only the seed's hex, so the rounding never enters a solve.
 const hexToValue = (hex: string): DtcgColorValue => {
   const h = hex.replace('#', '')
-  const c = (i: number) => parseInt(h.slice(i, i + 2), 16) / 255
+  const c = (i: number) => Math.round((parseInt(h.slice(i, i + 2), 16) / 255) * 1e4) / 1e4
   return { colorSpace: 'srgb', components: [c(0), c(2), c(4)], alpha: 1, hex: hex.toLowerCase() }
 }
 

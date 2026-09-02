@@ -40,7 +40,16 @@ brand.light
 ```json
 {
   "$type": "color",
-  "$value": { "colorSpace": "srgb", "components": [0.345, 0.525, 0.867], "alpha": 1, "hex": "#5886dd" },
+  "$value": {
+    "colorSpace": "srgb",
+    "components": [
+      0.3451,
+      0.5255,
+      0.8667
+    ],
+    "alpha": 1,
+    "hex": "#5886dd"
+  },
   "$extensions": {
     "org.okchroma.requirement": {
       "resolver": "okchroma-reqtoken@2",
@@ -49,10 +58,19 @@ brand.light
       "stop": 8,
       "rootL": 0.738,
       "group": "crayon",
-      "produce": { "hue": "warm-drift", "L": "perceptual", "chroma": "ladder" },
+      "produce": {
+        "hue": "warm-drift",
+        "L": "perceptual",
+        "chroma": "ladder"
+      },
       "satFraction": 0.78,
       "baseC": 0.142,
-      "require": { "metric": "wcag", "against": "paper-5", "target": 3, "level": "AA" }
+      "require": {
+        "metric": "wcag",
+        "against": "paper-5",
+        "target": 3,
+        "level": "AA"
+      }
     }
   }
 }
@@ -67,14 +85,27 @@ pencil-47, and the two pens.
 ```json
 {
   "$type": "color",
-  "$value": { "colorSpace": "srgb", "components": [0.251, 0.447, 0.831], "alpha": 1, "hex": "#4072d4" },
+  "$value": {
+    "colorSpace": "srgb",
+    "components": [
+      0.251,
+      0.4471,
+      0.8314
+    ],
+    "alpha": 1,
+    "hex": "#4072d4"
+  },
   "$extensions": {
     "org.okchroma.requirement": {
       "resolver": "okchroma-reqtoken@2",
       "seed": "{brand.dark.seed}",
       "mode": "dark",
       "role": "stamp-fill",
-      "produce": { "hue": "constant", "L": "anchor", "chroma": "brand" },
+      "produce": {
+        "hue": "constant",
+        "L": "anchor",
+        "chroma": "brand"
+      },
       "floorL": 0.63,
       "chromaMult": 1
     }
