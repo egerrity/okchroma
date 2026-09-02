@@ -9,7 +9,7 @@ import { redGateDist, RED_GATE } from '../src/engine/collision'
 import { SIGNAL_EMIT_NAME } from '../src/engine/signals'
 import { ARCHETYPES, type Archetype } from '../src/engine/archetypes'
 import { brandCss, signalsCss, stopHex } from '../src/engine/cssRender'
-import { generateNeutralScale, neutralTintHue, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
+import { generateNeutralScale, neutralTintHue, type NeutralLevel } from '../src/engine/colorEngine'
 import { wcagY, contrastRatio } from '../src/engine/constraints'
 import { PAPER_0, PEN_100 } from '../src/engine/tokenNames'
 import { HERO_ILLO } from './heroIllo'
@@ -144,10 +144,11 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   const isArchetype = (v: string): v is Archetype => ARCHETYPES.some(a => a.name === v)
   // legacy shape for the checklist/toast logic: anchors count as recommended machinery
   const rung: RungMode = primaryMode === 'exact' ? 'exact' : 'recommended'
-  // WCAG is the DEFAULT (owner 2026-07-29, the true split): the strict legal mode ships,
-  // every on-text pole ratio-passing, pencil-47 (the emphasis fill) flips to black where
-  // white fails 4.5. APCA is the opt-in extra-legibility lane, the perceptually-solved look.
-  const [profile, setProfile] = useState<ContrastProfile>('wcag')
+  // WCAG is what ships: every on-text pole ratio-passing, pencil-47 (the emphasis fill)
+  // flips to black where white fails 4.5. The demo's APCA toggle was removed 2026-09-02
+  // (owner: APCA is only the stamp legibility booster; the alternate solve stays unexposed),
+  // so the demo resolves under the default profile everywhere.
+  const cp = undefined
   // Neutral offering (owner 2026-08-04): one 5-entry choice — three strengths of the
   // primary's hue, or an alternate hue source (Match secondary / Custom hex) at the
   // Default strength. Level + source derive from the one choice.
@@ -210,7 +211,6 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   const secondary = secState === 'custom' ? (parsedSecondary ?? (secondaryInput ? lastValidSecondary.current : null)) : null
 
   const computed = useMemo(() => {
-    const cp = profile === 'apca' ? ('apca' as const) : undefined
     // THEME-level resolution: primary + signals exactly as before; the secondary resolves against
     // the post-shift signal set. The LEVEL follows the engine mode (owner model: subtle IS the
     // recommendation; a full-register secondary is the exact-mode choice) — no separate control.
@@ -224,8 +224,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
       secondaryArchetype: derived ? undefined : (secondaryArchetype ?? undefined),
       contrastProfile: cp,
     })
-    // signals ALWAYS re-emit under the selected profile: the static signals.css now carries the
-    // SHIPPED default (apca), so the wcag toggle needs its own override block just like apca did
+    // signals re-emit with the brand block (the static signals.css carries the same values)
     // red-range detection gates the escape toggle: the repel FIRING means the given hex
     // was in the red region (recommended mode exits the register, so the resolved cta
     // alone would miss exactly the brands the escape is for); the direct gate check
@@ -254,7 +253,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     // stops keep the brand's own values under the escape (owner 2026-08-13)
     const linkFromPrimaryHex = stopHex(t.themed.scale.light.find(s => s.stop === 9)!).toUpperCase()
     return { t, r: t.themed, accent: t.secondary?.scale ?? null, css, inRedRange, escapeOn: ctaEscape && inRedRangeNow, linkFromPrimaryHex }
-  }, [primary, secondary, derived, primaryMode, secondaryStyle, secondaryArchetype, neutralChoice, neutralHexInput, profile, ctaEscape, linkCustom, linkInput, ctaBorder])
+  }, [primary, secondary, derived, primaryMode, secondaryStyle, secondaryArchetype, neutralChoice, neutralHexInput, ctaEscape, linkCustom, linkInput, ctaBorder])
 
   // NEUTRAL-SOURCE HYGIENE (the linkBundled idiom): "Match secondary" must not outlive
   // the secondary it matches — removing the secondary reverts the choice to Default
@@ -277,10 +276,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
 
   // The RECOMMENDED resolution, always — exact mode skips the rules, so the
   // checklist and toasts need to know what WOULD have fired to flag it red.
-  // PROFILE-AWARE (C12 v6): the red treatment legitimately diverges per lane (a red-move
-  // in apca can be a self-exit in wcag), so banners/checklist resolve under the toggle —
-  // the old profile-less resolve here silently pinned them to wcag.
-  const rRec = useMemo(() => resolveBrand(primary, 'Custom brand', { contrastProfile: profile === 'apca' ? 'apca' : undefined }), [primary, profile])
+  const rRec = useMemo(() => resolveBrand(primary, 'Custom brand'), [primary])
 
   // Collision/caveat notices as dismissible toasts. Keys include the
   // primary so a new color re-surfaces them.
@@ -478,25 +474,6 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
             hexInput={neutralHexInput} onHexInput={setNeutralHexInput} />
         </div>
         <InfoLine text={neutralInfo} />
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px 18px', flexWrap: 'wrap' }}>
-        <div className="ct-bar-field">
-          <div className="ct-label">Contrast standard</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Segmented value={profile} onChange={setProfile} options={[['wcag', 'WCAG'], ['apca', 'APCA']]} />
-            <span className="ct-info">
-              ⓘ
-              <span className="ct-tip">
-                The same requirements solved under two contrast metrics. WCAG (the default) is
-                the strict legal mode: the 2.x ratios (3:1 / 4.5 / 7), every text color
-                guaranteed to pass its ratio, pencil-47 (the emphasis fill) flipping to black
-                where white reads under 4.5:1. APCA is the opt-in extra-legibility lane: the
-                perceptual model, Lc 30 / 75 / 90, a closer read of what's actually legible.
-              </span>
-            </span>
-          </div>
-        </div>
       </div>
 
       {/* ADVANCED (owner spec 2026-07-16): the link field + the two levers live behind a

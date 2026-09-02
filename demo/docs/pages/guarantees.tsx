@@ -37,13 +37,13 @@ export function Body() {
         every family the theme emits: neutral, brand, brand-alt, and the four signals.
       </P>
       <Table
-        head={['band', 'claim', 'bar', 'stops']}
+        head={['band', 'claim', 'bar']}
         rows={[
-          ['paper', 'grounds. Every contrast band is cleared against them; they carry no claim of their own', '', <>{stopTokenName(1)}, {stopTokenName(2)}, {stopTokenName(3)}, and the neutral's {PAPER_0}</>],
-          ['highlighter', 'grounds for subtle states and decoration. The pen band is cleared against them. Never text', '', <>{stopTokenName(4)} to {stopTokenName(7)}</>],
-          ['crayon', 'reads on every paper: focus rings, icons, borders, large text (the non-text contrast bar)', <><K v={STOP_8_NONTEXT_CONTRAST} d={1} />:1</>, stopTokenName(8)],
-          ['pencil', 'reads on every paper: regular text, and the emphasis fill', <><K v={PENCIL_9_CONTRAST} d={1} />:1</>, stopTokenName(9)],
-          ['pen', 'reads on every paper and every highlighter, both directions', <><K v={PEN_10_CONTRAST} d={1} />:1</>, <>{stopTokenName(10)}, {stopTokenName(11)}, and the neutral's {PEN_100}</>],
+          ['paper', 'grounds. Every contrast band is cleared against them; they carry no claim of their own', ''],
+          ['highlighter', 'grounds for subtle states and decoration. The pen band is cleared against them. Never text', ''],
+          ['crayon', 'reads on every paper: focus rings, icons, borders, large text (the non-text contrast bar)', <><K v={STOP_8_NONTEXT_CONTRAST} d={1} />:1</>],
+          ['pencil', 'reads on every paper: regular text, and the emphasis fill', <><K v={PENCIL_9_CONTRAST} d={1} />:1</>],
+          ['pen', 'reads on every paper and every highlighter, both directions', <><K v={PEN_10_CONTRAST} d={1} />:1</>],
         ]}
       />
       <P>
@@ -71,10 +71,10 @@ export function Body() {
       <Table
         head={['bound', 'light (darkest Y)', 'dark (lightest Y)', 'binds']}
         rows={[
-          [<Code>NEUTRAL_P3_WORST_SHIP_Y</Code>, <K v={NEUTRAL_P3_WORST_SHIP_Y.light} d={6} />, <K v={NEUTRAL_P3_WORST_SHIP_Y.dark} d={6} />, `the worst neutral ${stopTokenName(3)}; every chromatic family's crayon, pencil and ${stopTokenName(11)}`],
-          [<Code>NEUTRAL_W80_WORST_SHIP_Y</Code>, <K v={NEUTRAL_W80_WORST_SHIP_Y.light} d={6} />, <K v={NEUTRAL_W80_WORST_SHIP_Y.dark} d={6} />, `the worst neutral ${stopTokenName(7)}; every chromatic family's ${stopTokenName(10)} (the one stop anchored at a highlighter)`],
-          [<Code>CHROMATIC_P3_WORST_SHIP_Y</Code>, <K v={CHROMATIC_P3_WORST_SHIP_Y.light} d={6} />, <K v={CHROMATIC_P3_WORST_SHIP_Y.dark} d={6} />, `the worst chromatic ${stopTokenName(3)}; the neutral's crayon, pencil and pens, each at its band's bar`],
-          [<Code>CHROMATIC_W80_WORST_SHIP_Y</Code>, <K v={CHROMATIC_W80_WORST_SHIP_Y.light} d={6} />, <K v={CHROMATIC_W80_WORST_SHIP_Y.dark} d={6} />, `the worst chromatic ${stopTokenName(7)}; the neutral's pens`],
+          [<Code>NEUTRAL_P3_WORST_SHIP_Y</Code>, <K v={NEUTRAL_P3_WORST_SHIP_Y.light} d={6} />, <K v={NEUTRAL_P3_WORST_SHIP_Y.dark} d={6} />, 'the worst neutral paper; every chromatic family\'s crayon, pencil and pen'],
+          [<Code>NEUTRAL_W80_WORST_SHIP_Y</Code>, <K v={NEUTRAL_W80_WORST_SHIP_Y.light} d={6} />, <K v={NEUTRAL_W80_WORST_SHIP_Y.dark} d={6} />, 'the worst neutral highlighter; every chromatic family\'s pen'],
+          [<Code>CHROMATIC_P3_WORST_SHIP_Y</Code>, <K v={CHROMATIC_P3_WORST_SHIP_Y.light} d={6} />, <K v={CHROMATIC_P3_WORST_SHIP_Y.dark} d={6} />, 'the worst chromatic paper; the neutral\'s crayon, pencil and pen, each at its own bar'],
+          [<Code>CHROMATIC_W80_WORST_SHIP_Y</Code>, <K v={CHROMATIC_W80_WORST_SHIP_Y.light} d={6} />, <K v={CHROMATIC_W80_WORST_SHIP_Y.dark} d={6} />, 'the worst chromatic highlighter; the neutral\'s pen'],
         ]}
       />
       <P>
