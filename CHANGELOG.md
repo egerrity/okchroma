@@ -8,7 +8,7 @@ structure, ships as at least a minor.
 
 Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git log.
 
-## 0.4.0 — unreleased
+## 0.4.0 — 2026-09-06
 
 - The scrim ships in CSS: `--abs-black-060` (black at 60%, both modes) in the `:root`
   block `signalsCss` writes, beside the alpha ladders; `tokens/semantic.css` aliases it
