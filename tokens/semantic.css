@@ -1,20 +1,18 @@
 /*
-  Semantic token layer — maps role names to primitive tokens.
+  Semantic token layer: maps role names to primitive tokens.
   This file never changes per brand. Only the primitives (--brand-*, --neutral-*) change.
 */
 
 /* ─── Global surface / fg / border ─────────────────────────────────────────── */
 
 [data-brand] {
-  /* Elevation planes sunken → low → base → high (owner spec 2026-07-24 Figma
-     elevation study; renamed 2026-08-12 — base is the raised plane components sit
-     on, the page behind it is low, the two extremes are edge cases): both themes
-     use the SAME four stops, in reversed order — elevation always moves toward
-     paper-0's side of the ramp. Light descends the ramp as elevation rises
-     (sunken paper-5 → high paper-0 white); dark ascends it (sunken paper-0
-     black → high paper-5). paper-0 flips white→black with the mode, so it is
-     always the extreme pole: the high in light, the sunken in dark. The stops
-     themselves have never moved through any of the renames. */
+  /* Elevation planes dim, low, mid, high: mid is the raised plane components sit on,
+     the page behind it is low, and the two extremes are edge cases. Both themes use
+     the SAME four stops in reversed order, so elevation always moves toward paper-0's
+     side of the ramp. Light descends the ramp as elevation rises (dim paper-5 to high
+     paper-0, white); dark ascends it (dim paper-0, the deep tinted ground, to high
+     paper-5). paper-0 flips with the mode, so it is always the extreme pole: the high
+     in light, the dim in dark. */
   --surface-dim:        var(--neutral-paper-5);
   --surface-low:         var(--neutral-paper-3);
   --surface-mid:       var(--neutral-paper-1);
@@ -22,46 +20,40 @@
 
   --fg-default:           var(--neutral-pen-70);
   --fg-subtle:            var(--neutral-pencil-47);
-  /* --fg-link moved to the SYSTEM LINK trio below (owner 2026-07-16: one link per
-     theme, riding --link — no longer the brand's raw pen pair) */
 
-  /* --border-default IS THE ACCESSIBILITY BORDER (owner 2026-07-29): a border that has
-     to be there — inputs and other controls — so it rides crayon-26, the stop that
-     carries the WCAG 1.4.11 3:1 non-text require (highlight-8 pre-Stage-B). It sat on
-     --neutral-highlight-9 until that stop was deleted; crayon-26 is where the
-     requirement actually lives, and it is the one stop this round does not move.
-     Decorative borders are --border-subtle (highlighter-11) and the per-family
-     --*-border-default (highlighter-15). */
+  /* --border-default IS THE ACCESSIBILITY BORDER: a border that has to be there (inputs
+     and other controls), so it rides crayon-26, the stop that carries the 3:1 non-text
+     contrast requirement. Decorative borders are --border-subtle (highlighter-11) and
+     the per-family --*-border-default (highlighter-15). */
   --border-default:       var(--neutral-crayon-26);
   --border-subtle:        var(--neutral-highlighter-11);
 
-  /* Shadow transparencies (owner 2026-07-27) — pure black, mirrors the plugin's
-     system/alpha/shadow-04|08|12 rows 1:1. Dark is heavier by necessity: near
-     black a light-mode alpha vanishes, so the dark values carry the same roles
-     at 32/48/64%. Elevation recipes (--elev-*) compose these, so dark shadows
-     fall out of the token swap with nothing bespoke per style. */
+  /* Shadow transparencies: pure black, the engine's SHADOW_ALPHAS, the same rows the
+     plugins write as shadow-04|08|12. Dark is heavier by necessity: near black a
+     light-mode alpha vanishes, so the dark values carry the same roles at heavier
+     alphas. Elevation recipes compose these, so dark shadows fall out of the token
+     swap with nothing bespoke per style. */
   --shadow-04: rgba(0, 0, 0, 0.04);
   --shadow-08: rgba(0, 0, 0, 0.08);
   --shadow-12: rgba(0, 0, 0, 0.12);
 
   /* The scrim: the modal veil, black at 60% in both modes. The primitive
      (--abs-black-060) rides signalsCss's :root, the same row the plugins write
-     as abs-black-060; this alias is the job word (owner 2026-09-06). */
+     as abs-black-060; this alias is the job word. */
   --scrim: var(--abs-black-060);
 
-  /* Disabled opacity (owner 2026-08-29): disabled is a COMPONENT-LEVEL opacity —
-     colors stay the enabled ones and never swap. Mode-invariant; mirrors the JS
-     API's DISABLED_OPACITY constant 1:1. */
+  /* Disabled opacity: disabled is a COMPONENT-LEVEL opacity. Colors stay the enabled
+     ones and never swap. Mode-invariant; mirrors the JS API's DISABLED_OPACITY
+     constant 1:1. */
   --disabled-opacity: 0.38;
 }
 
 [data-brand][data-theme="dark"] {
-  /* Dark runs the same four stops upward: sunken paper-0 (black) → low paper-1 →
-     base paper-3 → high paper-5 — the one-level highest background (C27: every
+  /* Dark runs the same four stops upward: dim paper-0 (the deep tinted ground), low
+     paper-1, mid paper-3, high paper-5, the one-level highest background: every
      family's paper-5 shares one photometric level, so chips sit flush on the high
-     plane by construction; a generated candidate for it was tried and retired,
-     owner 2026-07-28). Low needs its own override here because the shared block's
-     low is paper-3 (the light value); the stops themselves did not move. */
+     plane by construction. Low needs its own override here because the shared
+     block's low is paper-3, the light value. */
   --surface-dim:        var(--paper-0, #000000);
   --surface-low:         var(--neutral-paper-1);
   --surface-mid:       var(--neutral-paper-3);
@@ -95,15 +87,15 @@
   --brand-border-emphasis:       var(--brand-stamp-fill);
   --brand-border-emphasis-hover: var(--brand-stamp-fill-hover);
 
-  /* the SYSTEM LINK (one trio per theme — aliases the primary's pen stops unless a custom
+  /* the SYSTEM LINK (one trio per theme; aliases the primary's pen stops unless a custom
      link color de-conflicts it; --link/-hover/-pressed are emitted per brand) */
   --fg-link:         var(--link);
   --fg-link-hover:   var(--link-hover);
   --fg-link-pressed: var(--link-pressed);
 
-  /* the INVERSE link trio (owner round 2026-08-19): the same link seed re-solved for
-     text on inverted surfaces (a pen-70 fill); always its own emitted values —
-     no stop is anchored against that ground, so there is no alias posture */
+  /* the INVERSE link trio: the same link seed re-solved for text on inverted surfaces
+     (a pen-70 fill); always its own emitted values, since no stop is anchored against
+     that ground and so there is no alias posture */
   --fg-link-inverse:         var(--link-inverse);
   --fg-link-inverse-hover:   var(--link-inverse-hover);
   --fg-link-inverse-pressed: var(--link-inverse-pressed);
@@ -136,20 +128,15 @@
 /* ─── Signal roles ──────────────────────────────────────────────────────────
    Aliases onto engine-generated signal primitives (dist/signals.css).
    Mode switching happens at the primitive layer, so one block covers both.
-   Signal families emit by ROLE (owner 2026-07-27: critical/warning/positive/
-   info — the re-pointable in-between tier; identity stays engine-internal),
-   so the role tokens and the family ramp share a prefix: --critical-fg rides
-   --critical-pen-70. The old alert-high/alert-med role prefixes collapsed
-   into critical/warning in the same round.
+   Signal families emit by ROLE (critical/warning/positive/info, the re-pointable
+   in-between tier; identity stays engine-internal), so the role tokens and the
+   family ramp share a prefix: --critical-fg rides --critical-pen-70.
 
-   -fg-on-emphasis rides --paper-0, NOT a solved on-color: the engine's on-highlight
-   token was deleted with the highlight band (owner 2026-07-29). paper-0 is the
-   mode-flipping paper extreme — white in light, the tinted deep ground in dark — and
-   it clears 4.5 against pencil-47 everywhere (agnostic 360-seed sweep, worst 4.96
-   light / 8.04 dark). -bg-emphasis / -border-emphasis moved from highlight-9 to
-   pencil-47 (ink-9 pre-Stage-B) with it; in dark that reads lighter (contrast vs
-   paper-5, median 6.01 → 7.72). Stage B (owner 2026-08-07, names only) relabeled
-   every leaf in the block below; the stops themselves did not move. */
+   -fg-on-emphasis rides --paper-0, NOT a solved on-color. paper-0 is the
+   mode-flipping paper extreme (white in light, the deep tinted ground in dark) and
+   it clears the 4.5:1 text bar against pencil-47 in every family and both modes;
+   the band audit holds that floor over an agnostic sweep. -bg-emphasis and
+   -border-emphasis ride pencil-47. */
 
 [data-brand] {
   --critical-fg:                    var(--critical-pen-70);

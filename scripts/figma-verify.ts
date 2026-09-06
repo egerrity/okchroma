@@ -374,7 +374,7 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
     for (const mode of ['light', 'dark'] as const)
       ok(root.includes(`--alpha-away-from-bg-${String(rung).padStart(2, '0')}: rgba(${mode === 'light' ? '0, 0, 0' : '255, 255, 255'}`),
         `system alpha row --alpha-away-from-bg-${String(rung).padStart(2, '0')} missing from :root (${mode})`)
-  // the scrim rides the same :root (the 2026-09-06 kitchenUI handoff): black at 0.60, the
+  // the scrim rides the same :root: black at 0.60, the
   // value pinned on the Figma side above, spelled --abs-black-060, once per mode block
   ok((root.match(/--abs-black-060: rgba\(0, 0, 0, 0\.6\);/g) ?? []).length === 2,
     'system alpha row --abs-black-060 (the scrim) missing from :root in one or both blocks')

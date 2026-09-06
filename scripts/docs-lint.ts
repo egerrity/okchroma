@@ -2,16 +2,18 @@
 //
 //   npm run docs:lint
 //
-// The docs site (demo/docs/DocsSite.tsx) and the repo docs it links to are checked for
-// the classes of drift that have recurred: em dashes in prose, retired token vocabulary,
-// internal round IDs and owner-date jargon that an outside engineer cannot decode.
-// A hit prints file:line, the rule, and the offending text; any hit fails the run.
+// The docs site (demo/docs/DocsSite.tsx), the repo docs it links to, and the shipped
+// semantic token file (tokens/semantic.css, whose comments land verbatim in every
+// consumer's repository) are checked for the classes of drift that have recurred: em
+// dashes in prose, retired token vocabulary, internal round IDs, owner-date jargon that
+// an outside engineer cannot decode, and dated history in what should be a present-tense
+// claim. A hit prints file:line, the rule, and the offending text; any hit fails the run.
 //
 // Not linted: docs/engine-spec/CATALOG.md (history), CHANGELOG.md (a release log whose
 // rename tables must name the old words), research/, scratch/, and the plugins' own docs.
 import * as fs from 'fs'
 
-type Surface = { path: string; kind: 'md' | 'tsx' }
+type Surface = { path: string; kind: 'md' | 'tsx' | 'css' }
 const SURFACES: Surface[] = [
   { path: 'demo/docs/DocsSite.tsx', kind: 'tsx' },
   { path: 'demo/docs/prose.tsx', kind: 'tsx' },
@@ -30,6 +32,7 @@ const SURFACES: Surface[] = [
   { path: 'docs/schema.md', kind: 'md' },
   { path: 'docs/agents.md', kind: 'md' },
   { path: 'plugin-ext/README.md', kind: 'md' },
+  { path: 'tokens/semantic.css', kind: 'css' },
 ]
 
 type Rule = { name: string; re: RegExp; why: string }
@@ -42,13 +45,15 @@ const RULES: Rule[] = [
   { name: 'retired-plane', re: /\bsunken\b/g, why: 'retired plane word; the planes are dim/low/mid/high' },
   { name: 'criterion-number', re: /\bWCAG ?\d\.\d+\.\d+\b|\b1\.4\.(?:1|3|6|11)\b/g, why: 'state the requirement in plain English (the 4.5:1 text bar, the 3:1 non-text bar); link the clause if citing it' },
   { name: 'round-id', re: /\b[CT]\d{1,3}\b/g, why: 'internal round ID; state the mechanism, link CATALOG if history is needed' },
+  { name: 'dated', re: /\b20\d\d-\d\d-\d\d\b/g, why: 'a comment is present tense and true at HEAD; history goes to the commit message, the changelog, or the decisions record' },
   { name: 'owner-jargon', re: /\(owner\b|\bowner(?:'s)? (?:ruling|rule|call|decision|directive|spec|mark|pick|correction)\b|\bowner[ -]20\d\d\b/gi, why: 'internal decision jargon; state the rule, not who ruled it' },
 ]
 
 // tsx: only the rendered prose is a doc surface. Strip block comments, full-line
 // comments, and trailing " // " comments (a URL's :// has no space before it).
+// md and css: the whole file (a css declaration carries no prose, so linting it is free).
 function proseOf(src: string, kind: Surface['kind']): string {
-  if (kind === 'md') return src
+  if (kind !== 'tsx') return src
   return src
     .replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '))
     .replace(/^(\s*)\/\/.*$/gm, (m, ws) => ws + ' '.repeat(m.length - ws.length))

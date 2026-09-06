@@ -4,6 +4,29 @@ Fresh tracker. The previous CATALOG was archived with the whole old docs tree in
 ("clean-slate rewrite" 2026-06-27); entries here are code-grounded, logged at find-time,
 fixed holistically after owner sign-off.
 
+## C61 — tokens/semantic.css narrated its own history, in retired vocabulary (FIXED, the kitchenUI hygiene work order, 2026-09-06)
+
+Found by kitchenUI, which appends the file verbatim per the Install page: eight comment
+blocks carried dates, owner attributions, "this round", "pre-Stage-B", "was deleted",
+"did not move", and the elevation blocks still named the planes sunken/base while the
+declarations say dim/mid (the comment narrating the rename was not updated by it). The
+rule applied (now global, "Comments and the record"): a comment is present tense and true
+at HEAD, keeps the reason and drops the provenance; history lives in the commit message,
+the changelog, or this ledger. Owner ruling in the same pass: no measured number is ever
+pinned in a comment (the block kept "worst 4.96 / 8.04" while the band audit already read
+5.18 / 8.08); state the mechanism and name the gate. Also corrected in passing: dark
+paper-0 described as black (it is the deep tinted ground one seam below paper-1), a
+reference to --elev-* recipes that exist only in the demo, the "require" typo, C27 as a
+round ID, a criterion cited by number, em dashes. The four "changelog" items the work
+order proposed were declined: every one predates the first npm release (0.1.0,
+2026-08-28), so no published version carried the old words and no consumer upgrades
+across them; they stay in this ledger and git. Same treatment applied to the dated
+comments C58-C60 had just added in cssRender.ts and figma-verify.ts. Durable: the docs
+lint now covers tokens/semantic.css and gains a dated-line rule. Comment-only: the
+comment-stripped file is byte-identical before and after. The engine's own pre-existing
+dated comments (cssRender.ts, resolve.ts, the plugins) are a separate sweep, hers to
+schedule.
+
 ## C60 — `neutralTintHue` documented as a package export, never exported (FIXED, the kitchenUI handoff, 2026-09-06)
 
 Found by kitchenUI following README.md and the Install page verbatim: the import fails
