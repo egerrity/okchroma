@@ -149,13 +149,17 @@ export const offsetTokenPath = (rung: OffsetRung) => `base/alpha/away-from-bg/${
 // carries system/alpha/cta-border adopts the row instead of gaining a duplicate.
 // THE SHADOW LADDER + THE SCRIM (engine worklist B3/B4, 2026-08-29): the values
 // tokens/semantic.css and both plugins have carried as literals, single-sourced so
-// the JS emit (figmaRender's system group) and the ext payload cannot drift.
+// the JS emit (figmaRender's system group), the ext payload and the CSS :root
+// (alphaRootVars, since the 2026-09-06 kitchenUI handoff) cannot drift.
 // Shadows are pure black; dark is heavier by necessity — near black a light-mode
 // alpha vanishes — so the same three roles ride 32/48/64%. The scrim is black at
 // 60% in BOTH modes (spelled by its composition — abs-black-060 — because it is
-// honest across modes; owner export 2026-08-18). plugin/code.ts's STATIC_UTILS
-// stays a literal mirror (the sandbox bundle imports no engine module);
-// figma-verify pins the emitted values so a drift there fails loudly here.
+// honest across modes; owner export 2026-08-18). Its CSS spelling drops the ext
+// zone the way utility/shadow-04 ships as --shadow-04 (owner 2026-09-06); the job
+// word is the semantic layer's alias (--scrim in tokens/semantic.css).
+// plugin/code.ts's STATIC_UTILS stays a literal mirror (the sandbox bundle
+// imports no engine module); figma-verify pins the emitted values so a drift
+// there fails loudly here.
 export const SHADOW_ALPHAS = {
   4: { light: 0.04, dark: 0.32 },
   8: { light: 0.08, dark: 0.48 },
@@ -172,10 +176,15 @@ export const SCRIM_ALPHA = 0.6
 export const DISABLED_OPACITY = 0.38
 
 export const TRANSPARENT_VAR = '--alpha-transparent'
+// the scrim's CSS name: system/alpha/abs-black-060 with the zone dropped, one spelling
+// with the ext plugin's developer-visible name (see the B3/B4 note above)
+export const SCRIM_VAR = '--abs-black-060'
 export const offsetRgba = (rung: OffsetRung, mode: 'light' | 'dark'): string =>
   mode === 'light' ? `rgba(0, 0, 0, ${OFFSET_ALPHAS[rung]})` : `rgba(255, 255, 255, ${OFFSET_ALPHAS[rung]})`
 export const alphaRootVars = (mode: 'light' | 'dark'): string[] => [
   `  ${TRANSPARENT_VAR}: transparent;`,
+  // mode-invariant like transparent; repeated in the dark block to keep the set together
+  `  ${SCRIM_VAR}: rgba(0, 0, 0, ${SCRIM_ALPHA});`,
   ...(Object.keys(OFFSET_ALPHAS) as unknown as OffsetRung[])
     .map(Number).sort((a, b) => a - b)
     .map(r => `  ${offsetVarName(r as OffsetRung)}: ${offsetRgba(r as OffsetRung, mode)};`),
@@ -206,7 +215,11 @@ export function ctaNeedsBorder(s: GeneratedScale, mode: 'light' | 'dark', page: 
 
 // (the paper-overlay lines are PARKED — owner 2026-08-18: emission off, the solve
 // lives on in alphaPapers.ts under audit:alpha; see git for the emit wiring)
-export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' | 'dark', page: ColorStop | undefined): string[] {
+// `on`: the stamp-on register. 'soft' = the pole at SOFT_ON_CTA_ALPHA (the quiet fills),
+// 'solid' = the pole. Defaults soft for the neutral, solid for everyone else; brandCss
+// passes the secondary's per-mode verdict (softOnCtaPasses) so the body writes the right
+// line once instead of a post-body cascade override (the kitchenUI handoff, 2026-09-06).
+export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' | 'dark', page: ColorStop | undefined, on: 'soft' | 'solid' = prefix === CSS_NEUTRAL ? 'soft' : 'solid'): string[] {
   const stops = mode === 'light' ? s.light : s.dark
   const f = ctaFamilyOf(s, mode)
   const onCta = mode === 'light' ? s.onFillTextIsWhite : s.onFillTextIsWhiteDark
@@ -235,11 +248,11 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
     // button text takes the pole AT ALPHA like the default-model secondary's — composited
     // over whatever state the fill is in, so hover/pressed carry their own legibility. Same
     // register both families (SOFT_ON_CTA_ALPHA), so both alias the ONE system/alpha/ink
-    // primitive. Emitted HERE rather than as a post-body override because the neutral's is
-    // unconditional — the secondary's rides the cascade only because it gates on the style
-    // chip. Loud fills (brand, signals, the cta escape) keep the solid pole.
-    prefix === CSS_NEUTRAL
-      ? `  --${CSS_NEUTRAL}-stamp-on: rgba(${onCta ? '255, 255, 255' : '0, 0, 0'}, ${SOFT_ON_CTA_ALPHA[mode]});`
+    // primitive. The neutral's is unconditional (the parameter default); the secondary's is
+    // the caller's per-mode verdict. Loud fills (brand, signals, the cta escape) keep the
+    // solid pole.
+    on === 'soft'
+      ? `  --${prefix}-stamp-on: rgba(${onCta ? '255, 255, 255' : '0, 0, 0'}, ${SOFT_ON_CTA_ALPHA[mode]});`
       : `  --${prefix}-stamp-on: ${onColor(onCta)};`,
   ]
 }
@@ -357,7 +370,8 @@ export function signalsCss(contrastProfile?: ContrastProfile): string {
     // the system alpha variables every family's cta-border aliases (owner 2026-07-29) — this is
     // the engine's one global :root, the CSS counterpart of the Figma side's system/alpha/* rows.
     // Emitted in BOTH blocks because the offset rungs are scheme-DIVERGENT (black in light,
-    // white in dark); --alpha-transparent repeats harmlessly and keeps the set together.
+    // white in dark); --alpha-transparent and the scrim (both mode-invariant) repeat
+    // harmlessly and keep the set together.
     ...alphaRootVars('light'),
     ...lightBlocks,
     `}`,
@@ -469,8 +483,18 @@ export function brandCss(
     ]
   }
 
-  const secondaryLight = secondary ? brandKindBody(CSS_SECONDARY, secondary, 'light', page.light) : mirrorBody(CSS_SECONDARY, 'light')
-  const secondaryDark = secondary ? brandKindBody(CSS_SECONDARY, secondary, 'dark', page.dark) : mirrorBody(CSS_SECONDARY, 'dark')
+  // the secondary's stamp-on register (owner 2026-08-06, tightened 2026-08-29): EVERY
+  // non-outline secondary — default model included — takes the SOFT pole per mode wherever
+  // softOnCtaPasses says the composite stays over WCAG 4.5 on every fill state. The default
+  // model's old unconditional pass was a C47 calibration gap (its dark states were never
+  // measured and never passed — see the CARRIERS note in resolve.ts). A failing fill keeps
+  // the solid pole — the regular button posture. Outline overrides stamp-on to pen-58 below
+  // and the no-secondary mirror keeps the brand's. Decided HERE so the body writes the line
+  // once (it was a post-body cascade override until the 2026-09-06 kitchenUI handoff).
+  const secondaryOn = (mode: 'light' | 'dark'): 'soft' | 'solid' =>
+    secondary && secondaryStyle !== 'outline' && softOnCtaPasses(secondary, mode) ? 'soft' : 'solid'
+  const secondaryLight = secondary ? brandKindBody(CSS_SECONDARY, secondary, 'light', page.light, secondaryOn('light')) : mirrorBody(CSS_SECONDARY, 'light')
+  const secondaryDark = secondary ? brandKindBody(CSS_SECONDARY, secondary, 'dark', page.dark, secondaryOn('dark')) : mirrorBody(CSS_SECONDARY, 'dark')
   // identity — literal input hex, mode-invariant (light block only). Secondary
   // mirrors the brand's when no secondary ramp exists.
   const brandIdentity = `  --${CSS_BRAND}-identity: ${scale.identityHex};`
@@ -556,23 +580,6 @@ export function brandCss(
     ]
   }
 
-  // the SOFT on-cta: the on-text pole at SOFT_ON_CTA_ALPHA, composited by the renderer over
-  // the fill's current state so hover/pressed carry their own legibility. Emitted AFTER the
-  // secondary body so the cascade takes it (the outline idiom).
-  // WHO GETS IT (owner 2026-08-06, tightened 2026-08-29): EVERY non-outline secondary —
-  // default model included — per mode, wherever softOnCtaPasses says the composite stays
-  // over WCAG 4.5 on every fill state. The default model's old unconditional pass was a C47
-  // calibration gap (its dark states were never measured and never passed — see the
-  // CARRIERS note in resolve.ts). A failing fill emits nothing here, so the secondary
-  // body's solid pole stands — the regular button posture. Outline keeps its pencil-47 and
-  // the no-secondary mirror keeps the brand's.
-  const softOnCta = (mode: 'light' | 'dark'): string[] => {
-    if (!secondary || secondaryStyle === 'outline') return []
-    if (!softOnCtaPasses(secondary, mode)) return []
-    const white = mode === 'light' ? secondary.onFillTextIsWhite : secondary.onFillTextIsWhiteDark
-    return [`  --${CSS_SECONDARY}-stamp-on: rgba(${white ? '255, 255, 255' : '0, 0, 0'}, ${SOFT_ON_CTA_ALPHA[mode]});`]
-  }
-
   const outline = (mode: 'light' | 'dark'): string[] => {
     if (secondaryStyle !== 'outline' || !secondary) return []
     const s8 = (mode === 'light' ? secondary.light : secondary.dark).find(s => s.stop === 8)
@@ -635,7 +642,6 @@ export function brandCss(
     ...linkInverse('light'),
     brandIdentity,
     ...secondaryLight,
-    ...softOnCta('light'),
     ...outline('light'),
     secondaryIdentity,
     ...brandKindBody(CSS_NEUTRAL, nScale, 'light', page.light),
@@ -648,7 +654,6 @@ export function brandCss(
     ...link('dark'),
     ...linkInverse('dark'),
     ...secondaryDark,
-    ...softOnCta('dark'),
     ...outline('dark'),
     ...brandKindBody(CSS_NEUTRAL, nScale, 'dark', page.dark),
     ...effOverrides.flatMap(o => brandKindBody(SIGNAL_EMIT_NAME[o.name], o.scale, 'dark', page.dark)),

@@ -4,6 +4,54 @@ Fresh tracker. The previous CATALOG was archived with the whole old docs tree in
 ("clean-slate rewrite" 2026-06-27); entries here are code-grounded, logged at find-time,
 fixed holistically after owner sign-off.
 
+## C60 — `neutralTintHue` documented as a package export, never exported (FIXED, the kitchenUI handoff, 2026-09-06)
+
+Found by kitchenUI following README.md and the Install page verbatim: the import fails
+("does not provide an export named neutralTintHue"). The function exists
+(colorEngine.ts neutralTintHue, the C48 rule: the primary's hue by default, 'secondary'
+follows the secondary's hue live, 'custom' takes a hex's hue) and the demo imports it from
+source; src/index.ts never re-exported it, so the docs rewrite (C57) described an API the
+package did not carry. Fix: exported with its NeutralSource type; the Install page gains
+the signature line; the README example is unchanged and now runs. No emit changes.
+
+## C59 — the scrim had no CSS custom property (FIXED, the kitchenUI handoff, 2026-09-06)
+
+themeToFigma writes system/alpha/abs-black-060 and the ext payload utility/abs-black-060,
+both from SCRIM_ALPHA (B3/B4); signalsCss, brandCss and tokens/semantic.css wrote nothing
+for it, and agents.md said so. Two consumers had each invented one (kitchenUI a --scrim
+literal appended to its emit; the base PoC a --alpha-abs-black-060 projection of the
+canonical path). Fix: alphaRootVars emits `--abs-black-060: rgba(0, 0, 0, 0.6)` in both
+:root blocks (mode-invariant, repeated like --alpha-transparent to keep the set together);
+tokens/semantic.css aliases it as --scrim beside the shadows. Spelling ruled by the owner
+2026-09-06: the ext plugin strips the zone from a row's developer-visible name and the
+docs promise that name matches the CSS property (utility/shadow-04 ships as --shadow-04),
+so the primitive carries the composition word and the alias carries the job word. The
+absolute poles stay Figma-only: the plugins alias pole-valued stamp-on rows onto them
+while the CSS emit inlines the pole; closing that split (CSS poles plus a soft ink row,
+the stamp-on lines aliasing them) is an emit-structure round of its own, parked, hers to
+resurrect. A new token key, so 0.4.0. figma-verify pins the :root line, once per block;
+the docs roster (figures.tsx cssHomeOf) reads SCRIM_VAR.
+
+## C58 — the secondary's soft stamp-on declared twice in a block (FIXED, the kitchenUI handoff, 2026-09-06)
+
+Found by kitchenUI's token page: for a default-style secondary whose fill passes the
+quiet-fill rule, the light block read `--brand-alt-stamp-on: #000000` and then
+`--brand-alt-stamp-on: rgba(0, 0, 0, 0.75)`. Cause: brandKindBody wrote the solid pole for
+every non-neutral family and softOnCta re-declared the alpha form after the secondary body
+(the cascade idiom); the body's own comment named the reason for the split (the neutral's
+soft form is unconditional, the secondary's gates on the style chip). Fix: brandKindBody
+takes the register (`on: 'soft' | 'solid'`, defaulting soft for the neutral) and brandCss
+passes the secondary's per-mode softOnCtaPasses verdict; softOnCta deleted. Proof through
+the real pipeline (resolveTheme into brandCss): 962 emits over an agnostic sweep (24 hues
+at three chromas plus pastel and deep seeds, default and outline styles, derived, custom
+and no secondary, escape on and off, both signalsCss profiles) folded last-declaration-
+wins are identical before and after; the raw line diff is 320 removed solid stamp-on
+lines and the 4 added scrim lines (C59), nothing else. Every gate and snapshot clean.
+SAME CLASS, KEPT: the outline and escape re-expressions still re-declare the stamp trio,
+edge and on after the body (the documented "outline idiom", P3-cascade-sensitive per
+dropOutlineCta / dropEscapeCta). Logged, not fixed: a consumer's last-wins read is correct
+there, and a body-level rewrite of those two is its own round.
+
 ## C57 — the docs contradicted the code on every surface (FIXED, the engineering docs rewrite, 2026-09-02)
 
 Found by the claims audit that opened the rewrite: every sentence on the four site pages

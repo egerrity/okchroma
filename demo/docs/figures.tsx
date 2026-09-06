@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { generateScale } from '../../src/engine/colorEngine'
-import { stopHex, brandCss, signalsCss } from '../../src/engine/cssRender'
+import { stopHex, brandCss, signalsCss, SCRIM_VAR } from '../../src/engine/cssRender'
 import { resolveTheme, SIGNAL_SCALES } from '../../src/engine/resolve'
 import { neutralTintHue } from '../../src/engine/colorEngine'
 import { themeToFigma, groupEntries, type FigmaGroup, type FigmaColorToken } from '../../src/engine/figmaRender'
@@ -119,6 +119,7 @@ export function cssHomeOf(path: string): CssHome {
   if (canonical === 'system/abs-primary') return { name: `--${CSS_FAMILY.brandPrimary}-identity`, from: 'engine' }
   if (canonical === 'system/abs-alt') return { name: `--${CSS_FAMILY.brandSecondary}-identity`, from: 'engine' }
   if (canonical === 'system/alpha/transparent') return { name: '--alpha-transparent', from: 'engine' }
+  if (canonical === 'system/alpha/abs-black-060') return { name: SCRIM_VAR, from: 'engine' }
   const m = canonical.match(/^system\/alpha\/away-from-bg\/(\d\d)$/)
   if (m) return { name: `--alpha-away-from-bg-${m[1]}`, from: 'engine' }
   const sh = canonical.match(/^system\/alpha\/shadow-(\d\d)$/)

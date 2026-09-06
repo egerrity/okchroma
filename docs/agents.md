@@ -76,7 +76,8 @@ Light theme descends the papers as elevation rises toward white; dark ascends th
 - `--link`, `--link-hover`, `--link-pressed`: the system link color for text on normal surfaces. `--link-inverse`, `--link-inverse-hover`, `--link-inverse-pressed`: the same seed, re-solved for text on inverted (`pen-70`-filled) surfaces. A link is not a text-style CTA; do not restyle links with the text stops. Emitted by `brandCss`.
 - `--alpha-away-from-bg-06/-08/-16`: the alpha rungs `stamp-edge` draws from. The `--alpha-toward-bg-` trio is the same ladder with the pole flipped, for state layers on inverted grounds. `--alpha-transparent` is the aliased off-state. Emitted by `signalsCss` at `:root`.
 - `--shadow-04/-08/-12`: drop shadow alphas, from `tokens/semantic.css`. Shadows are always dark, never glows.
-- The scrim (black at 60%) and the absolute poles `abs-black` / `abs-white` exist in the Figma output only; there is no CSS custom property for them. `paper-0` is a tinted near-pole, not an absolute; `pen-100` is a true pole but flips with the mode, while the absolutes never flip.
+- `--abs-black-060`: the scrim, black at 60% in both modes. Emitted by `signalsCss` at `:root`; `--scrim` in `tokens/semantic.css` aliases it. The same row is `abs-black-060` in the Figma output.
+- The absolute poles `abs-black` / `abs-white` exist in the Figma output only; there is no CSS custom property for them. `paper-0` is a tinted near-pole, not an absolute; `pen-100` is a true pole but flips with the mode, while the absolutes never flip.
 - `--disabled-opacity` (from `tokens/semantic.css`): disabled is an opacity on the component, never a color swap.
 
 ## Rules for agents

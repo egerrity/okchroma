@@ -8,6 +8,17 @@ structure, ships as at least a minor.
 
 Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git log.
 
+## 0.4.0 — unreleased
+
+- The scrim ships in CSS: `--abs-black-060` (black at 60%, both modes) in the `:root`
+  block `signalsCss` writes, beside the alpha ladders; `tokens/semantic.css` aliases it
+  as `--scrim`. The same row was Figma-only before. A new token key, hence a minor.
+- The secondary's soft `stamp-on` is declared once. The body writes the pole at alpha
+  directly where the quiet-fill rule applies; it used to write the solid pole and then
+  re-declare the alpha form after the body. Resolved values are byte-identical.
+- `neutralTintHue` and its `NeutralSource` type are exported. The README and Install
+  examples that already called it now run.
+
 ## 0.3.1 — 2026-09-02
 
 - The declaration names `paper-5` as the ground of `pencil-47` and `pen-70` (it spelled

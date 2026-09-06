@@ -96,7 +96,7 @@ export function Body() {
       <H3>CSS</H3>
       <Pre>{`[data-brand="acme"] { … }                        /* light: the anchors, then every family's rows */
 [data-brand="acme"][data-theme="dark"] { … }     /* dark: the same names, dark values */
-:root { … }                                      /* signalsCss: the alpha ladders + the canonical signals */
+:root { … }                                      /* signalsCss: the alpha ladders, the scrim, the canonical signals */
 :root[data-theme="dark"], [data-theme="dark"] { … }
 ${P3_SUPPORTS} {
 ${P3_MEDIA} {

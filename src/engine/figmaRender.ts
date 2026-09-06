@@ -279,7 +279,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     // state so hover/pressed carry their own legibility. Same values cssRender emits. The
     // VALUE ships here; both plugins alias this leaf onto their system/alpha/ink primitive
     // (owner-named 2026-08-03) — the cta-border idiom, never a raw write.
-    // THE CARRIERS (mirrors cssRender.softOnCta — the two must agree):
+    // THE CARRIERS (mirror cssRender: brandKindBody's `on` default for the neutral and brandCss.secondaryOn for the secondary — the two must agree):
     //  · the NEUTRAL (owner 2026-08-04) — unconditional; re-measured 2026-08-29, it passes
     //    softOnCtaPasses across the sweep in both modes.
     //  · EVERY non-outline secondary, default model included (owner ruling 2026-08-29) —

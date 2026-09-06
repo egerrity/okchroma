@@ -44,6 +44,11 @@
   --shadow-08: rgba(0, 0, 0, 0.08);
   --shadow-12: rgba(0, 0, 0, 0.12);
 
+  /* The scrim: the modal veil, black at 60% in both modes. The primitive
+     (--abs-black-060) rides signalsCss's :root, the same row the plugins write
+     as abs-black-060; this alias is the job word (owner 2026-09-06). */
+  --scrim: var(--abs-black-060);
+
   /* Disabled opacity (owner 2026-08-29): disabled is a COMPONENT-LEVEL opacity —
      colors stay the enabled ones and never swap. Mode-invariant; mirrors the JS
      API's DISABLED_OPACITY constant 1:1. */

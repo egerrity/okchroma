@@ -72,7 +72,9 @@ const css = brandCss(
         In the page: put the CSS in a stylesheet, set <Code>data-brand="acme"</Code> on the element the theme applies to,
         and toggle <Code>data-theme="dark"</Code> on it for dark mode. <Code>signalsCss()</Code> is the same for every brand,
         so it is emitted once (the repo's <Code>npm run generate</Code> writes it to <Code>dist/signals.css</Code>).{' '}
-        <Code>neutralCss(selector, brandH, level)</Code> emits a neutral alone, for chrome that carries no brand.
+        <Code>neutralCss(selector, brandH, level)</Code> emits a neutral alone, for chrome that carries no brand.{' '}
+        <Code>neutralTintHue(primaryH, source?, secondaryH?, customHex?)</Code> resolves the neutral's tint hue: no source, the primary's;{' '}
+        <Code>'secondary'</Code> follows the secondary's hue; <Code>'custom'</Code> takes the hue of a hex.
         Selectors, blocks, and the P3 override are on the <DocLink page="output" section="modes-and-selectors">Output contract</DocLink> page.
       </P>
       <H3>Emit Figma variables</H3>
