@@ -8,7 +8,7 @@ structure, ships as at least a minor.
 
 Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git log.
 
-## 0.5.1 — unreleased
+## 0.5.1 — 2026-09-08
 
 - The opacity ladder's Figma value is the percent, Figma's opacity unit: `system/opacity/064`
   holds `64` (0.5.0 emitted `0.64`, which Figma reads as under one percent). The CSS
