@@ -25,13 +25,15 @@
 // is its OWN single-mode collection (owner preference) or a third zone beside these.
 
 import { resolveTheme, signalScalesFor, SOFT_ON_CTA_ALPHA, type ResolvedTheme } from '../src/engine/resolve'
-import { themeToFigma, groupEntries, type FigmaGroup, type FigmaColorToken } from '../src/engine/figmaRender'
+import { themeToFigma, groupEntries, type FigmaGroup, type FigmaColorToken, type FigmaLeaf } from '../src/engine/figmaRender'
 import { SIGNALS } from '../src/engine/signals'
-import { OFFSET_ALPHAS, offsetTokenPath, SHADOW_ALPHAS, SCRIM_ALPHA, type OffsetRung } from '../src/engine/cssRender'
+import { OFFSET_ALPHAS, offsetTokenPath, SHADOW_ALPHAS, OPACITY_RUNGS, opacityLeafName, type OffsetRung, type OpacityRung } from '../src/engine/cssRender'
 import { neutralTintHue, type ContrastProfile, type NeutralLevel } from '../src/engine/colorEngine'
 import { FAMILIES } from '../src/engine/tokenDescriptions'
 
-export interface FlatTok { path: string; r: number; g: number; b: number; a?: number }
+// a row is a color (r/g/b, optional alpha) or, with `n` set, a bare number (the
+// opacity ladder; r/g/b are placeholders the writers never read)
+export interface FlatTok { path: string; r: number; g: number; b: number; a?: number; n?: number }
 
 // THE ZONE MAP (owner ruling 2026-08-18, replacing the primitive/ register): family
 // rows take the base/ zone as the FINAL pass in toFlat(), after IDENTITY_HOME and
@@ -94,7 +96,7 @@ export type ThemeSpec = Omit<Parameters<typeof resolveTheme>[0], 'contrastProfil
 // (unshifted — a brand's collision-shifted signal becomes that brand's override).
 export const BASE_SEED_HEX = '#E93D82'
 
-const isLeaf = (n: FigmaColorToken | FigmaGroup): n is FigmaColorToken => '$type' in n
+const isLeaf = (n: FigmaLeaf | FigmaGroup): n is FigmaColorToken => '$type' in n && n.$type === 'color'
 
 function flatten(node: FigmaGroup, prefix: string, out: FlatTok[]): void {
   // groupEntries (figmaRender.ts), not Object.entries: a group of bare-digit leaves is
@@ -106,7 +108,7 @@ function flatten(node: FigmaGroup, prefix: string, out: FlatTok[]): void {
     if (isLeaf(v)) {
       const [r, g, b] = v.$value.components
       out.push(v.$value.alpha < 1 ? { path, r, g, b, a: v.$value.alpha } : { path, r, g, b })
-    } else flatten(v, path, out)
+    } else if (!('$type' in v)) flatten(v, path, out)
   }
 }
 
@@ -131,15 +133,16 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
   // targets living in the tail is safe: code.ts seeds a missing-target row raw and
   // its conversion walk re-points the raw onto the alias in the same apply.
   const out: FlatTok[] = [
-    // shadows + the scrim: utility zone (classic hand-tuned rows — the engine never
-    // reads them back; the scrim spelled by its composition, black at 60%, honest in
-    // BOTH modes — owner export 2026-08-18). Values ride the engine's single-sourced
-    // register (cssRender SHADOW_ALPHAS/SCRIM_ALPHA, worklist B3/B4 2026-08-29) so
-    // this payload and the JS emit's system group cannot drift.
+    // the utility shelf: the shadows (black at a ladder rung per scheme) and the
+    // opacity ladder itself, bare numbers the same in both schemes. Values ride the
+    // engine's register (cssRender SHADOW_ALPHAS / OPACITY_RUNGS) so this payload and
+    // the JS emit's system group cannot drift. The scrim has no row: a kit composes it
+    // from the absolute black and the top rung.
     { path: 'utility/shadow-04', ...K, a: SHADOW_ALPHAS[4][scheme] },
     { path: 'utility/shadow-08', ...K, a: SHADOW_ALPHAS[8][scheme] },
     { path: 'utility/shadow-12', ...K, a: SHADOW_ALPHAS[12][scheme] },
-    { path: 'utility/abs-black-060', ...K, a: SCRIM_ALPHA },
+    ...(Object.keys(OPACITY_RUNGS).map(Number) as OpacityRung[])
+      .map(r => ({ path: `utility/opacity/${opacityLeafName(r)}`, ...K, n: OPACITY_RUNGS[r] })),
   ]
   flatten(g.neutral as FigmaGroup, 'neutral', out)
   // identity rows re-home to the ABSOLUTES (owner 2026-07-27: the unprocessed inputs

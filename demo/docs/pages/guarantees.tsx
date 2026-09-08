@@ -43,7 +43,7 @@ export function Body() {
           ['chalk', 'grounds for subtle states and decoration. The pen band is cleared against them. Never text', ''],
           ['highlighter', 'reads on every paper: focus rings, icons, borders, large text (the non-text contrast bar)', <><K v={STOP_8_NONTEXT_CONTRAST} d={1} />:1</>],
           ['pencil', 'reads on every paper: regular text, and the emphasis fill', <><K v={PENCIL_9_CONTRAST} d={1} />:1</>],
-          ['pen', 'reads on every paper and every chalk, both directions', <><K v={PEN_10_CONTRAST} d={1} />:1</>],
+          ['pen', 'reads on every paper and every chalk, both directions, and on highlighter-26 at every state rung composited over every paper', <><K v={PEN_10_CONTRAST} d={1} />:1</>],
         ]}
       />
       <P>
@@ -153,7 +153,7 @@ export function Body() {
         <LI>Exact mode ships the typed hex as the stamp fill and identity with on-fill enforcement off. The label is whichever pole passes, and a note is emitted when no pole reads well; the ramp's own stops keep their claims.</LI>
         <LI>A custom or exact secondary's ramp is the user's hex, untouched; its stops still resolve under the claims, but its stamp is not moved by the booster.</LI>
         <LI>The <Code>full-chroma</Code> style releases the vividness cap and sits outside the guarantee; it is API only.</LI>
-        <LI>Nothing is claimed for a color a consumer computes from the tokens (opacity tweaks, mixes). The claims are on the shipped values.</LI>
+        <LI>Nothing is claimed for a color a consumer computes from the tokens (ad-hoc opacities, mixes), except highlighter-26 at a state rung, which is claimed above. The claims are on the shipped values.</LI>
       </UL>
 
       <H2>How it is verified</H2>
@@ -165,7 +165,7 @@ export function Body() {
       <Table
         head={['script', 'sweep', 'what it proves']}
         rows={[
-          [<Code>audit:guarantee</Code>, '72 hues × 3 chromas at L 0.62, plus the 15 audit fixtures; 7 families; 4 neutral tint levels; both modes', 'the five claims above on the shipped 8-bit pair, both directions; the quiet stamp/on composite at 4.5:1 on every state; the full-chroma residual, reported'],
+          [<Code>audit:guarantee</Code>, '72 hues × 3 chromas at L 0.62, plus the 15 audit fixtures; 7 families; 4 neutral tint levels; both modes', 'the five claims above on the shipped 8-bit pair, both directions; highlighter-26 at every state rung over every paper; the quiet stamp/on composite at 4.5:1 on every state; the full-chroma residual, reported'],
           [<Code>req:audit</Code>, '24 hues × 3 chromas at L 0.62; both modes', 'every declared requirement holds; the ladder is monotonic through the highlighter; the pencil sits past the highlighter; the pens order; every stop is in gamut and a valid hex; the stamp anchor respects its floor and hue; hover and pressed travel one way; the on-fill pole is valid'],
           [<Code>audit:cta-apca</Code>, 'agnostic hue × lightness × chroma grids, every stamp surface', `the booster holds: every stamp fill reads Lc ${CO_LC} (critical ${CRITICAL_CLEARANCE_LC}), light and dark`],
           [<Code>band-audit</Code>, 'agnostic hue × chroma × L, plus the fixtures', `band order (${stopTokenName(9)} past ${stopTokenName(8)}); ${PAPER_0} on ${stopTokenName(9)} at 4.5:1; ${stopTokenName(8)} at 3:1 on its declared paper in both modes; the neutral stamp's state law and soft composite; a blessed value snapshot`],

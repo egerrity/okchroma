@@ -971,11 +971,12 @@ figma.ui.onmessage = async (msg) => {
         /\/stamp\//.test(p)
         || p.startsWith('base/link/')
         || p.startsWith('utility/surface/')
+        || p.startsWith('utility/opacity/') // the numbers a designer binds an opacity to
       const withSecondary = baseHasSecondary || hasSecondary
       const seedByCol = new Map<Column, Map<string, FlatTok>>(
         activeCols.map(c => [c, new Map(baseTokens[c].map(t => [t.path, t]))]))
       let createdVars = 0
-      const ensure = (path: string): figma.Variable => {
+      const ensure = (path: string, kind: 'COLOR' | 'FLOAT' = 'COLOR'): figma.Variable => {
         let v = baseVars.get(path)
         // An exact `paper-3` hit that lacks the current generation is a pre-Stage-B
         // index-era row (stop 3 = today's paper-5), not ours: drop it so the legacy
@@ -999,7 +1000,7 @@ figma.ui.onmessage = async (msg) => {
             baseVars.delete(legacyPath); baseVars.set(path, legacy); v = legacy; break
           }
         }
-        if (!v) { v = figma.variables.createVariable(path, base, 'COLOR'); baseVars.set(path, v); createdVars++ }
+        if (!v) { v = figma.variables.createVariable(path, base, kind); baseVars.set(path, v); createdVars++ }
         v.setPluginData(PATH_KEY, path); v.setPluginData(GEN_KEY, GEN_CURRENT) // identity stamp — a panel rename survives future lookups
         // the CROSS-PLUGIN stamp (owner 2026-08-11): pluginData is namespaced per plugin,
         // so the Mapper (plugin-unify) can't read the private stamp above. Same identity,
@@ -1077,6 +1078,8 @@ figma.ui.onmessage = async (msg) => {
         !!a && !!b && Math.abs(a.r - b.r) < EPS && Math.abs(a.g - b.g) < EPS
         && Math.abs(a.b - b.b) < EPS && Math.abs((a.a ?? 1) - (b.a ?? 1)) < EPS
       const seedValue = (v: figma.Variable, colId: string, t: FlatTok, col: Column) => {
+        // a bare-number row (the opacity ladder) writes its number; nothing aliases it
+        if (t.n !== undefined) { v.setValueForMode(colId, t.n); return }
         const target = strokeFor(t.path, t) ?? softInkFor(t.path, t)
           ?? (POLE_LEAVES(t.path) && isPole(t) ? absFor(t) : undefined)
         v.setValueForMode(colId, target ? figma.variables.createVariableAlias(target) : toRGBA(t))
@@ -1135,7 +1138,7 @@ figma.ui.onmessage = async (msg) => {
       for (const t of baseTokens[activeCols[0]]) { // all columns share the path set
         if (!withSecondary && (isBrandSecondary(t.path) || t.path === 'base/absolute/brand-alt')) continue
         const before = createdVars
-        const v = ensure(t.path)
+        const v = ensure(t.path, t.n !== undefined ? 'FLOAT' : 'COLOR')
         if (createdVars > before || rebuildBase) seedFresh(v, t.path) // fresh variable (or a rebuild) → seed every active column
       }
       // Existing bases predate the aliasing: convert a RAW value that is exactly what we
@@ -1186,6 +1189,7 @@ figma.ui.onmessage = async (msg) => {
         for (let i = 0; i < activeCols.length; i++) {
           const cur = v.valuesByMode[colIds[i]]
           if (!cur) continue
+          if (typeof cur === 'number') continue // a bare-number row (the opacity ladder) has no alias idiom
           if (isAlias(cur)) {
             // the era-crossing alias (owner-caught: "not updating the main theme"): a base
             // cta/on seeded PRE-C43 was pole-aliased onto abs-black/abs-white, and an alias
@@ -1244,7 +1248,7 @@ figma.ui.onmessage = async (msg) => {
         if (!v) continue
         for (let i = 0; i < activeCols.length; i++) {
           const cur = v.valuesByMode[colIds[i]]
-          if (!cur || isAlias(cur)) continue
+          if (!cur || typeof cur === 'number' || isAlias(cur)) continue
           const rgba = cur as figma.RGBA
           const a = rgba.a ?? 1
           if (!isPole({ r: rgba.r, g: rgba.g, b: rgba.b })) continue
@@ -1372,9 +1376,10 @@ figma.ui.onmessage = async (msg) => {
       for (const v of baseVars.values()) varById.set(v.id, v)
       const resolvedBase = (v: figma.Variable, colId: string): figma.RGBA | figma.VariableAlias | undefined => {
         const cur = v.valuesByMode[colId]
+        if (typeof cur === 'number') return undefined // number rows never take overrides
         if (isAlias(cur)) {
           const inner = varById.get(cur.id)?.valuesByMode[colId]
-          if (inner && !isAlias(inner)) return inner
+          if (inner && typeof inner !== 'number' && !isAlias(inner)) return inner
         }
         return cur
       }

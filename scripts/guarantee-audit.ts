@@ -12,6 +12,8 @@
 //   highlighter-26                3:1 against paper only
 //   pencil-47                4.5 against paper only          (pencil-47 pre guarantee round)
 //   pen (58/70/100)          4.5 against paper AND chalk      (the T10 chalk-20 law)
+//   pen (58/70/100)          4.5 against highlighter-26 at every state rung, composited
+//                            over every paper in scope (the translucent state layers)
 //
 // Plus the STAMP/ON pairing (owner ruling 2026-08-29): a quiet cta's shipped on-text —
 // the soft composite where softOnCtaPasses gates it in, the solid pole at rest where
@@ -33,7 +35,9 @@ import { resolveTheme, signalScalesFor, softOnCtaPasses, SOFT_ON_CTA_ALPHA } fro
 import { generateNeutralScale, type GeneratedScale } from '../src/engine/colorEngine'
 import { contrastRatio, shippedY } from '../src/engine/constraints'
 import { oklchToLinearRgb } from '../src/engine/constraints'
-import { srgbEmitChannels } from '../src/engine/colorMath'
+import { srgbEmitChannels, hexToOklch } from '../src/engine/colorMath'
+import { stopHex, OPACITY_RUNGS, INTERACTION_RUNGS, opacityLeafName } from '../src/engine/cssRender'
+import { compositeHex } from '../src/engine/alphaPapers'
 import { FIXTURES } from './fixture'
 import type { NeutralLevel } from '../src/engine/neutralCurve'
 // every tint level the neutral ships at — each level resolves its own pens, so each is measured
@@ -117,6 +121,26 @@ function check(hex: string, tag: string, opts: { exact?: boolean; archetypeOverr
       for (const [s, y] of chalkY) {
         for (const pen of PENS) seen(`${PEN_NAME[pen]} vs chalk`, contrastRatio(yOf(arr[pen - 1]), y), where(s), BAR.text)
         if (f.name === 'neutral') seen('pen-100 vs chalk', contrastRatio(penPoleY, y), where(s), BAR.text)
+      }
+      // THE STATE-LAYER CLAIM: highlighter-26 at every interaction rung, composited over
+      // every paper in scope (gamma sRGB, the basis every renderer composites in), holds
+      // the pen group at 4.5. The composite's Y is read from its 8-bit hex like any
+      // shipped pair.
+      const hlHex = stopHex(arr[HIGHLIGHTER - 1])
+      const paperHex: Array<[string, string]> = []
+      for (const st of PAPERS) {
+        paperHex.push([`own ${nameOf(st)}`, stopHex(arr[st - 1])])
+        if (f.name !== 'neutral') paperHex.push([`neutral ${nameOf(st)}`, stopHex(nArr[st - 1])])
+        else for (const g of fams) if (g.name !== 'neutral')
+          paperHex.push([`${g.name} ${nameOf(st)}`, stopHex((mode === 'light' ? g.scale.light : g.scale.dark)[st - 1])])
+      }
+      if (f.name === 'neutral' && nP0) paperHex.push(['paper-0', stopHex(nP0)])
+      for (const rung of INTERACTION_RUNGS) for (const [s, gHex] of paperHex) {
+        const o = hexToOklch(compositeHex(hlHex, gHex, OPACITY_RUNGS[rung]))
+        const cy = shippedY(o.L, o.C, o.H)
+        const at = `${s} under highlighter-26 at ${opacityLeafName(rung)}`
+        for (const pen of PENS) seen(`${PEN_NAME[pen]} vs state rung`, contrastRatio(yOf(arr[pen - 1]), cy), where(at), BAR.text)
+        if (f.name === 'neutral') seen('pen-100 vs state rung', contrastRatio(penPoleY, cy), where(at), BAR.text)
       }
     }
     // stamp/on over the quiet cta fill (owner ruling 2026-08-29): the soft composite is

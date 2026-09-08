@@ -12,7 +12,7 @@ import { HUE_COLLISION_CHALK_DEG, HUE_COLLISION_MIN_V, YELLOW_SPLIT_H, HUE_GATE_
 import { SHIFT_RULES } from '../../../src/engine/signalShift'
 import { P2_D, P2_D_UP } from '../../../src/engine/p2'
 import { DEFAULT_SECONDARY, SOFT_ON_CTA_ALPHA, OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, DEFAULT_LINK_HEX, SECONDARY_DISTINCT_DELTA_E } from '../../../src/engine/resolve'
-import { CTA_BORDER_LC_FLOOR, OFFSET_ALPHAS, SHADOW_ALPHAS, SCRIM_ALPHA, DISABLED_OPACITY } from '../../../src/engine/cssRender'
+import { CTA_BORDER_LC_FLOOR, OFFSET_ALPHAS, SHADOW_ALPHAS, SCRIM_ALPHA, DISABLED_OPACITY, OPACITY_RUNGS, INTERACTION_RUNGS, opacityLeafName } from '../../../src/engine/cssRender'
 import { SIGNALS } from '../../../src/engine/signals'
 import { stopTokenName, SCALE_STOP_COUNT, PAPER_0 } from '../../../src/engine/tokenNames'
 
@@ -143,7 +143,9 @@ export function Body() {
         [<Code>CTA_BORDER_LC_FLOOR</Code>, k(CTA_BORDER_LC_FLOOR, 0), 'the stamp edge gate'],
         [<Code>OFFSET_ALPHAS</Code>, Object.entries(OFFSET_ALPHAS).map(([r, a]) => `${r}: ${a}`).join(', '), 'the alpha ladder rungs'],
         [<Code>SHADOW_ALPHAS</Code>, Object.entries(SHADOW_ALPHAS).map(([r, a]) => `${r}: ${a.light} / ${a.dark}`).join(', '), 'the shadow rungs, light / dark'],
-        [<Code>SCRIM_ALPHA</Code>, k(SCRIM_ALPHA, 2), 'the scrim'],
+        [<Code>OPACITY_RUNGS</Code>, Object.entries(OPACITY_RUNGS).map(([r, a]) => `${opacityLeafName(Number(r) as never)}: ${a}`).join(', '), 'the opacity ladder, bare numbers, both modes'],
+        [<Code>INTERACTION_RUNGS</Code>, INTERACTION_RUNGS.map(r => opacityLeafName(r)).join(', '), 'the state rungs of highlighter-26 over a ground'],
+        [<Code>SCRIM_ALPHA</Code>, k(SCRIM_ALPHA, 2), 'the scrim, the ladder\'s top rung'],
         [<Code>DISABLED_OPACITY</Code>, k(DISABLED_OPACITY, 2), 'the disabled opacity'],
       ] as Row[]} />
 

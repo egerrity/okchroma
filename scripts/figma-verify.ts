@@ -257,6 +257,10 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
 // ship through the JS emit now. Ground truth is spelled LITERALLY here — the values the
 // token layer and both plugins carry — so a drifted register constant fails this script
 // instead of silently re-pinning itself (the C40 snapshot lesson).
+// the opacity ladder, pinned as the numbers the token layer and both plugins carry
+const OPACITY_TRUTH: Record<string, number> = {
+  '004': 0.04, '008': 0.08, '012': 0.12, '016': 0.16, '024': 0.24, '032': 0.32, '048': 0.48, '064': 0.64,
+}
 {
   const SURFACE_TRUTH: Record<string, { light: string; dark: string }> = {
     dim: { light: 'paper-5', dark: 'paper-0' },
@@ -287,8 +291,11 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
     }
     const a = sys.alpha
     ok(a?.transparent?.$value.alpha === 0, `${mode}.system.alpha.transparent is not alpha 0`)
-    ok(a?.['abs-black-060']?.$value.hex === '#000000' && a?.['abs-black-060']?.$value.alpha === 0.6,
-      `${mode}.system.alpha.abs-black-060 is not black@0.60 (the scrim is mode-invariant)`)
+    ok(a?.['abs-black-060'] === undefined, `${mode}.system.alpha.abs-black-060 is still emitted (the scrim composes from the opacity ladder)`)
+    // the opacity ladder: bare numbers, mode-invariant, typed as numbers
+    for (const [k, n] of Object.entries(OPACITY_TRUTH))
+      ok(sys.opacity?.[k]?.$type === 'number' && sys.opacity?.[k]?.$value === n,
+        `${mode}.system.opacity.${k} is not the number ${n} (got ${JSON.stringify(sys.opacity?.[k])})`)
     // the soft on-text pole: black@.75 light / white@.80 dark — must equal the register
     // the neutral's quiet stamp/on already rides (asserted against SOFT_ON_CTA_ALPHA above)
     ok(a?.ink?.$value.hex === (mode === 'dark' ? '#ffffff' : '#000000') && a?.ink?.$value.alpha === (mode === 'dark' ? 0.8 : 0.75),
@@ -374,10 +381,12 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
     for (const mode of ['light', 'dark'] as const)
       ok(root.includes(`--alpha-away-from-bg-${String(rung).padStart(2, '0')}: rgba(${mode === 'light' ? '0, 0, 0' : '255, 255, 255'}`),
         `system alpha row --alpha-away-from-bg-${String(rung).padStart(2, '0')} missing from :root (${mode})`)
-  // the scrim rides the same :root: black at 0.60, the
-  // value pinned on the Figma side above, spelled --abs-black-060, once per mode block
-  ok((root.match(/--abs-black-060: rgba\(0, 0, 0, 0\.6\);/g) ?? []).length === 2,
-    'system alpha row --abs-black-060 (the scrim) missing from :root in one or both blocks')
+  // the opacity ladder rides the same :root, once per mode block, as the numbers pinned
+  // on the Figma side above; the retired scrim row must be gone
+  for (const [k, n] of Object.entries(OPACITY_TRUTH))
+    ok((root.match(new RegExp(`--opacity-${k}: ${n};`, 'g')) ?? []).length === 2,
+      `opacity row --opacity-${k}: ${n} missing from :root in one or both blocks`)
+  ok(!root.includes('--abs-black-060'), 'the retired scrim row --abs-black-060 is still in :root')
 }
 
 if (fails.length) { console.error('FAIL:\n' + fails.map(f => '  - ' + f).join('\n')); process.exit(1) }

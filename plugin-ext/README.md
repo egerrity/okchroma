@@ -36,7 +36,9 @@ reads back, written last so they shelve together.
 - `base/link/default/*` and `base/link/inverse/*`, `base/alpha/*` (transparent, ink, the
   `away-from-bg` rungs), `base/absolute/*` (black, white, brand, brand-alt).
 - `utility/surface/dim|low|mid|high` (created by the plugin, aliased onto the neutral's
-  papers per the surface plane law), `utility/shadow-04|08|12`, `utility/abs-black-060`.
+  papers per the surface plane law), `utility/shadow-04|08|12`, and the opacity ladder `utility/opacity/004` through `064` (number
+  variables; `008` through `032` are `base/<family>/highlighter-26`'s state rungs, the shadows and the
+  scrim compose with the rest). The scrim has no row: a kit composes it from the absolute black and `064`.
 
 Values in the base are the documented default seed (`payload.BASE_SEED_HEX`, `#E93D82`),
 recommended mode, the derived brand-alt, the default neutral, canonical signals. The base is

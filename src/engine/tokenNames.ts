@@ -107,7 +107,6 @@ export const SYSTEM_LEAF = {
   },
   ALPHA: {
     TRANSPARENT: 'system/alpha/transparent',
-    SCRIM: 'system/alpha/abs-black-060',
     INK: 'system/alpha/ink',
     // the DIRECTIONAL ladders (owner 2026-08-31, renaming the 2026-08-18 bare rungs
     // and the 2026-08-29 inverse ladder): away-from-bg is the page-polarity pole
@@ -127,6 +126,13 @@ export const SYSTEM_LEAF = {
     SHADOW_08: 'system/alpha/shadow-08',
     SHADOW_12: 'system/alpha/shadow-12',
   },
+  // the OPACITY LADDER's rows: bare numbers, never colors. `alpha` above is the group
+  // of colors that carry transparency; `opacity` is the numbers they compose with
+  // (values in cssRender OPACITY_RUNGS; the ext plugin zones these under utility/).
+  OPACITY: {
+    '004': 'system/opacity/004', '008': 'system/opacity/008', '012': 'system/opacity/012', '016': 'system/opacity/016',
+    '024': 'system/opacity/024', '032': 'system/opacity/032', '048': 'system/opacity/048', '064': 'system/opacity/064',
+  } as Record<string, string>,
 } as const
 
 // THE SURFACE-PLANE LAW (the one per-mode reversal, owner spec 2026-07-24 —

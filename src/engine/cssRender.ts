@@ -3,7 +3,7 @@
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
 import { srgbEmitChannels, masterEmitChannels } from './colorMath'
 import { clampChromaToGamut, apcaY, apcaLc } from './constraints'
-import { stopTokenName, tokenOrder, PAPER_0, PEN_100 } from './tokenNames'
+import { stopTokenName, tokenOrder, PAPER_0, PEN_100, SYSTEM_LEAF } from './tokenNames'
 import { signalScalesFor, OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, SOFT_ON_CTA_ALPHA, softOnCtaPasses, escapeCtaFamily, resolveLinkTrio, resolveLinkInverseTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
 import { SIGNALS, SIGNAL_EMIT_NAME } from './signals'
 import { CSS_FAMILY } from './tokenDescriptions'
@@ -147,26 +147,37 @@ export const offsetTokenPath = (rung: OffsetRung) => `base/alpha/away-from-bg/${
 // as the property of one token. Nothing about it is cta-specific, so any border that wants the
 // same quiet edge can point at it. Renamed in place via RENAMED_LEAVES so a file that already
 // carries system/alpha/cta-border adopts the row instead of gaining a duplicate.
-// THE SHADOW LADDER + THE SCRIM (engine worklist B3/B4, 2026-08-29): the values
-// tokens/semantic.css and both plugins have carried as literals, single-sourced so
-// the JS emit (figmaRender's system group), the ext payload and the CSS :root
-// (alphaRootVars) cannot drift.
-// Shadows are pure black; dark is heavier by necessity — near black a light-mode
-// alpha vanishes — so the same three roles ride 32/48/64%. The scrim is black at
-// 60% in BOTH modes (spelled by its composition — abs-black-060 — because it is
-// honest across modes). Its CSS spelling drops the ext zone the way
-// utility/shadow-04 ships as --shadow-04; the job word is the semantic layer's
-// alias (--scrim in tokens/semantic.css).
-// plugin/code.ts's STATIC_UTILS stays a literal mirror (the sandbox bundle
-// imports no engine module); figma-verify pins the emitted values so a drift
-// there fails loudly here.
+// THE OPACITY LADDER: the bare numbers every translucent composition reads its
+// weight from. Eight rungs spelled as three-digit percents, the same in both modes;
+// a color row that needs a heavier weight in dark picks a heavier rung per mode, the
+// way the shadows do. Numbers, never colors: `alpha` names a color that carries
+// transparency (alpha/ink, shadow-04), `opacity` names the bare number (the disabled
+// value below is the older precedent). INTERACTION_RUNGS is the state register of
+// highlighter-26 over any paper or inverted ground: that stop is placed by its 3:1
+// against paper-5 in both modes, so one rung set steps the same distance off the
+// ground in light and in dark, and the pen group's 4.5 holds on every rung of the
+// subset over every paper of the family and the neutral (guarantee-audit). The
+// shadow and scrim rungs sit outside the state register.
+// tokens/semantic.css composes the shadows and the scrim from these; the Figma
+// side ships them as number variables (system/opacity, utility/opacity in the ext
+// zone); figma-verify pins both emits so a drift fails loudly here.
+export const OPACITY_RUNGS = { 4: 0.04, 8: 0.08, 12: 0.12, 16: 0.16, 24: 0.24, 32: 0.32, 48: 0.48, 64: 0.64 } as const
+export type OpacityRung = keyof typeof OPACITY_RUNGS
+export const INTERACTION_RUNGS: readonly OpacityRung[] = [8, 12, 16, 24, 32]
+export const opacityLeafName = (rung: OpacityRung) => String(rung).padStart(3, '0')
+export const opacityVarName = (rung: OpacityRung) => `--opacity-${opacityLeafName(rung)}`
+export const opacityTokenPath = (rung: OpacityRung) => SYSTEM_LEAF.OPACITY[opacityLeafName(rung)]
+// Shadows are pure black on a ladder rung; dark is heavier by necessity (near black a
+// light-mode weight vanishes), so the same three roles pick the heavier rungs there.
 export const SHADOW_ALPHAS = {
-  4: { light: 0.04, dark: 0.32 },
-  8: { light: 0.08, dark: 0.48 },
-  12: { light: 0.12, dark: 0.64 },
+  4: { light: OPACITY_RUNGS[4], dark: OPACITY_RUNGS[32] },
+  8: { light: OPACITY_RUNGS[8], dark: OPACITY_RUNGS[48] },
+  12: { light: OPACITY_RUNGS[12], dark: OPACITY_RUNGS[64] },
 } as const
 export type ShadowRung = keyof typeof SHADOW_ALPHAS
-export const SCRIM_ALPHA = 0.6
+// the scrim: the absolute black at the top rung in both modes, composed by the token
+// layer (--scrim in tokens/semantic.css) and by a kit's alias; it has no row of its own
+export const SCRIM_ALPHA = OPACITY_RUNGS[64]
 
 // THE DISABLED OPACITY (owner 2026-08-29 — the worklist's one value specified
 // nowhere, now blessed): disabled is a COMPONENT-LEVEL opacity; colors stay the
@@ -176,15 +187,14 @@ export const SCRIM_ALPHA = 0.6
 export const DISABLED_OPACITY = 0.38
 
 export const TRANSPARENT_VAR = '--alpha-transparent'
-// the scrim's CSS name: system/alpha/abs-black-060 with the zone dropped, one spelling
-// with the ext plugin's developer-visible name (see the B3/B4 note above)
-export const SCRIM_VAR = '--abs-black-060'
 export const offsetRgba = (rung: OffsetRung, mode: 'light' | 'dark'): string =>
   mode === 'light' ? `rgba(0, 0, 0, ${OFFSET_ALPHAS[rung]})` : `rgba(255, 255, 255, ${OFFSET_ALPHAS[rung]})`
 export const alphaRootVars = (mode: 'light' | 'dark'): string[] => [
   `  ${TRANSPARENT_VAR}: transparent;`,
-  // mode-invariant like transparent; repeated in the dark block to keep the set together
-  `  ${SCRIM_VAR}: rgba(0, 0, 0, ${SCRIM_ALPHA});`,
+  // the opacity ladder, mode-invariant like transparent; repeated in the dark block to
+  // keep the set together
+  ...(Object.keys(OPACITY_RUNGS).map(Number) as OpacityRung[])
+    .map(r => `  ${opacityVarName(r)}: ${OPACITY_RUNGS[r]};`),
   ...(Object.keys(OFFSET_ALPHAS) as unknown as OffsetRung[])
     .map(Number).sort((a, b) => a - b)
     .map(r => `  ${offsetVarName(r as OffsetRung)}: ${offsetRgba(r as OffsetRung, mode)};`),
@@ -370,7 +380,7 @@ export function signalsCss(contrastProfile?: ContrastProfile): string {
     // the system alpha variables every family's cta-border aliases (owner 2026-07-29) — this is
     // the engine's one global :root, the CSS counterpart of the Figma side's system/alpha/* rows.
     // Emitted in BOTH blocks because the offset rungs are scheme-DIVERGENT (black in light,
-    // white in dark); --alpha-transparent and the scrim (both mode-invariant) repeat
+    // white in dark); --alpha-transparent and the opacity ladder (mode-invariant) repeat
     // harmlessly and keep the set together.
     ...alphaRootVars('light'),
     ...lightBlocks,

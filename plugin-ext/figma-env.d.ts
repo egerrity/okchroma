@@ -29,7 +29,7 @@ declare namespace figma {
     function getLocalVariableCollectionsAsync(): Promise<VariableCollection[]>
     function getLocalVariablesAsync(): Promise<Variable[]>
     function createVariableCollection(name: string): VariableCollection
-    function createVariable(name: string, collection: VariableCollection, type: 'COLOR'): Variable
+    function createVariable(name: string, collection: VariableCollection, type: 'COLOR' | 'FLOAT'): Variable
     function createVariableAlias(variable: Variable): VariableAlias
     /** Returns a COPY of the paint with its color bound to the variable — heal.ts. */
     function setBoundVariableForPaint(paint: SolidPaint, field: 'color', variable: Variable): SolidPaint
@@ -124,12 +124,13 @@ declare namespace figma {
     scopes: VariableScope[]
     readonly variableCollectionId: string
     /** Values keyed by the OWNING collection's modeIds (the base pair for base variables). */
-    readonly valuesByMode: { readonly [modeId: string]: RGBA | VariableAlias }
+    readonly resolvedType: 'COLOR' | 'FLOAT' | 'STRING' | 'BOOLEAN'
+    readonly valuesByMode: { readonly [modeId: string]: RGBA | VariableAlias | number }
     /** Routing by an EXTENSION's modeId is what makes a call an override. */
-    setValueForMode(modeId: string, value: RGBA | VariableAlias): void
+    setValueForMode(modeId: string, value: RGBA | VariableAlias | number): void
     removeOverrideForMode(modeId: string): void
     /** Inherited + overridden values as seen through `collection` (extension modeId keys). */
-    valuesByModeForCollectionAsync(collection: VariableCollection): Promise<{ [modeId: string]: RGBA | VariableAlias }>
+    valuesByModeForCollectionAsync(collection: VariableCollection): Promise<{ [modeId: string]: RGBA | VariableAlias | number }>
     setVariableCodeSyntax(platform: 'WEB' | 'ANDROID' | 'iOS', value: string): void
   }
 }

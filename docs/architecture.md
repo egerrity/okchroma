@@ -134,7 +134,7 @@ flowchart TD
 
 | Piece | Location | What it does |
 |---|---|---|
-| CSS emitter | `cssRender.ts` | `brandCss`, `neutralCss`, `signalsCss`, `stopHex`, the P3 override blocks, the stamp edge gate (`ctaNeedsBorder`, `ctaBorderRung`, `pageStopFor`), the alpha ladders, shadows, scrim, `DISABLED_OPACITY`, the outline and escape re-expressions, the quiet fill's soft on-text. |
+| CSS emitter | `cssRender.ts` | `brandCss`, `neutralCss`, `signalsCss`, `stopHex`, the P3 override blocks, the stamp edge gate (`ctaNeedsBorder`, `ctaBorderRung`, `pageStopFor`), the alpha ladders, the opacity ladder (`OPACITY_RUNGS`, the shadows and the scrim derive from it), `DISABLED_OPACITY`, the outline and escape re-expressions, the quiet fill's soft on-text. |
 | Figma emitter | `figmaRender.ts` | `themeToFigma` (the same theme as light and dark group trees, with the system group), `groupEntries`, `putLeaf`. |
 | Public API | `index.ts` | What the npm package exports. |
 | Token build | `build.ts` | Writes `dist/signals.css`. |
@@ -325,7 +325,7 @@ engine (`resolveTheme` → `themeToFigma` → `toFlat`); `plugin-ext/code.ts` wr
 
 **Zones.** Every path starts with an ownership zone: `base/` marks engine-owned rows, where
 a hand edit is deliberately not rebuilt by a re-apply; `utility/` marks team-touchable rows
-the engine never reads back (the surface planes, the shadows, the scrim), written last so
+the engine never reads back (the surface planes, the shadows, the opacity ladder), written last so
 they shelve together. `payload.registerPath` applies the family zone as the final step of
 `toFlat`, after the identity and link rows have been re-homed; system-descended rows are
 built with their zone spelling directly. The zone is stripped from the Web code syntax, so a

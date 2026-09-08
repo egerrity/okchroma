@@ -96,7 +96,7 @@ export function Body() {
       <H3>CSS</H3>
       <Pre>{`[data-brand="acme"] { … }                        /* light: the anchors, then every family's rows */
 [data-brand="acme"][data-theme="dark"] { … }     /* dark: the same names, dark values */
-:root { … }                                      /* signalsCss: the alpha ladders, the scrim, the canonical signals */
+:root { … }                                      /* signalsCss: the alpha ladders, the opacity ladder, the canonical signals */
 :root[data-theme="dark"], [data-theme="dark"] { … }
 ${P3_SUPPORTS} {
 ${P3_MEDIA} {
@@ -142,6 +142,12 @@ ${P3_MEDIA} {
         in <Code>themeToFigma</Code>. The disabled state is an opacity (<Code>--disabled-opacity</Code> in the semantic layer),
         never a color token.
       </P>
+      <P>
+        The opacity ladder (<Code>--opacity-004</Code> through <Code>--opacity-064</Code> at <Code>:root</Code>;{' '}
+        <Code>utility/opacity/NNN</Code> number variables in Figma) is the register the shadows, the scrim, and the{' '}
+        <Code>highlighter-26</Code> state layers compose with. The plugins write the numbers and the literal alphas; a
+        color alias that takes its opacity from one of the numbers is made in the kit.
+      </P>
 
       <H2>What is identical, what differs</H2>
       <UL>
@@ -155,7 +161,7 @@ ${P3_MEDIA} {
       <P>
         Every path the extended plugin writes starts with an ownership zone. <Code>base/</Code> marks engine-owned rows: a
         hand edit there is deliberately not rebuilt by a re-apply. <Code>utility/</Code> marks team-touchable rows the engine
-        never reads back (the surface planes, the shadows, the scrim). The zone is stripped from the Web code syntax, so the
+        never reads back (the surface planes, the shadows, the opacity ladder). The zone is stripped from the Web code syntax, so the
         name a developer sees matches the CSS custom property.
       </P>
       <P>

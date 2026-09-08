@@ -707,7 +707,7 @@ figma.ui.onmessage = async (msg) => {
       // low-lookup consume a file's old base row first (see RENAMED_LEAVES). The alpha/shadow ladder (owner 2026-07-27) is pure black at
       // 4/8/12% light; dark is heavier by necessity — near black a light-mode alpha
       // vanishes — at 32/48/64%.
-      const STATIC_UTILS: Array<{ path: string; light?: figma.RGBA; dark?: figma.RGBA; elevation?: boolean }> = [
+      const STATIC_UTILS: Array<{ path: string; light?: figma.RGBA; dark?: figma.RGBA; elevation?: boolean; float?: number }> = [
         { path: 'system/abs-black', light: K, dark: K },
         { path: 'system/abs-white', light: W, dark: W },
         { path: 'system/surface/dim', elevation: true },
@@ -718,7 +718,6 @@ figma.ui.onmessage = async (msg) => {
         { path: 'system/surface/mid', elevation: true },
         { path: 'system/surface/high', elevation: true },
         { path: 'system/alpha/transparent', light: { r: 1, g: 1, b: 1, a: 0 }, dark: { r: 1, g: 1, b: 1, a: 0 } },
-        { path: 'system/alpha/abs-black-060', light: { r: 0, g: 0, b: 0, a: 0.6 }, dark: { r: 0, g: 0, b: 0, a: 0.6 } },
         // the SOFT ON-CTA primitive (C43 follow-up, owner-named 2026-08-03): the on-text
         // pole at the engine's SOFT_ON_CTA_ALPHA register — black@.75 light,
         // white@.80 dark. A quiet cta's stamp/on aliases this row wherever the engine
@@ -735,6 +734,17 @@ figma.ui.onmessage = async (msg) => {
         { path: 'system/alpha/shadow-04', light: { r: 0, g: 0, b: 0, a: 0.04 }, dark: { r: 0, g: 0, b: 0, a: 0.32 } },
         { path: 'system/alpha/shadow-08', light: { r: 0, g: 0, b: 0, a: 0.08 }, dark: { r: 0, g: 0, b: 0, a: 0.48 } },
         { path: 'system/alpha/shadow-12', light: { r: 0, g: 0, b: 0, a: 0.12 }, dark: { r: 0, g: 0, b: 0, a: 0.64 } },
+        // the OPACITY LADDER: bare numbers, the same in both modes (a literal mirror
+        // of cssRender OPACITY_RUNGS like the rows above). The scrim has no row: a kit
+        // composes it from abs-black and the top rung.
+        { path: 'system/opacity/004', float: 0.04 },
+        { path: 'system/opacity/008', float: 0.08 },
+        { path: 'system/opacity/012', float: 0.12 },
+        { path: 'system/opacity/016', float: 0.16 },
+        { path: 'system/opacity/024', float: 0.24 },
+        { path: 'system/opacity/032', float: 0.32 },
+        { path: 'system/opacity/048', float: 0.48 },
+        { path: 'system/opacity/064', float: 0.64 },
       ]
       for (const u of STATIC_UTILS) {
         // getOrMigrate (not .get): renamed rows (the surface-plane words, historical
@@ -744,7 +754,7 @@ figma.ui.onmessage = async (msg) => {
         const existing = getOrMigrate(primByName, u.path)
         // already seeded — enforce the scope rule + restamp the code syntax
         if (existing) { existing.scopes = [] ; existing.setVariableCodeSyntax('WEB', codeSyntaxFor(existing.name)); continue }
-        const v = figma.variables.createVariable(u.path, p.coll, 'COLOR')
+        const v = figma.variables.createVariable(u.path, p.coll, u.float !== undefined ? 'FLOAT' : 'COLOR')
         v.setPluginData(PATH_KEY, u.path); v.setPluginData(GEN_KEY, GEN_CURRENT)
         v.description = descFor(u.path)
         v.setVariableCodeSyntax('WEB', codeSyntaxFor(v.name))
@@ -752,7 +762,10 @@ figma.ui.onmessage = async (msg) => {
         // (the theme aliases carry the scopes); the mode collection is the value store
         v.scopes = []
         primByName.set(u.path, v)
-        if (u.light && u.dark) { // elevation entries are aliased below, not value-set
+        if (u.float !== undefined) { // a bare number, the same in both modes
+          v.setValueForMode(pLight, u.float)
+          v.setValueForMode(pDark, u.float)
+        } else if (u.light && u.dark) { // elevation entries are aliased below, not value-set
           v.setValueForMode(pLight, u.light)
           v.setValueForMode(pDark, u.dark)
         }
@@ -946,7 +959,8 @@ figma.ui.onmessage = async (msg) => {
         const target = typeof primTarget === 'string' ? (primVar.get(primTarget) ?? primByName.get(primTarget)) : primTarget
         if (!target) return
         let v = getOrMigrate(themeByName, themePath)
-        if (!v) { v = figma.variables.createVariable(themePath, th.coll, 'COLOR'); v.setPluginData(PATH_KEY, themePath); v.setPluginData(GEN_KEY, GEN_CURRENT); themeByName.set(themePath, v) }
+        // a theme alias must carry its target's type (a number row aliases as a number)
+        if (!v) { v = figma.variables.createVariable(themePath, th.coll, target.resolvedType === 'FLOAT' ? 'FLOAT' : 'COLOR'); v.setPluginData(PATH_KEY, themePath); v.setPluginData(GEN_KEY, GEN_CURRENT); themeByName.set(themePath, v) }
         v.description = descFor(themePath)
         v.setVariableCodeSyntax('WEB', codeSyntaxFor(v.name))
         // the THEME aliases are what users bind — visible in every supported property
@@ -984,8 +998,10 @@ figma.ui.onmessage = async (msg) => {
       // idempotent — backfills pre-existing brand modes the moment the globals appear)
       const SYSTEM_GLOBALS = ['system/abs-black', 'system/abs-white',
         'system/surface/dim', 'system/surface/low', 'system/surface/mid', 'system/surface/high',
-        'system/alpha/transparent', 'system/alpha/abs-black-060',
-        'system/alpha/shadow-04', 'system/alpha/shadow-08', 'system/alpha/shadow-12']
+        'system/alpha/transparent',
+        'system/alpha/shadow-04', 'system/alpha/shadow-08', 'system/alpha/shadow-12',
+        'system/opacity/004', 'system/opacity/008', 'system/opacity/012', 'system/opacity/016',
+        'system/opacity/024', 'system/opacity/032', 'system/opacity/048', 'system/opacity/064']
       for (const path of SYSTEM_GLOBALS) {
         for (const m of th.coll.modes) aliasInto(path, path, m.modeId)
       }

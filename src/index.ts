@@ -57,7 +57,12 @@ export {
   OFFSET_ALPHAS,
   SHADOW_ALPHAS,
   SCRIM_ALPHA,
-  SCRIM_VAR,
+  OPACITY_RUNGS,
+  INTERACTION_RUNGS,
+  opacityLeafName,
+  opacityVarName,
+  opacityTokenPath,
+  type OpacityRung,
   DISABLED_OPACITY,
   type ShadowRung,
   ctaNeedsBorder,
@@ -69,6 +74,8 @@ export {
   themeToFigma,
   type FigmaGroup,
   type FigmaColorToken,
+  type FigmaNumberToken,
+  type FigmaLeaf,
   type ThemeInput,
 } from './engine/figmaRender'
 export {

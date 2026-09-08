@@ -1,6 +1,6 @@
 
 
-import { toHex, ctaNeedsBorder, pageStopFor, ctaBorderRung, OFFSET_ALPHAS, SHADOW_ALPHAS, SCRIM_ALPHA, type OffsetRung } from './cssRender'
+import { toHex, ctaNeedsBorder, pageStopFor, ctaBorderRung, OFFSET_ALPHAS, SHADOW_ALPHAS, OPACITY_RUNGS, opacityTokenPath, type OffsetRung, type OpacityRung } from './cssRender'
 import { srgbEmitChannels } from './colorMath'
 import { stopTokenName, tokenOrder, STAMP_FILL, STAMP_FILL_HOVER, STAMP_FILL_PRESSED, STAMP_EDGE, STAMP_ON, STAMP_STATE_LEAVES, PAPER_0, PEN_100, SYSTEM_LEAF, SURFACE_PLANE_LAW } from './tokenNames'
 import { CSS_FAMILY } from './tokenDescriptions'
@@ -13,7 +13,13 @@ export interface FigmaColorToken {
   $type: 'color'
   $value: { colorSpace: 'srgb'; components: [number, number, number]; alpha: number; hex: string }
 }
-export type FigmaGroup = { [key: string]: FigmaColorToken | FigmaGroup }
+// a bare-number row (the opacity ladder): `$value` is the number itself
+export interface FigmaNumberToken {
+  $type: 'number'
+  $value: number
+}
+export type FigmaLeaf = FigmaColorToken | FigmaNumberToken
+export type FigmaGroup = { [key: string]: FigmaLeaf | FigmaGroup }
 
 // the cta-border's transparent default (alpha 0 — the plugin aliases it onto system/transparent)
 const TRANSPARENT_TOKEN: FigmaColorToken = {
@@ -78,7 +84,7 @@ function bandedLeaf(flat: string): string {
 // Object.entries' order, which is already correct for them. Exported so every consumer
 // that walks a FigmaGroup for panel-order-sensitive output uses the same rule instead of
 // re-deriving it (or missing it) per call site.
-export function groupEntries(g: FigmaGroup): Array<[string, FigmaColorToken | FigmaGroup]> {
+export function groupEntries(g: FigmaGroup): Array<[string, FigmaLeaf | FigmaGroup]> {
   const entries = Object.entries(g)
   const digitLeading = (k: string) => /^\d/.test(k)
   if (entries.length > 1 && entries.every(([k]) => digitLeading(k)))
@@ -88,7 +94,7 @@ export function groupEntries(g: FigmaGroup): Array<[string, FigmaColorToken | Fi
 
 // set a token at its banded home inside a family group (used by rampGroup AND
 // the outline/escape re-expressions, so every write lands in the same shape)
-export function putLeaf(g: FigmaGroup, flat: string, tok: FigmaColorToken): void {
+export function putLeaf(g: FigmaGroup, flat: string, tok: FigmaLeaf): void {
   const path = bandedLeaf(flat).split('/')
   let cur = g
   for (const seg of path.slice(0, -1)) {
@@ -376,7 +382,10 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     // white@0 like the plugins' row (any fully-transparent value aliases here; the
     // stamp/edge TRANSPARENT_TOKEN stays black@0 — same pixel, its own posture)
     putLeaf(g, SYSTEM_LEAF.ALPHA.TRANSPARENT, pole(true, 0))
-    putLeaf(g, SYSTEM_LEAF.ALPHA.SCRIM, pole(false, SCRIM_ALPHA))
+    // the OPACITY LADDER: bare numbers, mode-invariant, the rows the shadows, the
+    // scrim and the highlighter-26 state layers compose with (no scrim row of its own)
+    for (const rung of Object.keys(OPACITY_RUNGS).map(Number) as OpacityRung[])
+      putLeaf(g, opacityTokenPath(rung), { $type: 'number', $value: OPACITY_RUNGS[rung] })
     // the soft on-text pole (C43/C9 register): black in light, white in dark, alpha
     // per mode — the ONE row every quiet cta's stamp/on aliases
     putLeaf(g, SYSTEM_LEAF.ALPHA.INK, pole(mode === 'dark', SOFT_ON_CTA_ALPHA[mode]))

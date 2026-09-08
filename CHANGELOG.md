@@ -17,6 +17,25 @@ Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git lo
   properties follow (`--brand-chalk-11`, `--neutral-highlighter-26`), as do the DTCG
   group labels (`chalk`, `highlighter`) and the `against` field of `pen-58` (`chalk-20`).
   The `HueCollisionCheck` fields are `dHueChalk` and `chalkDeltaE`.
+- The opacity ladder ships: eight bare numbers, `--opacity-004/008/012/016/024/032/048/064`,
+  in the `:root` block `signalsCss` writes, and `system/opacity/NNN` number tokens
+  (`$type: "number"`) in `themeToFigma`. Both plugins write them as number variables:
+  `utility/opacity/NNN` in the extended plugin, `system/opacity/NNN` with theme aliases in
+  the community plugin. The same in both modes. New exports: `OPACITY_RUNGS`,
+  `INTERACTION_RUNGS`, `opacityLeafName`, `opacityVarName`, `opacityTokenPath`,
+  `OpacityRung`, `FigmaNumberToken`, `FigmaLeaf`.
+- `highlighter-26` at the state rungs `008` through `032` is the translucent state layer over
+  any paper or inverted ground, and the pen band's 4.5:1 claim covers those composites over
+  every paper of the family and of the neutral (`audit:guarantee`). The chalk and
+  highlighter descriptions say so; chalk no longer names interactive states.
+- The shadows compose with the ladder: `--shadow-04/08/12` in `tokens/semantic.css` read
+  `--opacity-004/008/012` in light and `032/048/064` in dark. `SHADOW_ALPHAS` derives from
+  `OPACITY_RUNGS`. Values unchanged.
+- The scrim's own color row is removed: `--abs-black-060` leaves `:root`,
+  `system/alpha/abs-black-060` leaves the Figma tree and both plugins, and `SCRIM_VAR` is
+  no longer exported. `--scrim` in `tokens/semantic.css` composes black with
+  `--opacity-064`, so the scrim moves from 60% to 64%, onto the ladder. `SCRIM_ALPHA`
+  stays exported at the new value. An existing file's row orphans in place.
 
 ## 0.4.0 — 2026-09-06
 

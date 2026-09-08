@@ -15,7 +15,7 @@ declare namespace figma {
     function getLocalVariableCollectionsAsync(): Promise<VariableCollection[]>
     function getLocalVariablesAsync(): Promise<Variable[]>
     function createVariableCollection(name: string): VariableCollection
-    function createVariable(name: string, collection: VariableCollection, type: 'COLOR'): Variable
+    function createVariable(name: string, collection: VariableCollection, type: 'COLOR' | 'FLOAT'): Variable
     function createVariableAlias(variable: Variable): VariableAlias
   }
 
@@ -41,8 +41,9 @@ declare namespace figma {
     setPluginData(key: string, value: string): void
     scopes: VariableScope[]
     readonly variableCollectionId: string
-    readonly valuesByMode: { readonly [modeId: string]: RGBA | VariableAlias }
-    setValueForMode(modeId: string, value: RGBA | VariableAlias): void
+    readonly resolvedType: 'COLOR' | 'FLOAT' | 'STRING' | 'BOOLEAN'
+    readonly valuesByMode: { readonly [modeId: string]: RGBA | VariableAlias | number }
+    setValueForMode(modeId: string, value: RGBA | VariableAlias | number): void
     setVariableCodeSyntax(platform: 'WEB' | 'ANDROID' | 'iOS', value: string): void
   }
 }

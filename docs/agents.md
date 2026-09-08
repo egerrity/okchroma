@@ -22,9 +22,9 @@ Every scale token here is a primitive. What is unusual is that the requirement i
 
 **paper: `paper-1`, `paper-3`, `paper-5`.** Backgrounds and inverted text. No contrast claim of their own; every contrast stop is cleared against them. `paper-5` is the darkest light paper (the lightest dark paper), the one the contrast stops are solved against.
 
-**chalk: `chalk-8`, `chalk-11`, `chalk-15`, `chalk-20`.** Subtle interactive states, decorative borders, illustration, signal hierarchy. Never text. The pens are cleared against them; the highlighter and the pencil are not.
+**chalk: `chalk-8`, `chalk-11`, `chalk-15`, `chalk-20`.** Decorative borders, grounds for inverted text, illustration, signal hierarchy. Never text. The pens are cleared against them; the highlighter and the pencil are not. Interactive states are not chalk's job: they are `highlighter-26` at an opacity rung.
 
-**highlighter: `highlighter-26`.** Focus rings, icons, borders, large text. AA large text and UI elements: 3:1 against every paper of its family and of the neutral.
+**highlighter: `highlighter-26`.** Focus rings, icons, borders, large text. AA large text and UI elements: 3:1 against every paper of its family and of the neutral. At an opacity rung (`--opacity-008` through `--opacity-032`) it is the state layer over any paper or inverted ground: hover, pressed, and selected are this one stop at a rung, never a chalk step. AA body text holds on every state rung: the pen band clears 4.5:1 on the composite over every paper of its family and of the neutral.
 
 **pencil: `pencil-47`.** Regular text, and the emphasis fill. AA body text: 4.5:1 against every paper of its family and of the neutral. Its on-text, when used as a fill, is `paper-0`.
 
@@ -75,8 +75,9 @@ Light theme descends the papers as elevation rises toward white; dark ascends th
 
 - `--link`, `--link-hover`, `--link-pressed`: the system link color for text on normal surfaces. `--link-inverse`, `--link-inverse-hover`, `--link-inverse-pressed`: the same seed, re-solved for text on inverted (`pen-70`-filled) surfaces. A link is not a text-style CTA; do not restyle links with the text stops. Emitted by `brandCss`.
 - `--alpha-away-from-bg-06/-08/-16`: the alpha rungs `stamp-edge` draws from. The `--alpha-toward-bg-` trio is the same ladder with the pole flipped, for state layers on inverted grounds. `--alpha-transparent` is the aliased off-state. Emitted by `signalsCss` at `:root`.
-- `--shadow-04/-08/-12`: drop shadow alphas, from `tokens/semantic.css`. Shadows are always dark, never glows.
-- `--abs-black-060`: the scrim, black at 60% in both modes. Emitted by `signalsCss` at `:root`; `--scrim` in `tokens/semantic.css` aliases it. The same row is `abs-black-060` in the Figma output.
+- `--opacity-004/-008/-012/-016/-024/-032/-048/-064`: the opacity ladder, bare numbers, the same in both modes. Emitted by `signalsCss` at `:root`; `system/opacity/NNN` number variables in the Figma output. The shadows, the scrim, and the `highlighter-26` state layers compose with these; `008` through `032` are the state rungs.
+- `--shadow-04/-08/-12`: drop shadows, black at an opacity rung, from `tokens/semantic.css`; the dark block picks the heavier rungs. Shadows are always dark, never glows.
+- `--scrim`: the modal veil, black at `--opacity-064` in both modes, composed in `tokens/semantic.css`. There is no separate scrim color row.
 - The absolute poles `abs-black` / `abs-white` exist in the Figma output only; there is no CSS custom property for them. `paper-0` is a tinted near-pole, not an absolute; `pen-100` is a true pole but flips with the mode, while the absolutes never flip.
 - `--disabled-opacity` (from `tokens/semantic.css`): disabled is an opacity on the component, never a color swap.
 
@@ -85,6 +86,6 @@ Light theme descends the papers as elevation rises toward white; dark ascends th
 1. Never hardcode a hex. Every color in UI code is a token reference.
 2. Text comes from the text stops (`pencil-47`/`pen-58`/`pen-70`), or `stamp-on` over a CTA fill. The WCAG guarantee is documented per stop, not spelled in the name; do not run your own contrast checks or add compensating colors.
 3. The same token is used in both light and dark. Theming moves the values, not the references; never swap to a different stop for dark mode.
-4. States move along the scale in the order the names imply: rest, hover, pressed follow `stamp-fill`/`stamp-fill-hover`/`stamp-fill-pressed`, and text-style CTAs follow `pencil-47`/`pen-58`/`pen-70`.
-5. Do not invent intermediate values (no opacity tweaks on stops, no color-mix between stops). If a needed value seems missing, that is a design-system question, not something to patch locally.
+4. States move along the scale in the order the names imply: rest, hover, pressed follow `stamp-fill`/`stamp-fill-hover`/`stamp-fill-pressed`, and text-style CTAs follow `pencil-47`/`pen-58`/`pen-70`. A state on a paper or an inverted ground is `highlighter-26` at an opacity rung.
+5. Do not invent intermediate values (no ad-hoc opacities, no color-mix between stops). The one sanctioned translucency is `highlighter-26` at an opacity rung. If a needed value seems missing, that is a design-system question, not something to patch locally.
 6. Contrast is stated as WCAG conformance levels in each variable's description, never as ratios, and never encoded in the name.

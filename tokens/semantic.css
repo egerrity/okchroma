@@ -28,19 +28,20 @@
   --border-default:       var(--neutral-highlighter-26);
   --border-subtle:        var(--neutral-chalk-11);
 
-  /* Shadow transparencies: pure black, the engine's SHADOW_ALPHAS, the same rows the
-     plugins write as shadow-04|08|12. Dark is heavier by necessity: near black a
-     light-mode alpha vanishes, so the dark values carry the same roles at heavier
-     alphas. Elevation recipes compose these, so dark shadows fall out of the token
-     swap with nothing bespoke per style. */
-  --shadow-04: rgba(0, 0, 0, 0.04);
-  --shadow-08: rgba(0, 0, 0, 0.08);
-  --shadow-12: rgba(0, 0, 0, 0.12);
+  /* Shadow transparencies: pure black at a rung of the engine's opacity ladder (the
+     --opacity-NNN numbers signalsCss writes at :root), the same rows the plugins write
+     as shadow-04|08|12. Dark is heavier by necessity: near black a light-mode weight
+     vanishes, so the dark block picks the heavier rungs for the same three roles.
+     Elevation recipes compose these, so dark shadows fall out of the token swap with
+     nothing bespoke per style. */
+  --shadow-04: rgb(0 0 0 / var(--opacity-004));
+  --shadow-08: rgb(0 0 0 / var(--opacity-008));
+  --shadow-12: rgb(0 0 0 / var(--opacity-012));
 
-  /* The scrim: the modal veil, black at 60% in both modes. The primitive
-     (--abs-black-060) rides signalsCss's :root, the same row the plugins write
-     as abs-black-060; this alias is the job word. */
-  --scrim: var(--abs-black-060);
+  /* The scrim: the modal veil, the absolute black at the ladder's top rung in both
+     modes. Composed here from the number; a Figma kit composes the same thing as a
+     black alias at that opacity. There is no separate scrim color row. */
+  --scrim: rgb(0 0 0 / var(--opacity-064));
 
   /* Disabled opacity: disabled is a COMPONENT-LEVEL opacity. Colors stay the enabled
      ones and never swap. Mode-invariant; mirrors the JS API's DISABLED_OPACITY
@@ -59,9 +60,9 @@
   --surface-mid:       var(--neutral-paper-3);
   --surface-high:        var(--neutral-paper-5);
 
-  --shadow-04: rgba(0, 0, 0, 0.32);
-  --shadow-08: rgba(0, 0, 0, 0.48);
-  --shadow-12: rgba(0, 0, 0, 0.64);
+  --shadow-04: rgb(0 0 0 / var(--opacity-032));
+  --shadow-08: rgb(0 0 0 / var(--opacity-048));
+  --shadow-12: rgb(0 0 0 / var(--opacity-064));
 }
 
 /* ─── role.brand ────────────────────────────────────────────────────────────── */

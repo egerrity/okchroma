@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from 'react'
 import { generateScale } from '../../src/engine/colorEngine'
-import { stopHex, brandCss, signalsCss, SCRIM_VAR } from '../../src/engine/cssRender'
+import { stopHex, brandCss, signalsCss } from '../../src/engine/cssRender'
 import { resolveTheme, SIGNAL_SCALES } from '../../src/engine/resolve'
 import { neutralTintHue } from '../../src/engine/colorEngine'
-import { themeToFigma, groupEntries, type FigmaGroup, type FigmaColorToken } from '../../src/engine/figmaRender'
+import { themeToFigma, groupEntries, type FigmaGroup, type FigmaColorToken, type FigmaLeaf } from '../../src/engine/figmaRender'
 import { stopTokenName, PAPER_0, PEN_100, SURFACE_PLANE_LAW, SCALE_STOP_COUNT } from '../../src/engine/tokenNames'
 import { describeToken, canonicalize, FAMILY, CSS_FAMILY, type Family } from '../../src/engine/tokenDescriptions'
 import { SIGNALS } from '../../src/engine/signals'
@@ -81,8 +81,9 @@ export function roster(): RosterRow[] {
   rosterCache = cols.light.map(t => ({ path: t.path, light: t, dark: dark.get(t.path) }))
   return rosterCache
 }
-const tokColor = (t: FlatTok | undefined) => (t ? rgbaCss(t.r, t.g, t.b, t.a) : '')
-const tokLabel = (t: FlatTok | undefined) => (t ? (t.a !== undefined && t.a < 1 ? `${rgbaCss(t.r, t.g, t.b)} · ${Math.round(t.a * 100)}%` : rgbaCss(t.r, t.g, t.b)) : '')
+// a bare-number row (the opacity ladder) shows its number, no swatch
+const tokColor = (t: FlatTok | undefined) => (t ? (t.n !== undefined ? 'transparent' : rgbaCss(t.r, t.g, t.b, t.a)) : '')
+const tokLabel = (t: FlatTok | undefined) => (t ? (t.n !== undefined ? String(t.n) : t.a !== undefined && t.a < 1 ? `${rgbaCss(t.r, t.g, t.b)} · ${Math.round(t.a * 100)}%` : rgbaCss(t.r, t.g, t.b)) : '')
 
 // the description's parts: title, the role line, the conformance line (unlabeled), theming
 export function describeParts(path: string): { role: string; conformance?: string; theming?: string } {
@@ -119,7 +120,8 @@ export function cssHomeOf(path: string): CssHome {
   if (canonical === 'system/abs-primary') return { name: `--${CSS_FAMILY.brandPrimary}-identity`, from: 'engine' }
   if (canonical === 'system/abs-alt') return { name: `--${CSS_FAMILY.brandSecondary}-identity`, from: 'engine' }
   if (canonical === 'system/alpha/transparent') return { name: '--alpha-transparent', from: 'engine' }
-  if (canonical === 'system/alpha/abs-black-060') return { name: SCRIM_VAR, from: 'engine' }
+  const op = canonical.match(/^system\/opacity\/(\d{3})$/)
+  if (op) return { name: `--opacity-${op[1]}`, from: 'engine' }
   const m = canonical.match(/^system\/alpha\/away-from-bg\/(\d\d)$/)
   if (m) return { name: `--alpha-away-from-bg-${m[1]}`, from: 'engine' }
   const sh = canonical.match(/^system\/alpha\/shadow-(\d\d)$/)
@@ -295,10 +297,10 @@ export function CssSample() {
 }
 
 // ── The Figma tree: what themeToFigma emits for the reference theme ──────────
-function walk(g: FigmaGroup, prefix: string, out: Array<[string, FigmaColorToken]>) {
+function walk(g: FigmaGroup, prefix: string, out: Array<[string, FigmaLeaf]>) {
   for (const [k, v] of groupEntries(g)) {
     const path = prefix ? `${prefix}/${k}` : k
-    if ('$type' in v) out.push([path, v as FigmaColorToken])
+    if ('$type' in v) out.push([path, v as FigmaLeaf])
     else walk(v as FigmaGroup, path, out)
   }
 }
@@ -306,7 +308,7 @@ export function FigmaTree() {
   const { groups, leaves } = useMemo(() => {
     const t = refTheme()
     const { light } = themeToFigma(t.themed, { secondary: t.secondary?.scale ?? null, secondaryStyle: t.secondary?.style, neutralH: neutralTintHue(t.themed.scale.brandH), signals: refSignals() })
-    const leaves: Array<[string, FigmaColorToken]> = []
+    const leaves: Array<[string, FigmaLeaf]> = []
     walk(light, '', leaves)
     const groups = Object.keys(light).map(k => {
       const n = leaves.filter(([p]) => p.startsWith(k + '/')).length
@@ -322,7 +324,9 @@ export function FigmaTree() {
         <div className="d2-leaf-list">
           {leaves.map(([p, tok]) => (
             <div key={p} className="d2-leaf-row">
-              <SwatchCell color={rgbaCss(...tok.$value.components, tok.$value.alpha)} label={tok.$value.alpha < 1 ? `${tok.$value.hex} · ${Math.round(tok.$value.alpha * 100)}%` : tok.$value.hex} />
+              {tok.$type === 'number'
+                ? <SwatchCell color="transparent" label={String(tok.$value)} />
+                : <SwatchCell color={rgbaCss(...tok.$value.components, tok.$value.alpha)} label={tok.$value.alpha < 1 ? `${tok.$value.hex} · ${Math.round(tok.$value.alpha * 100)}%` : tok.$value.hex} />}
               <code className="d2-code">{p}</code>
             </div>
           ))}

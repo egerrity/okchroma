@@ -102,8 +102,7 @@ const PAPER: Body = { req: 'backgrounds, inverted text', theming: f => TINT[f], 
 // word's search results (the whole reason the shared stamp broke search). A row may carry a
 // label word only when it is in its OWN path. The 2026-08-18 solid rename flipped this
 // word: edge became the label (stamp/edge) and border stopped being one.
-// ("interaction" → interactive 2026-08-28: interacti-ON fed the "on" flood)
-const CHALK: Body = { req: 'subtle interactive states, decorative borders, illos, signal hierarchy', theming: f => TINT[f], collides: true }
+const CHALK: Body = { req: 'decorative borders, inverted text, illos, signal hierarchy', theming: f => TINT[f], collides: true }
 const solved = (f: Family) => `${TINT[f]}; re-solved to clear its floor`
 // (Leaf keys are FLAT — band flattening 2026-08-12: paper-1, never paper/99 — except
 // the stamp/ state group, keyed by its nested spelling.)
@@ -129,7 +128,7 @@ const SCALE: Record<string, Body> = {
   'chalk-20': CHALK,
   // ("icons" KEPT through the 2026-08-28 on-flood strip (owner): an "icon" query
   // landing on the highlighter rows is worth its ic-ON-s noise — the one surviving body carrier)
-  'highlighter-26': { req: 'focus rings, icons, large text', contrast: AA_LARGE, theming: solved, collides: true },
+  'highlighter-26': { req: 'focus rings, icons, large text, translucent state layers over any ground', contrast: AA_LARGE, theming: solved, collides: true },
   'pencil-47': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
   'pen-58': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
   // ("high-emphasis" reworded 2026-08-12: the surface planes took low/high as label
@@ -165,6 +164,8 @@ const OFFSET: Body = { req: 'min APCA visibility', theming: 'offsets CTAs in the
 // phrasing, "state layers" carries the intent without a banned word)
 const OFFSET_INVERSE: Body = { req: 'state layers over inverted backgrounds', theming: 'the offset ladder with its pole flipped, so inverted grounds keep the same rungs' }
 const SHADOW: Body = { req: 'drop shadows' }
+const OPACITY_RUNG: Body = { req: 'translucency weight for any color', theming: 'a bare number; a translucent row composes its color with one rung' }
+const OPACITY_STATE: Body = { req: 'translucency weight for any color; the state layer weight of the non-text stop over any ground', theming: 'a bare number; a translucent row composes its color with one rung' }
 const PLANE = (req: string): Body => ({ req, theming: 'aliased to the gray ramp' })
 // ("text action" reworded 2026-08-28: acti-ON fed the "on" flood; "link" is legal
 // here — it is these rows' OWN path word)
@@ -192,8 +193,17 @@ const SYSTEM: Record<string, Body> = {
   // ("companion" reworded 2026-08-28: compani-ON fed the "on" flood)
   'system/abs-alt': { req: 'identity seed reference', theming: 'the theme’s paired input, as given' },
   'system/alpha/transparent': { req: 'aliased off-states' },
-  // ("dimming" reworded 2026-08-18: the surface planes took dim as a label word)
-  'system/alpha/abs-black-060': { req: 'veils the page behind modals' },
+  // the OPACITY LADDER: bare numbers a translucent color row composes with (the
+  // scrim is the absolute black at the top rung). No conformance line of its own:
+  // the state-layer claim rides the non-text stop these weights apply to
+  'system/opacity/004': OPACITY_RUNG,
+  'system/opacity/008': OPACITY_STATE,
+  'system/opacity/012': OPACITY_STATE,
+  'system/opacity/016': OPACITY_STATE,
+  'system/opacity/024': OPACITY_STATE,
+  'system/opacity/032': OPACITY_STATE,
+  'system/opacity/048': OPACITY_RUNG,
+  'system/opacity/064': OPACITY_RUNG,
   // ("fills" reworded 2026-08-18: fill became a label word and is foreign here;
   // "on-color" reworded 2026-08-28: the bare on fed the "on" flood)
   'system/alpha/ink': { req: 'soft text pole for quiet CTAs' },
@@ -255,7 +265,7 @@ const ZONE_MAP: Array<[string, string]> = [
   ['base/alpha/', 'system/alpha/'],
   ['utility/surface/', 'system/surface/'],
   ['utility/shadow-', 'system/alpha/shadow-'],
-  ['utility/abs-black-060', 'system/alpha/abs-black-060'],
+  ['utility/opacity/', 'system/opacity/'],
   ['base/', ''],
   ['primitive/', ''],
 ]
