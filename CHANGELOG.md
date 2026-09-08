@@ -8,7 +8,7 @@ structure, ships as at least a minor.
 
 Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git log.
 
-## 0.5.0 — unreleased
+## 0.5.0 — 2026-09-08
 
 - Two instrument words move. The tinted band `highlighter-8/11/15/20` is renamed
   `chalk-8/11/15/20`, and the 3:1 stop `crayon-26` is renamed `highlighter-26`. Names
