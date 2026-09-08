@@ -7,7 +7,7 @@
 //
 // FORMAT (owner 2026-08-05):
 //   title        the row's own spaced name — the one place its own digit may appear; the
-//                literal spaced string is what makes a "highlighter 4" query land
+//                literal spaced string is what makes a "chalk 4" query land
 //   Req for:      the requirement the stop was DESIGNED to satisfy — documented roles only,
 //                 never editorial ("not what the variable COULD be for")
 //   (conformance) an UNLABELED line, only where a floor exists — one of the owner's
@@ -103,7 +103,7 @@ const PAPER: Body = { req: 'backgrounds, inverted text', theming: f => TINT[f], 
 // label word only when it is in its OWN path. The 2026-08-18 solid rename flipped this
 // word: edge became the label (stamp/edge) and border stopped being one.
 // ("interaction" → interactive 2026-08-28: interacti-ON fed the "on" flood)
-const HIGHLIGHTER: Body = { req: 'subtle interactive states, decorative borders, illos, signal hierarchy', theming: f => TINT[f], collides: true }
+const CHALK: Body = { req: 'subtle interactive states, decorative borders, illos, signal hierarchy', theming: f => TINT[f], collides: true }
 const solved = (f: Family) => `${TINT[f]}; re-solved to clear its floor`
 // (Leaf keys are FLAT — band flattening 2026-08-12: paper-1, never paper/99 — except
 // the stamp/ state group, keyed by its nested spelling.)
@@ -123,13 +123,13 @@ const SCALE: Record<string, Body> = {
   'paper-97-overlay': OVERLAY,
   'paper-5': { req: 'backgrounds, inverted text', theming: f => `${TINT[f]}. Worst background text stops must clear.`, collides: true },
   'paper-95-overlay': OVERLAY,
-  'highlighter-8': HIGHLIGHTER,
-  'highlighter-11': HIGHLIGHTER,
-  'highlighter-15': HIGHLIGHTER,
-  'highlighter-20': HIGHLIGHTER,
+  'chalk-8': CHALK,
+  'chalk-11': CHALK,
+  'chalk-15': CHALK,
+  'chalk-20': CHALK,
   // ("icons" KEPT through the 2026-08-28 on-flood strip (owner): an "icon" query
-  // landing on the crayon rows is worth its ic-ON-s noise — the one surviving body carrier)
-  'crayon-26': { req: 'focus rings, icons, large text', contrast: AA_LARGE, theming: solved, collides: true },
+  // landing on the highlighter rows is worth its ic-ON-s noise — the one surviving body carrier)
+  'highlighter-26': { req: 'focus rings, icons, large text', contrast: AA_LARGE, theming: solved, collides: true },
   'pencil-47': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
   'pen-58': { req: 'regular text, inverted backgrounds', contrast: AA_BODY, theming: solved, collides: true },
   // ("high-emphasis" reworded 2026-08-12: the surface planes took low/high as label
@@ -160,7 +160,7 @@ const NEUTRAL_ONLY: Record<string, Body> = {
 // both cONtrast and a bare on; "buttons" carried butt-ON-s)
 const ABS: Body = { req: 'extreme poles for CTAs, aliased global endpoints' }
 const OFFSET: Body = { req: 'min APCA visibility', theming: 'offsets CTAs in themes where they sit close to the page' }
-// (wording bound by desc-audit: no label words — highlighter/edge/hover/pressed are path
+// (wording bound by desc-audit: no label words — chalk/edge/hover/pressed are path
 // vocabulary — and no scheme talk; "over inverted backgrounds" is the established
 // phrasing, "state layers" carries the intent without a banned word)
 const OFFSET_INVERSE: Body = { req: 'state layers over inverted backgrounds', theming: 'the offset ladder with its pole flipped, so inverted grounds keep the same rungs' }
@@ -201,7 +201,7 @@ const SYSTEM: Record<string, Body> = {
   'system/alpha/away-from-bg/08': OFFSET,
   'system/alpha/away-from-bg/16': OFFSET,
   // the inverse ladder: the offset rungs with the pole flipped per mode, for
-  // highlighters and edges over inverted backgrounds ("interaction" avoided in the
+  // chalks and edges over inverted backgrounds ("interaction" avoided in the
   // bodies: acti-ON would feed the "on" flood)
   'system/alpha/toward-bg/06': OFFSET_INVERSE,
   'system/alpha/toward-bg/08': OFFSET_INVERSE,

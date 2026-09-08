@@ -26,7 +26,7 @@ import type { ResolvedBrand } from '../src/engine/resolve'
 // The Figma-spec CHIP SELECT (post-hk 60:1384): a VISUAL chip — label + its own 12px
 // chevron laid out inline (never the native select arrow, which let copy run under it) —
 // with a transparent native <select> overlaid for the actual menu. The chip TINTS with
-// the selection (the family's own highlighter/pen; outline gets the outline treatment; exact
+// the selection (the family's own chalk/pen; outline gets the outline treatment; exact
 // reads neutral-grey "hands off").
 function ChipSelect({ value, label, onChange, tone, children, title }: {
   value: string
@@ -352,12 +352,12 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   // every color, pinned under the navbar on BOTH views, so editing is live
   // everywhere (change the primary on Preview, the demo themes under you).
   // the in-field MODE CHIP (the mockup's pill dropdown): a styled select riding inside ct-field
-  // the chip TINTS with the selection (Figma spec): the family's own highlighter/pen; outline gets
+  // the chip TINTS with the selection (Figma spec): the family's own chalk/pen; outline gets
   // the outline treatment; exact reads neutral-grey "hands off"
   const chipTone: Record<string, React.CSSProperties> = {
-    brand: { background: 'var(--brand-highlighter-8)', color: 'var(--brand-pen-70)' },
-    secondary: { background: 'var(--brand-alt-highlighter-15)', color: 'var(--brand-alt-pen-70)' },
-    outline: { background: 'transparent', color: 'var(--brand-alt-pencil-47)', border: '1px solid var(--brand-alt-crayon-26)' },
+    brand: { background: 'var(--brand-chalk-8)', color: 'var(--brand-pen-70)' },
+    secondary: { background: 'var(--brand-alt-chalk-15)', color: 'var(--brand-alt-pen-70)' },
+    outline: { background: 'transparent', color: 'var(--brand-alt-pencil-47)', border: '1px solid var(--brand-alt-highlighter-26)' },
     grey: { background: 'var(--surface-dim)', color: 'var(--fg-subtle)' },
   }
   const styleLabel: Record<SecondaryStyle, string> = { default: 'Custom', outline: 'Outline', exact: 'Exact' }
@@ -420,7 +420,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
             <label className="ct-swatch-btn" title="Open color picker">
               {/* the swatch always shows the RESOLVED secondary — in derived mode that's
                   the subtle tint the engine produced, not the primary hex in the input */}
-              <span className="ct-swatch" style={{ background: derived ? 'var(--brand-alt-stamp-fill)' : (secondary ?? 'var(--neutral-highlighter-11)') }} />
+              <span className="ct-swatch" style={{ background: derived ? 'var(--brand-alt-stamp-fill)' : (secondary ?? 'var(--neutral-chalk-11)') }} />
               <input type="color" value={secondary ?? primary} onChange={e => { setSecState('custom'); setSecondaryInput(e.target.value.toUpperCase()) }} />
             </label>
             {/* derived: the input TRACKS the primary live (that's what derived means) and is
@@ -581,9 +581,9 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   // eyeballing the ladder. The cta family lives in the deconfliction card below, not
   // here (owner 2026-07-17: keep the top card to the 0–12 scale, reserve the second
   // card for the ctas). Each cell shows the token representatively: surfaces as
-  // plain swatches, crayon-26 as a ring (its role IS a stroke), pen as "Aa" text,
+  // plain swatches, highlighter-26 as a ring (its role IS a stroke), pen as "Aa" text,
   // identity as an "ID" chip. Themes with the page toggle.
-  const SWATCH_STOPS = ['paper-1', 'paper-3', 'paper-5', 'highlighter-8', 'highlighter-11', 'highlighter-15', 'highlighter-20', 'crayon-26', 'pencil-47', 'pen-58', 'pen-70']
+  const SWATCH_STOPS = ['paper-1', 'paper-3', 'paper-5', 'chalk-8', 'chalk-11', 'chalk-15', 'chalk-20', 'highlighter-26', 'pencil-47', 'pen-58', 'pen-70']
   // column labels = the token name minus the band word ("89", "53aa"), derived from
   // the token strings so a rename cannot desynchronise label and column
   const stopLabel = (s: string) => s.split('-').slice(1).join('')
@@ -597,15 +597,15 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   ]
   const swatchCell = (prefix: string, stop: string) => {
     const cv = (t: string) => `var(--${prefix}-${t})`
-    // chip "Aa" (crayon/cta) carries its on-color at a slightly lighter weight;
+    // chip "Aa" (highlighter/cta) carries its on-color at a slightly lighter weight;
     // pen "Aa" is a big, heavy glyph so it reads as a text swatch, not a chip label.
     const aa: React.CSSProperties = { height: 36, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600 }
-    // crayon-26 is the 3:1 NON-TEXT stop (boundaries/strokes) — it carries no on-text, so it
+    // highlighter-26 is the 3:1 NON-TEXT stop (boundaries/strokes) — it carries no on-text, so it
     // renders AS a stroke: a ring of the color, not a fill.
     // …and it's icon-grade at the same 3:1 (owner 2026-07-24): the ring carries a
-    // plus glyph painted IN crayon-26 — non-text contrast serves icons, unlike the
+    // plus glyph painted IN highlighter-26 — non-text contrast serves icons, unlike the
     // pen text stops.
-    if (stop === 'crayon-26') return (
+    if (stop === 'highlighter-26') return (
       <div style={{ height: 36, borderRadius: 6, boxSizing: 'border-box', border: `2px solid ${cv(stop)}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Plus size={18} strokeWidth={2.5} color={cv(stop)} />
       </div>
@@ -1027,7 +1027,7 @@ const dashCard: React.CSSProperties = {
   borderRadius: 12, padding: 18,
 }
 const dashMetric: React.CSSProperties = {
-  background: 'var(--surface-dim)', border: '1px solid var(--neutral-highlighter-8)',
+  background: 'var(--surface-dim)', border: '1px solid var(--neutral-chalk-8)',
   borderRadius: 12, padding: 16,
 }
 
@@ -1078,7 +1078,7 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
           <div className="dash-search"><Search size={14} aria-hidden /> Search…</div>
           <span style={{ flex: 1 }} />
           {/* the three cta tiers in context: neutral (Export) · secondary (Share,
-              inserted only once a secondary exists) · primary (New project). No highlighter
+              inserted only once a secondary exists) · primary (New project). No chalk
               fills — the ramps carry every button (owner 2026-07-17). */}
           <button className="u-btn u-btn-neutral" style={{ padding: '6px 12px', fontSize: 13 }} title="Placeholder — export coming"><Download size={14} /> Export</button>
           {hasSecondary && <button className="u-btn u-btn-secondary" style={{ padding: '6px 14px', fontSize: 13 }}>Share</button>}
@@ -1121,7 +1121,7 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
             </div>
             {/* neutral cta — the quiet action. The secondary is showcased in the
                 topbar tier (Share), so this stays neutral in every state (owner
-                2026-07-17: no highlighter-fill buttons). */}
+                2026-07-17: no chalk-fill buttons). */}
             <button className="u-btn u-btn-neutral" style={{ width: '100%', justifyContent: 'center' }}>Create project</button>
           </section>
 
@@ -1148,8 +1148,8 @@ function Dashboard({ hasSecondary }: { hasSecondary: boolean }) {
 //   focused input + resting input
 //   input with the signal's helper + an error (red) input
 //   the signal's alert message (its cta register)
-//   button row: primary highlighter-11 · primary cta · red cta
-//   button row: secondary highlighter-11 · secondary cta · neutral cta
+//   button row: primary chalk-11 · primary cta · red cta
+//   button row: secondary chalk-11 · secondary cta · neutral cta
 // All live vars — re-solves with the pickers, profile, and mode.
 const SIGNAL_CARDS: Array<{ sig: string; Icon: typeof Info; alert: string }> = [
   { sig: 'critical', Icon: AlertCircle, alert: 'We couldn\'t process the request. Try again.' },
@@ -1160,19 +1160,19 @@ const SIGNAL_CARDS: Array<{ sig: string; Icon: typeof Info; alert: string }> = [
 
 function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typeof Info; alert: string; hasSecondary: boolean }) {
   const v = (t: string) => `var(--${sig}-${t})`
-  // the canonical chip recipe (owner 2026-07-28): paper-5 · highlighter-15 · pencil-47
+  // the canonical chip recipe (owner 2026-07-28): paper-5 · chalk-15 · pencil-47
   const chip = (prefix: string, label: string) => (
     <span style={{
       display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 6,
       fontSize: 12, fontWeight: 500,
       background: `var(--${prefix}-paper-5)`, color: `var(--${prefix}-pencil-47)`,
-      border: `1px solid var(--${prefix}-highlighter-15)`,
+      border: `1px solid var(--${prefix}-chalk-15)`,
     }}>{label}</span>
   )
   const fieldLabel: React.CSSProperties = { fontSize: 11, fontWeight: 600, color: 'var(--fg-subtle)', marginBottom: 4 }
   // the focused state, held statically (mirror of .ct-field:focus-within) so all
   // four cards can show it at once
-  const focusRing: React.CSSProperties = { borderColor: 'var(--brand-crayon-26)', boxShadow: '0 0 0 3px var(--brand-highlighter-11)' }
+  const focusRing: React.CSSProperties = { borderColor: 'var(--brand-highlighter-26)', boxShadow: '0 0 0 3px var(--brand-chalk-11)' }
   const btn: React.CSSProperties = { padding: '8px 16px', borderRadius: 999, border: '1.5px solid transparent', cursor: 'pointer', fontSize: 13, fontWeight: 500, fontFamily: 'inherit' }
   return (
     <section className="dash-card" style={{ background: 'var(--surface-mid)', boxShadow: 'var(--elev-card)', borderRadius: 12, padding: 18 }}>
@@ -1233,16 +1233,16 @@ function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typ
         <span>{alert}</span>
       </div>
 
-      {/* button rows: primary highlighter-11 · primary cta · red cta, then
-          secondary highlighter-11 · secondary cta · neutral cta */}
+      {/* button rows: primary chalk-11 · primary cta · red cta, then
+          secondary chalk-11 · secondary cta · neutral cta */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
-        <button style={{ ...btn, background: 'var(--brand-highlighter-11)', color: 'var(--brand-pen-70)' }}>Highlighter 89</button>
+        <button style={{ ...btn, background: 'var(--brand-chalk-11)', color: 'var(--brand-pen-70)' }}>Chalk 89</button>
         <button style={{ ...btn, background: 'var(--brand-stamp-fill)', color: 'var(--brand-stamp-on)' }}>Primary cta</button>
         <button style={{ ...btn, background: 'var(--critical-stamp-fill)', color: 'var(--critical-stamp-on)' }}>Critical cta</button>
       </div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {hasSecondary && <>
-          <button style={{ ...btn, background: 'var(--brand-alt-highlighter-11)', color: 'var(--brand-alt-pen-70)' }}>Highlighter 89</button>
+          <button style={{ ...btn, background: 'var(--brand-alt-chalk-11)', color: 'var(--brand-alt-pen-70)' }}>Chalk 89</button>
           <button style={{ ...btn, background: 'var(--brand-alt-stamp-fill)', color: 'var(--brand-alt-stamp-on)', borderColor: 'var(--brand-alt-stamp-edge)' }}>Secondary cta</button>
         </>}
         <button style={{ ...btn, background: 'var(--neutral-stamp-fill)', color: 'var(--neutral-stamp-on)' }}>Neutral cta</button>
@@ -1270,7 +1270,7 @@ function SettingsStress({ hasSecondary }: { hasSecondary: boolean }) {
 
 function Metric({ label, value, delta, tone }: { label: string; value: string; delta: string; tone: string }) {
   // RECESSED tile — the −1 level of the owner's 2026-07-27 hierarchy (sink plane
-  // + highlighter-8 hairline, no shadow): the metrics settle INTO the page while the
+  // + chalk-8 hairline, no shadow): the metrics settle INTO the page while the
   // content cards lift off it. Fill stays neutral; the signal reads through the
   // value + delta text alone. --mtone still publishes the tone for style layers.
   return (
@@ -1316,19 +1316,19 @@ function CustomersTable({ hasSecondary }: { hasSecondary: boolean }) {
           const premium = c.plan !== 'Starter'
           // Premium plans carry the accent when a secondary exists, else the brand.
           // THE canonical chip recipe (owner 2026-07-28, matching the unify-compare
-          // exhibit): paper-5 fill · highlighter-15 stroke · pencil-47 text, family = the only
+          // exhibit): paper-5 fill · chalk-15 stroke · pencil-47 text, family = the only
           // variable. Chips are color-family recipes, never surface planes. NOTE:
           // dark chips on the HIGH plane (= paper-5) show the fill collision honestly —
           // that's the context the pop-plane decision is being judged in.
           const planFam = premium ? (hasSecondary ? 'secondary' : 'brand') : 'neutral'
           const planBg = `var(--${planFam}-paper-5)`
           const planFg = `var(--${planFam}-pencil-47)`
-          const planBorder = `var(--${planFam}-highlighter-15)`
+          const planBorder = `var(--${planFam}-chalk-15)`
           return (
             <tr key={c.name}>
               <td>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span className="dash-avatar" style={{ width: 28, height: 28, fontSize: 11, background: 'var(--surface-dim)', color: 'var(--fg-default)', border: '1px solid var(--neutral-highlighter-11)' }}>{c.name[0]}</span>
+                  <span className="dash-avatar" style={{ width: 28, height: 28, fontSize: 11, background: 'var(--surface-dim)', color: 'var(--fg-default)', border: '1px solid var(--neutral-chalk-11)' }}>{c.name[0]}</span>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500 }}>{c.name}</div>
                     <div style={{ fontSize: 11, color: 'var(--fg-subtle)' }}>{c.email}</div>
@@ -1336,7 +1336,7 @@ function CustomersTable({ hasSecondary }: { hasSecondary: boolean }) {
                 </div>
               </td>
               <td><span className="dash-pill" style={{ background: planBg, color: planFg, border: `1px solid ${planBorder}` }}>{c.plan}</span></td>
-              <td><span className="dash-pill" style={{ background: `var(--${tone}-paper-5)`, color: `var(--${tone}-pencil-47)`, border: `1px solid var(--${tone}-highlighter-15)` }}>{label}</span></td>
+              <td><span className="dash-pill" style={{ background: `var(--${tone}-paper-5)`, color: `var(--${tone}-pencil-47)`, border: `1px solid var(--${tone}-chalk-15)` }}>{label}</span></td>
               <td style={{ fontWeight: 500 }}>{c.mrr}</td>
               <td style={{ color: 'var(--fg-subtle)' }}>{c.seen}</td>
             </tr>
@@ -1349,7 +1349,7 @@ function CustomersTable({ hasSecondary }: { hasSecondary: boolean }) {
 
 function Feed({ who, what, when, tone }: { who: string; what: string; when: string; tone: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid var(--neutral-highlighter-11)' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid var(--neutral-chalk-11)' }}>
       <span className="dash-dot" style={{ width: 8, height: 8, borderRadius: 999, flexShrink: 0, background: `var(--${tone}-bg-emphasis)` }} />
       <div style={{ flex: 1, fontSize: 12 }}><span style={{ fontWeight: 600 }}>{who}</span> {what}</div>
       <span style={{ fontSize: 11, color: 'var(--fg-subtle)', flexShrink: 0 }}>{when}</span>
@@ -1370,8 +1370,8 @@ const PAGE_CSS = `
 /* wordmark (logoipsum placeholder) — the two svg groups' fills wire to the live
    palette: the mark to brand-pencil-47 (the pencil stop — keeps the mark
    COLOURED yet legible on the light neutral sidebar; ~2.9:1 worst-case for a bright
-   yellow brand, and a logo mark is WCAG-exempt so 3:1 isn't required. cta/crayon-26
-   highlighter out for bright brands here), the wordmark to brand-pencil-47. A fully-robust
+   yellow brand, and a logo mark is WCAG-exempt so 3:1 isn't required. cta/highlighter-26
+   chalk out for bright brands here), the wordmark to brand-pencil-47. A fully-robust
    colour-AND-contrast mark would need an engine-emitted contrast-clamped stop. */
 .dash-logo { display: flex; align-items: center; }
 .dash-logo svg { height: 22px; width: auto; display: block; }
@@ -1383,8 +1383,8 @@ const PAGE_CSS = `
   font-size: 13px; color: var(--fg-default); text-decoration: none;
 }
 .dash-navitem:hover { background: var(--surface-mid); }
-.dash-navitem.active { background: var(--brand-highlighter-11); color: var(--brand-pen-70); font-weight: 600; }
-.dash-user { display: flex; align-items: center; gap: 10px; padding-top: 14px; border-top: 1px solid var(--neutral-highlighter-11); }
+.dash-navitem.active { background: var(--brand-chalk-11); color: var(--brand-pen-70); font-weight: 600; }
+.dash-user { display: flex; align-items: center; gap: 10px; padding-top: 14px; border-top: 1px solid var(--neutral-chalk-11); }
 .dash-avatar {
   width: 30px; height: 30px; border-radius: 999px; flex-shrink: 0;
   background: var(--brand-stamp-fill); color: var(--brand-stamp-on);
@@ -1394,13 +1394,13 @@ const PAGE_CSS = `
 .dash-topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
 .dash-search {
   display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--fg-subtle);
-  background: var(--surface-dim); border: 1px solid var(--neutral-highlighter-11); border-radius: 999px; padding: 7px 14px; min-width: 200px;
+  background: var(--surface-dim); border: 1px solid var(--neutral-chalk-11); border-radius: 999px; padding: 7px 14px; min-width: 200px;
 }
 /* trial banner — a filled tinted chip; the fill carries it, no stroke needed. */
 .dash-info {
   display: flex; gap: 8px; align-items: center; margin-bottom: 16px;
   /* the trial banner is an alert CALLOUT — it rides its signal's CTA register
-     (alerts use cta in signals), not the highlighter (owner-caught 2026-07-24) */
+     (alerts use cta in signals), not the chalk (owner-caught 2026-07-24) */
   background: var(--info-stamp-fill); color: var(--info-stamp-on);
   border-radius: 12px; padding: 10px 14px; font-size: 12px;
 }
@@ -1413,9 +1413,9 @@ const PAGE_CSS = `
 /* dense table keeps hairline row dividers — small/functional, legibility earns them */
 .dash-table th {
   text-align: left; font-size: 11px; font-weight: 600; color: var(--fg-subtle);
-  padding: 8px 18px; border-bottom: 1px solid var(--neutral-highlighter-11); white-space: nowrap;
+  padding: 8px 18px; border-bottom: 1px solid var(--neutral-chalk-11); white-space: nowrap;
 }
-.dash-table td { padding: 10px 18px; border-bottom: 1px solid var(--neutral-highlighter-11); }
+.dash-table td { padding: 10px 18px; border-bottom: 1px solid var(--neutral-chalk-11); }
 .dash-table tbody tr:last-child td { border-bottom: none; }
 .dash-table tbody tr:hover { background: var(--surface-dim); }
 .dash-table th:nth-child(n+4), .dash-table td:nth-child(n+4) { text-align: right; }
@@ -1464,7 +1464,7 @@ const PAGE_CSS = `
 .ct-alert-warn {
   display: flex; gap: 8px; align-items: flex-start; margin-top: 8px;
   padding: 8px 10px; border-radius: 10px; font-size: 12px; line-height: 1.45;
-  background: var(--warning-highlighter-8); border: 1px solid var(--warning-crayon-26); color: var(--warning-pen-70);
+  background: var(--warning-chalk-8); border: 1px solid var(--warning-highlighter-26); color: var(--warning-pen-70);
 }
 .ct-alert-warn a { color: inherit; font-weight: 600; }
 .ct-alert-text {
@@ -1509,7 +1509,7 @@ const PAGE_CSS = `
   color: var(--fg-subtle); background: transparent;
   border: 1.5px dashed var(--neutral-pencil-47); border-radius: 12px;
 }
-.ct-add:hover { color: var(--fg-default); border-color: var(--brand-crayon-26); background: var(--brand-paper-3); }
+.ct-add:hover { color: var(--fg-default); border-color: var(--brand-highlighter-26); background: var(--brand-paper-3); }
 /* STATIC FRAME (owner 2026-07-24): the palette page never scrolls as a page. The
    pane fills the viewport from the measured controls-bar bottom (--ct-dock, set by
    a ResizeObserver — the bar's height varies) down to the bottom bar (54px). The
@@ -1611,7 +1611,7 @@ const PAGE_CSS = `
   background: var(--surface-mid); border: 1px solid var(--neutral-pencil-47); border-radius: 12px;
   padding: 9px 12px;
 }
-.ct-field:focus-within { border-color: var(--brand-crayon-26); box-shadow: 0 0 0 3px var(--brand-highlighter-11); }
+.ct-field:focus-within { border-color: var(--brand-highlighter-26); box-shadow: 0 0 0 3px var(--brand-chalk-11); }
 .ct-field input, .ct-field select {
   border: none; outline: none; background: transparent; color: var(--fg-default);
   font-family: inherit; font-size: 14px; flex: 1; min-width: 0;
@@ -1620,7 +1620,7 @@ const PAGE_CSS = `
 .ct-field.err { border-color: var(--critical-border-emphasis); background: var(--critical-bg-faint); }
 .ct-field.err:focus-within { border-color: var(--critical-border-emphasis); box-shadow: 0 0 0 3px var(--critical-bg-subtle); }
 .ct-err-note { font-size: 11px; color: var(--critical-fg-alt); margin-top: 5px; }
-.ct-swatch { width: 20px; height: 20px; border-radius: 5px; flex-shrink: 0; border: 1px solid var(--neutral-highlighter-11); }
+.ct-swatch { width: 20px; height: 20px; border-radius: 5px; flex-shrink: 0; border: 1px solid var(--neutral-chalk-11); }
 .ct-swatch.sm { width: 13px; height: 13px; }
 .ct-popover {
   position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; width: 230px;
@@ -1630,7 +1630,7 @@ const PAGE_CSS = `
 }
 .ct-suggest {
   display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-family: inherit;
-  background: var(--surface-dim); border: 1px solid var(--neutral-highlighter-11); border-radius: 10px;
+  background: var(--surface-dim); border: 1px solid var(--neutral-chalk-11); border-radius: 10px;
   padding: 4px 10px; font-size: 12px; color: var(--fg-default);
 }
 .ct-suggest:hover { background: var(--brand-paper-3); }

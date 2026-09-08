@@ -52,20 +52,20 @@ export type { ResolveOpts }
 // the loudness cap on the APCA-clearance move (v1 raw-L symmetric budget around the brand fill; owner-tuned
 // from the exhibit marks — plan open item 4). 4.5 is NEVER capped; only the Lc ambition is. No emphasis-band
 // clamp: the emphasis fill (pencil-47) sits at a mid L (often BELOW the cta), so a black-lighten moves AWAY from it —
-// there is no highlighter risk to guard, and clamping to it wrongly killed the move.
+// there is no chalk risk to guard, and clamping to it wrongly killed the move.
 // The clearance caps are the POLE caps (owner 2026-07-13 dead-zone ruling: the bar is the
 // goal, not an ambition — the old ±0.16 taste budget capped worst-case dead zones short of
 // legibility and is retired; 4.5 was never capped either way).
 // (exported 2026-09-02 so the docs site renders the caps live; value and use unchanged)
 export const CTA_CLEARANCE_CAPS: [number, number] = [0.05, 0.92]
 
-// THE CROSS-FAMILY HIGHLIGHTER BOUND ON THE NEUTRAL PENS (T13, owner-caught 2026-09-01).
+// THE CROSS-FAMILY CHALK BOUND ON THE NEUTRAL PENS (T13, owner-caught 2026-09-01).
 // The pen guarantee is symmetric: a pen and a ground are in scope when they share a family
 // or either side is the neutral, both directions. NEUTRAL_W80_WORST_SHIP_Y (inside
-// resolveRamp) bounds every chromatic pen against the neutral's highlighter-20; nothing
+// resolveRamp) bounds every chromatic pen against the neutral's chalk-20; nothing
 // bounded the NEUTRAL's pens against the chromatics', and neutral pen-58 light read 4.16
-// on info highlighter-20 while guarantee-audit (one direction only) read PASS. Same
-// doctrine as its two siblings: frozen at the worst SHIPPED highlighter-20 Y any theme can
+// on info chalk-20 while guarantee-audit (one direction only) read PASS. Same
+// doctrine as its two siblings: frozen at the worst SHIPPED chalk-20 Y any theme can
 // put on screen — light min (darkest) / dark max (lightest) over brand seeds L 0.2–0.8 ×
 // C 0.08–0.4 × hue 0–359 in the recommended, exact, deeper and archetypeOverride
 // registers, the derived brand-alt, the four base signals, every per-brand signal
@@ -73,37 +73,37 @@ export const CTA_CLEARANCE_CAPS: [number, number] = [0.05, 0.92]
 //   light 0.459357  brand stop 7 at seed #2e0f8a (L 0.777 C 0.086 H 281, violet)
 //   dark  0.074936  brand stop 7 at seed #411000, style 'deeper' (L 0.427 C 0.112 H 63)
 // The `full-chroma` register is NOT in the bound: its released cap sinks the violet-band
-// highlighter-20 to 0.392975 light / 0.078646 dark, which would cost the neutral pen-58
+// chalk-20 to 0.392975 light / 0.078646 dark, which would cost the neutral pen-58
 // ≈0.05 L in every theme, so the owner removed its checkbox from both plugins and the demo
 // (2026-09-01); the GenerateOptions lever stays for instruments, outside the guarantee, and
-// guarantee-audit prints its residual as a report cell. generateNeutralScale passes this through opts.crossHighlighterBoundY (the
+// guarantee-audit prints its residual as a report cell. generateNeutralScale passes this through opts.crossChalkBoundY (the
 // resolver has no neutral flag — scaleName is metadata) and the shipped-pair clamp on
 // stops 10–11 takes it as a third floor; stop 9 (pencil-47) never does, pencil is
 // paper-only by design. Dark clears by construction (neutral dark pen-58 ≥ 5.17 against
 // it) and pen-70 clears in both modes, so only the light neutral pen-58 moves
-// (L ≈0.413 → ≈0.398). RE-DERIVE if the highlighter ladder, the ramp chroma cap or a
+// (L ≈0.413 → ≈0.398). RE-DERIVE if the chalk ladder, the ramp chroma cap or a
 // signal seed moves.
 export const CHROMATIC_W80_WORST_SHIP_Y = { light: 0.459357, dark: 0.074936 } as const
 // THE CROSS-FAMILY PAPER BOUND ON THE NEUTRAL'S CONTRAST STOPS (T13, owner 2026-09-01: "the rule
 // is true for every band"). The paper claims are symmetric the same way: NEUTRAL_P3_WORST_SHIP_Y
-// bounds every chromatic crayon/pencil/pen against the neutral's paper-5; this bounds the
-// NEUTRAL's crayon-26, pencil-47 and pens against the worst CHROMATIC paper-5 — neutral
-// crayon-26 read 2.987 and pencil-47 4.484 on a violet brand's paper-5 (both need ≤0.003 L).
+// bounds every chromatic highlighter/pencil/pen against the neutral's paper-5; this bounds the
+// NEUTRAL's highlighter-26, pencil-47 and pens against the worst CHROMATIC paper-5 — neutral
+// highlighter-26 read 2.987 and pencil-47 4.484 on a violet brand's paper-5 (both need ≤0.003 L).
 // Frozen at the worst SHIPPED chromatic paper-5 Y over the same registers and seed sweep as
-// the highlighter bound (72,584 seeds, resolveTheme → shippedY, 2026-09-01):
+// the chalk bound (72,584 seeds, resolveTheme → shippedY, 2026-09-01):
 //   light 0.836007  brand stop 3 at seed #5233ff (L 0.944 C 0.022 H 278, violet)
 //   dark  0.016041  brand stop 3 at seed #794d00, archetypeOverride near-black (L 0.251 C 0.038 H 87)
-// Each stop is judged at ITS band's claim bar (crayon 3, pencil 4.5, pens 4.5), never the
+// Each stop is judged at ITS band's claim bar (highlighter 3, pencil 4.5, pens 4.5), never the
 // stop's own target. Light only in effect (dark clears: worst 3.015 / 7.5); the pens clear
-// by ladder monotonicity and are declared, not moved. RE-DERIVE with the highlighter bound.
+// by ladder monotonicity and are declared, not moved. RE-DERIVE with the chalk bound.
 export const CHROMATIC_P3_WORST_SHIP_Y = { light: 0.836007, dark: 0.016041 } as const
 // the CROSS-FAMILY paper bound (owner defect 2026-08-03 — her measured pair was the
 // brand pencil-47 (ink-9) on the NEUTRAL paper-5 (paper-3), 4.479:1; her follow-up
-// caught crayon-26 (highlight-8) the same way, 26/72 under 3:1): "usable on every
+// caught highlighter-26 (highlight-8) the same way, 26/72 under 3:1): "usable on every
 // paper" includes the per-brand NEUTRAL's papers, and the own-family paper-5 (paper-3)
 // is NOT the nearest paper for green-band brands — their tinted paper carries more Y
 // than the near-gray neutral at the same L. Covers every contrast-required stop from 8
-// up: the pens are text on any paper, and crayon-26 (highlight-8) is the focus-
+// up: the pens are text on any paper, and highlighter-26 (highlight-8) is the focus-
 // ring/border register that sits on neutral surfaces (WCAG 1.4.11).
 // The bound is the worst SHIPPED neutral paper-5 (paper-3) Y over hue 0..350 × every NeutralLevel:
 // light min 0.845015 (H260 branded #e8edf8) · dark max 0.014247 (H300 medium #211f23),
@@ -115,13 +115,13 @@ export const CHROMATIC_P3_WORST_SHIP_Y = { light: 0.836007, dark: 0.016041 } as 
 // (Module-scope and exported since 2026-09-02 so the docs site renders the bound live;
 // the value and its use are unchanged.)
 export const NEUTRAL_P3_WORST_SHIP_Y = { light: 0.845015, dark: 0.014247 } as const
-// The same doctrine for the highlighter-20 anchor (T10's highlighter-20 law, owner 2026-08-27): the
+// The same doctrine for the chalk-20 anchor (T10's chalk-20 law, owner 2026-08-27): the
 // pen group's claim spans its own family AND the neutral, so the bound is the worst
-// SHIPPED neutral highlighter-20 Y over hue 0..350 × every NeutralLevel — light min (darkest)
+// SHIPPED neutral chalk-20 Y over hue 0..350 × every NeutralLevel — light min (darkest)
 // H290 branded, dark max (lightest) H30 branded, measured 2026-08-27 via
 // generateNeutralScale → shippedY (scratchpad derive-w80-bound). RE-DERIVE if the
-// neutral curve or the highlighter ladder moves. A highlighter-20-anchored stop needs no paper bound:
-// clearing the darkest highlighter clears every paper of both ramps by ladder monotonicity.
+// neutral curve or the chalk ladder moves. A chalk-20-anchored stop needs no paper bound:
+// clearing the darkest chalk clears every paper of both ramps by ladder monotonicity.
 export const NEUTRAL_W80_WORST_SHIP_Y = { light: 0.506433, dark: 0.074262 } as const
 
 // `spec` defaults to the built-in mode table; a parsed DTCG requirement bundle can be passed instead —
@@ -131,7 +131,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   const ctx = buildContext(hex, opts)
   spec ??= MODE_SPECS[mode]
   // THE INVERSE LANE KEEPS ITS OWN LADDER (guarantee-groups round, owner 2026-08-27):
-  // T10's highlighter-20 law is a claim about highlighters, which the inverse lane never ships — its
+  // T10's chalk-20 law is a claim about chalks, which the inverse lane never ships — its
   // pen register is text on a pen-70 fill, judged against PEN_70_GROUND at the
   // 4.5 / 6.5 / 7.0 ladder the inverse round froze. On the textGround path stop 10's
   // target therefore stays 6.5 (the anchor is moot there: groundOf overrides every
@@ -169,9 +169,9 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   // it used to be documentation while the resolver hardcoded paper-3 (paper-2) here and in the
   // apca path, so moving a require's anchor meant editing the engine rather than the
   // declaration. spec.ts is the portable artifact; the anchor belongs in it.
-  // highlighter-20 joined the union with the T10 highlighter-20 law (guarantee-groups round, owner
-  // 2026-08-27): the pen group's highlighter claim anchors at the darkest highlighter.
-  const AGAINST_STOP: Record<string, number> = { 'paper-1': 1, 'paper-3': 2, 'paper-5': 3, 'highlighter-20': 7 }
+  // chalk-20 joined the union with the T10 chalk-20 law (guarantee-groups round, owner
+  // 2026-08-27): the pen group's chalk claim anchors at the darkest chalk.
+  const AGAINST_STOP: Record<string, number> = { 'paper-1': 1, 'paper-3': 2, 'paper-5': 3, 'chalk-20': 7 }
   const declaredAnchor = (req: Require): number =>
     req.metric === 'min-separation' ? 1 : AGAINST_STOP[req.against] ?? 2
   // THE PEN ANCHOR (owner rule 2026-07-28: "ink-10 can only be used on papers" — and it
@@ -183,8 +183,8 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   // Threshold moved 10 → 9 with the 2026-07-29 renumber: the pen band starts at 9 now.
   // This IS why the collapse is visually cheap — it is the rule that made pencil-47 (then
   // ink-10) land on top of highlight-9, both solving 4.5 against paper-5 (paper-3).
-  // The override applies only when the declaration names a PAPER: a declared highlighter anchor
-  // (T10's highlighter-20 law) is already darker than every paper and must be honored as-is.
+  // The override applies only when the declaration names a PAPER: a declared chalk anchor
+  // (T10's chalk-20 law) is already darker than every paper and must be honored as-is.
   const wcagAnchorStop = (req: Require, stop: number) =>
     (stop >= 9 && declaredAnchor(req) <= 3 ? 3 : declaredAnchor(req))
   // THE INVERSE PEN GROUND (owner round 2026-08-19, opts.textGround): the pen stops solve
@@ -269,7 +269,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
           ? (textTwin ? ((_L: number) => textTwin.C) : darkTextChromaAt(ctx, d, sp.chromaFloor ?? chromaFloorBase(sp.stop), sp.chromaMult ?? 1, sp.textMaxC))
         // chroma-floor index clamps at 0: stop 0 shares paper-1's (paper-1's) tint treatment
         : darkScaleChromaAt(ctx, d, Math.max(0, sp.stop - 1), sp.satFraction ?? 1)
-      // DELTA-KEYED: derive dark from the resolved light twin for the SURFACE stops 1–8 (papers, highlighters,
+      // DELTA-KEYED: derive dark from the resolved light twin for the SURFACE stops 1–8 (papers, chalks,
       // focus ring). PENS 9–11 are dark-native (owner 2026-07-09): text INVERTS across modes — there is
       // no "same color, re-referenced" for a stop that crosses the paper; carrying a dark-gold pen's hue up
       // ~0.3 L lands in a different hue family (gold→orange). The C9/C11 dark text register + the
@@ -283,9 +283,9 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         // THE CARRY: hue carried verbatim from the light twin; chroma verbatim at ×1 and resampled from
         // the light ladder's chroma-at-depth under a C24 band lift — for EVERY ramp kind (OKLab C is
         // near-uniform in perceived chroma; a saturation/gamut-ratio floor was tried and REJECTED — sRGB
-        // geometry made blue→red highlighters hyper-chromatic; evaluating a declared chromaCurve at the DARK L was
+        // geometry made blue→red chalks hyper-chromatic; evaluating a declared chromaCurve at the DARK L was
         // tried and REJECTED — the curves are keyed to the OLD dark's L geography, so the delta's paper L's
-        // landed in their highlighter-tint region and tinted the papers 8×, owner-caught). Lightness re-referenced
+        // landed in their chalk-tint region and tinted the papers 8×, owner-caught). Lightness re-referenced
         // to the dark ground in APPARENT space (deltaDarkTargetL).
         // REQUIREMENT stops (s8) carry their RECIPE, not a parity: light places s8 BY the 3:1-vs-paper-3
         // (paper-2) clamp, so dark re-solves that same law against the dark paper-3 (paper-2) exactly (the require block below
@@ -294,7 +294,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         // THE SMOOTHED BAND (owner round 2026-08-13): the whole surface band 1–7 —
         // papers included, the C27 pin retired — lands on the C28 photometric dialect
         // at the COMPUTED band lift: light's log-contrast distribution between the
-        // held ground and the held highlighter-20 (producers.smoothedBandLift). Require
+        // held ground and the held chalk-20 (producers.smoothedBandLift). Require
         // stops (8) still solve from the sentinel by their own law.
         const lift = smoothedBandLift(sp.stop)
         let C = ls.C
@@ -386,15 +386,15 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         }
       }
       // (The C24 8-vs-7 BAND-ORDER FLOOR is DELETED — owner 2026-07-29. It floored stop 8 at
-      // highlighter-20's (wash-7's) apparent plus light's own 7→8 apparent gap, written when the C24 lift was
-      // ×1.75 and a lifted highlighter-20 (wash-7) could overshoot an achromatic ramp's low-riding 3:1 solve.
+      // chalk-20's (wash-7's) apparent plus light's own 7→8 apparent gap, written when the C24 lift was
+      // ×1.75 and a lifted chalk-20 (wash-7) could overshoot an achromatic ramp's low-riding 3:1 solve.
       // C28 then halved the lift and the guard was never re-checked. Measured at the shipped
       // lift: it fired on 366/366 ramps — not a guard but THE placement rule for dark stop 8,
       // supplying 0.056–0.157 of its L and every bit of the gap between its law (3.05 vs
       // paper-3/paper-2) and where it shipped (4.65). The inversion it was written for cannot occur:
-      // without it stop 8 still sits 5.35–6.85 apparent-L above highlighter-20 (wash-7) on every ramp, 0 of 366
+      // without it stop 8 still sits 5.35–6.85 apparent-L above chalk-20 (wash-7) on every ramp, 0 of 366
       // inverting. It also chained an ACCESSIBILITY BORDER to an ILLUSTRATION STOP — moving
-      // highlighter-20 (wash-7) for an illustration silently repositioned the stop carrying WCAG 1.4.11. Stop 8
+      // chalk-20 (wash-7) for an illustration silently repositioned the stop carrying WCAG 1.4.11. Stop 8
       // is now placed by its own require, anchored at paper-5 (paper-3) in both modes; see spec.ts S8.)
     }
 
@@ -418,8 +418,8 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       // EXCEPT on the inverse pen ground: that text sits on a pen-70 fill, never on a
       // paper, so the paper bound is not its law — its own frozen worst IS the bound.
       const paperBound = sp.stop >= 8 && !(textGround && sp.stop >= 9)
-      // the cross-family bound follows the anchor's band: a highlighter-anchored stop (T10's
-      // highlighter-20 law) reads against the worst neutral HIGHLIGHTER-20, which dominates the paper
+      // the cross-family bound follows the anchor's band: a chalk-anchored stop (T10's
+      // chalk-20 law) reads against the worst neutral CHALK-20, which dominates the paper
       // bound on both ramps (ladder monotonicity, see the constant above)
       const crossBoundY = wcagAnchorStop(sp.require, sp.stop) === 7
         ? NEUTRAL_W80_WORST_SHIP_Y[mode] : NEUTRAL_P3_WORST_SHIP_Y[mode]
@@ -429,15 +429,15 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         return paperBound ? Math.min(own, contrastRatio(y, crossBoundY)) : own
       }
       // T13: the NEUTRAL's pens (stops 10–11, never pencil-47) also clear the worst CHROMATIC
-      // highlighter-20 (CHROMATIC_W80_WORST_SHIP_Y, set only by generateNeutralScale), judged
+      // chalk-20 (CHROMATIC_W80_WORST_SHIP_Y, set only by generateNeutralScale), judged
       // at the PEN BAND'S bar — the 4.5 the guarantee states — not at the stop's own target:
-      // pen-70 declares a stricter target against its paper, and judging the highlighter
+      // pen-70 declares a stricter target against its paper, and judging the chalk
       // term there walked a stop that already cleared the claim by 6.6. The inverse pen
       // ground excludes it the way it excludes the paper bound.
-      const highlighterBoundY = ctx.opts?.crossHighlighterBoundY && sp.stop >= 10 && !textGround
-        ? ctx.opts.crossHighlighterBoundY[mode] : undefined
-      const highlighterRatio = (L: number) => highlighterBoundY === undefined
-        ? Infinity : contrastRatio(shippedY(L, placed.C, placed.H), highlighterBoundY)
+      const chalkBoundY = ctx.opts?.crossChalkBoundY && sp.stop >= 10 && !textGround
+        ? ctx.opts.crossChalkBoundY[mode] : undefined
+      const chalkRatio = (L: number) => chalkBoundY === undefined
+        ? Infinity : contrastRatio(shippedY(L, placed.C, placed.H), chalkBoundY)
       // and the NEUTRAL's stops 8–11 clear the worst CHROMATIC paper-5 (CHROMATIC_P3_WORST_SHIP_Y,
       // also set only by generateNeutralScale), each at its own band's claim bar
       const paperBoundY = ctx.opts?.crossPaperBoundY && sp.stop >= 8 && !textGround
@@ -446,7 +446,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       const paperRatio = (L: number) => paperBoundY === undefined
         ? Infinity : contrastRatio(shippedY(L, placed.C, placed.H), paperBoundY)
       const target = sp.require.target
-      const clears = (L: number) => shipRatio(L) >= target && highlighterRatio(L) >= PEN_10_CONTRAST && paperRatio(L) >= paperBar
+      const clears = (L: number) => shipRatio(L) >= target && chalkRatio(L) >= PEN_10_CONTRAST && paperRatio(L) >= paperBar
       if (!clears(placed.L)) {
         const away = shippedY(placed.L, placed.C, placed.H) < anchorShipY ? -1 : +1
         let L2 = placed.L
@@ -459,7 +459,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
         shipRatio(placed.L),
       )
       if (got < sp.require.target - 1e-3) unresolvable = `stop ${sp.stop}: contrast ${got.toFixed(2)} < required ${sp.require.target}`
-      else if (highlighterRatio(placed.L) < PEN_10_CONTRAST - 1e-3) unresolvable = `stop ${sp.stop}: contrast ${highlighterRatio(placed.L).toFixed(2)} < required ${PEN_10_CONTRAST} on the worst chromatic highlighter-20`
+      else if (chalkRatio(placed.L) < PEN_10_CONTRAST - 1e-3) unresolvable = `stop ${sp.stop}: contrast ${chalkRatio(placed.L).toFixed(2)} < required ${PEN_10_CONTRAST} on the worst chromatic chalk-20`
       else if (paperRatio(placed.L) < paperBar - 1e-3) unresolvable = `stop ${sp.stop}: contrast ${paperRatio(placed.L).toFixed(2)} < required ${paperBar} on the worst chromatic paper-5`
     } else if (sp.require?.metric === 'apca') {
       const ga = apcaGroundOf(sp.require, sp.stop)

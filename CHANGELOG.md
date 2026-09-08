@@ -8,6 +8,16 @@ structure, ships as at least a minor.
 
 Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git log.
 
+## 0.5.0 — unreleased
+
+- Two instrument words move. The tinted band `highlighter-8/11/15/20` is renamed
+  `chalk-8/11/15/20`, and the 3:1 stop `crayon-26` is renamed `highlighter-26`. Names
+  only: every resolved value is byte-identical through the CSS, Figma, and DTCG emit, and
+  both Figma plugins rename an existing file's rows in place, ids kept. CSS custom
+  properties follow (`--brand-chalk-11`, `--neutral-highlighter-26`), as do the DTCG
+  group labels (`chalk`, `highlighter`) and the `against` field of `pen-58` (`chalk-20`).
+  The `HueCollisionCheck` fields are `dHueChalk` and `chalkDeltaE`.
+
 ## 0.4.0 — 2026-09-06
 
 - The scrim ships in CSS: `--abs-black-060` (black at 60%, both modes) in the `:root`

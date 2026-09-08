@@ -19,8 +19,8 @@ export const STYLE_CSS = /* css */ `
    (owner's 2026-07-27 Figma card set — one 4px flat offset everywhere, the
    SHADOW COLOR fades down the ladder and the stroke fades with it):
      +2 hero    titlebar + brand-black shadow + pencil-47 stroke → Customers (high plane)
-     +1 cards   highlighter-20 grey shadow + crayon-26 stroke            → Get started, Activity, sidebar
-     −1 metrics surface-high shadow (punched in) + highlighter-8 stroke    → metric tiles (compact)
+     +1 cards   chalk-20 grey shadow + highlighter-26 stroke            → Get started, Activity, sidebar
+     −1 metrics surface-high shadow (punched in) + chalk-8 stroke    → metric tiles (compact)
      ctas       pen-100 border + pencil-47 shadow                      → primary/secondary cta buttons
    Every shadow color is a token (or the brand mix), so DARK FALLS OUT of the
    swap — no bespoke dark block (owner ruling 2026-07-27). */
@@ -29,7 +29,7 @@ export const STYLE_CSS = /* css */ `
   font-variant-numeric: tabular-nums;
   --rt-line: var(--border-default);
   --rt-shadow: color-mix(in srgb, var(--brand-stamp-fill) 45%, black);
-  --elev-card: 4px 4px 0 var(--neutral-highlighter-20);
+  --elev-card: 4px 4px 0 var(--neutral-chalk-20);
   --elev-pop: 4px 4px 0 var(--rt-shadow);
   --elev-float: 7px 7px 0 var(--rt-shadow);
   background-image: repeating-linear-gradient(0deg, rgba(0,0,0,.02) 0 1px, transparent 1px 3px);
@@ -42,7 +42,7 @@ export const STYLE_CSS = /* css */ `
 /* +1 default: chunky keyline (one stop lighter than the hero's) + grey flat shadow */
 [data-style="retro"] .dash .dash-card,
 [data-style="retro"] .dash .dash-side {
-  border: 2.5px solid var(--neutral-crayon-26) !important;
+  border: 2.5px solid var(--neutral-highlighter-26) !important;
   box-shadow: var(--elev-card) !important;
 }
 /* +2 hero: the full-strength keyline + the brand-black shadow */
@@ -51,7 +51,7 @@ export const STYLE_CSS = /* css */ `
   box-shadow: var(--elev-pop) !important;
 }
 /* +2 hero ONLY: the action titlebar — BRAND pen-70 fill (owner: bar is a brand
-   color), control squares in its highlighter partner (the active-nav pair, swapped);
+   color), control squares in its chalk partner (the active-nav pair, swapped);
    slimmed to 24px in the owner's 2026-07-27 set */
 [data-style="retro"] .dash .dash-card-customers { position: relative; padding-top: 24px !important; }
 [data-style="retro"] .dash .dash-card-customers::before {
@@ -59,9 +59,9 @@ export const STYLE_CSS = /* css */ `
   background-color: var(--brand-pen-70);
   border-bottom: 2.5px solid var(--rt-line);
   background-image:
-    linear-gradient(var(--brand-highlighter-11), var(--brand-highlighter-11)),
-    linear-gradient(var(--brand-highlighter-11), var(--brand-highlighter-11)),
-    linear-gradient(var(--brand-highlighter-11), var(--brand-highlighter-11));
+    linear-gradient(var(--brand-chalk-11), var(--brand-chalk-11)),
+    linear-gradient(var(--brand-chalk-11), var(--brand-chalk-11)),
+    linear-gradient(var(--brand-chalk-11), var(--brand-chalk-11));
   background-size: 7px 7px;
   background-position: right 9px center, right 22px center, right 35px center;
   background-repeat: no-repeat;
@@ -71,14 +71,14 @@ export const STYLE_CSS = /* css */ `
 [data-style="retro"] .dash .dash-hero-head > div > div:first-child {
   position: absolute; top: 0; left: 14px; height: 24px; z-index: 1;
   display: flex; align-items: center;
-  color: var(--brand-highlighter-11);
+  color: var(--brand-chalk-11);
   font-size: 11px !important; font-weight: 700 !important;
   text-transform: uppercase; letter-spacing: .14em;
 }
 /* −1: metric tiles PUNCH IN — faint stroke + a surface-high flat shadow (paper
    token, so it stays a knockout in light and falls out correctly in dark) */
 [data-style="retro"] .dash .dash-metric {
-  border: 2.5px solid var(--neutral-highlighter-8) !important;
+  border: 2.5px solid var(--neutral-chalk-8) !important;
   box-shadow: 4px 4px 0 var(--surface-high) !important;
   padding: 10px 12px !important;
 }
@@ -102,7 +102,7 @@ export const STYLE_CSS = /* css */ `
 /* INVERTED SELECTION — the active item swaps its own fill/text pair */
 [data-style="retro"] .dash .dash-navitem.active {
   background: var(--brand-pen-70) !important;
-  color: var(--brand-highlighter-11) !important;
+  color: var(--brand-chalk-11) !important;
 }
 /* terminal grammar */
 [data-style="retro"] .dash .dash-navitem {
@@ -119,7 +119,7 @@ export const STYLE_CSS = /* css */ `
 }
 /* the customers table reads as a LEDGER — the inset header bar keeps its own
    sink color (owner: don't recolor it), dashed rules, letterspaced heads */
-[data-style="retro"] .dash .dash-table td { border-bottom: 2px dashed var(--neutral-highlighter-11) !important; }
+[data-style="retro"] .dash .dash-table td { border-bottom: 2px dashed var(--neutral-chalk-11) !important; }
 [data-style="retro"] .dash .dash-table th { letter-spacing: .12em; }
 /* honest links — underlined, chunky */
 [data-style="retro"] .dash a { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
@@ -134,7 +134,7 @@ export const STYLE_CSS = /* css */ `
    THREE levels:
      +2 hero    PLAIN pop fill + quiet brand-grey shade + spread key light + ambient ring
      +1 cards   lift fill + layered white key light + tight rim + brand-grey shade
-     −1 metrics sink→base gradient + COLORED inners (highlighter tokens) + outer white rim
+     −1 metrics sink→base gradient + COLORED inners (chalk tokens) + outer white rim
    No borders, everything pillowed. */
 [data-style="bubble"] .dash {
   font-family: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, sans-serif;
@@ -160,11 +160,11 @@ export const STYLE_CSS = /* css */ `
     -2px -2px 8px -1px rgba(255,255,255,.8),
     0 0 8px -2px color-mix(in srgb, var(--nm-shade) 20%, transparent),
     inset 1px 1.5px 3px rgba(255,255,255,1);
-  /* −1 — her level=−1 variant: the inners ride the highlighter TOKENS, so the recess
+  /* −1 — her level=−1 variant: the inners ride the chalk TOKENS, so the recess
      colors fall out per theme */
   --bb-recess:
-    inset 0 0 10.6px -1px var(--neutral-highlighter-8),
-    inset 0 2px 2px -2px var(--neutral-highlighter-15),
+    inset 0 0 10.6px -1px var(--neutral-chalk-8),
+    inset 0 2px 2px -2px var(--neutral-chalk-15),
     0 0 24px 24px rgba(255,255,255,.1),
     0 1px 0 rgba(255,255,255,.7);
   /* recessed physics for the SMALL wells (search, illo, hover) — unchanged:
@@ -210,7 +210,7 @@ export const STYLE_CSS = /* css */ `
 /* DARK (owner principle 2026-07-24, approved that round: treatment amounts
    adjust to the CONTRAST AROUND them — lights whisper, darks strong; near black
    a broad white glow is a halo). The approved dark ladder re-expressed over the
-   new stacks; the recess keeps its colored inners (the highlighter tokens already
+   new stacks; the recess keeps its colored inners (the chalk tokens already
    swapped) and DROPS the broad white ring. */
 [data-style="bubble"] [data-theme="dark"] .dash .dash-card {
   box-shadow: -1px -1px 3px rgba(255,255,255,.03), 4px 5px 9px rgba(0,0,0,.65), 0 0 4px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06) !important;
@@ -222,14 +222,14 @@ export const STYLE_CSS = /* css */ `
   box-shadow: -1px -1px 3px rgba(255,255,255,.03), 4px 5px 9px rgba(0,0,0,.65), 0 0 4px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06);
 }
 /* the recess DARK (owner correction 2026-07-28: invert the SURFACES, keep the
-   LIGHT — the raw highlighter tokens flip LIGHTER than the dark sink fill, which turned
-   the inner shadow into a glow-in-the-hole. The inners keep their highlighter tint but
+   LIGHT — the raw chalk tokens flip LIGHTER than the dark sink fill, which turned
+   the inner shadow into a glow-in-the-hole. The inners keep their chalk tint but
    mixed toward dark (shadows are always dark), so the well reads dark with the
    light catching only the outer bottom lip). */
 [data-style="bubble"] [data-theme="dark"] .dash .dash-metric {
   box-shadow:
-    inset 0 0 10.6px -1px color-mix(in srgb, var(--neutral-highlighter-8) 25%, rgba(0,0,0,.72)),
-    inset 0 2px 2px -2px color-mix(in srgb, var(--neutral-highlighter-15) 25%, rgba(0,0,0,.85)),
+    inset 0 0 10.6px -1px color-mix(in srgb, var(--neutral-chalk-8) 25%, rgba(0,0,0,.72)),
+    inset 0 2px 2px -2px color-mix(in srgb, var(--neutral-chalk-15) 25%, rgba(0,0,0,.85)),
     0 1px 0 rgba(255,255,255,.05) !important;
 }
 /* selection physics (owner): the SELECTED item pops UP (pillow, keeps its own

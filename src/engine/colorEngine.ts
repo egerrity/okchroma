@@ -169,14 +169,14 @@ export interface GenerateOptions {
   // ground and vice versa (see the cross there). Nothing else in the solve changes — same
   // requires, producers, hue laws, chroma floors and shipped-pair floor. Absent = byte-identical.
   textGround?: { light: { L: number; C: number; H: number }; dark: { L: number; C: number; H: number } }
-  // THE CROSS-FAMILY HIGHLIGHTER BOUND (T13, owner 2026-09-01): the pen guarantee is
-  // symmetric, so the NEUTRAL's pens must clear every chromatic family's highlighter-20,
+  // THE CROSS-FAMILY CHALK BOUND (T13, owner 2026-09-01): the pen guarantee is
+  // symmetric, so the NEUTRAL's pens must clear every chromatic family's chalk-20,
   // not only their own ramp's and the neutral bound. The resolver has no neutral flag
   // (scaleName is metadata), so generateNeutralScale passes the frozen worst chromatic
-  // highlighter-20 Y here and the shipped-pair clamp on stops 10–11 takes it as a third
+  // chalk-20 Y here and the shipped-pair clamp on stops 10–11 takes it as a third
   // floor (resolve.ts CHROMATIC_W80_WORST_SHIP_Y). Absent (every other caller) = byte-identical.
-  crossHighlighterBoundY?: { light: number; dark: number }
-  // the same, for the paper claims: the NEUTRAL's crayon-26 / pencil-47 / pens clear the worst
+  crossChalkBoundY?: { light: number; dark: number }
+  // the same, for the paper claims: the NEUTRAL's highlighter-26 / pencil-47 / pens clear the worst
   // chromatic paper-5 (resolve.ts CHROMATIC_P3_WORST_SHIP_Y), each at its band's bar
   crossPaperBoundY?: { light: number; dark: number }
 
@@ -298,20 +298,20 @@ export function generateNeutralScale(
     chromaCurve: curve,
     enforceOnFillContrast: true,
     contrastProfile,
-    // T13: the neutral's pens clear every chromatic family's highlighter-20 (the symmetric
+    // T13: the neutral's pens clear every chromatic family's chalk-20 (the symmetric
     // pen guarantee); the chromatic ramps clear the neutral's through NEUTRAL_W80_WORST_SHIP_Y
-    crossHighlighterBoundY: CHROMATIC_W80_WORST_SHIP_Y,
+    crossChalkBoundY: CHROMATIC_W80_WORST_SHIP_Y,
     crossPaperBoundY: CHROMATIC_P3_WORST_SHIP_Y,
   })
 
   // The neutral cta is LOW-HIERARCHY: unlike a brand/signal cta (a bold off-scale
-  // fill), it reads at the quiet highlighter level, so its REST fill stays fed from the
+  // fill), it reads at the quiet chalk level, so its REST fill stays fed from the
   // scale's own stop 4 — which flips via ROOT_L_LIGHT/ROOT_L_DARK (light ~0.936, dark ~0.285).
   // on-cta is recomputed so the text stays legible in each mode.
   const asCta = (stop: number, src: ColorStop) => makeStop(stop, src.L, src.C, src.H)
   scale.cta = asCta(9, scale.light[3])
   scale.ctaDark = asCta(9, scale.dark[3])
-  // DARK POP CLEARANCE (owner 2026-07-27): the fed dark highlighters pack near black, so
+  // DARK POP CLEARANCE (owner 2026-07-27): the fed dark chalks pack near black, so
   // the quiet fill sat ~1.07 vs the HIGH plane (dark paper-3 — post-C27 the one-level
   // highest background; a generated pop candidate was tried and RETIRED, owner
   // 2026-07-28: once the papers share a photometric level, pop = paper-3 is the
@@ -362,7 +362,7 @@ export function generateNeutralScale(
 // not the loud off-scale fill. This is both the user-facing `secondaryLevel: 'subtle'` AND the
 // automatic yield move when a secondary collides with a signal (resolveTheme). Note the red
 // case: the primary's rung-1 goes DARK; this goes LIGHTER + lower chroma — the mirror falls out
-// of the highlighter-register cta, no extra machinery.
+// of the chalk-register cta, no extra machinery.
 export function generateSubtleSecondary(
   hex: string,
   opts?: {

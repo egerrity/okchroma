@@ -99,7 +99,7 @@ const isLeaf = (n: FigmaColorToken | FigmaGroup): n is FigmaColorToken => '$type
 function flatten(node: FigmaGroup, prefix: string, out: FlatTok[]): void {
   // groupEntries (figmaRender.ts), not Object.entries: a group of bare-digit leaves is
   // JS integer keys and gets silently re-sorted ascending otherwise, reversing the
-  // TOKEN_ORDER panel contract (adversarial-audit-caught 2026-08-07, when paper/highlighter
+  // TOKEN_ORDER panel contract (adversarial-audit-caught 2026-08-07, when paper/chalk
   // leaves WERE bare digits; flat band leaves aren't, but the rule stays cheap).
   for (const [k, v] of groupEntries(node)) {
     const path = prefix ? `${prefix}/${k}` : k

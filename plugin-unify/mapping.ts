@@ -1,8 +1,8 @@
 // The BAKED mapping table (owner-reviewed 2026-08-11) — Unify semantic tokens to
 // okchroma primitive paths. Owner rules: suffix bands per color family — Primary (or
 // the bare token) -> marks + pens of the family (text under the flat hierarchy; focus
-// rings, brand only; icons can take crayon-26) · Highlight -> any highlighter (borders) ·
-// Accent -> any paper · Spotlight -> crayon-26 or pencil-47. NEVER identity, never
+// rings, brand only; icons can take highlighter-26) · Highlight -> any chalk (borders) ·
+// Accent -> any paper · Spotlight -> highlighter-26 or pencil-47. NEVER identity, never
 // the cta family. Matching is suffix + value based so old and new Unify name vintages
 // both route. Link is parked (the known tricky case) — those land unmatched.
 
@@ -40,7 +40,7 @@ const fam = (family: string) => (toks: string[]) => toks.map(t => `base/${family
 
 const PRIMARY_BAND = [M74, I53, I42, I30]
 const SPOTLIGHT_BAND = [M74, I53]
-const HIGHLIGHTERS = [W92, W89, W85, W80]
+const CHALKS = [W92, W89, W85, W80]
 const PAPERS = [P99, P97, P95]
 const OFFSET_08 = 'base/alpha/away-from-bg/08'
 const OFFSET_16 = 'base/alpha/away-from-bg/16'
@@ -75,7 +75,7 @@ export function matchBound(name: string): Rule | 'ignore' | null {
   if (family) {
     const f = fam(FAMILY_PREFIX[family])
     if (s.includes('spotlight')) return { candidates: f(SPOTLIGHT_BAND) }
-    if (s.includes('highlight')) return { candidates: f(HIGHLIGHTERS) }
+    if (s.includes('highlight')) return { candidates: f(CHALKS) }
     if (s.includes('accent')) return { candidates: f(PAPERS) }
     return { candidates: f(PRIMARY_BAND) } // Primary or the bare token
   }
@@ -101,7 +101,7 @@ export function matchBound(name: string): Rule | 'ignore' | null {
   }
   if (s.includes('stroke')) {
     if (s.includes('inverse')) return { candidates: [PAPER_0], auto: true }
-    if (s.includes('quaternary') || s.includes('quarternary')) return { candidates: n([W92, W85, W80, M74]) } // highlighter-8 first: nearest value (owner 2026-08-11)
+    if (s.includes('quaternary') || s.includes('quarternary')) return { candidates: n([W92, W85, W80, M74]) } // chalk-8 first: nearest value (owner 2026-08-11)
     if (s.includes('tertiary')) return { candidates: n([M74, W80]) }
     if (s.includes('secondary')) return { candidates: n([I53, M74]) }
     return { candidates: n([I30, I42, I53, M74]) }
@@ -141,20 +141,20 @@ export function matchDetached(hex: string, alpha: number): Rule | 'ignore' | nul
     '#E2E4E9': { candidates: n([W85, W80, M74]) },
     '#044BAF': { candidates: fam(FAMILY.brandPrimary)(PRIMARY_BAND) },
     '#4F46E5': { candidates: fam(FAMILY.brandPrimary)(PRIMARY_BAND) }, // archived Violet vintage
-    '#8EB9F5': { candidates: fam(FAMILY.brandPrimary)(HIGHLIGHTERS) },
+    '#8EB9F5': { candidates: fam(FAMILY.brandPrimary)(CHALKS) },
     '#E6EFFB': { candidates: fam(FAMILY.brandPrimary)(PAPERS) },
     '#B42318': { candidates: fam(FAMILY.critical)(PRIMARY_BAND) },
-    '#FECDCA': { candidates: fam(FAMILY.critical)(HIGHLIGHTERS) },
+    '#FECDCA': { candidates: fam(FAMILY.critical)(CHALKS) },
     '#FEF3F2': { candidates: fam(FAMILY.critical)(PAPERS) },
     '#2A5F26': { candidates: fam(FAMILY.positive)(PRIMARY_BAND) },
     '#277A1F': { candidates: fam(FAMILY.positive)(PRIMARY_BAND) }, // vintage
-    '#A3DB9E': { candidates: fam(FAMILY.positive)(HIGHLIGHTERS) },
-    '#AFE9AA': { candidates: fam(FAMILY.positive)(HIGHLIGHTERS) },
+    '#A3DB9E': { candidates: fam(FAMILY.positive)(CHALKS) },
+    '#AFE9AA': { candidates: fam(FAMILY.positive)(CHALKS) },
     '#EBF5EA': { candidates: fam(FAMILY.positive)(PAPERS) },
     '#804F00': { candidates: fam(FAMILY.warning)(PRIMARY_BAND) },
     '#B54708': { candidates: fam(FAMILY.warning)(PRIMARY_BAND) }, // vintage
-    '#FFE680': { candidates: fam(FAMILY.warning)(HIGHLIGHTERS) },
-    '#FEDF89': { candidates: fam(FAMILY.warning)(HIGHLIGHTERS) },
+    '#FFE680': { candidates: fam(FAMILY.warning)(CHALKS) },
+    '#FEDF89': { candidates: fam(FAMILY.warning)(CHALKS) },
     '#FFF9E5': { candidates: fam(FAMILY.warning)(PAPERS) },
     '#FFFAEB': { candidates: fam(FAMILY.warning)(PAPERS) },
   }
@@ -167,7 +167,7 @@ export function allCandidatePaths(): string[] {
     SURFACE('dim'), SURFACE('low'), SURFACE('mid'), SURFACE('high')])
   for (const family of [FAMILY.neutral, FAMILY.brandPrimary, FAMILY.critical, FAMILY.positive, FAMILY.warning]) {
     const f = fam(family)
-    for (const t of [...PRIMARY_BAND, ...HIGHLIGHTERS, ...PAPERS]) for (const p of f([t])) out.add(p)
+    for (const t of [...PRIMARY_BAND, ...CHALKS, ...PAPERS]) for (const p of f([t])) out.add(p)
     out.add(CTA_ON(family))
   }
   return [...out]

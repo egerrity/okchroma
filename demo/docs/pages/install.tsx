@@ -42,7 +42,7 @@ const theme = resolveTheme({
           [<Code>primaryMode</Code>, <Code>'recommended' | 'exact'</Code>, 'exact ships the hex as the stamp fill and identity untouched, with on-fill enforcement off; the ramp and the signals still resolve'],
           [<Code>primaryArchetype</Code>, <Code>Archetype</Code>, 'pin the fill to one of the six lightness anchors (near-black, dark, rich, vivid, bright, light); turns the red collision solve off'],
           [<Code>secondaryHex</Code>, 'string | null', 'a secondary seed'],
-          [<Code>secondaryStyle</Code>, <Code>'default' | 'outline' | 'exact'</Code>, "default: the ramp is your hex, the stamp trio is a tint of it; exact: everything is your hex; outline: exact with the fill re-expressed at emit (transparent fill, alpha hover, crayon-26 edge)"],
+          [<Code>secondaryStyle</Code>, <Code>'default' | 'outline' | 'exact'</Code>, "default: the ramp is your hex, the stamp trio is a tint of it; exact: everything is your hex; outline: exact with the fill re-expressed at emit (transparent fill, alpha hover, highlighter-26 edge)"],
           [<Code>secondaryArchetype</Code>, <Code>Archetype</Code>, 'the anchor, for the secondary'],
           [<Code>deriveSecondary</Code>, 'boolean', 'with no secondaryHex: derive one from the primary'],
           [<Code>style</Code>, <Code>'default' | 'deeper' | 'full-chroma'</Code>, 'deeper pushes semi-muted warm seeds toward the cream/brown envelope; full-chroma releases the vividness cap (API only, outside the guarantees)'],

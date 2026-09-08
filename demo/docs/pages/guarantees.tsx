@@ -40,10 +40,10 @@ export function Body() {
         head={['band', 'claim', 'bar']}
         rows={[
           ['paper', 'grounds. Every contrast band is cleared against them; they carry no claim of their own', ''],
-          ['highlighter', 'grounds for subtle states and decoration. The pen band is cleared against them. Never text', ''],
-          ['crayon', 'reads on every paper: focus rings, icons, borders, large text (the non-text contrast bar)', <><K v={STOP_8_NONTEXT_CONTRAST} d={1} />:1</>],
+          ['chalk', 'grounds for subtle states and decoration. The pen band is cleared against them. Never text', ''],
+          ['highlighter', 'reads on every paper: focus rings, icons, borders, large text (the non-text contrast bar)', <><K v={STOP_8_NONTEXT_CONTRAST} d={1} />:1</>],
           ['pencil', 'reads on every paper: regular text, and the emphasis fill', <><K v={PENCIL_9_CONTRAST} d={1} />:1</>],
-          ['pen', 'reads on every paper and every highlighter, both directions', <><K v={PEN_10_CONTRAST} d={1} />:1</>],
+          ['pen', 'reads on every paper and every chalk, both directions', <><K v={PEN_10_CONTRAST} d={1} />:1</>],
         ]}
       />
       <P>
@@ -57,9 +57,9 @@ export function Body() {
       <P>
         A band reads against the grounds of its own family and of the theme's neutral. The pen band is
         symmetric: a pen and a ground are in scope when they share a family or either side is the neutral,
-        in both directions, so the neutral's pens also read against every chromatic family's highlighters.
-        The neutral's crayon and pencil read against every chromatic family's papers as well. A pen of one
-        chromatic family on another chromatic family's highlighter is not in scope.
+        in both directions, so the neutral's pens also read against every chromatic family's chalks.
+        The neutral's highlighter and pencil read against every chromatic family's papers as well. A pen of one
+        chromatic family on another chromatic family's chalk is not in scope.
       </P>
       <P>
         The ramp resolves per family, so the neutral it will be paired with is not in view during the solve.
@@ -71,10 +71,10 @@ export function Body() {
       <Table
         head={['bound', 'light (darkest Y)', 'dark (lightest Y)', 'binds']}
         rows={[
-          [<Code>NEUTRAL_P3_WORST_SHIP_Y</Code>, <K v={NEUTRAL_P3_WORST_SHIP_Y.light} d={6} />, <K v={NEUTRAL_P3_WORST_SHIP_Y.dark} d={6} />, 'the worst neutral paper; every chromatic family\'s crayon, pencil and pen'],
-          [<Code>NEUTRAL_W80_WORST_SHIP_Y</Code>, <K v={NEUTRAL_W80_WORST_SHIP_Y.light} d={6} />, <K v={NEUTRAL_W80_WORST_SHIP_Y.dark} d={6} />, 'the worst neutral highlighter; every chromatic family\'s pen'],
-          [<Code>CHROMATIC_P3_WORST_SHIP_Y</Code>, <K v={CHROMATIC_P3_WORST_SHIP_Y.light} d={6} />, <K v={CHROMATIC_P3_WORST_SHIP_Y.dark} d={6} />, 'the worst chromatic paper; the neutral\'s crayon, pencil and pen, each at its own bar'],
-          [<Code>CHROMATIC_W80_WORST_SHIP_Y</Code>, <K v={CHROMATIC_W80_WORST_SHIP_Y.light} d={6} />, <K v={CHROMATIC_W80_WORST_SHIP_Y.dark} d={6} />, 'the worst chromatic highlighter; the neutral\'s pen'],
+          [<Code>NEUTRAL_P3_WORST_SHIP_Y</Code>, <K v={NEUTRAL_P3_WORST_SHIP_Y.light} d={6} />, <K v={NEUTRAL_P3_WORST_SHIP_Y.dark} d={6} />, 'the worst neutral paper; every chromatic family\'s highlighter, pencil and pen'],
+          [<Code>NEUTRAL_W80_WORST_SHIP_Y</Code>, <K v={NEUTRAL_W80_WORST_SHIP_Y.light} d={6} />, <K v={NEUTRAL_W80_WORST_SHIP_Y.dark} d={6} />, 'the worst neutral chalk; every chromatic family\'s pen'],
+          [<Code>CHROMATIC_P3_WORST_SHIP_Y</Code>, <K v={CHROMATIC_P3_WORST_SHIP_Y.light} d={6} />, <K v={CHROMATIC_P3_WORST_SHIP_Y.dark} d={6} />, 'the worst chromatic paper; the neutral\'s highlighter, pencil and pen, each at its own bar'],
+          [<Code>CHROMATIC_W80_WORST_SHIP_Y</Code>, <K v={CHROMATIC_W80_WORST_SHIP_Y.light} d={6} />, <K v={CHROMATIC_W80_WORST_SHIP_Y.dark} d={6} />, 'the worst chromatic chalk; the neutral\'s pen'],
         ]}
       />
       <P>
@@ -84,9 +84,9 @@ export function Body() {
 
       <H2>Declared target versus promise</H2>
       <P>
-        Each contrast stop is solved against one ground: the crayon and the pencil against {stopTokenName(3)}, the
+        Each contrast stop is solved against one ground: the highlighter and the pencil against {stopTokenName(3)}, the
         nearest paper, so clearing it clears every paper; {stopTokenName(10)} against {stopTokenName(7)}, the darkest
-        highlighter; {stopTokenName(11)} against {stopTokenName(3)}, and it clears the highlighters by sitting past{' '}
+        chalk; {stopTokenName(11)} against {stopTokenName(3)}, and it clears the chalks by sitting past{' '}
         {stopTokenName(10)}. A declared target can be stricter than the claim, in which case the surplus is
         placement, not a promise.
       </P>
@@ -95,9 +95,9 @@ export function Body() {
         rows={[
           [stopTokenName(8), <><K v={R8.target} d={1} />:1 ({R8.level})</>, `${stopTokenName(3)}, plus the neutral paper bound`, <><K v={STOP_8_NONTEXT_CONTRAST} d={1} />:1 on every paper</>],
           [stopTokenName(9), <><K v={R9.target} d={1} />:1 ({R9.level})</>, `${stopTokenName(3)}, plus the neutral paper bound`, <><K v={PENCIL_9_CONTRAST} d={1} />:1 on every paper</>],
-          [stopTokenName(10), <><K v={R10.target} d={1} />:1 ({R10.level})</>, `${R10.against}, plus the neutral highlighter bound`, <><K v={PEN_10_CONTRAST} d={1} />:1 on every paper and highlighter</>],
-          [stopTokenName(11), <><K v={R11.target} d={1} />:1 ({R11.level})</>, `${stopTokenName(3)}, plus the neutral paper bound`, <><K v={PEN_10_CONTRAST} d={1} />:1 on every paper and highlighter; it clears highlighters by sitting past {stopTokenName(10)}</>],
-          [PEN_100, 'none (the literal pole)', '', <><K v={PEN_10_CONTRAST} d={1} />:1 on every paper and highlighter (neutral only)</>],
+          [stopTokenName(10), <><K v={R10.target} d={1} />:1 ({R10.level})</>, `${R10.against}, plus the neutral chalk bound`, <><K v={PEN_10_CONTRAST} d={1} />:1 on every paper and chalk</>],
+          [stopTokenName(11), <><K v={R11.target} d={1} />:1 ({R11.level})</>, `${stopTokenName(3)}, plus the neutral paper bound`, <><K v={PEN_10_CONTRAST} d={1} />:1 on every paper and chalk; it clears chalks by sitting past {stopTokenName(10)}</>],
+          [PEN_100, 'none (the literal pole)', '', <><K v={PEN_10_CONTRAST} d={1} />:1 on every paper and chalk (neutral only)</>],
         ]}
       />
       <P>
@@ -147,7 +147,7 @@ export function Body() {
 
       <H2>What is not promised</H2>
       <UL>
-        <LI>Highlighters are never text grounds for the crayon or the pencil. Only the pen band is cleared against them.</LI>
+        <LI>Chalks are never text grounds for the highlighter or the pencil. Only the pen band is cleared against them.</LI>
         <LI>No AAA. {stopTokenName(11)} declares <K v={R11.target} d={1} />:1 against its paper, but the promise is the same AA minimum as every text band.</LI>
         <LI>APCA is a booster, not a claim. It nudges the stamp fill, picks its pole, and gates its edge; no token is promised any APCA value.</LI>
         <LI>Exact mode ships the typed hex as the stamp fill and identity with on-fill enforcement off. The label is whichever pole passes, and a note is emitted when no pole reads well; the ramp's own stops keep their claims.</LI>
@@ -166,7 +166,7 @@ export function Body() {
         head={['script', 'sweep', 'what it proves']}
         rows={[
           [<Code>audit:guarantee</Code>, '72 hues × 3 chromas at L 0.62, plus the 15 audit fixtures; 7 families; 4 neutral tint levels; both modes', 'the five claims above on the shipped 8-bit pair, both directions; the quiet stamp/on composite at 4.5:1 on every state; the full-chroma residual, reported'],
-          [<Code>req:audit</Code>, '24 hues × 3 chromas at L 0.62; both modes', 'every declared requirement holds; the ladder is monotonic through the crayon; the pencil sits past the crayon; the pens order; every stop is in gamut and a valid hex; the stamp anchor respects its floor and hue; hover and pressed travel one way; the on-fill pole is valid'],
+          [<Code>req:audit</Code>, '24 hues × 3 chromas at L 0.62; both modes', 'every declared requirement holds; the ladder is monotonic through the highlighter; the pencil sits past the highlighter; the pens order; every stop is in gamut and a valid hex; the stamp anchor respects its floor and hue; hover and pressed travel one way; the on-fill pole is valid'],
           [<Code>audit:cta-apca</Code>, 'agnostic hue × lightness × chroma grids, every stamp surface', `the booster holds: every stamp fill reads Lc ${CO_LC} (critical ${CRITICAL_CLEARANCE_LC}), light and dark`],
           [<Code>band-audit</Code>, 'agnostic hue × chroma × L, plus the fixtures', `band order (${stopTokenName(9)} past ${stopTokenName(8)}); ${PAPER_0} on ${stopTokenName(9)} at 4.5:1; ${stopTokenName(8)} at 3:1 on its declared paper in both modes; the neutral stamp's state law and soft composite; a blessed value snapshot`],
           [<Code>audit:divergence</Code>, 'the fixtures, every family × mode × stop', 'the neutral follows its declared tint curve in both modes; the red signal keeps its hue in both modes; a blessed value snapshot; the dark apparent-lightness residual, reported'],

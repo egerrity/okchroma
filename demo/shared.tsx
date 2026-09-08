@@ -18,7 +18,7 @@ export const FONT_STACK = "'Inter', -apple-system, system-ui, sans-serif"
 //   accented-inverse primary: accent  subtle: brand
 // The "accent" Family is emitted as the `secondary` primitive prefix (the role
 // was renamed in the token rename); prim() maps Family → primitive prefix.
-// Stops are the emitted token names: scale paper/highlighter, the crayon-26 ring, the
+// Stops are the emitted token names: scale paper/chalk, the highlighter-26 ring, the
 // cta/cta-hover/cta-pressed fill trio, pencil-47/42-aa/30-aaa text (doubling as the
 // text-style cta — the cta-ink aliases died 2026-08-12),
 // on-cta on-fill text. (on-highlight died with highlight-9, owner 2026-07-29 — the
@@ -30,12 +30,12 @@ function accentModeCss(mode: AccentMode, primary: Family, subtle: Family): strin
   const PRIMARY_ROLES: Array<[string, string]> = [
     ['fg', 'pen-70'], ['fg-hover', 'pencil-47'], ['fg-alt', 'pencil-47'], ['fg-alt-hover', 'pen-70'], ['fg-on-emphasis', 'stamp-on'],
     ['bg-emphasis', 'stamp-fill'], ['bg-emphasis-hover', 'stamp-fill-hover'], ['bg-emphasis-pressed', 'stamp-fill-pressed'],
-    ['border-default', 'highlighter-15'], ['border-default-hover', 'crayon-26'],
+    ['border-default', 'chalk-15'], ['border-default-hover', 'highlighter-26'],
     ['border-emphasis', 'stamp-fill'], ['border-emphasis-hover', 'stamp-fill-hover'],
   ]
   const SUBTLE_ROLES: Array<[string, string]> = [
-    ['bg-faint', 'paper-3'], ['bg-subtle', 'highlighter-11'], ['bg-subtle-hover', 'highlighter-15'],
-    ['border-subtle', 'highlighter-8'], ['border-subtle-hover', 'highlighter-11'],
+    ['bg-faint', 'paper-3'], ['bg-subtle', 'chalk-11'], ['bg-subtle-hover', 'chalk-15'],
+    ['border-subtle', 'chalk-8'], ['border-subtle-hover', 'chalk-11'],
   ]
   const lines: string[] = [`[data-accent-mode="${mode}"][data-brand] {`]
   for (const [suffix, tok] of PRIMARY_ROLES) {
@@ -116,16 +116,16 @@ export const COMPONENT_CSS = `
 .u-link:active { color: var(--fg-link-pressed); }
 /* Stop 8 IS the ramp's focus-ring role — never the OS default accent */
 [data-brand] :is(input, select, textarea, button, a):focus-visible {
-  outline: 2px solid var(--brand-crayon-26);
+  outline: 2px solid var(--brand-highlighter-26);
   outline-offset: 1px;
 }
 /* The app-chrome scope is brandless — it carries only the generated neutral
-   (App.tsx neutralCss), so --brand-crayon-26 doesn't exist there and the
+   (App.tsx neutralCss), so --brand-highlighter-26 doesn't exist there and the
    rule above would go invalid at computed-value time (no ring at all on the
    footer controls). Alias the ring source to the chrome's own neutral
-   crayon-26 — stop 8 of whichever ramp owns the scope. */
+   highlighter-26 — stop 8 of whichever ramp owns the scope. */
 [data-brand="chrome"] {
-  --brand-crayon-26: var(--neutral-crayon-26);
+  --brand-highlighter-26: var(--neutral-highlighter-26);
 }
 /* Elevation — demo-layer shadow recipes composing the --shadow-* transparencies
    (tokens/semantic.css; mirrors the plugin's system/alpha/shadow rows). The
@@ -424,12 +424,12 @@ export function Readout({ r }: { r: ResolvedBrand }) {
   )
 }
 
-// The emitted scale — the NAMED stops (paper/highlighter/crayon/pen, contiguous 1–10
+// The emitted scale — the NAMED stops (paper/chalk/highlighter/pen, contiguous 1–10
 // since the 2026-07-29 highlight collapse; the engine emits no numeric
 // --{prefix}-N vars). Kept in emit order; cta stays off-scale and out of the strip.
 export const SCALE_STOP_NAMES = [
-  'paper-1', 'paper-3', 'paper-5', 'highlighter-8', 'highlighter-11', 'highlighter-15', 'highlighter-20',
-  'crayon-26', 'pencil-47', 'pen-58', 'pen-70',
+  'paper-1', 'paper-3', 'paper-5', 'chalk-8', 'chalk-11', 'chalk-15', 'chalk-20',
+  'highlighter-26', 'pencil-47', 'pen-58', 'pen-70',
 ] as const
 
 // Labeled single-row scale strip — used where multiple scales stack tight

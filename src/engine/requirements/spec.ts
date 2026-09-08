@@ -3,8 +3,8 @@
 // (resolve.ts) executes it by calling the real engine functions; producer names ('perceptual', 'warm-torsion')
 // are references to named resolver capabilities, not formulas.
 //
-// NUMBERING TRUTH (owner-flagged; matches the engine): the SCALE is stops 1–11 — paper 1–3, highlighter 4–7,
-// crayon 8, pencil 9, pen 10–11 (contiguous; the C49 between-stop round later took the pens back to
+// NUMBERING TRUTH (owner-flagged; matches the engine): the SCALE is stops 1–11 — paper 1–3, chalk 4–7,
+// highlighter 8, pencil 9, pen 10–11 (contiguous; the C49 between-stop round later took the pens back to
 // 9–11 after the collapse below briefly made the scale 1–10). THE HIGHLIGHT BAND COLLAPSED 2026-07-29: highlight-9 is
 // deleted and the pens renumbered down onto it (old 10/11 → 9/10). highlight-9 and old ink-10 both
 // solved 4.5 against paper-5 (paper-3) — the same bar against the same anchor — so they landed on
@@ -24,7 +24,7 @@ import {
 // source of truth for the band words — the group labels below DERIVE from it.
 import { stopTokenName, PAPER_0, STAMP_FILL, STAMP_FILL_HOVER, STAMP_FILL_PRESSED } from '../tokenNames'
 
-export type Group = 'paper' | 'highlighter' | 'crayon' | 'pencil' | 'pen'
+export type Group = 'paper' | 'chalk' | 'highlighter' | 'pencil' | 'pen'
 // The solver's text-lane membership test (stops 9–11: pencil + the two pens). Takes a
 // plain string, not Group, ON PURPOSE: a DTCG bundle exported before 2026-08-31
 // labels stop 9 'ink' (the lane and the label were one word then), and re-resolving
@@ -46,13 +46,13 @@ export type Producer = {
 // (resolve.ts declaredAnchor). paper-5 (paper-3) joined the union when stop 8 became the focus
 // ring (owner 2026-07-28); the pen stops keep a lane-specific override in the resolver.
 export type Require =
-  | { metric: 'wcag'; against: 'paper-1' | 'paper-3' | 'paper-5' | 'highlighter-20'; target: number; level: 'AA' | 'AAA' }
+  | { metric: 'wcag'; against: 'paper-1' | 'paper-3' | 'paper-5' | 'chalk-20'; target: number; level: 'AA' | 'AAA' }
   // APCA lightness-contrast requirement (the contrast-PROFILE alternative to wcag): the stop must read
   // |Lc| ≥ targetLc against its declared anchor. Same floor semantics — a placement that already clears
   // does not move. Produced by withProfile() (profiles.ts), never hand-declared in the built-in specs.
   | { metric: 'apca'; against: 'paper-1' | 'paper-3' | 'paper-5'; targetLc: number }
   // minimum perceptual separation (OKLab ΔE, the house stopDeltaE metric) from another RESOLVED stop —
-  // 'paper-1' anchors the paper-3 push; 'prev' = the stop's resolved predecessor (the highlighter seam floors:
+  // 'paper-1' anchors the paper-3 push; 'prev' = the stop's resolved predecessor (the chalk seam floors:
   // every ladder seam guarantees distinctness, so no seed — low-chroma grays and muted warms included —
   // can ever collapse a seam again, whatever the producers do).
   | { metric: 'min-separation'; against: 'paper-1' | 'prev'; target: number }
@@ -125,11 +125,11 @@ export type ModeSpec = {
 // the emitted `group` field — it ships in every DTCG token's $extensions and renders
 // on the docs site — must be true to the band words). No hand-kept ladder: the
 // pre-2026-08-31 labels were exactly that, a parallel spelling that drifted from the
-// names ('wash' on paper-5, 'highlight' on crayon-26, 'ink' on pencil-47). Deriving from
+// names ('wash' on paper-5, 'highlight' on highlighter-26, 'ink' on pencil-47). Deriving from
 // tokenNames kills the drift class — a band rename propagates here for free.
 // LABELS ONLY — the solver's lanes are separate, explicit rules and their spans are
 // unchanged: the text lane is textLane() (the pencil + pen bands — stops 9–11, exactly
-// the old 'ink' span), and the highlighter-collision span is the stop-number HIGHLIGHTER_STOPS
+// the old 'ink' span), and the chalk-collision span is the stop-number CHALK_STOPS
 // table in collision.ts (still 3–7; the 2026-07-24 boundary warning lives there).
 // Pre-2026-08-31 bundles carrying the old labels re-resolve identically: only the
 // text lane is ever read, and textLane accepts the legacy word.
@@ -187,15 +187,15 @@ const S8: Require = { metric: 'wcag', against: 'paper-5', target: STOP_8_NONTEXT
 // them can carry both jobs. Nothing about the number changed; only the count of stops
 // asking for it.
 const T9: Require = { metric: 'wcag', against: 'paper-5', target: PENCIL_9_CONTRAST, level: 'AA' }
-// T10 — THE HIGHLIGHTER-20 LAW (guarantee-groups round, owner 2026-08-27): the between text
-// stop anchors at highlighter-20, its own ramp's darkest highlighter, so the pen group's claim
-// (4.5 on every paper and highlighter of its own family or of the neutral, both directions)
+// T10 — THE CHALK-20 LAW (guarantee-groups round, owner 2026-08-27): the between text
+// stop anchors at chalk-20, its own ramp's darkest chalk, so the pen group's claim
+// (4.5 on every paper and chalk of its own family or of the neutral, both directions)
 // is declared rather than hoped (see stopTable.ts PEN_10_CONTRAST; the neutral's side of it
 // is the resolver's CHROMATIC_W80_WORST_SHIP_Y bound, T13).
 // WCAG lane only in effect: the resolver keeps the apca lane's anchor at paper-3
 // (resolve.ts apcaGroundOf) so the community/apca lane stays byte-identical — the
 // mirror of the wcag lane's own paper-5 pen override.
-const T10: Require = { metric: 'wcag', against: 'highlighter-20', target: PEN_10_CONTRAST, level: 'AA' }
+const T10: Require = { metric: 'wcag', against: 'chalk-20', target: PEN_10_CONTRAST, level: 'AA' }
 const T11: Require = { metric: 'wcag', against: 'paper-5', target: PEN_11_CONTRAST_FLOOR, level: 'AAA' }
 
 // ONE on-color left (owner 2026-07-29). `onHighlight` is deleted with the band it named:
@@ -217,9 +217,9 @@ const T11: Require = { metric: 'wcag', against: 'paper-5', target: PEN_11_CONTRA
 // opts.apcaClearanceLc. Exact and custom-secondary ctas stay inert (enforce off).
 const ONS = { onFill: { metric: 'apca-pole', enforce: true, ratioFloor: 4.5, coEnforceLc: 65 } as OnReq }
 
-// paper/highlighter separation is a PROPERTY OF THE ROOT_L_LIGHT SHAPE, not a runtime delta (owner 2026-07-09,
+// paper/chalk separation is a PROPERTY OF THE ROOT_L_LIGHT SHAPE, not a runtime delta (owner 2026-07-09,
 // render/paper2-distributions.html, distribution "B"). The near-white ladder's gaps grow geometrically
-// (~1.25×/step), so paper-3 (paper-2) stands ~0.017 ΔE off paper-1 (paper-1) and every highlighter seam holds BY CONSTRUCTION —
+// (~1.25×/step), so paper-3 (paper-2) stands ~0.017 ΔE off paper-1 (paper-1) and every chalk seam holds BY CONSTRUCTION —
 // paper-3 (paper-2) falls onto its ID curve with nothing clamped. This REPLACES the old min-separation deltas: the
 // former 0.028 target was unreachable near white (the gamut can't earn it via chroma), so it was enforced by
 // darkening / chroma-spend — which pushed paper-3's (paper-2's) chroma off-curve and past paper-5 (paper-3) on wide-gamut hues (the
@@ -231,7 +231,7 @@ export const LIGHT: ModeSpec = {
   stops: [
     // paper-0 (paper-0 pre-Stage-B): the resolved ladder extreme — in light it genuinely is white (rootL 1.0, zero chroma)
     { stop: 0, rootL: 1.0, group: groupOf(0), produce: { hue: 'warm-drift', L: 'fixed', chroma: 'ladder' }, satFraction: SCALE_C_LIGHT[0].sat, baseC: SCALE_C_LIGHT[0].base },
-    // paper/highlighter/crayon-26: perceptual ladder/envelope blend on the geometric ROOT_L_LIGHT scaffold. Separation
+    // paper/chalk/highlighter-26: perceptual ladder/envelope blend on the geometric ROOT_L_LIGHT scaffold. Separation
     // falls out of the shape (see above) — no min-separation require. Only stop 8 carries a require: the WCAG
     // 3:1 vs the resolved paper-3 (paper-2) (re-solves automatically since it references paper-3 (paper-2)).
     ...[1, 2, 3, 4, 5, 6, 7, 8].map((stop): StopReq => ({
@@ -259,7 +259,7 @@ export const DARK: ModeSpec = {
     // paper-0 (paper-0 pre-Stage-B): the resolved ladder extreme — one seam BELOW paper-1 (paper-1), deep and brand-tinted, never the
     // absolute void (the old hard-coded #000000 was "too much"). Lift applies like the rest of the scale.
     { stop: 0, rootL: PAPER0_DARK_ROOT_L, group: groupOf(0), produce: P_LIFT, satFraction: SCALE_C_DARK[0].sat },
-    // paper/highlighter 1–7: perceptual on the dark scaffold. stop 8: FIXED at the hand-placed scaffold BUT with the
+    // paper/chalk 1–7: perceptual on the dark scaffold. stop 8: FIXED at the hand-placed scaffold BUT with the
     // 3:1 non-text require DECLARED (the Stage-5 flip, owner-approved) — the blue-recede failure is prevented
     // BY RULE, not by patch. The require now genuinely PLACES the stop rather than catching a few low-luminance
     // hues: on the delta-carry path it solves from the sentinel every time, and the old claim that "most hues

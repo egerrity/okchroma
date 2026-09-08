@@ -162,7 +162,7 @@ const NAV_CSS = `
   display: inline-flex; align-items: center; gap: 6px;
 }
 .app-navlink:hover { background: var(--surface-dim); color: var(--fg-default); }
-.app-navlink.active { background: var(--neutral-highlighter-8); color: var(--fg-default); font-weight: 600; }
+.app-navlink.active { background: var(--neutral-chalk-8); color: var(--fg-default); font-weight: 600; }
 .app-bottombar {
   position: sticky; bottom: 0; z-index: 40;
   display: flex; align-items: center; justify-content: center; gap: 16px;
@@ -185,7 +185,7 @@ const NAV_CSS = `
   font-size: 12px; font-weight: 600; letter-spacing: 0.005em; text-decoration: none;
   background: var(--surface-dim); color: var(--fg-default);
 }
-.nav-pill:hover { background: var(--neutral-highlighter-8); }
+.nav-pill:hover { background: var(--neutral-chalk-8); }
 [data-theme="dark"] .app-topbar { box-shadow: 0 1px 3px rgba(0,0,0,0.42); }
 [data-theme="dark"] .app-bottombar { box-shadow: 0 -1px 3px rgba(0,0,0,0.42); }
 `

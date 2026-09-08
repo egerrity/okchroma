@@ -91,7 +91,7 @@ function hueCollisionPending(scale: GeneratedScale, sigScales: SignalScales): Si
 // cool-first beside warm brands, first-clean-wins in preference order. Clean = the P2 bar
 // (.12 deep / .11 light) + solve-metric release + a passing pole. The variant cta is PINNED
 // (makeStop, never re-enforced — enforcement would collapse it back onto canonical red;
-// generateSubtleSecondary's ctaL pin is the precedent); ramp, highlighters, pens and the ENTIRE
+// generateSubtleSecondary's ctaL pin is the precedent); ramp, chalks, pens and the ENTIRE
 // dark side stay canonical red verbatim (the dark canonical carries its own C42 clearance).
 // Returns null = canonical red already stands clean beside this brand.
 const blackLcAt = (L: number, C: number, H: number): number =>
@@ -350,12 +350,12 @@ export type SecondaryLevel = 'standard' | 'subtle'
 // The secondary's per-field MODE (owner design 2026-07-04: modes decoupled per family — the
 // mockup's chip dropdown). muted/vibrant = the two subtle chroma models (both ride the locked
 // delta curve); outline = the muted ramp with the cta re-resolved (cta transparent, cta-hover the
-// cta color at OUTLINE_HOVER_ALPHA, on-cta the family's ink-9, cta-border always crayon-26); exact = the
+// cta color at OUTLINE_HOVER_ALPHA, on-cta the family's ink-9, cta-border always highlighter-26); exact = the
 // standard full ramp, advice-only.
 // the offering (owner 2026-07-12, striking the bespoke subtle models: "you either use the
 // derived or you use custom"): 'default' = the derived seed-transform (no hex supplied);
 // 'exact' = the CUSTOM path — your hex ships as a full standard ramp; 'outline' = the exact
-// ramp with the cta re-resolved at the emitters (cta transparent, border = crayon-26).
+// ramp with the cta re-resolved at the emitters (cta transparent, border = highlighter-26).
 export type SecondaryStyle = 'default' | 'outline' | 'exact'
 // legacy ids: the retired subtle models (tint/pastel and their muted/vibrant renames) map to
 // 'exact' — a supplied hex is honored as custom, never silently re-modeled.
@@ -432,7 +432,7 @@ export const OUTLINE_PRESSED_ALPHA = 0.18
 // the Lc-60 on-cta bar at rest.
 //
 // THE CARRIERS, in two tiers:
-//  · KNOWN-LEGAL BY CONSTRUCTION — the NEUTRAL only, whose cta is the scale-fed highlighter-level
+//  · KNOWN-LEGAL BY CONSTRUCTION — the NEUTRAL only, whose cta is the scale-fed chalk-level
 //    fill (colorEngine, stop 4): re-measured 2026-08-29, softOnCtaPasses holds across the
 //    agnostic sweep in both modes. It always ships soft.
 //  · CHECKED PER BRAND AND MODE — every non-outline secondary, the default model included
@@ -765,12 +765,12 @@ export function resolveTheme(input: {
   // corrected detection for secondaries (C7): the TYPE-1 hue gate at the annotation
   // qualifier, against the THEME's effective (POST-MERGE) signal set — after the collider
   // pass above, a note fires only for the RESIDUALS the machinery could not clear.
-  const signalNotesFor = (scale: GeneratedScale, wording: (name: SignalDef['name'], highlighterDE: number) => string): string[] => {
+  const signalNotesFor = (scale: GeneratedScale, wording: (name: SignalDef['name'], chalkDE: number) => string): string[] => {
     const out: string[] = []
     for (const def of SIGNALS) {
       if (adoptedForSecondary.has(def.name)) continue
       const h = checkHueCollision(scale, effectiveOf(def.name), def, { minV: SECONDARY_NOTE_MIN_V })
-      if (h.collides) out.push(wording(def.name, Math.min(h.highlighterDeltaE.light, h.highlighterDeltaE.dark)))
+      if (h.collides) out.push(wording(def.name, Math.min(h.chalkDeltaE.light, h.chalkDeltaE.dark)))
     }
     return out
   }
@@ -859,7 +859,7 @@ export function resolveTheme(input: {
         notes: [
           `secondary derived from the brand color (default model, seed ${liftedHex})`,
           ...signalNotesFor(scale, (name, dE) =>
-            `derived secondary sits on the ${name} signal's hue (highlighter ΔE ${dE.toFixed(3)}) — it tracks the brand color`),
+            `derived secondary sits on the ${name} signal's hue (chalk ΔE ${dE.toFixed(3)}) — it tracks the brand color`),
         ],
         distinctness: ctaDistinctness(primary.scale, scale),
       },
@@ -883,7 +883,7 @@ export function resolveTheme(input: {
         notes: [
           `secondary keeps your color through the ramp; the cta is a tint of it (tint seed ${tintedHex})`,
           ...signalNotesFor(scale, (name, dE) =>
-            `secondary sits on the ${name} signal's hue (highlighter ΔE ${dE.toFixed(3)}) — it tracks your color`),
+            `secondary sits on the ${name} signal's hue (chalk ΔE ${dE.toFixed(3)}) — it tracks your color`),
         ],
         distinctness,
       },
@@ -900,7 +900,7 @@ export function resolveTheme(input: {
   const level: SecondaryLevel = 'standard'
   mergeSecondarySignals(scale, input.secondaryHex)
   const secNotes = signalNotesFor(scale, (name, dE) =>
-    `secondary reads close to the ${name} signal (highlighter ΔE ${dE.toFixed(3)}) — your color ships untouched`)
+    `secondary reads close to the ${name} signal (chalk ΔE ${dE.toFixed(3)}) — your color ships untouched`)
 
   const distinctness = ctaDistinctness(primary.scale, scale)
   if (distinctness.close)

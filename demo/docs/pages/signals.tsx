@@ -3,7 +3,7 @@ import { H2, H3, P, UL, LI, Code, Lead, Table, DocLink, K, SwatchCell } from '..
 import { SIGNALS } from '../../../src/engine/signals'
 import { SIGNAL_SCALES, DEFAULT_SECONDARY, defaultSecondarySeed, OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, DEFAULT_LINK_HEX, SECONDARY_DISTINCT_DELTA_E, SOFT_ON_CTA_ALPHA } from '../../../src/engine/resolve'
 import { SHIFT_RULES } from '../../../src/engine/signalShift'
-import { HUE_COLLISION_HIGHLIGHTER_DEG, HUE_COLLISION_MIN_V, YELLOW_SPLIT_H, DELTA_E_THRESHOLD, DARK_DELTA_E_THRESHOLD, HUE_GATE_DEG } from '../../../src/engine/collision'
+import { HUE_COLLISION_CHALK_DEG, HUE_COLLISION_MIN_V, YELLOW_SPLIT_H, DELTA_E_THRESHOLD, DARK_DELTA_E_THRESHOLD, HUE_GATE_DEG } from '../../../src/engine/collision'
 import { RED_GATE, RED_SOLVE, VIVID_C } from '../../../src/engine/colorMath'
 import { P2_D, P2_D_UP } from '../../../src/engine/p2'
 import { CRITICAL_CLEARANCE_LC } from '../../../src/engine/requirements/profiles'
@@ -49,10 +49,10 @@ export function Body() {
       <H2>The collision test</H2>
       <P>
         Whole-ramp remedies (a swap variant, the lemon shift) gate on one test, <Code>checkHueCollision</Code>
-        (collision.ts): the smallest hue distance between the brand's and the signal's highlighter stops
-        ({stopTokenName(3)} to {stopTokenName(7)}, either mode) is at most <K v={HUE_COLLISION_HIGHLIGHTER_DEG} d={0} deg />, and
+        (collision.ts): the smallest hue distance between the brand's and the signal's chalk stops
+        ({stopTokenName(3)} to {stopTokenName(7)}, either mode) is at most <K v={HUE_COLLISION_CHALK_DEG} d={0} deg />, and
         the brand's vividness (its chroma over <K v={VIVID_C} />, capped at 1) is at least <K v={HUE_COLLISION_MIN_V} d={1} />.
-        Highlighters are where a near-hue pair collides at every rung: the ladder normalizes lightness and chroma, so hue is
+        Chalks are where a near-hue pair collides at every rung: the ladder normalizes lightness and chroma, so hue is
         the only thing left telling them apart.
       </P>
       <P>
@@ -132,7 +132,7 @@ export function Body() {
         <Code>generateNeutralScale(tintHue, level)</Code>: a near-gray seed (chroma 0.006 at the tint hue) through the same
         generator with a declared chroma curve (<Code>neutralChromaCurve</Code>, neutralCurve.ts) in place of the ladder.
         The curve lifts the tint across the papers so the planes separate, peaks at {stopTokenName(4)} and {stopTokenName(5)},
-        and tapers through the crayon and the pens so text lands near-neutral; warm hues are damped, since a warm tint reads
+        and tapers through the highlighter and the pens so text lands near-neutral; warm hues are damped, since a warm tint reads
         dirtier on gray than a cool one at the same chroma. The tint hue is stored as a source (the primary, the secondary,
         or a custom hex) and re-resolved on every apply. Four strengths, as multiples of the curve:
       </P>

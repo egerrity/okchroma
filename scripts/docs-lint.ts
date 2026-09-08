@@ -38,8 +38,8 @@ const SURFACES: Surface[] = [
 type Rule = { name: string; re: RegExp; why: string }
 const RULES: Rule[] = [
   { name: 'em-dash', re: /—/g, why: 'no em dashes in doc prose' },
-  { name: 'retired-band', re: /\b(?:wash|wax|lead|mark|ink)-\d+\b/g, why: 'retired band word; the instruments are paper/highlighter/crayon/pencil/pen' },
-  { name: 'retired-suffix', re: /\b(?:paper|highlighter|crayon|pencil|pen)-\d+-aaa?\b/g, why: 'the -aa/-aaa conformance suffix is retired; conformance is stated in the description' },
+  { name: 'retired-band', re: /\b(?:wash|wax|lead|mark|ink|crayon)-\d+\b/g, why: 'retired band word; the instruments are paper/chalk/highlighter/pencil/pen' },
+  { name: 'retired-suffix', re: /\b(?:paper|chalk|highlighter|pencil|pen)-\d+-aaa?\b/g, why: 'the -aa/-aaa conformance suffix is retired; conformance is stated in the description' },
   { name: 'retired-register', re: /\b(?:solid|primitive)\//g, why: 'retired register word; the zones are base/ and utility/, the family is stamp/' },
   { name: 'retired-token', re: /\b(?:cta-border|on-cta|cta-ink|highlight-9|on-highlight|cta-stroke)\b/g, why: 'retired token name' },
   { name: 'retired-plane', re: /\bsunken\b/g, why: 'retired plane word; the planes are dim/low/mid/high' },

@@ -8,7 +8,7 @@ import { CRITICAL_CLEARANCE_LC } from '../../../src/engine/requirements/profiles
 import { VIVID_C, HUE_NOISE_C, MUTED_BLEND_DENOM, SPINE_OFFPATH_SIGMA, LIGHT_DRIFT_COOL_HI, LIGHT_DRIFT_COOL_RANGE, BRAND_BELL_H, BRAND_BELL_SIGMA, BRAND_BELL_AMOUNT, BRAND_BELL_L_HI, BRAND_BELL_L_LO, BRAND_BELL_RED_H, BRAND_BELL_RED_SIGMA, CREAM_UPPER_H, CREAM_UPPER_SOFTNESS, DEEPER_BAND_H_LO, DEEPER_BAND_H_HI, DEEPER_BAND_U_LO, DEEPER_BAND_U_HI, DEEPER_STRENGTH, RED_PIVOT_H, RED_COOL_DEG, RED_PIVOT_EXIT_DEG, RED_TORSION_CENTER_H, RED_TORSION_SOFTNESS, RED_BAND_LO_H, RED_WARM_EXIT_H, RED_GATE, RED_SOLVE, RED_KEEP_BOX, DARK_FLOOR_FULL_C, DARK_FLOOR_MUTED_MAX_C } from '../../../src/engine/colorMath'
 import { MASTER_GAMUT } from '../../../src/engine/constraints'
 import { ARCHETYPES, stateStepL } from '../../../src/engine/archetypes'
-import { HUE_COLLISION_HIGHLIGHTER_DEG, HUE_COLLISION_MIN_V, YELLOW_SPLIT_H, HUE_GATE_DEG, DELTA_E_THRESHOLD, DARK_DELTA_E_THRESHOLD } from '../../../src/engine/collision'
+import { HUE_COLLISION_CHALK_DEG, HUE_COLLISION_MIN_V, YELLOW_SPLIT_H, HUE_GATE_DEG, DELTA_E_THRESHOLD, DARK_DELTA_E_THRESHOLD } from '../../../src/engine/collision'
 import { SHIFT_RULES } from '../../../src/engine/signalShift'
 import { P2_D, P2_D_UP } from '../../../src/engine/p2'
 import { DEFAULT_SECONDARY, SOFT_ON_CTA_ALPHA, OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, DEFAULT_LINK_HEX, SECONDARY_DISTINCT_DELTA_E } from '../../../src/engine/resolve'
@@ -36,15 +36,15 @@ export function Body() {
         head={['term', 'meaning']}
         rows={[
           ['stop', <>one of the {SCALE_STOP_COUNT} positions of the scale, plus the two poles. Indexed 1 to 11 inside the engine; named by instrument and number outside it</>],
-          ['instrument (band)', 'paper, highlighter, crayon, pencil, pen: the law a stop serves. The name says what the stop is for, not where it sits'],
+          ['instrument (band)', 'paper, chalk, highlighter, pencil, pen: the law a stop serves. The name says what the stop is for, not where it sits'],
           ['rootL', 'the declared lightness target a stop is solved from (the scaffold). Not the emitted lightness'],
           ['apparent lightness', 'lightness as seen: OKLCH L corrected for the Helmholtz-Kohlrausch effect (a saturated color reads brighter than a gray of equal luminance). The light ramp solves every stop in this space'],
-          ['luminance (Y)', 'relative luminance, the photometric quantity WCAG ratios are computed from. The dark paper and highlighter stops are placed by luminance parity'],
+          ['luminance (Y)', 'relative luminance, the photometric quantity WCAG ratios are computed from. The dark paper and chalk stops are placed by luminance parity'],
           ['the shipped pair', 'a stop and its ground as they ship: both quantized to 8-bit sRGB. The value a browser and an audit tool measure; every claim is judged on it'],
           ['produce, require, refine', 'the three phases a stop resolves through: the producers place it (hue, chroma, lightness), a declared floor binds, chroma yields to the gamut at emit'],
           ['producer', 'a named placement rule (warm-drift, perceptual, ladder). A reference to a versioned resolver capability, never a formula in the token file'],
           ['requirement (floor)', 'a declared contrast the stop must clear against a resolved ground. A floor: a placement that already clears does not move'],
-          ['anchor, ground', 'the resolved stop a requirement is solved against: paper-5 for the crayon, the pencil and pen-70; highlighter-20 for pen-58'],
+          ['anchor, ground', 'the resolved stop a requirement is solved against: paper-5 for the highlighter, the pencil and pen-70; chalk-20 for pen-58'],
           ['bound', 'a frozen worst-case ground (the darkest neutral paper any theme ships, and so on) the resolver holds a stop against, because the paired family is not in view during a solve'],
           ['seam', 'the lightness gap between adjacent stops. Held open by the ladder shape, not by a floor'],
           ['pole', 'pure white or pure black. The on-text candidates; also the two ladder extremes'],
@@ -56,7 +56,7 @@ export function Body() {
           ['carry (delta)', 'the dark model: the dark ramp derived from the resolved light ramp'],
           ['torsion, drift', 'the hue rotation warm seeds take toward the clean warm hue at each lightness: drift in light, torsion in dark'],
           ['repel', 'the hue rotation a near-red seed takes away from the red signal'],
-          ['collision', 'a brand close enough to a signal that the two read as one family; decided on the highlighter stops'],
+          ['collision', 'a brand close enough to a signal that the two read as one family; decided on the chalk stops'],
           ['variant', "a signal re-generated from an alternate seed to stay distinct from the brand; replaces the signal's ramp in the emitted theme"],
           ['zone', "the extended plugin's path prefix: base/ (engine-owned) or utility/ (team-touchable)"],
           ['descope', 'the plugin posture that hides non-role rows from Figma pickers'],
@@ -125,7 +125,7 @@ export function Body() {
       <Table head={['name', 'value', 'what it is']} rows={[
         [<Code>ARCHETYPES</Code>, ARCHETYPES.map(a => `${a.name} ${a.min} to ${a.max}`).join(', '), 'the six lightness bands'],
         [<Code>stateStepL</Code>, <>{k(stateStepL(0.5, 'light', 1), 2)} hover, {k(stateStepL(0.5, 'light', 2), 2)} pressed</>, 'the flat state step in L'],
-        [<Code>HUE_COLLISION_HIGHLIGHTER_DEG</Code>, <>{k(HUE_COLLISION_HIGHLIGHTER_DEG, 0)}°</>, 'the hue collision gate'],
+        [<Code>HUE_COLLISION_CHALK_DEG</Code>, <>{k(HUE_COLLISION_CHALK_DEG, 0)}°</>, 'the hue collision gate'],
         [<Code>HUE_COLLISION_MIN_V</Code>, k(HUE_COLLISION_MIN_V, 1), 'the vividness qualifier'],
         [<Code>YELLOW_SPLIT_H</Code>, <>{k(YELLOW_SPLIT_H, 0)}°</>, 'below: lemon'],
         [<Code>SHIFT_RULES</Code>, <>green split {SHIFT_RULES.green!.splitH}°, blue split {SHIFT_RULES.blue!.splitH}°</>, 'the swap splits'],
@@ -168,7 +168,7 @@ export function Body() {
         [<Code>ctaSolve</Code>, 'the red joint solve inputs, injected by resolveBrand'],
         [<Code>darkCtaFlatApp</Code>, 'the flat dark stamp register (the derived secondary)'],
         [<Code>textGround</Code>, 'an external ground for the pen stops (the inverse link)'],
-        [<><Code>crossHighlighterBoundY</Code>, <Code>crossPaperBoundY</Code></>, 'the neutral’s symmetric bounds, passed by generateNeutralScale'],
+        [<><Code>crossChalkBoundY</Code>, <Code>crossPaperBoundY</Code></>, 'the neutral’s symmetric bounds, passed by generateNeutralScale'],
         [<><Code>hueShiftDeg</Code>, <Code>chromaScale</Code></>, 'the lemon variant’s inputs'],
         [<><Code>deltaLightStops</Code>, <Code>deltaCarry</Code></>, 'the dark carry inputs, always set by generateScale'],
         [<><Code>deltaHKPlace</Code>, <Code>deltaLiftFloor</Code>, <Code>deltaChromaEq</Code></>, 'instruments only: layer one retired dark mechanism onto the carry for comparison; never shipped'],

@@ -1,9 +1,9 @@
 # The scale
 
-One brand color in, a full ramp out: 3 papers, 4 highlighters, 1 crayon, 1 pencil, and 2
+One brand color in, a full ramp out: 3 papers, 4 chalks, 1 highlighter, 1 pencil, and 2
 pens, plus the two poles (neutral only) and the off-scale stamp with its on-text color.
 Every name follows one pattern, `instrument-NN`: the instrument word (`paper`,
-`highlighter`, `crayon`, `pencil`, `pen`) says which law the stop serves; the number places
+`chalk`, `highlighter`, `pencil`, `pen`) says which law the stop serves; the number places
 it on the ladder. The engine carries internal stop indices 1 to 11 for its own machinery,
 but those indices are not the names: a stop is addressed by what it is, not by its position.
 Each stop has a reserved role and a contrast guarantee, so the same name does the same
@@ -20,21 +20,21 @@ file is the repo-side summary with the code pointers.
 | instrument | stops | the duty |
 |---|---|---|
 | `paper` | 0 · 1 · 3 · 5 | grounds: the surface planes and role backgrounds; no contrast obligation of their own |
-| `highlighter` | 8 · 11 · 15 · 20 | grounds for subtle states and decoration; never text |
-| `crayon` | 26 | **3:1 on every paper**: focus rings, icons, borders, large text. The bar for anything that must be visible to operate the interface (the WCAG non-text contrast requirement) |
+| `chalk` | 8 · 11 · 15 · 20 | grounds for subtle states and decoration; never text |
+| `highlighter` | 26 | **3:1 on every paper**: focus rings, icons, borders, large text. The bar for anything that must be visible to operate the interface (the WCAG non-text contrast requirement) |
 | `pencil` | 47 | **4.5:1 on every paper**: regular text, AA; also the emphasis fill |
-| `pen` | 58 · 70 · 100 | **4.5:1 on every paper and highlighter of its own family or of the neutral, both directions**: text that must hold on tinted grounds, AA |
+| `pen` | 58 · 70 · 100 | **4.5:1 on every paper and chalk of its own family or of the neutral, both directions**: text that must hold on tinted grounds, AA |
 
-The promise in one line: pen writes on paper and highlighter; pencil writes on paper;
-crayon writes large and draws on paper.
+The promise in one line: pen writes on paper and chalk; pencil writes on paper;
+highlighter writes large and draws on paper.
 
 "On every paper" means the family's own papers and the worst paper the family's generated
 neutral can produce across all hues; for the neutral's own stops it means the neutral's
-papers and the worst paper any chromatic family can produce. Crayon and pencil are cleared
-against paper only. `pen-58` is anchored at `highlighter-20`, the darkest highlighter, and
+papers and the worst paper any chromatic family can produce. Highlighter and pencil are cleared
+against paper only. `pen-58` is anchored at `chalk-20`, the darkest chalk, and
 so clears every paper by ladder order; `pen-70` is declared against a paper at a stricter
-target and clears the highlighters by sitting past `pen-58`. The neutral's pens are also
-cleared against the worst `highlighter-20` any chromatic family can produce. The promise is a
+target and clears the chalks by sitting past `pen-58`. The neutral's pens are also
+cleared against the worst `chalk-20` any chromatic family can produce. The promise is a
 guaranteed minimum of 4.5:1 (AA) on every text stop. Where the engine places a stop above
 it, the surplus is placement, not a promise, and no AAA claim is made anywhere.
 
@@ -43,7 +43,7 @@ it, the surplus is placement, not a promise, and no AAA claim is made anywhere.
 The number is the stop's declared light rootL, rounded, then inverted:
 `100 − round(rootL × 100)`. The order of those three steps is the rule (derive, round,
 invert) and it is never re-rounded after inversion. So `paper-0` is pure white (rootL 1.00),
-`paper-1` is rootL 0.987, `crayon-26` is rootL 0.738, `pen-70` is rootL 0.300, and `pen-100`
+`paper-1` is rootL 0.987, `highlighter-26` is rootL 0.738, `pen-70` is rootL 0.300, and `pen-100`
 is the black pole. Bigger means stronger. A future stop names itself by the same three steps
 from its own declared rootL. Renames are recorded in [CHANGELOG.md](../CHANGELOG.md);
 every rename has been names only, no value has moved through one.
@@ -84,26 +84,26 @@ from; the emitted lightness differs per hue.
 | `paper-1` | 1 | 0.987 | 0.178 | – | backgrounds, inverted text |
 | `paper-3` | 2 | 0.970 | 0.213 | – | backgrounds, inverted text |
 | `paper-5` | 3 | 0.950 | 0.252 | – | backgrounds, inverted text; the paper the contrast stops are cleared against |
-| `highlighter-8` | 4 | 0.924 | 0.285 | – | subtle interactive states, decorative borders, illustration, signal hierarchy |
-| `highlighter-11` | 5 | 0.892 | 0.313 | – | the same |
-| `highlighter-15` | 6 | 0.852 | 0.348 | – | the same |
-| `highlighter-20` | 7 | 0.801 | 0.420 | – | the same; the ground `pen-58` is cleared against |
-| `crayon-26` | 8 | 0.738 | 0.550 | 3:1 against `paper-5` | focus rings, icons, large text |
+| `chalk-8` | 4 | 0.924 | 0.285 | – | subtle interactive states, decorative borders, illustration, signal hierarchy |
+| `chalk-11` | 5 | 0.892 | 0.313 | – | the same |
+| `chalk-15` | 6 | 0.852 | 0.348 | – | the same |
+| `chalk-20` | 7 | 0.801 | 0.420 | – | the same; the ground `pen-58` is cleared against |
+| `highlighter-26` | 8 | 0.738 | 0.550 | 3:1 against `paper-5` | focus rings, icons, large text |
 | `pencil-47` | 9 | 0.530 | 0.767 | 4.5:1 against `paper-5` | regular text, inverted backgrounds; the emphasis fill |
-| `pen-58` | 10 | 0.415 | 0.843 | 4.5:1 against `highlighter-20` | regular text, inverted backgrounds |
+| `pen-58` | 10 | 0.415 | 0.843 | 4.5:1 against `chalk-20` | regular text, inverted backgrounds |
 | `pen-70` | 11 | 0.300 | 0.919 | 7:1 against `paper-5` (the promise is 4.5) | heavy-emphasis text, inverted backgrounds |
 | `pen-100` | 12 | 0.000 | 1.000 | – | the literal pole: black in light, white in dark (neutral only) |
 
-Paper and highlighter carry no declared requirement: their seam distinctness is a property
+Paper and chalk carry no declared requirement: their seam distinctness is a property
 of the `ROOT_L_LIGHT` ladder's own shape, not a runtime floor. The near-white gaps grow
 geometrically (about 1.25× per step), so `paper-3` already stands roughly 0.017 ΔE off
 `paper-1` by construction, with no push or clamp applied at resolve time. The resolver still
 supports a declared minimum-separation requirement for portable specs, but the shipped
 declaration carries none.
 
-`crayon-26`, `pencil-47`, and the two pens carry a declared WCAG requirement, enforced
-against the resolved ground on every resolve: `paper-5`, the nearest paper, for the crayon,
-the pencil and `pen-70`; `highlighter-20` for `pen-58`. Every stop from the crayon up is
+`highlighter-26`, `pencil-47`, and the two pens carry a declared WCAG requirement, enforced
+against the resolved ground on every resolve: `paper-5`, the nearest paper, for the highlighter,
+the pencil and `pen-70`; `chalk-20` for `pen-58`. Every stop from the highlighter up is
 additionally held against the worst paper the family's generated neutral can produce (the
 frozen bounds in [`requirements/resolve.ts`](../src/engine/requirements/resolve.ts)).
 
@@ -120,7 +120,7 @@ frozen bounds in [`requirements/resolve.ts`](../src/engine/requirements/resolve.
   seam below `paper-1`) and `pen-100` is the literal anchor (#000000 light / #ffffff dark).
   Both flip with the mode; neither is a per-brand ladder stop. They exist under `neutral` only.
 - Target versus emitted: light stops are solved from their rootL target for apparent
-  lightness (below), then the declared requirements bind, so for luminous hues `crayon-26`
+  lightness (below), then the declared requirements bind, so for luminous hues `highlighter-26`
   lands well below its 0.738 target.
 
 ## On-fill text
@@ -155,10 +155,10 @@ They differ in measured L but match in apparent lightness, so the step reads the
 brands. A live example, solved for two hues, is on the
 [generation page](https://egerrity.github.io/okchroma/#/docs/generation/step-3).
 
-Dark mode is derived from the resolved light ramp. The paper and highlighter stops (1 to 7)
+Dark mode is derived from the resolved light ramp. The paper and chalk stops (1 to 7)
 land on one shared luminance ladder: each sits above the dark ground by a computed band lift
 times the depth of the achromatic light stop below white, tinted by its own carried hue and
-resampled chroma, so every family lands at the same luminance per rung. `crayon-26` carries
+resampled chroma, so every family lands at the same luminance per rung. `highlighter-26` carries
 light's hue and chroma and is placed by its 3:1 requirement against the dark `paper-5`. The
 pens are solved dark-native with the same apparent-lightness solve to the dark scaffold, then
 floored by their requirements. `divergence-audit` reports the residual apparent-lightness

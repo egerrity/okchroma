@@ -41,9 +41,9 @@ for (const H of HUES) for (const C of CHROMAS) {
     for (const sp of spec.stops) if (!byStop(sp.stop)) fails.push({ seed: id, mode, check: 'missing-stop', detail: `stop ${sp.stop}`, sev: 100 })
     for (const st of s) if (st.unresolvable) fails.push({ seed: id, mode, check: 'unresolvable', detail: st.unresolvable, sev: 100 })
     // 2. every DECLARED contrast require holds under ITS OWN metric (recomputed from emitted,
-    // gamut-clamped) — the wcag reference follows the DECLARED anchor (T10 anchors highlighter-20
-    // since the highlighter-20 law; the papers verify vs paper-3 as before)
-    const AGAINST: Record<string, number> = { 'paper-1': 1, 'paper-3': 2, 'paper-5': 3, 'highlighter-20': 7 }
+    // gamut-clamped) — the wcag reference follows the DECLARED anchor (T10 anchors chalk-20
+    // since the chalk-20 law; the papers verify vs paper-3 as before)
+    const AGAINST: Record<string, number> = { 'paper-1': 1, 'paper-3': 2, 'paper-5': 3, 'chalk-20': 7 }
     const p2 = byStop(2)!
     const p2ApcaY = apcaYAt(p2.L, clampChromaToGamut(p2.L, p2.C, p2.H), p2.H)
     for (const sp of spec.stops) {
@@ -66,7 +66,7 @@ for (const H of HUES) for (const C of CHROMAS) {
         if (got < sp.require.target - 1e-4) fails.push({ seed: id, mode, check: `separation-stop${sp.stop}`, detail: `ΔE ${got.toFixed(4)} < ${sp.require.target}`, sev: 10 })
       }
     }
-    // 3. monotonic L where the system guarantees it: stops 1–8 (paper→crayon-26).
+    // 3. monotonic L where the system guarantees it: stops 1–8 (paper→highlighter-26).
     const ladder = [1, 2, 3, 4, 5, 6, 7, 8].map(n => byStop(n)!).filter(Boolean)
     for (let i = 1; i < ladder.length; i++) {
       const bad = mode === 'light' ? ladder[i].L > ladder[i - 1].L + 1e-6 : ladder[i].L < ladder[i - 1].L - 1e-6
@@ -85,7 +85,7 @@ for (const H of HUES) for (const C of CHROMAS) {
     const p3Y = wcagY(p3b.L, clampChromaToGamut(p3b.L, p3b.C, p3b.H), p3b.H)
     const vsP3 = (st: typeof s8b) => contrastRatio(wcagY(st.L, clampChromaToGamut(st.L, st.C, st.H), st.H), p3Y)
     if (vsP3(i9) <= vsP3(s8b) + 1e-6)
-      fails.push({ seed: id, mode, check: 'band-order', detail: `pencil-47 ${vsP3(i9).toFixed(2)} !> crayon-26 ${vsP3(s8b).toFixed(2)} vs paper-5`, sev: 12 })
+      fails.push({ seed: id, mode, check: 'band-order', detail: `pencil-47 ${vsP3(i9).toFixed(2)} !> highlighter-26 ${vsP3(s8b).toFixed(2)} vs paper-5`, sev: 12 })
     // the pen band is strictly monotonic — darker per stop in light, lighter in dark
     // (three stops since C49: 9 the first text, 10 the between, 11 the strong)
     for (const [lo, hi] of [[9, 10], [10, 11]] as const) {

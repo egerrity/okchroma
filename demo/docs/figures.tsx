@@ -17,13 +17,13 @@ import { Pre, SwatchCell, rgbaCss, Code } from './prose'
 export const REF_SEED = BASE_SEED_HEX
 
 // ── Live example: real generated ramps, computed by the engine ───────────────
-// The shipped bands: paper 1-3, highlighter 4-7, crayon 8, pencil 9, pen 10-11. Band labels and
+// The shipped bands: paper 1-3, chalk 4-7, highlighter 8, pencil 9, pen 10-11. Band labels and
 // stop numbers render ONCE, on top; the hue rows stack under them. Column count
 // derives from the scale (--cols) and the spans are asserted against it, so a
 // band change breaks loudly here instead of drifting.
 const RAMP_GROUPS: Array<{ label: string; span: number }> = [
-  { label: 'paper', span: 3 }, { label: 'highlighter', span: 4 },
-  { label: 'crayon', span: 1 }, { label: 'pencil', span: 1 }, { label: 'pen', span: 2 },
+  { label: 'paper', span: 3 }, { label: 'chalk', span: 4 },
+  { label: 'highlighter', span: 1 }, { label: 'pencil', span: 1 }, { label: 'pen', span: 2 },
 ]
 export const RAMP_SET_HEXES = [REF_SEED, '#C61D1B', '#E08A1E', '#E3B505', '#2E9E3F', '#0BA5C0', '#2C5FC9']
 // the digit a stop actually ships under (paper-1 → 1), off the one name table.
@@ -217,7 +217,7 @@ export function NamingAnatomy() {
   const cols = [
     { seg: 'base', title: 'ZONE', lines: ['extended plugin only:', 'base/ engine-owned,', 'utility/ team-touchable'] },
     { seg: FAMILY.neutral, title: 'FAMILY', lines: ['neutral, brand, brand-alt,', 'critical, warning,', 'positive, info'] },
-    { seg: instrument, title: 'INSTRUMENT', lines: ['paper, highlighter,', 'crayon, pencil, pen:', 'the law the stop serves'] },
+    { seg: instrument, title: 'INSTRUMENT', lines: ['paper, chalk,', 'highlighter, pencil, pen:', 'the law the stop serves'] },
     { seg: digit, title: 'NUMBER', lines: ['100 − round(light rootL × 100)', `= 100 − round(${ROOT_L_LIGHT[PENCIL]} × 100)`, 'bigger = stronger'] },
   ]
   const colW = 160, gap = 8, boxY = 34, boxH = 44

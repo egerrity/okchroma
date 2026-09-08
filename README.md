@@ -5,13 +5,13 @@ light and dark token system whose contrast requirements are solved during genera
 then emits it as CSS custom properties or Figma variables.
 
 Every family (neutral, brand, brand-alt, critical, warning, positive, info) carries the
-same scale: 3 papers, 4 highlighters, 1 crayon, 1 pencil, 2 pens, plus the stamp (the
+same scale: 3 papers, 4 chalks, 1 highlighter, 1 pencil, 2 pens, plus the stamp (the
 solid fill with its hover and pressed states, its edge, and its text). The neutral adds
 the two poles. Light and dark resolve together and ship on the same names, so a token is
 mapped once and holds for any brand.
 
-Contrast is built into the math, not checked afterwards: crayon reads on every paper at
-3:1 (the non-text bar), pencil at 4.5:1, pen at 4.5:1 on every paper and highlighter in
+Contrast is built into the math, not checked afterwards: highlighter reads on every paper at
+3:1 (the non-text bar), pencil at 4.5:1, pen at 4.5:1 on every paper and chalk in
 both directions; the stamp's text passes 4.5:1 on its fill. APCA is used once, as a booster
 that nudges the stamp fill until its text reads at Lc 65. Each claim, its scope, and the audit that
 proves it: [Guarantees](https://egerrity.github.io/okchroma/#/docs/guarantees).

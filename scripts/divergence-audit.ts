@@ -60,7 +60,7 @@ const ok = (cond: boolean, msg: string) => { if (!cond) fails.push(msg) }
 // at the SCALED depth and its chroma comes from the light ladder's chroma-at-depth relationship
 // there (deltaLiftChroma, stopTable.ts). So the gap this check measures GROWS WITH LIFT SIZE by
 // design, and the tolerance is quietly doubling as a bound on how much lift is allowed.
-// Widened 0.004 → 0.005 (owner-approved 2026-07-29) when the highlighters were redeclared at a flat
+// Widened 0.004 → 0.005 (owner-approved 2026-07-29) when the chalks were redeclared at a flat
 // S=1.20 and the steeper wash-4/5 lift took `branded h270 dark stop 5` to a 0.0042 gap — 1 stop
 // of 120, on a chroma of 0.012 vs 0.016, which is one near-neutral gray against another. The
 // same stops already read 0.0026–0.0031 at the old lift, so this is the same behaviour further

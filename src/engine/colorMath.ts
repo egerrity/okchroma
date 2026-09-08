@@ -238,7 +238,7 @@ export const LIGHT_DRIFT_COOL_RANGE = 16
 // sigma 35 / amount 1.7 — a narrow, strong spike. This is that idea, moved slightly warm,
 // ~1.6× as wide and about a third the strength.
 // RED EXCLUSION: the bell is tapered out across the critical signal's hue band. Measured
-// (sweep:collision, 2026-07-28): ANY amount of the bell costs red its highlighter separation —
+// (sweep:collision, 2026-07-28): ANY amount of the bell costs red its chalk separation —
 // worst unfired red went 0.00603 (no bell) → 0.00546, under the owner-accepted
 // RED_ONHUE_ACCEPTED_FLOOR 0.0057. Narrowing the bell to 35° or dropping the amount to
 // 0.35 did not recover it (0.00561 / 0.00550); only excluding the band does, and it
@@ -307,15 +307,15 @@ export function inRedRepelBand(h: number): boolean {
 //
 // Near-pivot exit floor (owner directive 2026-07-07, CATALOG C7): the cool branch reuses
 // the torsion fade, which sags to ~0.65 exactly at the pivot — the brands ON the signal
-// hue got the weakest push (measured: dH0 light highlighter ΔE 0.003–0.005, under the 0.006 bar).
+// hue got the weakest push (measured: dH0 light chalk ΔE 0.003–0.005, under the 0.006 bar).
 // The floor restores full exit strength approaching the pivot; below ~H30.5 the shipped
 // curve wins the max and stays byte-identical. Ties at the pivot exit cool (owner rule).
 export const RED_EXIT_FLOOR_H = 30.8
 export const RED_EXIT_FLOOR_SOFTNESS = 0.9
 export const RED_WARM_EXIT_FLOOR_H = 35.3
 export const RED_WARM_EXIT_FLOOR_SOFTNESS = 0.8
-// 14, not RED_COOL_DEG: the spine drift eats ~3° of the exit at the highlighter stops (sweep:
-// a full 10.8 push lands dHueHighlighter ≈ 9.4 — under the yardstick; 14 lands ≈ 12+, clearing
+// 14, not RED_COOL_DEG: the spine drift eats ~3° of the exit at the chalk stops (sweep:
+// a full 10.8 push lands dHueChalk ≈ 9.4 — under the yardstick; 14 lands ≈ 12+, clearing
 // the 0.006 bar at the pivot). Both floors fade into the shipped curves away from the
 // pivot (cool of ~H31 / warm of ~H34.5 the shipped curve wins the max — unchanged).
 export const RED_PIVOT_EXIT_DEG = 14

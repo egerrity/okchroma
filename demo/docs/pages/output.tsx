@@ -100,7 +100,7 @@ export function Body() {
 :root[data-theme="dark"], [data-theme="dark"] { … }
 ${P3_SUPPORTS} {
 ${P3_MEDIA} {
-  [data-brand="acme"] { --brand-highlighter-20: color(display-p3 …); … }   /* only stops whose chroma exceeds sRGB */
+  [data-brand="acme"] { --brand-chalk-20: color(display-p3 …); … }   /* only stops whose chroma exceeds sRGB */
 }
 }`}</Pre>
       <P>
@@ -146,7 +146,7 @@ ${P3_MEDIA} {
       <H2>What is identical, what differs</H2>
       <UL>
         <LI>The scale law is identical across every family: same targets, same producers, same requirements. Two families differ in their stops only by hue and chroma.</LI>
-        <LI>The stamp fill is the one per-family differentiator: it anchors at the seed's own lightness, so a dark brand has a dark button and a pastel brand a pale one. The neutral's stamp is deliberately quiet: its rest fill is the scale's own highlighter-8, lifted in dark until it clears the high plane.</LI>
+        <LI>The stamp fill is the one per-family differentiator: it anchors at the seed's own lightness, so a dark brand has a dark button and a pastel brand a pale one. The neutral's stamp is deliberately quiet: its rest fill is the scale's own chalk-8, lifted in dark until it clears the high plane.</LI>
         <LI>In dark mode the brand's stamp chroma is trimmed; the signals keep their identity chroma so canonical red and yellow read the same in both modes.</LI>
         <LI>A signal family's values move only to stay distinct from the brand (a hue shift or a swap variant), never for the brand's taste.</LI>
       </UL>

@@ -109,13 +109,13 @@ function BandTiles() {
   const at = (stop: number) => stopHex(neutral.light.find(s => s.stop === stop)!)
   const tiles = [
     { band: 'paper', bg: at(1), fg: '#202020' },
-    { band: 'highlighter', bg: at(5), fg: '#202020' },
-    { band: 'crayon', bg: at(8), fg: '#202020' },
+    { band: 'chalk', bg: at(5), fg: '#202020' },
+    { band: 'highlighter', bg: at(8), fg: '#202020' },
     { band: 'pencil', bg: at(9), fg: '#ffffff' },
     { band: 'pen', bg: at(11), fg: '#ffffff' },
   ]
   return (
-    <figure className="d2-fig" role="img" aria-label="The five band names, each painted with a live neutral stop from its own band: paper, highlighter, crayon, pencil, pen.">
+    <figure className="d2-fig" role="img" aria-label="The five band names, each painted with a live neutral stop from its own band: paper, chalk, highlighter, pencil, pen.">
       <div className="d2-chips">
         {tiles.map(t => (
           <div key={t.band} className="d2-chip" style={{ background: t.bg, color: t.fg }}>{t.band}</div>
@@ -289,12 +289,12 @@ export function Body() {
       </P>
       <BandTiles />
       <UL>
-        <LI><i>Paper</i> is the versatile surface group. Paper can accept crayon, pencil, and pen.</LI>
-        <LI><i>Highlighter</i> is a limited surface group, for highlighting things by stepping up tint
-        from paper. Pen holds on it; pencil and crayon do not.</LI>
-        <LI><i>Crayon</i> is for large text, icons, borders, and drawing attention: 3:1 on every paper.</LI>
-        <LI><i>Pencil</i> is regular text: 4.5:1 on every paper, but not on highlighter.</LI>
-        <LI><i>Pen</i> is the most flexible foreground group: 4.5:1 on every paper and highlighter of its own family or of the neutral, both directions.</LI>
+        <LI><i>Paper</i> is the versatile surface group. Paper can accept highlighter, pencil, and pen.</LI>
+        <LI><i>Chalk</i> is a limited surface group, for highlighting things by stepping up tint
+        from paper. Pen holds on it; pencil and highlighter do not.</LI>
+        <LI><i>Highlighter</i> is for large text, icons, borders, and drawing attention: 3:1 on every paper.</LI>
+        <LI><i>Pencil</i> is regular text: 4.5:1 on every paper, but not on chalk.</LI>
+        <LI><i>Pen</i> is the most flexible foreground group: 4.5:1 on every paper and chalk of its own family or of the neutral, both directions.</LI>
       </UL>
       <P>
         There is more to the full convention than I'll cover here (it's documented{' '}

@@ -4,7 +4,7 @@
 //   .bl-mark → --brand-pencil-47 (the pencil stop — keeps the mark COLOURED
 //              yet legible on the light neutral sidebar; ~2.9:1 worst-case for a bright
 //              yellow brand. A logo mark is WCAG-exempt, so 3:1 isn't required; a raw
-//              cta/crayon-26/identity fill highlighters out for bright brands. A mark that
+//              cta/highlighter-26/identity fill chalks out for bright brands. A mark that
 //              is colourful AND always ≥3:1 would need an engine-emitted contrast-
 //              clamped stop. Wired in demo/CustomTheme.tsx PAGE_CSS.)
 //   .bl-type → --brand-pencil-47 (the wordmark register)

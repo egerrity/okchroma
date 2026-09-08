@@ -2,11 +2,11 @@
 // 2026-07-09, CATALOG C10: "it shouldn't be stitched together mechanisms… how can we
 // make that stick?"). This audit is the answer: the invariant lives in the suite, not
 // in conversation. It fails when:
-//   1. TABLE SHAPE breaks the owner's register invariant — the crayon/pencil pair (8–9)
+//   1. TABLE SHAPE breaks the owner's register invariant — the highlighter/pencil pair (8–9)
 //      must share ONE declared base register (the 8|9 "starts and stops" break was a
-//      second constant); the highlighter run (1–7) must ascend monotonically with a bounded
+//      second constant); the chalk run (1–7) must ascend monotonically with a bounded
 //      per-step ratio (no hidden register cliff inside a lightness-adjacent run). The
-//      7|8 step is exempt BY DESIGN: it rides the highlighter|crayon family boundary and
+//      7|8 step is exempt BY DESIGN: it rides the chalk|highlighter family boundary and
 //      its ~0.15 L drop (the re-bucket seam), not an equal-lightness register jump.
 //   2. SPEC↔TABLE BINDING drifts — every stop's chroma params in MODE_SPECS must be
 //      the SCALE_C table's values (catches a re-inlined constant in spec.ts).
@@ -35,13 +35,13 @@ const ok = (msg: string) => console.log('  ✓ ' + msg)
   // owner 2026-07-29: highlight-9 is deleted, so stop 8 is the whole band and there is
   // no pair to hold together. Its replacement guards the thing the collapse put at
   // risk instead — see the chroma-floor check below.)
-  // highlighter run 1→7: strictly ascending, per-step ratio bounded (the historical ladder's
+  // chalk run 1→7: strictly ascending, per-step ratio bounded (the historical ladder's
   // own max step is the bound — a bigger jump means a register cliff crept in)
-  const MAX_HIGHLIGHTER_STEP = 2.6 // paper 1→2 is ×2.5 by design (0.004→0.010); highlighter steps run ≤ ×1.8
+  const MAX_CHALK_STEP = 2.6 // paper 1→2 is ×2.5 by design (0.004→0.010); chalk steps run ≤ ×1.8
   for (let i = 1; i < 7; i++) {
     const a = t[i].base!, b = t[i + 1].base!
     if (!(b > a)) fail(`light base must ascend ${i}→${i + 1}: ${a} → ${b}`)
-    if (b / a > MAX_HIGHLIGHTER_STEP) fail(`light base step ${i}→${i + 1} exceeds ×${MAX_HIGHLIGHTER_STEP}: ${a} → ${b}`)
+    if (b / a > MAX_CHALK_STEP) fail(`light base step ${i}→${i + 1} exceeds ×${MAX_CHALK_STEP}: ${a} → ${b}`)
   }
   ok('light 1–7 ascend with bounded steps')
   const d = SCALE_C_DARK

@@ -108,7 +108,7 @@ export function Body() {
         ]}
       />
       <P>
-        Stop 0 is fixed at its extreme (white). The paper and highlighter targets grow apart geometrically, about
+        Stop 0 is fixed at its extreme (white). The paper and chalk targets grow apart geometrically, about
         1.25× per step, which is what keeps every seam open without a separation floor: the resolver still supports a
         declared minimum-separation requirement, but the shipped declaration carries none.
       </P>
@@ -137,7 +137,7 @@ export function Body() {
       </UL>
       <H3>Chroma: a ladder, an envelope, a bell</H3>
       <P>
-        For the paper, highlighter and crayon stops (<Code>lightScaleChromaAt</Code>): the ladder chroma is
+        For the paper, chalk and highlighter stops (<Code>lightScaleChromaAt</Code>): the ladder chroma is
         v × baseC × bell(L); the envelope chroma is the seed's saturation (its chroma over its gamut ceiling) × sat ×
         the gamut ceiling at the stop's lightness and hue; the emitted chroma blends from the ladder toward the envelope
         by u, so vivid seeds ride the hue-blind ladder and semi-muted warm seeds follow their own envelope. The bell is a
@@ -215,9 +215,9 @@ export function Body() {
           reqText(MODE_SPECS.dark.stops.find(s => s.stop === i)?.require)])}
       />
       <UL>
-        <LI><b>Grounds.</b> The crayon and the pencil solve against {stopTokenName(3)}, the nearest paper, so clearing it clears every paper; {stopTokenName(10)} against {stopTokenName(7)}, the darkest highlighter; {stopTokenName(11)} against {stopTokenName(3)}. The inverse link family replaces every pen ground with the worst shipped {stopTokenName(11)}.</LI>
+        <LI><b>Grounds.</b> The highlighter and the pencil solve against {stopTokenName(3)}, the nearest paper, so clearing it clears every paper; {stopTokenName(10)} against {stopTokenName(7)}, the darkest chalk; {stopTokenName(11)} against {stopTokenName(3)}. The inverse link family replaces every pen ground with the worst shipped {stopTokenName(11)}.</LI>
         <LI><b>Light.</b> The floor clamps lightness down: L = min(L, the highest L that clears the ratio against the ground's luminance), iterated to a fixed point (up to six passes, since chroma and hue move with L). The scale solve carries a +0.05 ratio margin so the gamut-trimmed emit still clears; the pen solve does not.</LI>
-        <LI><b>Dark.</b> The floor raises lightness: if the placement misses the target, bisection walks L up until it clears (+0.05). The crayon solves from the ground up every time; the pens usually clear from the scaffold.</LI>
+        <LI><b>Dark.</b> The floor raises lightness: if the placement misses the target, bisection walks L up until it clears (+0.05). The highlighter solves from the ground up every time; the pens usually clear from the scaffold.</LI>
         <LI><b>Legality on both renditions.</b> The ratio a floor judges is the minimum over the P3 rendition and the sRGB clamp-down (<Code>legalRatio</Code>), so a pass holds on any display.</LI>
         <LI><b>The shipped pair.</b> After the analytic solve, the 8-bit sRGB pair (stop and ground, both quantized) is checked, together with the cross-family bounds on the <DocLink page="guarantees" section="what-every-paper-means">Guarantees</DocLink> page; a stop that misses walks away from its ground in steps of 0.001 L until it clears.</LI>
         <LI><b>Fail loud.</b> A floor that still cannot be met marks the stop <Code>unresolvable</Code>; the requirement gate then fails.</LI>
@@ -249,7 +249,7 @@ export function Body() {
       <P>
         The resolved brand is compared with the four signals. One test decides the whole-ramp remedies for yellow,
         green and blue (<Code>checkHueCollision</Code>, collision.ts): the smallest hue distance between the brand's and
-        the signal's highlighter stops, in either mode, is within the gate, and the brand is vivid enough to collide. Red
+        the signal's chalk stops, in either mode, is within the gate, and the brand is vivid enough to collide. Red
         has its own machinery, the joint solve: the brand's stamp exits red's region by its nearest edge, and the red
         signal re-seats on the far side of the brand when canonical red would still sit too close. A residual overlap
         ships as advice, never a silent move. The thresholds, the per-signal resolutions and the red solve's rules are on

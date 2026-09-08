@@ -33,7 +33,7 @@ brand.light
 Bundles emitted before the stamp rename named the roles `cta`, `cta-hover`, `cta-pressed`;
 `parseToken` still accepts those words, so an older bundle re-resolves identically.
 
-## Example: a scale stop (light crayon-26, seed #3060c0)
+## Example: a scale stop (light highlighter-26, seed #3060c0)
 
 Regenerated from the emitter; components are the 8-bit channels over 255 to four decimals.
 
@@ -57,7 +57,7 @@ Regenerated from the emitter; components are the 8-bit channels over 255 to four
       "mode": "light",
       "stop": 8,
       "rootL": 0.738,
-      "group": "crayon",
+      "group": "highlighter",
       "produce": {
         "hue": "warm-drift",
         "L": "perceptual",
@@ -127,7 +127,7 @@ Regenerated from the emitter; components are the 8-bit channels over 255 to four
 |---|---|---|
 | `stop` | number | the scale position, 0 to 11. 0 is `paper-0`, the anchor beyond `paper-1`: white in light, one seam below `paper-1` in dark. Roles are never stops |
 | `rootL` | number | the producer's lightness target (the scaffold the solve starts from) |
-| `group` | `paper` \| `highlighter` \| `crayon` \| `pencil` \| `pen` | the band, derived from the token name. The resolver reads only text-lane membership (pencil and pen) and accepts the pre-rename words there, so an older bundle re-resolves identically |
+| `group` | `paper` \| `chalk` \| `highlighter` \| `pencil` \| `pen` | the band, derived from the token name. The resolver reads only text-lane membership (pencil and pen) and accepts the pre-rename words there, so an older bundle re-resolves identically |
 | `produce` | object | the named producers, below |
 | `satFraction` | number | the ladder producer's envelope share (the per-stop sat) |
 | `baseC` | number | the ladder producer's absolute ladder chroma (light) |
@@ -166,7 +166,7 @@ behavior is a resolver version bump.
 
 One thing the labels do not say: in the shipped pipeline dark is resolved from the resolved
 light ramp (the delta carry, always set by `generateScale`), which places the paper and
-highlighter stops by luminance parity and the crayon by its requirement. The dark
+chalk stops by luminance parity and the highlighter by its requirement. The dark
 `perceptual-lift` and `fixed` labels on stops 1 to 8 describe what a direct `resolveRamp`
 call does without the light ramp in hand; a resolver that wants the shipped dark values must
 run the carry.
@@ -175,12 +175,12 @@ run the carry.
 
 | variant | fields | meaning |
 |---|---|---|
-| WCAG contrast | `{ metric: "wcag", against, target, level }` | the stop must hold `target`:1 against the resolved stop named by `against` (`paper-1` \| `paper-3` \| `paper-5` \| `highlighter-20`). Light clamps lightness down; dark raises it off the ground. Declared today: `crayon-26` at 3 against `paper-5`, `pencil-47` at 4.5 against `paper-5`, `pen-58` at 4.5 against `highlighter-20`, `pen-70` at 7 against `paper-5` |
+| WCAG contrast | `{ metric: "wcag", against, target, level }` | the stop must hold `target`:1 against the resolved stop named by `against` (`paper-1` \| `paper-3` \| `paper-5` \| `chalk-20`). Light clamps lightness down; dark raises it off the ground. Declared today: `highlighter-26` at 3 against `paper-5`, `pencil-47` at 4.5 against `paper-5`, `pen-58` at 4.5 against `chalk-20`, `pen-70` at 7 against `paper-5` |
 | minimum separation | `{ metric: "min-separation", against: "paper-1" \| "prev", target }` | an OKLab ΔE floor from a resolved stop. Supported for portable specs; the shipped declaration carries none, since the ladder shape holds every seam open by construction |
 
 **The anchor caveat.** A text stop (9 and up) always solves against `paper-5` when its
 `against` names a paper: a bundle edited to name another paper there is mapped back onto
-`paper-5` before the solve. Every stop from the crayon up is additionally held against frozen
+`paper-5` before the solve. Every stop from the highlighter up is additionally held against frozen
 cross-family bounds (the site's
 [Guarantees](https://egerrity.github.io/okchroma/#/docs/guarantees/what-every-paper-means)
 page). Editing `target` is honored everywhere.

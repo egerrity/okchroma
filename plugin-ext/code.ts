@@ -12,7 +12,7 @@
 // THE REGISTER (A1 regroup 2026-08-07; flattened 2026-08-11, owner: the semantic/
 // grouping confused designers): every path payload.ts emits carries the single
 // primitive/ prefix (payload.registerPath) — primitive/system/*, primitive/<fam>/
-// {paper,highlighter,mark,pen}/N and the ctas in their families primitive/<fam>/{cta,cta-ink,
+// {paper,chalk,mark,pen}/N and the ctas in their families primitive/<fam>/{cta,cta-ink,
 // cta-ink-strong}/*, the link trio at primitive/system/link/*. The elevation planes are
 // code.ts's own rows (payload never emits them), created at primitive/system/surface/*.
 // RENAMED_GROUPS' strips (below) recover every earlier spelling — pre-A1 flat AND the
@@ -106,8 +106,8 @@ const RETIRED_RUNG_ALPHA = 0.12
 // here, and the four cta-ink keys dropped (their paths died 2026-08-12 — entries could
 // never fire). Zone spellings per the same round's rename.
 const RETIRED_SIGNAL_VALUES: Record<string, string[]> = {
-  'base/critical/crayon-26': ['#e06146'],
-  'base/warning/crayon-26': ['#c67a00'],
+  'base/critical/highlighter-26': ['#e06146'],
+  'base/warning/highlighter-26': ['#c67a00'],
   'base/warning/pencil-47': ['#a56000'],
   'base/positive/pencil-47': ['#1c7e36'],
   'base/positive/stamp/fill': ['#63c373', '#67c777'],
@@ -138,19 +138,29 @@ const DARK_COLUMNS = new Set<Column>(['dark'])
 // before any candidate, so the ascending walk would hand the vacating row to the
 // wrong stop; see the textUpshifts pre-pass in the apply handler.
 const RENAMED_LEAVES: Array<[string, string]> = [
-  // ── THE INSTRUMENTS RENAME (owner 2026-08-31, mirror of plugin/code.ts): band words
-  // → instruments, the digit inverted (100 − the previous digit). Names only, same
-  // indices, same values. CURRENT-name entries stay FIRST; every older vintage below
-  // already re-targets straight at the new homes (one hop).
+  // ── THE CHALK/HIGHLIGHTER RENAME: the tinted band takes the chalk word and the
+  // 3:1 stop takes highlighter, the word that also names the translucent state rungs
+  // seeded from it. Names only, same indices, same values. CURRENT-name entries
+  // stay FIRST: they are exactly what a file applied since the instruments rename
+  // holds. Every older vintage below re-targets straight at the new homes (one hop).
+  ['highlighter-8', 'chalk-8'],
+  ['highlighter-11', 'chalk-11'],
+  ['highlighter-15', 'chalk-15'],
+  ['highlighter-20', 'chalk-20'],
+  ['crayon-26', 'highlighter-26'],
+  // ── THE INSTRUMENTS RENAME (the vintage every file applied between the
+  // conformance-suffix drop and the chalk rename holds): band words → instruments,
+  // the digit inverted (100 − the previous digit; derive → round → invert, never
+  // re-rounded). Names only, same indices, same values.
   ['paper-100', 'paper-0'],
   ['paper-99', 'paper-1'],
   ['paper-97', 'paper-3'],
   ['paper-95', 'paper-5'],
-  ['wash-92', 'highlighter-8'],
-  ['wash-89', 'highlighter-11'],
-  ['wash-85', 'highlighter-15'],
-  ['wash-80', 'highlighter-20'],
-  ['wax-74', 'crayon-26'],
+  ['wash-92', 'chalk-8'],
+  ['wash-89', 'chalk-11'],
+  ['wash-85', 'chalk-15'],
+  ['wash-80', 'chalk-20'],
+  ['wax-74', 'highlighter-26'],
   ['lead-53', 'pencil-47'],
   ['ink-42', 'pen-58'],
   ['ink-30', 'pen-70'],
@@ -160,7 +170,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // conformance, so an "aaa" search lands on descriptions); brand-primary → brand
   // and brand-secondary → brand-alt ride RENAMED_GROUPS below. Same indices, same
   // values — a relabel, not a renumber.
-  ['mark-74-aa', 'crayon-26'],
+  ['mark-74-aa', 'highlighter-26'],
   ['ink-53-aa', 'pencil-47'],
   ['ink-42-aa', 'pen-58'],
   ['ink-30-aaa', 'pen-70'],
@@ -169,10 +179,10 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // split the group guarantees need. Name only, same index, same values; older
   // ink-53-vintage sources already point straight at pencil-47 (the one-hop rule).
   ['ink-53', 'pencil-47'],
-  // ── GUARANTEE-ROUND (owner 2026-08-28): mark-74 → crayon-26 (band word mark → crayon).
+  // ── GUARANTEE-ROUND (owner 2026-08-28): mark-74 → highlighter-26 (band word mark → highlighter).
   // Name only, same index, same values; older mark-vintage sources already point
-  // straight at crayon-26 (the one-hop rule).
-  ['mark-74', 'crayon-26'],
+  // straight at highlighter-26 (the one-hop rule).
+  ['mark-74', 'highlighter-26'],
   // link nesting (owner 2026-08-31, the same round family): the flat trio + the
   // inverse leaves fold into state subgroups — link/{default,inverse}/{enabled,
   // hover,pressed}; enabled returns as the rest leaf (default became the group).
@@ -251,7 +261,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['abs-primary', 'absolute/brand'],
   ['abs-secondary', 'absolute/brand-alt'],
   // ── BAND FLATTENING (owner 2026-08-12): ramp leaves sit FLAT in the family group
-  // again — paper-1, highlighter-8, crayon-26, pencil-47 … (band word + hyphen + level,
+  // again — paper-1, chalk-8, highlighter-26, pencil-47 … (band word + hyphen + level,
   // the engine's own token names). The 2026-07-27 band nesting (paper/99 …) is
   // retired; only the cta STATE group still nests. These CURRENT-name entries MUST
   // precede everything below: candidates are tried in table order and the banded
@@ -264,11 +274,11 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['paper/99', 'paper-1'],
   ['paper/97', 'paper-3'],
   ['paper/95', 'paper-5'],
-  ['wash/92', 'highlighter-8'],
-  ['wash/89', 'highlighter-11'],
-  ['wash/85', 'highlighter-15'],
-  ['wash/80', 'highlighter-20'],
-  ['mark/74-aa', 'crayon-26'],
+  ['wash/92', 'chalk-8'],
+  ['wash/89', 'chalk-11'],
+  ['wash/85', 'chalk-15'],
+  ['wash/80', 'chalk-20'],
+  ['mark/74-aa', 'highlighter-26'],
   ['ink/53-aa', 'pencil-47'],
   ['ink/42-aa', 'pen-58'],
   ['ink/30-aaa', 'pen-70'],
@@ -277,11 +287,11 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // points STRAIGHT at the final flat home — the one-hop rule).
   ['paper-2', 'paper-3'],
   ['paper-3', 'paper-5'],
-  ['wash-4', 'highlighter-8'],
-  ['wash-5', 'highlighter-11'],
-  ['wash-6', 'highlighter-15'],
-  ['wash-7', 'highlighter-20'],
-  ['highlight-8', 'crayon-26'],
+  ['wash-4', 'chalk-8'],
+  ['wash-5', 'chalk-11'],
+  ['wash-6', 'chalk-15'],
+  ['wash-7', 'chalk-20'],
+  ['highlight-8', 'highlighter-26'],
   // ── pen flats, 2026-07-10-numbering vintage (pre-banding files, 07-10 → 07-27).
   // C49 restored the strong pen's and the anchor's pre-C33 numbers, so these map
   // one-hop to homes that are now NUMBER-TRUE for this vintage (the pre-C49 table
@@ -303,11 +313,11 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['paper/1', 'paper-1'],
   ['paper/2', 'paper-3'],
   ['paper/3', 'paper-5'],
-  ['wash/4', 'highlighter-8'],
-  ['wash/5', 'highlighter-11'],
-  ['wash/6', 'highlighter-15'],
-  ['wash/7', 'highlighter-20'],
-  ['highlight/8', 'crayon-26'],
+  ['wash/4', 'chalk-8'],
+  ['wash/5', 'chalk-11'],
+  ['wash/6', 'chalk-15'],
+  ['wash/7', 'chalk-20'],
+  ['highlight/8', 'highlighter-26'],
   ['ink/9', 'pencil-47'],
   ['ink/10', 'pen-58'],
   ['ink/11', 'pen-70'],
@@ -316,7 +326,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // r-floor leaves (mark/74-r300, ink/53-r450, ink/42-r650, ink/30-r700) for part of
   // one day; a file applied under that build carries them as its CURRENT names.
   // One-hop, no chaining: targets follow the final flat homes.
-  ['mark/74-r300', 'crayon-26'],
+  ['mark/74-r300', 'highlighter-26'],
   ['ink/53-r450', 'pencil-47'],
   ['ink/42-r650', 'pen-58'],
   ['ink/30-r700', 'pen-70'],

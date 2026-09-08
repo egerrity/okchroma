@@ -3,15 +3,15 @@
 // against its own family's grounds and the neutral's; the PEN band is symmetric (owner
 // 2026-09-01: a pen and a ground are in scope when they share a family or either side is
 // the neutral, both directions), so the neutral's pens also read against every chromatic
-// family's grounds. Blanket any-on-any is owner-rejected: a sibling family's highlighter-20
-// sits structurally out of reach. The neutral's crayon-26 and pencil-47 read against every
+// family's grounds. Blanket any-on-any is owner-rejected: a sibling family's chalk-20
+// sits structurally out of reach. The neutral's highlighter-26 and pencil-47 read against every
 // chromatic family's papers as well (owner 2026-09-01: the rule is true for every band).
 //
-//   paper (0/1/3/5)          passes crayon-26 at 3:1 and every pen at 4.5
-//   highlighter (8/11/15/20) passes the pen group (58/70/100) at 4.5
-//   crayon-26                3:1 against paper only
+//   paper (0/1/3/5)          passes highlighter-26 at 3:1 and every pen at 4.5
+//   chalk (8/11/15/20) passes the pen group (58/70/100) at 4.5
+//   highlighter-26                3:1 against paper only
 //   pencil-47                4.5 against paper only          (pencil-47 pre guarantee round)
-//   pen (58/70/100)          4.5 against paper AND highlighter      (the T10 highlighter-20 law)
+//   pen (58/70/100)          4.5 against paper AND chalk      (the T10 chalk-20 law)
 //
 // Plus the STAMP/ON pairing (owner ruling 2026-08-29): a quiet cta's shipped on-text —
 // the soft composite where softOnCtaPasses gates it in, the solid pole at rest where
@@ -28,7 +28,7 @@
 // chromatic family F reads against the surfaces of F and of the theme's neutral; the
 // NEUTRAL's pens read against the neutral's surfaces and every chromatic family's — the
 // direction this audit never measured before T13 (owner-caught 2026-09-01: neutral pen-58
-// light sat at 4.16 on info highlighter-20 while the gate read PASS).
+// light sat at 4.16 on info chalk-20 while the gate read PASS).
 import { resolveTheme, signalScalesFor, softOnCtaPasses, SOFT_ON_CTA_ALPHA } from '../src/engine/resolve'
 import { generateNeutralScale, type GeneratedScale } from '../src/engine/colorEngine'
 import { contrastRatio, shippedY } from '../src/engine/constraints'
@@ -42,13 +42,13 @@ const NEUTRAL_LEVELS: readonly NeutralLevel[] = ['default', 'medium', 'pure', 'b
 const enc = (c: number) => { c = Math.max(0, Math.min(1, c)); return c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055 }
 const seedHex = (L: number, C: number, H: number) => '#' + oklchToLinearRgb(L, C, H).map(c => Math.round(enc(c) * 255).toString(16).padStart(2, '0')).join('')
 
-// surfaces (array index = stop-1) and crayon stops, by the guarantee bands
+// surfaces (array index = stop-1) and highlighter stops, by the guarantee bands
 const PAPERS = [1, 2, 3] as const          // paper-1 / 97 / 95 (paper-0 poles below)
-const HIGHLIGHTERS = [4, 5, 6, 7] as const       // highlighter-8 / 89 / 85 / 80
-const CRAYON = 8, PENCIL = 9, PENS = [10, 11] as const   // + pen-100, the resolved extreme (below)
+const CHALKS = [4, 5, 6, 7] as const       // chalk-8 / 89 / 85 / 80
+const HIGHLIGHTER = 8, PENCIL = 9, PENS = [10, 11] as const   // + pen-100, the resolved extreme (below)
 const PEN_NAME = { 10: 'pen-58', 11: 'pen-70' } as const
-const nameOf = (st: number) => ['paper-1', 'paper-3', 'paper-5', 'highlighter-8', 'highlighter-11', 'highlighter-15', 'highlighter-20'][st - 1]
-const BAR = { crayon: 3.0, text: 4.5 }
+const nameOf = (st: number) => ['paper-1', 'paper-3', 'paper-5', 'chalk-8', 'chalk-11', 'chalk-15', 'chalk-20'][st - 1]
+const BAR = { highlighter: 3.0, text: 4.5 }
 
 type Worst = { r: number; where: string }
 const cells: Record<string, Worst> = {}
@@ -105,18 +105,18 @@ function check(hex: string, tag: string, opts: { exact?: boolean; archetypeOverr
       }
       const paperY = surfaces(PAPERS)
       if (f.name === 'neutral' && nP0) paperY.push(['paper-0', yOf(nP0)])
-      const highlighterY = surfaces(HIGHLIGHTERS)
-      const crayonY = yOf(arr[CRAYON - 1]), pencilY = yOf(arr[PENCIL - 1])
+      const chalkY = surfaces(CHALKS)
+      const highlighterY = yOf(arr[HIGHLIGHTER - 1]), pencilY = yOf(arr[PENCIL - 1])
       const where = (s: string) => `${tag} ${mode} ${lv}${f.name} on ${s}`
       for (const [s, y] of paperY) {
-        seen('crayon-26 vs paper', contrastRatio(crayonY, y), where(s), BAR.crayon)
+        seen('highlighter-26 vs paper', contrastRatio(highlighterY, y), where(s), BAR.highlighter)
         seen('pencil-47 vs paper', contrastRatio(pencilY, y), where(s), BAR.text)
         for (const pen of PENS) seen(`${PEN_NAME[pen]} vs paper`, contrastRatio(yOf(arr[pen - 1]), y), where(s), BAR.text)
         if (f.name === 'neutral') seen('pen-100 vs paper', contrastRatio(penPoleY, y), where(s), BAR.text)
       }
-      for (const [s, y] of highlighterY) {
-        for (const pen of PENS) seen(`${PEN_NAME[pen]} vs highlighter`, contrastRatio(yOf(arr[pen - 1]), y), where(s), BAR.text)
-        if (f.name === 'neutral') seen('pen-100 vs highlighter', contrastRatio(penPoleY, y), where(s), BAR.text)
+      for (const [s, y] of chalkY) {
+        for (const pen of PENS) seen(`${PEN_NAME[pen]} vs chalk`, contrastRatio(yOf(arr[pen - 1]), y), where(s), BAR.text)
+        if (f.name === 'neutral') seen('pen-100 vs chalk', contrastRatio(penPoleY, y), where(s), BAR.text)
       }
     }
     // stamp/on over the quiet cta fill (owner ruling 2026-08-29): the soft composite is
@@ -160,7 +160,7 @@ for (let h = 0; h < 360; h += 5) for (const c of [0.06, 0.13, 0.2]) check(seedHe
 for (const fx of FIXTURES) check(fx.hex, fx.slug, { exact: fx.exact, archetypeOverride: fx.archetypeOverride, style: fx.style })
 
 // REPORT-ONLY: the `full-chroma` register releases the ramp's vividness cap and its violet-band
-// highlighter-20 sinks below the bound the neutral pens are clamped to
+// chalk-20 sinks below the bound the neutral pens are clamped to
 // (CHROMATIC_W80_WORST_SHIP_Y). The owner removed its checkbox from every UI 2026-09-01; the
 // GenerateOptions lever remains for instruments, outside the guarantee. Measured so the
 // residual stays visible; never gated.
@@ -176,7 +176,7 @@ function reportFullChroma(hex: string, tag: string) {
       const y = shippedY(s7.L, s7.C, s7.H)
       for (const pen of PENS) {
         const p = nArr[pen - 1]
-        seen(`${PEN_NAME[pen]} vs full-chroma highlighter-20 (report)`, contrastRatio(shippedY(p.L, p.C, p.H), y), `${tag} ${mode} neutral on full-chroma ${g}`, 0)
+        seen(`${PEN_NAME[pen]} vs full-chroma chalk-20 (report)`, contrastRatio(shippedY(p.L, p.C, p.H), y), `${tag} ${mode} neutral on full-chroma ${g}`, 0)
       }
     }
   }
@@ -192,4 +192,4 @@ if (fails.length) {
   console.log('\nGATE: FAIL')
   process.exit(1)
 }
-console.log('\nGATE: PASS — every band claim holds at its bar (crayon 3:1, text 4.5), own family or neutral, both directions, both modes')
+console.log('\nGATE: PASS — every band claim holds at its bar (highlighter 3:1, text 4.5), own family or neutral, both directions, both modes')

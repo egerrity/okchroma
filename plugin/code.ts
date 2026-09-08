@@ -76,20 +76,29 @@ const profileStamp = (profile: Profile) =>
 // up, so the direct map.get never wrongly hits a stale same-name variable. Any future
 // renumber must keep that ascending order.
 const RENAMED_LEAVES: Array<[string, string]> = [
-  // ── THE INSTRUMENTS RENAME (owner 2026-08-31): band words → instruments, the digit
-  // inverted (100 − the previous digit; derive → round → invert, never re-rounded).
-  // Names only, same indices, same values. These CURRENT-name entries stay FIRST —
-  // they are exactly what every file applied between 2026-08-21 and 2026-08-31 holds.
-  // Every older vintage below already re-targets straight at the new homes (one hop).
+  // ── THE CHALK/HIGHLIGHTER RENAME: the tinted band takes the chalk word and the
+  // 3:1 stop takes highlighter, the word that also names the translucent state rungs
+  // seeded from it. Names only, same indices, same values. CURRENT-name entries
+  // stay FIRST: they are exactly what a file applied since the instruments rename
+  // holds. Every older vintage below re-targets straight at the new homes (one hop).
+  ['highlighter-8', 'chalk-8'],
+  ['highlighter-11', 'chalk-11'],
+  ['highlighter-15', 'chalk-15'],
+  ['highlighter-20', 'chalk-20'],
+  ['crayon-26', 'highlighter-26'],
+  // ── THE INSTRUMENTS RENAME (the vintage every file applied between the
+  // conformance-suffix drop and the chalk rename holds): band words → instruments,
+  // the digit inverted (100 − the previous digit; derive → round → invert, never
+  // re-rounded). Names only, same indices, same values.
   ['paper-100', 'paper-0'],
   ['paper-99', 'paper-1'],
   ['paper-97', 'paper-3'],
   ['paper-95', 'paper-5'],
-  ['wash-92', 'highlighter-8'],
-  ['wash-89', 'highlighter-11'],
-  ['wash-85', 'highlighter-15'],
-  ['wash-80', 'highlighter-20'],
-  ['wax-74', 'crayon-26'],
+  ['wash-92', 'chalk-8'],
+  ['wash-89', 'chalk-11'],
+  ['wash-85', 'chalk-15'],
+  ['wash-80', 'chalk-20'],
+  ['wax-74', 'highlighter-26'],
   ['lead-53', 'pencil-47'],
   ['ink-42', 'pen-58'],
   ['ink-30', 'pen-70'],
@@ -99,21 +108,21 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // "aaa" search still lands); brand/secondary → brand/alt rides RENAMED_GROUPS,
   // the per-brand prim groups ride the bespoke mid-segment pass (primByName
   // migration). Same indices, same values — a relabel, not a renumber.
-  ['mark-74-aa', 'crayon-26'],
+  ['mark-74-aa', 'highlighter-26'],
   ['ink-53-aa', 'pencil-47'],
   ['ink-42-aa', 'pen-58'],
   ['ink-30-aaa', 'pen-70'],
   ['abs-secondary', 'abs-alt'],
   // ── GUARANTEE-ROUND PASS 1 (owner 2026-08-27): ink-53 → pencil-47, the band-word
-  // split the group guarantees need ("pen is guaranteed on every highlighter" must not
+  // split the group guarantees need ("pen is guaranteed on every chalk" must not
   // implicate the papers-only stop). Name only, same index, same values; every
   // older ink-53-vintage source above/below already points straight at pencil-47
   // (the one-hop rule).
   ['ink-53', 'pencil-47'],
-  // ── GUARANTEE-ROUND (owner 2026-08-28): mark-74 → crayon-26 (band word mark → crayon).
+  // ── GUARANTEE-ROUND (owner 2026-08-28): mark-74 → highlighter-26 (band word mark → highlighter).
   // Name only, same index, same values; every older mark-vintage source below
-  // already points straight at crayon-26 (the one-hop rule).
-  ['mark-74', 'crayon-26'],
+  // already points straight at highlighter-26 (the one-hop rule).
+  ['mark-74', 'highlighter-26'],
   // link nesting (owner 2026-08-31, the same round family): the flat trio + the
   // inverse leaves fold into state subgroups — link/{default,inverse}/{enabled,
   // hover,pressed}. The rest word enabled RETURNS (nesting needs a rest leaf;
@@ -182,7 +191,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['alpha/offset-08', 'alpha/away-from-bg/08'],
   ['alpha/offset-16', 'alpha/away-from-bg/16'],
   // ── BAND FLATTENING (owner 2026-08-12): ramp leaves sit FLAT in the family group
-  // again — paper-1, highlighter-8, crayon-26, pencil-47 … (band word + hyphen + level, the
+  // again — paper-1, chalk-8, highlighter-26, pencil-47 … (band word + hyphen + level, the
   // engine's own token names). The 2026-07-27 band nesting (paper/99 …) is retired; only
   // the cta STATE group still nests. These CURRENT-name entries MUST precede everything
   // below: legacyCandidates tries entries in table order, and the banded spellings are
@@ -191,11 +200,11 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['paper/99', 'paper-1'],
   ['paper/97', 'paper-3'],
   ['paper/95', 'paper-5'],
-  ['wash/92', 'highlighter-8'],
-  ['wash/89', 'highlighter-11'],
-  ['wash/85', 'highlighter-15'],
-  ['wash/80', 'highlighter-20'],
-  ['mark/74-aa', 'crayon-26'],
+  ['wash/92', 'chalk-8'],
+  ['wash/89', 'chalk-11'],
+  ['wash/85', 'chalk-15'],
+  ['wash/80', 'chalk-20'],
+  ['mark/74-aa', 'highlighter-26'],
   ['ink/53-aa', 'pencil-47'],
   ['ink/42-aa', 'pen-58'],
   ['ink/30-aaa', 'pen-70'],
@@ -209,11 +218,11 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // as the renumber round.
   ['paper-2', 'paper-3'],
   ['paper-3', 'paper-5'],
-  ['wash-4', 'highlighter-8'],
-  ['wash-5', 'highlighter-11'],
-  ['wash-6', 'highlighter-15'],
-  ['wash-7', 'highlighter-20'],
-  ['highlight-8', 'crayon-26'],
+  ['wash-4', 'chalk-8'],
+  ['wash-5', 'chalk-11'],
+  ['wash-6', 'chalk-15'],
+  ['wash-7', 'chalk-20'],
+  ['highlight-8', 'highlighter-26'],
   // highlight-9 / on-highlight are DEAD (the 2026-07-29 collapse orphaned them; no
   // current token answers to either) — kept only so an old file's row is still
   // FOUND (renamed to its retired banded home, then reported as an orphan) rather
@@ -244,11 +253,11 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['paper/1', 'paper-1'],
   ['paper/2', 'paper-3'],
   ['paper/3', 'paper-5'],
-  ['wash/4', 'highlighter-8'],
-  ['wash/5', 'highlighter-11'],
-  ['wash/6', 'highlighter-15'],
-  ['wash/7', 'highlighter-20'],
-  ['highlight/8', 'crayon-26'],
+  ['wash/4', 'chalk-8'],
+  ['wash/5', 'chalk-11'],
+  ['wash/6', 'chalk-15'],
+  ['wash/7', 'chalk-20'],
+  ['highlight/8', 'highlighter-26'],
   ['ink/9', 'pencil-47'],
   ['ink/10', 'pen-58'],
   ['ink/11', 'pen-70'],
@@ -257,7 +266,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // r-floor leaves (mark/74-r300, ink/53-r450, ink/42-r650, ink/30-r700) for part of
   // one day; a file applied under that build carries them as its CURRENT names.
   // One-hop, no chaining: targets follow the final flat homes.
-  ['mark/74-r300', 'crayon-26'],
+  ['mark/74-r300', 'highlighter-26'],
   ['ink/53-r450', 'pencil-47'],
   ['ink/42-r650', 'pen-58'],
   ['ink/30-r700', 'pen-70'],
@@ -443,10 +452,10 @@ function getOrMigrate(map: Map<string, figma.Variable>, path: string): figma.Var
 // is a small hand-duplicated leaf, same rule as the one payload.ts's flatten() uses).
 // JS enumerates integer-index string keys ascending, before any string keys, REGARDLESS
 // of insertion order (ECMA-262 OrdinaryOwnPropertyKeys). Since the band flattening
-// (owner 2026-08-12) every ramp leaf is band-word-prefixed (paper-1, highlighter-8, …) so no
+// (owner 2026-08-12) every ramp leaf is band-word-prefixed (paper-1, chalk-8, …) so no
 // group consists of bare-digit keys any more — but the walker keeps the rule so the
 // panel order can't silently reverse again if a digit-keyed group ever returns
-// (adversarial-audit-caught 2026-08-07, when paper/highlighter leaves WERE bare digits).
+// (adversarial-audit-caught 2026-08-07, when paper/chalk leaves WERE bare digits).
 function orderedEntries(node: TokenNode): Array<[string, TokenNode]> {
   const entries = Object.entries(node) as Array<[string, TokenNode]>
   const digitLeading = (k: string) => /^\d/.test(k)
@@ -764,7 +773,7 @@ figma.ui.onmessage = async (msg) => {
       // Write a primitive. on-fill leaves ALIAS a shared invariant (always, so
       // pre-existing raw on-fills get converted on re-apply); cta-border leaves ALIAS
       // per mode — system/alpha/transparent when the fill passes the boundary gate, the
-      // family's own crayon-26 when it doesn't (alpha 0 in the payload = transparent);
+      // family's own highlighter-26 when it doesn't (alpha 0 in the payload = transparent);
       // every other leaf is a raw color, written on create or when `refresh` is set
       // (per-brand ramps).
       // (INK_SIBLING and its value-guarded alias branch DELETED with the cta-ink
@@ -820,15 +829,15 @@ figma.ui.onmessage = async (msg) => {
             v.setValueForMode(pDark, figma.variables.createVariableAlias(transparent))
           }
         } else if (t.path === STAMP_LEAF.EDGE) {
-          const sibling8 = primByName.get(path.slice(0, -STAMP_LEAF.EDGE.length) + 'crayon-26')
+          const sibling8 = primByName.get(path.slice(0, -STAMP_LEAF.EDGE.length) + 'highlighter-26')
           const transparent = primByName.get('system/alpha/transparent')
           // the OFFSET ROUTER (owner report 2026-08-28, the ext strokeFor idiom): a
           // firing edge carries its family's rung IN ITS OWN ALPHA — a value lookup,
           // no family table to drift from cssRender.ctaBorderRung — and aliases the
           // matching ladder row (created in STATIC_UTILS above, so it exists by now).
           // a=0 stays transparent (the gate passed); an OPAQUE leaf is the outline
-          // secondary's posture and keeps its crayon-26 alias. Re-aliased every apply,
-          // so a pre-ladder file's loud crayon-26 edge heals on the next apply.
+          // secondary's posture and keeps its highlighter-26 alias. Re-aliased every apply,
+          // so a pre-ladder file's loud highlighter-26 edge heals on the next apply.
           const rungRow = (a: number | undefined) => {
             const rung = a === undefined ? undefined
               : Object.keys(RUNG_ALPHAS).find(k => Math.abs(RUNG_ALPHAS[k] - a) < 1e-6)

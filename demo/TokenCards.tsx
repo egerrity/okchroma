@@ -8,10 +8,10 @@ import { AlertCircle, AlertTriangle, CheckCircle, Info } from 'lucide-react'
 //
 // Roles demonstrated in context, not as abstract chips:
 //   pen     → the heading + body copy ("pen family" called out in pencil-47)
-//   highlighter    → the inset surface(s)
+//   chalk    → the inset surface(s)
 //   cta     → the full-round pill button (brand/alt/neutral) OR, on signals,
 //             the ALERT callout (alerts use cta in signals; the pill is hidden)
-//   scale   → the ladder, stop labels above the chips, with paper/highlighter/crayon/pen brackets
+//   scale   → the ladder, stop labels above the chips, with paper/chalk/highlighter/pen brackets
 //
 // The universal paper-0/pen-100 anchors are NOT shown here — they're one shared
 // white/black pair at the system level, not a per-ramp token.
@@ -105,13 +105,13 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
   // (owner 2026-08-11): the suffixed names outgrew the chip, and the swatches
   // themselves stay clean.
   const scale = [
-    'paper-1', 'paper-3', 'paper-5', 'highlighter-8', 'highlighter-11', 'highlighter-15', 'highlighter-20',
-    'crayon-26', 'pencil-47', 'pen-58', 'pen-70',
+    'paper-1', 'paper-3', 'paper-5', 'chalk-8', 'chalk-11', 'chalk-15', 'chalk-20',
+    'highlighter-26', 'pencil-47', 'pen-58', 'pen-70',
   ]
   const stopLabel = (tok: string): string => tok.split('-').slice(1).join('')
   const groups = [
-    { label: 'paper', span: 3 }, { label: 'highlighter', span: 4 },
-    { label: 'crayon', span: 1 }, { label: 'pencil', span: 1 }, { label: 'pen', span: 2 },
+    { label: 'paper', span: 3 }, { label: 'chalk', span: 4 },
+    { label: 'highlighter', span: 1 }, { label: 'pencil', span: 1 }, { label: 'pen', span: 2 },
   ]
   // the brackets below share the scale's grid, so their spans have to add up to it
   if (groups.reduce((a, g) => a + g.span, 0) !== scale.length)
@@ -136,7 +136,7 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
       {/* pen in context — heading + body, "pen family" called out in pencil-47 */}
       <div style={{ fontSize: 24, fontWeight: 700, color: v('pen-70'), lineHeight: 1.15, marginBottom: 8 }}>Aa Heading</div>
       <p style={{ fontSize: 15, lineHeight: 1.5, color: v('pen-70'), margin: '0 0 16px' }}>
-        The <span style={{ color: v('pencil-47') }}>pen family</span> is designed to contrast with the paper and highlighter stops and is perfect for text. It can also be used as an inverted fill.
+        The <span style={{ color: v('pencil-47') }}>pen family</span> is designed to contrast with the paper and chalk stops and is perfect for text. It can also be used as an inverted fill.
       </p>
 
       {/* cta in context — the pill (hidden on signals, where cta lives in the alert).
@@ -175,12 +175,12 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
         </div>
       )}
 
-      {/* in context — the highlighter inset, plus the signal alert (signals), the chip +
+      {/* in context — the chalk inset, plus the signal alert (signals), the chip +
           focus-ring controls box (insetControls), or the emphasis inset (default) */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 18 }}>
-        <div style={{ ...box, background: v('highlighter-8') }}>
-          <div style={{ ...boxLabel, color: v('pencil-47') }}>inset &middot; highlighter</div>
-          <div style={{ ...boxBody, color: v('pen-70') }}>Body copy in pen on a highlighter fill.</div>
+        <div style={{ ...box, background: v('chalk-8') }}>
+          <div style={{ ...boxLabel, color: v('pencil-47') }}>inset &middot; chalk</div>
+          <div style={{ ...boxBody, color: v('pen-70') }}>Body copy in pen on a chalk fill.</div>
         </div>
         {isSignal ? (
           <div style={{ ...box, background: v('stamp-fill'), display: 'flex', gap: 10, alignItems: 'flex-start' }}>
@@ -193,7 +193,7 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
         ) : insetControls ? (
           /* the controls box (owner 2026-07-28, unify-compare section 3): chip +
              focused input, so the stops' JOBS read directly — chip = paper-5 fill ·
-             highlighter-15 border · pencil-47 text; the ring is crayon-26 with a highlighter-11 halo
+             chalk-15 border · pencil-47 text; the ring is highlighter-26 with a chalk-11 halo
              (the collision demo's held-focus idiom) */
           <div style={{ ...box, background: v('paper-3') }}>
             <div style={{ ...boxLabel, color: v('pencil-47') }}>chip &middot; focus ring</div>
@@ -201,12 +201,12 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
               <span style={{
                 display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 6,
                 fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap',
-                background: v('paper-5'), color: v('pencil-47'), border: `1px solid ${v('highlighter-15')}`,
+                background: v('paper-5'), color: v('pencil-47'), border: `1px solid ${v('chalk-15')}`,
               }}>chip</span>
               <input readOnly value="Focused input" style={{
                 flex: 1, minWidth: 0, boxSizing: 'border-box', padding: '7px 11px', borderRadius: 8,
                 fontSize: 13, fontFamily: 'inherit', background: v('paper-1'), color: v('pen-70'),
-                border: `1.5px solid ${v('crayon-26')}`, boxShadow: `0 0 0 3px ${v('highlighter-11')}`, outline: 'none',
+                border: `1.5px solid ${v('highlighter-26')}`, boxShadow: `0 0 0 3px ${v('chalk-11')}`, outline: 'none',
               }} />
             </div>
           </div>
@@ -250,7 +250,7 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
         ))}
       </div>
       {/* Bracketed group labels — each bracket spans its stops so the
-          paper/highlighter/crayon/pen grouping reads unambiguously.
+          paper/chalk/highlighter/pen grouping reads unambiguously.
           The column count is DERIVED from the scale, never written down: it was a
           hardcoded 11 and the 2026-07-29 collapse took the scale to 10, which left every
           bracket a column short and drifting left of the stops it labelled. A stop change

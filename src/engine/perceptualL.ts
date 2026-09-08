@@ -94,7 +94,7 @@ export function meanBoost(rootL: number, C: number, gamut: Gamut = MASTER_GAMUT)
 // be priced at a different chroma than the solve emits: the goldBoost shine must not
 // inflate the rung's lightness target (at the H-K minimum the extra chroma buys no
 // apparent pop, so the solver could only cover the inflated target with true L —
-// warning's highlighters floated above the other signals').
+// warning's chalks floated above the other signals').
 export function perceptualRungL(rootL: number, C: number, H: number, keep = KEEP_LIGHT, gamut: Gamut = MASTER_GAMUT, targetC = C): number {
   return solveLForApparent(grayApparentL(rootL, gamut) + keep * meanBoost(rootL, targetC, gamut), C, H, gamut)
 }

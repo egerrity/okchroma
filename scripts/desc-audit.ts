@@ -9,7 +9,7 @@
 //   4. Conformance is stated only through the owner's phrases verbatim (the lines are
 //      UNLABELED since 2026-08-28 — the old "Contrast:" label flooded "on" searches).
 //   5. No FOREIGN token label word in a body (owner 2026-08-05: "use a different word to
-//      optimize the search") — "decorative borders" on every highlighter row floods a search for
+//      optimize the search") — "decorative borders" on every chalk row floods a search for
 //      the cta border rows exactly the way the stamp's digits flooded number searches. A
 //      label word is allowed only when it is in the row's OWN path; the cta border title
 //      line is the standing exception (it IS the token's name).

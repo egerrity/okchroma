@@ -97,7 +97,7 @@ export function pageStopFor(neutral: GeneratedScale, mode: 'light' | 'dark'): Co
 //   · it is BRAND-INDEPENDENT, so each rung lives in the base collection as one system row and
 //     costs ZERO per-brand overrides. Sourcing it from the family's ramp instead cost 88 — the
 //     neutral is brand-hue-tinted, so its border differed per brand (measured).
-//   · it cannot fight the fill's hue, which a same-family highlighter stop can.
+//   · it cannot fight the fill's hue, which a same-family chalk stop can.
 //
 // C39 asserted the alpha "does not scale up in dark the way the shadow set does … if dark ever
 // needs more, it is this one constant." THAT CLAIM IS MEASURABLY WRONG and the 2026-07-31 round
@@ -190,7 +190,7 @@ export const alphaRootVars = (mode: 'light' | 'dark'): string[] => [
     .map(r => `  ${offsetVarName(r as OffsetRung)}: ${offsetRgba(r as OffsetRung, mode)};`),
   // the toward-bg ladder (the 2026-08-29 inverse ladder, renamed 2026-08-31): the
   // same rungs, pole flipped per mode — state layers for INVERTED grounds (never
-  // called a "highlighter" — that word is the tinted band's). One spelling with the Figma
+  // called a "chalk" — that word is the tinted band's). One spelling with the Figma
   // row: --alpha-toward-bg-06 ↔ system/alpha/toward-bg/06.
   ...(Object.keys(OFFSET_ALPHAS) as unknown as OffsetRung[])
     .map(Number).sort((a, b) => a - b)
@@ -224,7 +224,7 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
   const f = ctaFamilyOf(s, mode)
   const onCta = mode === 'light' ? s.onFillTextIsWhite : s.onFillTextIsWhiteDark
   // cta-border: the gated stroke at THIS family's rung, else the transparent variable. The
-  // OUTLINE secondary keeps its own unconditional crayon-26 override at the emitter — there
+  // OUTLINE secondary keeps its own unconditional highlighter-26 override at the emitter — there
   // the border is the button's identity, not a safety. Renamed from cta-stroke (owner 2026-07-09);
   // the Figma side renamed with it — plugins migrate existing variables in place.
   // cta family SEMANTIC-named (owner ruling 2026-07-16): cta/cta-hover/cta-pressed.
@@ -244,7 +244,7 @@ export function brandKindBody(prefix: string, s: GeneratedScale, mode: 'light' |
     `  --${prefix}-stamp-fill-pressed: ${stopHex(f.ctaPressed)};`,
     `  --${prefix}-stamp-edge: var(${border ? offsetVarName(ctaBorderRung(prefix)) : TRANSPARENT_VAR});`,
     // the SOFT on-cta (owner 2026-08-04: "neutral cta on's should also be the alpha"): the
-    // neutral's cta is the scale-fed HIGHLIGHTER-level fill, the system's other quiet cta, so its
+    // neutral's cta is the scale-fed CHALK-level fill, the system's other quiet cta, so its
     // button text takes the pole AT ALPHA like the default-model secondary's — composited
     // over whatever state the fill is in, so hover/pressed carry their own legibility. Same
     // register both families (SOFT_ON_CTA_ALPHA), so both alias the ONE system/alpha/ink
@@ -324,7 +324,7 @@ export function neutralCss(selector: string, brandH: number, level: NeutralLevel
 // P3 light block re-declares out-of-sRGB stops under bare `:root` (0,1,0) LATER in the file, and
 // at equal specificity source order wins, so a flat `[data-theme="dark"]` (0,1,0) dark base lost
 // every var the P3 dark block omits to its LIGHT display-p3 rendition on a root-themed page
-// (near-white red highlighters inside dark UI). Same bug class as the owner-caught outline P3 pop
+// (near-white red chalks inside dark UI). Same bug class as the owner-caught outline P3 pop
 // (2026-07-11, see brandCss) — brandCss/neutralCss were always immune because their dark
 // selectors compound the base selector. The bare `[data-theme="dark"]` stays in the list for
 // scoped carriers (the demo rides the attribute on divs, which `:root` P3 light never matches).
@@ -420,7 +420,7 @@ export function brandCss(
   contrastProfile?: ContrastProfile,
   // the secondary's mode chip: 'outline' re-resolves the fill trio — cta transparent, cta-hover the
   // cta color at OUTLINE_HOVER_ALPHA (the tinted hover), on-cta pencil-47, cta-border ALWAYS the
-  // gated crayon-26. Same tokens, different resolution — no component changes needed.
+  // gated highlighter-26. Same tokens, different resolution — no component changes needed.
   secondaryStyle?: SecondaryStyle,
   // the NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): the brand's cta FILL trio + on-cta
   // re-resolve from the brand-neutral's pen register (near-black light / near-white dark) —
@@ -513,7 +513,7 @@ export function brandCss(
   const darkAnchors = [`  --${PAPER_0}: ${p0hex(nScale.paper0Dark, '#000000')};`, `  --${PEN_100}: ${p0hex(nScale.pen100Dark, '#ffffff')};`]
 
   // outline re-resolution: emitted AFTER the secondary body so the cascade takes these values.
-  // cta-hover = crayon-26 at OUTLINE_HOVER_ALPHA (pressed doubles it) — the STABLE contrast-gated stop, the same one
+  // cta-hover = highlighter-26 at OUTLINE_HOVER_ALPHA (pressed doubles it) — the STABLE contrast-gated stop, the same one
   // the ring aliases (owner: 9% of the generated subtle cta was imperceptible — it's a very
   // light/dark color; the hover must reference a stable value).
   // the SYSTEM LINK trio: default aliases the primary's pen stops directly (mode-blind —

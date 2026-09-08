@@ -8,7 +8,7 @@ Every color family emits the same scale: eleven stops plus a small set of pulled
 
 A scale token name reads as `instrument-number`:
 
-- The instrument word tells you the job (paper, highlighter, crayon, pencil, pen).
+- The instrument word tells you the job (paper, chalk, highlighter, pencil, pen).
 - The number is `100 − round(light rootL × 100)`: derive, round, invert, in that order and never re-rounded. Bigger means stronger: `paper-0` is white, `pen-100` is black. A future stop names itself the same way.
 - Names carry no WCAG conformance suffix. The guarantee exists; it is stated in the variable's description, not the name. See the guarantee listed per stop below.
 
@@ -16,19 +16,19 @@ A scale token name reads as `instrument-number`:
 
 In a conventional token architecture, primitives are raw named values (`blue-500`) with no promises attached, and a semantic layer above them assigns meaning and accessibility (`text-primary`). okchroma's scale tokens do not fit that split, and reading them as semantic tokens will mislead you.
 
-Every scale token here is a primitive. What is unusual is that the requirement is built into the primitive itself: the name states a contract (instrument, lightness rung), and the engine solves the actual color value per brand and per theme so that the contract holds, including a specific WCAG guarantee carried in the description. `pen-58` is not "the text color role"; it is a primitive whose generated value is guaranteed to clear 4.5:1 against every paper and highlighter of its family and of the neutral, whatever seed color the brand supplies.
+Every scale token here is a primitive. What is unusual is that the requirement is built into the primitive itself: the name states a contract (instrument, lightness rung), and the engine solves the actual color value per brand and per theme so that the contract holds, including a specific WCAG guarantee carried in the description. `pen-58` is not "the text color role"; it is a primitive whose generated value is guaranteed to clear 4.5:1 against every paper and chalk of its family and of the neutral, whatever seed color the brand supplies.
 
 ## The scale
 
 **paper: `paper-1`, `paper-3`, `paper-5`.** Backgrounds and inverted text. No contrast claim of their own; every contrast stop is cleared against them. `paper-5` is the darkest light paper (the lightest dark paper), the one the contrast stops are solved against.
 
-**highlighter: `highlighter-8`, `highlighter-11`, `highlighter-15`, `highlighter-20`.** Subtle interactive states, decorative borders, illustration, signal hierarchy. Never text. The pens are cleared against them; the crayon and the pencil are not.
+**chalk: `chalk-8`, `chalk-11`, `chalk-15`, `chalk-20`.** Subtle interactive states, decorative borders, illustration, signal hierarchy. Never text. The pens are cleared against them; the highlighter and the pencil are not.
 
-**crayon: `crayon-26`.** Focus rings, icons, borders, large text. AA large text and UI elements: 3:1 against every paper of its family and of the neutral.
+**highlighter: `highlighter-26`.** Focus rings, icons, borders, large text. AA large text and UI elements: 3:1 against every paper of its family and of the neutral.
 
 **pencil: `pencil-47`.** Regular text, and the emphasis fill. AA body text: 4.5:1 against every paper of its family and of the neutral. Its on-text, when used as a fill, is `paper-0`.
 
-**pen: `pen-58`, `pen-70`.** Regular and heavy-emphasis text, inverted backgrounds. AA body text: 4.5:1 against every paper and every highlighter of its family and of the neutral, both directions.
+**pen: `pen-58`, `pen-70`.** Regular and heavy-emphasis text, inverted backgrounds. AA body text: 4.5:1 against every paper and every chalk of its family and of the neutral, both directions.
 
 **near-poles (neutral only): `paper-0`, `pen-100`.** The scale's extended endpoints, beyond `paper-1` and `pen-70`. `paper-0` is engine-resolved: white in light (rootL 1.0, zero chroma) and, in dark, the deep brand-tinted plane one seam below `paper-1`. `pen-100` is the literal pole: pure black in light, pure white in dark, no tint. `pen-100` is the max-emphasis text anchor and flips with the mode; prefer `pen-70` for running text. The mode-invariant poles are `abs-black` / `abs-white` under the system tokens (Figma only).
 
@@ -58,7 +58,7 @@ The token name is `stamp`. Say "CTA" out loud when talking about these (the engi
 
 Signal families are named by role, always `critical`/`warning`/`positive`/`info`, never `error`/`success`/`danger`. Signal stops may be shifted from the canonical value to stay visually distinct from the brand; that is by design, do not "correct" them.
 
-Example composed names: `--brand-highlighter-11`, `--critical-pen-58`, `--neutral-crayon-26`, `--brand-alt-stamp-fill-hover`.
+Example composed names: `--brand-chalk-11`, `--critical-pen-58`, `--neutral-highlighter-26`, `--brand-alt-stamp-fill-hover`.
 
 ## Elevation planes
 

@@ -413,7 +413,7 @@ function updatePreview() {
       }
     }
 
-    // chip TONES (Figma spec): the family's own highlighter/pen; outline = the outline treatment;
+    // chip TONES (Figma spec): the family's own chalk/pen; outline = the outline treatment;
     // exact = neutral-grey "hands off". Stops looked up by IDENTITY, never array position
     // (positions shift when the stop set changes — the stop-10 deletion lesson).
     const hxs = (s: { r: number; g: number; b: number }) => toHex(s.r, s.g, s.b)

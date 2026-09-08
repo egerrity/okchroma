@@ -150,7 +150,7 @@ scripts that nothing imports.
 | 1 | Decode and context | `producers.ts` · `buildContext` | hex + options → the OKLCH seed, the archetype, the aesthetic state (vividness, mutedness, the warm weight, the red repel, the bell) |
 | 2 | Compile | `colorEngine.ts` · `generateScale` | options + the built-in declaration → a per-mode `ModeSpec` |
 | 3 | Resolve the light stops | `requirements/resolve.ts` · `resolveRamp('light')` | per declared stop: produce (hue → chroma → the apparent-lightness solve) → require (the declared floor clamps L down, the shipped-pair walk) → refine (chroma yields to gamut). In declared order, so a floor references a resolved ground |
-| 4 | Resolve the dark stops | `resolveRamp('dark', { deltaLightStops, deltaCarry })` | paper and highlighter stops by luminance parity with the computed band lift, hue carried and chroma resampled from light; the crayon placed by its 3:1 solve; the pens solved dark-native to the dark scaffold then floored |
+| 4 | Resolve the dark stops | `resolveRamp('dark', { deltaLightStops, deltaCarry })` | paper and chalk stops by luminance parity with the computed band lift, hue carried and chroma resampled from light; the highlighter placed by its 3:1 solve; the pens solved dark-native to the dark scaffold then floored |
 | 5 | Resolve the stamp and its text | `resolveRamp`, the roles block | the pole judged, the enforce re-solve, the booster, the red exit, the states, the final pole floor; dark anchored at max(seed L, floor) |
 | 6 | Assemble | `colorEngine.ts` adapter | resolved ramps → the `GeneratedScale` contract |
 | 7 | Policy | `resolve.ts` · `resolveBrand` | the hue collision test, the red complement, the signal shifts → `signalOverrides`; `resolveTheme` adds the secondary and merges its collisions |
@@ -204,15 +204,15 @@ require, refine. The field-by-field format is on the site
 ([Requirement tokens](https://egerrity.github.io/okchroma/#/docs/token-schema)) and
 summarized in [schema.md](schema.md). Three resolver facts a maintainer needs:
 
-- **The grounds.** The crayon, the pencil and `pen-70` solve against `paper-5`, the nearest
-  paper; `pen-58` against `highlighter-20`. `wcagAnchorStop` maps any paper anchor on a text
+- **The grounds.** The highlighter, the pencil and `pen-70` solve against `paper-5`, the nearest
+  paper; `pen-58` against `chalk-20`. `wcagAnchorStop` maps any paper anchor on a text
   stop onto `paper-5` before the solve, a guard for portable bundles that spell another paper.
   The inverse link family replaces every pen ground with `PEN_70_GROUND` (`textGround`).
 - **The cross-family bounds.** A ramp resolves per family, so the neutral it pairs with is
-  not in view. The resolver holds every stop from the crayon up against the worst neutral
-  paper-5 any theme ships (`NEUTRAL_P3_WORST_SHIP_Y`), the highlighter-anchored pen against
-  the worst neutral highlighter-20 (`NEUTRAL_W80_WORST_SHIP_Y`), and, for the neutral's own
-  stops, against the worst chromatic paper-5 and highlighter-20 (`CHROMATIC_P3_WORST_SHIP_Y`,
+  not in view. The resolver holds every stop from the highlighter up against the worst neutral
+  paper-5 any theme ships (`NEUTRAL_P3_WORST_SHIP_Y`), the chalk-anchored pen against
+  the worst neutral chalk-20 (`NEUTRAL_W80_WORST_SHIP_Y`), and, for the neutral's own
+  stops, against the worst chromatic paper-5 and chalk-20 (`CHROMATIC_P3_WORST_SHIP_Y`,
   `CHROMATIC_W80_WORST_SHIP_Y`, passed in by `generateNeutralScale`). The bounds are frozen
   measurements; re-derive them when a ladder, the neutral curve, or a signal seed moves.
 - **The shipped pair.** After the analytic solve, the 8-bit sRGB rendition of stop and
@@ -221,8 +221,8 @@ summarized in [schema.md](schema.md). Three resolver facts a maintainer needs:
 
 The producer labels in the declaration describe the direct-resolver path. The shipped dark
 ramp is resolved from the resolved light ramp (the delta carry, always set by
-`generateScale`), which places the paper and highlighter stops by luminance parity and the
-crayon by its requirement; the dark `perceptual-lift` and `fixed` labels on stops 1 to 8 are
+`generateScale`), which places the paper and chalk stops by luminance parity and the
+highlighter by its requirement; the dark `perceptual-lift` and `fixed` labels on stops 1 to 8 are
 what a direct `resolveRamp` call without the light stops does.
 
 ## 6. Design decisions
@@ -260,21 +260,21 @@ mechanism; the constants are rendered live on the site's
   Helmholtz-Kohlrausch-corrected apparent lightness equals a shared target
   (`perceptualRungL`), so a high-boost hue sits lower and a low-boost hue higher and the
   stop reads the same across brands.
-- **The dark model.** Dark is derived from light: the paper and highlighter stops land on
+- **The dark model.** Dark is derived from light: the paper and chalk stops land on
   the achromatic scaffold's luminance ladder with a computed band lift
   (`smoothedBandLift`, the top held at `DARK_BAND_TOP_LIFT`), hue carried and chroma
-  resampled; the crayon is placed by its 3:1 solve from a sentinel; the pens solve
+  resampled; the highlighter is placed by its 3:1 solve from a sentinel; the pens solve
   dark-native to the dark scaffold and are floored. `divergence-audit` reports the residual
   apparent-lightness spread.
 - **Dark fills lift, never sink.** The dark stamp anchors at max(seed L, floor):
   `DARK_BRAND_FILL_MIN_L` for brands, `DARK_CTA_MIN_L` by default, per-signal floors for
   green and blue. Brand chroma is trimmed (`darkCtaTrim`); signals keep identity chroma.
-- **The crayon's 3:1, both modes.** `crayon-26` declares the non-text bar against `paper-5`
+- **The highlighter's 3:1, both modes.** `highlighter-26` declares the non-text bar against `paper-5`
   in both modes; light clamps down, dark solves up from the ground.
 - **The text floors, both modes.** `pencil-47` at 4.5 and `pen-70` at 7 against `paper-5`,
   `pen-58` at 4.5 against
-  `highlighter-20`. The promise on every text stop is AA; the surplus is placement.
-- **Seams by shape.** The paper and highlighter targets grow apart geometrically, about
+  `chalk-20`. The promise on every text stop is AA; the surplus is placement.
+- **Seams by shape.** The paper and chalk targets grow apart geometrically, about
   1.25× per step, so every seam stays open without a separation floor.
 - **On-fill text by one criterion: it passes.** `onTextIsWhite` prefers the pole that reads
   better (judged with APCA); the chosen pole must pass 4.5:1 or it flips; the fill darkens
@@ -291,7 +291,7 @@ mechanism; the constants are rendered live on the site's
 
 - **Four canonical signals**, generated once, named by identity in the engine and emitted
   under role names.
-- **One collision test.** `checkHueCollision`: the smallest highlighter hue distance (stops
+- **One collision test.** `checkHueCollision`: the smallest chalk hue distance (stops
   3 to 7, either mode) within 15° and the brand vivid enough (at least 0.5 of the vividness
   reference). The stamp ΔE test (`checkCollision`) is audit-only.
 - **The red joint solve.** A brand whose stamp sits inside the red region
@@ -309,10 +309,10 @@ mechanism; the constants are rendered live on the site's
 **The generated neutral**
 
 - A near-gray seed at the tint hue through the same generator with its own chroma curve
-  (`neutralChromaCurve`: lifts across the papers, peaks at the first highlighters, tapers
+  (`neutralChromaCurve`: lifts across the papers, peaks at the first chalks, tapers
   through the pens, warm hues damped), at four strengths (pure, default, medium, branded).
   The tint hue is a stored source, never a frozen value (`neutralTintHue`).
-- Its stamp is quiet: the rest fill is the scale's own `highlighter-8`, lifted in dark until
+- Its stamp is quiet: the rest fill is the scale's own `chalk-8`, lifted in dark until
   it clears 1.2:1 against the dark `paper-3`; hover and pressed step from the rest by the
   shared state rule; the on-text is always the pole at alpha.
 
@@ -417,7 +417,7 @@ npm run typecheck        # tsc --noEmit
 npm run req:audit        # every declared requirement, agnostic sweep, both modes
 npm run audit:guarantee  # the five band claims on the shipped 8-bit pair
 npm run audit            # dark-mode parity + the blessed snapshot (add :bless to update)
-npm run band-audit       # band order, the crayon's 3:1, the neutral stamp, snapshot
+npm run band-audit       # band order, the highlighter's 3:1, the neutral stamp, snapshot
 npm run audit:divergence # the neutral curve, red hue fidelity, snapshot
 npm run smooth           # ramp smoothness against the recorded baseline
 npm run figma:verify     # the Figma tree's shape and spot values

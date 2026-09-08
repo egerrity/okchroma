@@ -52,8 +52,8 @@ for (const mode of ['light', 'dark'] as const) {
     // regressed the collapse.
     const isBrand = fam === 'brand' || fam === 'secondary'
     const tokens = isBrand
-      ? ['paper-1', ...CTA_FAMILY, 'crayon-26', 'pencil-47', 'pen-58', 'pen-70', 'stamp-on', 'identity']
-      : ['paper-1', 'crayon-26', ...CTA_FAMILY, 'pen-70', 'stamp-on']
+      ? ['paper-1', ...CTA_FAMILY, 'highlighter-26', 'pencil-47', 'pen-58', 'pen-70', 'stamp-on', 'identity']
+      : ['paper-1', 'highlighter-26', ...CTA_FAMILY, 'pen-70', 'stamp-on']
     for (const t of tokens) ok(!!leaf(m[fam], t), `${mode}.${fam}.${t} missing`)
     for (const gone of ['highlight-9', 'on-highlight'])
       ok(!leaf(m[fam], gone), `${mode}.${fam}.${gone} is still emitted — the highlight collapse regressed`)
@@ -61,7 +61,7 @@ for (const mode of ['light', 'dark'] as const) {
     // emitting one is a regression of the deletion
     for (const gone of ['cta-ink/enabled', 'cta-ink/hover', 'cta-ink/pressed', 'cta-ink-strong/enabled'])
       ok(!leaf(m[fam], gone), `${mode}.${fam}.${gone} is still emitted — the cta-ink deletion regressed`)
-    // the SOFT on-cta (the quiet-fill rule): the neutral's cta is the scale-fed highlighter-level
+    // the SOFT on-cta (the quiet-fill rule): the neutral's cta is the scale-fed chalk-level
     // fill, so its button text is the on-text POLE AT ALPHA (owner 2026-08-04) — same
     // register the default-model secondary carries. LOUD fills keep the solid pole; a
     // signal or the brand going soft here would be a leak.
@@ -132,7 +132,7 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
     ok((esc[mode] as any).link['link'].$value.hex === leaf(p, 'pencil-47').$value.hex, `${mode} default link should stay on the brand's pencil-47`)
     // the RED RESET (owner amendment): under the escape the red group ships CANONICAL —
     // byte-equal to the canonical emit, different from this brand's variant
-    for (const leafName of ['stamp-fill', 'stamp-fill-hover', 'stamp-fill-pressed', 'crayon-26', 'pencil-47']) {
+    for (const leafName of ['stamp-fill', 'stamp-fill-hover', 'stamp-fill-pressed', 'highlighter-26', 'pencil-47']) {
       ok(leaf((esc[mode] as any).red, leafName).$value.hex === leaf((canon[mode] as any).red, leafName).$value.hex,
         `${mode} escape red/${leafName} ${leaf((esc[mode] as any).red, leafName).$value.hex} != canonical ${leaf((canon[mode] as any).red, leafName).$value.hex} (the escape must reset red)`)
     }
@@ -142,7 +142,7 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
   }
   ok(leaf((esc.light as any).brand, 'stamp-on').$value.hex === '#ffffff', `escape light on-cta should be white on the near-black fill (got ${leaf((esc.light as any).brand, 'stamp-on').$value.hex})`)
   ok(leaf((esc.dark as any).brand, 'stamp-on').$value.hex === '#000000', `escape dark on-cta should be black on the near-white fill (got ${leaf((esc.dark as any).brand, 'stamp-on').$value.hex})`)
-  // the escape's fill is the neutral's LOUD pen-58 register, not the quiet highlighter cta, so it
+  // the escape's fill is the neutral's LOUD pen-58 register, not the quiet chalk cta, so it
   // keeps the SOLID pole (owner-confirmed 2026-08-04). The hex assertions above check the
   // pole but not its opacity — a soft-on-cta leak would slip past them.
   for (const mode of ['light', 'dark'] as const)
@@ -213,7 +213,7 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
   const vivid = resolveBrand('#0B5FFF', 'vivid-probe', { style: 'full-chroma' })
   const plain = resolveBrand('#0B5FFF', 'vivid-probe')
   const w5v = vivid.scale.light.find(s => s.stop === 5)!, w5p = plain.scale.light.find(s => s.stop === 5)!
-  ok(w5v.C > w5p.C + 1e-4, `full-chroma highlighter-11 chroma did not rise (${w5v.C.toFixed(3)} vs ${w5p.C.toFixed(3)}) — cap release`)
+  ok(w5v.C > w5p.C + 1e-4, `full-chroma chalk-11 chroma did not rise (${w5v.C.toFixed(3)} vs ${w5p.C.toFixed(3)}) — cap release`)
   // the trim release probes a MODERATE blue: at a saturated blue the sRGB gamut ceiling
   // binds tighter than the trim (both paths clamp to the same ceiling — the lever's dark
   // gain lives where trim < ceiling; measured +31% at this seed, +8% at #487bff)
@@ -247,7 +247,7 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
     const sg = (outline[mode] as any).secondary
     ok(leaf(sg, 'stamp-fill').$value.alpha === 0, `${mode} outline cta/enabled should be transparent`)
     ok(!!leaf(sg, 'stamp-edge') && leaf(sg, 'stamp-edge').$value.alpha === 1, `${mode} outline cta/border should carry mark/74-aa (opaque)`)
-    ok(leaf(sg, 'stamp-edge').$value.hex === leaf(sg, 'crayon-26').$value.hex, `${mode} outline cta/border != its mark/74-aa`)
+    ok(leaf(sg, 'stamp-edge').$value.hex === leaf(sg, 'highlighter-26').$value.hex, `${mode} outline cta/border != its mark/74-aa`)
     ok(leaf(sg, 'stamp-on').$value.hex === leaf(sg, 'pencil-47').$value.hex, `${mode} outline cta/on should be the family pencil-47`)
     ok(!sg['stamp-fill'] || !sg['stamp-fill'].$type, `${mode} outline left a FLAT cta leaf (band regression)`)
   }

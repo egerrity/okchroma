@@ -176,7 +176,7 @@ function RampChart({ mode, lines, xTicks, height = 210 }: {
 // space before the first stop, and read as misleading (owner 2026-07-30). Plain log
 // fixed that but left the low end tight and the 8 → 20 tail luxurious; above 8:1 the
 // differences stop mattering, so that tail is condensed and the width goes to
-// 1 → 8 instead. The natural gap between highlighter-20 and crayon-26 absorbs the stretch.
+// 1 → 8 instead. The natural gap between chalk-20 and highlighter-26 absorbs the stretch.
 // 21 is the true WCAG ceiling (pure black on pure white) — the neutral lane plots
 // pen-70, which is exactly that, so the axis has to reach it rather than clamp.
 const DIST_MAX = 21
@@ -350,7 +350,7 @@ function Section({ n, title, lede, children }: { n: number; title: string; lede?
 
 // ─── Unify mirror of TokenCards ─────────────────────────────────────────────
 // The SAME layout as the OKChroma TokenCards opposite it, colored with everything
-// Unify actually has: the three brand aliases tint the cta, one highlighter and one
+// Unify actually has: the three brand aliases tint the cta, one chalk and one
 // highlight — every other stop must ride the shared Gray ramp. The grayness IS
 // the exhibit.
 function UnifyMirrorCard({ t, dark }: { t: UnifyTheme; dark: boolean }) {
@@ -363,7 +363,7 @@ function UnifyMirrorCard({ t, dark }: { t: UnifyTheme; dark: boolean }) {
   const boxBody: React.CSSProperties = { fontSize: 14, lineHeight: 1.4 }
   const box: React.CSSProperties = { flex: 1, minWidth: 200, borderRadius: 10, padding: '13px 15px' }
   // the 1–11 ladder in Unify vocabulary: 3 brandable cells, gray everywhere else.
-  // Accent sits at position 3 (owner 2026-07-27: its analog is paper-5, not a highlighter).
+  // Accent sits at position 3 (owner 2026-07-27: its analog is paper-5, not a chalk).
   const ladder: Array<{ n: number; fill: string; branded: boolean }> = [
     { n: 1, fill: g(0), branded: false },
     { n: 2, fill: g(25), branded: false },
@@ -381,8 +381,8 @@ function UnifyMirrorCard({ t, dark }: { t: UnifyTheme; dark: boolean }) {
   // and the 2026-07-29 collapse does not touch it. Spans asserted against the ladder
   // so the brackets can never drift off the stops they label.
   const groups = [
-    { label: 'paper', span: 3 }, { label: 'highlighter', span: 4 },
-    { label: 'crayon', span: 1 }, { label: 'pencil', span: 1 }, { label: 'pen', span: 2 },
+    { label: 'paper', span: 3 }, { label: 'chalk', span: 4 },
+    { label: 'highlighter', span: 1 }, { label: 'pencil', span: 1 }, { label: 'pen', span: 2 },
   ]
   if (groups.reduce((a, g) => a + g.span, 0) !== ladder.length)
     throw new Error(`UnifyCompare: group spans != ladder length (${ladder.length})`)
@@ -462,9 +462,9 @@ export default function UnifyCompare() {
   // Every Unify seed through the real pipeline, once. WCAG — the lane this comparison is
   // read in, and the one build.ts ships (SHIPPED_PROFILE flipped 'apca' → 'wcag' in C33).
   // This page rendered APCA until 2026-07-29 under a comment claiming apca was the shipped
-  // lane. Papers and highlighters are byte-identical between the lanes, so the change is confined
+  // lane. Papers and chalks are byte-identical between the lanes, so the change is confined
   // to the emphasis band — and that is the whole subject of the comparison: measured over
-  // the 7 Unify seeds, light crayon-26 differed on 7/7 (worst ΔE 0.128, #369c54 vs
+  // the 7 Unify seeds, light highlighter-26 differed on 7/7 (worst ΔE 0.128, #369c54 vs
   // #62c47a) and dark pencil-47 on 7/7 (worst 0.127). The published page was showing a focus
   // ring visibly lighter than the one the WCAG lane actually ships.
   const resolved = useMemo(() => themes.map(t => ({
@@ -570,7 +570,7 @@ export default function UnifyCompare() {
       ],
     }
   }
-  // Every pen/crayon require binds against paper-5 in the WCAG lane (resolve.ts
+  // Every pen/highlighter require binds against paper-5 in the WCAG lane (resolve.ts
   // wcagAnchorStop overrides the paper-3 anchor the declaration carries for apca),
   // so each threshold lands at its target × paper-5's own distance from the page.
   // Targets read from stopTable, never typed in — they have moved twice.
@@ -707,21 +707,21 @@ export default function UnifyCompare() {
               <DotChart mode="light" xLabels={labels} series={[
                 { label: 'pen-70', dots: okRole(okStop(11), 'light') },
                 { label: 'pencil-47', dots: okRole(okStop(9), 'light') },
-                { label: 'highlighter-15', dots: okRole(okStop(6), 'light') },
+                { label: 'chalk-15', dots: okRole(okStop(6), 'light') },
                 { label: 'paper-5', dots: okRole(okStop(3), 'light') },
               ]} />
               <span style={MODE_TAG}>Dark mode</span>
               <DotChart mode="dark" xLabels={labels} series={[
                 { label: 'pen-70', dots: okRole(okStop(11), 'dark') },
                 { label: 'pencil-47', dots: okRole(okStop(9), 'dark') },
-                { label: 'highlighter-15', dots: okRole(okStop(6), 'dark') },
+                { label: 'chalk-15', dots: okRole(okStop(6), 'dark') },
                 { label: 'paper-5', dots: okRole(okStop(3), 'dark') },
               ]} />
               <div style={STAT}>
                 Unify's one Primary is doing the button job, the text job, and the emphasis job at once — here it
                 forks. In light mode: <b>pen-70</b>, the body text register, spans <b>{okSpread(11, 'light')} L*</b> across
                 the seven seeds; <b>pencil-47</b>, the emphasis fill and first text stop, <b>{okSpread(9, 'light')} L*</b>; and
-                the tint registers highlighter-15 / paper-5 — Unify's Highlight and Accent analogs —
+                the tint registers chalk-15 / paper-5 — Unify's Highlight and Accent analogs —
                 <b> {okSpread(6, 'light')}</b> and <b>{okSpread(3, 'light')} L*</b>. Unify's Primary spans
                 <b> {spread(uPrimL).toFixed(0)} L*</b> over the same seven. The fourth fork, the <b>cta</b>, is
                 left off the chart on purpose: it carries the brand's identity inside a gated register, so it is
@@ -735,7 +735,7 @@ export default function UnifyCompare() {
                 Where a line is <i>not</i> flat, the reason is the ruler rather than the placement. Each mode is
                 placed on its own declared ladder — light on apparent lightness, dark on luminance, because a dark
                 surface only reads as a single plane when its stops share a luminance. This chart measures both
-                with the apparent-lightness ruler, so the dark papers and highlighters fan out with chroma
+                with the apparent-lightness ruler, so the dark papers and chalks fan out with chroma
                 (<b>{okSpread(3, 'dark')}</b> to <b>{okSpread(7, 'dark')} L*</b>) while their luminance holds within
                 about a tenth of a percentage point. Light mode's pencil-47 is the same trade running the other way:
                 the text register solves a contrast requirement, contrast is pure luminance, and equal contrast
@@ -772,7 +772,7 @@ export default function UnifyCompare() {
 
         {/* ── 02 · CHIP ROWS ── */}
         <Section n={2} title="One chip recipe, seven themes"
-          lede={'Unify builds an indicator chip from the three brand aliases — Accent fill, Highlight border, Primary text — and each theme re-rolls all three. So the brand chip lands at a different weight in every theme while the signal chips beside it never move; where a brand is green or orange, its chip and a signal chip read as neighbors. OKChroma builds the same chip from structural stops — paper-5 fill, highlighter-15 border, pencil-47 text — so the chip is the same component in every theme, and only its hue belongs to the brand.'}>
+          lede={'Unify builds an indicator chip from the three brand aliases — Accent fill, Highlight border, Primary text — and each theme re-rolls all three. So the brand chip lands at a different weight in every theme while the signal chips beside it never move; where a brand is green or orange, its chip and a signal chip read as neighbors. OKChroma builds the same chip from structural stops — paper-5 fill, chalk-15 border, pencil-47 text — so the chip is the same component in every theme, and only its hue belongs to the brand.'}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: 18 }}>
             <div style={CARD}>
               <div style={CARD_TITLE}>Unify — Accent · Highlight · Primary, re-aliased per theme</div>
@@ -794,7 +794,7 @@ export default function UnifyCompare() {
               </div>
             </div>
             <div style={CARD}>
-              <div style={CARD_TITLE}>OKChroma — paper-5 · highlighter-15 · pencil-47, from the same seeds</div>
+              <div style={CARD_TITLE}>OKChroma — paper-5 · chalk-15 · pencil-47, from the same seeds</div>
               <div style={{
                 background: dark ? PANEL.dark.bg : PANEL.light.bg, borderRadius: 10, padding: '14px 16px',
                 display: 'flex', flexDirection: 'column', gap: 10,
@@ -803,7 +803,7 @@ export default function UnifyCompare() {
                   <div key={slug} data-brand={slug} data-theme={dark ? 'dark' : 'light'}
                     style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     {OK_CHIP_PREFIXES.map(p => (
-                      <Chip key={p} bg={`var(--${p}-paper-5)`} border={`var(--${p}-highlighter-15)`} fg={`var(--${p}-pencil-47)`} />
+                      <Chip key={p} bg={`var(--${p}-paper-5)`} border={`var(--${p}-chalk-15)`} fg={`var(--${p}-pencil-47)`} />
                     ))}
                     <span style={{ marginLeft: 'auto', paddingLeft: 8, fontSize: 11, fontWeight: 600, color: dark ? PANEL.dark.pen : PANEL.light.pen }}>{shortName(t)}</span>
                   </div>
@@ -898,7 +898,7 @@ export default function UnifyCompare() {
             <div data-brand={focus.slug} data-theme={dark ? 'dark' : 'light'}>
               <ForkComposition
                 page={DIST_PAGE[distMode]} heading="var(--brand-pencil-47)" body="var(--brand-pen-70)"
-                ring="var(--brand-crayon-26)" fill="var(--brand-stamp-fill)" onFill="var(--brand-stamp-on)"
+                ring="var(--brand-highlighter-26)" fill="var(--brand-stamp-fill)" onFill="var(--brand-stamp-on)"
                 linkC="var(--link)" textBtn="var(--brand-pencil-47)" />
             </div>
           </div>

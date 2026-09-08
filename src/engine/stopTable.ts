@@ -4,7 +4,7 @@ export interface StopSpec {
 }
 
 // ── THE STOP-L SCAFFOLDS, KEYED BY STOP NUMBER ────────────────────────────────
-// Stops 1–8 (paper→crayon-26) are a GEOMETRIC ladder — gaps grow ~1.25× per step — so every adjacent
+// Stops 1–8 (paper→highlighter-26) are a GEOMETRIC ladder — gaps grow ~1.25× per step — so every adjacent
 // stop is distinct by construction and paper-2 falls onto its ID curve with no clamp (owner 2026-07-09,
 // distribution "B"; separation is a shape property, not a delta — see spec.ts).
 // (Normalized 2026-08-05: these were positional arrays carrying two RETIRED slots between stop 8 and
@@ -122,7 +122,7 @@ export const DARK_CTA_C = {
 export type DarkCtaKind = keyof typeof DARK_CTA_C
 // ──────────────────────────────────────────────────────────────────────────────
 
-// Stop 8 (crayon-26) carries the WCAG 1.4.11 non-text 3:1 guarantee — against
+// Stop 8 (highlighter-26) carries the WCAG 1.4.11 non-text 3:1 guarantee — against
 // PAPER-3 IN BOTH MODES (owner 2026-07-29: "it is a 3:1 contrast require on paper 3
 // so inputs can be placed on any paper"). Paper-3 is the hardest plane in each mode:
 // light's darkest paper, dark's lightest. The light ramp clamps its perceptual rung L
@@ -138,16 +138,16 @@ export type DarkCtaKind = keyof typeof DARK_CTA_C
 export const STOP_8_NONTEXT_CONTRAST = 3.0
 
 // ── THE DARK BAND ANCHOR (owner round 2026-08-13, the smoothing) ──────────────
-// The six per-stop solved lifts (C24 marks → C28 half-strength → C37 highlighter
-// redistribution) are RETIRED. C37 declared highlighters 4–7 in contrast space at one S so
+// The six per-stop solved lifts (C24 marks → C28 half-strength → C37 chalk
+// redistribution) are RETIRED. C37 declared chalks 4–7 in contrast space at one S so
 // their seam ratios match light's by algebra, but with the papers pinned (C27) the
-// whole raise landed on the single paper-5→highlighter-8 seam (contrast 1.107 → 1.295,
+// whole raise landed on the single paper-5→chalk-8 seam (contrast 1.107 → 1.295,
 // recorded then as the accepted cost). This round extends the same law across the
 // WHOLE band, papers included, every family including the neutral (owner: "one rule
 // for everything"): the interior is placed by light's log-contrast distribution
 // (shipped-Y, achromatic scaffold — the C28 one-dialect basis) between two held
 // anchors, the dark ground (paper-0's scaffold) and the band top. The constant
-// below IS the top anchor: highlighter-20's shipped C37 stop-7 lift, verbatim — highlighter-20
+// below IS the top anchor: chalk-20's shipped C37 stop-7 lift, verbatim — chalk-20
 // does not move. The interior lifts are COMPUTED (producers.smoothedBandLift), so
 // there is nothing left to hand-maintain: this one number sets the band's loudness,
 // and the shape comes out analogous to light's by construction. The C27 paper pin
@@ -174,11 +174,11 @@ export const YELLOW_BAND = { centerH: 92, sigmaDeg: 20 }
 // Named by ROLE, not by stop number, so the next renumber cannot make the name lie.
 export const PENCIL_9_CONTRAST = 4.5
 
-// pen-58 (stop 10), the BETWEEN text stop — THE HIGHLIGHTER-20 LAW (guarantee-groups round,
-// owner 2026-08-27): 4.5 anchored at highlighter-20 (stop 7), the darkest highlighter, so the
-// pen claim (4.5 on every paper and highlighter of its own family or of the neutral, both
+// pen-58 (stop 10), the BETWEEN text stop — THE CHALK-20 LAW (guarantee-groups round,
+// owner 2026-08-27): 4.5 anchored at chalk-20 (stop 7), the darkest chalk, so the
+// pen claim (4.5 on every paper and chalk of its own family or of the neutral, both
 // directions) is a guarantee rather than a near-miss (the pre-law worst was 4.25 on
-// highlighter-20, positive lane, light). The neutral's side of the claim is the resolver's
+// chalk-20, positive lane, light). The neutral's side of the claim is the resolver's
 // CHROMATIC_W80_WORST_SHIP_Y bound (T13, 2026-09-01). Replaces the old 6.5-vs-paper-3 declaration, a floor
 // that never fired on the geometry; the paper-3 fact still holds after this law (the
 // solve only darkens) and guarantee-audit pins the full group matrix. Light-only in

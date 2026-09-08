@@ -48,10 +48,10 @@ export function Body() {
       </P>
       <UL>
         <LI><b>paper</b>: grounds. No contrast claim of their own; every contrast band is cleared against them.</LI>
-        <LI><b>highlighter</b>: grounds for subtle states and decoration, never text. The pen band is cleared against them.</LI>
-        <LI><b>crayon</b>: <K v={STOP_8_NONTEXT_CONTRAST} d={1} />:1 on every paper. The bar for anything that must be visible to operate the interface: focus rings, icons, borders, large text.</LI>
+        <LI><b>chalk</b>: grounds for subtle states and decoration, never text. The pen band is cleared against them.</LI>
+        <LI><b>highlighter</b>: <K v={STOP_8_NONTEXT_CONTRAST} d={1} />:1 on every paper. The bar for anything that must be visible to operate the interface: focus rings, icons, borders, large text.</LI>
         <LI><b>pencil</b>: <K v={PENCIL_9_CONTRAST} d={1} />:1 on every paper. Regular text and the emphasis fill.</LI>
-        <LI><b>pen</b>: <K v={PEN_10_CONTRAST} d={1} />:1 on every paper and every highlighter, both directions. Text that must hold on tinted grounds.</LI>
+        <LI><b>pen</b>: <K v={PEN_10_CONTRAST} d={1} />:1 on every paper and every chalk, both directions. Text that must hold on tinted grounds.</LI>
       </UL>
       <P>
         The stamp's text passes 4.5:1 on its fill. On top of that law, the engine uses APCA in one
@@ -66,7 +66,7 @@ export function Body() {
         <LI>
           <b>A stop reads the same on every brand.</b> In light mode each stop's lightness is solved per hue so its
           apparent lightness, with the Helmholtz-Kohlrausch effect corrected, hits one shared target. In dark mode the
-          paper and highlighter stops land on one shared luminance ladder, and the pen stops are solved the same way as light.
+          paper and chalk stops land on one shared luminance ladder, and the pen stops are solved the same way as light.
         </LI>
         <LI>
           <b>Primitives are broad, not agnostic.</b> Each stop is made for a purpose and the purpose is in its name and
