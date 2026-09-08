@@ -8,6 +8,13 @@ structure, ships as at least a minor.
 
 Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git log.
 
+## 0.5.1 — unreleased
+
+- The opacity ladder's Figma value is the percent, Figma's opacity unit: `system/opacity/064`
+  holds `64` (0.5.0 emitted `0.64`, which Figma reads as under one percent). The CSS
+  `--opacity-NNN` fractions are unchanged. Both plugins write the percent and heal a row a
+  0.5.0 apply left at the fraction; a value a designer changed stays.
+
 ## 0.5.0 — 2026-09-08
 
 - Two instrument words move. The tinted band `highlighter-8/11/15/20` is renamed
