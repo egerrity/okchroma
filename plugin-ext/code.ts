@@ -1189,7 +1189,14 @@ figma.ui.onmessage = async (msg) => {
         for (let i = 0; i < activeCols.length; i++) {
           const cur = v.valuesByMode[colIds[i]]
           if (!cur) continue
-          if (typeof cur === 'number') continue // a bare-number row (the opacity ladder) has no alias idiom
+          if (typeof cur === 'number') {
+            // a bare-number row (the opacity ladder) has no alias idiom. The unit heal: a
+            // row written in the fraction era holds exactly its rung over a hundred and
+            // takes the percent, Figma's opacity unit; any other value is a designer's own
+            const seed = seedByCol.get(activeCols[i])!.get(path)
+            if (seed?.n !== undefined && Math.abs(cur - seed.n / 100) < 1e-6) v.setValueForMode(colIds[i], seed.n)
+            continue
+          }
           if (isAlias(cur)) {
             // the era-crossing alias (owner-caught: "not updating the main theme"): a base
             // cta/on seeded PRE-C43 was pole-aliased onto abs-black/abs-white, and an alias

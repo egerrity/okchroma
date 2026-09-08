@@ -383,9 +383,11 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     // stamp/edge TRANSPARENT_TOKEN stays black@0 — same pixel, its own posture)
     putLeaf(g, SYSTEM_LEAF.ALPHA.TRANSPARENT, pole(true, 0))
     // the OPACITY LADDER: bare numbers, mode-invariant, the rows the shadows, the
-    // scrim and the highlighter-26 state layers compose with (no scrim row of its own)
+    // scrim and the highlighter-26 state layers compose with (no scrim row of its own).
+    // Figma's opacity unit is the PERCENT (a number bound to opacity reads 64 as 64%),
+    // so the Figma value is the rung itself; the CSS emit carries the fraction.
     for (const rung of Object.keys(OPACITY_RUNGS).map(Number) as OpacityRung[])
-      putLeaf(g, opacityTokenPath(rung), { $type: 'number', $value: OPACITY_RUNGS[rung] })
+      putLeaf(g, opacityTokenPath(rung), { $type: 'number', $value: rung })
     // the soft on-text pole (C43/C9 register): black in light, white in dark, alpha
     // per mode — the ONE row every quiet cta's stamp/on aliases
     putLeaf(g, SYSTEM_LEAF.ALPHA.INK, pole(mode === 'dark', SOFT_ON_CTA_ALPHA[mode]))

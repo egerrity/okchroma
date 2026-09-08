@@ -142,7 +142,7 @@ function toFlat(g: FigmaGroup, scheme: 'light' | 'dark', includeSecondary: boole
     { path: 'utility/shadow-08', ...K, a: SHADOW_ALPHAS[8][scheme] },
     { path: 'utility/shadow-12', ...K, a: SHADOW_ALPHAS[12][scheme] },
     ...(Object.keys(OPACITY_RUNGS).map(Number) as OpacityRung[])
-      .map(r => ({ path: `utility/opacity/${opacityLeafName(r)}`, ...K, n: OPACITY_RUNGS[r] })),
+      .map(r => ({ path: `utility/opacity/${opacityLeafName(r)}`, ...K, n: r })), // Figma's unit: the percent
   ]
   flatten(g.neutral as FigmaGroup, 'neutral', out)
   // identity rows re-home to the ABSOLUTES (owner 2026-07-27: the unprocessed inputs

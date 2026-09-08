@@ -257,10 +257,12 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
 // ship through the JS emit now. Ground truth is spelled LITERALLY here — the values the
 // token layer and both plugins carry — so a drifted register constant fails this script
 // instead of silently re-pinning itself (the C40 snapshot lesson).
-// the opacity ladder, pinned as the numbers the token layer and both plugins carry
+// the opacity ladder, pinned as the numbers the token layer and both plugins carry:
+// the CSS fraction, and the Figma value in Figma's opacity unit, the percent
 const OPACITY_TRUTH: Record<string, number> = {
   '004': 0.04, '008': 0.08, '012': 0.12, '016': 0.16, '024': 0.24, '032': 0.32, '048': 0.48, '064': 0.64,
 }
+const FIGMA_PERCENT = (k: string) => Number(k)
 {
   const SURFACE_TRUTH: Record<string, { light: string; dark: string }> = {
     dim: { light: 'paper-5', dark: 'paper-0' },
@@ -294,8 +296,8 @@ const OPACITY_TRUTH: Record<string, number> = {
     ok(a?.['abs-black-060'] === undefined, `${mode}.system.alpha.abs-black-060 is still emitted (the scrim composes from the opacity ladder)`)
     // the opacity ladder: bare numbers, mode-invariant, typed as numbers
     for (const [k, n] of Object.entries(OPACITY_TRUTH))
-      ok(sys.opacity?.[k]?.$type === 'number' && sys.opacity?.[k]?.$value === n,
-        `${mode}.system.opacity.${k} is not the number ${n} (got ${JSON.stringify(sys.opacity?.[k])})`)
+      ok(sys.opacity?.[k]?.$type === 'number' && sys.opacity?.[k]?.$value === FIGMA_PERCENT(k),
+        `${mode}.system.opacity.${k} is not the percent ${FIGMA_PERCENT(k)} (got ${JSON.stringify(sys.opacity?.[k])})`)
     // the soft on-text pole: black@.75 light / white@.80 dark — must equal the register
     // the neutral's quiet stamp/on already rides (asserted against SOFT_ON_CTA_ALPHA above)
     ok(a?.ink?.$value.hex === (mode === 'dark' ? '#ffffff' : '#000000') && a?.ink?.$value.alpha === (mode === 'dark' ? 0.8 : 0.75),

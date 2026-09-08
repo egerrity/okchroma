@@ -21,7 +21,8 @@ Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git lo
   in the `:root` block `signalsCss` writes, and `system/opacity/NNN` number tokens
   (`$type: "number"`) in `themeToFigma`. Both plugins write them as number variables:
   `utility/opacity/NNN` in the extended plugin, `system/opacity/NNN` with theme aliases in
-  the community plugin. The same in both modes. New exports: `OPACITY_RUNGS`,
+  the community plugin. The CSS carries the fraction (`0.16`); the Figma value is the
+  percent (`16`), Figma's opacity unit. The same in both modes. New exports: `OPACITY_RUNGS`,
   `INTERACTION_RUNGS`, `opacityLeafName`, `opacityVarName`, `opacityTokenPath`,
   `OpacityRung`, `FigmaNumberToken`, `FigmaLeaf`.
 - `highlighter-26` at the state rungs `008` through `032` is the translucent state layer over

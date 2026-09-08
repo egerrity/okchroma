@@ -138,8 +138,10 @@ Declared per mode as the `ons` block of the spec.
 ## The opacity rungs
 
 Eight bare numbers, `004 008 012 016 024 032 048 064`, the same in both modes. In CSS they
-are `--opacity-NNN` in the `:root` block `signalsCss` writes; in Figma they are number
-variables (`system/opacity/NNN`, zoned as `utility/opacity/NNN` in the extended plugin).
+are `--opacity-NNN` in the `:root` block `signalsCss` writes, as fractions (`0.16`); in Figma
+they are number variables (`system/opacity/NNN`, zoned as `utility/opacity/NNN` in the
+extended plugin) holding the percent (`16`), which is the unit Figma reads when a number is
+bound to an opacity.
 A translucent row composes a color with one of them: the shadows are black at `004`, `008`,
 `012` in light and at `032`, `048`, `064` in dark; the scrim is black at `064` in both modes.
 Neither has a color row of its own.

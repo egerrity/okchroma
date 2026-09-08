@@ -734,17 +734,18 @@ figma.ui.onmessage = async (msg) => {
         { path: 'system/alpha/shadow-04', light: { r: 0, g: 0, b: 0, a: 0.04 }, dark: { r: 0, g: 0, b: 0, a: 0.32 } },
         { path: 'system/alpha/shadow-08', light: { r: 0, g: 0, b: 0, a: 0.08 }, dark: { r: 0, g: 0, b: 0, a: 0.48 } },
         { path: 'system/alpha/shadow-12', light: { r: 0, g: 0, b: 0, a: 0.12 }, dark: { r: 0, g: 0, b: 0, a: 0.64 } },
-        // the OPACITY LADDER: bare numbers, the same in both modes (a literal mirror
-        // of cssRender OPACITY_RUNGS like the rows above). The scrim has no row: a kit
-        // composes it from abs-black and the top rung.
-        { path: 'system/opacity/004', float: 0.04 },
-        { path: 'system/opacity/008', float: 0.08 },
-        { path: 'system/opacity/012', float: 0.12 },
-        { path: 'system/opacity/016', float: 0.16 },
-        { path: 'system/opacity/024', float: 0.24 },
-        { path: 'system/opacity/032', float: 0.32 },
-        { path: 'system/opacity/048', float: 0.48 },
-        { path: 'system/opacity/064', float: 0.64 },
+        // the OPACITY LADDER: bare numbers in Figma's opacity unit, the PERCENT (a
+        // number bound to opacity reads 64 as 64%), the same in both modes; a literal
+        // mirror of cssRender OPACITY_RUNGS like the rows above. The scrim has no row:
+        // a kit composes it from abs-black and the top rung.
+        { path: 'system/opacity/004', float: 4 },
+        { path: 'system/opacity/008', float: 8 },
+        { path: 'system/opacity/012', float: 12 },
+        { path: 'system/opacity/016', float: 16 },
+        { path: 'system/opacity/024', float: 24 },
+        { path: 'system/opacity/032', float: 32 },
+        { path: 'system/opacity/048', float: 48 },
+        { path: 'system/opacity/064', float: 64 },
       ]
       for (const u of STATIC_UTILS) {
         // getOrMigrate (not .get): renamed rows (the surface-plane words, historical
@@ -753,7 +754,17 @@ figma.ui.onmessage = async (msg) => {
         // resolved anchor rides the neutral walk now.)
         const existing = getOrMigrate(primByName, u.path)
         // already seeded — enforce the scope rule + restamp the code syntax
-        if (existing) { existing.scopes = [] ; existing.setVariableCodeSyntax('WEB', codeSyntaxFor(existing.name)); continue }
+        if (existing) {
+          existing.scopes = [] ; existing.setVariableCodeSyntax('WEB', codeSyntaxFor(existing.name))
+          // the unit heal: a number row written in the fraction era holds exactly its
+          // rung over a hundred; it takes the percent, Figma's opacity unit. Any other
+          // value is a designer's own and stays.
+          if (u.float !== undefined) for (const m of [pLight, pDark]) {
+            const cur = existing.valuesByMode[m]
+            if (typeof cur === 'number' && Math.abs(cur - u.float / 100) < 1e-6) existing.setValueForMode(m, u.float)
+          }
+          continue
+        }
         const v = figma.variables.createVariable(u.path, p.coll, u.float !== undefined ? 'FLOAT' : 'COLOR')
         v.setPluginData(PATH_KEY, u.path); v.setPluginData(GEN_KEY, GEN_CURRENT)
         v.description = descFor(u.path)
