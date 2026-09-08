@@ -969,8 +969,8 @@ figma.ui.onmessage = async (msg) => {
         let v = baseVars.get(path)
         // An exact `paper-3` hit that lacks the current generation is a pre-Stage-B
         // index-era row (stop 3 = today's paper-5), not ours: drop it so the legacy
-        // candidates claim paper-2 → paper-3 first, and paper-5's own lookup then
-        // claims this row through its ['paper-3', 'paper-5'] vintage (ladder order).
+        // candidates claim paper-2 → paper-3 first. (The old row's own onward move to
+        // paper-5 does not follow; CATALOG C63.)
         if (v && path.endsWith('/paper-3') && v.getPluginData(GEN_KEY) !== GEN_CURRENT) v = undefined
         // a direct hit (usually via stamp) whose display name is any ENGINE spelling
         // of this path — a stale generation or invisibly-off — heals to canonical;
@@ -978,6 +978,12 @@ figma.ui.onmessage = async (msg) => {
         if (v && v.name !== path && isEngineSpelling(v.name, path)) v.name = path
         if (!v) for (const legacyPath of legacyCandidates(path)) {
           const legacy = baseVars.get(legacyPath)
+          // The same collision from the other side: a `paper-3` candidate that CARRIES
+          // the current generation is the live paper-3 (written or claimed this apply),
+          // never paper-5's index-era vintage. On a fresh base nothing older answers
+          // paper-5's earlier candidates, so without this its lookup consumes the
+          // paper-3 row created a moment before and the ramp ships one stop short.
+          if (legacy && legacyPath.endsWith('/paper-3') && legacy.getPluginData(GEN_KEY) === GEN_CURRENT) continue
           if (legacy) {
             if (legacy.name === legacyPath || isEngineSpelling(legacy.name, path)) legacy.name = path
             baseVars.delete(legacyPath); baseVars.set(path, legacy); v = legacy; break

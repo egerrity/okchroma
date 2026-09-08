@@ -411,8 +411,8 @@ function getOrMigrate(map: Map<string, figma.Variable>, path: string): figma.Var
   const v = map.get(path)
   // An exact `paper-3` hit that lacks the current generation is a pre-Stage-B
   // index-era row (stop 3 = today's paper-5), not ours: fall through to the legacy
-  // candidates so paper-2 → paper-3 claims first and paper-5's lookup then
-  // claims this row via its own ['paper-3', 'paper-5'] vintage (ladder order).
+  // candidates so paper-2 → paper-3 claims first. (The old row's own onward move to
+  // paper-5 does not follow; CATALOG C63.)
   const indexEraCollision = v !== undefined && path.endsWith('/paper-3') && v.getPluginData(GEN_KEY) !== GEN_CURRENT
   if (v && !indexEraCollision) {
     if (v.name !== path && isEngineSpelling(v.name, path)) v.name = path
@@ -421,6 +421,12 @@ function getOrMigrate(map: Map<string, figma.Variable>, path: string): figma.Var
   }
   for (const legacyPath of legacyCandidates(path)) {
     const legacy = map.get(legacyPath)
+    // The same collision from the other side: a `paper-3` candidate that CARRIES the
+    // current generation is the live paper-3 (written or claimed this apply), never
+    // paper-5's index-era vintage. On a fresh ramp nothing older answers paper-5's
+    // earlier candidates, so without this its lookup consumes the paper-3 row created
+    // a moment before and the ramp ships one stop short.
+    if (legacy && legacyPath.endsWith('/paper-3') && legacy.getPluginData(GEN_KEY) === GEN_CURRENT) continue
     if (legacy) {
       if (legacy.name === legacyPath || isEngineSpelling(legacy.name, path)) legacy.name = path
       legacy.setPluginData(PATH_KEY, path); legacy.setPluginData(GEN_KEY, GEN_CURRENT)

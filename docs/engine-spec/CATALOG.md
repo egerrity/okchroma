@@ -4,6 +4,56 @@ Fresh tracker. The previous CATALOG was archived with the whole old docs tree in
 ("clean-slate rewrite" 2026-06-27); entries here are code-grounded, logged at find-time,
 fixed holistically after owner sign-off.
 
+## C63 — an index-era paper-3 row does not move on to paper-5 (LOGGED, 2026-09-06)
+
+Found while proving C62. Both plugin lookups drop an exact `paper-3` hit that lacks the
+current generation so the file's `paper-2` row can claim the name; the comment beside
+that guard said paper-5's own lookup would then claim the old row through
+`['paper-3', 'paper-5']`. It never did: the `paper-2` migration overwrote the map entry
+for `paper-3`, so the old row left the map, and paper-5's lookup reached the freshly
+migrated `paper-3` instead (C62). With C62 in place the migrated row survives and
+`paper-5` is created new, so the old index-era `paper-3` row is orphaned under a live
+name with stale values, and bindings to that stop do not follow. Real Figma may also
+reject the duplicate name inside one collection; the mock does not enforce it, unverified.
+Scope: files applied before 2026-07-27 and never re-applied since (the flat-digit
+vintage), for the community `getOrMigrate` and the extended `ensure` alike. The fix, when
+taken, is to park the dropped row under its banded spelling (`paper/3`) before the
+`paper-2` migration, so paper-5's existing candidate claims it and keeps the id. Not
+fixed in this round. Reproduced by run 4 of `scratch/fake-figma/community-fresh.ts`.
+
+## C62 — a fresh ramp shipped without paper-3 in both plugins (FIXED, the kitchenUI plugin handoff, 2026-09-06)
+
+Found by kitchenUI's Figma round F0 (`scratch/okchroma-plugin-handoff.md`): after a first
+community-plugin apply in a new file, `neutral/paper-3` aliased the paper-5 primitive, the
+mode collection had no `system/neutral/<tint>/paper-3`, and every other family's
+`paper-3` rows were the newest variables in the file. Cause: the rename table carries the
+index-era entry `['paper-3', 'paper-5']` (flat digits, when stop 3 was the 0.95 stop), so
+`paper-3` is a legacy candidate for `paper-5`. The lookup's generation guard covered only
+the exact-hit side (an unstamped `paper-3` is not ours). On a fresh ramp nothing older
+answers `paper-5`'s earlier candidates (`paper-95`, `paper/95`), so its lookup reached the
+`paper-3` row created a moment before, renamed it to `paper-5`, and the ramp shipped one
+stop short. The same lookup serves the theme collection, so the `neutral/paper-3` alias
+row was renamed to `neutral/paper-5` the same way. A re-apply then found `paper-5` by
+exact hit and created `paper-3` fresh, which is why the drop healed per ramp on the second
+apply, and why a neutral written under a new tint key on that second apply lost its
+`paper-3` again; the alias for it landed on `paper-5` because the primitive map's
+`paper-3` key still pointed at the renamed row. Files applied before the instruments
+rename never showed it: their `paper-95` row answers first. Fix: the legacy loop skips a
+`paper-3` candidate that carries the current generation, in the community `getOrMigrate`
+and the extended `ensure`; the mirror of the exact-hit guard. Proof: the fake-figma
+harness (`scratch/fake-figma/community-fresh.ts` and `ext-fresh.ts`) runs each plugin's
+real code.ts against the mock; before the fix it reproduces the handoff's three file
+states in order, after it every ramp carries `paper-3` on the first apply and a
+same-settings re-apply creates zero rows. Typecheck, both plugin builds and `audit:ext`
+clean.
+
+The handoff's two neutral scales (the alt's hue, then the primary's) are two applies under
+different neutral-source settings, not a plugin defect: the tint hue is resolved once per
+apply and keys the primitive path, and a superseded primitive orphans in place by design.
+The handoff's second item, the Web code syntax without `var(--…)` and with the
+`brand-primary-` segment the CSS emit does not carry, is the owner's standing format
+choice and is not changed here.
+
 ## C61 — tokens/semantic.css narrated its own history, in retired vocabulary (FIXED, the kitchenUI hygiene work order, 2026-09-06)
 
 Found by kitchenUI, which appends the file verbatim per the Install page: eight comment
