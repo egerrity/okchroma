@@ -8,7 +8,7 @@ structure, ships as at least a minor.
 
 Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git log.
 
-## Unreleased
+## 0.6.0 — 2026-09-11
 
 - The structured emit: `themeTokens` returns every emitted name with its light and dark
   value, `var()` references resolved and mode-invariant names carried into both modes. It
