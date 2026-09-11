@@ -43,7 +43,7 @@
       "runtimeArgs": [
         "run",
         "--prefix",
-        "/Users/emilygerrity/emily-portfolio",
+        "../emily-portfolio",
         "dev"
       ],
       "port": 5173
@@ -54,7 +54,7 @@
       "runtimeArgs": [
         "run",
         "--prefix",
-        "/Users/emilygerrity/okchroma-material",
+        "../okchroma-material",
         "dev",
         "--",
         "--port",
@@ -68,7 +68,7 @@
       "runtimeArgs": [
         "run",
         "--prefix",
-        "/Users/emilygerrity/okchroma-base",
+        "../okchroma-base",
         "dev",
         "--",
         "--port",
@@ -82,7 +82,7 @@
       "runtimeArgs": [
         "run",
         "--prefix",
-        "/Users/emilygerrity/emily-portfolio",
+        "../emily-portfolio",
         "dev",
         "--",
         "--port",
@@ -90,6 +90,36 @@
         "--strictPort"
       ],
       "port": 5177
+    },
+    {
+      "name": "ds-spike-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "../ds-spike/apps/web",
+        "run",
+        "dev"
+      ],
+      "port": 8340
+    },
+    {
+      "name": "ds-spike-web-prod",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "--yes",
+        "serve",
+        "../ds-spike/apps/web/dist",
+        "-l",
+        "8342",
+        "-s"
+      ],
+      "port": 8342
+    },
+    {
+      "name": "ds-spike-native-ios",
+      "runtimeExecutable": "../ds-spike/scripts/start-ios.sh",
+      "runtimeArgs": [],
+      "port": 8081
     }
   ]
 }
