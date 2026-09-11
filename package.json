@@ -54,7 +54,8 @@
     "name-lint": "esbuild scripts/name-lint.ts --bundle --platform=node --outfile=dist/name-lint.js && node dist/name-lint.js",
     "typecheck": "tsc --noEmit",
     "typecheck:ext": "tsc --noEmit -p plugin-ext",
-    "docs:lint": "esbuild scripts/docs-lint.ts --bundle --platform=node --outfile=dist/docs-lint.js && node dist/docs-lint.js"
+    "docs:lint": "esbuild scripts/docs-lint.ts --bundle --platform=node --outfile=dist/docs-lint.js && node dist/docs-lint.js",
+    "audit:tokens": "esbuild scripts/tokens-audit.ts --bundle --platform=node --outfile=dist/tokens-audit.js && node dist/tokens-audit.js"
   },
   "devDependencies": {
     "@types/node": "^25.9.2",

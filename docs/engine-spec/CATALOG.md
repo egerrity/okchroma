@@ -4,6 +4,30 @@ Fresh tracker. The previous CATALOG was archived with the whole old docs tree in
 ("clean-slate rewrite" 2026-06-27); entries here are code-grounded, logged at find-time,
 fixed holistically after owner sign-off.
 
+## C65 — the consumer contract stated a stamp-edge width nobody ruled (FIXED, 2026-09-11)
+
+`docs/agents.md` told consumers to render `stamp-edge` at 1.5px. The owner never set a
+width; the number most likely came from a Figma file read during an earlier docs pass.
+The two-platform spike built on the contract shipped 1px and nothing caught it, because
+the width lived in prose. Removed from the contract; a width, if one is ever ruled, ships
+as a number token.
+
+## C64 — the state layer had a contract and no shipped form (FIXED, the interaction register, 2026-09-11)
+
+Since 0.5.0 `docs/agents.md` says hover, pressed and selected on a ground are
+`highlighter-26` at an opacity rung, never a chalk step, but nothing emitted a composed
+value: `tokens/semantic.css` still aliases `--brand-bg-subtle` and `-hover` onto chalk-11
+and chalk-15, and the demo's own aliases step the chalk. The two-platform spike reproduced
+the consequence: a consumer with no rung form steps chalk. The owner authored the register
+in Figma (nine families as modes, `solid`/`subtle`/`hint` tiers plus `fg` rows,
+compose-color expressions) and ruled the ladders: hint 0/008/012/016, subtle
+008/012/016/024. The engine now emits it (`interactionCss`, `interactionTokens`) from the
+same table; the Figma side stays hand-authored because the plugin API cannot write
+compose-color expressions. `audit:tokens` holds the body-text bar on every rung over every
+paper across the roster (the inverse family over the inverted grounds). Still open:
+`semantic.css` and the demo keep their chalk-stepping aliases; retiring them is a
+subtractive round of its own.
+
 ## C63 — an index-era paper-3 row does not move on to paper-5 (LOGGED, 2026-09-06)
 
 Found while proving C62. Both plugin lookups drop an exact `paper-3` hit that lacks the

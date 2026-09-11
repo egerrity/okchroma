@@ -41,7 +41,7 @@ const css = brandCss('acme', 'Acme', theme.themed, theme.secondary?.scale ?? nul
 // and data-theme="dark" on it for dark mode
 ```
 
-The Figma tree comes from `themeToFigma`. Signatures, the full input, and an end-to-end example:
+The same values as one object per mode come from `themeTokens`, and the state layer as named rows from `interactionCss` and `interactionTokens` (`docs/agents.md` lists the rows). The Figma tree comes from `themeToFigma`. Signatures, the full input, and an end-to-end example:
 [Install and API](https://egerrity.github.io/okchroma/#/docs/install).
 
 ## Run from source

@@ -71,6 +71,31 @@ export {
 } from './engine/cssRender'
 export { CSS_FAMILY } from './engine/tokenDescriptions'
 export {
+  themeTokens,
+  tokensFromEmission,
+  readEmission,
+  resolveReferences,
+  systemCss,
+  type ThemeTokens,
+  type ThemeTokensInput,
+  type TokenMode,
+} from './engine/tokensRender'
+export {
+  interactionCss,
+  interactionTokens,
+  interactionRows,
+  interactionVarName,
+  interactionTintName,
+  INTERACTION_FAMILIES,
+  INTERACTION_POLE_FAMILY,
+  INTERACTION_ROWS,
+  INTERACTION_STATES,
+  INTERACTION_LADDER,
+  type InteractionRow,
+  type InteractionState,
+  type InteractionPoleFamily,
+} from './engine/interaction'
+export {
   themeToFigma,
   type FigmaGroup,
   type FigmaColorToken,

@@ -8,6 +8,21 @@ structure, ships as at least a minor.
 
 Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git log.
 
+## Unreleased
+
+- The structured emit: `themeTokens` returns every emitted name with its light and dark
+  value, `var()` references resolved and mode-invariant names carried into both modes. It
+  reads the CSS emission back, so the two cannot disagree; the CSS output is unchanged.
+- The interaction register: `interactionCss` and `interactionTokens` emit the state layer
+  as named rows per family, the `solid`, `subtle` and `hint` tiers plus the `fg` rows, on
+  nine families including the pole families `neutral-strong` and `neutral-inverse`. The
+  translucent rows are `highlighter-26` at an opacity rung, one rung per state, as
+  `rgba()` literals per mode. New names only; no existing value moves. A minor when it
+  ships.
+- `audit:tokens` holds the reader's completeness and the register's body-text bar across
+  the fixture roster.
+- `docs/agents.md` no longer states a border width for `stamp-edge`; none was ever ruled.
+
 ## 0.5.1 — 2026-09-08
 
 - The opacity ladder's Figma value is the percent, Figma's opacity unit: `system/opacity/064`

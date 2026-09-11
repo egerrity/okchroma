@@ -135,6 +135,8 @@ flowchart TD
 | Piece | Location | What it does |
 |---|---|---|
 | CSS emitter | `cssRender.ts` | `brandCss`, `neutralCss`, `signalsCss`, `stopHex`, the P3 override blocks, the stamp edge gate (`ctaNeedsBorder`, `ctaBorderRung`, `pageStopFor`), the alpha ladders, the opacity ladder (`OPACITY_RUNGS`, the shadows and the scrim derive from it), `DISABLED_OPACITY`, the outline and escape re-expressions, the quiet fill's soft on-text. |
+| Structured emit | `tokensRender.ts` | `themeTokens` (the CSS emission read back into one object per mode, `var()` resolved, mode-invariant names carried into both), `readEmission`, `resolveReferences`, `systemCss` (the planes, the shadows, the scrim and the disabled opacity as engine-table projections). |
+| Interaction register | `interaction.ts` | `interactionCss` and `interactionTokens`: the state layer as named rows per family, `INTERACTION_LADDER`, `INTERACTION_ROWS`, the two pole families. |
 | Figma emitter | `figmaRender.ts` | `themeToFigma` (the same theme as light and dark group trees, with the system group), `groupEntries`, `putLeaf`. |
 | Public API | `index.ts` | What the npm package exports. |
 | Token build | `build.ts` | Writes `dist/signals.css`. |
