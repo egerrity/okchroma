@@ -38,17 +38,6 @@
       "port": 8327
     },
     {
-      "name": "portfolio",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "--prefix",
-        "../emily-portfolio",
-        "dev"
-      ],
-      "port": 5173
-    },
-    {
       "name": "material-poc",
       "runtimeExecutable": "npm",
       "runtimeArgs": [
@@ -75,21 +64,6 @@
         "5175"
       ],
       "port": 5175
-    },
-    {
-      "name": "portfolio-alt",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "--prefix",
-        "../emily-portfolio",
-        "dev",
-        "--",
-        "--port",
-        "5177",
-        "--strictPort"
-      ],
-      "port": 5177
     },
     {
       "name": "ds-spike-web",
