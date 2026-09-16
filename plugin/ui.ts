@@ -12,8 +12,8 @@ import { hexToOklch } from '../src/engine/colorMath'
 
 let primaryHex = '#E93D82'
 let secondaryHex: string | null = null
-// the neutral offering is ONE 6-entry choice (owner 2026-08-04; Medium joined 2026-08-11):
-// four strengths of the PRIMARY's hue, or an alternate hue SOURCE at the Default
+// the neutral offering is ONE 6-entry choice: four strengths of the PRIMARY's hue, or
+// an alternate hue SOURCE at the Default
 // strength — Match brand-alt (follows the current secondary live) or Custom (the hex's
 // hue tints the grey).
 type NeutralChoice = NeutralLevel | 'secondary' | 'custom'
@@ -26,24 +26,22 @@ const neutralLevelOf = (): NeutralLevel => (neutralChoice === 'secondary' || neu
 let primaryMode: 'recommended' | 'exact' | Archetype = 'recommended'
 let secondaryStyle: SecondaryStyle = 'default'
 let contrastProfile: ContrastProfile = 'apca' // APCA = the shipped default; WCAG = the opt-in legal mode
-// the NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): red-range brands can swap the cta
-// fill trio to the brand-neutral's pen register (near-black light / near-white dark).
-// The toggle is VISIBLE only in red range, and the EFFECTIVE flag is ctaEscape &&
-// inRedRange — outside the range the checkbox is inert, never force-cleared (clearing
-// on every keystroke wiped the toggle through 3-digit intermediate parses like "#EA3",
-// review-caught 2026-07-16), and it can't ride an apply silently either.
+// the NEUTRAL CTA ESCAPE (C20): red-range brands can swap the cta fill trio to the
+// brand-neutral's pen register (near-black light / near-white dark). The toggle is
+// VISIBLE only in red range, and the EFFECTIVE flag is ctaEscape && inRedRange —
+// outside the range the checkbox is inert, never force-cleared (clearing on every
+// keystroke would wipe the toggle through 3-digit intermediate parses like "#EA3"),
+// and it can't ride an apply silently either.
 let ctaEscape = false
 let inRedRange = false        // EFFECTIVE gate: the CURRENT posture's red range
 let inRedRangeOffer = false   // OFFER gate: the row shows when the current posture is red-range
-// the SYSTEM LINK (Phase 4, owner 2026-07-16): ONE link trio per theme — hyperlinks, not
-// per-family. Default aliases the primary's pen stops (9/10/11 as states; was cta-ink
-// until its 2026-08-12 deletion). Custom = the seed below through
+// the SYSTEM LINK (C20): ONE link trio per theme — hyperlinks, not per-family. Default
+// aliases the primary's pen stops (9/10/11 as states). Custom = the seed below through
 // the pen register (#0B57D0 default when toggled on — the red de-conflict for links).
 let linkCustom = false
-// the escape BUNDLE (owner 2026-07-16): ticking "Use neutral primary cta" auto-enables
+// the escape BUNDLE: ticking "Use neutral primary cta" auto-enables
 // the custom link (#0B57D0) — overridable; unticking reverts ONLY an untouched bundle
 let linkBundled = false
-// the VIVIDNESS LEVER (phase 5): default OFF = the shipped dampened registers
 let pendingName: string | null = null // brand armed for overwrite confirmation
 // The secondary is the demo's THREE-STATE field: none (default — just "+ Add brand-alt") →
 // derived (the input tracks the primary live; the engine derives the default secondary) →
@@ -195,12 +193,12 @@ function themeInput(name: string) {
 
 // the demo's top-card matrix: every family × ID + the 11 stops + the cta pair (light mode).
 // Stop 8 renders AS a stroke (it's the boundary stop); fill cells carry the family's stamp/edge.
-// Cells iterate the scale's ACTUAL stops (stop 10 deleted 2026-07-09) — a future stop change
-// reshapes the grid instead of throwing into updatePreview's catch.
+// Cells iterate the scale's ACTUAL stops — a stop change reshapes the grid instead of
+// throwing into updatePreview's catch.
 function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
   const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
   const sigScales = signalScalesFor(cp)
-  // the escape resets red to canonical (owner 2026-07-16) — the preview mirrors the apply
+  // the escape resets red to canonical — the preview mirrors the apply
   const effective = (n: typeof SIGNALS[number]['name']) =>
     (ctaEscape && inRedRange && n === 'red')
       ? sigScales.get('red')!.scale
@@ -228,18 +226,15 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     cells.push(row.idHex
       ? `<div class="mx-aa" style="background:${row.idHex};color:${idText(row.idHex)};font-weight:700;font-size:10px" title="identity">ID</div>`
       : `<div class="mx-cell"></div>`)
-    // the pen stops keep the brand's own chroma under the escape (owner 2026-08-13,
-    // reverting the 2026-08-12 pen de-chroma) — the scale cells render raw
+    // the pen stops keep the brand's own chroma under the escape — the scale cells
+    // render raw
     for (const s of row.scale.light) {
       const n = s.stop
       const h = hx(s)
-      // stop 9 (pencil-47) is BOTH the emphasis fill and a text stop (owner
-      // 2026-07-29) — this cell was stale on the dead highlight-9 name and the
-      // DELETED onHighlightIsWhite field until 2026-08-04; it now mirrors the ext
-      // plugin's rendition (on-emphasis = the paper). Titles read the live name off
-      // stopTokenName (the engine's SSOT) so a future rename never drifts this
-      // preview — Stage B (owner 2026-08-07, names only) relabeled every stop;
-      // nothing here is hardcoded any more.
+      // stop 9 (pencil-47) is BOTH the emphasis fill and a text stop (C33) — this
+      // cell mirrors the ext plugin's rendition (on-emphasis = the paper). Titles
+      // read the live name off stopTokenName (the engine's SSOT) so a rename never
+      // drifts this preview; nothing here is hardcoded.
       if (n === 8) cells.push(`<div class="mx-cell" style="border:2px solid ${h}" title="${stopTokenName(8)}"></div>`)
       else if (n === 9) cells.push(`<div class="mx-aa" style="background:${h};color:${hx(nScale.light[0])}" title="${stopTokenName(9)} (emphasis fill)">Aa</div>`)
       else if (n >= 10) cells.push(`<div class="mx-aa" style="color:${h};font-size:15px;font-weight:800" title="${stopTokenName(n)}">Aa</div>`)
@@ -248,7 +243,7 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     const s8 = hx(st(8))
     if (row.outline) {
       // outline's re-expressed fill trio: transparent + ring + the stop-9 label (the
-      // stop the emitted on-cta rides — st(10) was stale post-C33); hover/pressed =
+      // stop the emitted on-cta rides); hover/pressed =
       // the STABLE stop-8 at 9%/18% (the same stop the ring uses; pressed doubles hover)
       const pencil9 = hx(st(9))
       const c8 = st(8)
@@ -271,9 +266,8 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
       cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaHover)};color:${on}" title="stamp/fill-hover">Aa</div>`)
       cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaPressed)};color:${on}" title="stamp/fill-pressed">Aa</div>`)
     }
-    // (the cta-ink + cta-ink-strong preview columns DELETED with their tokens, owner
-    // 2026-08-12: the text-style cta is the pen stops, already rendered as scale cells
-    // above.)
+    // (no text-cta columns: the text-style cta is the pen stops, already rendered as
+    // scale cells above.)
     return cells.join('')
   }
 
@@ -289,7 +283,7 @@ function updatePreview() {
     const t = resolveTheme(themeInput('x'))
     // the neutral rides the RESOLVED tint hue (the one engine rule) — matrix, swatch and
     // the escape preview all read THIS nScale, so a source pick can never leave the
-    // escape anchored off a neutral the theme no longer ships
+    // escape anchored off a neutral the theme does not ship
     const nScale = generateNeutralScale(
       neutralTintHue(t.themed.scale.brandH, neutralSourceOf(), t.secondary?.scale.brandH, normalizeHex(neutralHexIn.value) || null),
       neutralLevelOf(), cp)
@@ -299,15 +293,14 @@ function updatePreview() {
     // the brands the escape is for); the direct gate check catches exact-mode reds.
     // The toggle stays checked-but-inert outside the range (effective = && inRedRange).
     const redCta = signalScalesFor(cp).get('red')!.scale.cta
-    // ONE GATE (the vividness lever's checkbox was removed 2026-09-01, owner; the 2026-07-16
-    // opposite-posture probe went with it): the row shows exactly when the CURRENT posture
-    // is red-range, and the file/css carries an escape only for that posture.
+    // ONE GATE, no opposite-posture probe: the row shows exactly when the CURRENT
+    // posture is red-range, and the file/css carries an escape only for that posture.
     const rangeOf = (rb: { redRepel: unknown; scale: { cta: { L: number; C: number; H: number } } }) =>
       !!rb.redRepel || redGateDist(rb.scale.cta, redCta) <= RED_GATE.G
     inRedRange = rangeOf(t.themed)
     inRedRangeOffer = inRedRange
     ctaEscapeRow.style.display = inRedRangeOffer ? '' : 'none'
-    // BUNDLE HYGIENE (review-caught): an untouched bundle auto-reverts the moment the
+    // BUNDLE HYGIENE: an untouched bundle auto-reverts the moment the
     // escape stops being effective (range exit / posture flip) — the frozen default blue
     // must not outlive the escape it was bundled with, nor ride an apply for a brand
     // whose links were never meant to be custom.
@@ -320,7 +313,7 @@ function updatePreview() {
     // the link FIELD previews the RESOLVED system link: custom seed through the pen
     // register, else the primary's pencil-47 (which rides the neutral's register when
     // the escape is active). The from-primary posture shows the resolved hex GREYED +
-    // read-only; clicking the hex takes it over (owner Advanced-menu spec 2026-07-16).
+    // read-only; clicking the hex takes it over (the Advanced-menu spec).
     const fromPrimaryStop = t.themed.scale.light.find(s => s.stop === 9)!
     const linkStop = linkCustom && normalizeHex(linkHexInput.value)
       ? resolveLinkTrio(normalizeHex(linkHexInput.value)!, cp).link
@@ -346,7 +339,7 @@ function updatePreview() {
     const n9 = nScale.light.find(s => s.stop === 9)
     if (n9) neutralSwatch.style.background = toHex(n9.r, n9.g, n9.b)
     // the neutral picker seeds from the custom hue when set, else the primary — the
-    // hue currently feeding the tint, not the resolved grey the swatch paints
+    // hue feeding the tint, not the resolved grey the swatch paints
     neutralPicker.value = normalizeHex(neutralHexIn.value) ?? (normalizeHex(primaryHex) ?? '#E93D82')
     if (t.secondary) {
       const c = t.secondary.scale.cta
@@ -360,15 +353,12 @@ function updatePreview() {
 
     // chip TONES (Figma spec): the family's own chalk/pen; outline = the outline treatment;
     // exact = neutral-grey "hands off". Stops looked up by IDENTITY, never array position
-    // (positions shift when the stop set changes — the stop-10 deletion lesson).
+    // (positions shift when the stop set changes).
     const hxs = (s: { r: number; g: number; b: number }) => toHex(s.r, s.g, s.b)
-    // NAME the miss — ported from plugin-ext (fixed there 2026-07-29, missed here until
-    // 2026-08-05): `at` used a bare non-null assertion, so a stop that no longer exists
-    // returned undefined and surfaced as "Cannot read properties of undefined (reading
-    // 'r')" from inside hxs — unattributable. Both chips asked for stop 11, which C33's pen
-    // renumber removed from the array (it emits as an off-scale literal), so BOTH chip
-    // colours threw on EVERY render and the throw skipped syncInfoLines below it — which is
-    // why the info lines and chip labels silently stopped updating. Fail loudly instead.
+    // NAME the miss (the plugin-ext idiom): a bare non-null assertion surfaces a stop
+    // that is not in the ramp as "Cannot read properties of undefined (reading 'r')"
+    // from inside hxs — unattributable — and the throw skips syncInfoLines below, so
+    // the info lines and chip labels silently stop updating. Fail loudly instead.
     const at = (arr: ColorStop[], n: number) => {
       const s = arr.find(x => x.stop === n)
       if (!s) throw new Error(`chip preview asked for stop ${n}, which is not in the ramp (${arr.map(x => x.stop).join(',')})`)
@@ -394,7 +384,7 @@ function updatePreview() {
     syncInfoLines()
   } catch (e) {
     // partial hex mid-typing lands here by design; anything else is a REAL break —
-    // log it so the preview can't go blank silently again (the stop-10 lesson)
+    // log it so the preview can't go blank silently
     console.warn('okchroma preview render failed:', e)
   }
 }
@@ -404,7 +394,7 @@ function updatePreview() {
 // The shared-primitive leaf for an overridden signal: readable label + the
 // RESOLVED light-cta hex. The hex is the dedup identity — never the note text:
 // C12 mints hue-less notes ("red → rich L0.49"), so two brands can share a note
-// while carrying DIFFERENT solved hues, and a note-derived key made the second
+// while carrying DIFFERENT solved hues, and a note-derived key would make the second
 // brand's theme alias the FIRST brand's red primitive (shared prims write
 // refresh=false — only consulted the first time). Identical resolved variants
 // across brands still dedup onto one primitive; the hex suffix also keeps '.'
@@ -422,8 +412,7 @@ function buildAndSend() {
   const norm = normalizeHex(primaryHexInput.value)
   if (!norm) { setStatus('Enter a valid hex color.', 'err'); return }
   // a ticked custom link with an invalid hex must BLOCK, not silently ship the default
-  // posture while the checkbox reads custom (review-caught 2026-07-16 — the primary hex
-  // already blocks this way)
+  // posture while the checkbox reads custom (the primary hex already blocks this way)
   if (linkCustom && !normalizeHex(linkHexInput.value)) {
     setStatus('Enter a valid custom link hex (or untick Custom link color).', 'err'); return
   }
@@ -439,8 +428,8 @@ function buildAndSend() {
     const secondary = t.secondary?.scale ?? null
 
     // The neutral's shared-primitive key. Same-key re-applies REFRESH values in place
-    // since 2026-08-11 (the default-tint retune heals old files); the key still dedups
-    // identical ramps across brands. 'pure' is a true grey (C=0), identical
+    // (so a retuned tint heals old files); the key still dedups identical ramps across
+    // brands. 'pure' is a true grey (C=0), identical
     // for every brand — so it's keyed hue-INDEPENDENTLY as one shared
     // system/neutral/pure that the plugin reuses across brands (an existing path
     // is reused, never recreated) instead of duplicating an identical grey ramp
@@ -450,7 +439,7 @@ function buildAndSend() {
     // profile suffix — the file keeps ONE profile per collection pair (code.ts
     // detects a mismatched apply and forks a separate, labeled pair instead of
     // ever mixing values inside one).
-    // the tint hue follows the neutral SOURCE (owner 2026-08-04) — resolved once here,
+    // the tint hue follows the neutral SOURCE — resolved once here,
     // feeding BOTH the primitive key and the emit, so the prim name can never disagree
     // with the values written under it. Same-hue sources still dedup onto one primitive.
     const nH = neutralTintHue(r.scale.brandH, neutralSourceOf(), t.secondary?.scale.brandH, normalizeHex(neutralHexIn.value) || null)
@@ -462,7 +451,7 @@ function buildAndSend() {
     // No override → the canonical ramp, keyed 'base'.
     const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
     const sigScales = signalScalesFor(cp)
-    // the escape RESETS the red collision to default (owner 2026-07-16): the brand's
+    // the escape RESETS the red collision to default: the brand's
     // ctas ride the neutral register, nothing collides — canonical red ships, no
     // per-brand variant primitive is minted
     const escapeOn = ctaEscape && inRedRange
@@ -475,7 +464,7 @@ function buildAndSend() {
     const customLink = linkCustom ? normalizeHex(linkHexInput.value) : null
     const { light, dark } = themeToFigma(r, { secondary, secondaryStyle: t.secondary?.style, neutralLevel: neutralLevelOf(), neutralH: nH, signals, contrastProfile: cp, ctaEscape: ctaEscape && inRedRange, linkHex: customLink })
 
-    // Signals are the re-pointable in-between tier (owner 2026-07-27): the
+    // Signals are the re-pointable in-between tier: the
     // THEME group carries the ROLE name (critical/warning/positive/info) while
     // the primitive lane keeps the identity path (system/<identity>/<variant>)
     // — the same role→identity split as brand/primary → brand/<brand>.
@@ -495,20 +484,20 @@ function buildAndSend() {
         light: light[s.name],
         dark: dark[s.name],
       })),
-      // CUSTOM system link: one shared prim trio, keyed by the SEED hex (review-caught
-      // 2026-07-16: the old resolved-LIGHT-hex key collided distinct seeds whose light
-      // solves matched but darks differed — the second brand silently rode the first's
-      // dark trio — and a states/dark-only engine retune reused the stale prim wholesale).
+      // CUSTOM system link: one shared prim trio, keyed by the SEED hex, never the
+      // resolved light hex (a light-hex key collides distinct seeds whose light solves
+      // match but darks differ — the second brand would silently ride the first's dark
+      // trio — and a dark-only engine retune would reuse the stale prim wholesale).
       // Seed-keyed, the path is stable per input and the write path refreshes its values
-      // every apply (idempotent: same seed ⇒ same engine output). Old light-hex prims
-      // orphan harmlessly (scopes=[], unbindable — the red-variant class). Default
+      // every apply (idempotent: same seed ⇒ same engine output). A light-hex-vintage
+      // prim orphans harmlessly (scopes=[], unbindable — the red-variant class). Default
       // posture sends nothing: the plugin aliases the brand's own pen stops.
       ...(customLink ? [{
         theme: 'link',
         prim: `system/link/${customLink.slice(1)}`,
         light: light.link, dark: dark.link,
       }] : []),
-      // the INVERSE link trio (owner round 2026-08-19): the link seed re-solved for text
+      // the INVERSE link trio: the link seed re-solved for text
       // on inverted (strong-text-colored) surfaces. Unlike the link there is NO alias
       // posture — no brand stop carries these values — so the prim ALWAYS ships, seed-keyed
       // like the custom link's. The key mirrors themeToFigma's seed choice (linkHex ??
@@ -586,7 +575,7 @@ secondaryPicker.addEventListener('input', () => {
   updatePreview()
 })
 
-// ONE select carries the whole offering (owner 2026-07-12): From primary / Custom (their
+// ONE select carries the whole offering: From primary / Custom (their
 // hex through the model) / Exact / Remove.
 secondaryStyleSelect.addEventListener('change', () => {
   const v = secondaryStyleSelect.value
@@ -618,8 +607,8 @@ neutralHexIn.addEventListener('input', () => {
   neutralHexIn.classList.toggle('invalid', neutralHexIn.value !== '' && !normalizeHex(neutralHexIn.value))
   updatePreview()
 })
-// the swatch PICKERS (owner 2026-08-05: "there is no color picker for the link or for
-// custom"). Both mirror the secondary's picker, which flips the field to custom on use:
+// the swatch PICKERS ("there is no color picker for the link or for custom"). Both
+// mirror the secondary's picker, which flips the field to custom on use:
 // picking a neutral hue IS the custom source; picking a link color IS the takeover.
 neutralPicker.addEventListener('input', () => {
   neutralChoice = 'custom'
@@ -630,7 +619,7 @@ neutralPicker.addEventListener('input', () => {
 })
 linkPicker.addEventListener('input', () => {
   linkCustom = true
-  linkBundled = false // a hand-picked color no longer auto-reverts with the escape
+  linkBundled = false // a hand-picked color never auto-reverts with the escape
   linkHexInput.value = linkPicker.value.toUpperCase()
   linkHexInput.classList.remove('invalid')
   updatePreview()
@@ -647,7 +636,7 @@ profileBtns.forEach(btn => {
 
 ctaEscapeBox.addEventListener('change', () => {
   ctaEscape = ctaEscapeBox.checked
-  // the BUNDLE (owner 2026-07-16): a neutralized cta family shouldn't leave links riding
+  // the BUNDLE: a neutralized cta family shouldn't leave links riding
   // grey neutral pen — ticking the escape auto-enables the custom de-conflict blue.
   // Overridable: edit the hex or ↩ back; unticking reverts ONLY an untouched bundle.
   if (ctaEscape && !linkCustom) {
@@ -685,7 +674,7 @@ linkResetBtn.addEventListener('click', e => {
 })
 linkHexInput.addEventListener('input', () => {
   if (!linkCustom) return
-  linkBundled = false // a hand-edited bundle no longer auto-reverts with the escape
+  linkBundled = false // a hand-edited bundle never auto-reverts with the escape
   // an EMPTY field is invalid too while custom — apply blocks on it below
   linkHexInput.classList.toggle('invalid', !normalizeHex(linkHexInput.value))
   updatePreview()
@@ -722,7 +711,7 @@ window.addEventListener('message', e => {
     if (raQueue) { setStatus(`Re-apply stopped at "${raQueue[raIdx]?.brand}": ${msg.message ?? 'unknown error'}`, 'err'); raQueue = null; return }
     setStatus(msg.message ?? 'Unknown error', 'err')
   } else if (msg.type === 'specs') {
-    // the C52 lesson (ext): this reply is SHARED — the reason tag routes it. 'list'
+    // the C52 rule (ext): this reply is SHARED — the reason tag routes it. 'list'
     // feeds the edit picker and must NEVER start a batch.
     const stored = ((msg.specs ?? []) as Recipe[]).filter(r => r && typeof r.brand === 'string' && typeof r.primaryHex === 'string')
     const recon = ((msg.reconstructed ?? []) as ReconFact[]).filter(f => f && typeof f.brand === 'string').map(reconToRecipe)
@@ -733,9 +722,9 @@ window.addEventListener('message', e => {
   }
 })
 
-// ─── Applied themes: recipes, the edit picker, re-apply all (owner 2026-08-28 —
-// the ext C52 flow ported). Every apply now ships its form inputs as a RECIPE the
-// sandbox stamps on the theme collection; collect-specs returns them (plus
+// ─── Applied themes: recipes, the edit picker, re-apply all (the ext C52 flow).
+// Every apply ships its form inputs as a RECIPE the sandbox stamps on the theme
+// collection; collect-specs returns them (plus
 // RECONSTRUCTION bundles for brands applied before recipes existed, read off the
 // file's identity prims / neutral key / link prim). "Re-apply all brands" replays
 // each recipe through the UNCHANGED apply path — the heal loop for renames and
