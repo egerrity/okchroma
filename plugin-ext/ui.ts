@@ -11,8 +11,8 @@ import { buildBrandColumns, buildBaseColumns, buildRetiredNeutralRows, BASE_SEED
 
 let primaryHex = '#E93D82'
 let secondaryHex: string | null = null
-// the neutral offering is ONE 6-entry choice (owner 2026-08-04; Medium joined 2026-08-11):
-// four strengths of the PRIMARY's hue, or an alternate hue SOURCE at the Default strength
+// the neutral offering is ONE 6-entry choice: four strengths of the PRIMARY's hue, or
+// an alternate hue SOURCE at the Default strength
 // — Match brand-alt (follows the current secondary live; the recipe stores the SOURCE,
 // never a frozen hue) or Custom (the hex's hue tints the grey). Level + source derive
 // from the one choice.
@@ -25,44 +25,42 @@ const neutralLevelOf = (): NeutralLevel => (neutralChoice === 'secondary' || neu
 // derived rides the default seed-transform, the engine's call).
 let primaryMode: 'recommended' | 'exact' | Archetype = 'recommended'
 let secondaryStyle: SecondaryStyle = 'default'
-// the six anchors, now offered for the secondary too (owner 2026-07-29). Own state beside
-// secondaryStyle: one list in the chip, but an anchor COMPOSES with the posture — it pins the
-// ramp's lightness and leaves custom's tinted cta alone. A posture pick clears it.
+// the six anchors, offered for the secondary too. Own state beside secondaryStyle: one
+// list in the chip, but an anchor REPLACES the posture — it selects the hands-off ramp
+// and places the button (see the select handler). A posture pick clears it.
 let secondaryArchetype: Archetype | null = null
 const isArchetype = (v: string): v is Archetype => ARCHETYPES.some(a => a.name === v)
-// WCAG ONLY (owner 2026-07-29). The preview lens and the "Include APCA columns" opt-in
-// are both gone: this plugin was APCA's last exposure, and the owner is not authorised to
-// use it for design decisions. Preview and Apply now read the same single lane, so the
-// class of bug where the preview showed a different band than Apply wrote goes with them.
-// The profile machinery itself stays dormant in src/engine/requirements/profiles.ts (the wcag path
+// WCAG ONLY: no preview lens, no "Include APCA columns" opt-in — the owner is not
+// authorised to use APCA for design decisions. Preview and Apply read the same single
+// lane, so the preview can never show a different band than Apply writes. The profile
+// machinery itself stays dormant in src/engine/requirements/profiles.ts (the wcag path
 // is a passthrough), so re-enabling is a column list, not a rebuild.
-// the NEUTRAL CTA ESCAPE (Phase 3, owner 2026-07-16): red-range brands can swap the cta
-// fill trio to the brand-neutral's pen register (near-black light / near-white dark).
-// The toggle is VISIBLE only in red range, and the EFFECTIVE flag is ctaEscape &&
-// inRedRange — outside the range the checkbox is inert, never force-cleared (clearing
-// on every keystroke wiped the toggle through 3-digit intermediate parses like "#EA3",
-// review-caught 2026-07-16), and it can't ride an apply or recipe silently either.
+// the NEUTRAL CTA ESCAPE (C20): red-range brands can swap the cta fill trio to the
+// brand-neutral's pen register (near-black light / near-white dark). The toggle is
+// VISIBLE only in red range, and the EFFECTIVE flag is ctaEscape && inRedRange —
+// outside the range the checkbox is inert, never force-cleared (clearing on every
+// keystroke would wipe the toggle through 3-digit intermediate parses like "#EA3"),
+// and it can't ride an apply or recipe silently either.
 let ctaEscape = false
 let inRedRange = false        // EFFECTIVE gate: the CURRENT posture's red range
 let inRedRangeOffer = false   // OFFER gate: the row shows when the current posture is red-range
-// the SYSTEM LINK (Phase 4, owner 2026-07-16): ONE link trio per theme — hyperlinks, not
+// the SYSTEM LINK (C20): ONE link trio per theme — hyperlinks, not
 // per-family. Default = the primary's pen-stop values (extensions carry their own).
 // Custom = the seed through the pen register (#0B57D0 default when toggled).
 let linkCustom = false
-// the escape BUNDLE (owner 2026-07-16): ticking "Use neutral primary cta" auto-enables
+// the escape BUNDLE: ticking "Use neutral primary cta" auto-enables
 // the custom link (#0B57D0) — overridable; unticking reverts ONLY an untouched bundle
 let linkBundled = false
-// the VIVIDNESS LEVER (phase 5): default OFF = the shipped dampened registers
-// THE CTA-BORDER OPT-OUT (owner 2026-07-31: "on by default but optional"). Default ON, and the
+// THE CTA-BORDER OPT-OUT ("on by default but optional"). Default ON, and the
 // spec stores it as `false | undefined` rather than `true | false` so that ABSENT means ON —
 // every recipe written before this flag existed replays with its strokes intact.
 let ctaBorder = true
-// THE DESCOPE POSTURE (owner 2026-08-07; role-based since the 2026-08-11 flatten): FILE
+// THE DESCOPE POSTURE (role-based): FILE
 // state, not per-brand — unlike every flag above this never rides themeInput/the recipe.
 // Default ON (ramp stops + alpha/abs plumbing hidden from every Figma picker; the cta
 // bands, link trio and surface planes always stay bindable). Initialized from the file-state
 // handshake on load, then carried on every apply message so a re-apply/rebuild/batch
-// batch always re-stamps the SAME posture the checkbox currently shows.
+// always re-stamps the SAME posture the checkbox shows.
 let descopePrimitives = true
 // brand + the exact confirm TOKEN it was armed with (reason-scoped — the plugin only
 // honors a confirm whose reasons haven't changed since it was shown; changing the
@@ -139,7 +137,7 @@ function normalizeHex(s: string): string | null {
 // v2 brand names are free-form (they are ONLY a collection name + a tag — never a
 // variable path segment, unlike v1): trim and collapse whitespace, keep everything else
 // verbatim. The audit fixture's own names (L1-near-black, "vs-red (shifts light)") set the precedent —
-// spinal-casing here made manual re-writes of them impossible (owner-caught 2026-07-07).
+// spinal-casing here would make manual re-writes of them impossible.
 function cleanName(s: string): string {
   return s.trim().replace(/\s+/g, ' ')
 }
@@ -181,8 +179,8 @@ function syncInfoLines() {
   secondaryStyleSelect.value = secondaryMode === 'derived' ? 'from-primary'
     : (secondaryArchetype ?? secondaryStyle)
   secondaryInfoLine.style.display = secondaryMode === 'off' ? 'none' : ''
-  // the six names place the BUTTON, not the surfaces (measured 2026-07-29: an anchor moves the
-  // cta across the full lightness range and leaves the ramp alone). The copy says which.
+  // the six names place the BUTTON, not the surfaces (an anchor moves the cta across
+  // the full lightness range and leaves the ramp alone). The copy says which.
   secondaryInfo.textContent = secondaryMode === 'derived' ? 'A lighter take on your primary — derived by default'
     : secondaryArchetype ? `Your color, with the button at ${secondaryArchetype} lightness`
     : STYLE_INFO[secondaryStyle]
@@ -235,7 +233,7 @@ function themeInput(name: string) {
     // can't ride a recipe replay
     ctaEscape: (ctaEscape && inRedRange) || undefined,
     linkHex: (linkCustom && normalizeHex(linkHexInput.value)) || undefined,
-    // the neutral's hue SOURCE (owner 2026-08-04) — 'secondary' stores the source so
+    // the neutral's hue SOURCE — 'secondary' stores the source so
     // re-applies/backfills follow the brand's CURRENT secondary; custom stores its hex.
     // Absent = the primary's hue; payload.lane() resolves via colorEngine.neutralTintHue.
     neutralSource: neutralSourceOf(),
@@ -249,10 +247,10 @@ function themeInput(name: string) {
 // the demo's top-card matrix: every family × ID + the scale stops + the cta pair (light).
 // Stop 8 renders AS a stroke (it's the boundary stop); cta cells carry the family's cta-border.
 // Cells iterate the scale's ACTUAL stops — a stop change reshapes the grid instead of
-// throwing into updatePreview's catch (the 2026-07-29 highlight collapse rode this).
+// throwing into updatePreview's catch.
 function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
   const sigScales = signalScalesFor(undefined)
-  // the escape resets red to canonical (owner 2026-07-16) — the preview mirrors the apply
+  // the escape resets red to canonical — the preview mirrors the apply
   const effective = (n: typeof SIGNALS[number]['name']) =>
     (ctaEscape && inRedRange && n === 'red')
       ? sigScales.get('red')!.scale
@@ -280,16 +278,15 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     cells.push(row.idHex
       ? `<div class="mx-aa" style="background:${row.idHex};color:${idText(row.idHex)};font-weight:700;font-size:10px" title="identity">ID</div>`
       : `<div class="mx-cell"></div>`)
-    // the pen stops keep the brand's own chroma under the escape (owner 2026-08-13,
-    // reverting the 2026-08-12 pen de-chroma) — the scale cells render raw
+    // the pen stops keep the brand's own chroma under the escape — the scale cells
+    // render raw
     for (const s of row.scale.light) {
       const n = s.stop
       const h = hx(s)
-      // stop 9 (ink-53) is BOTH the emphasis fill and a text stop (owner
-      // 2026-07-29), so it renders as a filled chip carrying its on-emphasis paper — the
-      // role highlight-9 used to show. Titles read the live name off stopTokenName (the
-      // engine's SSOT) so a future rename never drifts this preview — Stage B (owner
-      // 2026-08-07, names only) relabeled every stop; nothing here is hardcoded any more.
+      // stop 9 (pencil-47) is BOTH the emphasis fill and a text stop (C33), so it
+      // renders as a filled chip carrying its on-emphasis paper. Titles read the live
+      // name off stopTokenName (the engine's SSOT) so a rename never drifts this
+      // preview; nothing here is hardcoded.
       if (n === 8) cells.push(`<div class="mx-cell" style="border:2px solid ${h}" title="${stopTokenName(8)}"></div>`)
       else if (n === 9) cells.push(`<div class="mx-aa" style="background:${h};color:${hx(nScale.light[0])}" title="${stopTokenName(9)} (emphasis fill)">Aa</div>`)
       else if (n >= 10) cells.push(`<div class="mx-aa" style="color:${h};font-size:15px;font-weight:800" title="${stopTokenName(n)}">Aa</div>`)
@@ -298,7 +295,7 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
     const s8 = hx(st(8))
     if (row.outline) {
       // outline's re-expressed fill trio: transparent + ring + the stop-9 label (the stop
-      // the emitted on-cta rides — the variable name was stale post-C33); hover/pressed =
+      // the emitted on-cta rides); hover/pressed =
       // the STABLE stop-8 at 9%/18% (the same stop the ring uses; pressed doubles hover)
       const pencil9 = hx(st(9))
       const c8 = st(8)
@@ -320,15 +317,14 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
       cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaHover)};color:${on}" title="cta/hover">Aa</div>`)
       cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaPressed)};color:${on}" title="cta/pressed">Aa</div>`)
     }
-    // (the cta-ink + cta-ink-strong preview columns DELETED with their tokens, owner
-    // 2026-08-12: the text-style cta is the pen stops, already rendered as scale cells
-    // above — escaped values included via effStop.)
+    // (no text-cta columns: the text-style cta is the pen stops, already rendered as
+    // scale cells above.)
     return cells.join('')
   }
 
   // the grid's column count FOLLOWS THE SCALE (see .matrix in ui-template.html): one ID
   // cell, one per stop, then the cta fill trio. Derived, never
-  // written down — a stop change must not be able to knock the rows out of alignment again.
+  // written down — a stop change must not be able to knock the rows out of alignment.
   matrixEl.style.setProperty('--mx-cols', String(1 + nScale.light.length + 3))
   matrixEl.innerHTML = rows.map(rowHtml).join('')
 }
@@ -338,7 +334,7 @@ function updatePreview() {
     const t = resolveTheme(themeInput('x'))
     // the neutral rides the RESOLVED tint hue (the one engine rule) — every consumer
     // below (matrix, swatch, escape preview, link field) reads THIS nScale, so a source
-    // pick can never leave the escape anchored off a neutral the theme no longer ships
+    // pick can never leave the escape anchored off a neutral the theme does not ship
     const nH = neutralTintHue(t.themed.scale.brandH, neutralSourceOf(), t.secondary?.scale.brandH, normalizeHex(neutralHexIn.value) || null)
     const nScale = generateNeutralScale(nH, neutralLevelOf(), undefined)
 
@@ -347,15 +343,14 @@ function updatePreview() {
     // the brands the escape is for); the direct gate check catches exact-mode reds.
     // The toggle stays checked-but-inert outside the range (effective = && inRedRange).
     const redCta = signalScalesFor(undefined).get('red')!.scale.cta
-    // ONE GATE (the vividness lever's checkbox was removed 2026-09-01, owner; the 2026-07-16
-    // opposite-posture probe went with it): the row shows exactly when the CURRENT posture
-    // is red-range, and the file carries an escape only for that posture.
+    // ONE GATE, no opposite-posture probe: the row shows exactly when the CURRENT
+    // posture is red-range, and the file carries an escape only for that posture.
     const rangeOf = (rb: { redRepel: unknown; scale: { cta: { L: number; C: number; H: number } } }) =>
       !!rb.redRepel || redGateDist(rb.scale.cta, redCta) <= RED_GATE.G
     inRedRange = rangeOf(t.themed)
     inRedRangeOffer = inRedRange
     ctaEscapeRow.style.display = inRedRangeOffer ? '' : 'none'
-    // BUNDLE HYGIENE (review-caught): an untouched bundle auto-reverts the moment the
+    // BUNDLE HYGIENE: an untouched bundle auto-reverts the moment the
     // escape stops being effective — the frozen default blue must not outlive the escape
     // it was bundled with, nor BAKE INTO THE RECIPE for a non-red brand (batch re-applies
     // would replay it forever).
@@ -366,9 +361,9 @@ function updatePreview() {
     }
 
     // the link FIELD previews the RESOLVED system link: custom seed through the pen
-    // register, else the primary's ink-53. The from-primary posture shows
-    // the resolved hex GREYED + read-only; clicking the hex takes it over (owner
-    // Advanced-menu spec 2026-07-16).
+    // register, else the primary's pencil-47. The from-primary posture shows
+    // the resolved hex GREYED + read-only; clicking the hex takes it over (the
+    // Advanced-menu spec).
     const fromPrimaryStop = t.themed.scale.light.find(s => s.stop === 9)!
     const linkStop = linkCustom && normalizeHex(linkHexInput.value)
       ? resolveLinkTrio(normalizeHex(linkHexInput.value)!, undefined).link
@@ -388,13 +383,13 @@ function updatePreview() {
 
     renderMatrix(t, nScale)
 
-    // the bar's live swatches: neutral shows its emphasis fill (stop 9, ink-53
-    // since the 2026-07-29 collapse); a derived secondary shows the RESOLVED default
-    // secondary (the input tracks the primary hex — that's the source, not the result)
+    // the bar's live swatches: neutral shows its emphasis fill (stop 9, pencil-47); a
+    // derived secondary shows the RESOLVED default secondary (the input tracks the
+    // primary hex — that's the source, not the result)
     const n9 = nScale.light.find(s => s.stop === 9)
     if (n9) neutralSwatch.style.background = toHex(n9.r, n9.g, n9.b)
     // the neutral picker seeds from the custom hue when set, else the primary — the
-    // hue currently feeding the tint, not the resolved grey the swatch paints
+    // hue feeding the tint, not the resolved grey the swatch paints
     neutralPicker.value = normalizeHex(neutralHexIn.value) ?? (normalizeHex(primaryHex) ?? '#E93D82')
     if (t.secondary) {
       const c = t.secondary.scale.cta
@@ -404,24 +399,22 @@ function updatePreview() {
         secondaryHexInput.value = primaryHex
         secondaryPicker.value = primaryHex
       } else if (secondaryHex) {
-        // LEAVING DERIVED USED TO STRAND THE SWATCH (owner-caught 2026-07-29): the swatch was
-        // only ever repainted inside the derived branch, so switching to Custom or Exact with a
-        // hex already set left the old derived TINT sitting next to a field reading the real
-        // hex — it looked like the engine had paled the user's colour when it had not. Custom
-        // and Exact show the supplied hex, matching the demo's swatch rule.
+        // Custom and Exact show the supplied hex, matching the demo's swatch rule. Without
+        // this branch the swatch is only repainted under derived, so switching to Custom or
+        // Exact with a hex already set leaves the derived TINT sitting next to a field
+        // reading the real hex — it looks like the engine paled the user's colour.
         secondarySwatch.style.background = secondaryHex
       }
     }
 
     // chip TONES (Figma spec): the family's own chalk/pen; outline = the outline treatment;
     // exact = neutral-grey "hands off". Stops looked up by IDENTITY, never array position
-    // (positions shift when the stop set changes — the stop-10 deletion lesson).
+    // (positions shift when the stop set changes).
     const hxs = (s: { r: number; g: number; b: number }) => toHex(s.r, s.g, s.b)
-    // NAME the miss (2026-07-29): `at` used a bare non-null assertion, so a stop that no longer
-    // exists returned undefined and surfaced as "Cannot read properties of undefined (reading
-    // 'r')" from inside hxs — unattributable. Both chips asked for stop 11, which C33's pen
-    // renumber removed from the array (it emits as an off-scale literal), so BOTH chip colours
-    // threw on every render and the throw skipped syncInfoLines below it. Fail loudly instead.
+    // NAME the miss: a bare non-null assertion surfaces a stop that is not in the ramp as
+    // "Cannot read properties of undefined (reading 'r')" from inside hxs — unattributable
+    // — and the throw skips syncInfoLines below, so the info lines and chip labels
+    // silently stop updating. Fail loudly instead.
     const at = (arr: ColorStop[], n: number) => {
       const s = arr.find(x => x.stop === n)
       if (!s) throw new Error(`chip preview asked for stop ${n}, which is not in the ramp (${arr.map(x => x.stop).join(',')})`)
@@ -437,9 +430,10 @@ function updatePreview() {
     if (t.secondary) {
       const sl = t.secondary.scale.light
       // GREY IS FOR HANDS-OFF ONLY. The chip reads the EFFECTIVE posture, not secondaryStyle
-      // alone: an anchor now sends style 'exact' (it rides the hands-off ramp), and derived
-      // leaves whatever style was last picked in place — both used to inherit the grey Exact
-      // chip and stop looking like a colour at all. Matches the demo's `tone` logic.
+      // alone: an anchor sends style 'exact' (it rides the hands-off ramp), and derived
+      // leaves whatever style was last picked in place — on secondaryStyle alone both would
+      // inherit the grey Exact chip and stop looking like a colour at all. Matches the
+      // demo's `tone` logic.
       const greyChip = secondaryMode === 'custom' && !secondaryArchetype && secondaryStyle === 'exact'
       if (greyChip) {
         secondaryChip.style.background = '#ededf0'; secondaryChip.style.color = '#646464'; secondaryChip.style.borderColor = 'transparent'
@@ -452,7 +446,7 @@ function updatePreview() {
     syncInfoLines()
   } catch (e) {
     // partial hex mid-typing lands here by design; anything else is a REAL break —
-    // log it so the preview can't go blank silently again (the stop-10 lesson)
+    // log it so the preview can't go blank silently
     console.warn('okchroma preview render failed:', e)
   }
 }
@@ -466,7 +460,7 @@ function buildAndSend() {
   const norm = normalizeHex(primaryHexInput.value)
   if (!norm) { setStatus('Enter a valid hex color.', 'err'); return }
   // a ticked custom link with an invalid hex must BLOCK, not silently apply (and bake)
-  // the default posture into the recipe (review-caught 2026-07-16)
+  // the default posture into the recipe
   if (linkCustom && !normalizeHex(linkHexInput.value)) {
     setStatus('Enter a valid custom link hex (or untick Custom link color).', 'err'); return
   }
@@ -475,18 +469,17 @@ function buildAndSend() {
   setStatus('Applying…')
 
   try {
-    // v2 sends flat token COLUMNS (wcag · wcag-dark · apca · apca-dark — both lanes,
-    // always): this brand's semantic set, plus the DEFAULT-SEED base set (used only when
-    // the base collection — or its brand-alt group — is created). No dedup keys,
-    // no shared-primitive paths, no profile picker: the diff against the base IS the
-    // dedup, and the solve columns carry the profile axis. The RECIPE rides along and
+    // v2 sends flat token COLUMNS (light · dark — both schemes, always): this brand's
+    // semantic set, plus the file-seed base set (used only when the base collection — or
+    // its brand-alt group — is created). No dedup keys, no shared-primitive paths, no
+    // profile picker: the diff against the base IS the dedup. The RECIPE rides along and
     // gets stamped on the extension — it powers the automatic secondary check and
     // "Re-apply all brands".
     const { contrastProfile: _previewOnly, ...theme } = themeInput(name)
     const recipe: Recipe = { brand: name, theme, neutralLevel: neutralLevelOf(), hasSecondary: secondaryMode !== 'off' }
     const brandTokens = buildBrandColumns(theme, neutralLevelOf())
     const baseTokens = buildBaseColumns(fileBaseSeed)
-    const retiredNeutral = buildRetiredNeutralRows(fileBaseSeed) // heals pre-retune base rows (2026-08-11)
+    const retiredNeutral = buildRetiredNeutralRows(fileBaseSeed) // heals pre-retune base rows
 
     // reason-scoped confirm: echo back the exact token the confirm was armed with —
     // the plugin re-derives the reasons and only proceeds if they still match
@@ -559,8 +552,8 @@ secondaryPicker.addEventListener('input', () => {
   updatePreview()
 })
 
-// ONE select carries the whole offering (owner 2026-07-12, extended 2026-07-29): From primary /
-// Custom (their hex keeps the ramp, the button is a tint) / Exact / Remove / the six anchors.
+// ONE select carries the whole offering: From primary / Custom (their hex keeps the
+// ramp, the button is a tint) / Exact / Remove / the six anchors.
 secondaryStyleSelect.addEventListener('change', () => {
   const v = secondaryStyleSelect.value
   if (v === 'from-primary') { setSecondaryMode('derived'); return }
@@ -578,7 +571,7 @@ secondaryStyleSelect.addEventListener('change', () => {
     secondaryPicker.value = primaryHex
     secondarySwatch.style.background = primaryHex
   }
-  // an anchor REPLACES Custom rather than stacking on it (owner 2026-07-29): the six names
+  // an anchor REPLACES Custom rather than stacking on it: the six names
   // place the BUTTON, and Custom's tint owns the button, so both cannot apply. An anchor
   // selects the hands-off ramp and pins the cta into its band. A posture pick clears it.
   if (isArchetype(v)) {
@@ -601,8 +594,8 @@ neutralHexIn.addEventListener('input', () => {
   neutralHexIn.classList.toggle('invalid', neutralHexIn.value !== '' && !normalizeHex(neutralHexIn.value))
   updatePreview()
 })
-// the swatch PICKERS (owner 2026-08-05: "there is no color picker for the link or for
-// custom"). Both mirror the secondary's picker, which flips the field to custom on use:
+// the swatch PICKERS ("there is no color picker for the link or for custom"). Both
+// mirror the secondary's picker, which flips the field to custom on use:
 // picking a neutral hue IS the custom source; picking a link color IS the takeover.
 neutralPicker.addEventListener('input', () => {
   neutralChoice = 'custom'
@@ -613,19 +606,15 @@ neutralPicker.addEventListener('input', () => {
 })
 linkPicker.addEventListener('input', () => {
   linkCustom = true
-  linkBundled = false // a hand-picked color no longer auto-reverts with the escape
+  linkBundled = false // a hand-picked color never auto-reverts with the escape
   linkHexInput.value = linkPicker.value.toUpperCase()
   linkHexInput.classList.remove('invalid')
   updatePreview()
 })
 
-// Include APCA (default off): the ⓘ copy tracks the state so the flip's consequence —
-// the confirm + collection-wide backfill — is announced before Apply is ever pressed.
-// Changing the toggle DISARMS any armed batch (the arm copy described the old posture)
-// and clears a pending single-apply confirm (its token no longer matches anyway).
 ctaEscapeBox.addEventListener('change', () => {
   ctaEscape = ctaEscapeBox.checked
-  // the BUNDLE (owner 2026-07-16): a neutralized cta family shouldn't leave links riding
+  // the BUNDLE: a neutralized cta family shouldn't leave links riding
   // grey neutral pen — ticking the escape auto-enables the custom de-conflict blue.
   // Overridable: edit the hex or ↩ back; unticking reverts ONLY an untouched bundle.
   if (ctaEscape && !linkCustom) {
@@ -674,7 +663,7 @@ linkResetBtn.addEventListener('click', e => {
 })
 linkHexInput.addEventListener('input', () => {
   if (!linkCustom) return
-  linkBundled = false // a hand-edited bundle no longer auto-reverts with the escape
+  linkBundled = false // a hand-edited bundle never auto-reverts with the escape
   // an EMPTY field is invalid too while custom — apply blocks on it
   linkHexInput.classList.toggle('invalid', !normalizeHex(linkHexInput.value))
   updatePreview()
@@ -701,8 +690,8 @@ window.addEventListener('message', e => {
       qTotals.removed += msg.removed ?? 0
       qTotals.inherited += msg.inherited ?? 0
       qTotals.baseCreated = qTotals.baseCreated || !!msg.baseCreated
-      // column additions + the orphan count must SURVIVE the batch (re-verify 2026-07-16:
-      // the flip's primary flow IS a batch — swallowing them hid the stale-value warning)
+      // column additions + the orphan count must SURVIVE the batch (the flip's primary
+      // flow IS a batch — swallowing them would hide the stale-value warning)
       for (const c of msg.addedCols ?? []) if (!qTotals.addedCols.includes(c)) qTotals.addedCols.push(c)
       qTotals.orphaned = Math.max(qTotals.orphaned, msg.orphaned ?? 0)
       // a posture flip mid-batch (secondary group or solve columns added): append the
@@ -809,13 +798,11 @@ let qi = 0
 let qLabel = 'batch'
 let qTotals = { set: 0, removed: 0, inherited: 0, baseCreated: false, addedCols: [] as string[], orphaned: 0 }
 let qUnstamped: string[] = []
-// the APCA posture a batch runs under is SNAPSHOTTED at queue start (re-verify
-// 2026-07-16: reading the live checkbox per item let a mid-batch tick flip the file's
-// posture with confirmed:true and no arm mention). The arm copy names what the snapshot
-// will do; ticking the box after arming resets the arms (see the change handler).
+// the two-click arm for "Re-apply all brands": the first click says what the batch will
+// do, the second runs it
 let reapplyArmed = false
-// ─── the REBUILD feature (owner 2026-08-03: "a way to redo the main theme … or change it
-// to a different color") ──────────────────────────────────────────────────────────────
+// ─── the REBUILD feature ("a way to redo the main theme … or change it to a different
+// color") ─────────────────────────────────────────────────────────────────────────────
 // fileBaseSeed: the base collection's seed color — the file-state handshake delivers the
 // stored value on load; every payload's base column builds from it so diffs stay against
 // THIS file's base, not the fixed default.
@@ -830,7 +817,7 @@ function sendQueueItem() {
   setStatus(`${qLabel} ${qi + 1}/${queue!.length} — ${it.brand}…`)
   const brandTokens = buildBrandColumns(it.theme, it.neutralLevel)
   const baseTokens = buildBaseColumns(fileBaseSeed)
-  const retiredNeutral = buildRetiredNeutralRows(fileBaseSeed) // heals pre-retune base rows (2026-08-11)
+  const retiredNeutral = buildRetiredNeutralRows(fileBaseSeed) // heals pre-retune base rows
   // a rebuild batch: the FIRST item carries the force-reseed flag (the base rebuilds once,
   // then every following item's diff runs against the fresh base)
   const rebuild = qi === 0 && queueRebuildSeed
@@ -838,8 +825,6 @@ function sendQueueItem() {
   parent.postMessage({ pluginMessage: { type: 'apply', brand: it.brand, brandTokens, baseTokens, retiredNeutral, hasSecondary: it.hasSecondary, confirmed: true, spec: it, descopePrimitives, ...rebuild } }, '*')
 }
 
-// (the apcaPosture parameter died with the Include-APCA toggle, 2026-07-29: there is one
-// column set now, so a batch can no longer be armed under a different posture.)
 function startQueue(items: Recipe[], label: string) {
   queue = items
   qi = 0
@@ -885,9 +870,9 @@ reapplyBtn.addEventListener('click', () => {
   parent.postMessage({ pluginMessage: { type: 'collect-specs' } }, '*')
 })
 
-// ─── Rebuild base theme (owner 2026-08-03: "a way to redo the main theme … or change it
-// to a different color"). Armed two-click like re-apply; the hex field empty =
-// refresh the CURRENT seed onto today's engine. Overwrites base-row edits by design —
+// ─── Rebuild base theme ("a way to redo the main theme … or change it to a different
+// color"). Armed two-click like re-apply; the hex field empty = re-solve the CURRENT
+// seed with the engine. Overwrites base-row edits by design —
 // that is what "redo" means; per-brand extension overrides recompute right after.
 rebuildBtn.addEventListener('click', () => {
   if (queue) return
@@ -904,8 +889,8 @@ rebuildBtn.addEventListener('click', () => {
   parent.postMessage({ pluginMessage: { type: 'collect-specs' } }, '*')
 })
 
-// ─── Edit an applied theme (owner 2026-08-06: "pull up the themes that are in the
-// file to edit") — the picker loads a stored recipe back into the form; Apply then
+// ─── Edit an applied theme ("pull up the themes that are in the file to edit") — the
+// picker loads a stored recipe back into the form; Apply then
 // updates the extension through the unchanged single-apply path. A name change while
 // a theme is loaded RENAMES the extension in place (renameFrom rides the apply).
 
