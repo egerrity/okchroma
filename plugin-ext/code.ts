@@ -764,10 +764,12 @@ figma.ui.onmessage = async (msg) => {
       // comparing an upshift's from/to against a fresh payload path below. Index-keyed,
       // not a payload
       // value-import (keeps the engine out of the sandbox bundle — see the header
-      // comment). Anything else passes through unchanged.
+      // comment). Anything else passes through unchanged. The matched word is the
+      // DETECTION's band word (ink), never the live instrument word: lifting it to the
+      // current spelling disarms both newRows filters below with no type error.
       const STAGE_B_INK_LEAF: Record<string, string> = { '10': 'pen-58', '11': 'pen-70', '12': 'pen-100' }
       const stageBInkLeaf = (oldSpelling: string): string => {
-        const m = /\/pen\/(10|11|12)$/.exec(oldSpelling)
+        const m = /\/ink\/(10|11|12)$/.exec(oldSpelling)
         return m ? oldSpelling.slice(0, -m[0].length) + '/' + STAGE_B_INK_LEAF[m[1]] : oldSpelling
       }
 

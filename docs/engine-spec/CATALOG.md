@@ -4,6 +4,32 @@ Fresh tracker. The previous CATALOG was archived with the whole old docs tree in
 ("clean-slate rewrite" 2026-06-27); entries here are code-grounded, logged at find-time,
 fixed holistically after owner sign-off.
 
+## C66 — the C49 upshift's newRows detection stopped firing at the instruments rename (FIXED, 2026-09-15)
+
+Found during the plugin comment de-dating pass. The extended plugin's C49 pre-pass
+computes `textUpshifts` in the pre-Stage-B spelling on purpose (`neutral/ink/11` →
+`neutral/ink/12`, `<fam>/ink/10` → `<fam>/ink/11`), and `stageBInkLeaf` maps that spelling
+to the current payload leaf so the two newRows filters can compare an upshift against an
+emitted path. The instruments rename (names only) lifted the helper's regex from `/ink/`
+to `/pen/` along with every other band word, so it no longer matched the detection's own
+entries and passed them through unchanged; both filters then compared `base/neutral/ink/12`
+against `base/neutral/pen-100` and never fired. Effect on a C33-era file (banded digits,
+applied between the 2026-07-29 collapse and C49, never re-applied): the confirm counted the
+rename-filled targets as new (`pen-70` per family, the neutral `pen-100`) and did not count
+the vacating between-stop rows (`pen-58`), which are the rows that need the new-row
+treatment. The count matched by coincidence, the names did not, and the extension backfill
+still ran on the strength of the wrongly counted rows, so the visible symptom was a confirm
+naming rows the apply then filled by rename. The rename itself and the ensure ladder were
+unaffected: ids ride to the new names, the between stop is created fresh, no old name
+survives. Post-C49 and pre-C33 files never build an upshift list. Fix: the regex matches the
+detection's word again, with a comment beside it saying why it must not follow the live
+instrument word. Proof: `scratch/fake-figma/ext-c33-upshift.ts` runs the real code.ts
+against the mock over a file rewritten to the C33-era spelling; before the fix the confirm
+names `pen-100` and `pen-70` rows, after it every named row is a `pen-58` row, every moved
+id sits under its new name, and no `ink/N` name remains. Typecheck, the plugin-ext build and
+`audit:ext` clean. The community plugin is not affected: it has no upshift pass (its
+unsupported-surface note).
+
 ## C65 — the consumer contract stated a stamp-edge width nobody ruled (FIXED, 2026-09-11)
 
 `docs/agents.md` told consumers to render `stamp-edge` at 1.5px. The owner never set a
