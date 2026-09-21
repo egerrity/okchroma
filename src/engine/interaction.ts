@@ -3,8 +3,8 @@
 // Three tiers of ground plus the text that sits on them. `solid` is the stamp
 // (fill, hover, pressed, edge, on). `subtle` and `hint` are the family's
 // highlighter-26 at an opacity rung, the one sanctioned translucency; `hint` rests
-// transparent and `subtle` rests at the lowest rung. Each tier climbs the ladder
-// one rung per state. Two pole families join the seven color families: `neutral-strong`
+// transparent and `subtle` rests a rung above the ladder's foot. Each tier climbs the
+// ladder one rung per state. Two pole families join the seven color families: `neutral-strong`
 // is the neutral's pen pole used as a stamp, `neutral-inverse` its paper pole; every
 // row in them is a neutral pole, so they flip with the mode as one.
 //
@@ -35,7 +35,7 @@ export const INTERACTION_STATES: readonly InteractionState[] = ['enabled', 'hove
 
 /** the rung each translucent tier takes per state; null is the transparent rest */
 export const INTERACTION_LADDER: Record<'subtle' | 'hint', Record<InteractionState, OpacityRung | null>> = {
-  subtle: { enabled: 8, hover: 12, pressed: 16, selected: 24 },
+  subtle: { enabled: 12, hover: 16, pressed: 24, selected: 32 },
   hint: { enabled: null, hover: 8, pressed: 12, selected: 16 },
 }
 

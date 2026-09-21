@@ -4,6 +4,23 @@ Fresh tracker. The previous CATALOG was archived with the whole old docs tree in
 ("clean-slate rewrite" 2026-06-27); entries here are code-grounded, logged at find-time,
 fixed holistically after owner sign-off.
 
+## C67 — the subtle ladder cannot climb to 032 on the inverse family's pen-58 ground (RULED, 2026-09-21)
+
+Found bumping the subtle tier one rung per state on the owner's ruling (8/12/16/24 to
+12/16/24/32; the hint tier unchanged). Dump-and-diff through the real pipeline over the
+fixture roster: exactly the subtle rows move, every other value identical. typecheck,
+audit, audit:register and figma:verify pass. audit:tokens fails on one shape, every
+fixture alike: `neutral-inverse`, light, `fg` and `fg-strong` on `subtle-bg-selected` over
+`neutral-pen-58`, at 3.8 to 3.9:1 against the 4.5:1 body bar. The inverse family's tint
+and its text are both the paper pole, so its selected rung is the pole at 032 over the pen
+that clears 4.5:1 for that pole; the composite lightens past the bar by arithmetic, not by
+seed. Over `pen-70` and `pen-100` it holds, and dark holds everywhere. `pen-58` is in the
+inverse claim as the strong stamp's pressed ground (audit E composites the inverse family
+over pen-100, pen-58 and pen-70). Ruled the same day: the pole families are the black and
+the white version of the register, each paired with its straight pole, so the claim is
+`neutral-strong` over `paper-0` and `neutral-inverse` over `pen-100`; the audit and
+`docs/agents.md` say so, and the ladder stays at 12/16/24/32.
+
 ## C66 — the C49 upshift's newRows detection stopped firing at the instruments rename (FIXED, 2026-09-15)
 
 Found during the plugin comment de-dating pass. The extended plugin's C49 pre-pass

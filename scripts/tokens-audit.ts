@@ -154,13 +154,11 @@ for (const fx of FIXTURES) {
     for (const mode of ['light', 'dark'] as const) {
       const rows = new Map(interactionRows(family, mode, base))
       const texts: Array<['fg' | 'fg-strong', string]> = [['fg', full[mode][`${family}-fg`]], ['fg-strong', full[mode][`${family}-fg-strong`]]]
-      // the inverse family is the paper pole used on INVERTED grounds (a pen fill), so it
-      // is judged there; every other family is judged over the papers
-      const grounds: Array<[string, string]> = family === INTERACTION_POLE_FAMILY.inverse
-        ? [
-            [PEN_100, base[mode][PEN_100]],
-            ...[10, 11].map(i => [`${CSS_FAMILY.neutral}-${stopTokenName(i)}`, base[mode][`${CSS_FAMILY.neutral}-${stopTokenName(i)}`]] as [string, string]),
-          ]
+      // the pole families are the black and the white version of the register, each paired
+      // with its straight pole: `neutral-strong` is judged over `paper-0`, `neutral-inverse`
+      // over `pen-100` (owner, C67); every color family is judged over the papers
+      const grounds: Array<[string, string]> = isPole
+        ? [family === INTERACTION_POLE_FAMILY.inverse ? [PEN_100, base[mode][PEN_100]] : [PAPER_0, base[mode][PAPER_0]]]
         : [
             [PAPER_0, base[mode][PAPER_0]],
             ...paperFamilies.flatMap(pf => [1, 2, 3].map(i => [`${pf}-${stopTokenName(i)}`, base[mode][`${pf}-${stopTokenName(i)}`]] as [string, string])),

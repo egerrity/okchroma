@@ -8,6 +8,13 @@ structure, ships as at least a minor.
 
 Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git log.
 
+## 0.6.1
+
+- The subtle tier of the interaction register climbs one rung at every state: it rests at
+  `012` and reaches `032` when selected, where it rested at `008` and reached `024`. The
+  hint tier is unchanged. Only the eight `subtle-bg-*` rows per family move; every other
+  emitted value is identical. A patch: resolved values only.
+
 ## 0.6.0 — 2026-09-11
 
 - The structured emit: `themeTokens` returns every emitted name with its light and dark
