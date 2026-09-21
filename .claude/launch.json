@@ -94,6 +94,23 @@
       "runtimeExecutable": "../ds-spike/scripts/start-ios.sh",
       "runtimeArgs": [],
       "port": 8081
+    },
+    {
+      "name": "poc-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "../okchroma-tamagui/apps/web",
+        "run",
+        "dev"
+      ],
+      "port": 8350
+    },
+    {
+      "name": "poc-native-ios",
+      "runtimeExecutable": "../okchroma-tamagui/scripts/start-ios.sh",
+      "runtimeArgs": [],
+      "port": 8081
     }
   ]
 }
