@@ -8,7 +8,7 @@ structure, ships as at least a minor.
 
 Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git log.
 
-## 0.6.1
+## 0.6.1 — 2026-09-21
 
 - The subtle tier of the interaction register climbs one rung at every state: it rests at
   `012` and reaches `032` when selected, where it rested at `008` and reached `024`. The
