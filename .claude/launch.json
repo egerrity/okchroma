@@ -52,6 +52,17 @@
       "port": 5176
     },
     {
+      "name": "astryx-poc",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "--prefix",
+        "../okchroma-tamagui/apps/web-astryx",
+        "dev"
+      ],
+      "port": 5177
+    },
+    {
       "name": "base-poc",
       "runtimeExecutable": "npm",
       "runtimeArgs": [
