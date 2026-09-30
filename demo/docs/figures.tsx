@@ -4,7 +4,7 @@ import { stopHex, brandCss, signalsCss } from '../../src/engine/cssRender'
 import { resolveTheme, SIGNAL_SCALES } from '../../src/engine/resolve'
 import { neutralTintHue } from '../../src/engine/colorEngine'
 import { themeToFigma, groupEntries, type FigmaGroup, type FigmaColorToken, type FigmaLeaf } from '../../src/engine/figmaRender'
-import { stopTokenName, PAPER_0, PEN_100, SURFACE_PLANE_LAW, SCALE_STOP_COUNT } from '../../src/engine/tokenNames'
+import { stopTokenName, SCALE_STOP_COUNT, cssVarName } from '../../src/engine/tokenNames'
 import { describeToken, canonicalize, FAMILY, CSS_FAMILY, type Family } from '../../src/engine/tokenDescriptions'
 import { SIGNALS } from '../../src/engine/signals'
 import { ROOT_L_LIGHT } from '../../src/engine/stopTable'
@@ -81,9 +81,8 @@ export function roster(): RosterRow[] {
   rosterCache = cols.light.map(t => ({ path: t.path, light: t, dark: dark.get(t.path) }))
   return rosterCache
 }
-// a bare-number row (the opacity ladder) shows its number, no swatch
-const tokColor = (t: FlatTok | undefined) => (t ? (t.n !== undefined ? 'transparent' : rgbaCss(t.r, t.g, t.b, t.a)) : '')
-const tokLabel = (t: FlatTok | undefined) => (t ? (t.n !== undefined ? String(t.n) : t.a !== undefined && t.a < 1 ? `${rgbaCss(t.r, t.g, t.b)} · ${Math.round(t.a * 100)}%` : rgbaCss(t.r, t.g, t.b)) : '')
+const tokColor = (t: FlatTok | undefined) => (t ? rgbaCss(t.r, t.g, t.b, t.a) : '')
+const tokLabel = (t: FlatTok | undefined) => (t ? (t.a !== undefined && t.a < 1 ? `${rgbaCss(t.r, t.g, t.b)} · ${Math.round(t.a * 100)}%` : rgbaCss(t.r, t.g, t.b)) : '')
 
 // the description's parts: title, the role line, the conformance line (unlabeled), theming
 export function describeParts(path: string): { role: string; conformance?: string; theming?: string } {
@@ -97,39 +96,11 @@ export function describeParts(path: string): { role: string; conformance?: strin
   return { role, conformance, theming }
 }
 
-// The CSS custom property a row ships as, if any. Family rows follow the CSS grammar
-// (cssRender.brandKindBody); the system rows are spelled where they are emitted.
-const CSS_WORD: Record<string, string> = {
-  [FAMILY.neutral]: CSS_FAMILY.neutral, [FAMILY.brandPrimary]: CSS_FAMILY.brandPrimary, [FAMILY.brandSecondary]: CSS_FAMILY.brandSecondary,
-  [FAMILY.critical]: FAMILY.critical, [FAMILY.warning]: FAMILY.warning, [FAMILY.positive]: FAMILY.positive, [FAMILY.info]: FAMILY.info,
-}
-export type CssHome = { name: string; from: 'engine' | 'semantic' } | { name: null; note: string }
+// The CSS custom property a row ships as: the row's canonical path joined with hyphens,
+// the one grammar every emitter spells (tokenNames.ts). Every row has one.
+export type CssHome = { name: string }
 export function cssHomeOf(path: string): CssHome {
-  const canonical = canonicalize(path)
-  const fam = Object.keys(CSS_WORD).find(f => canonical.startsWith(f + '/'))
-  if (fam) {
-    const leaf = canonical.slice(fam.length + 1)
-    if (leaf === PAPER_0 || leaf === PEN_100) return { name: `--${leaf}`, from: 'engine' }
-    return { name: `--${CSS_WORD[fam]}-${leaf.replace('/', '-')}`, from: 'engine' }
-  }
-  const link: Record<string, string> = {
-    'system/link/default/enabled': '--link', 'system/link/default/hover': '--link-hover', 'system/link/default/pressed': '--link-pressed',
-    'system/link/inverse/enabled': '--link-inverse', 'system/link/inverse/hover': '--link-inverse-hover', 'system/link/inverse/pressed': '--link-inverse-pressed',
-  }
-  if (link[canonical]) return { name: link[canonical], from: 'engine' }
-  if (canonical === 'system/abs-primary') return { name: `--${CSS_FAMILY.brandPrimary}-identity`, from: 'engine' }
-  if (canonical === 'system/abs-alt') return { name: `--${CSS_FAMILY.brandSecondary}-identity`, from: 'engine' }
-  if (canonical === 'system/alpha/transparent') return { name: '--alpha-transparent', from: 'engine' }
-  const op = canonical.match(/^system\/opacity\/(\d{3})$/)
-  if (op) return { name: `--opacity-${op[1]}`, from: 'engine' }
-  const m = canonical.match(/^system\/alpha\/away-from-bg\/(\d\d)$/)
-  if (m) return { name: `--alpha-away-from-bg-${m[1]}`, from: 'engine' }
-  const sh = canonical.match(/^system\/alpha\/shadow-(\d\d)$/)
-  if (sh) return { name: `--shadow-${sh[1]}`, from: 'semantic' }
-  const sf = canonical.match(/^system\/surface\/(\w+)$/)
-  if (sf) return { name: `--surface-${sf[1]}`, from: 'semantic' }
-  if (canonical === 'system/alpha/ink') return { name: null, note: 'inlined into the quiet stamp/on values' }
-  return { name: null, note: 'Figma only' }
+  return { name: cssVarName(canonicalize(path).split('/')) }
 }
 
 const FAMILY_ORDER: Family[] = [FAMILY.brandPrimary, FAMILY.brandSecondary, FAMILY.neutral, FAMILY.critical, FAMILY.warning, FAMILY.positive, FAMILY.info]
@@ -150,7 +121,7 @@ function RosterTable({ rows, cssColumn }: { rows: RosterRow[]; cssColumn: boolea
             return (
               <tr key={r.path}>
                 <td><code className="d2-code">{r.path}</code></td>
-                {cssColumn && <td>{'note' in home ? <span className="d2-muted">{home.note}</span> : <><code className="d2-code">{home.name}</code>{home.from === 'semantic' && <span className="d2-muted"> (tokens/semantic.css)</span>}</>}</td>}
+                {cssColumn && <td><code className="d2-code">{home.name}</code></td>}
                 <td>{d.role}</td>
                 <td>{d.conformance ?? ''}</td>
                 <td><SwatchCell color={tokColor(r.light)} label={tokLabel(r.light)} /></td>
@@ -164,8 +135,8 @@ function RosterTable({ rows, cssColumn }: { rows: RosterRow[]; cssColumn: boolea
   )
 }
 
-// One family's rows, with a picker. The identity row is re-homed by the plugin to
-// base/absolute/brand, so it shows under the system rows instead.
+// One family's rows, with a picker. The seed absolutes sit outside the families, under
+// absolute/, so they show with the link trios instead.
 export function FamilyRoster({ cssColumn = true }: { cssColumn?: boolean }) {
   const [fam, setFam] = useState<string>(FAMILY.brandPrimary)
   const rows = useMemo(() => roster().filter(r => r.path.startsWith(`base/${fam}/`)), [fam])
@@ -185,26 +156,15 @@ export function FamilyRoster({ cssColumn = true }: { cssColumn?: boolean }) {
   )
 }
 
-// The system rows: link, alpha, absolutes, the utility shelf, plus the four surface
-// planes (created by the plugin itself and aliased onto the neutral's papers per
-// SURFACE_PLANE_LAW, so they are spliced in here from that law).
+// The rows outside the families: the two link trios and the two seed absolutes.
 export function SystemRoster() {
-  const rows = useMemo(() => {
-    const all = roster()
-    const sys = all.filter(r => !/^base\/(neutral|brand|brand-alt|critical|warning|positive|info)\//.test(r.path))
-    const neutral = (leaf: string) => all.find(r => r.path === `base/neutral/${leaf}`)
-    const planes: RosterRow[] = Object.entries(SURFACE_PLANE_LAW).map(([path, law]) => {
-      const l = neutral(law.light), d = neutral(law.dark)
-      return { path: path.replace(/^system\//, 'utility/'), light: l!.light, dark: d?.dark }
-    })
-    return [...planes, ...sys]
-  }, [])
+  const rows = useMemo(() => roster().filter(r => !/^base\/(neutral|brand|brand-alt|critical|warning|positive|info)\//.test(r.path)), [])
   return (
     <figure className="d2-fig">
       <RosterTable rows={rows} cssColumn />
       <figcaption className="d2-ramp-cap">
-        The system rows for seed {REF_SEED}. The surface planes alias the neutral's own papers in reversed order per mode;
-        the alpha and utility rows are brand-independent constants.
+        The rows outside the families for seed {REF_SEED}: the link trio for text on the papers, the inverse trio for
+        text on the pen ground, and the two seeds as given.
       </figcaption>
     </figure>
   )
@@ -217,7 +177,7 @@ export function NamingAnatomy() {
   const PENCIL = 9
   const [instrument, digit] = stopTokenName(PENCIL).split('-')
   const cols = [
-    { seg: 'base', title: 'ZONE', lines: ['extended plugin only:', 'base/ engine-owned,', 'utility/ team-touchable'] },
+    { seg: 'base', title: 'ZONE', lines: ['extended plugin only:', 'base/ engine-owned'] },
     { seg: FAMILY.neutral, title: 'FAMILY', lines: ['neutral, brand, brand-alt,', 'critical, warning,', 'positive, info'] },
     { seg: instrument, title: 'INSTRUMENT', lines: ['paper, chalk,', 'highlighter, pencil, pen:', 'the law the stop serves'] },
     { seg: digit, title: 'NUMBER', lines: ['100 − round(light rootL × 100)', `= 100 − round(${ROOT_L_LIGHT[PENCIL]} × 100)`, 'bigger = stronger'] },
@@ -324,9 +284,7 @@ export function FigmaTree() {
         <div className="d2-leaf-list">
           {leaves.map(([p, tok]) => (
             <div key={p} className="d2-leaf-row">
-              {tok.$type === 'number'
-                ? <SwatchCell color="transparent" label={String(tok.$value)} />
-                : <SwatchCell color={rgbaCss(...tok.$value.components, tok.$value.alpha)} label={tok.$value.alpha < 1 ? `${tok.$value.hex} · ${Math.round(tok.$value.alpha * 100)}%` : tok.$value.hex} />}
+              <SwatchCell color={rgbaCss(...tok.$value.components, tok.$value.alpha)} label={tok.$value.alpha < 1 ? `${tok.$value.hex} · ${Math.round(tok.$value.alpha * 100)}%` : tok.$value.hex} />
               <code className="d2-code">{p}</code>
             </div>
           ))}
@@ -334,8 +292,9 @@ export function FigmaTree() {
       </details>
       <figcaption className="d2-ramp-cap">
         Live: <Code>themeToFigma(theme.themed, {'{'} secondary, neutralH, signals {'}'}).light</Code> for seed {REF_SEED}.
-        The dark tree has the same shape with the dark values. Signal groups are keyed by identity here (red, yellow, green, blue);
-        the plugins write them under their role names.
+        The dark tree has the same shape with the dark values. Every group is spelled in the one grammar: the signals by
+        role, the link trios under link/default and link/inverse, the seeds under absolute/. Joined with slashes a path
+        is the Figma variable; joined with hyphens it is the CSS custom property.
       </figcaption>
     </figure>
   )

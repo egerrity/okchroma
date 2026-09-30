@@ -19,9 +19,9 @@ file is the repo-side summary with the code pointers.
 
 | instrument | stops | the duty |
 |---|---|---|
-| `paper` | 0 · 1 · 3 · 5 | grounds: the surface planes and role backgrounds; no contrast obligation of their own |
+| `paper` | 0 · 1 · 3 · 5 | grounds: backgrounds and the planes a semantic layer builds on them; no contrast obligation of their own |
 | `chalk` | 8 · 11 · 15 · 20 | grounds: decorative borders, inverted text, illustration; never text |
-| `highlighter` | 26 | **3:1 on every paper**: focus rings, icons, borders, large text. The bar for anything that must be visible to operate the interface (the WCAG non-text contrast requirement). At an opacity rung it is the state layer over any ground; the pens hold 4.5:1 on every state rung over every paper |
+| `highlighter` | 26 | **3:1 on every paper**: focus rings, icons, borders, large text. The bar for anything that must be visible to operate the interface (the WCAG non-text contrast requirement). As a translucent layer it is the state layer over any ground; the pens hold 4.5:1 on the composite over every paper |
 | `pencil` | 47 | **4.5:1 on every paper**: regular text, AA; also the emphasis fill |
 | `pen` | 58 · 70 · 100 | **4.5:1 on every paper and chalk of its own family or of the neutral, both directions**: text that must hold on tinted grounds, AA |
 
@@ -89,7 +89,7 @@ from; the emitted lightness differs per hue.
 | `chalk-11` | 5 | 0.892 | 0.313 | – | the same |
 | `chalk-15` | 6 | 0.852 | 0.348 | – | the same |
 | `chalk-20` | 7 | 0.801 | 0.420 | – | the same; the ground `pen-58` is cleared against |
-| `highlighter-26` | 8 | 0.738 | 0.550 | 3:1 against `paper-5` | focus rings, icons, large text; the state layer at an opacity rung |
+| `highlighter-26` | 8 | 0.738 | 0.550 | 3:1 against `paper-5` | focus rings, icons, large text; the state layer as a translucent layer |
 | `pencil-47` | 9 | 0.530 | 0.767 | 4.5:1 against `paper-5` | regular text, inverted backgrounds; the emphasis fill |
 | `pen-58` | 10 | 0.415 | 0.843 | 4.5:1 against `chalk-20` | regular text, inverted backgrounds |
 | `pen-70` | 11 | 0.300 | 0.919 | 7:1 against `paper-5` (the promise is 4.5) | heavy-emphasis text, inverted backgrounds |
@@ -135,30 +135,18 @@ and signal fills are nudged until the text reads at Lc 65 (critical 50). White a
 are the contrast extremes under WCAG, so for any fill at least one of them clears 4.5:1.
 Declared per mode as the `ons` block of the spec.
 
-## The opacity rungs
+## State layers
 
-Eight bare numbers, `004 008 012 016 024 032 048 064`, the same in both modes. In CSS they
-are `--opacity-NNN` in the `:root` block `signalsCss` writes, as fractions (`0.16`); in Figma
-they are number variables (`system/opacity/NNN`, zoned as `utility/opacity/NNN` in the
-extended plugin) holding the percent (`16`), which is the unit Figma reads when a number is
-bound to an opacity.
-A translucent row composes a color with one of them: the shadows are black at `004`, `008`,
-`012` in light and at `032`, `048`, `064` in dark; the scrim is black at `064` in both modes.
-Neither has a color row of its own.
-
-The state rungs, `008` through `032`, are `highlighter-26` over a ground: hover, pressed, and
-selected are the one stop at a rung, over any paper or over an inverted ground, never a chalk
-step. `highlighter-26` is placed by its 3:1 against `paper-5` in both modes, so a rung steps
-the same distance off the ground in light and in dark, and one rung set serves both modes.
-The claim: the pen band clears 4.5:1 on `highlighter-26` at every state rung composited over
-every paper of its family and of the neutral, in the shipped 8-bit basis
-(`npm run audit:guarantee`). The composite is judged in gamma sRGB, the space every renderer
+The engine emits no opacity ladder: a translucency is a semantic decision a consuming
+system makes with its own names. What the engine ships is the stop to build state layers
+on and a claim about it. Hover, pressed, and selected on a paper or on an inverted ground
+are `highlighter-26` as a translucent layer over that ground, never a chalk step.
+`highlighter-26` is placed by its 3:1 against `paper-5` in both modes, so a given weight
+steps the same distance off the ground in light and in dark. The claim: the pen band
+clears 4.5:1 on `highlighter-26` composited over every paper of its family and of the
+neutral, in the shipped 8-bit basis, up to the weight `npm run audit:guarantee` measures
+(roughly a third). The composite is judged in gamma sRGB, the space every renderer
 composites in.
-
-Which rung a state takes is a semantic decision a consuming system makes with its own names;
-the engine ships the numbers and the claim. In Figma, a color alias that takes its opacity
-from one of these numbers is made in the kit: the plugins write the numbers and the literal
-alphas, and the Plugin API does not yet expose an alias with opacity.
 
 ## The Helmholtz-Kohlrausch solve
 

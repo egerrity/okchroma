@@ -19,8 +19,9 @@ export function Body() {
   return (
     <>
       <Lead>
-        The output is a fixed vocabulary of names whose values move per brand and per mode. This page is the
-        vocabulary: what every name means, where each one is emitted, and what it looks like.
+        The output is a fixed vocabulary of primitives whose values move per brand and per mode: the seven color
+        families, two link trios and the two seed absolutes, every one a value the engine calculates from the seed.
+        This page is the vocabulary: what every name means, where each one is emitted, and what it looks like.
       </Lead>
 
       <H2>Reading a name</H2>
@@ -67,14 +68,14 @@ export function Body() {
           [<Code>{STAMP_FILL}</Code>, 'the solid button fill', "the seed's own lightness and hue, moved only by the on-fill law, the legibility booster, and the red collision solve; floored in dark so it lifts, never sinks"],
           [<Code>{STAMP_FILL_HOVER}</Code>, 'hover state', 'a flat step of 0.05 L away from the mode’s ground (toward black in light, white in dark), reversed for fills that sit near the far pole'],
           [<Code>{STAMP_FILL_PRESSED}</Code>, 'pressed state', 'the same direction, twice the step'],
-          [<Code>{STAMP_EDGE}</Code>, 'a low-visibility stroke', <>the alpha ladder rung for the family (primary and signals <K v={OFFSET_ALPHAS[ctaBorderRung('brand')]} pct d={0} />, secondary <K v={OFFSET_ALPHAS[ctaBorderRung(CSS_FAMILY.brandSecondary)]} pct d={0} />, neutral <K v={OFFSET_ALPHAS[ctaBorderRung(CSS_FAMILY.neutral)]} pct d={0} />) when the fill reads under APCA |Lc| <K v={CTA_BORDER_LC_FLOOR} d={0} /> against the page; otherwise the transparent variable. Always render it, so layout never shifts</>],
+          [<Code>{STAMP_EDGE}</Code>, 'a low-visibility stroke', <>the page-polarity pole (black in light, white in dark) at the family's rung (primary and signals <K v={OFFSET_ALPHAS[ctaBorderRung('brand')]} pct d={0} />, secondary <K v={OFFSET_ALPHAS[ctaBorderRung(CSS_FAMILY.brandSecondary)]} pct d={0} />, neutral <K v={OFFSET_ALPHAS[ctaBorderRung(CSS_FAMILY.neutral)]} pct d={0} />) when the fill reads under APCA |Lc| <K v={CTA_BORDER_LC_FLOOR} d={0} /> against the page; otherwise transparent. A literal in every output. Always render it, so layout never shifts</>],
           [<Code>{STAMP_ON}</Code>, 'the text over the fill', <>white or black, whichever passes; quiet fills (the neutral, and a secondary whose composite stays legal on every state) carry the pole at alpha, <K v={SOFT_ON_CTA_ALPHA.light} pct d={0} /> light / <K v={SOFT_ON_CTA_ALPHA.dark} pct d={0} /> dark</>],
         ]}
       />
       <P>
         The text-style action has no separate tokens: it is the three text stops read as states (rest{' '}
         <Code>{stopTokenName(9)}</Code>, hover <Code>{stopTokenName(10)}</Code>, pressed <Code>{stopTokenName(11)}</Code>).
-        <Code>identity</Code> is the exact input hex (brand and brand-alt only), never adjusted.
+        The seeds ship as given under <Code>absolute/brand</Code> and <Code>absolute/brand-alt</Code>, never adjusted: reference values, not UI colors.
       </P>
 
       <H2>Families and prefixes</H2>
@@ -92,11 +93,22 @@ export function Body() {
         names, so a future re-pointing of a role keeps the emitted name.
       </P>
 
+      <H2>The grammar</H2>
+      <P>
+        Every row has one path, and every output spells it: <Code>brand/stamp/fill</Code>, <Code>neutral/paper-0</Code>,{' '}
+        <Code>link/default/enabled</Code>, <Code>absolute/brand</Code>. Joined with hyphens it is the CSS custom property
+        (<Code>--brand-stamp-fill</Code>, <Code>--neutral-paper-0</Code>, <Code>--link-default-enabled</Code>); joined with
+        slashes it is the Figma variable and the DTCG token path. The neutral's poles sit in the neutral group; the link
+        trios and the seed absolutes are their own groups. Nothing is emitted outside these: no planes, no shadows, no
+        opacity or alpha ladders, no absolute black or white. Those belong to the semantic layer a consumer authors on
+        the primitives; the demo's own <Code>demo/semantic.css</Code> is a worked example.
+      </P>
+
       <H2 id="modes-and-selectors">Modes and selectors</H2>
       <H3>CSS</H3>
-      <Pre>{`[data-brand="acme"] { … }                        /* light: the anchors, then every family's rows */
+      <Pre>{`[data-brand="acme"] { … }                        /* light: the neutral's poles, then every family's rows, the link trios, the seeds */
 [data-brand="acme"][data-theme="dark"] { … }     /* dark: the same names, dark values */
-:root { … }                                      /* signalsCss: the alpha ladders, the opacity ladder, the canonical signals */
+:root { … }                                      /* signalsCss: the four canonical signal families */
 :root[data-theme="dark"], [data-theme="dark"] { … }
 ${P3_SUPPORTS} {
 ${P3_MEDIA} {
@@ -112,11 +124,17 @@ ${P3_MEDIA} {
       </P>
       <H3>Figma</H3>
       <P>
-        <Code>themeToFigma</Code> returns a light tree and a dark tree of the same shape. The extended plugin writes one
-        base collection (<Code>theme</Code>, modes <Code>light</Code> and <Code>dark</Code>, populated once from the default
-        seed) and one extension collection per brand that overrides only the rows that differ. The extension carries the
-        brand's name; the paths inside stay generic (<Code>base/brand/…</Code>), so a designer binds once and re-themes by
-        switching the extension.
+        <Code>themeToFigma</Code> returns a light tree and a dark tree of the same shape, on the grammar's paths. The
+        extended plugin writes one base collection (<Code>theme</Code>, modes <Code>light</Code> and <Code>dark</Code>,
+        populated once from the default seed) and one extension collection per brand that overrides only the rows that
+        differ. The extension carries the brand's name; the paths inside stay generic (<Code>base/brand/…</Code>), so a
+        designer binds once and re-themes by switching the extension.
+      </P>
+      <H3>DTCG</H3>
+      <P>
+        <Code>tokensToDtcg</Code> returns one Design Tokens Format Module 2025.10 document per mode on the same paths,
+        every token with its description. The two join through a resolver document with a theme modifier; the format
+        is in <Code>docs/schema.md</Code>.
       </P>
 
       <H2>A live CSS block</H2>
@@ -128,26 +146,12 @@ ${P3_MEDIA} {
       <H2>The full roster</H2>
       <P>
         Every row the extended plugin writes for seed {REF_SEED}, in the plugin's own spelling, with the CSS custom
-        property the same row ships as. Rows marked "tokens/semantic.css" come from the optional semantic layer in the
-        package rather than from <Code>brandCss</Code>; rows marked "Figma only" have no CSS custom property.
+        property the same row ships as. Every row has one; the two spellings are the same path.
       </P>
       <H3>Per family</H3>
       <FamilyRoster />
-      <H3>System rows</H3>
+      <H3>The link trios and the seeds</H3>
       <SystemRoster />
-      <P>
-        Two rows exist in the JS emit and in CSS but are not written by the extended plugin yet: the{' '}
-        <Code>toward-bg</Code> alpha ladder (<Code>--alpha-toward-bg-06|08|16</Code>, the same rungs with the pole flipped,
-        for state layers on inverted grounds) ships in <Code>signalsCss</Code> and under <Code>system/alpha/toward-bg/</Code>{' '}
-        in <Code>themeToFigma</Code>. The disabled state is an opacity (<Code>--disabled-opacity</Code> in the semantic layer),
-        never a color token.
-      </P>
-      <P>
-        The opacity ladder (<Code>--opacity-004</Code> through <Code>--opacity-064</Code> at <Code>:root</Code>;{' '}
-        <Code>utility/opacity/NNN</Code> number variables in Figma) is the register the shadows, the scrim, and the{' '}
-        <Code>highlighter-26</Code> state layers compose with. The plugins write the numbers and the literal alphas; a
-        color alias that takes its opacity from one of the numbers is made in the kit.
-      </P>
 
       <H2>What is identical, what differs</H2>
       <UL>
@@ -157,19 +161,18 @@ ${P3_MEDIA} {
         <LI>A signal family's values move only to stay distinct from the brand (a hue shift or a swap variant), never for the brand's taste.</LI>
       </UL>
 
-      <H2>The extended plugin's zones and the picker</H2>
+      <H2>The extended plugin's zone and the picker</H2>
       <P>
-        Every path the extended plugin writes starts with an ownership zone. <Code>base/</Code> marks engine-owned rows: a
-        hand edit there is deliberately not rebuilt by a re-apply. <Code>utility/</Code> marks team-touchable rows the engine
-        never reads back (the surface planes, the shadows, the opacity ladder). The zone is stripped from the Web code syntax, so the
-        name a developer sees matches the CSS custom property.
+        Every path the extended plugin writes starts with <Code>base/</Code>, the engine-owned zone: a hand edit there is
+        deliberately not rebuilt by a re-apply. The zone is stripped from the Web code syntax, so the name a developer
+        sees matches the CSS custom property.
       </P>
       <P>
-        Inside <Code>base/</Code>, the ramp stops and the alpha and absolute plumbing are single resolved colors with no
-        state; the roles (<Code>stamp/</Code> inside each family, <Code>base/link/</Code>, and <Code>utility/surface/</Code>)
-        are state-carrying decisions a designer binds to. The plugin's "Hide primitive scale from pickers" checkbox, on by
-        default, hides every non-role row from Figma's color pickers and keeps the role rows visible. The posture is stored on
-        the file and re-applied on every apply, so a scope hand-edited in Figma reverts on the next run.
+        The ramp stops and the seed absolutes are single resolved colors with no state; the roles (<Code>stamp/</Code>{' '}
+        inside each family and <Code>base/link/</Code>) are state-carrying decisions a designer binds to. The plugin's
+        "Hide primitive scale from pickers" checkbox, on by default, hides every non-role row from Figma's color pickers
+        and keeps the role rows visible. The posture is stored on the file and re-applied on every apply, so a scope
+        hand-edited in Figma reverts on the next run.
       </P>
     </>
   )

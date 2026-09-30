@@ -12,7 +12,7 @@ import { HUE_COLLISION_CHALK_DEG, HUE_COLLISION_MIN_V, YELLOW_SPLIT_H, HUE_GATE_
 import { SHIFT_RULES } from '../../../src/engine/signalShift'
 import { P2_D, P2_D_UP } from '../../../src/engine/p2'
 import { DEFAULT_SECONDARY, SOFT_ON_CTA_ALPHA, OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, DEFAULT_LINK_HEX, SECONDARY_DISTINCT_DELTA_E } from '../../../src/engine/resolve'
-import { CTA_BORDER_LC_FLOOR, OFFSET_ALPHAS, SHADOW_ALPHAS, SCRIM_ALPHA, DISABLED_OPACITY, OPACITY_RUNGS, INTERACTION_RUNGS, opacityLeafName } from '../../../src/engine/cssRender'
+import { CTA_BORDER_LC_FLOOR, OFFSET_ALPHAS } from '../../../src/engine/cssRender'
 import { SIGNALS } from '../../../src/engine/signals'
 import { stopTokenName, SCALE_STOP_COUNT, PAPER_0 } from '../../../src/engine/tokenNames'
 
@@ -52,13 +52,15 @@ export function Body() {
           ['quiet fill', "a stamp that sits near the page: the neutral's, and the derived secondary's. Its text is the pole at alpha"],
           ['booster', 'the one use of APCA: a legibility nudge on the stamp fill, applied after the WCAG law is met; never a claim'],
           ['archetype', "one of six lightness bands a seed falls in. An override pins the stamp to the band's median"],
-          ['identity', 'the exact input hex, emitted untouched for logos'],
+          ['absolute', 'the seeds as given, emitted untouched under absolute/brand and absolute/brand-alt; reference values, never UI colors'],
           ['carry (delta)', 'the dark model: the dark ramp derived from the resolved light ramp'],
           ['torsion, drift', 'the hue rotation warm seeds take toward the clean warm hue at each lightness: drift in light, torsion in dark'],
           ['repel', 'the hue rotation a near-red seed takes away from the red signal'],
           ['collision', 'a brand close enough to a signal that the two read as one family; decided on the chalk stops'],
           ['variant', "a signal re-generated from an alternate seed to stay distinct from the brand; replaces the signal's ramp in the emitted theme"],
-          ['zone', "the extended plugin's path prefix: base/ (engine-owned) or utility/ (team-touchable)"],
+          ['primitive', 'a value the engine calculates from the seed. Everything the engine emits is one; planes, shadows, opacity and state layers are a semantic layer\'s, authored on the primitives'],
+          ['grammar', 'the one path every row has (brand/stamp/fill, neutral/paper-0, link/default/enabled, absolute/brand): hyphen-joined it is the CSS custom property, slash-joined the Figma variable and the DTCG token path'],
+          ['zone', "the extended plugin's path prefix: base/, engine-owned rows"],
           ['descope', 'the plugin posture that hides non-role rows from Figma pickers'],
         ]}
       />
@@ -141,12 +143,7 @@ export function Body() {
         [<Code>OUTLINE_HOVER_ALPHA</Code>, <>{k(OUTLINE_HOVER_ALPHA, 2)} (pressed {k(OUTLINE_PRESSED_ALPHA, 2)})</>, 'the outline secondary’s state tints'],
         [<Code>DEFAULT_LINK_HEX</Code>, DEFAULT_LINK_HEX, 'the custom link’s default seed'],
         [<Code>CTA_BORDER_LC_FLOOR</Code>, k(CTA_BORDER_LC_FLOOR, 0), 'the stamp edge gate'],
-        [<Code>OFFSET_ALPHAS</Code>, Object.entries(OFFSET_ALPHAS).map(([r, a]) => `${r}: ${a}`).join(', '), 'the alpha ladder rungs'],
-        [<Code>SHADOW_ALPHAS</Code>, Object.entries(SHADOW_ALPHAS).map(([r, a]) => `${r}: ${a.light} / ${a.dark}`).join(', '), 'the shadow rungs, light / dark'],
-        [<Code>OPACITY_RUNGS</Code>, Object.entries(OPACITY_RUNGS).map(([r, a]) => `${opacityLeafName(Number(r) as never)}: ${a}`).join(', '), 'the opacity ladder, bare numbers, both modes'],
-        [<Code>INTERACTION_RUNGS</Code>, INTERACTION_RUNGS.map(r => opacityLeafName(r)).join(', '), 'the state rungs of highlighter-26 over a ground'],
-        [<Code>SCRIM_ALPHA</Code>, k(SCRIM_ALPHA, 2), 'the scrim, the ladder\'s top rung'],
-        [<Code>DISABLED_OPACITY</Code>, k(DISABLED_OPACITY, 2), 'the disabled opacity'],
+        [<Code>OFFSET_ALPHAS</Code>, Object.entries(OFFSET_ALPHAS).map(([r, a]) => `${r}: ${a}`).join(', '), 'the stamp edge rungs, one per family tier'],
       ] as Row[]} />
 
       <H2>Option types</H2>

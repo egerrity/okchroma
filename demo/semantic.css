@@ -1,0 +1,213 @@
+/*
+  The demo's semantic layer: role names, elevation planes, shadows and an opacity ladder,
+  authored on the primitives the engine emits. The package ships the primitives only;
+  this file is the demo's own and a worked example of the layer a design system writes
+  on top of them. It never changes per brand. Only the primitives (--brand-*,
+  --neutral-*, the link trios, the seed absolutes) change.
+*/
+
+/* ─── Global planes, foreground, borders, the opacity ladder ───────────────── */
+
+[data-brand] {
+  /* The opacity ladder: bare numbers a translucent composition reads its weight
+     from, the same in both modes. The shadows and the scrim below compose with these. */
+  --opacity-004: 0.04;
+  --opacity-008: 0.08;
+  --opacity-012: 0.12;
+  --opacity-016: 0.16;
+  --opacity-024: 0.24;
+  --opacity-032: 0.32;
+  --opacity-048: 0.48;
+  --opacity-064: 0.64;
+
+  /* Elevation planes dim, low, mid, high: mid is the raised plane components sit on,
+     the page behind it is low, and the two extremes are edge cases. Both themes use
+     the SAME four stops in reversed order, so elevation always moves toward paper-0's
+     side of the ramp. Light descends the ramp as elevation rises (dim paper-5 to high
+     paper-0, white); dark ascends it (dim paper-0, the deep tinted ground, to high
+     paper-5). paper-0 flips with the mode, so it is always the extreme pole: the high
+     in light, the dim in dark. */
+  --surface-dim:        var(--neutral-paper-5);
+  --surface-low:         var(--neutral-paper-3);
+  --surface-mid:       var(--neutral-paper-1);
+  --surface-high:        var(--neutral-paper-0, #ffffff);
+
+  --fg-default:           var(--neutral-pen-70);
+  --fg-subtle:            var(--neutral-pencil-47);
+
+  /* --border-default IS THE ACCESSIBILITY BORDER: a border that has to be there (inputs
+     and other controls), so it rides highlighter-26, the stop that carries the 3:1 non-text
+     contrast requirement. Decorative borders are --border-subtle (chalk-11) and
+     the per-family --*-border-default (chalk-15). */
+  --border-default:       var(--neutral-highlighter-26);
+  --border-subtle:        var(--neutral-chalk-11);
+
+  /* Shadow transparencies: pure black at a rung of the opacity ladder above. Dark is
+     heavier by necessity: near black a light-mode weight vanishes, so the dark block
+     picks the heavier rungs for the same three roles. Elevation recipes compose these,
+     so dark shadows fall out of the token swap with nothing bespoke per style. */
+  --shadow-04: rgb(0 0 0 / var(--opacity-004));
+  --shadow-08: rgb(0 0 0 / var(--opacity-008));
+  --shadow-12: rgb(0 0 0 / var(--opacity-012));
+
+  /* The scrim: the modal veil, the absolute black at the ladder's top rung in both
+     modes. Composed here from the number; a Figma kit composes the same thing as a
+     black alias at that opacity. There is no separate scrim color row. */
+  --scrim: rgb(0 0 0 / var(--opacity-064));
+
+  /* Disabled opacity: disabled is a COMPONENT-LEVEL opacity. Colors stay the enabled
+     ones and never swap. Mode-invariant. */
+  --disabled-opacity: 0.38;
+}
+
+[data-brand][data-theme="dark"] {
+  /* Dark runs the same four stops upward: dim paper-0 (the deep tinted ground), low
+     paper-1, mid paper-3, high paper-5, the one-level highest background: every
+     family's paper-5 shares one photometric level, so chips sit flush on the high
+     plane by construction. Low needs its own override here because the shared
+     block's low is paper-3, the light value. */
+  --surface-dim:        var(--neutral-paper-0, #000000);
+  --surface-low:         var(--neutral-paper-1);
+  --surface-mid:       var(--neutral-paper-3);
+  --surface-high:        var(--neutral-paper-5);
+
+  --shadow-04: rgb(0 0 0 / var(--opacity-032));
+  --shadow-08: rgb(0 0 0 / var(--opacity-048));
+  --shadow-12: rgb(0 0 0 / var(--opacity-064));
+}
+
+/* ─── role.brand ────────────────────────────────────────────────────────────── */
+
+[data-brand] {
+  --brand-fg:                    var(--brand-pen-70);
+  --brand-fg-hover:              var(--brand-pencil-47);
+  --brand-fg-alt:                var(--brand-pencil-47);
+  --brand-fg-alt-hover:          var(--brand-pen-70);
+  --brand-fg-on-emphasis:        var(--brand-stamp-on);
+
+  --brand-bg-faint:              var(--brand-paper-3);
+  --brand-bg-subtle:             var(--brand-chalk-11);
+  --brand-bg-subtle-hover:       var(--brand-chalk-15);
+  --brand-bg-emphasis:           var(--brand-stamp-fill);
+  --brand-bg-emphasis-hover:     var(--brand-stamp-fill-hover);
+  --brand-bg-emphasis-pressed:   var(--brand-stamp-fill-pressed);
+
+  --brand-border-subtle:         var(--brand-chalk-8);
+  --brand-border-subtle-hover:   var(--brand-chalk-11);
+  --brand-border-default:            var(--brand-chalk-15);
+  --brand-border-default-hover:      var(--brand-highlighter-26);
+  --brand-border-emphasis:       var(--brand-stamp-fill);
+  --brand-border-emphasis-hover: var(--brand-stamp-fill-hover);
+
+  /* the system link (one trio per theme; aliases the primary's pen stops unless a custom
+     link color de-conflicts it; emitted per brand under link/default) */
+  --fg-link:         var(--link-default-enabled);
+  --fg-link-hover:   var(--link-default-hover);
+  --fg-link-pressed: var(--link-default-pressed);
+
+  /* the inverse link trio: the same link seed re-solved for text on inverted surfaces
+     (a pen-70 fill); always its own emitted values, since no stop is anchored against
+     that ground and so there is no alias posture */
+  --fg-link-inverse:         var(--link-inverse-enabled);
+  --fg-link-inverse-hover:   var(--link-inverse-hover);
+  --fg-link-inverse-pressed: var(--link-inverse-pressed);
+}
+
+/* ─── role.secondary (the brand's secondary ramp; mirrors brand when none) ──── */
+
+[data-brand] {
+  --brand-alt-fg:                    var(--brand-alt-pen-70);
+  --brand-alt-fg-hover:              var(--brand-alt-pencil-47);
+  --brand-alt-fg-alt:                var(--brand-alt-pencil-47);
+  --brand-alt-fg-alt-hover:          var(--brand-alt-pen-70);
+  --brand-alt-fg-on-emphasis:        var(--brand-alt-stamp-on);
+
+  --brand-alt-bg-faint:              var(--brand-alt-paper-3);
+  --brand-alt-bg-subtle:             var(--brand-alt-chalk-11);
+  --brand-alt-bg-subtle-hover:       var(--brand-alt-chalk-15);
+  --brand-alt-bg-emphasis:           var(--brand-alt-stamp-fill);
+  --brand-alt-bg-emphasis-hover:     var(--brand-alt-stamp-fill-hover);
+  --brand-alt-bg-emphasis-pressed:   var(--brand-alt-stamp-fill-pressed);
+
+  --brand-alt-border-subtle:         var(--brand-alt-chalk-8);
+  --brand-alt-border-subtle-hover:   var(--brand-alt-chalk-11);
+  --brand-alt-border-default:           var(--brand-alt-chalk-15);
+  --brand-alt-border-default-hover:     var(--brand-alt-highlighter-26);
+  --brand-alt-border-emphasis:       var(--brand-alt-stamp-fill);
+  --brand-alt-border-emphasis-hover: var(--brand-alt-stamp-fill-hover);
+}
+
+/* ─── Signal roles ──────────────────────────────────────────────────────────
+   Aliases onto the engine's signal primitives (dist/signals.css).
+   Mode switching happens at the primitive layer, so one block covers both.
+   Signal families emit by ROLE (critical/warning/positive/info, the re-pointable
+   in-between tier; identity stays engine-internal), so the role tokens and the
+   family ramp share a prefix: --critical-fg rides --critical-pen-70.
+
+   -fg-on-emphasis rides the neutral's paper-0, NOT a solved on-color. paper-0 is the
+   mode-flipping paper extreme (white in light, the deep tinted ground in dark) and
+   it clears the 4.5:1 text bar against pencil-47 in every family and both modes;
+   the band audit holds that floor over an agnostic sweep. -bg-emphasis and
+   -border-emphasis ride pencil-47. */
+
+[data-brand] {
+  --critical-fg:                    var(--critical-pen-70);
+  --critical-fg-hover:              var(--critical-pencil-47);
+  --critical-fg-alt:                var(--critical-pencil-47);
+  --critical-fg-alt-hover:          var(--critical-pen-70);
+  --critical-fg-on-emphasis:        var(--neutral-paper-0);
+  --critical-bg-faint:              var(--critical-paper-3);
+  --critical-bg-subtle:             var(--critical-chalk-11);
+  --critical-bg-subtle-hover:       var(--critical-chalk-15);
+  --critical-bg-emphasis:           var(--critical-pencil-47);
+  --critical-border-subtle:         var(--critical-chalk-8);
+  --critical-border-subtle-hover:   var(--critical-chalk-11);
+  --critical-border-default:       var(--critical-chalk-15);
+  --critical-border-default-hover: var(--critical-highlighter-26);
+  --critical-border-emphasis:       var(--critical-pencil-47);
+
+  --warning-fg:                     var(--warning-pen-70);
+  --warning-fg-hover:               var(--warning-pencil-47);
+  --warning-fg-alt:                 var(--warning-pencil-47);
+  --warning-fg-alt-hover:           var(--warning-pen-70);
+  --warning-fg-on-emphasis:         var(--neutral-paper-0);
+  --warning-bg-faint:               var(--warning-paper-3);
+  --warning-bg-subtle:              var(--warning-chalk-11);
+  --warning-bg-subtle-hover:        var(--warning-chalk-15);
+  --warning-bg-emphasis:            var(--warning-pencil-47);
+  --warning-border-subtle:          var(--warning-chalk-8);
+  --warning-border-subtle-hover:    var(--warning-chalk-11);
+  --warning-border-default:        var(--warning-chalk-15);
+  --warning-border-default-hover:  var(--warning-highlighter-26);
+  --warning-border-emphasis:        var(--warning-pencil-47);
+
+  --positive-fg:                      var(--positive-pen-70);
+  --positive-fg-hover:                var(--positive-pencil-47);
+  --positive-fg-alt:                  var(--positive-pencil-47);
+  --positive-fg-alt-hover:            var(--positive-pen-70);
+  --positive-fg-on-emphasis:          var(--neutral-paper-0);
+  --positive-bg-faint:                var(--positive-paper-3);
+  --positive-bg-subtle:               var(--positive-chalk-11);
+  --positive-bg-subtle-hover:         var(--positive-chalk-15);
+  --positive-bg-emphasis:             var(--positive-pencil-47);
+  --positive-border-subtle:           var(--positive-chalk-8);
+  --positive-border-subtle-hover:     var(--positive-chalk-11);
+  --positive-border-default:         var(--positive-chalk-15);
+  --positive-border-default-hover:   var(--positive-highlighter-26);
+  --positive-border-emphasis:         var(--positive-pencil-47);
+
+  --info-fg:                          var(--info-pen-70);
+  --info-fg-hover:                    var(--info-pencil-47);
+  --info-fg-alt:                      var(--info-pencil-47);
+  --info-fg-alt-hover:                var(--info-pen-70);
+  --info-fg-on-emphasis:              var(--neutral-paper-0);
+  --info-bg-faint:                    var(--info-paper-3);
+  --info-bg-subtle:                   var(--info-chalk-11);
+  --info-bg-subtle-hover:             var(--info-chalk-15);
+  --info-bg-emphasis:                 var(--info-pencil-47);
+  --info-border-subtle:               var(--info-chalk-8);
+  --info-border-subtle-hover:         var(--info-chalk-11);
+  --info-border-default:             var(--info-chalk-15);
+  --info-border-default-hover:       var(--info-highlighter-26);
+  --info-border-emphasis:             var(--info-pencil-47);
+}

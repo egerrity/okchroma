@@ -91,7 +91,7 @@ export const STYLE_CSS = /* css */ `
 [data-style="retro"] .dash button { border: 2px solid var(--rt-line); }
 [data-style="retro"] .dash .u-btn-primary,
 [data-style="retro"] .dash .u-btn-secondary {
-  border: 2px solid var(--pen-100) !important;
+  border: 2px solid var(--neutral-pen-100) !important;
   box-shadow: 3px 3px 0 var(--brand-pencil-47);
   transition: transform 90ms ease, box-shadow 90ms ease;
 }

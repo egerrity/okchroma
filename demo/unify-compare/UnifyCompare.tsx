@@ -899,7 +899,7 @@ export default function UnifyCompare() {
               <ForkComposition
                 page={DIST_PAGE[distMode]} heading="var(--brand-pencil-47)" body="var(--brand-pen-70)"
                 ring="var(--brand-highlighter-26)" fill="var(--brand-stamp-fill)" onFill="var(--brand-stamp-on)"
-                linkC="var(--link)" textBtn="var(--brand-pencil-47)" />
+                linkC="var(--link-default-enabled)" textBtn="var(--brand-pencil-47)" />
             </div>
           </div>
         </section>

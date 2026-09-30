@@ -495,7 +495,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
                   keeps the field's own takeover from racing it to the default blue. */}
               <label className="ct-swatch-btn" title="Pick a custom link color"
                 onClick={e => e.stopPropagation()}>
-                <span className="ct-swatch" style={{ background: 'var(--link)' }} />
+                <span className="ct-swatch" style={{ background: 'var(--link-default-enabled)' }} />
                 <input type="color" value={(linkCustom ? normalizeHex(linkInput) : normalizeHex(computed.linkFromPrimaryHex)) ?? DEFAULT_LINK_HEX}
                   onChange={e => { linkBundled.current = false; setLinkInput(e.target.value.toUpperCase()); setLinkCustom(true) }} />
               </label>
@@ -587,7 +587,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
   // column labels = the token name minus the band word ("89", "53aa"), derived from
   // the token strings so a rename cannot desynchronise label and column
   const stopLabel = (s: string) => s.split('-').slice(1).join('')
-  // neutral rides on top — it carries the global paper-0/pen-100 anchors for the
+  // neutral rides on top — it carries the paper-0/pen-100 poles for the
   // whole matrix (owner 2026-07-24)
   const swatchRamps: Array<[string, string]> = [
     ['neutral', 'neutral'],
@@ -612,9 +612,9 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     )
     // pencil-47 is BOTH the emphasis fill and a text stop since the 2026-07-29 collapse: it
     // took over highlight-9's fill role. Render it AS a fill, carrying the on-emphasis
-    // paper the semantic layer gives it (--paper-0, the mode-flipping paper extreme),
+    // paper the semantic layer gives it (--neutral-paper-0, the mode-flipping paper extreme),
     // so this slot still reads as the filled chip it always was.
-    if (stop === 'pencil-47') return <div style={{ ...aa, background: cv(stop), color: 'var(--paper-0)' }}>Aa</div>
+    if (stop === 'pencil-47') return <div style={{ ...aa, background: cv(stop), color: 'var(--neutral-paper-0)' }}>Aa</div>
     // filled cta cells carry NO stroke (filled is filled — same call as the buttons);
     // only the OUTLINE secondary shows its ring, where the boundary IS the component
     if (stop.startsWith('stamp-fill')) {
@@ -634,7 +634,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     const [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16))
     return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6 ? '#000' : '#fff'
   }
-  // The end caps are the two GLOBAL anchors (--paper-0 / --pen-100, unprefixed —
+  // The end caps are the neutral's two poles (--neutral-paper-0 / --neutral-pen-100,
   // resolved off the neutral, one per theme). They render on the neutral row only;
   // other rows carry spacers so the stop columns stay aligned. The identity
   // chip moved to its own card in the side column (owner 2026-07-24).
@@ -673,15 +673,15 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
       {swatchRamps.map(([prefix, label], ri) => (
         <div key={prefix} style={{ marginTop: ri === 0 ? 0 : 10 }}>
           <div style={{ display: 'grid', gridTemplateColumns: `repeat(${SWATCH_STOPS.length + 2}, minmax(0, 1fr))`, gap: 4 }}>
-            <div title={prefix === 'neutral' ? '--paper-0' : undefined}>
-              {prefix === 'neutral' && <div style={{ height: 22, borderRadius: 5, boxSizing: 'border-box', background: 'var(--paper-0)', border: anchorStroke }} />}
+            <div title={prefix === 'neutral' ? '--neutral-paper-0' : undefined}>
+              {prefix === 'neutral' && <div style={{ height: 22, borderRadius: 5, boxSizing: 'border-box', background: 'var(--neutral-paper-0)', border: anchorStroke }} />}
               {(prefix === 'brand' || prefix === 'secondary') && <div style={{ height: 22, borderRadius: 5, background: `var(--${prefix}-identity)` }} />}
             </div>
             {SWATCH_STOPS.map(s => (
               <div key={s} style={{ height: 22, borderRadius: 5, background: `var(--${prefix}-${s})` }} title={`--${prefix}-${s}`} />
             ))}
-            <div title={prefix === 'neutral' ? '--pen-100' : undefined}>
-              {prefix === 'neutral' && <div style={{ height: 22, borderRadius: 5, background: 'var(--pen-100)' }} />}
+            <div title={prefix === 'neutral' ? '--neutral-pen-100' : undefined}>
+              {prefix === 'neutral' && <div style={{ height: 22, borderRadius: 5, background: 'var(--neutral-pen-100)' }} />}
             </div>
           </div>
           <div style={{ fontSize: 11, fontWeight: 700, lineHeight: 1, color: `var(--${prefix}-pencil-47)`, marginTop: 4 }}>{label}</div>
@@ -703,8 +703,8 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
           {/* first column matches the row height exactly: mini-swatch pinned top,
               label pinned to the row's bottom edge (owner 2026-07-24 alignment fix) */}
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: 36 }}
-            title={prefix === 'neutral' ? '--paper-0' : (prefix === 'brand' || prefix === 'secondary') ? `--${prefix}-identity` : undefined}>
-            {prefix === 'neutral' ? miniSwatch('var(--paper-0)', true)
+            title={prefix === 'neutral' ? '--neutral-paper-0' : prefix === 'brand' ? '--absolute-brand' : prefix === 'secondary' ? '--absolute-brand-alt' : undefined}>
+            {prefix === 'neutral' ? miniSwatch('var(--neutral-paper-0)', true)
               : (prefix === 'brand' || prefix === 'secondary') ? miniSwatch(`var(--${prefix}-identity)`, false, 'ID',
                   idTextOn(prefix === 'brand' ? computed.r.scale.identityHex : computed.accent?.identityHex))
               : <span />}
@@ -715,9 +715,9 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
               {swatchCell(prefix, s)}
             </div>
           ))}
-          <div title={prefix === 'neutral' ? '--pen-100' : undefined}>
+          <div title={prefix === 'neutral' ? '--neutral-pen-100' : undefined}>
             {prefix === 'neutral' && (
-              <div style={{ height: 36, borderRadius: 6, boxSizing: 'border-box', background: 'var(--pen-100)', border: anchorStroke }} />
+              <div style={{ height: 36, borderRadius: 6, boxSizing: 'border-box', background: 'var(--neutral-pen-100)', border: anchorStroke }} />
             )}
           </div>
         </div>
@@ -851,13 +851,13 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
             <div className="ct-colorblock">
               <div className="ct-label" style={{ marginBottom: 8 }}>Identity</div>
               <div style={{ display: 'flex', gap: 12 }}>
-                <div style={{ flex: 1 }} title="--brand-identity">
-                  <div style={{ height: 54, borderRadius: 12, background: 'var(--brand-identity)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: idTextOn(computed.r.scale.identityHex) }}>ID</div>
+                <div style={{ flex: 1 }} title="--absolute-brand">
+                  <div style={{ height: 54, borderRadius: 12, background: 'var(--absolute-brand)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: idTextOn(computed.r.scale.identityHex) }}>ID</div>
                   <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-default)', marginTop: 6 }}>brand</div>
                 </div>
                 {(secondary || derived) && (
-                  <div style={{ flex: 1 }} title="--brand-alt-identity">
-                    <div style={{ height: 54, borderRadius: 12, background: 'var(--brand-alt-identity)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: idTextOn(computed.accent?.identityHex) }}>ID</div>
+                  <div style={{ flex: 1 }} title="--absolute-brand-alt">
+                    <div style={{ height: 54, borderRadius: 12, background: 'var(--absolute-brand-alt)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: idTextOn(computed.accent?.identityHex) }}>ID</div>
                     <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-default)', marginTop: 6 }}>brand-alt</div>
                   </div>
                 )}
@@ -973,7 +973,7 @@ function checklistRows(rRec: ResolvedBrand, rung: RungMode, primaryHex: string, 
 const TONE_META: Record<CheckTone, { Icon: typeof Check; color: string }> = {
   pass: { Icon: Check, color: 'var(--positive-fg)' },
   // BRAND register (brand-pencil-47, i.e. brand-fg-alt): an engine decision reads as
-  // "on-brand", never as a link (--link is reserved for real anchors) and never as
+  // "on-brand", never as a link (the link trio is reserved for real anchors) and never as
   // the info-blue it used to borrow (owner 2026-07-17).
   adjusted: { Icon: Sparkles, color: 'var(--brand-pencil-47)' },
   standard: { Icon: ArrowRight, color: 'var(--fg-subtle)' },

@@ -18,11 +18,9 @@ export const FONT_STACK = "'Inter', -apple-system, system-ui, sans-serif"
 //   accented-inverse primary: accent  subtle: brand
 // The "accent" Family is emitted as the `secondary` primitive prefix (the role
 // was renamed in the token rename); prim() maps Family → primitive prefix.
-// Stops are the emitted token names: scale paper/chalk, the highlighter-26 ring, the
-// cta/cta-hover/cta-pressed fill trio, pencil-47/42-aa/30-aaa text (doubling as the
-// text-style cta — the cta-ink aliases died 2026-08-12),
-// on-cta on-fill text. (on-highlight died with highlight-9, owner 2026-07-29 — the
-// on-emphasis text is --paper-0 in the semantic layer now.)
+// Stops are the emitted token names: the papers and chalks, the highlighter-26 ring, the
+// stamp fill trio, the pencil and pen text stops (doubling as the text-style cta), the
+// stamp on-text. (The on-emphasis text is the neutral's paper-0 in the semantic layer.)
 type Family = 'brand' | 'accent'
 function accentModeCss(mode: AccentMode, primary: Family, subtle: Family): string {
   const other = (f: Family): Family => (f === 'brand' ? 'accent' : 'brand')
@@ -46,8 +44,8 @@ function accentModeCss(mode: AccentMode, primary: Family, subtle: Family): strin
     lines.push(`  --brand-${suffix}: var(--${prim(subtle)}-${tok});`)
     lines.push(`  --accent-${suffix}: var(--${prim(other(subtle))}-${tok});`)
   }
-  // links are SYSTEM-level (owner 2026-07-16: one link per theme — the accent flip must
-  // not re-point them): --fg-link rides --link from semantic.css, no per-mode override
+  // links are system-level (one link per theme, so the accent flip must not re-point
+  // them): --fg-link rides the link trio through semantic.css, no per-mode override
   lines.push(`}`)
   if (subtle !== primary) {
     lines.push(`[data-accent-mode="${mode}"] .u-btn-subtle { color: var(--${prim(subtle)}-pen-70); }`)
@@ -68,11 +66,10 @@ export const COMPONENT_CSS = `
   cursor: pointer; font-size: 14px; font-weight: 500; font-family: inherit;
   display: inline-flex; align-items: center; gap: 6px;
 }
-/* stamp-edge rides EVERY cta button, not just the secondary (owner 2026-07-31). Until this
-   round only .u-btn-secondary wired the token, so a firing brand or neutral emitted a stroke
-   that nothing drew — the engine and the demo disagreed about what shipped. The value is an
-   alias to system/alpha/* (transparent when the gate does not fire), so the border stays
-   unconditional and layout never shifts. */
+/* stamp-edge rides EVERY cta button, not just the secondary: a firing brand or neutral
+   must draw its stroke, or the engine and the demo disagree about what shipped. The value
+   is the pole at the family's rung, or transparent when the gate does not fire, so the
+   border stays unconditional and layout never shifts. */
 .u-btn-primary { background: var(--brand-bg-emphasis); color: var(--brand-fg-on-emphasis); border-color: var(--brand-stamp-edge); }
 .u-btn-primary:hover { background: var(--brand-bg-emphasis-hover); }
 .u-btn-primary:active { background: var(--brand-bg-emphasis-pressed); }
@@ -128,13 +125,11 @@ export const COMPONENT_CSS = `
   --brand-highlighter-26: var(--neutral-highlighter-26);
 }
 /* Elevation — demo-layer shadow recipes composing the --shadow-* transparencies
-   (tokens/semantic.css; mirrors the plugin's system/alpha/shadow rows). The
-   engine owns color, the demo owns depth. Ladder = the owner's 2026-07-27 Figma
-   card-hierarchy set: −1 sink (stroke, no shadow — see the metric tiles) ·
-   +1 lift (--elev-card) · +2 pop (--elev-pop, the hero) · +3 float
-   (--elev-float — geometry pending its own styling round, still literal).
-   Dark falls out of the tokens: --shadow-* carries the heavier dark alphas, so
-   there is no dark override for card/pop. */
+   (demo/semantic.css). The engine owns color, the demo owns depth. Ladder: −1 sink
+   (stroke, no shadow — see the metric tiles) · +1 lift (--elev-card) · +2 pop
+   (--elev-pop, the hero) · +3 float (--elev-float, still literal). Dark falls out of
+   the stylesheet: --shadow-* carries the heavier dark alphas, so there is no dark
+   override for card/pop. */
 [data-brand] {
   --elev-card: 0 4px 8px var(--shadow-04), 0 0 1px var(--shadow-04);
   --elev-pop: 0 4px 10px -2px var(--shadow-08), 0 20px 25px -2px var(--shadow-04);

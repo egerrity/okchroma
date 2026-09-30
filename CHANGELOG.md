@@ -8,6 +8,68 @@ structure, ships as at least a minor.
 
 Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git log.
 
+## 0.7.0 — unpublished
+
+- **The engine emits primitives only.** A primitive is a value the engine calculates from
+  the seed: the seven color families with their scale stops and five stamp tokens, the
+  neutral's two poles, the two link trios, the two seed absolutes. Everything static or
+  aliased leaves every output: the elevation planes, the shadows, the scrim, the disabled
+  opacity, the opacity ladder, the alpha ladders with `transparent` and `ink`, the absolute
+  black and white rows, and the interaction register (`interactionCss`,
+  `interactionTokens` and their exports). `tokens/semantic.css` leaves the package. The
+  record of that layer, with its values, its claim and its audit, is in
+  `research/semantic-layer/`; the demo keeps its own descendant of the stylesheet. No
+  surviving value moves.
+- **One grammar.** Every row has one path (`brand/stamp/fill`, `neutral/paper-0`,
+  `link/default/enabled`, `absolute/brand`); joined with hyphens it is the CSS custom
+  property, joined with slashes the Figma variable and the DTCG token path. Eight CSS
+  names rename in place, values unchanged:
+
+  | before | after |
+  |---|---|
+  | `--paper-0` | `--neutral-paper-0` |
+  | `--pen-100` | `--neutral-pen-100` |
+  | `--link` | `--link-default-enabled` |
+  | `--link-hover` | `--link-default-hover` |
+  | `--link-pressed` | `--link-default-pressed` |
+  | `--link-inverse` | `--link-inverse-enabled` |
+  | `--brand-identity` | `--absolute-brand` |
+  | `--brand-alt-identity` | `--absolute-brand-alt` |
+
+  The Figma tree follows: the alt group is `brand-alt`, the signals are keyed by role, the
+  link trios sit under `link/default` and `link/inverse` with `enabled`, `hover`, `pressed`
+  leaves, the seeds under `absolute/`, and the `system` group is gone. `stamp-edge` is a
+  literal in every output (the pole at the family's rung, or `transparent`) instead of a
+  reference to an alpha row, and `stamp/on` is the pole itself. The tree's `components`
+  are the 8-bit channels over 255, the same color as `hex`.
+- **The DTCG documents.** `tokensToDtcg(tokens)` returns one Design Tokens Format Module
+  2025.10 document per mode on identical paths: every primitive once, `$type` color, an
+  sRGB `$value` (or an alias where the CSS writes a reference) and a `$description`
+  written for agents: the requirement, the conformance level with the ground it holds
+  against, what clears a ground, a usage line on the stamp tokens, the links and the
+  seeds, and the theming. The Figma variable descriptions are unchanged; the grounds render
+  from a scope table the guarantee audit asserts it measures. New exports: `tokensToDtcg`,
+  `tokenPaths`, `tokenPathOf`, `descriptionPathOf`, `describeDocument`, `GUARANTEE_SCOPE`,
+  `BAND_STOPS`, the path helpers (`familyPath`, `linkPath`, `absolutePath`,
+  `cssVarName`, `figmaPathOf`) and their types. `npm run tokens:emit -- <hex> [slug]`
+  writes both files; `npm run audit:dtcg` holds the documents against the CSS emission and
+  the Figma tree over the fixture roster in every posture plus an agnostic sweep. The
+  format is in `docs/schema.md`.
+- **Removed from the API.** The experimental requirement-token export (`emitDtcgRamp`,
+  `resolveDtcgRamp`, `parseToken`, `EXT_KEY`, `RESOLVER_ID` and their types), whose values
+  were not the shipped values, moves to `research/reqtoken/`. Also gone: `systemCss`,
+  `SYSTEM_LEAF`, `SURFACE_PLANE_LAW`, `OPACITY_RUNGS`, `INTERACTION_RUNGS`,
+  `SHADOW_ALPHAS`, `SCRIM_ALPHA`, `DISABLED_OPACITY`, `opacityLeafName`,
+  `opacityVarName`, `opacityTokenPath`, `FigmaNumberToken`.
+- **The extended plugin** writes the base zone only (no `utility/` shelf, no alpha or
+  absolute black and white rows, no planes) and every value as a raw write. An existing
+  file keeps the removed rows as orphans; a live row that aliased one of them takes its
+  raw value where the alias resolves to exactly what the payload writes now. A brand
+  override now exists exactly where the 8-bit hex differs from the base. The community
+  plugin reads the new tree at its seam and is otherwise unchanged.
+- `README.md` is the complete consumer documentation on its own; `docs/agents.md`,
+  `docs/schema.md`, `docs/scale.md` and `docs/architecture.md` follow the cut.
+
 ## 0.6.1 — 2026-09-21
 
 - The subtle tier of the interaction register climbs one rung at every state: it rests at

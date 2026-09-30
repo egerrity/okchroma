@@ -11,12 +11,14 @@ code, the code wins.
 ## Layout
 
 - `src/` the engine. `src/engine/` generation and emitters (`tokenNames.ts` holds the
-  vocabulary, `figmaRender.ts` the Figma tree, `stopTable.ts` the ladders). `src/engine/requirements/`
-  the requirement resolver. `src/build.ts` writes `dist/signals.css`.
+  vocabulary and the one grammar, `figmaRender.ts` the Figma tree, `dtcgRender.ts` the DTCG
+  documents, `stopTable.ts` the ladders). `src/engine/requirements/` the requirement
+  resolver. `src/build.ts` writes `dist/signals.css`.
 - `demo/` the docs site and preview app. A preview of the output, not the product.
 - `plugin/` the community Figma plugin. `plugin-ext/` the extended plugin (say "unlisted",
   never "internal"). `plugin-unify/` the Mapper.
-- `tokens/semantic.css` the shipped alias layer (elevation planes, shadows, disabled).
+- `demo/semantic.css` the demo's own semantic layer (planes, shadows, roles), a worked
+  example; the package ships primitives only.
 - `scripts/` the audit gates. `docs/` see "Where things live". `research/` is moved,
   never deleted. `scratch/` is gitignored: handoffs, exhibits, personas, employer material.
 
@@ -33,6 +35,8 @@ npm run band-audit       # band order, the highlighter's 3:1, the neutral stamp,
 npm run audit:divergence # neutral curve, red hue fidelity, snapshot
 npm run smooth           # ramp smoothness against the recorded baseline
 npm run figma:verify     # the Figma tree's shape and spot values
+npm run audit:dtcg       # the DTCG documents against the CSS emission and the Figma tree
+npm run tokens:emit -- <hex> [slug]   # writes both DTCG documents to dist/tokens/
 npm run audit:ext        # the extended plugin's override sets (:bless to update)
 npm run docs:lint        # the docs' vocabulary rules; runs in CI
 npm run plugin:build · plugin-ext:build · plugin-unify:build
@@ -54,8 +58,8 @@ should be stable is a finding, not something to bless.
   Signals are named by role on every emitted surface, never error/success/danger. The
   engine keeps red/yellow/green/blue internally.
 - Never use "surface", "surfaces", "fills", or "text" as categories for the scale. The
-  elevation planes in `tokens/semantic.css` are aliases onto neutral papers; they are the
-  only legitimate "surface" word.
+  elevation planes in the demo's `semantic.css` are aliases onto neutral papers; they are
+  the only legitimate "surface" word.
 - A token label says the real token name. Preview content is free-form.
 - Point at a color by its hex or a description ("a low-chroma warm seed"), never by a
   fixture brand name. The named brands in the fixtures are arbitrary hexes.
@@ -65,8 +69,8 @@ should be stable is a finding, not something to bless.
 - The scale is the same across all families. The stamp is the only per-family
   differentiator. The neutral generates on its own curve.
 - A role uses the same stop in both modes. A per-theme stop swap means the dark stops
-  were generated wrong; file it against the engine. The elevation planes and the paper
-  overlays are the owner-shipped exceptions.
+  were generated wrong; file it against the engine. The demo's elevation planes and the
+  parked paper overlays are the owner-shipped exceptions.
 - No corrective layers. A value must fall out of the pipeline; fix the source or the
   mapping, never the output.
 - On-text is chosen on one criterion: it passes. Never favor, optimize for, or report
@@ -83,8 +87,11 @@ should be stable is a finding, not something to bless.
 - Shadows are dark. A bright or saturated glow is a halo.
 - Names carry no conformance. Descriptions carry it as WCAG levels in plain English, never
   as ratios or criterion numbers. The poles carry no letters at all.
-- Structure and engine output are frozen (owner, 2026-08-27). Names are rename-in-place
-  slots; values do not move for a rename.
+- The engine emits primitives only (owner, 2026-09-30): a primitive is a value the engine
+  calculates from the seed. Nothing static or aliased is emitted; a semantic layer is the
+  consumer's. One grammar spells every row in every output.
+- Structure and engine output are frozen (owner, 2026-08-27, re-cut 2026-09-30). Names are
+  rename-in-place slots; values do not move for a rename.
 - Reverted, never resurrect: the `semantic/` register split, the ink mirror, the escape
   ink de-chroma, C24 signal delivery, gold-flip, the light-wash apparent solve, the
   yellow-contrast follow-up, the cta-ink trios.

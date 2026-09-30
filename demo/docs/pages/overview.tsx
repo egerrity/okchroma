@@ -29,14 +29,15 @@ export function Body() {
       <P>
         Output: one resolved theme. Seven families (neutral, brand, brand-alt, critical, warning,
         positive, info), each carrying the same <K v={SCALE_STOP_COUNT} d={0} />-stop scale plus its
-        stamp roles; the neutral adds the two poles, <Code>{PAPER_0}</Code> and <Code>{PEN_100}</Code>;
-        system rows carry the link trios, the alpha ladders, shadows, the scrim, and the four surface
-        planes. Light and dark resolve together and ship on the same names. The two emitters carry
-        the same values:
+        stamp tokens; the neutral adds the two poles, <Code>{PAPER_0}</Code> and <Code>{PEN_100}</Code>;
+        two link trios and the two seed absolutes complete the set. Every token is a primitive: a
+        value the engine calculates from the seed. Light and dark resolve together and ship on the
+        same names, spelled in one grammar across every output:
       </P>
       <UL>
-        <LI><b>CSS custom properties</b>: <Code>brandCss</Code> emits a light block and a dark block per brand; <Code>signalsCss</Code> emits the brand-independent root block once.</LI>
+        <LI><b>CSS custom properties</b>: <Code>brandCss</Code> emits a light block and a dark block per brand; <Code>signalsCss</Code> emits the brand-independent signal block once.</LI>
         <LI><b>Figma variables</b>: <Code>themeToFigma</Code> emits a light and a dark group tree; the extended plugin writes it into a file.</LI>
+        <LI><b>DTCG documents</b>: <Code>tokensToDtcg</Code> emits one Design Tokens Format Module document per mode, every token with its description.</LI>
       </UL>
       <RampSet />
 
@@ -82,8 +83,8 @@ export function Body() {
       <H2>What a family ships</H2>
       <P>
         Every swatch below is computed live for seed {REF_SEED}, the engine's own default. Paths are the extended
-        plugin's; the CSS column is the custom property the same row ships as. The full roster with the system rows
-        is on the <DocLink page="output">Output contract</DocLink> page.
+        plugin's; the CSS column is the custom property the same row ships as. The full roster with the link trios
+        and the seed absolutes is on the <DocLink page="output">Output contract</DocLink> page.
       </P>
       <FamilyRoster />
 

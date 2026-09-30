@@ -15,10 +15,11 @@ export function Body() {
       <Pre>{`npm install okchroma`}</Pre>
       <P>
         The package ships an ESM build, a CommonJS build, and TypeScript declarations under one export
-        (<Code>import</Code> and <Code>require</Code> conditions), plus the optional semantic layer{' '}
-        <Code>tokens/semantic.css</Code>. Its one runtime dependency (helmlab, a perceptual distance metric used
-        by the red collision solve) is bundled at build time, so the published package declares none. Node 18 or
-        later; the engine has no DOM dependency.
+        (<Code>import</Code> and <Code>require</Code> conditions). It emits primitives only: the color families,
+        the link trios and the seed absolutes. A semantic layer (roles, planes, shadows, state layers) is the
+        consumer's, authored on these; the demo's own <Code>demo/semantic.css</Code> is a worked example. Its
+        one runtime dependency (helmlab, a perceptual distance metric used by the red collision solve) is bundled
+        at build time, so the published package declares none. Node 18 or later; the engine has no DOM dependency.
       </P>
 
       <H2>The entry points</H2>
@@ -71,11 +72,28 @@ const css = brandCss(
       <P>
         In the page: put the CSS in a stylesheet, set <Code>data-brand="acme"</Code> on the element the theme applies to,
         and toggle <Code>data-theme="dark"</Code> on it for dark mode. <Code>signalsCss()</Code> is the same for every brand,
-        so it is emitted once (the repo's <Code>npm run generate</Code> writes it to <Code>dist/signals.css</Code>).{' '}
+        so it is emitted once (the repo's <Code>npm run generate</Code> writes it to <Code>dist/signals.css</Code>).
+        The same values come as one object per mode from <Code>themeTokens</Code>, with every <Code>var()</Code> resolved.{' '}
         <Code>neutralCss(selector, brandH, level)</Code> emits a neutral alone, for chrome that carries no brand.{' '}
         <Code>neutralTintHue(primaryH, source?, secondaryH?, customHex?)</Code> resolves the neutral's tint hue: no source, the primary's;{' '}
         <Code>'secondary'</Code> follows the secondary's hue; <Code>'custom'</Code> takes the hue of a hex.
         Selectors, blocks, and the P3 override are on the <DocLink page="output" section="modes-and-selectors">Output contract</DocLink> page.
+      </P>
+      <H3>Emit DTCG documents</H3>
+      <Pre>{`import { themeTokens, tokensToDtcg } from 'okchroma'
+
+const tokens = themeTokens({ slug: 'acme', brand: theme.themed, secondary: theme.secondary?.scale ?? null, secondaryStyle: theme.secondary?.style, neutralH })
+const { light, dark } = tokensToDtcg(tokens)
+// two Design Tokens Format Module 2025.10 documents on identical paths:
+// { neutral: { 'paper-0': {...}, ..., stamp: { fill, 'fill-hover', 'fill-pressed', edge, on } }, brand, 'brand-alt',
+//   critical, warning, positive, info, link: { default: { enabled, hover, pressed }, inverse: {...} }, absolute: { brand, 'brand-alt' } }
+// every token: { $type: 'color', $value: { colorSpace: 'srgb', components, alpha, hex } | '{brand.pencil-47}', $description }`}</Pre>
+      <P>
+        One document per mode, every primitive once, with the same description the Figma variable carries. A path joined
+        with hyphens is the CSS custom property, joined with slashes the Figma path. Values are the sRGB pair the CSS
+        carries; where the CSS writes a reference the document writes the alias. The repo's{' '}
+        <Code>npm run tokens:emit -- '#E93D82' acme</Code> writes both files, and <Code>docs/schema.md</Code> is the
+        format's reference, including how the two modes join through a resolver document.
       </P>
       <H3>Emit Figma variables</H3>
       <Pre>{`import { themeToFigma, SIGNALS, SIGNAL_SCALES } from 'okchroma'
@@ -90,10 +108,12 @@ const { light, dark } = themeToFigma(theme.themed, {
   neutralH,
   signals,
 })
-// light and dark are FigmaGroup trees: { brand: {...}, secondary: {...}, neutral: {...}, link, 'link-inverse', red, yellow, green, blue, system }`}</Pre>
+// light and dark are FigmaGroup trees on the same paths as the DTCG documents:
+// { neutral, brand, 'brand-alt', critical, warning, positive, info, link: { default, inverse }, absolute }`}</Pre>
       <P>
-        Each leaf is a DTCG-shaped color (<Code>{'{ $type: "color", $value: { colorSpace: "srgb", components, alpha, hex } }'}</Code>).
-        The extended Figma plugin flattens this tree into variable paths; the leaf order is the panel order.
+        Each leaf is a color in the DTCG shape (<Code>{'{ $type: "color", $value: { colorSpace: "srgb", components, alpha, hex } }'}</Code>),
+        its components the same 8-bit value as its hex. The extended Figma plugin flattens this tree into variable paths
+        under its base zone; the leaf order is the panel order.
       </P>
       <H3>The engine beneath the theme</H3>
       <UL>
@@ -101,8 +121,8 @@ const { light, dark } = themeToFigma(theme.themed, {
         <LI><Code>generateScale(hex, name, forcedArchetype, opts)</Code>: the pure scale, no signal policy. Returns a <Code>GeneratedScale</Code>: <Code>light[]</Code>, <Code>dark[]</Code>, the stamp trio per mode, the on-fill booleans, the poles, <Code>identityHex</Code>.</LI>
         <LI><Code>generateNeutralScale(brandH, level)</Code>: the neutral for a tint hue.</LI>
         <LI><Code>resolveLinkTrio(hex)</Code>, <Code>resolveLinkInverseTrio(hex)</Code>: the link states from a seed, on papers and on pen-70 fills.</LI>
-        <LI><Code>stopHex(stop)</Code>: the sRGB hex a stop ships as. Token rosters (<Code>stopTokenName</Code>, <Code>STAMP_FILL</Code>, <Code>SYSTEM_LEAF</Code>, <Code>SURFACE_PLANE_LAW</Code>) are exported so a consumer never spells a token name; a rename then breaks the build instead of mis-mapping.</LI>
-        <LI><Code>emitDtcgRamp(hex, mode, groupName)</Code> and <Code>resolveDtcgRamp(group)</Code>: an experimental export that serializes one ramp as DTCG color tokens carrying the declaration that produced each value, and re-resolves such a group. No shipped pipeline writes this file; the format is documented in the repo at <Code>docs/schema.md</Code>.</LI>
+        <LI><Code>stopHex(stop)</Code>: the sRGB hex a stop ships as. The vocabulary (<Code>stopTokenName</Code>, <Code>STAMP_FILL</Code>, <Code>PAPER_0</Code>, <Code>linkPath</Code>, <Code>absolutePath</Code>) and the grammar (<Code>familyPath</Code>, <Code>cssVarName</Code>, <Code>figmaPathOf</Code>, <Code>tokenPaths</Code>) are exported so a consumer never spells a token name; a rename then breaks the build instead of mis-mapping.</LI>
+        <LI><Code>describeToken(path)</Code> and <Code>describeDocument(path)</Code>: the description text of any row, as the Figma variable carries it and as the DTCG documents carry it (the same lines plus each claim's ground and a usage line).</LI>
       </UL>
 
       <H2>Run from source</H2>

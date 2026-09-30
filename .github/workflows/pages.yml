@@ -51,7 +51,7 @@ jobs:
       # below, reachable only via the quiet "mapper" link on the install page.
       - run: npm run plugin-unify:build
 
-      # The demo entry (demo/index.html) references ../dist and ../tokens.
+      # The demo entry (demo/index.html) references ../dist and its own semantic.css.
       # Flatten into a Pages root: index.html at top, assets beside it, with
       # the ../ rewritten to plain relative paths so it works under the
       # /okchroma/ project subpath.
@@ -59,9 +59,9 @@ jobs:
         run: |
           mkdir -p _site
           cp -r dist _site/dist
-          cp -r tokens _site/tokens
+          cp demo/semantic.css _site/semantic.css
           cp demo/favicon.png _site/favicon.png
-          sed 's#\.\./dist/#dist/#g; s#\.\./tokens/#tokens/#g' demo/index.html > _site/index.html
+          sed 's#\.\./dist/#dist/#g' demo/index.html > _site/index.html
 
       # Manual install: /install.html + /okchroma-extended.zip. The page is the ONLY way
       # in — nothing in the demo links to it (the extended plugin is unlisted), so the

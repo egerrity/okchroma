@@ -8,19 +8,24 @@ explains the mechanisms with values rendered from the engine:
 
 ## 1. System overview
 
-OKChroma is a color-system engine. It resolves a themeable color system around a primary
+OKChroma is a color-system engine. It resolves a set of color primitives around a primary
 seed color (and optionally a secondary), in light and dark together, with the contrast
-requirements solved during generation, and emits it from one resolved theme:
+requirements solved during generation, and emits it from one resolved theme. A primitive
+is a value the engine calculates from the seed: the seven color families with their scale
+stops and stamp tokens, the neutral's poles, the two link trios, the two seed absolutes.
+Nothing static or aliased is emitted; a semantic layer is the consumer's, authored on the
+primitives. One grammar spells every row in every output (`tokenNames.ts`): a path such as
+`brand/stamp/fill`, hyphen-joined for CSS and slash-joined for Figma and DTCG.
 
 - **CSS custom properties**: `brandCss` / `neutralCss` (per family, light + dark blocks)
-  and `signalsCss` (the brand-independent `:root` block, the one static output
+  and `signalsCss` (the brand-independent signal block, the one static output
   `src/build.ts` writes to `dist/signals.css`). Per-brand CSS is generated live by whichever
-  caller resolves a hex; there is no brand roster.
+  caller resolves a hex; there is no brand roster. `themeTokens` reads the emission back as
+  one object per mode.
 - **Figma variables**: `themeToFigma` returns a light and a dark group tree; the extended
   plugin writes it into a file.
-- An experimental export, `emitDtcgRamp`, serializes one ramp as DTCG tokens carrying the
-  declaration that produced each value; no shipped pipeline writes it (the format is in
-  [schema.md](schema.md)).
+- **DTCG documents**: `tokensToDtcg` returns one Design Tokens Format Module document per
+  mode, every token with its description (the format is in [schema.md](schema.md)).
 
 The demo (`demo/`) and the plugins (`plugin-ext/`, `plugin/`, `plugin-unify/`) are
 front-ends. The product is the engine and what it emits.
@@ -59,8 +64,9 @@ flowchart TD
 
     subgraph Emit["Emitters"]
       CSS[cssRender.ts]
+      TOK[tokensRender.ts]
       FIG[figmaRender.ts]
-      DTCG[requirements/dtcg.ts]
+      DTCG[dtcgRender.ts]
       TN[tokenNames.ts · tokenDescriptions.ts]
     end
 
@@ -79,10 +85,11 @@ flowchart TD
     RES --> PROD
     PROD --> CM & CON & PL & P2 & ST & AR & DCC
     CE --> NC
-    SPEC --> DTCG
     RT --> CSS & FIG
+    CSS --> TOK --> DTCG
     CSS --> TN
     FIG --> TN
+    DTCG --> TN
     CSS --> BUILD --> DEMO
     RT --> DEMO
     FIG --> PLUG
@@ -108,8 +115,8 @@ flowchart TD
 | Signal identities | `signals.ts` | The four signals by identity (red, yellow, green, blue) with their role names, seeds, hue shifts and dark floors; `SIGNAL_EMIT_NAME`. |
 | Archetypes | `archetypes.ts` | The six lightness bands, `classifyArchetype`, and the state rule `stateFillL` (the flat step, reversed near the far pole). |
 | Neutral curve | `neutralCurve.ts` | `neutralChromaCurve` (the tint shape, the warm damp, the four levels) and the subtle secondary's curve. |
-| Token vocabulary | `tokenNames.ts` | The one name table: the stops, the poles, the stamp leaves (flat and nested), `SYSTEM_LEAF`, `SURFACE_PLANE_LAW`, the extended plugin's ownership rosters, `tokenOrder`. Zero imports, so both plugin sandboxes can bundle it. |
-| Descriptions | `tokenDescriptions.ts` | The `FAMILY` and `CSS_FAMILY` rosters, the per-variable Figma description text, `canonicalize` (zone paths onto canonical paths). Zero imports; `desc-audit` enforces the text rules. |
+| Token vocabulary | `tokenNames.ts` | The one name table and the one grammar: the stops, the poles, the stamp leaves (flat and nested), the path builders (`familyPath`, `linkPath`, `absolutePath`) and their projections (`cssVarName`, `figmaPathOf`), the extended plugin's overridable-row rule, `tokenOrder`. Zero imports, so both plugin sandboxes can bundle it. |
+| Descriptions | `tokenDescriptions.ts` | The `FAMILY` and `CSS_FAMILY` rosters, the per-row description text in two renderings (`describeToken` for Figma, `describeDocument` for the DTCG documents with each claim's ground and the usage lines, from `GUARANTEE_SCOPE`), `canonicalize` (zone and community spellings onto the grammar). Zero imports; `desc-audit` enforces the text rules. |
 
 **The requirement-token core (`src/engine/requirements/`)**
 
@@ -119,7 +126,6 @@ flowchart TD
 | Resolver | `resolve.ts` | `resolveRamp`: per stop, produce → require → refine, stops in declared order; the anchor rules (`declaredAnchor`, `wcagAnchorStop`, the inverse link's `textGround`); the frozen cross-family bounds and the shipped-pair walk; the stamp roles in evaluation order (pole, enforce, booster, exit, states, the final pole floor). |
 | Producers | `producers.ts` | `buildContext` (the per-seed state), the light placements (`placeLightScale`, `placeLightText`, `lightScaleChromaAt`), the dark carry (`deltaDarkPlace`, `deltaLiftChroma`, `smoothedBandLift`), the dark placements, the stamp solvers (`ctaLightL`, `ctaDualGateL`, the dark twins), the red exits (`solveBrandExit`, `solveDarkCtaExit`). |
 | Profiles | `profiles.ts` | `withProfile`: an alternate solve of the declaration under APCA targets, not exposed in the docs, the shipped output or the plugins; `'wcag'` is the identity. Also home to `CRITICAL_CLEARANCE_LC`, the booster's bar for the critical signal. |
-| Portability | `dtcg.ts` | `emitDtcgRamp` / `resolveDtcgRamp` / `parseToken`; the role names ride `tokenNames.ts`, and the pre-rename words are accepted on parse. |
 
 **The theme layer (`src/engine/`)**
 
@@ -134,10 +140,10 @@ flowchart TD
 
 | Piece | Location | What it does |
 |---|---|---|
-| CSS emitter | `cssRender.ts` | `brandCss`, `neutralCss`, `signalsCss`, `stopHex`, the P3 override blocks, the stamp edge gate (`ctaNeedsBorder`, `ctaBorderRung`, `pageStopFor`), the alpha ladders, the opacity ladder (`OPACITY_RUNGS`, the shadows and the scrim derive from it), `DISABLED_OPACITY`, the outline and escape re-expressions, the quiet fill's soft on-text. |
-| Structured emit | `tokensRender.ts` | `themeTokens` (the CSS emission read back into one object per mode, `var()` resolved, mode-invariant names carried into both), `readEmission`, `resolveReferences`, `systemCss` (the planes, the shadows, the scrim and the disabled opacity as engine-table projections). |
-| Interaction register | `interaction.ts` | `interactionCss` and `interactionTokens`: the state layer as named rows per family, `INTERACTION_LADDER`, `INTERACTION_ROWS`, the two pole families. |
-| Figma emitter | `figmaRender.ts` | `themeToFigma` (the same theme as light and dark group trees, with the system group), `groupEntries`, `putLeaf`. |
+| CSS emitter | `cssRender.ts` | `brandCss`, `neutralCss`, `signalsCss`, `stopHex`, the P3 override blocks, the stamp edge gate (`ctaNeedsBorder`, `ctaBorderRung`, `pageStopFor`) and its rungs (`OFFSET_ALPHAS`, written as literals), the outline and escape re-expressions, the quiet fill's soft on-text. |
+| Structured emit | `tokensRender.ts` | `themeTokens` (the CSS emission read back into one object per mode, `var()` resolved, mode-invariant names carried into both), `readEmission`, `resolveReferences`. |
+| DTCG emitter | `dtcgRender.ts` | `tokensToDtcg` (the structured emit as two Design Tokens Format Module documents on identical paths), `tokenPaths` (the roster, the definition of what the engine emits), `tokenPathOf`, `descriptionPathOf`. |
+| Figma emitter | `figmaRender.ts` | `themeToFigma` (the same theme as light and dark group trees on the grammar's paths), `groupEntries`, `putLeaf`. |
 | Public API | `index.ts` | What the npm package exports. |
 | Token build | `build.ts` | Writes `dist/signals.css`. |
 
@@ -156,7 +162,7 @@ scripts that nothing imports.
 | 5 | Resolve the stamp and its text | `resolveRamp`, the roles block | the pole judged, the enforce re-solve, the booster, the red exit, the states, the final pole floor; dark anchored at max(seed L, floor) |
 | 6 | Assemble | `colorEngine.ts` adapter | resolved ramps → the `GeneratedScale` contract |
 | 7 | Policy | `resolve.ts` · `resolveBrand` | the hue collision test, the red complement, the signal shifts → `signalOverrides`; `resolveTheme` adds the secondary and merges its collisions |
-| 8 | Emit | `cssRender.ts` / `figmaRender.ts` / `dtcg.ts` + `tokenNames.ts` | the theme → named CSS custom properties, Figma group trees, or DTCG tokens; the neutral and the inverse link resolve here |
+| 8 | Emit | `cssRender.ts` / `tokensRender.ts` / `figmaRender.ts` / `dtcgRender.ts` + `tokenNames.ts` | the theme → CSS custom properties, one object per mode, Figma group trees, DTCG documents, every row on the one grammar; the neutral and the inverse link resolve here |
 | 9 | Drive | `build.ts` (static) / demo / plugin (live) | writes `dist/signals.css` / renders the preview / writes Figma |
 
 Facts worth stating plainly:
@@ -202,9 +208,9 @@ The internal `GeneratedScale` fields keep the `cta` spelling; every emitted name
 ## 5. The requirement schema
 
 The declaration is pure data; the resolver executes it in three phases per stop: produce,
-require, refine. The field-by-field format is on the site
-([Requirement tokens](https://egerrity.github.io/okchroma/#/docs/token-schema)) and
-summarized in [schema.md](schema.md). Three resolver facts a maintainer needs:
+require, refine. The field-by-field format is in `research/reqtoken/FORMAT.md`, beside
+the parked experiment that serialized it as DTCG tokens. Three resolver facts a
+maintainer needs:
 
 - **The grounds.** The highlighter, the pencil and `pen-70` solve against `paper-5`, the nearest
   paper; `pen-58` against `chalk-20`. `wcagAnchorStop` maps any paper anchor on a text
@@ -286,8 +292,9 @@ mechanism; the constants are rendered live on the site's
   A legibility nudge on the stamp, never a claim.
 - **Quiet fills.** The neutral's stamp, and a secondary's where the composite stays legal
   on every state, carry the pole at alpha (0.75 light, 0.80 dark; `softOnCtaPasses`).
-- **The stamp edge.** A stroke from the alpha ladder (16 / 6 / 8 by family) when the fill
-  reads under APCA |Lc| 15 against the page; a taste gate, not an accessibility claim.
+- **The stamp edge.** The page-polarity pole at the family's rung (16 / 6 / 8 by family),
+  a literal in every output, when the fill reads under APCA |Lc| 15 against the page, else
+  transparent; a taste gate, not an accessibility claim.
 
 **Differentiation (brand versus signals)**
 
@@ -325,21 +332,20 @@ The extended plugin (`plugin-ext/`, Figma Enterprise) writes one base collection
 that overrides only the rows that differ. `plugin-ext/payload.ts` builds the rows from the
 engine (`resolveTheme` → `themeToFigma` → `toFlat`); `plugin-ext/code.ts` writes them.
 
-**Zones.** Every path starts with an ownership zone: `base/` marks engine-owned rows, where
-a hand edit is deliberately not rebuilt by a re-apply; `utility/` marks team-touchable rows
-the engine never reads back (the surface planes, the shadows, the opacity ladder), written last so
-they shelve together. `payload.registerPath` applies the family zone as the final step of
-`toFlat`, after the identity and link rows have been re-homed; system-descended rows are
-built with their zone spelling directly. The zone is stripped from the Web code syntax, so a
-developer's name matches the CSS custom property.
+**The zone.** Every path starts with `base/`, the engine-owned zone, where a hand edit is
+deliberately not rebuilt by a re-apply. `payload.registerPath` applies it as the final step
+of `toFlat`; the paths inside are the tree's own, the one grammar. The zone is stripped
+from the Web code syntax, so a developer's name matches the CSS custom property. A file
+applied before the engine went primitives-only keeps its utility shelf, its planes, its
+alpha rows and its absolute black and white as orphans; a live row that aliased one takes
+its raw value where the alias resolves to exactly what the payload writes.
 
-**Roles and the picker.** Inside `base/`, the ramp stops and the alpha and absolute
-plumbing are single resolved colors with no state; the roles are the state-carrying rows:
-`stamp/` inside each family, `base/link/` (default and inverse), and `utility/surface/`
-(`isRoleRow` in `code.ts`). The descope posture (the "Hide primitive scale from pickers"
-checkbox, default on) sets every non-role variable's scopes to none and keeps the roles at
-all scopes. It is file state on the base collection, re-stamped on every apply, so a scope
-hand-edited in Figma reverts on the next run.
+**Roles and the picker.** The ramp stops and the seed absolutes are single resolved colors
+with no state; the roles are the state-carrying rows: `stamp/` inside each family and
+`base/link/` (default and inverse) (`isRoleRow` in `code.ts`). The descope posture (the
+"Hide primitive scale from pickers" checkbox, default on) sets every non-role variable's
+scopes to none and keeps the roles at all scopes. It is file state on the base collection,
+re-stamped on every apply, so a scope hand-edited in Figma reverts on the next run.
 
 **Identity stamps.** A variable's canonical path lives in plugin data (`PATH_KEY`); the
 display name is the user's to edit. A generation stamp (`GEN_KEY`) marks rows written under
@@ -362,19 +368,11 @@ display name that spells any engine vintage is recognized as engine-owned
 (`isEngineSpelling`), never as a custom name. A path the current payload no longer emits
 is counted and reported as an orphan, never deleted; the designer removes it.
 
-**Hand-authored rows.** The four surface planes are created by the plugin itself, outside
-the payload, and aliased onto the neutral's own papers per `SURFACE_PLANE_LAW`
-(`tokenNames.ts`), never onto the family being themed:
-
-| plane | light aliases | dark aliases |
-|---|---|---|
-| `utility/surface/dim` | `base/neutral/paper-5` | `base/neutral/paper-0` |
-| `utility/surface/low` | `base/neutral/paper-3` | `base/neutral/paper-1` |
-| `utility/surface/mid` | `base/neutral/paper-1` | `base/neutral/paper-3` |
-| `utility/surface/high` | `base/neutral/paper-0` | `base/neutral/paper-5` |
-
-The `toward-bg` alpha ladder (emitted by `themeToFigma` under `system/alpha/toward-bg/`
-and by `signalsCss`) is not written by the extended plugin.
+**Raw values.** Every value is a raw write: the stamp's on-text pole, the soft on-text at
+alpha and the edge (a pole at its rung, or transparent) are the generated values, never
+aliases onto a system row. The semantic layer that once shipped with the package (the
+planes, the shadows, the opacity and alpha ladders, the interaction register) is recorded
+in `research/semantic-layer/`.
 
 ## 8. Dependencies
 

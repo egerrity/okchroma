@@ -143,7 +143,7 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
           Hover swaps stamp-fill → stamp-fill-hover; holding the button shows stamp-fill-pressed. Beside it,
           the TEXT-STYLE cta (the pen stops as states — the action color's 4.5 text
           rendition, a text button; never underlined, never a hyperlink — links are the
-          SYSTEM --link). */}
+          system link trio). */}
       {!isSignal && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
           <button
@@ -212,11 +212,11 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
           </div>
         ) : (
           <div style={{ ...box, background: v('pencil-47') }}>
-            <div style={{ ...boxLabel, color: 'var(--paper-0)' }}>inset &middot; emphasis</div>
-            {/* the emphasis inset is the INVERTED fill: pencil-47 (the emphasis fill since the
-                2026-07-29 collapse) carrying --paper-0, over a pen-70 panel with paper-1 text.
-                The link on it is the INVERSE trio (owner round 2026-08-19) — the link seed
-                re-solved for exactly this ground; the system --link is illegible here. */}
+            <div style={{ ...boxLabel, color: 'var(--neutral-paper-0)' }}>inset &middot; emphasis</div>
+            {/* the emphasis inset is the inverted fill: pencil-47 (the emphasis fill) carrying
+                the neutral's paper-0, over a pen-70 panel with paper-1 text. The link on it is
+                the inverse trio, the link seed re-solved for exactly this ground; the default
+                link is illegible here. */}
             <div style={{ background: v('pen-70'), borderRadius: 8, padding: '10px 12px' }}>
               <div style={{ ...boxBody, color: v('paper-1') }}>
                 Emphasis copy in paper-1 text with an{' '}
@@ -227,7 +227,7 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
                   onMouseLeave={() => setInvLinkState('rest')}
                   onMouseDown={() => setInvLinkState('pressed')}
                   onMouseUp={() => setInvLinkState('hover')}
-                  title={`--link-inverse${invLinkState === 'pressed' ? '-pressed' : invLinkState === 'hover' ? '-hover' : ''}`}
+                  title={`--link-inverse-${invLinkState === 'pressed' ? 'pressed' : invLinkState === 'hover' ? 'hover' : 'enabled'}`}
                   style={{
                     color: invLinkState === 'pressed' ? 'var(--fg-link-inverse-pressed)' : invLinkState === 'hover' ? 'var(--fg-link-inverse-hover)' : 'var(--fg-link-inverse)',
                     textDecoration: 'underline', textUnderlineOffset: 2,
