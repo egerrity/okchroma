@@ -1,5 +1,6 @@
 import React from 'react'
 import { AlertCircle, AlertTriangle, CheckCircle, Info } from 'lucide-react'
+import { cssPrefix, seedVar } from './shared'
 
 // Stage 3 — the per-ramp token display, as a realistic SHOWCASE card. It renders
 // with the LIVE primitives, so it themes (light/dark) and picks the right on-fill
@@ -49,19 +50,19 @@ export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; 
     { prefix: 'info', label: 'info' },
   ]
   const cell = (prefix: string, tok: 'stamp-fill' | 'stamp-fill-hover' | 'stamp-fill-pressed') => (
-    <div title={`--${prefix}-${tok}`} style={{
+    <div title={`--${cssPrefix(prefix)}-${tok}`} style={{
       flex: tok === 'stamp-fill' ? 1.6 : 1, height: 44, boxSizing: 'border-box',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: `var(--${prefix}-${tok})`, color: `var(--${prefix}-stamp-on)`,
+      background: `var(--${cssPrefix(prefix)}-${tok})`, color: `var(--${cssPrefix(prefix)}-stamp-on)`,
       fontSize: 13, fontWeight: 600,
-      border: `1.5px solid var(--${prefix}-stamp-edge)`,
+      border: `1.5px solid var(--${cssPrefix(prefix)}-stamp-edge)`,
     }}>Aa</div>
   )
   // the TEXT-style cta (the pen stops — the action color's 4.5 text rendition) rendered
   // on the card, so its rest / hover / pressed sit right under the fill cta trio
   const textCell = (prefix: string, tok: 'pencil-47' | 'pen-58' | 'pen-70') => (
-    <div title={`--${prefix}-${tok}`} style={{
-      flex: 1, textAlign: 'center', fontSize: 15, fontWeight: 800, color: `var(--${prefix}-${tok})`,
+    <div title={`--${cssPrefix(prefix)}-${tok}`} style={{
+      flex: 1, textAlign: 'center', fontSize: 15, fontWeight: 800, color: `var(--${cssPrefix(prefix)}-${tok})`,
     }}>Aa</div>
   )
   return (
@@ -89,7 +90,7 @@ export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; 
 }
 
 export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix: string; kind: RampKind; outlineCta?: boolean; insetControls?: boolean }) {
-  const v = (t: string) => `var(--${prefix}-${t})`
+  const v = (t: string) => `var(--${cssPrefix(prefix)}-${t})`
   const isSignal = kind === 'signal'
   const [ctaHover, setCtaHover] = React.useState(false)     // cta → cta-hover on hover
   const [ctaPressed, setCtaPressed] = React.useState(false)  // → cta-pressed while held
@@ -128,7 +129,7 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
       {/* identity — the exact input hex, preserved (brand & secondary only) */}
       {hasIdentity && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 14 }}>
-          <span style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0, background: v('identity') }} />
+          <span style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0, background: seedVar(prefix) }} />
           <span style={{ fontSize: 13, fontWeight: 600, color: v('pencil-47') }}>identity</span>
         </div>
       )}
@@ -166,7 +167,7 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
             onMouseLeave={() => setLinkState('rest')}
             onMouseDown={() => setLinkState('pressed')}
             onMouseUp={() => setLinkState('hover')}
-            title={`--${prefix}-${linkState === 'pressed' ? 'pen-70' : linkState === 'hover' ? 'pen-58' : 'pencil-47'}`}
+            title={`--${cssPrefix(prefix)}-${linkState === 'pressed' ? 'pen-70' : linkState === 'hover' ? 'pen-58' : 'pencil-47'}`}
             style={{
               background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
               fontSize: 15, fontWeight: 600, padding: '12px 10px',

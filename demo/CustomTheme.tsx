@@ -18,6 +18,7 @@ import {
   Segmented,
   normalizeHex,
   type RungMode,
+  cssPrefix, seedVar,
 } from './shared'
 import { CtaRow, TokenCards, type RampKind } from './TokenCards'
 import { classifyArchetype } from '../src/engine/archetypes'
@@ -596,7 +597,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     ['critical', 'critical'], ['warning', 'warning'], ['positive', 'positive'], ['info', 'info'],
   ]
   const swatchCell = (prefix: string, stop: string) => {
-    const cv = (t: string) => `var(--${prefix}-${t})`
+    const cv = (t: string) => `var(--${cssPrefix(prefix)}-${t})`
     // chip "Aa" (highlighter/cta) carries its on-color at a slightly lighter weight;
     // pen "Aa" is a big, heavy glyph so it reads as a text swatch, not a chip label.
     const aa: React.CSSProperties = { height: 36, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600 }
@@ -675,16 +676,16 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
           <div style={{ display: 'grid', gridTemplateColumns: `repeat(${SWATCH_STOPS.length + 2}, minmax(0, 1fr))`, gap: 4 }}>
             <div title={prefix === 'neutral' ? '--neutral-paper-0' : undefined}>
               {prefix === 'neutral' && <div style={{ height: 22, borderRadius: 5, boxSizing: 'border-box', background: 'var(--neutral-paper-0)', border: anchorStroke }} />}
-              {(prefix === 'brand' || prefix === 'secondary') && <div style={{ height: 22, borderRadius: 5, background: `var(--${prefix}-identity)` }} />}
+              {(prefix === 'brand' || prefix === 'secondary') && <div style={{ height: 22, borderRadius: 5, background: seedVar(prefix) }} />}
             </div>
             {SWATCH_STOPS.map(s => (
-              <div key={s} style={{ height: 22, borderRadius: 5, background: `var(--${prefix}-${s})` }} title={`--${prefix}-${s}`} />
+              <div key={s} style={{ height: 22, borderRadius: 5, background: `var(--${cssPrefix(prefix)}-${s})` }} title={`--${cssPrefix(prefix)}-${s}`} />
             ))}
             <div title={prefix === 'neutral' ? '--neutral-pen-100' : undefined}>
               {prefix === 'neutral' && <div style={{ height: 22, borderRadius: 5, background: 'var(--neutral-pen-100)' }} />}
             </div>
           </div>
-          <div style={{ fontSize: 11, fontWeight: 700, lineHeight: 1, color: `var(--${prefix}-pencil-47)`, marginTop: 4 }}>{label}</div>
+          <div style={{ fontSize: 11, fontWeight: 700, lineHeight: 1, color: `var(--${cssPrefix(prefix)}-pencil-47)`, marginTop: 4 }}>{label}</div>
         </div>
       ))}
     </div>
@@ -705,13 +706,13 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: 36 }}
             title={prefix === 'neutral' ? '--neutral-paper-0' : prefix === 'brand' ? '--absolute-brand' : prefix === 'secondary' ? '--absolute-brand-alt' : undefined}>
             {prefix === 'neutral' ? miniSwatch('var(--neutral-paper-0)', true)
-              : (prefix === 'brand' || prefix === 'secondary') ? miniSwatch(`var(--${prefix}-identity)`, false, 'ID',
+              : (prefix === 'brand' || prefix === 'secondary') ? miniSwatch(seedVar(prefix), false, 'ID',
                   idTextOn(prefix === 'brand' ? computed.r.scale.identityHex : computed.accent?.identityHex))
               : <span />}
-            <div style={{ fontSize: 11, lineHeight: 1, fontWeight: 700, color: `var(--${prefix}-pencil-47)`, textAlign: 'right' }}>{label}</div>
+            <div style={{ fontSize: 11, lineHeight: 1, fontWeight: 700, color: `var(--${cssPrefix(prefix)}-pencil-47)`, textAlign: 'right' }}>{label}</div>
           </div>
           {SWATCH_STOPS.map(s => (
-            <div key={s} title={`--${prefix}-${s}`}>
+            <div key={s} title={`--${cssPrefix(prefix)}-${s}`}>
               {swatchCell(prefix, s)}
             </div>
           ))}
@@ -1165,8 +1166,8 @@ function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typ
     <span style={{
       display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 6,
       fontSize: 12, fontWeight: 500,
-      background: `var(--${prefix}-paper-5)`, color: `var(--${prefix}-pencil-47)`,
-      border: `1px solid var(--${prefix}-chalk-15)`,
+      background: `var(--${cssPrefix(prefix)}-paper-5)`, color: `var(--${cssPrefix(prefix)}-pencil-47)`,
+      border: `1px solid var(--${cssPrefix(prefix)}-chalk-15)`,
     }}>{label}</span>
   )
   const fieldLabel: React.CSSProperties = { fontSize: 11, fontWeight: 600, color: 'var(--fg-subtle)', marginBottom: 4 }

@@ -1,6 +1,8 @@
 import React from 'react'
 import { resolveBrand, type ResolvedBrand } from '../src/engine/resolve'
 import { annotationNote, stopHex } from '../src/engine/cssRender'
+import { CSS_FAMILY } from '../src/engine/tokenDescriptions'
+import { cssVarName, absolutePath } from '../src/engine/tokenNames'
 import { HERO_ILLO } from './heroIllo'
 
 export type RungMode = 'recommended' | 'exact'
@@ -21,10 +23,16 @@ export const FONT_STACK = "'Inter', -apple-system, system-ui, sans-serif"
 // Stops are the emitted token names: the papers and chalks, the highlighter-26 ring, the
 // stamp fill trio, the pencil and pen text stops (doubling as the text-style cta), the
 // stamp on-text. (The on-emphasis text is the neutral's paper-0 in the semantic layer.)
+// The demo keys the alt family `secondary` in its own state and tabs; the engine's CSS
+// word for it is CSS_FAMILY.brandSecondary. Every var() the demo builds from a family key
+// goes through this map, and the seed absolutes through seedVar, so a rename in the engine
+// reaches the demo through the one table.
+export const cssPrefix = (family: string): string => (family === 'secondary' ? CSS_FAMILY.brandSecondary : family)
+export const seedVar = (family: string): string => `var(${cssVarName(absolutePath(cssPrefix(family)))})`
 type Family = 'brand' | 'accent'
 function accentModeCss(mode: AccentMode, primary: Family, subtle: Family): string {
   const other = (f: Family): Family => (f === 'brand' ? 'accent' : 'brand')
-  const prim = (f: Family): string => (f === 'brand' ? 'brand' : 'secondary')
+  const prim = (f: Family): string => (f === 'brand' ? CSS_FAMILY.brandPrimary : CSS_FAMILY.brandSecondary)
   const PRIMARY_ROLES: Array<[string, string]> = [
     ['fg', 'pen-70'], ['fg-hover', 'pencil-47'], ['fg-alt', 'pencil-47'], ['fg-alt-hover', 'pen-70'], ['fg-on-emphasis', 'stamp-on'],
     ['bg-emphasis', 'stamp-fill'], ['bg-emphasis-hover', 'stamp-fill-hover'], ['bg-emphasis-pressed', 'stamp-fill-pressed'],
@@ -434,7 +442,7 @@ export function ScaleStrip({ label, prefix }: { label: string; prefix: string })
       <div style={{ width: 150, fontSize: 12, color: 'var(--fg-subtle)', flexShrink: 0 }}>{label}</div>
       <div style={{ display: 'grid', gridTemplateColumns: `repeat(${SCALE_STOP_NAMES.length}, 1fr)`, gap: 4, flex: 1 }}>
         {SCALE_STOP_NAMES.map(tok => (
-          <div key={tok} title={`${prefix}-${tok}`} style={{ height: 34, borderRadius: 4, background: `var(--${prefix}-${tok})`, border: '1px solid var(--border-subtle)' }} />
+          <div key={tok} title={`--${cssPrefix(prefix)}-${tok}`} style={{ height: 34, borderRadius: 4, background: `var(--${cssPrefix(prefix)}-${tok})`, border: '1px solid var(--border-subtle)' }} />
         ))}
       </div>
     </div>
