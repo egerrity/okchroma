@@ -9,19 +9,18 @@
 // solve axis = the mode. No alias maps, no dedup keys, no profile forks, no sister
 // extensions.
 //
-// THE ZONES: every path payload.ts emits carries an OWNERSHIP-ZONE prefix
-// (payload.registerPath) — base/ for the engine-owned rows (base/<fam>/paper-1 …,
-// base/<fam>/stamp/*, base/link/*, base/absolute/*, base/alpha/*) and utility/ for the
-// team-touchable shelf (utility/shadow-*, utility/opacity/*). The elevation planes are
-// code.ts's own rows (payload never emits them), created at utility/surface/*.
-// RENAMED_GROUPS' strips (below) recover every earlier spelling — the register-less
-// flat vintages, the primitive/ register and the semantic/ era — through
-// legacyCandidates; no value import of registerPath here (see the
-// zero-engine-in-the-bundle note on the describeToken import).
+// THE ZONE: every path payload.ts emits carries the base/ ownership prefix
+// (payload.registerPath), the engine-owned rows: base/<fam>/paper-1 …,
+// base/<fam>/stamp/*, base/link/*, base/absolute/*. The engine emits primitives only
+// (CATALOG C68): a file applied earlier keeps its utility/ shelf, its planes, its alpha
+// rows and its absolute black and white as orphans, never deleted; rows that aliased
+// them take their raw values (the conversion pass below). RENAMED_GROUPS' strips recover
+// every earlier spelling through legacyCandidates; no value import of registerPath here
+// (see the zero-engine-in-the-bundle note on the describeToken import).
 
 import type { FlatTok, TokenColumns, Column } from './payload'
 import { LEGACY_COLUMN_NAME, RETIRED_COLUMN_NAMES } from './payload'
-import { STAMP_LEAF, EXT_NON_OVERRIDABLE, EXT_OVERRIDABLE_SYSTEM } from '../src/engine/tokenNames'
+import { STAMP_LEAF } from '../src/engine/tokenNames'
 // zero-import text module — safe here, drags nothing of the engine into the sandbox bundle
 import { describeToken } from '../src/engine/tokenDescriptions'
 
@@ -52,9 +51,9 @@ const COLS_KEY = 'okchroma-ext-cols'
 // files predating it, which means the fixed default (payload.ts BASE_SEED_HEX)
 const BASE_SEED_KEY = 'okchroma-ext-base-seed'
 // the DESCOPE POSTURE (role-based):
-// whether the non-role rows (ramp stops, alpha/abs plumbing) get scopes = [] (hidden
-// from every Figma picker) while the state-carrying roles (cta bands, link, surfaces)
-// keep ALL_SCOPES. FILE state, not per-brand — the posture is file-wide, so this lives
+// whether the non-role rows (the ramp stops, the seed absolutes) get scopes = [] (hidden
+// from every Figma picker) while the state-carrying roles (the stamp bands, the link
+// trios) keep ALL_SCOPES. FILE state, not per-brand — the posture is file-wide, so this lives
 // on the base collection same as BASE_SEED_KEY, never inside a ThemeSpec recipe.
 // Absent = default ON (non-role rows hidden).
 const DESCOPE_KEY = 'okchroma-ext-descope'
@@ -78,13 +77,16 @@ const DESCOPE_KEY = 'okchroma-ext-descope'
 // Mirrors payload.COLUMNS (type-only import keeps the engine out of the sandbox bundle).
 // Column order IS the mode-dropdown order: the default lane leads, pairs group by prefix.
 const COLUMNS: Column[] = ['light', 'dark']
-// Mirrors cssRender.OFFSET_ALPHAS — declared locally for the same reason COLUMNS is: a value
-// import from payload would drag the engine into the sandbox bundle. Used only to RECOGNISE our
-// own decorative strokes when converting a pre-existing raw value to the alias, never to write one.
-// 0.12 is the RETIRED rung and stays in the recognise set precisely because
-// files in the wild still hold it — dropping it would leave those raw forever.
-const RUNG_ALPHAS: Record<string, number> = { 'away-from-bg/06': 0.06, 'away-from-bg/08': 0.08, 'away-from-bg/16': 0.16 }
-const RETIRED_RUNG_ALPHA = 0.12
+// The rows earlier applies aliased the stamp/on and stamp/edge leaves onto (the absolute
+// poles, the transparent row, the soft ink, the stroke rungs). The engine no longer emits
+// them; a file that holds them keeps them as orphans, and a live row still aliasing one
+// takes its raw value in the conversion pass, provided the alias resolves to exactly what
+// the payload would write. Declared locally: a value import from payload would drag the
+// engine into the sandbox bundle.
+const RETIRED_ALIAS_TARGETS = [
+  'base/absolute/black', 'base/absolute/white', 'base/alpha/transparent', 'base/alpha/ink',
+  'base/alpha/away-from-bg/06', 'base/alpha/away-from-bg/08', 'base/alpha/away-from-bg/16',
+]
 
 // RETIRED CANONICAL SIGNAL VALUES: base rows are create-once, so an engine value-move
 // strands an existing file's SIGNAL rows on the era they were seeded in — a re-apply
@@ -118,9 +120,6 @@ const rgbaMatchesHex = (cur: { r: number; g: number; b: number; a?: number }, he
   const ch = (i: number) => parseInt(hex.slice(i, i + 2), 16) / 255
   return Math.abs(cur.r - ch(1)) < 1 / 510 && Math.abs(cur.g - ch(3)) < 1 / 510 && Math.abs(cur.b - ch(5)) < 1 / 510
 }
-const RUNG_FOR_ALPHA = (a: number | undefined): string | undefined =>
-  a === undefined ? undefined : Object.keys(RUNG_ALPHAS).find(k => Math.abs(RUNG_ALPHAS[k] - a) < 1e-6)
-const DARK_COLUMNS = new Set<Column>(['dark'])
 // Descriptions are per-variable (tokenDescriptions.ts), never a one-size stamp: a
 // stamp's ratio digits would pollute Figma's picker search, which fuzzy-matches
 // descriptions.
@@ -360,10 +359,8 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // every existing binding across in place rather than stranding the row. The
   // cta-border entry above points at the same home (one hop, never a chain).
   //
-  // ⚠️ THE RENAME MOVES THE NAME, NOT THE VALUE. ensure() adopts a legacy row by renaming it and
-  // does NOT bump createdVars, so seedFresh never runs and the row keeps its 0.12 under the
-  // new name — a token called 08 holding 12%. The value-correction pass further down
-  // (the RUNG_ALPHAS loop) is what actually re-values it; do not delete one without the other.
+  // (the alpha rows are no longer written; the entry stays so an old file's row keeps
+  // answering to its last name when reported)
   ['alpha/offset-12', 'alpha/away-from-bg/08'],
   // ── THE C33 COLLAPSE, under C49 numbering. highlight/9 and highlight/on are DEAD
   // (they ORPHAN — the plugin reports orphans, it never deletes a user's variables).
@@ -805,23 +802,14 @@ figma.ui.onmessage = async (msg) => {
       // regenerates every extension so each brand overrides the new rows with its own.
       // brand-alt/* is excluded (the secondary posture has its own reason +
       // trigger); a legacy name counts as EXISTING (ensure() migrates it in place).
-      // Brand-VARYING system rows — the link trio and the identity absolutes — are
-      // the only system paths extensions may override.
-      // rosters from tokenNames.ts (zero-import — the sandbox-safe single source; a
-      // prefix test would disarm silently when a name moves, C56)
-      const OVERRIDABLE_SYSTEM = EXT_OVERRIDABLE_SYSTEM
+      // Every base row is brand-overridable: the family rows, and the non-family rows
+      // tokenNames.EXT_OVERRIDABLE_SYSTEM names (the link trios and the seed absolutes).
       // one helper so every exclusion site stays in sync
       const isBrandSecondary = (p: string) => p.startsWith('base/brand-alt/')
-      // Contract-invariant system rows (every system row except the brand-overridable
-      // rows above) are excluded: extensions can never override them (the work loop
-      // skips them), so their appearance seeds silently — a confirm promising "each
-      // brand carries its own values" would be false and the backfill regeneration
-      // pointless (the alpha/shadow rows are the case).
       const newRows: string[] = baseMatch
         ? baseTokens[activeCols[0]]
             .map((t: FlatTok) => t.path)
             .filter((p: string) => !isBrandSecondary(p))
-            .filter((p: string) => !EXT_NON_OVERRIDABLE(p))
             // the identity absolutes migrate via the BESPOKE pre-pass, invisible to
             // legacyCandidates — a base still holding the old identity rows must not
             // count them as new; and abs-secondary follows the SECONDARY POSTURE
@@ -950,26 +938,22 @@ figma.ui.onmessage = async (msg) => {
       // ── populate the base: CREATE-ONCE from the default seed ─────────────────
       // Existing base values are never rewritten (extensions diff against them); every
       // apply restamps description + scopes. THE DESCOPE POSTURE (default ON;
-      // role-based): the ramp stops and
-      // alpha/abs plumbing are implementation detail — the state-carrying roles (the
-      // cta bands, the link trio, the surface planes) are what a designer should bind —
-      // so descopeOn hides the non-role rows from every picker (scopes = []) while the
-      // role rows always keep ALL_SCOPES. Off exposes everything. Re-stamped every
+      // role-based): the ramp stops and the seed absolutes are implementation detail; the
+      // state-carrying roles (the stamp bands, the link trios) are what a designer should
+      // bind, so descopeOn hides the non-role rows from every picker (scopes = []) while
+      // the role rows always keep ALL_SCOPES. Off exposes everything. Re-stamped every
       // apply regardless of rebuildBase, so a scope hand-edited in Figma's own panel
       // always reverts on the next apply.
       // The role-row band list: the stamp/ state band (payload.ROLE_BANDS' one entry)
-      // + the surfaces (code.ts's own rows), the opacity ladder and the link group
-      // (whose prefix also carries the inverse leaves).
+      // and the link group (whose prefix carries both trios).
       const isRoleRow = (p: string): boolean =>
         /\/stamp\//.test(p)
         || p.startsWith('base/link/')
-        || p.startsWith('utility/surface/')
-        || p.startsWith('utility/opacity/') // the numbers a designer binds an opacity to
       const withSecondary = baseHasSecondary || hasSecondary
       const seedByCol = new Map<Column, Map<string, FlatTok>>(
         activeCols.map(c => [c, new Map(baseTokens[c].map(t => [t.path, t]))]))
       let createdVars = 0
-      const ensure = (path: string, kind: 'COLOR' | 'FLOAT' = 'COLOR'): figma.Variable => {
+      const ensure = (path: string): figma.Variable => {
         let v = baseVars.get(path)
         // An exact `paper-3` hit that lacks the current generation is a pre-Stage-B
         // index-era row (index stop 3 = the live paper-5), not ours: drop it so the legacy
@@ -993,7 +977,7 @@ figma.ui.onmessage = async (msg) => {
             baseVars.delete(legacyPath); baseVars.set(path, legacy); v = legacy; break
           }
         }
-        if (!v) { v = figma.variables.createVariable(path, base, kind); baseVars.set(path, v); createdVars++ }
+        if (!v) { v = figma.variables.createVariable(path, base, 'COLOR'); baseVars.set(path, v); createdVars++ }
         v.setPluginData(PATH_KEY, path); v.setPluginData(GEN_KEY, GEN_CURRENT) // identity stamp — a panel rename survives future lookups
         // the CROSS-PLUGIN stamp: pluginData is namespaced per plugin,
         // so the Mapper (plugin-unify) can't read the private stamp above. Same identity,
@@ -1004,74 +988,19 @@ figma.ui.onmessage = async (msg) => {
         // zone prefixes stay OUT of dev-facing names: the code
         // syntax matches the CSS var modulo the leading --, and a row migrating zones
         // never breaks an engineer's reference
-        v.setVariableCodeSyntax('WEB', v.name.replace(/^(base|utility)\//, '').toLowerCase().replace(/[\s/]+/g, '-'))
+        v.setVariableCodeSyntax('WEB', v.name.replace(/^base\//, '').toLowerCase().replace(/[\s/]+/g, '-'))
         v.scopes = descopeOn && !isRoleRow(path) ? [] : ['ALL_SCOPES']
         return v
       }
-      // Pole-aliasing: the on-fill leaves are exact poles by construction — alias them
-      // to the base/absolute/* rows so the chip READS as the pole and the poles stay
-      // single-source. Emit-layer representation only: a non-pole value (an outline
-      // secondary's on-cta rides its pencil-47) falls back to a raw write, so the alias
-      // never constrains the solve — the engine still picks the pole per family ×
-      // column. (Only the stamp/on leaf: the neutral anchor base/neutral/pen-100 is
-      // RESOLVED off the pole by the engine, so it writes raw like any scale leaf. A
-      // static-anchor-vintage file's pole ALIAS on that row stands until a base rebuild
-      // — create-once is the base contract.)
-      const POLE_LEAVES = (path: string) =>
-        path.endsWith('/' + STAMP_LEAF.ON)
-      // EXACT poles only (per-channel EPS): the engine emits true 0/1 poles, so a
-      // loose band buys nothing — and the conversion pass below must never snap a
-      // hand-edited near-pole value (#FFFFF8) onto the abs row (a sum-tolerance gate
-      // would do exactly that).
-      const isPole = (t: { r: number; g: number; b: number; a?: number }) => {
-        if (t.a !== undefined && t.a !== 1) return false
-        const w = Math.abs(t.r - 1) < EPS && Math.abs(t.g - 1) < EPS && Math.abs(t.b - 1) < EPS
-        const k = t.r < EPS && t.g < EPS && t.b < EPS
-        return w || k
-      }
-      const absFor = (t: { r: number; g: number; b: number }) =>
-        baseVars.get(t.r + t.g + t.b > 1.5 ? 'base/absolute/white' : 'base/absolute/black')
-      // STAMP-EDGE ALIASING ("the rest of them should get aliased to the transparent
-      // variable instead of being raw"). BOTH states are aliases, never raw writes:
-      // alpha 0 → base/alpha/transparent, the decorative stroke → its rung row
-      // (away-from-bg/06/08/16). So the panel reads the token rather than a raw swatch,
-      // and the stroke stays single-source. isPole() deliberately rejects alpha≠1, so
-      // the poles path can never claim either of these — this is its own rule with its
-      // own targets.
-      // Takes the path explicitly so BOTH write paths share it — the base seeding below
-      // and the per-brand extension overrides ("there is a transparent token that can
-      // be aliased to all the rest that are raw"): base rows aliased while overrides go
-      // raw is the gap a pole-only router leaves.
-      // The rung is carried by the token's own alpha (the engine picks it per family), so the
-      // router is a value lookup — no family table to keep in sync with cssRender.ctaBorderRung.
-      const strokeFor = (path: string, t: { a?: number }) => {
-        if (!path.endsWith('/' + STAMP_LEAF.EDGE)) return undefined
-        if (t.a === 0) return baseVars.get('base/alpha/transparent')
-        const rung = RUNG_FOR_ALPHA(t.a)
-        return rung ? baseVars.get(`base/alpha/${rung}`) : undefined
-      }
-      // the SOFT ON-CTA (the C43 addendum): a stamp/on leaf carrying a POLE AT PARTIAL
-      // ALPHA is the default-model secondary's soft text — alias it onto the
-      // base/alpha/ink primitive. isPole() rejects alpha≠1 by design, so without this
-      // router these leaves fall through to RAW writes.
-      const softInkFor = (path: string, t: { r: number; g: number; b: number; a?: number }) => {
-        if (!path.endsWith('/' + STAMP_LEAF.ON)) return undefined
-        if (t.a === undefined || t.a >= 1 - EPS || t.a <= EPS) return undefined
-        return isPole({ r: t.r, g: t.g, b: t.b }) ? baseVars.get('base/alpha/ink') : undefined
-      }
-      // (No text-cta sibling aliasing: the payload carries no text-cta reference
-      // leaves — the text register IS the pen stops. The footer HEAL converts old
-      // files' cta-ink node applications onto those stops.)
+      // Every value is a raw write: the engine emits primitives only, and the stamp/on
+      // pole, the soft on-text at alpha and the stamp/edge stroke or transparent are the
+      // generated values themselves, never an alias onto a system row (C68).
       const chEq = (a: { r: number; g: number; b: number; a?: number } | undefined,
         b: { r: number; g: number; b: number; a?: number } | undefined): boolean =>
         !!a && !!b && Math.abs(a.r - b.r) < EPS && Math.abs(a.g - b.g) < EPS
         && Math.abs(a.b - b.b) < EPS && Math.abs((a.a ?? 1) - (b.a ?? 1)) < EPS
       const seedValue = (v: figma.Variable, colId: string, t: FlatTok, col: Column) => {
-        // a bare-number row (the opacity ladder) writes its number; nothing aliases it
-        if (t.n !== undefined) { v.setValueForMode(colId, t.n); return }
-        const target = strokeFor(t.path, t) ?? softInkFor(t.path, t)
-          ?? (POLE_LEAVES(t.path) && isPole(t) ? absFor(t) : undefined)
-        v.setValueForMode(colId, target ? figma.variables.createVariableAlias(target) : toRGBA(t))
+        v.setValueForMode(colId, toRGBA(t))
       }
       const seedFresh = (v: figma.Variable, path: string) => {
         for (let i = 0; i < activeCols.length; i++) {
@@ -1091,22 +1020,10 @@ figma.ui.onmessage = async (msg) => {
           baseVars.set(to, v); baseVars.delete(from)
         }
       }
-      // PANEL ORDER = CREATION ORDER: the team-touchable utility shelf leads so it
-      // never buries under the families; the low-usage machinery rows (link, alpha,
-      // absolutes) sit LAST in payload order. No alias-target pre-pass: targets create
-      // AFTER their consumers, which is safe because seedValue falls back to a raw
-      // write when a target is missing and the conversion walk below — which runs
-      // after every row exists — re-points every OUR-value raw onto its alias in the
-      // same apply. rebuildBase ("redo the main theme") rides the main loop: seedFresh
-      // runs for EVERY row — the one sanctioned overwrite of base values (values AND
-      // alias idioms).
-      ensure('utility/surface/dim')
-      // low MUST precede mid: a sunken|low|base|high-vintage file's real low row must
-      // direct-hit before mid's legacy lookup consumes that file's base row (the word
-      // base has named two planes — see the RENAMED_LEAVES plane notes)
-      ensure('utility/surface/low')
-      ensure('utility/surface/mid')
-      ensure('utility/surface/high')
+      // PANEL ORDER = CREATION ORDER: the families lead, the link trios and the seed
+      // absolutes trail the collection, in payload order. rebuildBase ("redo the main
+      // theme") rides the main loop: seedFresh runs for EVERY row, the one sanctioned
+      // overwrite of base values.
       // identity re-homes to the system absolutes — bespoke in-place migration
       // (a leaf entry can't express two divergent homes for the same 'identity'
       // leaf); the renamed var keeps its id, bindings and overrides survive. SOURCES
@@ -1127,75 +1044,32 @@ figma.ui.onmessage = async (msg) => {
       for (const t of baseTokens[activeCols[0]]) { // all columns share the path set
         if (!withSecondary && (isBrandSecondary(t.path) || t.path === 'base/absolute/brand-alt')) continue
         const before = createdVars
-        const v = ensure(t.path, t.n !== undefined ? 'FLOAT' : 'COLOR')
+        const v = ensure(t.path)
         if (createdVars > before || rebuildBase) seedFresh(v, t.path) // fresh variable (or a rebuild) → seed every active column
       }
-      // A base that predates an aliasing idiom holds RAW values: convert a raw value that
-      // is exactly what we would have written to the alias (resolution-identical, so the
-      // create-once contract is preserved); user-EDITED values are never touched.
-      //
-      // THIS PASS IS THE OTHER HALF of seedValue's aliasing: seedValue runs only on
-      // FRESHLY CREATED variables, so in any real file ensure() finds an existing row,
-      // seedFresh never runs, and a raw value would keep its raw form forever ("the
-      // alpha transparent didn't take"). Both idioms convert here.
-      const strokeTargetFor = (path: string, cur: figma.RGBA, col: Column) => {
-        // only OUR values: fully transparent, or a black/white offset at one of our rung alphas
-        // (including the RETIRED 0.12, which files in the wild still carry). Anything else is a
-        // designer's own border colour and is left exactly alone.
-        const a = cur.a ?? 1
-        if (Math.abs(a) < EPS) return strokeFor(path, { a: 0 })
-        if (!isPole({ r: cur.r, g: cur.g, b: cur.b })) return undefined
-        const ours = RUNG_FOR_ALPHA(a) !== undefined || Math.abs(a - RETIRED_RUNG_ALPHA) < EPS
-        if (!ours) return undefined
-        // target the rung the PAYLOAD wants for this path, not the one the old value implies —
-        // a file still holding the retired 12% neutral border must land on 08, not on a 12 row
-        // that does not exist.
-        const seed = seedByCol.get(col)!.get(path)
-        return seed ? strokeFor(path, seed) : undefined
-      }
-      // A C43-vintage base holds the soft on-cta as a raw rgba (isPole rejects alpha≠1,
-      // so neither pole idiom claims it). Convert OUR values only: a pure pole at exactly the
-      // alpha the payload wants for this path — a designer's own soft text is left alone.
-      const softInkTargetFor = (path: string, cur: figma.RGBA, col: Column) => {
-        if (!path.endsWith('/' + STAMP_LEAF.ON)) return undefined
-        const seed = seedByCol.get(col)!.get(path)
-        if (!seed || !softInkFor(path, seed)) return undefined
-        if (!isPole({ r: cur.r, g: cur.g, b: cur.b })) return undefined
-        // OUR values only, across both eras: the C43 raw write (alpha = the register) and
-        // the PRE-C43 solid pole (alpha 1 — what the base shipped before the soft on-cta
-        // existed). Any other alpha is a designer's own soft text and is left alone.
-        const a = cur.a ?? 1
-        return Math.abs(a - (seed.a ?? 1)) < EPS || Math.abs(a - 1) < EPS ? softInkFor(path, seed) : undefined
-      }
-      // (No cta-ink raw→alias conversion: cta-ink paths never appear in the payload,
-      // so such a pass could never match; an old file's rows stay as they are — the
-      // footer HEAL handles their node applications.)
+      // A base applied under the aliasing idioms holds stamp/on and stamp/edge leaves as
+      // ALIASES onto rows the engine no longer emits (the absolute poles, the transparent
+      // row, the soft ink, the stroke rungs). Convert OUR aliases back to raw values:
+      // only where the alias resolves to exactly what the payload would write now, so
+      // the create-once contract holds and a designer's own wiring is never touched. The
+      // orphaned target rows stay in the file; the plugin never deletes a user's variables.
+      const retiredTargetIds = new Set(RETIRED_ALIAS_TARGETS.map(p => baseVars.get(p)?.id).filter((id): id is string => !!id))
+      const varById = new Map<string, figma.Variable>()
+      for (const v of baseVars.values()) varById.set(v.id, v)
       const retiredNeutralByCol = retiredNeutral && new Map<Column, Map<string, FlatTok>>(
         activeCols.map(c => [c, new Map(retiredNeutral[c].map(t => [t.path, t]))]))
       for (const [path, v] of baseVars) {
         for (let i = 0; i < activeCols.length; i++) {
           const cur = v.valuesByMode[colIds[i]]
           if (!cur) continue
-          if (typeof cur === 'number') {
-            // a bare-number row (the opacity ladder) has no alias idiom. The unit heal: a
-            // row written in the fraction era holds exactly its rung over a hundred and
-            // takes the percent, Figma's opacity unit; any other value is a designer's own
-            const seed = seedByCol.get(activeCols[i])!.get(path)
-            if (seed?.n !== undefined && Math.abs(cur - seed.n / 100) < 1e-6) v.setValueForMode(colIds[i], seed.n)
-            continue
-          }
+          // a bare-number row (an orphaned opacity rung) has nothing to convert to
+          if (typeof cur === 'number') continue
           if (isAlias(cur)) {
-            // the era-crossing alias ("not updating the main theme"): a base stamp/on
-            // seeded PRE-C43 is pole-aliased onto absolute/black|white, and an alias is
-            // otherwise never touched — so the base would keep reading the SOLID pole after
-            // the payload went soft. OUR abs alias on a path whose seed is soft is exactly the
-            // stale half of that migration: re-point it to base/alpha/ink. An
-            // alias to any OTHER target is a designer's own wiring and is left alone.
+            if (!retiredTargetIds.has(cur.id)) continue
             const seed = seedByCol.get(activeCols[i])!.get(path)
-            const soft = seed ? softInkFor(path, seed) : undefined
-            const isOurAbs = cur.id === baseVars.get('base/absolute/black')?.id
-              || cur.id === baseVars.get('base/absolute/white')?.id
-            if (soft && isOurAbs && soft.id !== v.id) v.setValueForMode(colIds[i], figma.variables.createVariableAlias(soft))
+            const resolved = varById.get(cur.id)?.valuesByMode[colIds[i]]
+            if (seed && resolved && typeof resolved !== 'number' && !isAlias(resolved) && chEq(resolved, seed))
+              v.setValueForMode(colIds[i], toRGBA(seed))
             continue
           }
           // the retired-canonical VALUE refresh (see RETIRED_SIGNAL_VALUES): a signal row
@@ -1222,34 +1096,6 @@ figma.ui.onmessage = async (msg) => {
               continue
             }
           }
-          const target = strokeTargetFor(path, cur, activeCols[i])
-            ?? softInkTargetFor(path, cur, activeCols[i])
-            ?? (POLE_LEAVES(path) && isPole(cur) ? absFor(cur) : undefined)
-          if (target && target.id !== v.id) v.setValueForMode(colIds[i], figma.variables.createVariableAlias(target))
-        }
-      }
-      // ── THE RENAMED ROW'S VALUE ───────────────────────────────────────────────────────────
-      // offset-12 → offset-08 is a rename WITH a value change, and ensure() only renames: it
-      // adopts the legacy row without bumping createdVars, so seedFresh never runs and the row
-      // arrives here still holding 0.12 under its new name. Every cta/border aliasing it then
-      // resolves 12% while the token says 08 — the name would lie, which is worse than a raw
-      // value. This pass is the other half of that rename; deleting it silently un-does it.
-      //
-      // Conservative in the same way strokeTargetFor is: only a value that is EXACTLY one of our
-      // own rung alphas at a pure pole is rewritten. A designer who re-valued the row keeps it.
-      for (const rung of Object.keys(RUNG_ALPHAS)) {
-        const v = baseVars.get(`base/alpha/${rung}`)
-        if (!v) continue
-        for (let i = 0; i < activeCols.length; i++) {
-          const cur = v.valuesByMode[colIds[i]]
-          if (!cur || typeof cur === 'number' || isAlias(cur)) continue
-          const rgba = cur as figma.RGBA
-          const a = rgba.a ?? 1
-          if (!isPole({ r: rgba.r, g: rgba.g, b: rgba.b })) continue
-          const isOurs = RUNG_FOR_ALPHA(a) !== undefined || Math.abs(a - RETIRED_RUNG_ALPHA) < EPS
-          if (!isOurs || Math.abs(a - RUNG_ALPHAS[rung]) < EPS) continue
-          const seed = seedByCol.get(activeCols[i])!.get(`base/alpha/${rung}`)
-          if (seed) v.setValueForMode(colIds[i], toRGBA(seed))
         }
       }
       // Columns CREATED on an existing base (a hand-deleted half being restored —
@@ -1273,8 +1119,6 @@ figma.ui.onmessage = async (msg) => {
       let orphaned = 0
       if (addedCols.length) {
         const known = new Set(baseTokens[activeCols[0]].map(t => t.path))
-        known.add('utility/surface/dim'); known.add('utility/surface/low')
-        known.add('utility/surface/mid'); known.add('utility/surface/high')
         for (const p of baseVars.keys()) if (!known.has(p)) orphaned++
         for (const c of addedCols) {
           const idx = activeCols.indexOf(c)
@@ -1284,32 +1128,6 @@ figma.ui.onmessage = async (msg) => {
           }
         }
       }
-      // Elevation planes — scheme-DIVERGENT aliases, base-only and never overridden:
-      // each alias points at the semantic neutral VARIABLE, so under any brand
-      // extension it resolves through that brand's paper overrides automatically.
-      // Same four stops both schemes, order reversed:
-      //   dim  → neutral/paper-5 light · neutral/paper-0 dark
-      //   low  → neutral/paper-3 light · neutral/paper-1 dark
-      //   mid  → neutral/paper-1 light · neutral/paper-3 dark
-      //   high → neutral/paper-0 light · neutral/paper-5 dark
-      const p0 = baseVars.get('base/neutral/paper-0')
-      const p1 = baseVars.get('base/neutral/paper-1')
-      const p2 = baseVars.get('base/neutral/paper-3')
-      const p3 = baseVars.get('base/neutral/paper-5')
-      if (p0 && p1 && p2 && p3) {
-        const planes: Array<[string, figma.Variable, figma.Variable]> = [
-          ['utility/surface/dim', p3, p0], ['utility/surface/low', p2, p1],
-          ['utility/surface/mid', p1, p2], ['utility/surface/high', p0, p3],
-        ]
-        for (const [path, light, darkVar] of planes) {
-          const v = baseVars.get(path)!
-          activeCols.forEach((c, i) => {
-            const dark = DARK_COLUMNS.has(c)
-            v.setValueForMode(colIds[i], figma.variables.createVariableAlias(dark ? darkVar : light))
-          })
-        }
-      }
-
       // ── the brand's extension (ONE per brand — the picker stays flat and clean) ──
       // The rename EXECUTES here, past every confirm/abort: the collection keeps its id
       // (bindings + overrides survive); BRAND_KEY and the recipe restamp under the new
@@ -1342,29 +1160,23 @@ figma.ui.onmessage = async (msg) => {
       // ── overrides: diff every brand token against the LIVE base value, per column ──
       // Equal → ensure NO override (inherit; the blue-highlight story stays honest).
       // Different → setValueForMode routed by the extension's modeId for that column.
-      // The contract-invariant system rows are skipped outright (the dim/low/mid/high
-      // planes are aliases; the rest are poles every brand shares). The payload always CARRIES a
-      // brand-alt (real or derived from the primary); it is WRITTEN only when the
-      // file's posture is on — secondary stays opt-in, and once on, every brand derives.
+      // The payload always CARRIES a brand-alt (real or derived from the primary); it is
+      // WRITTEN only when the file's posture is on — secondary stays opt-in, and once on,
+      // every brand derives.
       const secondaryMode: 'real' | 'derived' | 'none' = hasSecondary ? 'real' : (withSecondary ? 'derived' : 'none')
       const brandByCol = new Map<Column, Map<string, FlatTok>>(
         activeCols.map(c => [c, new Map(brandTokens[c].map(t => [t.path, t]))]))
       const work: string[] = []
       for (const t of brandTokens[activeCols[0]]) {
-        // The contract-invariant system rows are skipped — EXCEPT the brand-varying
-        // rows OVERRIDABLE_SYSTEM names: the link trio (C20: "link is a system
-        // level color. It can still be extended" — each brand's extension overrides
-        // base/link/* with its own resolved values, its primary's pen stops
-        // or its custom link seed) and the identity absolutes.
-        if (EXT_NON_OVERRIDABLE(t.path)) continue
+        // every row is overridable: the family rows, the link trios (each brand's own
+        // resolved values) and the seed absolutes
         if (secondaryMode === 'none' && (isBrandSecondary(t.path) || t.path === 'base/absolute/brand-alt')) continue
         work.push(t.path)
       }
-      // The pole aliases resolve through ONE hop (they point at the raw abs rows) —
-      // the diff must compare the brand token against the RESOLVED base color, or
-      // every aliased on-fill would read "different" and grow a pointless override.
-      const varById = new Map<string, figma.Variable>()
-      for (const v of baseVars.values()) varById.set(v.id, v)
+      // A base row applied under the old aliasing idioms may still resolve through ONE
+      // hop (an alias onto an orphaned pole or alpha row a designer re-valued): the diff
+      // compares the brand token against the RESOLVED base color, or every such row would
+      // read "different" and grow a pointless override.
       const resolvedBase = (v: figma.Variable, colId: string): figma.RGBA | figma.VariableAlias | undefined => {
         const cur = v.valuesByMode[colId]
         if (typeof cur === 'number') return undefined // number rows never take overrides
@@ -1387,19 +1199,8 @@ figma.ui.onmessage = async (msg) => {
             if (cur && cur[extColIds[i]] !== undefined) { v.removeOverrideForMode(extColIds[i]); removed++ }
             else inherited++
           } else {
-            // a differing override rides the same alias idiom (a flipped on-cta reads
-            // "abs-white" in the extension, not an anonymous hex; a cta/border reads
-            // "alpha/transparent" or an "alpha/away-from-bg/*" rung rather than a raw invisible swatch;
-            // the soft on-cta reads "alpha/ink"). strokeFor/softInkFor come FIRST for the same
-            // reason they do at the base seeding: isPole rejects alpha≠1, so the poles rule can
-            // never claim an alpha-carrying leaf. ⚠️ THIS is the write path the APPLIED theme
-            // shows — brand-alt/stamp/on is an OVERRIDE row (the base posture is the
-            // mirror's solid pole), so a router missing HERE ships raw even when the base
-            // seeding and the conversion pass both carry it ("not seeing these changes
-            // come through in the top level theme").
-            const target = strokeFor(path, tok) ?? softInkFor(path, tok)
-              ?? (POLE_LEAVES(path) && isPole(tok) ? absFor(tok) : undefined)
-            v.setValueForMode(extColIds[i], target ? figma.variables.createVariableAlias(target) : toRGBA(tok))
+            // a differing override is a raw write, like the base seeding
+            v.setValueForMode(extColIds[i], toRGBA(tok))
             set++
           }
         }

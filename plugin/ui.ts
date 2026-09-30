@@ -2,7 +2,7 @@ import { resolveTheme, signalScalesFor, escapeCtaFamily, resolveLinkTrio, DEFAUL
 import { redGateDist, RED_GATE } from '../src/engine/collision'
 import { ARCHETYPES, type Archetype } from '../src/engine/archetypes'
 import { generateNeutralScale, neutralTintHue, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from '../src/engine/colorEngine'
-import { themeToFigma } from '../src/engine/figmaRender'
+import { themeToFigma, type FigmaGroup } from '../src/engine/figmaRender'
 import { SIGNALS } from '../src/engine/signals'
 import { toHex } from '../src/engine/cssRender'
 import { stopTokenName } from '../src/engine/tokenNames'
@@ -462,7 +462,28 @@ function buildAndSend() {
     })
 
     const customLink = linkCustom ? normalizeHex(linkHexInput.value) : null
-    const { light, dark } = themeToFigma(r, { secondary, secondaryStyle: t.secondary?.style, neutralLevel: neutralLevelOf(), neutralH: nH, signals, contrastProfile: cp, ctaEscape: ctaEscape && inRedRange, linkHex: customLink })
+    const tree = themeToFigma(r, { secondary, secondaryStyle: t.secondary?.style, neutralLevel: neutralLevelOf(), neutralH: nH, signals, contrastProfile: cp, ctaEscape: ctaEscape && inRedRange, linkHex: customLink })
+    // THE SEAM: the tree is spelled in the engine's one grammar (the alt as brand-alt, the
+    // signals by role, the link trios under link/default and link/inverse with state
+    // leaves, the seeds under absolute/). This plugin keeps its own spellings for now
+    // (CATALOG C68), so the groups are re-shaped here into what code.ts expects: the alt
+    // as `secondary`, the signals by identity, flat link leaves, an identity leaf inside
+    // each brand group.
+    const reshape = (g: FigmaGroup) => {
+      const link = g.link as FigmaGroup
+      const flatTrio = (trio: FigmaGroup) => ({ 'link': trio.enabled, 'link-hover': trio.hover, 'link-pressed': trio.pressed })
+      const absolute = g.absolute as FigmaGroup
+      const out: FigmaGroup = {
+        brand: { ...(g.brand as FigmaGroup), identity: absolute.brand },
+        secondary: { ...(g['brand-alt'] as FigmaGroup), identity: absolute['brand-alt'] },
+        neutral: g.neutral,
+        link: flatTrio(link.default as FigmaGroup),
+        'link-inverse': flatTrio(link.inverse as FigmaGroup),
+      }
+      for (const s of SIGNALS) out[s.name] = g[s.emitName]
+      return out
+    }
+    const light = reshape(tree.light), dark = reshape(tree.dark)
 
     // Signals are the re-pointable in-between tier: the
     // THEME group carries the ROLE name (critical/warning/positive/info) while

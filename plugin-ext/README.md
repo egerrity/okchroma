@@ -21,9 +21,10 @@ It is not listed on Figma Community. Install it by download from the site's inst
 
 ## What it writes
 
-Every path carries an ownership zone. `base/` is engine-owned: a hand edit there is
-deliberately not rebuilt by a re-apply. `utility/` is team-touchable: rows the engine never
-reads back, written last so they shelve together.
+Every path carries the `base/` ownership zone: engine-owned rows, where a hand edit is
+deliberately not rebuilt by a re-apply. Inside the zone the paths are the engine's one
+grammar, the same spelling the CSS custom properties and the DTCG documents carry. The
+engine emits primitives only: every row is a value it calculates from the seed.
 
 - `base/neutral/*`: `paper-0` to `pen-100` in ladder order, the stamp rows.
 - `base/brand/*` and, when the file carries a secondary, `base/brand-alt/*`: the eleven
@@ -33,12 +34,17 @@ reads back, written last so they shelve together.
 - `base/critical/*`, `base/warning/*`, `base/positive/*`, `base/info/*`: the four signals
   under their role names, canonical in the base; a brand's collision-shifted signal becomes
   that brand's override.
-- `base/link/default/*` and `base/link/inverse/*`, `base/alpha/*` (transparent, ink, the
-  `away-from-bg` rungs), `base/absolute/*` (black, white, brand, brand-alt).
-- `utility/surface/dim|low|mid|high` (created by the plugin, aliased onto the neutral's
-  papers per the surface plane law), `utility/shadow-04|08|12`, and the opacity ladder `utility/opacity/004` through `064` (number
-  variables; `008` through `032` are `base/<family>/highlighter-26`'s state rungs, the shadows and the
-  scrim compose with the rest). The scrim has no row: a kit composes it from the absolute black and `064`.
+- `base/link/default/*` and `base/link/inverse/*`: the link trio for text on the papers and
+  the trio re-solved for text on the pen ground, each with `enabled`, `hover`, `pressed`.
+- `base/absolute/brand` and `base/absolute/brand-alt`: the seeds as given, reference values.
+
+Every value is a raw write: `stamp/on` is the pole (or the pole at alpha on a quiet fill),
+`stamp/edge` the pole at the family's rung or transparent. Nothing aliases a system row.
+A file applied by an earlier version keeps its `utility/` shelf, its planes, its
+`base/alpha/*` rows and its absolute black and white as orphans; the plugin never deletes
+a variable, and a live row that aliased one of them takes its raw value where the alias
+resolves to exactly what the payload writes now. A semantic layer (planes, shadows,
+opacity, state layers) is a collection of its own, authored on these rows.
 
 Values in the base are the documented default seed (`payload.BASE_SEED_HEX`, `#E93D82`),
 recommended mode, the derived brand-alt, the default neutral, canonical signals. The base is
@@ -47,8 +53,8 @@ a base row only when its value exactly matches a retired canonical value the eng
 once wrote. Descriptions come from `src/engine/tokenDescriptions.ts`.
 
 With the "Hide primitive scale from pickers" checkbox on (the default), the state-carrying
-roles (`stamp/` in every family, the link rows, the surface planes) are pickable in every
-Figma color picker and every other row is hidden. Off exposes everything. The posture is
+roles (`stamp/` in every family, the link rows) are pickable in every Figma color picker
+and every other row is hidden. Off exposes everything. The posture is
 file-wide, stored on the base collection, and re-stamped on every apply.
 
 ## Per brand
