@@ -1,20 +1,26 @@
-# The requirement-token format (an experimental export)
+# The requirement-token format (parked research)
 
-`emitDtcgRamp` and `resolveDtcgRamp` are exported from the package but no shipped pipeline
-uses them: the CSS and Figma emitters carry values only. They exist to show that the
-engine's declaration can travel as data: a DTCG color token that carries a frozen color any
-tool can read (`$value`) and the live requirement the engine solved to produce it
-(`$extensions["org.okchroma.requirement"]`). A requirement-aware resolver ignores the
-frozen value and re-resolves from the requirement; everything else uses the fallback. Per
-the DTCG Format Module (2025.10), tools MUST preserve `$extensions` entries they don't
-understand, so the requirement survives any conformant pipeline.
+`emitDtcgRamp` and `resolveDtcgRamp` were an experimental export of the package until
+CATALOG C68 moved them here, out of the public API. No shipped pipeline ever used them.
+They exist to show that the engine's declaration can travel as data: a DTCG color token
+that carries a frozen color any tool can read (`$value`) and the live requirement the
+engine solved to produce it (`$extensions["org.okchroma.requirement"]`). A
+requirement-aware resolver ignores the frozen value and re-resolves from the requirement;
+everything else uses the fallback. Per the DTCG Format Module (2025.10), tools MUST
+preserve `$extensions` entries they don't understand, so the requirement survives any
+conformant pipeline.
+
+The frozen values are not the shipped values: `emitDtcgRamp` runs the resolver without
+the light-to-dark carry and without the policy layer `resolveBrand` adds, so the light
+scale matches the shipped output but the stamps and everything in dark do not. The
+shipped DTCG documents come from `src/engine/dtcgRender.ts` (`docs/schema.md`).
 
 This file is the format's reference. The declaration source of truth is
-[`src/engine/requirements/spec.ts`](../src/engine/requirements/spec.ts) (pure data);
-[`src/engine/requirements/dtcg.ts`](../src/engine/requirements/dtcg.ts) serializes and
-parses it. [`research/reqtoken/reqtoken-emit.ts`](../research/reqtoken/reqtoken-emit.ts)
-writes a full two-mode document when run; the last emitted one is checked in at
-[`research/reqtoken/reqtoken.tokens.json`](../research/reqtoken/reqtoken.tokens.json).
+[`src/engine/requirements/spec.ts`](../../src/engine/requirements/spec.ts) (pure data);
+[`dtcg.ts`](dtcg.ts) beside this file serializes and parses it.
+[`reqtoken-emit.ts`](reqtoken-emit.ts) writes a full two-mode document when run (bundle
+with esbuild, then node); the last emitted one is checked in at
+[`reqtoken.tokens.json`](reqtoken.tokens.json).
 
 ## Document shape
 
@@ -209,7 +215,7 @@ page). Editing `target` is honored everywhere.
 
 - `npm run req:audit`, the requirement gate: resolves an agnostic hue × chroma sweep in
   both modes and verifies every declared requirement plus the structural invariants.
-- [`research/reqtoken/reqtoken-portability.ts`](../research/reqtoken/reqtoken-portability.ts),
+- [`reqtoken-portability.ts`](reqtoken-portability.ts),
   the round-trip gate: emit → JSON → parse → re-resolve is bit-identical; an edited target
   is honored; corruption fails loud. Parked research, not part of `npm run req:audit`;
   run by hand (bundle with esbuild, then node) at commit 0359ea5: 25 checks, 0 failures.

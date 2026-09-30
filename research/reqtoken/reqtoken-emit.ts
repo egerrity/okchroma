@@ -3,7 +3,7 @@
 // in $extensions['org.okchroma.requirement'] (a requirement-aware resolver re-resolves from it — proven by
 // reqtoken-portability.ts, this directory). Usage: node dist/reqtoken-emit.js [seedHex]
 import { writeFileSync, mkdirSync } from 'fs'
-import { emitDtcgRamp, RESOLVER_ID } from '../../src/engine/requirements/dtcg'
+import { emitDtcgRamp, RESOLVER_ID } from './dtcg'
 
 const seed = process.argv[2] ?? '#3060c0'
 const doc = {

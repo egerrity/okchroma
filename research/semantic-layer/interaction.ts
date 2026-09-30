@@ -1,21 +1,35 @@
-// The interaction register: the state layer as named rows, per family.
+// The interaction register, parked research (CATALOG C68): the state layer as named rows,
+// per family, as it shipped in okchroma 0.6.0 and 0.6.1. It left the engine's emission
+// because it is a semantic layer (aliases onto the stamp and the pens, plus the family's
+// highlighter at a static translucency weight), not a primitive the engine calculates from
+// the seed. Kept here as the record for a semantic layer built on the primitives; see
+// README.md beside this file for the ladder, the rows, the claim it held and its audit.
 //
-// Three tiers of ground plus the text that sits on them. `solid` is the stamp
-// (fill, hover, pressed, edge, on). `subtle` and `hint` are the family's
-// highlighter-26 at an opacity rung, the one sanctioned translucency; `hint` rests
-// transparent and `subtle` rests a rung above the ladder's foot. Each tier climbs the
-// ladder one rung per state. Two pole families join the seven color families: `neutral-strong`
-// is the neutral's pen pole used as a stamp, `neutral-inverse` its paper pole; every
-// row in them is a neutral pole, so they flip with the mode as one.
+// Three tiers of ground plus the text that sits on them. `solid` is the stamp (fill,
+// hover, pressed, edge, on). `subtle` and `hint` are the family's highlighter-26 at an
+// opacity rung, the one sanctioned translucency; `hint` rests transparent and `subtle`
+// rests a rung above the ladder's foot. Each tier climbs the ladder one rung per state.
+// Two pole families join the seven color families: `neutral-strong` is the neutral's pen
+// pole used as a stamp, `neutral-inverse` its paper pole; every row in them is a neutral
+// pole, so they flip with the mode as one.
 //
 // The rung rows ship as literal rgba per mode rather than a CSS color function: native
-// renderers have no color-mix, and the number still comes from OPACITY_RUNGS, the one
-// ladder. The alias rows stay var() references so they follow the base emission.
-import { OPACITY_RUNGS, INTERACTION_RUNGS, TRANSPARENT_VAR, type OpacityRung } from './cssRender'
-import { stopTokenName, PAPER_0, PEN_100, STAMP_FILL, STAMP_FILL_HOVER, STAMP_FILL_PRESSED, STAMP_EDGE, STAMP_ON } from './tokenNames'
-import { CSS_FAMILY } from './tokenDescriptions'
-import { SIGNALS } from './signals'
-import { resolveReferences, type ThemeTokens, type TokenMode } from './tokensRender'
+// renderers have no color-mix, and the number still comes from the opacity ladder. The
+// alias rows stay var() references so they follow the base emission.
+//
+// The constants below were engine exports (cssRender.ts) while the register shipped; they
+// are inlined here so this record stays self-contained. The pole and link names are the
+// pre-C68 CSS spellings the register was written against.
+export const OPACITY_RUNGS = { 4: 0.04, 8: 0.08, 12: 0.12, 16: 0.16, 24: 0.24, 32: 0.32, 48: 0.48, 64: 0.64 } as const
+export type OpacityRung = keyof typeof OPACITY_RUNGS
+export const INTERACTION_RUNGS: readonly OpacityRung[] = [8, 12, 16, 24, 32]
+const TRANSPARENT_VAR = '--alpha-transparent'
+const PAPER_0 = 'paper-0'
+const PEN_100 = 'pen-100'
+import { stopTokenName, STAMP_FILL, STAMP_FILL_HOVER, STAMP_FILL_PRESSED, STAMP_EDGE, STAMP_ON } from '../../src/engine/tokenNames'
+import { CSS_FAMILY } from '../../src/engine/tokenDescriptions'
+import { SIGNALS } from '../../src/engine/signals'
+import { resolveReferences, type ThemeTokens, type TokenMode } from '../../src/engine/tokensRender'
 
 export const INTERACTION_POLE_FAMILY = { strong: 'neutral-strong', inverse: 'neutral-inverse' } as const
 export type InteractionPoleFamily = (typeof INTERACTION_POLE_FAMILY)[keyof typeof INTERACTION_POLE_FAMILY]

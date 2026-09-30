@@ -1,16 +1,14 @@
 // The structured emit: the values the CSS emitters write, as one object per mode.
 //
-// The CSS emission is the source of truth and its output is frozen. This module reads
-// the engine's own emission back instead of re-deriving a single value, so the object
-// and the CSS cannot disagree. The reader knows the emitters' block grammar: top-level
-// rule blocks, a dark block named by [data-theme="dark"], and the display-p3
-// re-emission under @supports, which is skipped because object consumers read the
-// sRGB rendition. A name declared once (the identity rows, the opacity ladder) is
-// mode-invariant and is carried into both maps, which is what a per-mode consumer
-// with no cascade needs.
-import { brandCss, signalsCss, SHADOW_ALPHAS, SCRIM_ALPHA, DISABLED_OPACITY, type ShadowRung } from './cssRender'
-import { SURFACE_PLANE_LAW, PAPER_0 } from './tokenNames'
-import { CSS_FAMILY } from './tokenDescriptions'
+// The CSS emission is the source of truth. This module reads the engine's own emission
+// back instead of re-deriving a single value, so the object and the CSS cannot disagree.
+// The reader knows the emitters' block grammar: top-level rule blocks, a dark block named
+// by [data-theme="dark"], and the display-p3 re-emission under @supports, which is
+// skipped because object consumers read the sRGB rendition. A name declared once (the
+// seed absolutes) is mode-invariant and is carried into both maps, which is what a
+// per-mode consumer with no cascade needs. The DTCG documents (dtcgRender.ts) are built
+// from this object.
+import { brandCss, signalsCss } from './cssRender'
 import type { GeneratedScale, NeutralLevel, ContrastProfile } from './colorEngine'
 import type { ResolvedBrand, SecondaryStyle } from './resolve'
 
@@ -23,7 +21,7 @@ export interface ThemeTokens {
   /** resolved literal values per mode; mode-invariant names appear in both */
   light: Record<string, string>
   dark: Record<string, string>
-  /** names whose value does not depend on the mode */
+  /** names whose value does not depend on the mode (the seed absolutes) */
   invariant: string[]
   /** the declarations as emitted, var() references intact, per block */
   raw: { light: Record<string, string>; dark: Record<string, string> }
@@ -111,19 +109,6 @@ export function resolveReferences(own: Map<string, string>, shared: Map<string, 
   return out
 }
 
-/** The system rows tokens/semantic.css states as static aliases, as engine-table projections. */
-export function systemCss(): string {
-  const planeRef = (stop: string) => (stop === PAPER_0 ? `var(--${PAPER_0})` : `var(--${CSS_FAMILY.neutral}-${stop})`)
-  const pad = (r: string | number) => String(r).padStart(2, '0')
-  const lines = (mode: TokenMode): string[] => [
-    ...Object.entries(SURFACE_PLANE_LAW).map(([leaf, stops]) => `  --surface-${leaf.split('/').pop()}: ${planeRef(stops[mode])};`),
-    ...(Object.keys(SHADOW_ALPHAS).map(Number) as ShadowRung[]).map(r => `  --shadow-${pad(r)}: rgba(0, 0, 0, ${SHADOW_ALPHAS[r][mode]});`),
-    `  --scrim: rgba(0, 0, 0, ${SCRIM_ALPHA});`,
-    `  --disabled-opacity: ${DISABLED_OPACITY};`,
-  ]
-  return [':root {', ...lines('light'), '}', `:root${DARK_MARK}, ${DARK_MARK} {`, ...lines('dark'), '}'].join('\n')
-}
-
 /** Builds a ThemeTokens object from an emission's declaration maps. */
 export function tokensFromEmission(slug: string, css: string): ThemeTokens {
   const { light, dark, order } = readEmission(css)
@@ -134,11 +119,10 @@ export function tokensFromEmission(slug: string, css: string): ThemeTokens {
   return { slug, names: order, light: resolvedLight, dark: resolvedDark, invariant, raw }
 }
 
-/** The whole page's token set for one brand: signals, system rows, and the brand block. */
+/** The whole page's token set for one brand: the signal block and the brand block. */
 export function themeTokens(input: ThemeTokensInput): ThemeTokens {
   const css = [
     signalsCss(input.contrastProfile),
-    systemCss(),
     brandCss(
       input.slug,
       input.displayName ?? input.slug,

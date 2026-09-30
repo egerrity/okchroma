@@ -7,7 +7,7 @@
 //   4. fail-loud: a corrupted bundle throws, never silently falls back
 import { STAMP_FILL, STAMP_FILL_HOVER, STAMP_FILL_PRESSED } from '../../src/engine/tokenNames'
 import { resolveRamp } from '../../src/engine/requirements/resolve'
-import { emitDtcgRamp, resolveDtcgRamp, parseToken, EXT_KEY, type DtcgRampGroup, type DtcgRequirementToken } from '../../src/engine/requirements/dtcg'
+import { emitDtcgRamp, resolveDtcgRamp, parseToken, EXT_KEY, type DtcgRampGroup, type DtcgRequirementToken } from './dtcg'
 import { wcagY, contrastRatio } from '../../src/engine/constraints'
 
 const SEEDS = ['#3060c0', '#c03a2b', '#c8a018', '#2a9d5c', '#8a8a8a']  // blue, red, yellow, green, near-gray

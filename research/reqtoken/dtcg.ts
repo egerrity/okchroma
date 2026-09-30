@@ -1,17 +1,23 @@
-// dtcg.ts — PORTABILITY layer. Serializes the requirement declaration (spec.ts, pure data) into DTCG color
-// tokens and parses them back. Each stop/role token carries:
-//   $value       — a FROZEN fallback (the resolved color at emit time) so any DTCG tool reads a valid color
-//   $extensions['org.okchroma.requirement'] — the live requirement data + a NAMED resolver reference
-// A requirement-aware resolver ignores $value and re-resolves from the extension; a dumb tool uses the
-// fallback. Per DTCG Format 2025.10, unknown $extensions entries MUST be preserved by tools.
-// Scale stops are keyed by number ('0'..'11'); off-scale roles by name (stamp-fill / stamp-fill-hover /
-// stamp-fill-pressed, the shipped spelling every other emitter uses) — the numbering truth (the fill is a
-// ROLE, never a scale stop) survives serialization. Bundles emitted before 2026-09-02 named the roles
-// cta / cta-hover / cta-pressed; parseToken maps those onto the stamp names, so they still re-resolve.
-import type { StopReq, RoleReq, ModeSpec, OnReq, RoleName } from './spec'
-import { resolveRamp, type ResolvedRamp, type ResolvedRole } from './resolve'
-import { MODE_SPECS } from './spec'
-import { STAMP_FILL, STAMP_FILL_HOVER, STAMP_FILL_PRESSED } from '../tokenNames'
+// dtcg.ts: the requirement-token portability experiment, parked research (CATALOG C68).
+// Serializes the requirement declaration (spec.ts, pure data) into DTCG color tokens and
+// parses them back. Each stop or role token carries a frozen $value (the color the
+// requirement lane resolves at emit time) and, in $extensions['org.okchroma.requirement'],
+// the live requirement plus a named resolver reference. Per DTCG Format 2025.10, unknown
+// $extensions entries must be preserved by tools.
+//
+// Not a shipped output: the requirement lane runs the resolver without the dark carry and
+// without the policy layer, so its values are not the shipped values (measured: the light
+// scale matches, the stamps and everything in dark do not). The shipped DTCG documents come
+// from src/engine/dtcgRender.ts. This file is kept runnable by hand: bundle with esbuild,
+// then node (see FORMAT.md and reqtoken-portability.ts).
+//
+// Scale stops are keyed by number ('0'..'11'); off-scale roles by name (stamp-fill /
+// stamp-fill-hover / stamp-fill-pressed). Bundles written under the older role words cta /
+// cta-hover / cta-pressed still parse.
+import type { StopReq, RoleReq, ModeSpec, OnReq, RoleName } from '../../src/engine/requirements/spec'
+import { resolveRamp, type ResolvedRamp, type ResolvedRole } from '../../src/engine/requirements/resolve'
+import { MODE_SPECS } from '../../src/engine/requirements/spec'
+import { STAMP_FILL, STAMP_FILL_HOVER, STAMP_FILL_PRESSED } from '../../src/engine/tokenNames'
 
 export const EXT_KEY = 'org.okchroma.requirement'
 export const RESOLVER_ID = 'okchroma-reqtoken@2'   // named resolver capability (DTCG "computed source" model)

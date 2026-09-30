@@ -4,6 +4,93 @@ Fresh tracker. The previous CATALOG was archived with the whole old docs tree in
 ("clean-slate rewrite" 2026-06-27); entries here are code-grounded, logged at find-time,
 fixed holistically after owner sign-off.
 
+## C72 — the Mapper's background and merge rules target rows the extended plugin no longer writes (OPEN, 2026-09-30)
+
+Found while scoping C68. `plugin-unify/mapping.ts` maps Unify backgrounds onto the
+elevation planes (`utility/surface/dim|low|mid|high`, the owner's rule that backgrounds are
+planes, never raw papers) and merges onto the alpha offsets (`base/alpha/away-from-bg/08|16`).
+With C68 the extended plugin stops writing both. On a file applied before C68 the rows
+survive as orphans and the picks still bind; on a fresh file `applyPicks` skips them and
+the notice says to re-apply the theme, which will not create them. The Mapper is not the
+engine and is left alone by the owner's word; a Mapper round decides whether those rules
+become picks over the neutral papers, fall to the runtime suggestion, or wait for a
+semantic layer to target.
+
+## C71 — desc-audit's conformance phrase list names two retired phrases and not the live one (FIXED, 2026-09-30)
+
+`scripts/desc-audit.ts` counts conformance lines by matching `PHRASES`, which lists
+"AA large text and UI elements", "AA standard body text & Level AAA large text" and
+"AAA standard body text". `tokenDescriptions.ts` writes only the first and "AA standard
+body text"; the body-text phrase is never counted, so the zero-count tripwire is carried by
+the highlighter rows alone. Harmless today, blind if the highlighter phrase is ever
+rewritten. Fixed in the C68 round: the list imports the two live constants.
+
+## C70 — `fg-on-hint` clears the body-text bar over the resting hint ground only (FOUND, 2026-09-30)
+
+Measured through the real pipeline over the 15 fixtures in every posture plus a 108-seed
+hue by chroma sweep. The register's `fg-on-hint` row is the family's `pencil-47`, and no
+audit composites it over a rung: `audit:tokens` E covers `fg` and `fg-strong` only. Over
+the resting hint ground (transparent, so the paper) the worst pairing is 4.53:1. Over the
+hovered, pressed and selected hint rungs the worst is 3.79:1, and over the subtle rungs
+3.15:1, in the color families; the pole families clear everywhere. The register leaves the
+emission under C68 and is recorded in `research/semantic-layer/`, where this measurement
+travels with it; a semantic layer that reuses the row must pair it with the resting ground
+or re-solve it.
+
+## C69 — six role names hold two values: `tokens/semantic.css` against the interaction register (FOUND, 2026-09-30)
+
+`tokens/semantic.css` declares `--brand-fg: var(--brand-pen-70)` (and the same for
+`brand-alt`, `critical`, `warning`, `positive`, `info`), while `interactionCss` declares
+`--brand-fg: var(--brand-pen-58)` for the same six names (`interaction.ts`, the `fg` row).
+Both selectors are one attribute deep, so whichever stylesheet a consumer loads last wins.
+The demo loads only the stylesheet and never the register, so it never showed. Resolved by
+C68: both leave the package, the stylesheet moving to the demo as its own alias layer and
+the register to research.
+
+## C68 — THE ENGINE EMITS PRIMITIVES ONLY, IN ONE GRAMMAR, WITH A DTCG DOCUMENT PER MODE (RULED, 2026-09-30)
+
+The hand-off that opened the round asked for a DTCG emit of everything the engine ships.
+Measured through the real pipeline (183 cases: the fixture roster in every posture plus
+the agnostic sweep): the shipped vocabulary was 290 names per mode, of which 146 came from
+the CSS emitters and 144 from the interaction register; 144 had an authored description;
+no shipped token was emitted as a DTCG document; the experimental `emitDtcgRamp` covered
+15 names of one family with values that differ from the shipped ones on 44.5% of tokens
+(every dark stamp, up to OKLab 0.26), because it runs the resolver without the dark carry
+and the policy layer. The repo also said three different things about DTCG: an output
+(`package.json`, `docs/architecture.md` stage 8, the `src/index.ts` header), one of two
+outputs (`README.md`), experimental and unused (`docs/schema.md`).
+
+The owner's ruling: a primitive is what the engine calculates from the seed, and the
+engine emits primitives only, in every output. A color family is its 11 scale stops and
+its five stamp tokens (the edge and the quiet fills' soft on-text carry alpha inside their
+value). The link trios stay (calculated from the seed). The neutral poles and the two seed
+absolutes stay. Everything static or aliased leaves every output and is recorded in
+`research/`: the interaction register, the elevation planes, the shadows, the scrim, the
+disabled opacity, the opacity ladder, the alpha ladders with transparent and ink, the
+absolute black and white rows; `tokens/semantic.css` leaves the package. One grammar
+spells every row: the extended plugin's paths without the zone word, hyphen-joined for CSS
+and slash-joined for Figma; eight CSS names rename in place (`--paper-0`, `--pen-100`,
+`--link`, `--link-hover`, `--link-pressed`, `--link-inverse`, `--brand-identity`,
+`--brand-alt-identity`). The experimental export moves to research and leaves the API. The
+DTCG documents are sRGB only this round. The community plugin is deferred (seam edits
+only), the Mapper is left alone (C72), the proofs of concept stay pinned. No fork: one
+engine, one record, a README complete on its own. No color moves; the diff against the
+baseline dump is removed names and the eight renames only.
+
+**Addendum, same day: the descriptions are agent-readable in the file.** The owner asked
+whether the contrast pairs belong on the token. They do: the DTCG `$description` is a
+second rendering of the same bodies (`describeDocument`) that adds each claim's ground
+("AA standard body text on every paper and chalk of this family and of the neutral"), a
+ground's own line naming what clears it, and a usage line on the stamp tokens, the links
+and the seeds (her words: the fill is for primary button fills, optional for avatars,
+badges and other elements that carry text, never a standalone color, alone or with its
+hover and pressed states, which are for nothing else). The Figma rendering is unchanged:
+Figma's picker searches descriptions, the file is not searched. The grounds render from
+`GUARANTEE_SCOPE` in tokenDescriptions.ts, and `audit:guarantee` asserts the pairs it
+measures are exactly that table's, so a token never describes a claim the gate does not
+hold; `audit:desc` checks the document rendering under the rules that still apply to it
+and that it carries every Figma line.
+
 ## C67 — the subtle ladder cannot climb to 032 on the inverse family's pen-58 ground (RULED, 2026-09-21)
 
 Found bumping the subtle tier one rung per state on the owner's ruling (8/12/16/24 to
