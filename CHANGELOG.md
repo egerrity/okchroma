@@ -8,7 +8,7 @@ structure, ships as at least a minor.
 
 Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git log.
 
-## 0.7.0 — unpublished
+## 0.7.0 — 2026-09-30
 
 - **The engine emits primitives only.** A primitive is a value the engine calculates from
   the seed: the seven color families with their scale stops and five stamp tokens, the
