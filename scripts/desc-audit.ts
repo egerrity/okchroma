@@ -1,48 +1,44 @@
-// desc-audit — the description text rules, enforced (owner 2026-08-05).
+// desc-audit: the description text rules, enforced.
 //
-// Figma's picker fuzzy search matches variable DESCRIPTIONS as well as names; the old
-// one-size stamp's ratio digits ("3:1/4.5/7:1") made digit queries match every row and
-// bury the real name hit. These rules keep descriptions search-inert:
+// Figma's picker fuzzy search matches variable DESCRIPTIONS as well as names; ratio
+// digits in a description make digit queries match every row and bury the real name
+// hit. These rules keep descriptions search-inert:
 //   1. Every emitted path has a real body (no title-only fallbacks in the shipped set).
-//   2. No digit in a body line — a row's own TITLE line is the only digit carrier.
+//   2. No digit in a body line: a row's own TITLE line is the only digit carrier.
 //   3. No ratio strings, no light/dark/mode talk, no "n/a" filler (the line is dropped).
-//   4. Conformance is stated only through the owner's phrases verbatim (the lines are
-//      UNLABELED since 2026-08-28 — the old "Contrast:" label flooded "on" searches).
-//   5. No FOREIGN token label word in a body (owner 2026-08-05: "use a different word to
-//      optimize the search") — "decorative borders" on every chalk row floods a search for
-//      the cta border rows exactly the way the stamp's digits flooded number searches. A
-//      label word is allowed only when it is in the row's OWN path; the cta border title
-//      line is the standing exception (it IS the token's name).
-//   6. tokenDescriptions.ts stays import-free — the module both plugin sandboxes bundle.
+//   4. Conformance is stated only through the two phrases verbatim; the lines are
+//      unlabeled because a label's own letters flood searches.
+//   5. No FOREIGN token label word in a body: "decorative borders" on every chalk row
+//      would flood a search for a border row exactly the way digits flood number
+//      searches. A label word is allowed only when it is in the row's OWN path.
+//   6. tokenDescriptions.ts stays import-free: the module both plugin sandboxes bundle.
+// The document rendering (describeDocument, the $description of every token in the DTCG
+// documents) is the same bodies plus each claim's ground and a usage line. No picker
+// searches a JSON file, so rules 2 and 5 do not bind it; rules 1, 3 and 4 do, and every
+// line of the Figma rendering must appear in it, so the two cannot drift apart.
 
 import * as fs from 'fs'
 import { buildBaseColumns } from '../plugin-ext/payload'
-import { describeToken, canonicalize } from '../src/engine/tokenDescriptions'
+import { describeToken, describeDocument, canonicalize, AA_LARGE, AA_BODY, BAND_STOPS } from '../src/engine/tokenDescriptions'
+import { stopTokenName } from '../src/engine/tokenNames'
 
-const PHRASES = [
-  'AA large text and UI elements',
-  'AA standard body text & Level AAA large text',
-  'AAA standard body text',
-]
+// the two live phrases, imported so a rewrite cannot leave this gate matching nothing
+const PHRASES = [AA_LARGE, AA_BODY]
 
-// ext emits register-prefixed paths (primitive/* — one register since the 2026-08-11
-// flatten); the elevation planes are code.ts's own rows at primitive/system/surface/*
+// the extended plugin's paths carry the base/ zone; the canonical form strips it
 const paths = buildBaseColumns().light.map(t => t.path)
-paths.push('utility/surface/dim', 'utility/surface/low', 'utility/surface/mid', 'utility/surface/high')
-// the community plugin's spellings carry no register prefix and spell the brand families
-// differently — same rows, so the same rules must hold on those spellings too. Derived
-// from the CANONICAL form (adversarial-audit-caught 2026-08-07: matching the raw
-// register-prefixed path left this branch dead and the community shapes untested).
+// the community plugin spells the brand families and the link and seed rows its own way;
+// same rows, so the same rules must hold on those spellings too, derived from the
+// canonical form
 for (const p of [...paths]) {
   const c = canonicalize(p)
   if (c !== p) paths.push(c)
   if (c.startsWith('brand/')) paths.push('brand/primary/' + c.slice('brand/'.length))
   if (c.startsWith('brand-alt/')) paths.push('brand/alt/' + c.slice('brand-alt/'.length))
+  if (c.startsWith('link/')) paths.push('system/' + c)
+  if (c === 'absolute/brand') paths.push('system/abs-primary')
+  if (c === 'absolute/brand-alt') paths.push('system/abs-alt')
 }
-// (the community-only system/pen-100 push RETIRED 2026-08-28: the anchor is
-// engine-resolved and rides the neutral group in both plugins — covered above via
-// NEUTRAL_ONLY like paper-0. The 2026-08-07 title-only hole it patched cannot
-// reopen: no plugin creates the flat system/ path anymore.)
 
 let bad = 0
 const fail = (p: string, why: string) => { console.error(`FAIL ${p}: ${why}`); bad++ }
@@ -69,14 +65,9 @@ if (contrastLines === 0) fail('(gate)', 'conformance-phrase gate matched zero li
 
 // ── rule 5: no foreign label word ────────────────────────────────────────────
 // The vocabulary is derived from the real paths, so a future token name joins the ban
-// automatically — the 2026-08-18 solid rename put stamp/fill/edge/overlay/dim/mid on
-// the list for free, and retired "cta" from it (no path carries the word now, so the
-// bodies' deliberate "CTA" prose — kept so a designer's cta query still lands on the
-// action rows — needs no exception any more). "aaa" stays: pen-70's own leaf
-// collides with "AAA", the WCAG conformance-level word AA_BODY/AAA_BODY
-// (tokenDescriptions.ts) use verbatim in the Contrast line of every other AA/AAA
-// text-register row (PHRASES enforces those exact strings, rule 4) — a real word every
-// text-contrast row legitimately carries, not a pointer at pen-70 specifically.
+// automatically. No path carries "cta", so the bodies' deliberate "CTA" prose (kept so a
+// designer's cta query lands on the action rows) needs no exception. "aaa" stays allowed
+// because the conformance phrases carry the WCAG level words.
 const ALLOWED_FOREIGN = new Set(['aaa'])
 const vocab = new Set<string>()
 for (const p of paths) for (const w of p.toLowerCase().split(/[/-]/)) if (/^[a-z]{3,}$/.test(w)) vocab.add(w)
@@ -89,9 +80,28 @@ for (const p of paths) {
   }
 }
 
+// ── the document rendering ───────────────────────────────────────────────────
+for (const p of paths) {
+  const figma = describeToken(p).split('\n').slice(1)
+  const doc = describeDocument(p)
+  if (!doc.trim()) { fail(p, 'document rendering is empty'); continue }
+  const lines = doc.split('\n')
+  if (/:1\b/.test(doc)) fail(p, 'ratio string in the document rendering')
+  if (/\b(light|dark|mode|modes|n\/a)\b/i.test(doc)) fail(p, 'mode talk or n/a filler in the document rendering')
+  // every Figma line is in the document rendering; a conformance line may have grown its
+  // ground, so a Figma line matches as a prefix
+  for (const l of figma) if (!lines.some(d => d === l || d.startsWith(l))) fail(p, `document rendering lost the Figma line "${l}"`)
+  for (const line of lines) if (PHRASES.some(ph => line.includes(ph))) contrastLines++
+}
+// the stop words the document rendering names are the name table's
+for (const [band, stops] of Object.entries(BAND_STOPS)) {
+  const real = new Set([8, 9, 10, 11].map(stopTokenName))
+  for (const st of stops) if (!real.has(st)) fail(`(scope)`, `BAND_STOPS.${band} names ${st}, which is not a scale stop`)
+}
+
 // the sandbox-bundle guarantee: the text module must never grow an import
 const src = fs.readFileSync('src/engine/tokenDescriptions.ts', 'utf8')
 if (/^\s*import\b/m.test(src)) { console.error('FAIL tokenDescriptions.ts: grew an import — sandbox bundles depend on it staying a leaf'); bad++ }
 
 if (bad) { console.error(`desc-audit: ${bad} violation(s)`); process.exit(1) }
-console.log(`desc-audit: clean — ${paths.length} rows, all bodies present, digit-free`)
+console.log(`desc-audit: clean — ${paths.length} rows, all bodies present, digit-free; the document rendering carries every Figma line`)

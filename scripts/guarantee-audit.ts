@@ -36,7 +36,13 @@ import { generateNeutralScale, type GeneratedScale } from '../src/engine/colorEn
 import { contrastRatio, shippedY } from '../src/engine/constraints'
 import { oklchToLinearRgb } from '../src/engine/constraints'
 import { srgbEmitChannels, hexToOklch } from '../src/engine/colorMath'
-import { stopHex, OPACITY_RUNGS, INTERACTION_RUNGS, opacityLeafName } from '../src/engine/cssRender'
+import { stopHex } from '../src/engine/cssRender'
+import { GUARANTEE_SCOPE, BAND_STOPS, AA_LARGE, AA_BODY } from '../src/engine/tokenDescriptions'
+// the translucency weights a state layer built on highlighter-26 may take: the engine
+// emits no opacity ladder (C68), and this audit holds the highlighter under these weights
+// so a semantic layer that composites it over a paper keeps the pen text bar. The weights
+// are the ladder the retired interaction register climbed (research/semantic-layer/).
+const STATE_LAYER_WEIGHTS = [0.08, 0.12, 0.16, 0.24, 0.32] as const
 import { compositeHex } from '../src/engine/alphaPapers'
 import { FIXTURES } from './fixture'
 import type { NeutralLevel } from '../src/engine/neutralCurve'
@@ -122,7 +128,7 @@ function check(hex: string, tag: string, opts: { exact?: boolean; archetypeOverr
         for (const pen of PENS) seen(`${PEN_NAME[pen]} vs chalk`, contrastRatio(yOf(arr[pen - 1]), y), where(s), BAR.text)
         if (f.name === 'neutral') seen('pen-100 vs chalk', contrastRatio(penPoleY, y), where(s), BAR.text)
       }
-      // THE STATE-LAYER CLAIM: highlighter-26 at every interaction rung, composited over
+      // THE STATE-LAYER CLAIM: highlighter-26 at every state-layer weight, composited over
       // every paper in scope (gamma sRGB, the basis every renderer composites in), holds
       // the pen group at 4.5. The composite's Y is read from its 8-bit hex like any
       // shipped pair.
@@ -135,10 +141,10 @@ function check(hex: string, tag: string, opts: { exact?: boolean; archetypeOverr
           paperHex.push([`${g.name} ${nameOf(st)}`, stopHex((mode === 'light' ? g.scale.light : g.scale.dark)[st - 1])])
       }
       if (f.name === 'neutral' && nP0) paperHex.push(['paper-0', stopHex(nP0)])
-      for (const rung of INTERACTION_RUNGS) for (const [s, gHex] of paperHex) {
-        const o = hexToOklch(compositeHex(hlHex, gHex, OPACITY_RUNGS[rung]))
+      for (const weight of STATE_LAYER_WEIGHTS) for (const [s, gHex] of paperHex) {
+        const o = hexToOklch(compositeHex(hlHex, gHex, weight))
         const cy = shippedY(o.L, o.C, o.H)
-        const at = `${s} under highlighter-26 at ${opacityLeafName(rung)}`
+        const at = `${s} under highlighter-26 at ${Math.round(weight * 100)}%`
         for (const pen of PENS) seen(`${PEN_NAME[pen]} vs state rung`, contrastRatio(yOf(arr[pen - 1]), cy), where(at), BAR.text)
         if (f.name === 'neutral') seen('pen-100 vs state rung', contrastRatio(penPoleY, cy), where(at), BAR.text)
       }
@@ -206,6 +212,25 @@ function reportFullChroma(hex: string, tag: string) {
   }
 }
 for (let h = 0; h < 360; h += 5) for (const c of [0.13, 0.2, 0.32]) reportFullChroma(seedHex(0.62, c, h), `H${h}/C${c}`)
+
+// THE SCOPE TABLE IS THE GATE'S OWN: the document descriptions render each claim's ground
+// from tokenDescriptions.GUARANTEE_SCOPE, so the pairs this audit measured must be exactly
+// that table's pairs, at that table's level. A band the table names that was not measured,
+// a ground measured that the table does not name, or a level that differs, fails here, so
+// a token can never describe a claim the gate does not hold.
+{
+  const measured = new Set(Object.keys(cells).filter(k => / vs (paper|chalk)$/.test(k)))
+  const expected = new Set<string>()
+  const levelOf: Record<number, string> = { [BAR.highlighter]: AA_LARGE, [BAR.text]: AA_BODY }
+  for (const band of Object.keys(GUARANTEE_SCOPE) as Array<keyof typeof GUARANTEE_SCOPE>) {
+    const bar = band === 'highlighter' ? BAR.highlighter : BAR.text
+    if (GUARANTEE_SCOPE[band].level !== levelOf[bar]) fails.push(`scope table: ${band} says "${GUARANTEE_SCOPE[band].level}", the gate measures it at ${bar}`)
+    const stops = [...BAND_STOPS[band], ...(band === 'pen' ? ['pen-100'] : [])]
+    for (const ground of GUARANTEE_SCOPE[band].grounds) for (const stop of stops) expected.add(`${stop} vs ${ground}`)
+  }
+  for (const k of expected) if (!measured.has(k)) fails.push(`scope table names ${k}, which this audit did not measure`)
+  for (const k of measured) if (!expected.has(k)) fails.push(`this audit measured ${k}, which the scope table does not name`)
+}
 
 console.log(`\n=== guarantee-audit: the five band claims, shipped basis, ${seeds} seeds × 2 modes × 7 families × ${NEUTRAL_LEVELS.length} neutral levels ===`)
 for (const [k, w] of Object.entries(cells).sort())

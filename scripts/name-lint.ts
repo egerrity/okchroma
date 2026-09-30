@@ -9,12 +9,11 @@
 // only the role rows — the solid bands, the link trio, the surface planes — are
 // pickable; every other row is hidden from pickers).
 //
-// Name universes: the ext register's real variable names (the payload + the
-// plugin's own surface rows), then the community plugin's spellings of the same
-// rows, then the CSS grammar — the var names the library emits (base seed +
-// signals) and the semantic alias layer in tokens/semantic.css. A row's rendered
-// description is identical across spellings (the title is the canonical spaced
-// name), so descriptions are counted once, over the ext set.
+// Name universes: the ext register's real variable names (the payload), then the
+// community plugin's spellings of the same rows, then the CSS grammar — the var names
+// the library emits (base seed + signals) and the demo's own alias layer in
+// demo/semantic.css. A row's rendered description is identical across spellings (the
+// title is the canonical spaced name), so descriptions are counted once, over the ext set.
 // Informational only — always exits 0 when given an argument.
 
 import * as fs from 'fs'
@@ -26,17 +25,15 @@ import { brandCss, signalsCss } from '../src/engine/cssRender'
 const sub = process.argv[2]?.toLowerCase()
 if (!sub) { console.error('usage: npm run name-lint -- <substring>'); process.exit(1) }
 
-// the ext descope posture (mirrors plugin-ext/code.ts isRoleRow); the system/
-// spellings are the community/canonical homes of the same role rows
+// the ext descope posture (mirrors plugin-ext/code.ts isRoleRow); the system/link
+// spelling is the community plugin's home of the same rows
 const isRoleRow = (p: string): boolean =>
   /\/stamp\//.test(p)
-  || p.startsWith('base/link/') || p.startsWith('system/link/')
-  || p.startsWith('utility/surface/') || p.startsWith('system/surface/')
+  || p.startsWith('base/link/') || p.startsWith('link/') || p.startsWith('system/link/')
 const flag = (p: string): string => (isRoleRow(p) ? 'pickable' : 'hidden  ')
 
-// ── the ext register's real names: the payload + code.ts's own surface rows ──
+// ── the ext register's real names: the payload ──
 const extNames = buildBaseColumns().light.map(t => t.path)
-extNames.push('utility/surface/dim', 'utility/surface/low', 'utility/surface/mid', 'utility/surface/high')
 
 // ── the community plugin's spellings (the desc-audit assembly) ───────────────
 const communityNames: string[] = []
@@ -45,8 +42,10 @@ for (const p of extNames) {
   if (c !== p) communityNames.push(c)
   if (c.startsWith('brand/')) communityNames.push('brand/primary/' + c.slice('brand/'.length))
   if (c.startsWith('brand-alt/')) communityNames.push('brand/alt/' + c.slice('brand-alt/'.length))
+  if (c.startsWith('link/')) communityNames.push('system/' + c)
+  if (c === 'absolute/brand') communityNames.push('system/abs-primary')
+  if (c === 'absolute/brand-alt') communityNames.push('system/abs-alt')
 }
-communityNames.push('system/pen-100')
 
 // ── the CSS grammar: every var name the emitters declare, base seed posture ──
 const cssVarNames = (css: string): string[] =>
@@ -54,7 +53,7 @@ const cssVarNames = (css: string): string[] =>
 const t = resolveTheme({ primaryHex: BASE_SEED_HEX, name: 'okchroma', primaryMode: 'recommended', secondaryHex: null, deriveSecondary: true })
 const emittedCss = brandCss('okchroma', 'okchroma', t.themed, t.secondary?.scale ?? null, '', 'default', undefined, t.secondary?.style) + '\n' + signalsCss(undefined)
 const cssPrimitives = cssVarNames(emittedCss).sort()
-const semanticAliases = cssVarNames(fs.readFileSync('tokens/semantic.css', 'utf8')).filter(n => !cssPrimitives.includes(n)).sort()
+const semanticAliases = cssVarNames(fs.readFileSync('demo/semantic.css', 'utf8')).filter(n => !cssPrimitives.includes(n)).sort()
 
 const hit = (s: string): boolean => s.toLowerCase().includes(sub)
 const nameHitsExt = extNames.filter(hit)

@@ -2,9 +2,9 @@
 //
 //   npm run docs:lint
 //
-// The docs site (demo/docs/DocsSite.tsx), the repo docs it links to, and the shipped
-// semantic token file (tokens/semantic.css, whose comments land verbatim in every
-// consumer's repository) are checked for the classes of drift that have recurred: em
+// The docs site (demo/docs/DocsSite.tsx), the repo docs it links to, and the demo's
+// semantic stylesheet (demo/semantic.css, the worked example of a semantic layer on the
+// primitives) are checked for the classes of drift that have recurred: em
 // dashes in prose, retired token vocabulary, internal round IDs, owner-date jargon that
 // an outside engineer cannot decode, and dated history in what should be a present-tense
 // claim. A hit prints file:line, the rule, and the offending text; any hit fails the run.
@@ -32,7 +32,7 @@ const SURFACES: Surface[] = [
   { path: 'docs/schema.md', kind: 'md' },
   { path: 'docs/agents.md', kind: 'md' },
   { path: 'plugin-ext/README.md', kind: 'md' },
-  { path: 'tokens/semantic.css', kind: 'css' },
+  { path: 'demo/semantic.css', kind: 'css' },
 ]
 
 type Rule = { name: string; re: RegExp; why: string }

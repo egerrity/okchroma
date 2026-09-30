@@ -2,7 +2,7 @@
   "name": "okchroma",
   "version": "0.6.1",
   "license": "MIT",
-  "description": "Color token engine: one brand hex in, a full WCAG-enforced light+dark token system out (CSS variables, DTCG JSON, Figma variables)",
+  "description": "Color-system engine: one brand hex in, a light and dark set of color primitives out, with the contrast requirements solved during generation; emitted as CSS custom properties, DTCG documents, and Figma variables",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/egerrity/okchroma.git"
@@ -18,8 +18,7 @@
     }
   },
   "files": [
-    "dist-lib",
-    "tokens"
+    "dist-lib"
   ],
   "sideEffects": false,
   "scripts": {
@@ -55,7 +54,9 @@
     "typecheck": "tsc --noEmit",
     "typecheck:ext": "tsc --noEmit -p plugin-ext",
     "docs:lint": "esbuild scripts/docs-lint.ts --bundle --platform=node --outfile=dist/docs-lint.js && node dist/docs-lint.js",
-    "audit:tokens": "esbuild scripts/tokens-audit.ts --bundle --platform=node --outfile=dist/tokens-audit.js && node dist/tokens-audit.js"
+    "audit:tokens": "esbuild scripts/tokens-audit.ts --bundle --platform=node --outfile=dist/tokens-audit.js && node dist/tokens-audit.js",
+    "audit:dtcg": "esbuild scripts/dtcg-audit.ts --bundle --platform=node --outfile=dist/dtcg-audit.js && node dist/dtcg-audit.js",
+    "tokens:emit": "esbuild scripts/dtcg-emit.ts --bundle --platform=node --outfile=dist/dtcg-emit.js && node dist/dtcg-emit.js"
   },
   "devDependencies": {
     "@types/node": "^25.9.2",

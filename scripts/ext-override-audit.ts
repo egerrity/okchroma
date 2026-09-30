@@ -9,14 +9,14 @@
 //
 // Also asserts the invariants the plugin's write path relies on:
 //   · every column shares the same token path set (code.ts iterates one column's paths)
-//   · primitive/system/* never diffs from the base (code.ts skips it outright)
+//   · every path is a base/ row: the engine emits primitives only (CATALOG C68), so
+//     there is no utility shelf and no contract-invariant row any more
 //   · a brand carries a brand-alt group exactly when it HAS a secondary
 
 import * as fs from 'fs'
 import * as path from 'path'
 import { FIXTURES, FIXTURE_SECONDARIES } from './fixture'
 import { buildBaseColumns, buildBrandColumns, COLUMNS, type FlatTok, type TokenColumns } from '../plugin-ext/payload'
-import { EXT_NON_OVERRIDABLE } from '../src/engine/tokenNames'
 import { FAMILIES } from '../src/engine/tokenDescriptions'
 import { ROSTER, rosterSpec } from '../plugin-ext/roster'
 
@@ -39,15 +39,9 @@ function overridesFor(brand: TokenColumns, base: TokenColumns, label: string): R
     const ov: string[] = []
     for (const t of brand[col]) {
       const b = baseMap.get(t.path)
-      // contract-invariant rows never diverge from base — the roster import from
-      // tokenNames.ts (2026-08-18: the prefix test died with the ownership zones; the
-      // sweep showed prefix-keyed behavior disarms silently on renames). Brand-VARYING
-      // exceptions (link trio, identity absolutes) are EXT_OVERRIDABLE_SYSTEM — the
-      // same source plugin-ext/code.ts consumes.
-      if (EXT_NON_OVERRIDABLE(t.path)) {
-        if (!b || !eq(t, b)) fails.push(`${label} ${col}: system token diverges from base — ${t.path}`)
-        continue
-      }
+      // every row is a base/ row, brand-overridable: the family rows, the link trios and
+      // the seed absolutes
+      if (!t.path.startsWith('base/')) fails.push(`${label} ${col}: a path outside the base zone — ${t.path}`)
       if (!b || !eq(t, b)) ov.push(t.path)
     }
     out[col] = ov.sort()
@@ -171,4 +165,4 @@ if (fails.length) {
   for (const f of fails) console.error(`  ✗ ${f}`)
   process.exit(1)
 }
-console.log('ext-override-audit: override sets match the snapshot; path-set + contract-invariant-row invariants hold.')
+console.log('ext-override-audit: override sets match the snapshot; path-set and base-zone invariants hold.')
