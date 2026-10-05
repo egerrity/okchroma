@@ -1,7 +1,7 @@
 // The Figma tree: one group tree per mode, every leaf a color token in the DTCG shape,
 // every path spelled through the one grammar in tokenNames.ts (`brand/stamp/fill`,
 // `neutral/paper-0`, `link/default/enabled`, `absolute/brand`). The extended plugin
-// flattens this tree into variable paths under its base/ zone; the leaf order is the
+// flattens this tree into variable paths under the color group; the leaf order is the
 // panel order.
 import { toHex, ctaNeedsBorder, pageStopFor, ctaBorderRung, OFFSET_ALPHAS, type OffsetRung } from './cssRender'
 import { srgbEmitChannels } from './colorMath'

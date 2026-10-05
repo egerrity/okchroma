@@ -234,10 +234,10 @@ const SYSTEM: Record<string, Body> = {
   'link/inverse/pressed': LINK_INVERSE(' pressed', AA_BODY),
 }
 
-// Both plugins' user-facing path shapes: the extended plugin's base zone uses the
-// grammar (brand/…, link/…, absolute/…); the community theme collection spells the
-// brands brand/primary/… and brand/alt/… and the link and seed rows under system/. Same
-// rows, same text.
+// Both plugins' user-facing path shapes: the extended plugin writes the grammar
+// (brand/…, link/…, absolute/…) under the color group; the community theme collection
+// spells the brands brand/primary/… and brand/alt/… and the link and seed rows under
+// system/. Same rows, same text.
 const PREFIXES: Array<[string, Family]> = [
   // community spellings first: the family word is a prefix of the community shapes
   // ('brand/' would shadow 'brand/primary/' and 'brand/alt/'), so most-specific wins
@@ -246,18 +246,20 @@ const PREFIXES: Array<[string, Family]> = [
   ...FAMILIES.map((f): [string, Family] => [f + '/', f]),
 ]
 
-// CANONICALIZE: the extended plugin's paths carry its ownership zone (base/, the
-// engine-owned rows) that this module must never see: a zone is a Figma-panel organizing
-// axis, not part of a row's identity, and letting a zone word into a description would
-// flood the picker search. The community plugin's system/ spellings of the link and seed
-// rows map onto the grammar the same way. The retired primitive/ strip stays for rows
-// described mid-migration.
+// CANONICALIZE: the extended plugin's paths carry the color group (color/, the word
+// tokenNames.COLOR_GROUP holds, spelled here because this module takes no imports) that
+// this module must never see: the group is the category every color row shares, not part
+// of a row's identity, and letting its word into a description would flood the picker
+// search. desc-audit fails on a payload path this table does not strip. The community
+// plugin's system/ spellings of the link and seed rows map onto the grammar the same way.
+// The retired base/ and primitive/ strips stay for rows described mid-migration.
 const ZONE_MAP: Array<[string, string]> = [
   // brand-alt before brand: canonicalize is first-match startsWith, and brand is a prefix
   // of brand-alt
   ['system/abs-alt', 'absolute/brand-alt'],
   ['system/abs-primary', 'absolute/brand'],
   ['system/link/', 'link/'],
+  ['color/', ''],
   ['base/', ''],
   ['primitive/', ''],
 ]
@@ -278,9 +280,9 @@ function bodyFor(path: string): { body: Body; fam: Family } | undefined {
   return body ? { body, fam } : undefined
 }
 
-// The full description for a variable path. The title comes from the canonical path (a
-// zone word must never enter it, the search-flood rule above); unknown paths get the
-// canonical title alone.
+// The full description for a variable path. The title comes from the canonical path (the
+// color group's word must never enter it, the search-flood rule above); unknown paths get
+// the canonical title alone.
 export function describeToken(path: string): string {
   const canonical = canonicalize(path)
   const title = canonical.replace(/[/-]/g, ' ')

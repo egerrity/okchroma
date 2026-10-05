@@ -90,6 +90,7 @@ export {
   type DtcgGroup,
   type DtcgToken,
   type DtcgColorValue,
+  type DtcgOptions,
 } from './engine/dtcgRender'
 export { MODE_SPECS, type ModeSpec } from './engine/requirements/spec'
 
@@ -118,6 +119,7 @@ export {
   LINK_POSTURES,
   LINK_STATES,
   ABSOLUTE_GROUP,
+  COLOR_GROUP,
   type TokenPath,
   type LinkPosture,
   type LinkState,

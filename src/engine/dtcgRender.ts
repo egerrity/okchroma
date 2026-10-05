@@ -6,7 +6,8 @@
 // a reference (the mirror posture, the outline posture, the default link onto the pens)
 // the document writes the DTCG alias; where it writes a literal, a literal. Every color
 // is sRGB: components and hex are the same 8-bit value, the pair the guarantee audits
-// measure. Nothing sits at the document root but the groups.
+// measure. Nothing sits at the document root but the groups: the grammar's own, or the one
+// root group a caller names to nest them under.
 import type { ThemeTokens, TokenMode } from './tokensRender'
 import {
   stopTokenName, SCALE_STOP_COUNT, PAPER_0, PEN_100,
@@ -83,12 +84,28 @@ export function dtcgColor(value: string): DtcgColorValue {
 
 const ALIAS = /^var\(--([a-z0-9-]+)\)$/
 
+export type DtcgOptions = {
+  /**
+   * A group to nest every path under, for a consumer whose grammar starts a path with its
+   * category (`color`, the word `COLOR_GROUP` holds). Aliases are written with it
+   * (`{color.brand.pencil-47}`). Omitted, the grammar's groups sit at the document root.
+   */
+  rootGroup?: string
+}
+
+// a root group is a segment like any other: lower-case words and digits joined by
+// hyphens, so the dot, slash and hyphen joins of a path stay unambiguous
+const SEGMENT = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
 /**
  * The two DTCG documents for a structured emit. Every primitive in the roster must be
  * present in the emit and nothing else may be; a missing or foreign name throws, so the
  * emit and the roster cannot drift apart silently.
  */
-export function tokensToDtcg(tokens: ThemeTokens): { light: DtcgDocument; dark: DtcgDocument } {
+export function tokensToDtcg(tokens: ThemeTokens, options: DtcgOptions = {}): { light: DtcgDocument; dark: DtcgDocument } {
+  const { rootGroup } = options
+  if (rootGroup !== undefined && !SEGMENT.test(rootGroup)) throw new Error(`tokensToDtcg: rootGroup must be lower-case words and digits joined by hyphens: ${JSON.stringify(rootGroup)}`)
+  const rooted = (path: TokenPath): TokenPath => (rootGroup === undefined ? path : [rootGroup, ...path])
   const paths = byName()
   const roster = new Set(paths.keys())
   for (const name of tokens.names) if (!roster.has(name)) throw new Error(`tokensToDtcg: the emit carries a name the roster does not know: ${name}`)
@@ -103,14 +120,14 @@ export function tokensToDtcg(tokens: ThemeTokens): { light: DtcgDocument; dark: 
       if (alias) {
         const target = paths.get(alias[1])
         if (!target) throw new Error(`tokensToDtcg: ${name} references a name outside the roster: ${alias[1]}`)
-        token = { $type: 'color', $value: `{${target.join('.')}}` }
+        token = { $type: 'color', $value: `{${rooted(target).join('.')}}` }
       } else {
         token = { $type: 'color', $value: dtcgColor(tokens[mode][name]) }
       }
       const body = describeDocument(figmaPathOf(path))
       if (body) token.$description = body
       let cur: DtcgGroup = doc
-      for (const seg of path.slice(0, -1)) {
+      for (const seg of rooted(path).slice(0, -1)) {
         const next = cur[seg]
         if (next && '$type' in next) throw new Error(`tokensToDtcg: ${seg} is both a token and a group on the way to ${path.join('/')}`)
         cur = (cur[seg] as DtcgGroup | undefined) ?? (cur[seg] = {})

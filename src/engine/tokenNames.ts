@@ -96,12 +96,19 @@ export const absolutePath = (family: string): string[] => [ABSOLUTE_GROUP, famil
 // (the paper overlays are parked: nothing emits them; the solve lives in alphaPapers.ts
 // under audit:alpha, and a file that holds their rows keeps them in place)
 
-// The extended plugin's ownership zone: every engine row lives under base/, and hand edits
-// there are not rebuilt. Brand-varying rows outside the families are the only non-family
-// paths an extension may override: the link trios and the seed absolutes. Both plugin
-// sandboxes and the override audit import this rule rather than spelling a prefix.
+// The color group: the category word a color path starts with where the consumer's
+// grammar puts the category first. The extended plugin writes every engine row under it
+// (color/brand/pencil-47), and a caller of tokensToDtcg passes the same word to nest the
+// documents under it. The CSS names do not carry it. Hand-authored color roles share the
+// group in Figma; the plugin knows its own rows by their stamp, never by the name. The
+// canonicalizing strip in tokenDescriptions.ts spells the word itself, because that module
+// takes no imports.
+export const COLOR_GROUP = 'color'
+
+// Brand-varying rows outside the families are the only non-family paths an extension may
+// override: the link trios and the seed absolutes.
 export const EXT_OVERRIDABLE_SYSTEM = (p: string): boolean =>
-  p.startsWith(`base/${LINK_GROUP}/`) || p.startsWith(`base/${ABSOLUTE_GROUP}/`)
+  p.startsWith(`${COLOR_GROUP}/${LINK_GROUP}/`) || p.startsWith(`${COLOR_GROUP}/${ABSOLUTE_GROUP}/`)
 
 // Canonical emit order, uniform across every ramp: the papers, the chalks, the
 // highlighter, the text stops, then the stamp family. A ramp skips tokens it does not
