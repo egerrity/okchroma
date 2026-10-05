@@ -68,7 +68,13 @@ async function main() {
 // dependency, P2 adjacency metric) is bundled in, so the published package
 // declares no dependencies. Declarations come from tsc -p tsconfig.lib.json
 // (run by the build:lib script after this).
+//
+// The folder is emptied first. package.json ships it whole, and neither esbuild
+// nor tsc removes a file an earlier build wrote, so the declaration of a deleted
+// source would stay on disk and ship. The emptying sits here because this half
+// runs before tsc writes; npm run audit:lib is the check.
 async function buildLib() {
+  fs.rmSync('dist-lib', { recursive: true, force: true })
   const shared = {
     entryPoints: ['src/index.ts'],
     bundle: true,
