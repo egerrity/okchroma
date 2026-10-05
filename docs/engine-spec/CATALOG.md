@@ -11,10 +11,12 @@ Found in npm's file list at the 0.8.0 publish. `okchroma-0.8.0.tgz` holds
 and their sources left the tree in the C68 cut (0d3df30). `build:lib` runs esbuild and then
 `tsc -p tsconfig.lib.json` into `dist-lib`. Neither removes a file an earlier build wrote,
 and `package.json` ships the folder whole, so the two declarations the 0.6.1 build wrote
-stayed on the publishing disk and went out with 0.7.0 and 0.8.0. Both tarballs rebuild from
-their tags, with the two files put in place, to the hashes the registry lists, so the two
-files are the whole difference from a clean build. That disk holds no other declaration
-without a source and nothing removes one, so no earlier release carried others.
+stayed on the publishing disk and went out with 0.7.0 and 0.8.0. 0.8.1 was published from
+main before this fix was merged: it is 0.8.0 under a new version number and carries the two
+files as well. All three tarballs rebuild from their tags, with the two files put in place,
+to the hashes the registry lists, so the two files are the whole difference from a clean
+build. That disk holds no other declaration without a source and nothing removes one, so no
+earlier release carried others.
 
 Effect: none on an import of `okchroma`. `types/index.d.ts` refers to neither file and the
 exports map serves only the package root, so TypeScript's `node16` and `bundler` resolutions
@@ -40,8 +42,8 @@ passes, `npm pack --dry-run` lists the 0.8.0 files without the two, and every ot
 `dist-lib` is byte for byte the published one. A stray file in the folder, a missing
 `types/index.d.ts`, and the two halves of `build:lib` run in the other order each fail the
 gate, and with the halves in the other order a pack stops before it lists a tarball.
-0.7.0 and 0.8.0 keep the two files, since a published version cannot be changed; the next
-publish is the first without them.
+0.7.0, 0.8.0 and 0.8.1 keep the two files, since a published version cannot be changed; the
+next publish is the first without them.
 
 ## C75 — `EXT_OVERRIDABLE_SYSTEM` is called by nothing (FOUND, 2026-10-02)
 
