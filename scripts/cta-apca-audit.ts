@@ -1,19 +1,19 @@
-// cta-apca-audit.ts — MEASURE the wcag lane's CTA legibility under APCA across every cta
-// surface (owner initiative 2026-08-02: the extended plugin's apca option is retired, so the
-// wcag lane is the only lane anyone ships — where does it pass the ratio but fail the eye?).
+// cta-apca-audit.ts: MEASURE the wcag lane's CTA legibility under APCA across the brand,
+// secondary and signal ctas. The wcag lane is the only lane that ships, and a fill can
+// pass the ratio and still read weakly; this instrument shows where. It prints counts and
+// writes an exhibit; nothing here fails a run.
 //
-// This instrument MEASURED the pre-C42 state and now verifies the wired law (C42, owner
-// 2026-08-02): every cta clears Lc 65 except critical at 50 (the identity carve-out), light
-// AND dark. THE SIGNALS ARE ONE GROUP, shown at the TOP — a column per signal (critical |
-// warning | success | info), canonical on top, collision alternates stacked underneath.
-// Exact mode is OUT (owner ruling: hands-off by design, not part of the law) — and that
-// includes EXACT-style secondaries. CUSTOM secondaries (secondaryStyle 'default') are IN:
-// their cta is the engine's tint, "the same as the recommended" (owner 2026-08-02).
+// The wired law (C42): every cta clears Lc 65 except critical at 50 (the identity
+// carve-out), light AND dark. THE SIGNALS ARE ONE GROUP, shown at the TOP: a column per
+// signal (critical | warning | success | info), canonical on top, collision alternates
+// stacked underneath. Exact mode is OUT (hands-off by design: enforcement is off and it is
+// not part of the law), and that includes EXACT-style secondaries. CUSTOM secondaries
+// (secondaryStyle 'default') are IN: their cta is the engine's tint.
 //
-// Surfaces below the grid: brand cta light+dark, custom secondary — all via resolveTheme
-// (the real pipeline). Exhibit → dist/cta-apca-audit.html. Sweeps are agnostic hue×L×C
-// grids, no named brands. RUNGS keeps the historical 63/65/70 ladder for the non-signal
-// sections' cells.
+// Below the grid: brand cta light+dark and the custom and derived secondaries, all via
+// resolveTheme (the real pipeline). Exhibit → dist/cta-apca-audit.html. Sweeps are
+// agnostic hue×L×C grids, no named brands. These sections judge at BAR and show the RUNGS
+// buffer ladder in their cells; BAR sits under the wired clearance (CATALOG C78).
 import { writeFileSync, mkdirSync } from 'fs'
 import { resolveTheme, SIGNAL_SCALES, SOFT_ON_CTA_ALPHA } from '../src/engine/resolve'
 import {
@@ -21,12 +21,12 @@ import {
 } from '../src/engine/requirements/producers'
 import { legalRatio, clampChromaToGamut, oklchToLinearRgb, contrastRatio, apcaY, apcaLc } from '../src/engine/constraints'
 
-const BAR = 60                 // the shipped on-cta APCA bar (non-signal surfaces)
-const RUNGS = [63, 65, 70]     // owner's candidate buffers over the minimum
-const LIGHTEN_CAP = 0.92       // the enforce convention's lighten cap
+const BAR = 60                 // the bar the non-signal sections judge at, under the wired clearance (CATALOG C78)
+const RUNGS = [63, 65, 70]     // the buffer ladder over BAR that the non-signal cells show
+const LIGHTEN_CAP = 0.92       // the lighten cap of the engine's fill moves (CTA_CLEARANCE_CAPS)
 
 const CRITICAL_BAR = 50        // the identity carve-out: critical's minimum (C42)
-const REST_BARS = [65]         // the blessed bar (C42) — one grid
+const REST_BARS = [65]         // the clearance bar every other signal holds (C42); one grid
 
 const gm = (v: number) => { const x = Math.min(1, Math.max(0, v)); return x <= 0.0031308 ? 12.92 * x : 1.055 * x ** (1 / 2.4) - 0.055 }
 const hx = (c: { L: number; C: number; H: number }) => {
@@ -51,7 +51,7 @@ const moveTo = (f: Fill, pole: Pole, bar: number): Fill | null => {
 }
 
 // ── the signal group ─────────────────────────────────────────────────────────────────
-// column order + labels are the owner's: critical | warning | success | info
+// column order and labels: critical | warning | success | info
 const SIGNAL_COLS = [
   { name: 'red', role: 'critical' },
   { name: 'yellow', role: 'warning' },
@@ -96,9 +96,11 @@ const readCta = (surface: Surface, label: string, cta: Fill, isWhite: boolean, p
   return { surface, label, fill, paperHex, pole, ratio, lc, margin: lc - BAR, dead: ratio >= 4.5 && lc < BAR }
 }
 
-// the SOFT on-cta read (default-model secondaries, owner 2026-08-03): the text is the pole
-// AT ALPHA, so the audit measures the COMPOSITE exactly as the renderer produces it —
-// alpha-blend in encoded sRGB channel space, then wcag Y / apca Y from the blended channels.
+// the SOFT on-cta read (the quiet-fill rule, C43): the text is the pole AT ALPHA, so a row
+// measures a COMPOSITE: alpha-blend on the stop's own channels, then wcag Y / apca Y from
+// the blended channels. Those are ColorStop's channels (encoded in the master gamut,
+// unquantized), not the 8-bit sRGB pair the engine's softOnCtaPasses judges, and the
+// composite is taken whether or not that gate ships it (CATALOG C79).
 const linCh = (c: number) => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
 const wcagYCh = (r: number, g: number, b: number) => 0.2126 * linCh(r) + 0.7152 * linCh(g) + 0.0722 * linCh(b)
 type FillCh = Fill & { r: number; g: number; b: number }
@@ -128,13 +130,13 @@ for (let H = 0; H < 360; H += 15) for (const L of [0.50, 0.60, 0.70]) for (const
   harvestOverrides(t)
 }
 
-// 2) red-complement focus: the neighborhood that fires the variant, both travel directions
+// 2) the red neighborhood, where the red complement variant fires, both travel directions
 for (let H = 15; H <= 45; H += 5) for (const L of [0.35, 0.45, 0.55, 0.65, 0.75]) {
   harvestOverrides(resolveTheme({ primaryHex: hx({ L, C: 0.18, H }) }))
 }
 
-// 3) vibrant cyan/green band (exact mode is OUT of this audit — owner ruling 2026-08-02:
-// exact is hands-off by design and is not part of the clearance law)
+// 3) vibrant cyan/green band (exact mode is OUT of this audit: it is hands-off by design
+// and is not part of the clearance law)
 for (let H = 140; H <= 230; H += 15) for (const L of [0.55, 0.65, 0.75]) {
   const seed = hx({ L, C: 0.16, H })
   const rec = resolveTheme({ primaryHex: seed })
@@ -146,11 +148,10 @@ for (let H = 140; H <= 230; H += 15) for (const L of [0.55, 0.65, 0.75]) {
 for (const [name, v] of SIGNAL_SCALES) pushSignal(name, 'canonical', v.scale)
 
 // 5) CUSTOM secondaries (secondaryStyle 'default': the ramp keeps the hex, the cta is the
-// engine's tint — "the same as the recommended", owner 2026-08-02, so it is IN the law).
-// A bare secondaryHex resolves EXACT — the hands-off posture — which is out of this audit
-// like exact mode; an earlier cut measured that by mistake and called it custom.
-// Their on-cta is the SOFT pole (C43, owner 2026-08-03): the pole at SOFT_ON_CTA_ALPHA,
-// measured as the composite the renderer ships.
+// engine's tint, so it is IN the law). A bare secondaryHex resolves EXACT, the hands-off
+// posture, which is out of this audit like exact mode. The rows read the SOFT pole (C43):
+// the pole at SOFT_ON_CTA_ALPHA composited over the fill, in both modes (see readCtaSoft
+// for the basis; the composite is read even where the gate ships the solid pole).
 for (const sec of [{ L: 0.62, C: 0.16, H: 200 }, { L: 0.62, C: 0.18, H: 150 }, { L: 0.55, C: 0.20, H: 30 }]) {
   const secHex = hx(sec)
   const t = resolveTheme({ primaryHex: hx({ L: 0.45, C: 0.12, H: 260 }), secondaryHex: secHex, secondaryStyle: 'default' })
@@ -160,7 +161,7 @@ for (const sec of [{ L: 0.62, C: 0.16, H: 200 }, { L: 0.62, C: 0.18, H: 150 }, {
     rows.push(readCtaSoft('secondary', `secondary ${secHex} (dark)`, s.ctaDark, s.onFillTextIsWhiteDark, SOFT_ON_CTA_ALPHA.dark, hx(s.dark[0])))
   }
 }
-// 5b) the DERIVED secondary (no hex supplied) — the same tint register, same soft on-cta
+// 5b) the DERIVED secondary (no hex supplied): the same tint register, the same soft read
 {
   const t = resolveTheme({ primaryHex: hx({ L: 0.45, C: 0.12, H: 260 }), deriveSecondary: true })
   if (t.secondary) {
@@ -199,8 +200,8 @@ const signalCell = (e: SignalEntry, bar: number) => {
   return `<div class="scell">${btn(hx(m), fgOf(e.pole))}</div>`
 }
 
-// one grid per candidate law: a column per signal, canonical on top, alternates stacked.
-// Variants dedupe by note — the two near-identical corals are one alternate, not two.
+// one grid per bar in REST_BARS: a column per signal, canonical on top, alternates stacked.
+// Variants dedupe by note: where several fills carry one note, the grid shows the first.
 const signalGrid = (rest: number) => {
   const cols = SIGNAL_COLS.map(col => {
     const bar = col.name === 'red' ? CRITICAL_BAR : rest

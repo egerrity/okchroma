@@ -1,36 +1,32 @@
-// Smoothness / brand-fidelity harness — §3.G of the 2026-06-11 math
-// interrogation handoff. gamut-sweep asserts totality + collision
-// resolution; dark-audit asserts light↔dark parity vs the blessed build.
-// NOTHING mechanical asserted per-ramp hue/chroma smoothness or brand-hue
-// fidelity — every defect in the absolute-attractor class (near-neutral /
-// low-chroma) was caught by eye, which does not scale to the input domain
-// (ALL colors; the example fleet is a sample, not the domain). Three metrics, run on
-// light + dark ramps over the full gamut grid:
+// Smoothness / brand-fidelity harness. dark-audit reads light↔dark parity
+// against the blessed build and req:audit reads the declared requires;
+// neither reads per-ramp hue or chroma smoothness, or brand-hue fidelity.
+// This harness does. The input domain is ALL colors (the fixtures are a
+// sample, not the domain), so three metrics run on light + dark ramps over
+// a gamut grid:
 //
 //   hueStep  chroma-weighted adjacent-stop hue step: the OKLab chord of the
-//            hue change alone, 2·min(C_i,C_j)·sin(|ΔH|/2). Catches
-//            near-neutral-style zigzags including the derived-curve-vs-pin seam
-//            (the walk runs 1→12, so 8→9→10 is included).
+//            hue change alone, 2·min(C_i,C_j)·sin(|ΔH|/2). Catches zigzags
+//            between neighbours, near-neutral ramps included (the walk runs
+//            over every stop).
 //   drift    brand-hue fidelity: max over stops of the hue-only chord from
 //            the brand hue, 2·C_i·sin(|H_i − brandH|/2). Catches
-//            low-chroma identity loss. Some drift is DESIGNED (gold-
-//            spine browning, red cool rotation) — this is a budget tracked
-//            against baseline, not a zero target.
-//   wobble   per-stop chroma shape vs the spec ladders (subtle tier):
-//            interior local minima are never spec'd anywhere; light
-//            allows one interior maximum (cream peak), dark allows none
-//            (chromaMultiplier strictly rises). Catches gamut-ridge
-//            chroma wobble (suspect C) and pin spikes (suspect B).
+//            low-chroma identity loss. Some drift is DESIGNED (the gold-spine
+//            drift, the red cool rotation), so this is a budget tracked
+//            against the baseline, not a zero target.
+//   wobble   per-stop chroma shape over stops 1–8: an interior local minimum
+//            always counts; light allows one interior maximum, dark allows
+//            none.
 //
-// Grid runs twice: style unset and style 'deeper' — the lever is engine
-// surface (flag × band, any future input may carry it), so its worst case
-// is part of the engine's worst case. Fleet runs with each brand's real
-// flag on primary AND accent, mirroring build.ts.
+// Grid runs twice: style unset and style 'deeper'. The lever is engine
+// surface (flag × band, any input may carry it), so its worst case is part
+// of the engine's worst case. The fixtures run with each entry's own flags
+// on the primary, and its exact and style flags on the secondary.
 //
 // Default run compares against scripts/smoothness-baseline.json and
 // reports regressions/improvements; --baseline (re)writes the file. The
-// baseline is MECHANICAL state, not an eye-bless — it exists so candidate
-// fixes are measured against the current engine, not vibed.
+// baseline is MECHANICAL state, not an eye-bless: it exists so candidate
+// fixes are measured against the current engine. Nothing here fails a run.
 
 import {
   type GeneratedScale,
@@ -60,9 +56,9 @@ function hueDelta(h: number, center: number): number {
   return d
 }
 
-// OKLab chord length of a pure hue rotation at chroma c — the perceptual
+// OKLab chord length of a pure hue rotation at chroma c: the perceptual
 // size of a hue change with L and C held, comparable to stopDeltaE values
-// (dark-audit's drift tolerance is 0.015 per stop).
+// (the metric dark-audit's DRIFT_TOLERANCE is stated in).
 const hueChord = (c: number, dHdeg: number) =>
   2 * c * Math.sin(Math.min(180, Math.abs(dHdeg)) * (Math.PI / 360))
 
@@ -148,9 +144,9 @@ function measureScale(scale: GeneratedScale): Record<RampName, RampMetrics> {
   }
 }
 
-// Reporting segments on the RAW brand hue: red band (C12 solve / ramp cool-rotation
-// territory — drift there includes the DESIGNED 10.8° cool), the warm band
-// the gold spine serves, everything else.
+// Reporting segments on the RAW brand hue: the red band (colorMath.inRedBand's bounds;
+// drift there includes the DESIGNED cool rotation, RED_COOL_DEG), the warm hues above
+// it up to 122, everything else.
 const segment = (h: number) => (h > 12 && h <= 35.5 ? 'red' : h > 35.5 && h <= 122 ? 'warm' : 'other')
 
 interface Rec {

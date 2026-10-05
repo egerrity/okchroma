@@ -1,21 +1,23 @@
-// register-audit.ts — THE STRUCTURE GATE for the scale's chroma axis (owner round
-// 2026-07-09, CATALOG C10: "it shouldn't be stitched together mechanisms… how can we
-// make that stick?"). This audit is the answer: the invariant lives in the suite, not
-// in conversation. It fails when:
-//   1. TABLE SHAPE breaks the owner's register invariant — the highlighter/pencil pair (8–9)
-//      must share ONE declared base register (the 8|9 "starts and stops" break was a
-//      second constant); the chalk run (1–7) must ascend monotonically with a bounded
-//      per-step ratio (no hidden register cliff inside a lightness-adjacent run). The
-//      7|8 step is exempt BY DESIGN: it rides the chalk|highlighter family boundary and
-//      its ~0.15 L drop (the re-bucket seam), not an equal-lightness register jump.
-//   2. SPEC↔TABLE BINDING drifts — every stop's chroma params in MODE_SPECS must be
+// register-audit.ts: THE STRUCTURE GATE for the scale's chroma axis (CATALOG C10): the
+// scale is one ramp with no stitched-together band mechanisms, and that invariant lives
+// in the suite. It fails when:
+//   1. TABLE SHAPE breaks: the light base register (stops 1–7) must ascend with a bounded
+//      per-step ratio (no hidden register cliff inside a lightness-adjacent run); the
+//      dark sat ladder (1–8) must not descend; the pen rows must declare their text
+//      register and keep their frozen chroma floors. The light 7|8 step is exempt BY
+//      DESIGN: it crosses the chalk|highlighter band boundary, where stop 8's 3:1
+//      require takes its lightness well below the ladder's pace, so it is not an
+//      equal-lightness register jump.
+//   2. SPEC↔TABLE BINDING drifts: every stop's chroma params in MODE_SPECS must be
 //      the SCALE_C table's values (catches a re-inlined constant in spec.ts).
-//   3. A STITCHED MECHANISM REAPPEARS — the deleted constants' names must not come
-//      back anywhere in src/ (LIGHT_BASE_C, DARK_SUBTLE_CHROMA_MULT, chromaMultiplier,
-//      a baseC/satFraction literal on HIGHLIGHT_*). New chroma mechanisms must be
-//      added IN the table, visibly, or this gate goes red.
-// A future session claiming "the stitching is fixed" must be able to point at this
-// audit passing — that is the definition of fixed (owner, 2026-07-09).
+//   3. A STITCHED MECHANISM REAPPEARS: the deleted constants' names must not come back
+//      in src/ code (LIGHT_BASE_C, DARK_SUBTLE_CHROMA_MULT, the per-stop pen constants,
+//      a baseC/satFraction literal on HIGHLIGHT_*, loudCta). New chroma mechanisms must
+//      be added IN the table, visibly, or this gate goes red.
+//   4. THE DARK CTA REGISTER drifts: darkCtaTrim must compute from the declared
+//      DARK_CTA_C numbers, the signals' dark ctas must keep their light identity, and
+//      the full-chroma lever must release the brand trim.
+// "The stitching is fixed" means this audit passes.
 // Run: npm run audit:register
 import * as fs from 'fs'
 import * as path from 'path'
@@ -31,13 +33,10 @@ const ok = (msg: string) => console.log('  ✓ ' + msg)
 // ── 1. table shape ────────────────────────────────────────────────────────────
 {
   const t = SCALE_C_LIGHT
-  // (the "light highlight band 8–9 shares one base register" check DIED with the band,
-  // owner 2026-07-29: highlight-9 is deleted, so stop 8 is the whole band and there is
-  // no pair to hold together. Its replacement guards the thing the collapse put at
-  // risk instead — see the chroma-floor check below.)
-  // chalk run 1→7: strictly ascending, per-step ratio bounded (the historical ladder's
-  // own max step is the bound — a bigger jump means a register cliff crept in)
-  const MAX_CHALK_STEP = 2.6 // paper 1→2 is ×2.5 by design (0.004→0.010); chalk steps run ≤ ×1.8
+  // the paper and chalk run 1→7: strictly ascending, per-step ratio bounded. The bound
+  // sits just above the table's own largest step (paper-1 to paper-3); a bigger jump
+  // means a register cliff crept in.
+  const MAX_CHALK_STEP = 2.6
   for (let i = 1; i < 7; i++) {
     const a = t[i].base!, b = t[i + 1].base!
     if (!(b > a)) fail(`light base must ascend ${i}→${i + 1}: ${a} → ${b}`)
@@ -51,13 +50,12 @@ const ok = (msg: string) => console.log('  ✓ ' + msg)
   }
   ok('dark ladders shaped')
 
-  // THE PEN CHROMA FLOORS ARE FROZEN VALUES (normalized 2026-08-05 from the pinned-index
-  // form). The first-text and strong floors have sat at the ladder law's rungs 10/11
-  // since before two renumbers — the values are the invariant, declared per row
-  // precisely so a stop renumber has nothing left to move. pen-58 (the C49 between
-  // stop) inherits the first-text rung value: the retired hover law it replaces
-  // evaluated pencil-47's register, floor included. This check fails if a row's
-  // declared floor drifts off its historical value.
+  // THE PEN CHROMA FLOORS ARE FROZEN VALUES. Each pen row declares its floor as a value
+  // (chromaFloorBase at a fixed rung: 10 for the first text stop and the between stop,
+  // 11 for the strong stop), not as an index into the ladder, so a stop renumber has
+  // nothing to move. pen-58 carries the first-text rung value because it keeps
+  // pencil-47's register (stopTable.ts, the SCALE_C rows). This check fails if a row's
+  // declared floor drifts off that value.
   const TEXT_FLOOR_VALUES: Record<number, number> = { 9: chromaFloorBase(10), 10: chromaFloorBase(10), 11: chromaFloorBase(11) }
   for (const [label, tbl] of [['light', t], ['dark', d]] as const) {
     for (const [stopStr, expected] of Object.entries(TEXT_FLOOR_VALUES)) {
@@ -114,13 +112,13 @@ const ok = (msg: string) => console.log('  ✓ ' + msg)
   if (!hits) ok('no stitched scale-chroma mechanism present anywhere in src/')
 }
 
-// ── 4. the DARK CTA chroma register (C16, owner ruling 2026-07-12 'declare, don't
-// change') — the cta is off-scale so sections 1-2 never covered it. Two invariants:
-//   a. BINDING — darkCtaTrim computes from the DECLARED DARK_CTA_C.brand numbers
-//      (catches a re-inlined trim constant, the boolean's old failure mode).
-//   b. IDENTITY — signal dark ctas carry the seed's full chroma: canonical yellow and
-//      red cta hexes are byte-identical light<->dark through the REAL pipeline (the
-//      retired loudCta flag's original guarantee, now held by a gate).
+// ── 4. the DARK CTA chroma register (C16): the cta is off-scale, so sections 1-2 do not
+// cover it. Two invariants:
+//   a. BINDING: darkCtaTrim computes from the DECLARED DARK_CTA_C.brand numbers
+//      (catches a re-inlined trim constant).
+//   b. IDENTITY: signal dark ctas carry the seed's full chroma: the canonical yellow and
+//      red ctas match light<->dark within one 8-bit step per channel, through the REAL
+//      pipeline.
 {
   const rad = (d: number) => (d * Math.PI) / 180
   const angDist = (h: number, c: number) => Math.abs((((h - c + 540) % 360)) - 180)
@@ -133,9 +131,9 @@ const ok = (msg: string) => console.log('  ✓ ' + msg)
   }
   if (bound) ok('darkCtaTrim binds to the declared DARK_CTA_C.brand register (72-hue probe)')
   if (DARK_CTA_C.signal.policy !== 'identity') fail(`signal cta policy must be identity: ${DARK_CTA_C.signal.policy}`)
-  // tolerance 1/255 per channel: the C15 apca enforce margin nudges red's dark cta one
-  // 8-bit step; the TRIM this invariant guards against (x0.78 in the red-magenta lobe)
-  // moves 10+ steps — policy and enforce noise separate cleanly.
+  // tolerance 1/255 per channel: on-fill enforcement can nudge red's dark cta by one
+  // 8-bit step (it does in the apca lane), while the brand TRIM this invariant guards
+  // against would move it by many, so policy and enforce noise separate cleanly.
   for (const cp of [undefined, 'apca' as const]) {
     for (const name of ['yellow', 'red'] as const) {
       const sc = signalScalesFor(cp).get(name)!.scale
@@ -147,15 +145,15 @@ const ok = (msg: string) => console.log('  ✓ ' + msg)
   }
   ok('signal identity invariant holds through the real pipeline (yellow/red, both lanes, <=1 8-bit step)')
 
-  // the VIVIDNESS LEVER (Phase 5, C21): style:'full-chroma' REASSIGNS the brand's dark
-  // cta to the identity policy — the signals' declared register, no new numbers. The
-  // gate: the full-chroma dark cta's chroma must be the UNtrimmed identity solve — i.e.
-  // strictly above the trimmed default wherever the trim bites (>1%), and never above
-  // what the identity policy yields. Probed through the real pipeline at the blue lobe
-  // center (deepest trim).
-  // Probe seed is a MODERATE blue: at a saturated blue seed the sRGB gamut ceiling binds
-  // tighter than the trim (both policies clamp to the same ceiling and the release is
-  // invisible) — the reassignment shows where trim < ceiling (+31% at this seed).
+  // the VIVIDNESS LEVER (C21): style:'full-chroma' REASSIGNS the brand's dark cta to the
+  // identity policy, the signals' declared register, with no new numbers. The gate: at
+  // one probe seed, the full-chroma dark cta's chroma must exceed the trimmed default's
+  // by more than a fifth. Probed through the real pipeline at the blue lobe center
+  // (deepest trim).
+  // The probe seed is a MODERATE blue: at a saturated blue seed the sRGB gamut ceiling
+  // binds tighter than the trim (both policies clamp to the same ceiling and the release
+  // is invisible), so the reassignment shows only where the trim sits under the ceiling.
+  // The pass line's percentage is a literal, not the measured release (CATALOG C78).
   {
     const plain = resolveBrand('#4f6eb7', 'trim-probe')      // H≈265 — the blue lobe
     const full = resolveBrand('#4f6eb7', 'trim-probe', { style: 'full-chroma' })

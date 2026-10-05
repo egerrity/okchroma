@@ -1,31 +1,22 @@
-// The edge-case brand set (owner-settled 2026-07-07, second revision). This was the
-// plugin's bulk-apply roster; that button is gone, so the set now exists only as the
-// audit's brand coverage (scripts/ext-override-audit.ts is its one consumer). Names
-// are free of the old sidebar-ordering constraint, and sort e < L < m < t < v:
+// The edge-case brand set: the override audit's brand coverage
+// (scripts/ext-override-audit.ts is its one consumer; the plugin does not import it).
 //
-//   eggplant                     the one standalone real theme (planned secondary recorded)
-//   L1…L6-*                      one pure exemplar per archetype band (L IS the band axis;
-//                                the digit is the band order; all verified shift-free)
+//   eggplant                     a standalone theme with a supplied secondary
+//   L1…L6-*                      one exemplar per archetype band (L IS the band axis;
+//                                the digit is the band order)
 //   monochrome                   achromatic primary + true-grey neutral
-//   teal                         standalone real-theme tester (H229 — collides with nothing)
+//   teal                         a standalone theme that collides with nothing (H229)
 //   vs-*                         the colliders, named for the signal they stress (identity
-//                                names). vs-red pair = the BRAND moves (red-band design;
-//                                since the C12/C18 value-exit rounds the escape is a
-//                                LIGHTNESS move, so the pair is named by exit direction —
-//                                owner reseed 2026-07-27, retiring the stale cooler/warmer
-//                                hue-shift names; pipeline-verified: #EA3E3E cta exits
-//                                light L .62→.78, #E60000 exits dark L .58→.43, both
-//                                lanes). vs-yellow/green/blue = the SIGNAL moves. Pairs
-//                                cover both escape directions; vs-green (shifts teal) is
-//                                the wcag-lane-only exemplar. The retired warmer hex
-//                                #EA603E (the red-orange cool-fix eyeball case) leaves
-//                                the roster; red-band coverage stays in the audit
-//                                fixture (vivid-red-collider #EE3123, scripts/fixture.ts)
-//                                and the engine audits' red-fidelity gates.
+//                                names). The vs-red pair is where the BRAND moves: the
+//                                red-band escape is a LIGHTNESS move, so the pair is named
+//                                by exit direction (one cta exits lighter, one darker).
+//                                vs-yellow/green/blue are where the SIGNAL moves. Pairs
+//                                cover both escape directions. Red-band coverage also
+//                                sits in the audit fixture (scripts/fixture.ts).
 //
-// Every hex verified through the real pipeline; the roster is snapshot-gated alongside
-// the demo set in scripts/ext-override-audit.ts (which also asserts the seed-canary
-// property computationally — the in-file canary extension was retired, owner call).
+// The roster is snapshot-gated alongside the fixture set in scripts/ext-override-audit.ts.
+// The `note` fields are free-form and nothing reads them; the values some of them quote
+// are not kept current (CATALOG C80).
 
 import type { NeutralLevel } from '../src/engine/colorEngine'
 import type { SecondaryStyle } from '../src/engine/resolve'
@@ -36,17 +27,15 @@ export interface RosterEntry {
   hex: string
   neutralLevel?: NeutralLevel
   style?: 'default' | 'deeper' | 'full-chroma'
-  // A real secondary (activated 2026-07-07). eggplant is the group-add exerciser: it is
-  // the entry that makes a brand-alt group appear where the base has none.
+  // A supplied secondary. An entry without one gets the derived secondary inside
+  // buildBrandColumns.
   secondaryHex?: string
   // The secondary's render mode. NOTE THE OVERLOADED ID: `'default'` means the DERIVED posture
-  // when no secondary is supplied at all, and the UI's "Custom" chip when one is — the id was
-  // kept across the 2026-07-29 rename so stored recipes replay unchanged. With a hex present,
-  // as every entry below has, it therefore selects CUSTOM: the supplied colour keeps the whole
-  // ramp (byte-identical to exact) and only the cta is a tint of it (C36, Reading B). It no
-  // longer runs the lift over the whole ramp, which is what this comment used to describe.
-  // `'exact'` ships the hex as its own cta too. Omitting the field falls to 'exact', so the
-  // entries below carry the style explicitly.
+  // when no secondary is supplied at all, and the UI's "Custom" chip when one is; stored
+  // recipes carry the id. With a hex present, as on every entry below that sets it, it
+  // selects CUSTOM: the supplied colour keeps the whole ramp (byte-identical to exact) and
+  // only the cta is a tint of it (C36). `'exact'` ships the hex as its own cta too.
+  // Omitting the field falls to 'exact', so the entries below carry the style explicitly.
   secondaryStyle?: SecondaryStyle
   note: string
 }
@@ -70,9 +59,9 @@ export const ROSTER: RosterEntry[] = [
   { name: 'vs-yellow', hex: '#F5B301', note: 'yellow → lemon' },
 ]
 
-// The ThemeSpec each entry resolves to. Brands without a secondaryHex fall back to the
-// DERIVED default-model secondary inside buildBrandColumns (written only when the file's
-// posture is on).
+// The ThemeSpec each entry resolves to. An entry without a secondaryHex gets the DERIVED
+// default-model secondary inside buildBrandColumns, whose payload always carries a
+// brand-alt.
 export const rosterSpec = (e: RosterEntry): ThemeSpec => ({
   primaryHex: e.hex,
   name: e.name,

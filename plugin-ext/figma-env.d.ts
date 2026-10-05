@@ -1,9 +1,12 @@
-// Minimal ambient typings for the Figma plugin sandbox — v2 (extended collections).
-// Standalone: plugin v1 keeps its own shim; this one adds the ExtendedVariableCollection
-// shape per developers.figma.com/docs/plugins/api/ExtendedVariableCollection/ and the
-// theming section of /docs/plugins/working-with-variables/ (both checked 2026-07-07).
-// The feature is ENTERPRISE-PLAN-GATED at runtime — hence `extend` is optional and the
-// plugin feature-detects it (typeof c.extend === 'function').
+// Minimal ambient typings for the Figma plugin sandbox, for the extended plugin (extended
+// collections). Standalone: the community plugin keeps its own shim; this one adds the
+// ExtendedVariableCollection shape per
+// developers.figma.com/docs/plugins/api/ExtendedVariableCollection/ and the theming
+// section of /docs/plugins/working-with-variables/.
+// The feature is ENTERPRISE-PLAN-GATED at runtime, hence `extend` is optional and the
+// plugin feature-detects it (typeof extend === 'function').
+// The node read/rebind surface below (pages, paints, text segments) is declared here and
+// read by nothing in plugin-ext (CATALOG C80).
 
 declare const __html__: string
 
@@ -11,7 +14,7 @@ declare namespace figma {
   function showUI(html: string, options?: { width?: number; height?: number; title?: string }): void
   function closePlugin(message?: string): void
   function notify(message: string, options?: { error?: boolean; timeout?: number }): void
-  /** heal.ts walks every page (dynamic-page manifests load lazily). */
+  /** Loads every page (dynamic-page manifests load lazily). */
   function loadAllPagesAsync(): Promise<void>
   /** withFontRetry only — loads a font Figma's unloaded-font error demanded. */
   function loadFontAsync(fontName: { family: string; style: string }): Promise<void>
@@ -21,7 +24,7 @@ declare namespace figma {
     postMessage(msg: unknown): void
   }
 
-  /** Sentinel for mixed-valued properties (mixed text fills etc.) — heal.ts. */
+  /** Sentinel for mixed-valued properties (mixed text fills etc.). */
   const mixed: unique symbol
   const root: { readonly children: ReadonlyArray<PageNode> }
 
@@ -31,13 +34,13 @@ declare namespace figma {
     function createVariableCollection(name: string): VariableCollection
     function createVariable(name: string, collection: VariableCollection, type: 'COLOR' | 'FLOAT'): Variable
     function createVariableAlias(variable: Variable): VariableAlias
-    /** Returns a COPY of the paint with its color bound to the variable — heal.ts. */
+    /** Returns a COPY of the paint with its color bound to the variable. */
     function setBoundVariableForPaint(paint: SolidPaint, field: 'color', variable: Variable): SolidPaint
     /** Library-parent variant of extend() — same Enterprise gate. */
     function extendLibraryCollectionByKeyAsync(key: string, name: string): Promise<ExtendedVariableCollection>
   }
 
-  // ── the node read/rebind surface heal.ts walks (mirrors plugin-unify's shim) ──
+  // ── the node read/rebind surface (mirrors plugin-unify's shim) ──
   interface SolidPaint {
     readonly type: 'SOLID'
     readonly color: { r: number; g: number; b: number }
@@ -61,7 +64,7 @@ declare namespace figma {
     readonly type: string
     readonly removed?: boolean
     readonly children?: ReadonlyArray<SceneNode>
-    /** writable: the heal re-assigns a cloned array with one rebound paint */
+    /** writable: a rebind re-assigns a cloned array with one rebound paint */
     fills?: ReadonlyArray<Paint> | typeof mixed
     strokes?: ReadonlyArray<Paint>
     /** Index-aligned with fills/strokes; null holes for unbound paints. */
@@ -123,8 +126,8 @@ declare namespace figma {
     getSharedPluginData(namespace: string, key: string): string
     scopes: VariableScope[]
     readonly variableCollectionId: string
-    /** Values keyed by the OWNING collection's modeIds (the base pair for base variables). */
     readonly resolvedType: 'COLOR' | 'FLOAT' | 'STRING' | 'BOOLEAN'
+    /** Values keyed by the OWNING collection's modeIds (the base pair for base variables). */
     readonly valuesByMode: { readonly [modeId: string]: RGBA | VariableAlias | number }
     /** Routing by an EXTENSION's modeId is what makes a call an override. */
     setValueForMode(modeId: string, value: RGBA | VariableAlias | number): void

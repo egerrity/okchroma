@@ -1,4 +1,4 @@
-// name-lint — candidate-name substring probe (rename prep 2026-08-21).
+// name-lint: candidate-name substring probe.
 //
 //   npm run name-lint -- <substring>
 //
@@ -6,8 +6,8 @@
 // DESCRIPTIONS, so a name candidate that hides inside foreign words floods that
 // word's search results. This lint reports every token name and every rendered
 // description carrying the substring, with the ext descope posture (default ON:
-// only the role rows — the solid bands, the link trio, the surface planes — are
-// pickable; every other row is hidden from pickers).
+// only the role rows, the stamp rows and the link trios, are pickable; every
+// other row is hidden from pickers).
 //
 // Name universes: the ext register's real variable names (the payload), then the
 // community plugin's spellings of the same rows, then the CSS grammar — the var names
