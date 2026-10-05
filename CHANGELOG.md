@@ -8,6 +8,34 @@ structure, ships as at least a minor.
 
 Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git log.
 
+## 0.8.0 — unpublished
+
+- **A root group on the DTCG documents, opt-in.** `tokensToDtcg(tokens, { rootGroup: 'color' })`
+  nests every path under the named group and writes every alias with it
+  (`{color.brand.pencil-47}`), for a consumer whose paths start with the category.
+  `npm run tokens:emit -- <hex> [slug] --root color` writes the same two files. The group
+  is one segment, lower-case words and digits joined by hyphens; anything else throws.
+  Without the option the documents are byte for byte what 0.7.0 writes. `COLOR_GROUP`
+  exports the word and `DtcgOptions` the option's type. `audit:dtcg` runs every case in
+  both forms.
+- **No CSS name changes and no value moves.** The custom properties never carry the group.
+- **The extended plugin writes its rows under `color/`** where it wrote `base/`
+  (`color/brand/pencil-47`). Base versus utility is no longer a word in the path: the
+  group is the category, hand-authored color roles can share it, and the plugin knows its
+  own rows by the identity it stamps on each. A file applied by an earlier version migrates
+  on its next apply: every engine row is renamed in place, so bindings and brand overrides
+  stay; a row renamed by hand keeps its name; the Web code syntax does not change; rows the
+  engine no longer writes stay under the names they had. The apply stops before it writes
+  anything when a variable the plugin did not stamp sits at a name an engine row has to
+  move to.
+- **The Mapper** looks for its targets under `color/`. On a file not yet re-applied with
+  the extended plugin it reports them missing and asks for that re-apply, as it does for
+  any missing target.
+- **What a consumer does.** Nothing for the CSS, and nothing for documents emitted without
+  the option. A Figma file applied with the extended plugin: re-apply once, on a copy of
+  the file first. Anything that reads the extended plugin's variable names, or the path it
+  stamps on each variable, reads `color/…` after that re-apply.
+
 ## 0.7.0 — 2026-09-30
 
 - **The engine emits primitives only.** A primitive is a value the engine calculates from

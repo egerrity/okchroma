@@ -127,14 +127,15 @@ ${P3_MEDIA} {
         <Code>themeToFigma</Code> returns a light tree and a dark tree of the same shape, on the grammar's paths. The
         extended plugin writes one base collection (<Code>theme</Code>, modes <Code>light</Code> and <Code>dark</Code>,
         populated once from the default seed) and one extension collection per brand that overrides only the rows that
-        differ. The extension carries the brand's name; the paths inside stay generic (<Code>base/brand/…</Code>), so a
+        differ. The extension carries the brand's name; the paths inside stay generic (<Code>color/brand/…</Code>), so a
         designer binds once and re-themes by switching the extension.
       </P>
       <H3>DTCG</H3>
       <P>
         <Code>tokensToDtcg</Code> returns one Design Tokens Format Module 2025.10 document per mode on the same paths,
         every token with its description. The two join through a resolver document with a theme modifier; the format
-        is in <Code>docs/schema.md</Code>.
+        is in <Code>docs/schema.md</Code>. With <Code>{"{ rootGroup: 'color' }"}</Code> every path nests under that group
+        (<Code>color.brand.stamp.fill</Code>), the spelling the extended plugin writes with slashes.
       </P>
 
       <H2>A live CSS block</H2>
@@ -161,15 +162,18 @@ ${P3_MEDIA} {
         <LI>A signal family's values move only to stay distinct from the brand (a hue shift or a swap variant), never for the brand's taste.</LI>
       </UL>
 
-      <H2>The extended plugin's zone and the picker</H2>
+      <H2>The extended plugin's color group and the picker</H2>
       <P>
-        Every path the extended plugin writes starts with <Code>base/</Code>, the engine-owned zone: a hand edit there is
-        deliberately not rebuilt by a re-apply. The zone is stripped from the Web code syntax, so the name a developer
+        Every path the extended plugin writes starts with <Code>color/</Code>, the category: a design system whose
+        variable paths start with their category (<Code>space/400</Code>, <Code>radius/200</Code>) reads color the same
+        way. The group marks no ownership. Hand-authored color roles can sit in it beside the engine's rows, and the
+        plugin knows its own rows by an identity it stamps on each, not by the name. A hand edit to an engine row is
+        deliberately not rebuilt by a re-apply. The group is stripped from the Web code syntax, so the name a developer
         sees matches the CSS custom property.
       </P>
       <P>
         The ramp stops and the seed absolutes are single resolved colors with no state; the roles (<Code>stamp/</Code>{' '}
-        inside each family and <Code>base/link/</Code>) are state-carrying decisions a designer binds to. The plugin's
+        inside each family and <Code>color/link/</Code>) are state-carrying decisions a designer binds to. The plugin's
         "Hide primitive scale from pickers" checkbox, on by default, hides every non-role row from Figma's color pickers
         and keeps the role rows visible. The posture is stored on the file and re-applied on every apply, so a scope
         hand-edited in Figma reverts on the next run.

@@ -63,7 +63,9 @@ example: [Install and API](https://egerrity.github.io/okchroma/#/docs/install).
 Every token has one path, and every output spells it: `brand/stamp/fill`,
 `neutral/paper-0`, `link/default/enabled`, `absolute/brand`. Joined with hyphens it is the
 CSS custom property (`--brand-stamp-fill`); joined with slashes it is the Figma variable
-and the DTCG token path.
+and the DTCG token path. A consumer whose paths start with the category puts a `color`
+group in front: the extended plugin writes `color/brand/stamp/fill`, and the DTCG
+documents nest under the same word when asked. The CSS names never carry it.
 
 | Group | Tokens |
 |---|---|
@@ -101,7 +103,8 @@ component renders the border unconditionally and layout never shifts.
   every token with `$type`, an sRGB `$value` whose components and hex are the same 8-bit
   color (or an alias where the CSS writes a reference), and a `$description`. The two join
   through a resolver document. The format: [docs/schema.md](docs/schema.md). The repo's
-  `npm run tokens:emit -- '#E93D82' acme` writes both files.
+  `npm run tokens:emit -- '#E93D82' acme` writes both files. Pass `{ rootGroup: 'color' }`,
+  or `--root color` to the script, to nest every path and alias under that group.
 - Figma: `themeToFigma` returns a light and a dark group tree on the same paths; the
   extended plugin writes it into a file.
 

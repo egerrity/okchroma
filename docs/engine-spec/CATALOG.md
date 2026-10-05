@@ -4,6 +4,107 @@ Fresh tracker. The previous CATALOG was archived with the whole old docs tree in
 ("clean-slate rewrite" 2026-06-27); entries here are code-grounded, logged at find-time,
 fixed holistically after owner sign-off.
 
+## C75 — `EXT_OVERRIDABLE_SYSTEM` is called by nothing (FOUND, 2026-10-02)
+
+Found while scoping C73. `tokenNames.ts` defines the rule (the link trios and the seed
+absolutes are the only non-family rows an extension may override) and
+`plugin-ext/payload.ts` re-exports it; no code calls it. The comment beside it said both
+plugin sandboxes and the override audit import it, which was false and is corrected. The
+rule is enforced nowhere: `code.ts` diffs every base row for a brand, which is the same set
+since C68 left only the families, the link trios and the seed absolutes. Kept and respelled
+under C73; removing it is a subtraction and the owner's call.
+
+## C74 — a variable the plugin did not make is taken for an engine row when its name spells one (FOUND, 2026-10-02)
+
+Found while scoping C73. `legacyCandidates` composes every earlier leaf with the current
+group word, so `color/link` is a candidate for `color/link/default/enabled`,
+`color/brand/solid/fill` for the brand's stamp fill, and so on. While the group's word
+marked it as the engine's, nobody authored there; under C73 hand-authored color roles share
+`color/`. When the engine's own row is present it is found by its stamp and no candidate is
+consulted. When it is absent (a first apply into a file that already holds hand-made rows,
+or an engine row deleted by hand), an unstamped variable at one of those spellings is
+renamed to the engine path and stamped; its values stay, by the create-once rule. The same
+lookup adopts an unstamped variable at an exact engine path: that is the pre-stamp heal, and
+it is also what happens to rows made by Figma's native import of the nested token file.
+Among those, `paper-3` is read as an index-era row by the generation guard and a second
+`paper-3` is created beside it (the C63 family). Not fixed. The candidates under the
+current group word are synthesized, no file ever held them, but the next leaf rename makes
+them real, so excluding them needs a record of which leaf renames predate the group word.
+
+## C73 — ENGINE COLORS SIT UNDER A `color` GROUP IN FIGMA AND, ON REQUEST, IN THE TOKEN FILE (RULED, 2026-10-02)
+
+A design system that consumes the engine settled a naming grammar in which every path
+starts with its category (`space/400`, `radius/200`), so color reads
+`color/brand/pencil-47`. The engine's rows sat at `base/brand/pencil-47` in Figma (the
+extended plugin's ownership zone) and at `brand/pencil-47` in the token file.
+
+The owner's rulings. The fix belongs in the engine, so Figma and the token file agree by
+construction and a consumer's merge stays a plain join. The extended plugin's word changes
+from `base` to `color`. Base versus utility is no longer a word in the path: the
+separation stays in the mechanics (the plugin knows its rows by their stamp) and
+hand-authored color roles share the group. The token file takes an opt-in root group, off
+by default. The CSS names do not change. The hands-off signal the zone word gave is dropped
+from the rows and stated in the plugin README. The Mapper takes a seam edit only (its
+target spellings and its prefix strips; C72 stays open). The community plugin is untouched.
+The release is a minor.
+
+A second ruling, the same day, on Figma collections: a collection is a file-level
+coordinate, never a path segment. A collection maps to one set of token files (one per
+mode on identical paths), a mode to a context, a variable name to a path. A path is unique
+across all collections. Collection names and category words never share a word. The
+grounds: a collection is defined by its modes, so collections split and merge for mode
+reasons, and a collection word in a name would rename tokens in code when they do; three
+color collections cannot all be called `color`; Figma's native JSON import and export and
+its reference sync script both carry the collection in the file, not in the path. The
+collection names themselves are not ruled, and the plugin's default stays `theme`. The rule
+is written in the sibling generator's grammar, not here.
+
+What changed. One constant, `COLOR_GROUP` in `tokenNames.ts`: `registerPath`, the audits,
+the live paths in `plugin-ext/code.ts` and the Mapper's targets read it. The canonicalizing
+strip in `tokenDescriptions.ts` spells the word, because that module takes no imports;
+`audit:desc` fails on a payload path the strip misses. `RENAMED_GROUPS` spells every target
+through the constant and gains `base/` as one more earlier spelling, so the table stays one
+hop deep. `tokensToDtcg` takes `{ rootGroup }`, `tokens:emit` takes `--root`, and
+`audit:dtcg` runs every case in both forms. `audit:desc` bans a label word from another
+row's description, and derives the words from the paths, so `color` joined the ban while 54
+of the 122 description bodies use the word ("text over the CTA color"). The audit now
+allows the group's word: it starts every extended-plugin row's name, so a search for it
+lands on every row whatever the bodies say. No description changed.
+
+Two traps the rename set off, both closed in the round.
+
+- The generation guard in `ensure()` passed over any `paper-3` candidate of the current
+  generation. The guard exists for paper-5's lookup (C62). With the group renamed, paper-3's
+  own lookup reaches the live row as a candidate (`base/<family>/paper-3`), so the guard
+  skipped it: one `paper-3` was created per family and the real rows were left behind with
+  their bindings, while the new-row check upstream reported nothing new. The guard now
+  applies only to another stop's lookup (`isLivePaper3OfAnotherStop`). On the harness the
+  old guard creates 7 rows and strands 7; the new one creates none.
+- A hand-made variable at an engine path (`color/brand/paper-1`) in a file whose engine
+  rows still carry `base/` would be taken by the exact-name lookup, and the real row left
+  behind. The apply now stops before it writes anything and names such rows: an unstamped
+  exact hit with a stamped earlier spelling beside it. An unstamped row with no stamped
+  counterpart is adopted as before (C74 records what that reaches).
+
+`RETIRED_ALIAS_TARGETS` and the Mapper's alpha offsets keep `base/`: an orphan keeps the
+name and the stamp it had, so the current word never finds one.
+
+Proof, through the real pipeline against a baseline at `c977c96`. The extended payload is
+the baseline with the word substituted: 3,940 paths over the base seed, the retired neutral
+rows and 15 brands. The override snapshot likewise, 3,571 paths. The default documents are
+byte-identical over 183 cases; the nested documents are the default ones under `color` with
+1,558 aliases rewritten. On the fake-figma harness (`scratch/fake-figma/ext-zone-color.ts`),
+a file built by the previous plugin (two brands, a row renamed by hand, a group retyped
+with stray case and spaces, an earlier version's orphans, a `stamp/on` row aliasing a
+retired pole, hand-made roles under `color/`) and re-applied by the new plugin ends
+identical to the same file re-applied by the previous plugin once the word is substituted,
+over all 130 variables and 3 collections with their overrides: 122 engine rows renamed in
+place, none created, no duplicate name, the mock set to reject one, and a second apply
+changes nothing. The same holds from the vintage before the chalk and highlighter words (a
+leaf rename and the group rename in one lookup). The four existing extended-plugin harness
+scripts print the previous plugin's output with the word substituted. Real Figma has not
+run it: the owner checks the plugin on a copy of a work file before anything is published.
+
 ## C72 — the Mapper's background and merge rules target rows the extended plugin no longer writes (OPEN, 2026-09-30)
 
 Found while scoping C68. `plugin-unify/mapping.ts` maps Unify backgrounds onto the

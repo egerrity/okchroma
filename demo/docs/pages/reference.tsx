@@ -60,7 +60,7 @@ export function Body() {
           ['variant', "a signal re-generated from an alternate seed to stay distinct from the brand; replaces the signal's ramp in the emitted theme"],
           ['primitive', 'a value the engine calculates from the seed. Everything the engine emits is one; planes, shadows, opacity and state layers are a semantic layer\'s, authored on the primitives'],
           ['grammar', 'the one path every row has (brand/stamp/fill, neutral/paper-0, link/default/enabled, absolute/brand): hyphen-joined it is the CSS custom property, slash-joined the Figma variable and the DTCG token path'],
-          ['zone', "the extended plugin's path prefix: base/, engine-owned rows"],
+          ['color group', "the category word a color path starts with where a naming grammar puts the category first: the extended plugin writes every row under color/, the DTCG documents nest under it on request, the CSS names never carry it"],
           ['descope', 'the plugin posture that hides non-role rows from Figma pickers'],
         ]}
       />

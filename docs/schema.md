@@ -75,6 +75,36 @@ secondary's edge and on-text point at its own stops, and the default link trio p
 the primary's text stops (`{brand.pencil-47}`). Everywhere else the value is a literal.
 An alias always resolves inside the same document.
 
+## The root group
+
+A design system whose paths start with their category (`space.400`, `radius.200`) wants
+color to start the same way. `tokensToDtcg` takes the group as an option, and the script
+takes it as a flag:
+
+```ts
+import { tokensToDtcg, COLOR_GROUP } from 'okchroma'
+
+const { light, dark } = tokensToDtcg(tokens, { rootGroup: COLOR_GROUP }) // 'color'
+```
+
+`npm run tokens:emit -- '#E93D82' acme --root color` writes the same two files.
+
+```
+color
+├─ neutral, brand, brand-alt, critical, warning, positive, info
+├─ link
+└─ absolute
+```
+
+Every path gains the group as its first segment and nothing else changes:
+`color.brand.stamp.fill`. An alias is written with it (`{color.brand.pencil-47}`), so it
+still resolves inside the same document. Joined with slashes the path is the variable the
+extended plugin writes (`color/brand/stamp/fill`). The CSS custom property never carries
+the group: it stays `--brand-stamp-fill`. A description does not name the group either.
+
+The group is one segment, lower-case words and digits joined by hyphens; anything else
+throws. Without the option the grammar's groups sit at the document root.
+
 ## Modes
 
 The two documents share every path. They join through a resolver document, the
@@ -115,7 +145,10 @@ worked example.
   custom property the CSS emission declares with the same value, its slash-joined path is
   a leaf of the Figma tree with the same value, every alias resolves inside the document,
   every token has a description, every name is legal, light and dark hold the same paths,
-  and the documents survive a JSON round trip.
+  and the documents survive a JSON round trip. Every case runs in both forms. Nested, the
+  Figma check compares against the path the extended plugin writes, the CSS check compares
+  with the group taken off, and the nested documents must equal the plain ones once the
+  group is removed from every path and alias.
 - An independent parser: the audit cannot prove conformance to the format, so a release
   is also checked with a third-party DTCG 2025.10 parser (Terrazzo's `tz check` over both
   files, run through `npx`).
@@ -128,7 +161,8 @@ every color token carries `hex` for that reason. A plain hex string as `$value` 
 valid 2025.10 color, so the emitter never writes one.
 
 Figma's native variables import takes one file per mode on identical token names, which
-is the shape these documents have. The extended plugin remains the way the engine writes
+is the shape these documents have; nested under `color`, a token's name is the name of the
+variable the extended plugin writes. The extended plugin remains the way the engine writes
 Figma files; it aliases nothing the documents do not.
 
 The requirement-token experiment, which serialized the declaration behind each value into

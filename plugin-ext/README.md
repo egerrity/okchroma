@@ -21,30 +21,41 @@ It is not listed on Figma Community. Install it by download from the site's inst
 
 ## What it writes
 
-Every path carries the `base/` ownership zone: engine-owned rows, where a hand edit is
-deliberately not rebuilt by a re-apply. Inside the zone the paths are the engine's one
-grammar, the same spelling the CSS custom properties and the DTCG documents carry. The
-engine emits primitives only: every row is a value it calculates from the seed.
+Every path starts with `color/`, the category: a design system whose variable paths start
+with their category (`space/400`, `radius/200`) reads color the same way. Inside the group
+the paths are the engine's one grammar, the same spelling the CSS custom properties and the
+DTCG documents carry. The engine emits primitives only: every row is a value it calculates
+from the seed.
 
-- `base/neutral/*`: `paper-0` to `pen-100` in ladder order, the stamp rows.
-- `base/brand/*` and, when the file carries a secondary, `base/brand-alt/*`: the eleven
+- `color/neutral/*`: `paper-0` to `pen-100` in ladder order, the stamp rows.
+- `color/brand/*` and, when the file carries a secondary, `color/brand-alt/*`: the eleven
   stops and `stamp/fill`, `stamp/fill-hover`, `stamp/fill-pressed`, `stamp/edge`,
   `stamp/on`. The brand's name lives on the extension; the paths stay generic, so a designer
-  binds `base/brand/paper-1` once and re-themes by switching the extension.
-- `base/critical/*`, `base/warning/*`, `base/positive/*`, `base/info/*`: the four signals
-  under their role names, canonical in the base; a brand's collision-shifted signal becomes
-  that brand's override.
-- `base/link/default/*` and `base/link/inverse/*`: the link trio for text on the papers and
-  the trio re-solved for text on the pen ground, each with `enabled`, `hover`, `pressed`.
-- `base/absolute/brand` and `base/absolute/brand-alt`: the seeds as given, reference values.
+  binds `color/brand/paper-1` once and re-themes by switching the extension.
+- `color/critical/*`, `color/warning/*`, `color/positive/*`, `color/info/*`: the four
+  signals under their role names, canonical in the base; a brand's collision-shifted signal
+  becomes that brand's override.
+- `color/link/default/*` and `color/link/inverse/*`: the link trio for text on the papers
+  and the trio re-solved for text on the pen ground, each with `enabled`, `hover`,
+  `pressed`.
+- `color/absolute/brand` and `color/absolute/brand-alt`: the seeds as given, reference
+  values.
+
+The rows in this list are the engine's, and they are not for hand editing: a re-apply
+leaves a hand-edited value in place, so that row stops following the engine, and "Rebuild
+base theme" overwrites it. The name does not mark them. The group is shared: hand-authored
+color roles (planes, shadows, a scrim) can sit under `color/` beside these rows, and the
+plugin knows its own rows by the identity it stamps on each, never by the name.
 
 Every value is a raw write: `stamp/on` is the pole (or the pole at alpha on a quiet fill),
 `stamp/edge` the pole at the family's rung or transparent. Nothing aliases a system row.
 A file applied by an earlier version keeps its `utility/` shelf, its planes, its
-`base/alpha/*` rows and its absolute black and white as orphans; the plugin never deletes
-a variable, and a live row that aliased one of them takes its raw value where the alias
-resolves to exactly what the payload writes now. A semantic layer (planes, shadows,
-opacity, state layers) is a collection of its own, authored on these rows.
+`base/alpha/*` rows and its absolute black and white as orphans, under the names they had;
+the plugin never deletes or moves a variable it no longer writes, and a live row that
+aliased one of them takes its raw value where the alias resolves to exactly what the
+payload writes now. A semantic layer is authored on these rows: a role that needs its own
+light and dark value sits in this collection, which has those modes, and a role that only
+aliases these rows can sit in a collection of its own.
 
 Values in the base are the documented default seed (`payload.BASE_SEED_HEX`, `#E93D82`),
 recommended mode, the derived brand-alt, the default neutral, canonical signals. The base is
@@ -93,10 +104,19 @@ collection-wide check when a secondary is first added.
 
 A variable's identity is its canonical path in plugin data; the display name is the user's.
 Renames migrate in place, so bindings survive: `RENAMED_LEAVES` and `RENAMED_GROUPS` in
-`code.ts` recover every earlier spelling (the two pre-zone register eras, the pre-rename
-band words, the old signal identities), one hop each, straight to the final name. A display name that spells any engine vintage is treated as engine-owned and follows
-the rename; only names outside the engine's grammar are the user's. A row the current
-payload no longer emits is reported as an orphan and never deleted.
+`code.ts` recover every earlier spelling (the group's earlier word `base/`, the two
+register eras before it, the pre-rename band words, the old signal identities), one hop
+each, straight to the final name. A display name that spells any engine vintage is treated
+as engine-owned and follows the rename; only names outside the engine's grammar are the
+user's. A row the current payload no longer emits is reported as an orphan and never
+deleted.
+
+A file applied under `base/` migrates on its next apply. Every engine row is renamed to
+`color/…` in place, so bindings and brand overrides stay where they are; a row renamed by
+hand keeps its name and its identity advances; the Web code syntax does not change. The
+apply stops before it writes anything if a variable the plugin did not stamp already sits
+at a name an engine row has to move to (a hand-made `color/brand/paper-1`, say): rename or
+delete that variable and apply again. Try the first apply on a copy of the file.
 
 ## Install
 

@@ -93,7 +93,10 @@ const { light, dark } = tokensToDtcg(tokens)
         with hyphens is the CSS custom property, joined with slashes the Figma path. Values are the sRGB pair the CSS
         carries; where the CSS writes a reference the document writes the alias. The repo's{' '}
         <Code>npm run tokens:emit -- '#E93D82' acme</Code> writes both files, and <Code>docs/schema.md</Code> is the
-        format's reference, including how the two modes join through a resolver document.
+        format's reference, including how the two modes join through a resolver document. A consumer whose paths
+        start with the category passes <Code>{"tokensToDtcg(tokens, { rootGroup: 'color' })"}</Code>, or{' '}
+        <Code>--root color</Code> to the script: every path and every alias gains that group in front, and nothing
+        else changes.
       </P>
       <H3>Emit Figma variables</H3>
       <Pre>{`import { themeToFigma, SIGNALS, SIGNAL_SCALES } from 'okchroma'
@@ -113,7 +116,7 @@ const { light, dark } = themeToFigma(theme.themed, {
       <P>
         Each leaf is a color in the DTCG shape (<Code>{'{ $type: "color", $value: { colorSpace: "srgb", components, alpha, hex } }'}</Code>),
         its components the same 8-bit value as its hex. The extended Figma plugin flattens this tree into variable paths
-        under its base zone; the leaf order is the panel order.
+        under the color group (<Code>color/brand/paper-1</Code>); the leaf order is the panel order.
       </P>
       <H3>The engine beneath the theme</H3>
       <UL>

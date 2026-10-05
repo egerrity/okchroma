@@ -25,7 +25,8 @@ primitives. One grammar spells every row in every output (`tokenNames.ts`): a pa
 - **Figma variables**: `themeToFigma` returns a light and a dark group tree; the extended
   plugin writes it into a file.
 - **DTCG documents**: `tokensToDtcg` returns one Design Tokens Format Module document per
-  mode, every token with its description (the format is in [schema.md](schema.md)).
+  mode, every token with its description, at the document root or nested under a root
+  group the caller names (the format is in [schema.md](schema.md)).
 
 The demo (`demo/`) and the plugins (`plugin-ext/`, `plugin/`, `plugin-unify/`) are
 front-ends. The product is the engine and what it emits.
@@ -142,7 +143,7 @@ flowchart TD
 |---|---|---|
 | CSS emitter | `cssRender.ts` | `brandCss`, `neutralCss`, `signalsCss`, `stopHex`, the P3 override blocks, the stamp edge gate (`ctaNeedsBorder`, `ctaBorderRung`, `pageStopFor`) and its rungs (`OFFSET_ALPHAS`, written as literals), the outline and escape re-expressions, the quiet fill's soft on-text. |
 | Structured emit | `tokensRender.ts` | `themeTokens` (the CSS emission read back into one object per mode, `var()` resolved, mode-invariant names carried into both), `readEmission`, `resolveReferences`. |
-| DTCG emitter | `dtcgRender.ts` | `tokensToDtcg` (the structured emit as two Design Tokens Format Module documents on identical paths), `tokenPaths` (the roster, the definition of what the engine emits), `tokenPathOf`, `descriptionPathOf`. |
+| DTCG emitter | `dtcgRender.ts` | `tokensToDtcg` (the structured emit as two Design Tokens Format Module documents on identical paths), `tokenPaths` (the roster, the definition of what the engine emits), `tokenPathOf`, `descriptionPathOf`. The `rootGroup` option nests every path and every alias under one group. |
 | Figma emitter | `figmaRender.ts` | `themeToFigma` (the same theme as light and dark group trees on the grammar's paths), `groupEntries`, `putLeaf`. |
 | Public API | `index.ts` | What the npm package exports. |
 | Token build | `build.ts` | Writes `dist/signals.css`. |
@@ -332,17 +333,22 @@ The extended plugin (`plugin-ext/`, Figma Enterprise) writes one base collection
 that overrides only the rows that differ. `plugin-ext/payload.ts` builds the rows from the
 engine (`resolveTheme` → `themeToFigma` → `toFlat`); `plugin-ext/code.ts` writes them.
 
-**The zone.** Every path starts with `base/`, the engine-owned zone, where a hand edit is
-deliberately not rebuilt by a re-apply. `payload.registerPath` applies it as the final step
-of `toFlat`; the paths inside are the tree's own, the one grammar. The zone is stripped
-from the Web code syntax, so a developer's name matches the CSS custom property. A file
-applied before the engine went primitives-only keeps its utility shelf, its planes, its
-alpha rows and its absolute black and white as orphans; a live row that aliased one takes
-its raw value where the alias resolves to exactly what the payload writes.
+**The color group.** Every path starts with `color/`, the category word a path starts
+with in a naming grammar that puts the category first. `payload.registerPath` applies it as
+the final step of `toFlat`, from the one constant `COLOR_GROUP` in `tokenNames.ts`, the
+same word a caller passes to `tokensToDtcg` to nest the documents; the paths inside are the
+tree's own, the one grammar. The group carries no ownership: hand-authored color roles can
+share it, and an engine row is known by its identity stamp, never by its name. A hand edit
+to an engine row is deliberately not rebuilt by a re-apply. The group is stripped from the
+Web code syntax, so a developer's name matches the CSS custom property. A file applied
+before the engine went primitives-only keeps its utility shelf, its planes, its alpha rows
+and its absolute black and white as orphans under the names they had; a live row that
+aliased one takes its raw value where the alias resolves to exactly what the payload
+writes.
 
 **Roles and the picker.** The ramp stops and the seed absolutes are single resolved colors
 with no state; the roles are the state-carrying rows: `stamp/` inside each family and
-`base/link/` (default and inverse) (`isRoleRow` in `code.ts`). The descope posture (the
+`color/link/` (default and inverse) (`isRoleRow` in `code.ts`). The descope posture (the
 "Hide primitive scale from pickers" checkbox, default on) sets every non-role variable's
 scopes to none and keeps the roles at all scopes. It is file state on the base collection,
 re-stamped on every apply, so a scope hand-edited in Figma reverts on the next run.
@@ -365,8 +371,12 @@ engine at a chosen seed and re-applies every brand against it.
 (old leaf → new leaf) and `RENAMED_GROUPS` (old prefix → new prefix) compose through
 `legacyCandidates`, one hop only, so every table points straight at the final spelling; a
 display name that spells any engine vintage is recognized as engine-owned
-(`isEngineSpelling`), never as a custom name. A path the current payload no longer emits
-is counted and reported as an orphan, never deleted; the designer removes it.
+(`isEngineSpelling`), never as a custom name. The group's earlier word, `base/`, is one of
+those prefixes: a file applied under it has every engine row renamed to `color/` in place
+on its next apply, and a row renamed by hand keeps its name while its stamp advances. An
+apply stops before it writes anything when a variable the plugin did not stamp sits at a
+name an engine row has to move to. A path the current payload no longer emits is counted
+and reported as an orphan, never deleted or moved; the designer removes it.
 
 **Raw values.** Every value is a raw write: the stamp's on-text pole, the soft on-text at
 alpha and the edge (a pole at its rung, or transparent) are the generated values, never

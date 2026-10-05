@@ -52,20 +52,21 @@ every rename has been names only, no value has moved through one.
 ### Reading a name
 
 In the extended Figma plugin a full path adds two segments in front of the instrument word:
-the ownership zone and the family. The zone and family are groups (slash-separated); the
-instrument joins its number with a hyphen, so the token name itself is one flat leaf. Read
-left to right, `base/neutral/pencil-47`:
+the color group and the family. Both are groups (slash-separated); the instrument joins
+its number with a hyphen, so the token name itself is one flat leaf. Read left to right,
+`color/neutral/pencil-47`:
 
 | segment | example | meaning |
 |---|---|---|
-| zone | `base` | the extended plugin's ownership zone: `base/` engine-owned, `utility/` team-touchable |
+| group | `color` | the category: the extended plugin writes every row under it, and the DTCG documents nest under it when asked |
 | family | `neutral` | which family the stop belongs to: neutral, brand, brand-alt, or a signal |
 | instrument | `pencil` | which law the stop serves |
 | number | `47` | 100 − the stop's light rootL × 100, rounded |
 
-The plain engine and CSS name drops the first two segments (there is one zone, one family
-per emitted block): `pencil-47`, and the CSS custom property is `--neutral-pencil-47`. One
-spelling everywhere (engine identity, Figma leaf, CSS variable body) is the rule.
+The plain engine and CSS name drops the first two segments (the CSS never carries the
+group, and there is one family per emitted block): `pencil-47`, and the CSS custom property
+is `--neutral-pencil-47`. One spelling everywhere (engine identity, Figma leaf, CSS
+variable body) is the rule.
 
 Code: the declaration is [`spec.ts`](../src/engine/requirements/spec.ts) (per-stop rootL,
 producers, and requirements: the edit surface); the ladders it draws from are in
