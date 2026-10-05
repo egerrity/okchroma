@@ -8,6 +8,28 @@ structure, ships as at least a minor.
 
 Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git log.
 
+## 0.8.2 — unpublished
+
+- **Two declaration files leave the package.** 0.7.0, 0.8.0 and 0.8.1 carry
+  `dist-lib/types/engine/interaction.d.ts` and
+  `dist-lib/types/engine/requirements/dtcg.d.ts`: declarations of the interaction register
+  and of an earlier requirement-token emitter, whose sources left the engine in 0.7.0. The
+  library build wrote into `dist-lib` without emptying it and the package ships that folder
+  whole, so the two files stayed on the publishing machine and went out with all three
+  releases. The build now empties the folder first, and `prepack` runs `npm run audit:lib`
+  after it: a pack stops when a file in the folder has no source in the tree, or when an
+  entry file `package.json` names is missing.
+- **Nothing an import of `okchroma` reaches changes.** The entry declarations refer to
+  neither file, and the exports map serves only the package root.
+- **What a consumer does.** Nothing, unless a type-only import names one of the two files
+  by its path, which only TypeScript's legacy `node10` module resolution allows. Both
+  describe functions the package does not have; remove the import.
+
+## 0.8.1 — 2026-10-05
+
+- **No change from 0.8.0.** The same package under a new version number, published before
+  the fix in 0.8.2 was merged. It carries the same two declaration files.
+
 ## 0.8.0 — 2026-10-05
 
 - **A root group on the DTCG documents, opt-in.** `tokensToDtcg(tokens, { rootGroup: 'color' })`
