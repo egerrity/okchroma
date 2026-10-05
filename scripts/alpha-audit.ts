@@ -1,17 +1,21 @@
-// alpha-audit — the paper-overlay law gates (owner round 2026-08-13), fixture-sweep wide.
+// alpha-audit: the paper-overlay law gates, fixture-sweep wide. The overlays are parked:
+// nothing emits them, and the solve lives in src/engine/alphaPapers.ts under this audit.
 //
 // HARD GATES, per theme × family × mode:
-//   1. pen bars on the QUANTIZED rgba: pencil-47/42/30 keep 4.5/6.5/7.0 (shipped 8-bit
-//      basis) against the worst overlay composite — the lightest on the lightest
-//      paper in dark, the darkest on the darkest paper in light.
+//   1. pen bars on the QUANTIZED rgba: pencil-47 / pen-58 / pen-70 keep 4.5 / 6.5 / 7.0
+//      (shipped 8-bit basis) against the worst overlay composite on paper-5: the lightest
+//      in dark, where paper-5 is the lightest paper, and the darkest in light, where it
+//      is the darkest.
 //   2. the TOL bound, observed: each rung's composite apparent L* spans ≤ 2×TOL
 //      across the four neutral papers (both within ±TOL of one target).
 //   3. the visibility floor: a non-neutral rung's worst-field ΔE ≥ the theme bar,
-//      OR its pen chroma sits at the sRGB ceiling (the reported near-white cap).
+//      OR the rung declares a cap, OR its pen chroma sits at the sRGB ceiling.
 //   4. snapshot: every overlay value byte-stable vs the blessed build (--bless).
 //
-// REPORTS (no gate): dark step evenness vs K × light steps · the canonical-vs-theme
-// signal overlay spread (the signalsCss canonical-plane note's measurement).
+// REPORTS (no gate): the dark step unevenness (the three rungs composited on paper-0:
+// the difference between their two apparent steps) · the canonical-vs-theme signal
+// overlay spread (how far a signal's overlays move between the hue-0 neutral that
+// signalsCss builds its page from and a theme's own neutral).
 import * as fs from 'fs'
 import * as path from 'path'
 import { resolveTheme, signalScalesFor } from '../src/engine/resolve'
@@ -89,7 +93,7 @@ for (const fx of FIXTURES) {
             fail(`${fx.name} ${mode} ${name} ${t.name}: ΔE ${minDE.toFixed(3)} under the bar with no declared cap`)
         }
       }
-      // evenness report input (dark, vs the sunken field)
+      // evenness report input (dark, on paper-0)
       if (mode === 'dark') {
         const apps = twins.map(t => appHex(compositeHex(t.overlayHex, fields[0], t.alpha)))
         evenness.push(Math.abs((apps[2] - apps[1]) - (apps[1] - apps[0])))
@@ -98,7 +102,7 @@ for (const fx of FIXTURES) {
   }
 }
 
-// canonical-vs-theme signal spread (the signalsCss canonical-plane measurement)
+// canonical-vs-theme signal spread: the hue-0 neutral (signalsCss's page) against each theme's own
 {
   const canonicalNeutral = generateNeutralScale(0)
   const sig = signalScalesFor()

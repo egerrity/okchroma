@@ -7,10 +7,12 @@
 //                        collapse — "1/3/4 look the same" = failure)
 //   B. subtle visibility ΔE(stop1, stop3): badge/alert bg vs app bg
 //   C. chroma retention  mean C(dark 1–8) / C(light 1–8) — "dark went gray"
-//   D. text separation   ΔE(stop11, stop12) — accent vs body text
-//   E. collisions        per-mode error collision on the resolved scale
+//   D. text separation   ΔE(stop 9, stop 10): pencil-47 against pen-58
+//   E. collisions        the dark cta against the red signal's, by P2
+//   F. on-cta legibility the stamp booster's bar on the chosen pole, both modes
 //
-// Failures print worst-first with the brand hex so fixes are testable.
+// A to E are reports and F fails the run. Findings print worst-first with the
+// brand hex so fixes are testable.
 
 import { FIXTURES, FIXTURE_SECONDARIES } from './fixture'
 import { SIGNALS } from '../src/engine/signals'
@@ -22,33 +24,23 @@ import type { GeneratedScale } from '../src/engine/colorEngine'
 import { MODE_SPECS } from '../src/engine/requirements/spec'
 import { CRITICAL_CLEARANCE_LC } from '../src/engine/requirements/profiles'
 
-// This audit (and its blessed snapshot) tracks the SHIPPED profile: wcag (build.ts
-// SHIPPED_PROFILE, owner 2026-07-29). It pinned the apca solve from the 2026-07-04 split
-// until 2026-09-02, so its snapshot guarded a lane nothing ships; re-pointed and re-blessed.
+// This audit and its blessed snapshot track the SHIPPED profile: wcag (build.ts
+// SHIPPED_PROFILE).
 const SHIPPED_PROFILE = 'wcag' as const
 const SIGNAL_SCALES = signalScalesFor(SHIPPED_PROFILE)
-// the stamp legibility booster's bar (spec ons.coEnforceLc; the critical signal rides its own)
+// the stamp legibility booster's bar (spec ons.onFill.coEnforceLc; the critical signal rides its own)
 const BOOSTER_LC = MODE_SPECS.light.ons.onFill.coEnforceLc!
 
-// Parity tolerances: dark metric must reach this fraction of light's.
-// 0.55 → 0.48 (2026-06-10): the envelope-chroma light model widened
-// light-mode steps on wide-gamut hues (greens 4→5 ΔE 0.08); dark mode is
-// unchanged from the blessed ladder, so the parity bar recalibrates to
-// the new light reality rather than flagging dark for light's gains.
+// Parity tolerances: the dark metric must reach this fraction of light's.
 const ADJ_RATIO = 0.48
-// A step is a collapse only if it is BOTH proportionally small (< ADJ_RATIO×light)
-// AND absolutely small (< this floor, ~3 JND). The dark-L surface solve (2026-06-29)
-// decoupled dark step sizes from light's for low-boost hues — yellow's solved chalk-20
-// rides up toward the placed highlighter-26 — so a dark step can be < 48% of light's yet
-// still a plainly visible ΔE (e.g. yellow 7→8 #814900→#A35F00, ΔE ~0.09). The floor
-// catches true merges without flagging those intentional, owner-approved shifts.
+// A step is a collapse only if it is BOTH proportionally small (< ADJ_RATIO × light's)
+// AND absolutely small (< this floor, about 3 JND). The dark band is placed on its own
+// ladder (the photometric dialect under the band lift, producers.deltaDarkPlace), so a
+// dark step is not a fixed share of its light twin: one can fall under the ratio and
+// still be a plainly visible ΔE. The floor keeps those out of the findings and still
+// catches a true merge.
 const STEP_ABS_FLOOR = 0.06
 const SUBTLE_RATIO = 0.6
-// 0.6 → 0.58 (2026-06-29): the dark-L perceptual solve equalized the dark text
-// stops' apparent lightness, which tightened 10/11 measured separation slightly
-// for one warm scale (Honey Lemon: dark ΔE 0.147 vs light 0.250 = 0.59×). Still
-// distinct text stops; recalibrate the parity bar to the new dark reality rather
-// than flag it (mirrors the ADJ_RATIO recalibration above).
 const TEXTSEP_RATIO = 0.58
 const CHROMA_RETENTION_MIN = 0.45
 
@@ -94,8 +86,8 @@ function audit(name: string, hex: string, scale: GeneratedScale, redRepelled = f
       detail: `dark keeps ${(retention * 100).toFixed(0)}% of light chroma (stops 1–8)`,
     })
   }
-  // D: pen 9/10 separation (find by STOP — contiguous stops 1..10 after the
-  // 2026-07-29 highlight collapse renumbered the pens down from 10/11)
+  // D: pencil-47 against pen-58, found by STOP number (the pair this reads and the
+  // findings that stand on it: CATALOG C78)
   const li10 = scale.light.find(s => s.stop === 9)!, li11 = scale.light.find(s => s.stop === 10)!
   const da10 = scale.dark.find(s => s.stop === 9)!, da11 = scale.dark.find(s => s.stop === 10)!
   const sepL = stopDeltaE(li10, li11)
@@ -106,11 +98,11 @@ function audit(name: string, hex: string, scale: GeneratedScale, redRepelled = f
       detail: `ΔE(11,12): dark ${sepD.toFixed(3)} vs light ${sepL.toFixed(3)}`,
     })
   }
-  // F: on-cta legibility, HARD. The shipped lane's law on the stamp text is WCAG 4.5 (req:audit
-  // asserts it); on top of it the stamp legibility BOOSTER nudges the fill until the chosen pole
-  // reads APCA Lc 65, the critical signal 50 (spec ons.coEnforceLc / CRITICAL_CLEARANCE_LC,
-  // owner 2026-08-02). This gate asserts the booster delivered, both modes; the wcag ratio is
-  // printed beside it for the read.
+  // F: on-cta legibility, HARD. The shipped lane's law on the stamp text is the 4.5 ratio;
+  // on top of it the stamp legibility BOOSTER nudges the fill until the chosen pole reads
+  // the clearance bar (spec ons.onFill.coEnforceLc; the critical signal rides
+  // CRITICAL_CLEARANCE_LC). This gate asserts the booster delivered, both modes; the wcag
+  // ratio is printed beside it for the read.
   for (const mode of ['light', 'dark'] as const) {
     const cta = mode === 'light' ? scale.cta : scale.ctaDark  // on-fill sits on the off-scale cta
     const white = mode === 'light' ? scale.onFillTextIsWhite : scale.onFillTextIsWhiteDark
@@ -126,12 +118,11 @@ function audit(name: string, hex: string, scale: GeneratedScale, redRepelled = f
     }
   }
 
-  // E: dark-mode red collision on the resolved scale. No exemptions since the C12
-  // gate (redRepelled is report metadata, not an exemption). Metric = P2 (owner rounds
-  // 2026-07-11): redGateDist is the P1 at-a-glance category and PASSES vibrating dark
-  // pairs (0.11-0.20 while p2 reads 0.086-0.109 — the documented dark blindness);
-  // solveDarkCtaExit delivers the p2 release, so E asserts the same bar the
-  // collision-sweep dark assertion uses.
+  // E: dark-mode red collision on the resolved scale, every brand alike (a repelled brand
+  // is not exempt). The metric is P2: redGateDist is the at-a-glance category and passes
+  // dark pairs that vibrate side by side. The bar is P2_D_UP against the red dark cta
+  // this lane ships. The engine's own dark exit (producers.solveDarkCtaExit) releases at
+  // P2_D against the APCA lane's red, so the two are not one bar (CATALOG C79).
   const err = SIGNAL_SCALES.get('red')!
   if (name !== 'red' && p2Diff(scale.ctaDark, err.scale.ctaDark) < P2_D_UP - 1e-3) {
     findings['E dark error collision'].push({
@@ -158,8 +149,8 @@ for (const [check, list] of Object.entries(findings)) {
   list.sort((a, b) => b.severity - a.severity)
   console.log(`${check}: ${list.length} failures`)
   for (const f of list.slice(0, 5)) console.log(`   ${f.name} ${f.hex} — ${f.detail}`)
-  // F is LOAD-BEARING (owner 2026-07-11): sub-60 on-cta ships fail the build. A–E stay
-  // parity reports (standing tolerances, log-don't-fix per CATALOG).
+  // F fails the run: a stamp whose chosen pole reads under the booster's bar exits
+  // non-zero. A to E are parity reports and never do.
   if (check.includes('HARD') && list.length > 0) {
     console.log(`   GATE: FAIL — ${check}`)
     process.exitCode = 1
@@ -167,9 +158,9 @@ for (const [check, list] of Object.entries(findings)) {
 }
 
 // ── Blessed-snapshot regression ──────────────────────────────────────────────
-// `--bless` records every stop of every scale after the designer approves a build
-// visually. Default runs diff against the snapshot and name any scale that
-// drifted — rule changes can't silently degrade an approved mode.
+// `--bless` records every stop of every scale after a build is approved by eye.
+// Default runs diff against the snapshot and name any scale that drifted. The
+// drift is printed, not gated: it does not move the exit code (CATALOG C79).
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -177,19 +168,19 @@ import * as path from 'path'
 const SNAP_PATH = path.join(process.cwd(), 'scripts', 'dark-audit-snapshot.json')
 const DRIFT_TOLERANCE = 0.015 // OKLab ΔE per stop
 
-type Snap = Record<string, Array<[number, number, number]>> // name → 24×[L,C,H]
+type Snap = Record<string, Array<[number, number, number]>> // name → [L,C,H] per stop, light then dark
 
 function snapshotOf(): Snap {
   const snap: Snap = {}
   for (const b of FIXTURES) {
     const r = resolveBrand(b.hex, b.slug, { contrastProfile: SHIPPED_PROFILE })
     snap[b.slug] = [...r.scale.light.slice(0, 12), ...r.scale.dark.slice(0, 12)].map(s => [s.L, s.C, s.H])
-    // Accents joined the snapshot 2026-06-11 (dark pass): the near-neutral
-    // pink-ladder defect lived ONLY in accents and was invisible to a
-    // primaries-only bless. Accents carry the fixture's real flags, mirroring
-    // build.ts. (Primaries above keep their historical no-opts convention —
-    // changing it would shift the lever fixtures' light rows vs blessed;
-    // queued for a deliberate pass.)
+    // The secondaries are in the snapshot because a defect can live in a secondary
+    // alone, where a primaries-only bless would not see it. A secondary carries its
+    // fixture's exact and style flags. The primaries are resolved with no flags, here
+    // and in the checks above: that is what the blessed rows hold, and passing the
+    // flags would move the rows of the fixture that carries an archetype override
+    // (CATALOG C79).
     const sec = FIXTURE_SECONDARIES[b.slug]
     if (sec) {
       const ra = resolveBrand(sec, `${b.slug} accent`, { exact: b.exact, style: b.style, contrastProfile: SHIPPED_PROFILE })
@@ -218,12 +209,9 @@ if (process.argv.includes('--bless')) {
       const [L2, C2, H2] = ref[i]
       const d = stopDeltaE({ L: L1, C: C1, H: H1 } as any, { L: L2, C: C2, H: H2 } as any)
       if (d > DRIFT_TOLERANCE) {
-        // The label is DERIVED, not hardcoded (fixed 2026-07-29). Each row is
-        // [...light.slice(0,12), ...dark.slice(0,12)] — a 12-cap that used to yield 12 stops per
-        // mode and now yields 10, because C33's collapse took the scale to 10. The label still
-        // computed `% 12`, so it renamed every drift: a dark wash-4 (index 13) was reported as
-        // "stop 2 (dark)" and dark stops 1-2 surfaced as "light stop 11-12". Splitting the row
-        // in half is correct for any stop count, so a future renumber cannot re-break it.
+        // The label is DERIVED: each row is [...light.slice(0,12), ...dark.slice(0,12)],
+        // and the 12-cap sits above the scale's stop count, so the row is split in half
+        // rather than at 12. Half is correct for any stop count.
         const perMode = stops.length / 2
         drifted.push(`${key} stop ${(i % perMode) + 1} (${i < perMode ? 'light' : 'dark'}): ΔE ${d.toFixed(3)} vs blessed`)
         break

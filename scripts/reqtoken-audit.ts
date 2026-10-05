@@ -1,8 +1,13 @@
-// reqtoken-audit.ts — THE GATE. Agnostic hue×chroma sweep; for every seed, check every DECLARED requirement
-// of the resolved ramp. No okchroma comparison — pure requirement-satisfaction. Worst-case flagged.
+// reqtoken-audit.ts: THE GATE. Agnostic hue×chroma sweep; for every seed, check every DECLARED
+// requirement of the ramp the resolver returns. It compares against no reference build: pure
+// requirement-satisfaction, worst case flagged.
 // Checks are driven FROM the declaration (MODE_SPECS): a require declared = a require verified.
 // The whole sweep runs under BOTH contrast profiles (wcag = the shipped default, apca = the opt-in
 // re-solve); the gate passes only if every declared require holds under its own metric in both.
+// The ramp is resolveRamp's with the declaration and no options. That is not the ramp
+// resolveBrand ships: no APCA clearance, no red-band solve, and dark is placed seed-keyed
+// rather than carried from light. The verdict is printed and the exit code does not move
+// (CATALOG C79).
 import { STAMP_FILL } from '../src/engine/tokenNames'
 import { resolveRamp } from '../src/engine/requirements/resolve'
 import { MODE_SPECS } from '../src/engine/requirements/spec'
@@ -41,8 +46,12 @@ for (const H of HUES) for (const C of CHROMAS) {
     for (const sp of spec.stops) if (!byStop(sp.stop)) fails.push({ seed: id, mode, check: 'missing-stop', detail: `stop ${sp.stop}`, sev: 100 })
     for (const st of s) if (st.unresolvable) fails.push({ seed: id, mode, check: 'unresolvable', detail: st.unresolvable, sev: 100 })
     // 2. every DECLARED contrast require holds under ITS OWN metric (recomputed from emitted,
-    // gamut-clamped) — the wcag reference follows the DECLARED anchor (T10 anchors chalk-20
-    // since the chalk-20 law; the papers verify vs paper-3 as before)
+    // gamut-clamped). The wcag reference follows the DECLARED anchor (S8, T9 and T11 name
+    // paper-5, T10 names chalk-20). The apca recompute reads every stop against paper-3,
+    // which is the declared anchor of stop 10 only: withProfile keeps paper-5 for stops 8,
+    // 9 and 11, so for those it reads an easier paper than the resolver solved against
+    // (CATALOG C79). The resolver's own verify holds the declared anchor, and a miss there
+    // surfaces through check 1.
     const AGAINST: Record<string, number> = { 'paper-1': 1, 'paper-3': 2, 'paper-5': 3, 'chalk-20': 7 }
     const p2 = byStop(2)!
     const p2ApcaY = apcaYAt(p2.L, clampChromaToGamut(p2.L, p2.C, p2.H), p2.H)
@@ -72,22 +81,18 @@ for (const H of HUES) for (const C of CHROMAS) {
       const bad = mode === 'light' ? ladder[i].L > ladder[i - 1].L + 1e-6 : ladder[i].L < ladder[i - 1].L - 1e-6
       if (bad) fails.push({ seed: id, mode, check: 'monotonic-L', detail: `stop ${ladder[i].stop} L${ladder[i].L.toFixed(3)} vs ${ladder[i - 1].L.toFixed(3)}`, sev: 10 })
     }
-    // 3b. BAND ORDER — the invariant that did not exist, and whose absence let
-    //    highlight-9 drift onto ink-10 unnoticed (drift handoff 2026-07-29). The old
-    //    check here was `dark-8<9`, an L-comparison against a stop that no longer
-    //    exists. Its successor is stated as CONTRAST against the shared plane both
-    //    stops sit on (paper-5 (paper-3 pre-Stage-B)), because contrast is what the two requires are about:
-    //    the emphasis fill must read further off the page than the focus ring does.
-    //    Both modes now, not just dark. Margin declared in band-audit
-    //    (BAND_ORDER_MARGIN 1.0); this gate asserts the ORDER, the sweep gate asserts
-    //    the margin — a strict-order failure here is the louder signal.
+    // 3b. BAND ORDER. No require relates stops 8 and 9 to each other, so their order is
+    //    asserted, as CONTRAST against the shared plane both stops sit on (paper-5), because
+    //    contrast is what the two requires are about: the emphasis fill must read further
+    //    off the page than the focus ring does. Both modes. This check asserts the strict
+    //    ORDER; band-audit's sweep asserts the margin (BAND_ORDER_MARGIN).
     const s8b = byStop(8)!, i9 = byStop(9)!, p3b = byStop(3)!
     const p3Y = wcagY(p3b.L, clampChromaToGamut(p3b.L, p3b.C, p3b.H), p3b.H)
     const vsP3 = (st: typeof s8b) => contrastRatio(wcagY(st.L, clampChromaToGamut(st.L, st.C, st.H), st.H), p3Y)
     if (vsP3(i9) <= vsP3(s8b) + 1e-6)
       fails.push({ seed: id, mode, check: 'band-order', detail: `pencil-47 ${vsP3(i9).toFixed(2)} !> highlighter-26 ${vsP3(s8b).toFixed(2)} vs paper-5`, sev: 12 })
-    // the pen band is strictly monotonic — darker per stop in light, lighter in dark
-    // (three stops since C49: 9 the first text, 10 the between, 11 the strong)
+    // the pen band is monotonic: never lighter per stop in light, never darker in dark
+    // (three stops: 9 the first text, 10 the between, 11 the strong)
     for (const [lo, hi] of [[9, 10], [10, 11]] as const) {
       const a = byStop(lo)!, b = byStop(hi)!
       const textBad = mode === 'light' ? b.L > a.L + 1e-6 : b.L < a.L - 1e-6
@@ -99,15 +104,17 @@ for (const H of HUES) for (const C of CHROMAS) {
       if (Math.abs(gC - st.C) > 1e-3) fails.push({ seed: id, mode, check: 'gamut', detail: `stop ${st.stop} C${st.C.toFixed(3)} vs clamp ${gC.toFixed(3)}`, sev: 5 })
       if (!/^#[0-9a-f]{6}$/.test(st.hex)) fails.push({ seed: id, mode, check: 'rgb', detail: `stop ${st.stop} hex ${st.hex}`, sev: 20 })
     }
-    // 5. roles: cta is OFF-SCALE — anchored to the seed (floored in dark), constant hue. The floor governs
-    //    the ANCHOR: the on-fill enforcement re-solve may legitimately move the fill past it, but then the
-    //    enforcement's own guarantee (chosen-pole text 4.5) must hold — that's what we verify.
+    // 5. roles: cta is OFF-SCALE, anchored to the seed (floored in dark), with a constant hue
+    //    on this path (no red-band solve runs here). The floor governs the ANCHOR: the on-fill
+    //    enforcement re-solve may legitimately move the fill past it, but then the enforcement's
+    //    own guarantee (chosen-pole text 4.5) must hold, and that is what is verified.
     const { cta, ctaHover } = r.roles
     const floor = spec.roles.find(x => x.role === STAMP_FILL)!.floorL
     if (cta.L < floor - 1e-6 && !cta.enforced) fails.push({ seed: id, mode, check: 'cta-floor', detail: `L${cta.L.toFixed(3)} < floor ${floor} without enforcement`, sev: 10 })
     if (cta.enforced) {
       if (spec.ons.onFill.enforceLc !== undefined) {
-        // apca profile: an enforced cta's chosen pole must read the Lc threshold (solved to threshold+0.5)
+        // apca profile: an enforced cta's chosen pole must read the Lc threshold (the solve
+        // lands above it, by the fire margin and the solve margin)
         const aY2 = apcaYAt(cta.L, clampChromaToGamut(cta.L, cta.C, cta.H), cta.H)
         const got = Math.abs(apcaLc(r.ons.onFillIsWhite ? 1.0 : 0.0, aY2))
         if (got < spec.ons.onFill.enforceLc - 0.1) fails.push({ seed: id, mode, check: 'cta-enforce', detail: `enforced but on-text |Lc| ${got.toFixed(1)} < ${spec.ons.onFill.enforceLc}`, sev: 15 })
@@ -121,17 +128,15 @@ for (const H of HUES) for (const C of CHROMAS) {
     const { ctaPressed } = r.roles
     for (const role of [cta, ctaHover, ctaPressed])
       if (!/^#[0-9a-f]{6}$/.test(role.hex)) fails.push({ seed: id, mode, check: 'role-rgb', detail: `${role.role} ${role.hex}`, sev: 20 })
-    // 5b. the cta family's states (owner respec 2026-07-16). Pressed = hover's direction
-    //    doubled — same side of the cta, monotonic travel.
+    // 5b. the cta family's states. Pressed = hover's direction doubled: the same side of the
+    //    cta, at least as far.
     const hoverUp = ctaHover.L > cta.L
     if ((ctaPressed.L > cta.L) !== hoverUp || Math.abs(ctaPressed.L - cta.L) < Math.abs(ctaHover.L - cta.L) - 1e-9)
       fails.push({ seed: id, mode, check: 'pressed-travel', detail: `cta L${cta.L.toFixed(3)} hover L${ctaHover.L.toFixed(3)} pressed L${ctaPressed.L.toFixed(3)}`, sev: 10 })
-    // (5c DELETED with the cta-ink roles, owner 2026-08-12: it asserted the roles matched
-    //    stops 9/10/11 and re-checked those stops' requires — check #2 above already
-    //    verifies every declared stop require, and the roles no longer exist.)
-    // 5d. REPORT-ONLY — the on-cta pole chosen at rest, read on the PRESSED fill (pressed
-    //    travels 2× hover; hover has never re-judged the pole, so this measures the new
-    //    worst case rather than legislating one mid-round — owner reads the count).
+    // 5d. REPORT-ONLY: the on-cta pole is chosen at rest and is not re-judged on a state
+    //    fill, and pressed travels twice hover's distance, so this reads the rest pole on
+    //    the PRESSED fill and prints how many fall under 4.5. Nothing is gated, and the
+    //    count is this path's (see the header).
     {
       const pY = wcagY(ctaPressed.L, clampChromaToGamut(ctaPressed.L, ctaPressed.C, ctaPressed.H), ctaPressed.H)
       const got = r.ons.onFillIsWhite ? contrastRatio(1.0, pY) : contrastRatio(pY, 0)
@@ -145,8 +150,9 @@ for (const H of HUES) for (const C of CHROMAS) {
       const fillY = wcagY(cta.L, clampChromaToGamut(cta.L, cta.C, cta.H), cta.H)
       const aY = apcaY(...([cta.hex.slice(1, 3), cta.hex.slice(3, 5), cta.hex.slice(5, 7)].map(h => parseInt(h, 16) / 255) as [number, number, number]))
       if (onSpec.enforceLc !== undefined) {
-        // apca profile: the pole must be Lc-optimal, and a failing WHITE pole must have triggered the
-        // fill re-solve (white-only trigger, mirroring the engine's asymmetry — black dead zones keep the fill)
+        // apca profile: the pole must be Lc-optimal, and a failing WHITE pole must have
+        // triggered the fill re-solve. Only the white side is asserted; the engine's apca
+        // enforce moves the fill for either pole (producers.ctaLightLApca).
         const chosenLc = Math.abs(apcaLc(r.ons.onFillIsWhite ? 1.0 : 0.0, aY))
         const otherLc = Math.abs(apcaLc(r.ons.onFillIsWhite ? 0.0 : 1.0, aY))
         if (chosenLc < otherLc - 0.1)
@@ -164,15 +170,15 @@ for (const H of HUES) for (const C of CHROMAS) {
   }
 }
 
-// 6b. the INVERSE LINK trio (owner round 2026-08-19) — HARD. The trio is a role-level
-//     construct (resolveLinkInverseTrio: the link seed's pen register re-anchored at
+// 6b. the INVERSE LINK trio: HARD. The trio is a role-level construct
+//     (resolveLinkInverseTrio: the link seed's pen register re-anchored at
 //     PEN_70_GROUND, modes crossed), so the declaration-driven loop above never sees it.
 //     Two laws, each lane under its own metric:
-//       a) the trio clears its bars against the frozen ground — wcag on the SHIPPED pair
+//       a) the trio clears its bars against the frozen ground: wcag on the SHIPPED pair
 //          (the 8-bit basis the constant is stated in), apca as |Lc| vs the ground's apcaY
 //          at the DEFAULT_APCA_LC_MAP translations of the same bars;
 //       b) the GROUND BOUND tripwire: no pen-70 this sweep resolves may escape the frozen
-//          worst (lighter than light's, darker than dark's) — the constant's re-derive
+//          worst (lighter than light's, darker than dark's). The constant's re-derive
 //          note (stopTable.ts) names the full derivation sweep; this catches drift.
 {
   const TEXT_BARS: Array<[number, number]> = [[4.5, 75], [6.5, 85], [7.0, 90]] // [wcag, Lc] per state

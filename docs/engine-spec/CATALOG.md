@@ -45,6 +45,140 @@ gate, and with the halves in the other order a pack stops before it lists a tarb
 0.7.0, 0.8.0 and 0.8.1 keep the two files, since a published version cannot be changed; the
 next publish is the first without them.
 
+## C82 — comments inside expressions survive into the built bundles, the deployed ones included (FOUND, 2026-10-05)
+
+Found while proving that the audit comment pass changed no build output. esbuild drops a
+comment that stands between statements and keeps one that sits inside an expression (an
+array or object literal, a call's arguments, an arrow function's expression body). The
+builds are not minified, so those comments ship. At this commit `dist/demo.js` carries 430
+source comment lines (7 with a date, 11 naming the owner), the extended plugin's UI bundle
+106 (6 and 9), the community plugin's UI bundle 109 (6 and 9), the generator's bundle 92.
+The site publishes `dist/` whole (the generator's bundle and the docs lint's bundle with
+it) and the plugin zips carry their bundles, so these lines are public.
+
+Two consequences. A comment in such a position is part of the build output, and rewriting
+one moves the bundle's hash: the two this pass rewrote, one each in `band-audit` and
+`divergence-audit`, moved those audit bundles by three comment lines each and by nothing
+else. And a bundle-hash proof of a comment-only change holds only for the comments esbuild
+drops. For the rest the proof is a rebuild with the comments stripped (`minify`), which was
+byte-identical for all 26 bundles here. Whether the deployed builds are minified is the
+owner's call.
+
+## C81 — the APCA lane's quiet stamp text can read under 4.5:1, and the question lived only in comments (FOUND, 2026-10-05)
+
+Found while rewriting the dated comments in `scripts/guarantee-audit.ts`. An open decision
+was carried by comments and tracked nowhere: the audit's header, its stamp/on branch, and a
+third comment in `colorEngine.generateSubtleSecondary` (engine, not edited). Where a derived
+or custom brand-alt keeps the solid pole (`softOnCtaPasses` gates the soft composite out),
+the wcag lane holds that pole to 4.5:1 through the declared ratio floor. The APCA lane, the
+community plugin's default, strips the floor (`withProfile`) and judges the pole on Lc
+alone, so the pole can read under 4.5:1. `audit:guarantee` prints that cell as a report
+(`stamp/on solid (apca · report)`, worst 3.02:1 on a fixture at this commit) and gates the
+wcag lane's at 4.5. Whether the APCA lane's quiet text takes the ratio floor is the owner's
+call. The neutral is not in question: `generateNeutralScale` floors its pole in both lanes.
+The audit's comments now point here.
+
+## C80 — inert leftovers the comment pass over the audits could not remove (FOUND, 2026-10-05)
+
+Found while rewriting the dated comments in the audit scripts, the roster and the plugin
+shims. That pass changed comments only. These are code or data, and removing them is a
+subtraction. The same class as C75 and C76.
+
+- `scripts/dark-audit.ts` imports `RED_GATE`, `redGateDist` and `checkCollision` and uses
+  none of them, and `audit()` takes a `redRepelled` argument it never reads.
+- `stopTable.ts` exports an interface `StopSpec` that nothing imports; it still declares
+  `chromaMultiplier`. `register-audit`'s header listed that name among the banned ones.
+  The ban list never carried it, and the header now lists what the code bans.
+- `plugin-ext/figma-env.d.ts` declares a node read and rebind surface (pages, paints, text
+  segments, `loadAllPagesAsync`, `setBoundVariableForPaint`, the `mixed` sentinel) for
+  `heal.ts`, which 018c507 removed. Nothing in `plugin-ext` reads it.
+- `plugin-ext/roster.ts`: the `note` string on every entry is read by nothing. Several
+  quote values that have moved (the vs-red entries' landing lightness and hexes, and "wcag
+  lane only" on an entry that shifts in both lanes), several carry names from the retired
+  fixture set, and one says "owner-verified". The header also claimed the six band
+  exemplars were shift-free; five of them carry a signal override (through the primary or
+  through the entry's secondary) or exit the red band, and the claim is gone from the
+  comment.
+- `scripts/band-audit.ts` resolves one lane twice under two names (`neutralByHue` and
+  `neutralWcag`, `SIGNAL_SCALES` and `SIGNALS_WCAG`): an unset profile is the wcag lane.
+- `scripts/fixture.ts`: the slug `near-black-purple` (#2D1B69) classifies `dark`, and
+  `pastel-pink` sits under the light band's header and classifies `bright`. Slugs are
+  snapshot keys; the file's header now says which two entries these are.
+
+## C79 — audits that read something other than what ships, or print a verdict without failing (FOUND, 2026-10-05)
+
+Found by checking each audit comment against the code, and against `resolveBrand` and
+`resolveTheme` output where the comment claimed something about output. The comments now
+say what each audit reads. Whether each should read the shipped path is a gate round's
+call. Measured at this commit, none of these hides a failure in the sweeps the audits
+run: band order, the on-emphasis read, stop 8's 3:1, the declared requires and the dark
+collision bar all hold on `resolveBrand`'s output too, and the fixture audited without
+its flag passes with it.
+
+- `req:audit` resolves `resolveRamp(hex, mode, spec)` with no options. That is not the
+  ramp `resolveBrand` ships: no APCA clearance, no red-band solve, the declaration's dark
+  fill floor, and dark placed seed-keyed instead of carried from light. Light stops match
+  the shipped ramp on every seed of its sweep; dark stops differ on all 144 dark seed and
+  lane pairs (max OKLab ΔE 0.083). C24 noted this in passing. Its report-only reads
+  describe that path too: the pressed-fill pole report prints 140 of 288 under 4.5:1 over
+  both lanes, and the same read on `resolveBrand`'s wcag-lane stamps finds none in 144.
+  Measured on the shipped ramps this round, the declared requires hold in both lanes over
+  the same sweep.
+- `req:audit`'s apca recompute reads every stop against paper-3. `withProfile` keeps
+  paper-5 as the anchor of stops 8, 9 and 11, so the recompute reads those against an
+  easier paper, by about 1 to 3 Lc at the worst cases. The resolver's own verify holds the
+  declared anchor, and check 1 fails on it.
+- `req:audit`'s apca pole check asserts the fill re-solve for a failing white pole only.
+  `ctaLightLApca` moves the fill for either pole.
+- `req:audit` and `audit:secondary` print `GATE: FAIL` and exit 0. `dark-audit` exits
+  non-zero for check F only: a snapshot drift prints and passes.
+- `dark-audit` resolves the fixture primaries without their flags, in the checks and in
+  the snapshot. One fixture is affected: `dark-red-collider` is audited without its
+  archetype override.
+- `dark-audit` E asserts `P2_D_UP` (0.11) against the wcag lane's red dark cta. The
+  engine's dark exit has one bar, `P2_D` (0.12), read against the APCA lane's red in both
+  lanes (C22, C23). A pair in between passes E.
+- `band-audit` §1 and §1b and `divergence-audit` C and D sweep `generateScale` directly
+  with three of `resolveBrand`'s options. Without `coolRedDark` the dark pens differ from
+  the shipped ones on 90 of the 360 seeds of the §1 sweep (wcag lane); without the
+  clearance and the red-band solve the stamp differs on 347. Stops 1 to 8 match on every
+  seed.
+- `band-audit` check (b) reads each family's own resolved paper-0 under pencil-47.
+  `demo/semantic.css` ships the neutral's paper-0 over a signal's pencil-47. In light both
+  are the same white; in dark they differ slightly (worst 8.08:1 against 8.04:1).
+- `cta-apca-audit`'s secondary rows composite the soft pole in both modes without asking
+  `softOnCtaPasses`. In dark every sampled secondary ships the solid pole (5.8 to 5.9:1),
+  so the dark rows show a composite that does not ship, reading 4.3 to 4.5:1. The
+  composite is also taken on `ColorStop`'s master-gamut channels with sRGB luminance
+  weights, not on the 8-bit sRGB pair.
+
+## C78 — after C42 and C49, several audit reporters still describe the earlier shape (FOUND, 2026-10-05)
+
+The C40 class again. Found while rewriting the dated comments in the audit scripts. The
+comments now describe what the code reads. These are the places where the code, or a
+string it prints, still describes the scale before the between stop (C49) or the stamps
+before the clearance law (C42). Strings are code, so none of it was changed.
+
+- `dark-audit` D reads stops 9 and 10. Since C49 that is pencil-47 against pen-58, not
+  the first text stop against the strong one. Three red-band fixtures sit under
+  `TEXTSEP_RATIO` on that pair (0.56 against 0.58) and print as findings on every run; the
+  9 against 11 read has none (worst 0.62). The heading says "pen 9/10" and the detail line
+  says `ΔE(11,12)`.
+- `divergence-audit` C walks stops 1 to 10 and D reads stops 8, 9 and 10: pen-70 is in
+  neither. D labels its pen-58 row "light floor 7.0" (7.0 is pen-70's; pen-58 declares 4.5
+  against chalk-20) and its stop-8 row "vs PAPER-95".
+- `cta-apca-audit` judges its non-signal sections at `BAR = 60`. The wired clearance is 65
+  (`coEnforceLc`, C42). Its exhibit text says "measurement only, nothing wired" and "the
+  clearance never existed on the dark side", carries "(owner)", and labels the positive
+  column "success".
+- `band-audit` prints "states ride the mirrored k/(nearness+.1) law" (the flat step
+  replaced it), "× both profiles" (one lane, resolved twice) and "highlight snapshot".
+- `register-audit`'s pass line prints "+31%" for the full-chroma probe. The measured
+  release at this commit is 22%, against a gate of 20%.
+- `secondary-audit` names lane 1's checks "custom" (`supplied-is-custom`,
+  `custom-residual-silent`, "custom lane") where the lane asserts the exact posture.
+  Lanes 1 and 2 resolve the same theme (480 of 480 identical).
+
 ## C75 — `EXT_OVERRIDABLE_SYSTEM` is called by nothing (FOUND, 2026-10-02)
 
 Found while scoping C73. `tokenNames.ts` defines the rule (the link trios and the seed

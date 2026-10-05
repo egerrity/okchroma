@@ -1,6 +1,6 @@
-// Minimal ambient typings for the Mapper's sandbox — READ-side surface only
-// (Stage 1 is inspect-only: traversal, paints, bound variables, text segments).
-// Standalone like the other two plugins' shims; Stage 2 adds the rebind writers.
+// Minimal ambient typings for the Mapper's sandbox: the read surface (traversal, paints,
+// bound variables, text segments) and the rebind writers the apply path uses. Standalone
+// like the other two plugins' shims.
 
 declare const __html__: string
 
@@ -96,7 +96,7 @@ declare namespace figma {
     readonly variableCollectionId: string
     /** Keyed by the OWNING collection's modeIds; empty on un-imported remote handles. */
     readonly valuesByMode: { readonly [modeId: string]: RGBA | VariableAlias }
-    /** Cross-plugin identity — plugin-ext stamps its PATH_KEY here since 2026-08-11. */
+    /** Cross-plugin identity: plugin-ext stamps its PATH_KEY here. */
     getSharedPluginData(namespace: string, key: string): string
   }
 }

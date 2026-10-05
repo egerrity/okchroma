@@ -1,10 +1,12 @@
-// secondary-audit.ts — THE SECONDARY GATE (SECONDARY-PLAN §7). Agnostic primary×secondary sweep
-// through resolveTheme; for every theme, the INVARIANT: the resolved secondary either CLEARS every
-// effective signal (light AND dark) or was DEMOTED to subtle with an annotation — never a silent
-// hue-family collision. "Collides" = the TYPE-1 gate (checkHueCollision at the annotation
-// qualifier — CATALOG C7 split; the resolver's notes fire on the same test). Both contrast
-// profiles. Also checks: the primary is byte-untouched by theme resolution; subtle scales are
-// valid; the derived posture resolves.
+// secondary-audit.ts: THE SECONDARY GATE. Agnostic primary×secondary sweep through
+// resolveTheme; for every theme, the INVARIANT: the resolved secondary CLEARS every effective
+// signal, or the signal was adopted for it, or the collision is ANNOTATED. It is never a
+// silent hue-family collision and never a reshape of the secondary itself. "Collides" = the
+// TYPE-1 gate (checkHueCollision at the annotation qualifier, CATALOG C7; it reads the light
+// AND the dark chalks, and the resolver's notes fire on the same test). Both contrast
+// profiles. Also checks: the primary is byte-untouched by theme resolution; every emitted
+// stop is a real color; an anchor places the cta; the derived posture resolves. The verdict
+// is printed and the exit code does not move (CATALOG C79).
 import { resolveBrand, resolveTheme, signalScalesFor } from '../src/engine/resolve'
 import { SIGNALS } from '../src/engine/signals'
 import { checkHueCollision, SECONDARY_NOTE_MIN_V } from '../src/engine/collision'
@@ -25,9 +27,9 @@ type Fail = { theme: string; check: string; detail: string }
 const fails: Fail[] = []
 let themes = 0, closeAdvice = 0, residuals = 0, exactAdvice = 0
 
-// the SECONDARY-COLLIDER law (owner 2026-08-03): a collision against the effective set is
-// satisfied by EITHER an advice note OR a secondary-driven signal adoption — the merge marks
-// its adoptions with the "(for the secondary)" note suffix, and a within-band remedy (the
+// the SECONDARY-COLLIDER law (C45): a collision against the effective set is satisfied by
+// EITHER an advice note OR a secondary-driven signal adoption. The merge marks its
+// adoptions with the "(for the secondary)" note suffix, and a within-band remedy (the
 // lemon) can never pass a hue-distance test, so adopted signals are excluded from the
 // collision sweep exactly as the engine excludes them from the note pass.
 const adoptedFor = (t: { signalOverrides: Array<{ name: string; note: string }> }) =>
@@ -43,10 +45,10 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
     const sHex = hx(0.62, C, H)
     const id = `${profile} p${pHex} s${sHex}`
     themes++
-    // LANE 1 — a SUPPLIED secondary with no style = CUSTOM (owner 2026-07-12 strike: derived
-    // or custom, nothing else). Invariant: the hex ships as a standard hands-off ramp and
-    // every signal collision is REMEDIED (a secondary-driven variant, owner 2026-08-03)
-    // or ANNOTATED — never silent, and never a reshape of the secondary itself.
+    // LANE 1: a SUPPLIED secondary with no style resolves to the EXACT posture. Invariant:
+    // the hex ships as a standard hands-off ramp and every signal collision is REMEDIED (a
+    // secondary-driven signal variant) or ANNOTATED. It is never silent, and never a
+    // reshape of the secondary itself.
     const t = resolveTheme({ primaryHex: pHex, secondaryHex: sHex, contrastProfile: cp })
     const ref = resolveBrand(pHex, 'brand', { contrastProfile: cp })
     const sec = t.secondary!
@@ -66,17 +68,15 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
     }
     if (t.notes.some(n => n.includes('close to the primary'))) closeAdvice++
 
-    // LANE 1b — the 'default' style on a SUPPLIED hex = CUSTOM (owner 2026-07-29, superseding
-    // the 2026-07-12 "same model as derived" unification): "the id is preserved as is, but the
-    // cta is generated as if it was a tint of the given hex". Invariants, and they are the
-    // MODEL rather than a note-text spot check:
-    //   i.   the shape is still the default model's (style 'default', subtle, never demoted)
-    //   ii.  the RAMP is byte-identical to the exact posture's — the user's colour is preserved
-    //        across every stop, papers through pens. This is the guard that catches a
-    //        regression back to transforming the whole ramp.
-    //   iii. the CTA is NOT the exact posture's — it is the tint, and it must actually differ,
-    //        or the posture has silently collapsed into exact.
-    //   iv.  cta-ink is NOT tinted (owner ruling): it stays the own ramp's, matching pencil-47/pen-58.
+    // LANE 1b: the 'default' style on a SUPPLIED hex = CUSTOM (C36): the ramp keeps the hex
+    // and the cta is generated as a tint of it. Invariants, and they are the MODEL rather
+    // than a note-text spot check:
+    //   i.   the shape is the default model's (style 'default', subtle, never demoted)
+    //   ii.  the RAMP is byte-identical to the exact posture's: the user's colour is
+    //        preserved across every stop, papers through pens, so the text register is
+    //        the hex's own. This is the guard that catches a transform of the whole ramp.
+    //   iii. the CTA is NOT the exact posture's: it is the tint, and it must actually
+    //        differ, or the posture has silently collapsed into exact.
     const tf = resolveTheme({ primaryHex: pHex, secondaryHex: sHex, secondaryStyle: 'default', contrastProfile: cp })
     const secF = tf.secondary!
     const secX = resolveTheme({ primaryHex: pHex, secondaryHex: sHex, secondaryStyle: 'exact', contrastProfile: cp }).secondary!
@@ -90,13 +90,11 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
     }
     if (JSON.stringify(secF.scale.cta) === JSON.stringify(secX.scale.cta))
       fails.push({ theme: id, check: 'custom-cta-tinted', detail: 'custom cta equals the exact cta — the tint did not apply' })
-    // (the custom-ctaink-untinted check DELETED with the cta-ink fields, owner 2026-08-12:
-    // the text register is the pen stops, and the ramp-preserved check above already
-    // asserts every stop — pens included — matches the exact posture)
 
-    // LANE 2 — the EXACT style (the owner model: standard IS exact — user's color ships as a
-    // full ramp, hands off): the invariant is ADVICE — every signal collision must be annotated,
-    // never silently absent and never a reshape.
+    // LANE 2: the EXACT style passed explicitly (level 'standard': the user's color ships
+    // as a full ramp, hands off). It resolves the same theme as lane 1. The invariant is
+    // ADVICE: every signal collision must be annotated, never silently absent and never a
+    // reshape.
     const ts = resolveTheme({ primaryHex: pHex, secondaryHex: sHex, secondaryStyle: 'exact', contrastProfile: cp })
     const secS = ts.secondary!
     const effectiveS = (n: typeof SIGNALS[number]['name']) =>
@@ -116,23 +114,22 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
       }
     }
 
-    // LANE 3 — the SIX ANCHORS, newly exposed for the secondary (owner 2026-07-29). They ride
-    // the EXACT posture, because what an anchor does is PLACE THE CTA and custom's tint already
-    // owns the cta (owner ruling: the anchor replaces Custom, it does not stack on it).
-    // Sampled (every 90° at the low chroma) to keep the gate quick. Invariants:
-    //   i.   resolveTheme THREADS the anchor — the resolved scale is what a direct resolveBrand
-    //        with the same archetypeOverride produces. This is the whole of the change.
-    //   ii.  the anchor is what the scale reports, so annotations and the plugin agree with it.
-    //   iii. THE NO-OP GUARD: the anchored cta must land INSIDE the anchor's band. Three cuts to
-    //        get here. The first asserted only threading and ramp-preservation, both of which
-    //        stay true when the anchor does nothing at all — exactly the bug it shipped past
-    //        (anchors were wired onto the custom posture, where the tint overwrote them). The
-    //        second asserted "cta differs from un-anchored", which false-positives on a seed
-    //        whose own L already sits at a median, where a no-op IS the right answer. The third
-    //        asserted the cta lands ON the median — true until exact mode got its on-fill
-    //        enforcement back, after which LEGIBILITY legitimately nudges the cta off the median
-    //        (vivid 0.573 vs 0.60). Band containment is the anchor's actual promise: it says
-    //        which band the button sits in, and the label requirement outranks the exact centre.
+    // LANE 3: the SIX ANCHORS on the secondary. They ride the EXACT posture, because what
+    // an anchor does is PLACE THE CTA and custom's tint already owns the cta (an anchor
+    // replaces Custom, it does not stack on it). Sampled (every 90° at the low chroma) to
+    // keep the gate quick. Invariants:
+    //   i.   resolveTheme THREADS the anchor: the resolved scale is what a direct
+    //        resolveBrand with the same archetypeOverride produces.
+    //   ii.  the anchor is what the scale reports, so annotations and the plugin agree
+    //        with it.
+    //   iii. THE NO-OP GUARD: the anchored light cta lands INSIDE the anchor's band.
+    //        Threading and the report (i, ii) both stay true when the anchor does nothing
+    //        at all, and a "differs from un-anchored" test fails a seed whose own L
+    //        already sits at a median, where a no-op IS the right answer. Band containment
+    //        is the anchor's promise: it says which band the button sits in. In the exact
+    //        posture nothing moves the fill (on-fill enforcement is off), so the cta sits
+    //        on the band's median; the check asserts the band.
+    //   iv.  the six anchors produce six distinct ctas.
     if (C === SEC_CHROMAS[0] && H % 90 === 0) {
       const seen: Array<{ anchor: string; L: number; key: string }> = []
       for (const a of ARCHETYPES) {
@@ -161,9 +158,9 @@ for (const profile of ['wcag', 'apca'] as ContrastProfile[]) {
         fails.push({ theme: id, check: 'rgb', detail: `secondary stop ${st.stop} out of range` })
   }
 
-  // 5. the derived posture (§2b): resolves for every primary, always subtle, never demoted,
-  //    and ALWAYS the 'default' seed-transform model (owner 2026-07-12) — even when
-  //    a style leaks in from a lingering chip state
+  // 5. the derived posture: resolves for every primary, always subtle, never demoted,
+  //    and ALWAYS the 'default' seed-transform model, even when a style is passed with
+  //    no hex
   for (const pHex of PRIMARIES) {
     const t = resolveTheme({ primaryHex: pHex, deriveSecondary: true, secondaryStyle: 'tint', contrastProfile: cp })
     if (!t.secondary || !t.secondary.derived || t.secondary.level !== 'subtle' || t.secondary.demoted || t.secondary.style !== 'default')

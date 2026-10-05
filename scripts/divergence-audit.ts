@@ -1,22 +1,19 @@
 // Divergence audit. Light mode is the calibrated reference; this instrument
-// asserts the DARK path applies the same transforms light does, and snapshots
-// the full family × mode × stop L/C/H matrix as the regression gate (the
-// byte-identical guard for the cross-family consolidation).
+// holds the DARK path to light on two properties (A, B), reports two more
+// (C, D), and snapshots the full family × mode × stop L/C/H matrix as the
+// regression gate.
 //
 //   A. chroma-curve parity   every emitted stop of a chromaCurve-bearing scale
-//      (HARD)                (the neutral) must equal the curve at its L in BOTH
-//                            modes. (Historically it caught the dark highlight-9 bypass — the
-//                            sidecar `highlight` block skips cAt in dark.
-//   B. signal hue fidelity   the red signal keeps its source hue (33.3°) in BOTH
-//      (HARD)                modes. The red-cool is a BRAND-only differentiator;
-//                            light wrongly cools the signal, dark is correct.
-//   C. dark-L apparent wave  REPORT-ONLY: per-hue apparent-lightness spread,
-//      (REPORT)              light (≈flat) vs dark (waves). The fix is a separate
-//                            effort; this ships its gate.
-//   D. dark text contrast    REPORT: dark stop 8/10/11 vs paper-3, both modes,
-//      (REPORT)              swept agnostically. Drives the W2 decision.
+//      (HARD)                (the neutral): light sits on the curve at its own
+//                            L, dark carries its light twin's chroma.
+//   B. signal hue fidelity   a red-band signal keeps its source hue in BOTH
+//      (HARD)                modes. The red cool is a BRAND-only differentiator.
+//   C. apparent-L wave       REPORT-ONLY: per-hue apparent-lightness spread by
+//      (REPORT)              stop, light beside dark.
+//   D. dark text contrast    REPORT: dark stops 8, 9 and 10 against paper-3,
+//      (REPORT)              swept agnostically. Not the compliance read.
 //
-// Failures print worst-first with the input. `--bless` records the matrix after
+// Failures print with their input. `--bless` records the matrix after
 // visual approval; default diffs against it so a rule change can't silently move
 // a token. The bar is the AGNOSTIC hue×chroma sweep, not the brand list.
 
@@ -41,34 +38,29 @@ const synthHex = (L: number, C: number, H: number) => {
   const h2 = (v: number) => Math.round(Math.max(0, Math.min(1, encSrgb(v))) * 255).toString(16).padStart(2, '0')
   return `#${h2(r)}${h2(g)}${h2(b)}`
 }
-// PRODUCTION PARITY (C16 instrument fix): brands ship TRIMMED dark ctas — the old
-// loudCta:true here measured synthetic brands in a state production never ships.
+// The synthetic sweeps (C, D) resolve through generateScale with these options:
+// resolveBrand's dark chroma curve, on-fill enforcement and dark fill floor, without its
+// dark red cool, its APCA clearance or its red-band solve (CATALOG C79).
 const BRAND_FLOOR = { darkChromaCurve, enforceOnFillContrast: true, darkFillMinL: DARK_BRAND_FILL_MIN_L } as const
 
 const fails: string[] = []
 const ok = (cond: boolean, msg: string) => { if (!cond) fails.push(msg) }
 
-// ── A. chroma-curve parity (HARD) — catches curve bypass under the delta model ────
+// ── A. chroma-curve parity (HARD): catches a curve bypass ───────────────────────
 // A chromaCurve-bearing scale (the neutral) must emit the DECLARED chroma at every stop:
-//   LIGHT: the curve's chroma at the stop's own L (as always).
-//   DARK (the delta model, owner 2026-07-09): every dark stop CARRIES the light twin's emitted chroma
-//     (re-clamped at the dark L) — curve ramps included, pens included (the curves' dark branches are keyed
-//     to the OLD dark L geography; evaluating them at delta L's tinted the papers — owner-caught).
+//   LIGHT: the curve's chroma at the stop's own L.
+//   DARK: the light twin's emitted chroma, re-clamped at the dark L. The dark stops do not
+//     sample the curve's dark branch: the resolver carries chroma across from light
+//     (requirements/resolve.ts, the carry and the pen twin).
 //
-// ⚠️ THE DARK PREMISE IS APPROXIMATE FOR LIFTED STOPS, and this tolerance absorbs the error.
-// A stop carrying DARK_BAND_LIFT does not sample its same-stop light twin: its VIRTUAL twin sits
-// at the SCALED depth and its chroma comes from the light ladder's chroma-at-depth relationship
-// there (deltaLiftChroma, stopTable.ts). So the gap this check measures GROWS WITH LIFT SIZE by
-// design, and the tolerance is quietly doubling as a bound on how much lift is allowed.
-// Widened 0.004 → 0.005 (owner-approved 2026-07-29) when the chalks were redeclared at a flat
-// S=1.20 and the steeper wash-4/5 lift took `branded h270 dark stop 5` to a 0.0042 gap — 1 stop
-// of 120, on a chroma of 0.012 vs 0.016, which is one near-neutral gray against another. The
-// same stops already read 0.0026–0.0031 at the old lift, so this is the same behaviour further
-// along, not a new class of bypass.
-// The RIGHT fix is to evaluate `want` against the virtual twin at the scaled depth rather than
-// the same-stop twin — that would make the check state the actual law and stop the tolerance
-// standing in for a lift bound. Not done here: it means reproducing deltaLiftChroma inside the
-// audit, which is its own round.
+// THE DARK PREMISE IS APPROXIMATE FOR LIFTED STOPS, and this tolerance absorbs the error.
+// A band stop under a lift (producers.smoothedBandLift) does not sample its same-stop
+// light twin: its VIRTUAL twin sits at the SCALED depth and its chroma comes from the
+// light ladder's chroma-at-depth relationship there (producers.deltaLiftChroma). So the
+// gap this check measures GROWS WITH LIFT SIZE by design, and the tolerance doubles as a
+// bound on how much lift is allowed. Stating the law exactly means evaluating `want`
+// against the virtual twin at the scaled depth, which means reproducing deltaLiftChroma
+// here; CATALOG C37 records that as not done.
 const PARITY_TOL = 0.005
 const NEUTRAL_HUES = [30, 90, 143, 210, 270, 320]
 const LEVELS: NeutralLevel[] = ['pure', 'default', 'medium', 'branded']
@@ -94,12 +86,11 @@ for (const level of LEVELS) {
 }
 console.log(`=== A. chroma-curve parity (neutral, ${LEVELS.length - 1} levels × ${NEUTRAL_HUES.length} hues) — worst gap ${f(worstParity.gap)} @ ${worstParity.at || 'none'} ===`)
 
-// ── B. red-band signal hue fidelity (HARD) — the red-cool must not touch it ───
-// The red-cool is a BRAND-only differentiator and only acts on red-band hues
-// (≈12–35.5°). A red-band SIGNAL must therefore keep its source hue in BOTH modes;
-// light currently cools it (~7°), dark is correct. Warm signals like yellow carry
-// the gold-spine torsion by design — a different, mode-symmetric mechanism — so
-// they are out of this check's scope (it gates only red-band signals).
+// ── B. red-band signal hue fidelity (HARD): the red cool must not touch it ───
+// The red cool is a BRAND-only differentiator and only acts on red-band hues
+// (colorMath.inRedBand). A red-band SIGNAL must therefore keep its source hue in BOTH
+// modes. Warm signals like yellow carry the gold-spine drift by design, a different
+// mechanism, so they are out of this check's scope (it gates only red-band signals).
 const HUE_TOL = 2.0
 for (const sig of SIGNALS) {
   if (!inRedBand(sig.H)) continue
@@ -116,15 +107,19 @@ for (const sig of SIGNALS) {
   }
 }
 
-// ── C. dark-L apparent-lightness wave (REPORT-ONLY) ───────────────────────────
-// Light solves each stop's L so apparent (H-K) lightness is hue-flat; dark uses a
-// fixed scaffold, so apparent L waves with hue. Measured on a pure all-vivid sweep
-// (generateScale, no collision swaps). Reported; the fix is a separate effort.
+// ── C. apparent-lightness wave by stop (REPORT-ONLY) ──────────────────────────
+// On the band (stops 1 to 7) light solves each stop's L for a hue-flat apparent (H-K)
+// lightness and dark sits on the photometric ladder (placed by luminance), so dark's
+// apparent lightness waves with hue. From stop 8 up the contrast requires place the
+// light stops, so light waves there too; dark's stop 8 is placed by its require, and the
+// dark pens are placed perceptually and stay flat. Measured on an all-vivid sweep
+// (generateScale, no collision machinery). Nothing is gated. Stops 1 to 10 are read;
+// stop 11 is not (CATALOG C78).
 const WAVE_HUES = Array.from({ length: 24 }, (_, i) => i * 15)
 const lAp = (s: ColorStop) => apparentL(s.L, s.C, s.H)
 const perStop: { stop: number; light: number; dark: number }[] = []
 const ctaSpread = { light: { lo: 999, hi: -999 }, dark: { lo: 999, hi: -999 } }
-for (const stopN of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {   // contiguous 1–10 (highlight collapse 2026-07-29)
+for (const stopN of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {   // stops 1 to 10, not 11 (see above)
   const lv: number[] = [], dv: number[] = []
   for (const H of WAVE_HUES) {
     const s = generateScale(synthHex(0.62, 0.18, H), `wave-h${H}`, undefined, BRAND_FLOOR)
@@ -144,17 +139,14 @@ for (const p of perStop) console.log(`   ${String(p.stop).padStart(2)}  |    ${f
 console.log(`  CTA  |    ${f1(ctaSpread.light.hi - ctaSpread.light.lo).padStart(5)}     |   ${f1(ctaSpread.dark.hi - ctaSpread.dark.lo).padStart(5)}`)
 console.log(`  worst dark vivid-stop wave ${f1(worstDark)} L*  ·  dark CTA wave ${f1(ctaSpread.dark.hi - ctaSpread.dark.lo)} L*`)
 
-// ── D. dark text-stop contrast (REPORT) — drives the W2 decision ──────────────
-// Light clamps stop 8 to 3:1, the pens 9/10 to 4.5/7. Sweep agnostically; report the worst
-// dark ratio so W2 decides whether a dark clamp is needed or the scaffold already clears.
-// ⚠️ This section reads PAPER-97, which is no longer stop 8's anchor: since 2026-07-29 stop 8
-// declares 3:1 against PAPER-95 in both modes (spec.ts S8) and is placed by that require, not
-// by the scaffold. Paper-97 is the EASIER plane in dark, so the stop-8 row below reads high by
-// the paper-3→paper-5 offset and is NOT the compliance number — band-audit §1b owns that.
-// The pen rows are still on their declared anchor and unaffected. Left reading paper-3 so the
-// series stays comparable to its own history; read the label, not the bare ratio.
-// find by STOP number — the arrays are contiguous stops 1..10 (highlight-9 deleted and
-// the pens renumbered down 2026-07-29)
+// ── D. dark text-stop contrast (REPORT) ───────────────────────────────────────
+// The worst dark ratio of stops 8, 9 and 10 against PAPER-3, swept agnostically. It is
+// not the compliance read, because paper-3 is not these stops' declared anchor: stop 8
+// and pencil-47 declare paper-5 and pen-58 declares chalk-20 (spec.ts S8, T9, T10);
+// band-audit §1b, req:audit and audit:guarantee read those. Paper-3 is the EASIER paper
+// in dark, so the rows read high. The printed labels name earlier anchors and floors,
+// and pen-70 is not read (CATALOG C78).
+// find by STOP number
 const vsPaper3 = (arr: ColorStop[], stop: number) => {
   const st = arr.find(s => s.stop === stop)!
   const p2 = arr.find(s => s.stop === 2)!
@@ -177,9 +169,9 @@ console.log(`  pen-58  worst ${dark.s11.toFixed(2)}:1 (${dark.s11at})  [light fl
 const SNAP_PATH = path.join(process.cwd(), 'scripts', 'divergence-snapshot.json')
 const TOL = 0.015
 const matrix = (s: GeneratedScale): number[] =>
-  // the last six triples were the cta-ink fields (deleted 2026-08-12); they were pure
-  // references onto pen stops 9/10/11 so the SAME VALUES are read from the arrays —
-  // blessed snapshots stay byte-comparable, no re-bless
+  // thirty-four triples, the row layout the blessed snapshot holds. The last six repeat
+  // pen-band stops 9, 10 and 11, which the two slices already carry; dropping the repeat
+  // would change the layout and force a re-bless with no value moved.
   [...s.light.slice(0, 11), ...s.dark.slice(0, 11),
     s.cta, s.ctaHover, s.ctaPressed, s.ctaDark, s.ctaHoverDark, s.ctaPressedDark,
     s.light[8], s.light[9], s.light[10], s.dark[8], s.dark[9], s.dark[10],
@@ -206,15 +198,14 @@ if (process.argv.includes('--bless')) {
     const r = blessed[k]
     if (!r) { drift.push(`${k} (new, not in snapshot)`); continue }
     for (let i = 0; i < v.length; i += 3) {
-      // full OKLab ΔE per (L,C,H) triple — the L/C-only compare let HUE drift ship invisibly
-      // under "the byte-identical guard" (2026-07-11 hunt)
+      // full OKLab ΔE per (L,C,H) triple: an L/C-only compare passes a hue drift
       const d = oklabDist({ L: v[i], C: v[i + 1], H: v[i + 2] }, { L: r[i], C: r[i + 1], H: r[i + 2] })
       if (d > TOL) { drift.push(`${k} token ${i / 3}: ΔE ${d.toFixed(3)} vs blessed`); break }
     }
   }
   console.log(`\nsnapshot regression: ${drift.length === 0 ? 'clean — matches blessed' : `${drift.length} scales drifted`}`)
   drift.slice(0, 10).forEach(s => console.log(`   ${s}`))
-  // drift is LOAD-BEARING (2026-07-11 hunt: it printed but never failed — a silent guard)
+  // drift fails the run
   if (drift.length) fails.push('divergence snapshot drift (see above)')
 } else {
   console.log(`\nno blessed divergence snapshot yet — run audit:divergence:bless after visual approval`)

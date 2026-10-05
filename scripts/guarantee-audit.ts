@@ -1,36 +1,33 @@
-// guarantee-audit — THE GROUP GUARANTEES AS A GATE (guarantee-groups round, owner
-// 2026-08-27). The five bands each carry ONE flat claim, no caveats. SCOPE: a stop reads
-// against its own family's grounds and the neutral's; the PEN band is symmetric (owner
-// 2026-09-01: a pen and a ground are in scope when they share a family or either side is
-// the neutral, both directions), so the neutral's pens also read against every chromatic
-// family's grounds. Blanket any-on-any is owner-rejected: a sibling family's chalk-20
-// sits structurally out of reach. The neutral's highlighter-26 and pencil-47 read against every
-// chromatic family's papers as well (owner 2026-09-01: the rule is true for every band).
+// guarantee-audit: THE GROUP GUARANTEES AS A GATE. The five bands each carry ONE flat
+// claim, no caveats. SCOPE: a stop reads against its own family's grounds and the
+// neutral's, and the scope is symmetric: a stop and a ground are in scope when they share
+// a family or either side is the neutral, both directions. So the neutral's stops also
+// read against every chromatic family's grounds: its highlighter-26 and pencil-47 against
+// their papers, its pens against their papers and chalks. Blanket any-on-any is not
+// claimed: a sibling family's chalk-20 sits structurally out of a chromatic pen's reach.
 //
 //   paper (0/1/3/5)          passes highlighter-26 at 3:1 and every pen at 4.5
 //   chalk (8/11/15/20) passes the pen group (58/70/100) at 4.5
 //   highlighter-26                3:1 against paper only
-//   pencil-47                4.5 against paper only          (pencil-47 pre guarantee round)
-//   pen (58/70/100)          4.5 against paper AND chalk      (the T10 chalk-20 law)
+//   pencil-47                4.5 against paper only
+//   pen (58/70/100)          4.5 against paper AND chalk      (spec.ts T10, the chalk-20 law)
 //   pen (58/70/100)          4.5 against highlighter-26 at every state rung, composited
 //                            over every paper in scope (the translucent state layers)
 //
-// Plus the STAMP/ON pairing (owner ruling 2026-08-29): a quiet cta's shipped on-text —
-// the soft composite where softOnCtaPasses gates it in, the solid pole at rest where
-// gated out — measured WCAG in the shipped basis, both solver lanes ("apca is the
-// optimizer only; the text needs to pass WCAG"). GATES: soft (both lanes — the checker's
-// bar is WCAG by the C47 design) and the wcag lane's solid fallback. The APCA lane's
-// solid fallback is REPORT-ONLY: its pole rides the loud Lc dialect (the 2026-07-04
-// profile split) and can dip under 4.5 WCAG — whether that lane's quiet text takes the
-// WCAG floor is a pending owner call.
+// Plus the STAMP/ON pairing: a quiet cta's shipped on-text (the soft composite where
+// softOnCtaPasses gates it in, the solid pole at rest where it is gated out), measured as
+// a WCAG ratio in the shipped basis. The neutral is read on the wcag lane, the derived
+// brand-alt on both solver lanes. GATES: the soft composite (both lanes: the checker's
+// bar is the 4.5 ratio in both, C47) and the wcag lane's solid fallback. The APCA lane's
+// solid fallback is REPORT-ONLY: that lane judges its pole on Lc alone and the pole can
+// read under 4.5; whether its quiet text takes the ratio floor is undecided (CATALOG C81).
 //
-// Basis: the SHIPPED 8-bit pair (shippedY both sides — the value every browser and
-// audit tool measures). Sweep: agnostic hue×chroma seeds + the audit fixtures, every
-// family (neutral, brand, derived brand-alt, the four signals), both modes. A pen of a
-// chromatic family F reads against the surfaces of F and of the theme's neutral; the
-// NEUTRAL's pens read against the neutral's surfaces and every chromatic family's — the
-// direction this audit never measured before T13 (owner-caught 2026-09-01: neutral pen-58
-// light sat at 4.16 on info chalk-20 while the gate read PASS).
+// Basis: the SHIPPED 8-bit pair (shippedY both sides, the value every browser and audit
+// tool measures). Sweep: agnostic hue×chroma seeds + the audit fixtures, every family
+// (neutral, brand, derived brand-alt, the four signals), both modes. Both directions are
+// measured: a chromatic family's stops against its own grounds and the theme's neutral's,
+// and the NEUTRAL's against its own and every chromatic family's. A gate that read one
+// direction would pass while a neutral pen sat under the bar on a chromatic chalk.
 import { resolveTheme, signalScalesFor, softOnCtaPasses, SOFT_ON_CTA_ALPHA } from '../src/engine/resolve'
 import { generateNeutralScale, type GeneratedScale } from '../src/engine/colorEngine'
 import { contrastRatio, shippedY } from '../src/engine/constraints'
@@ -41,7 +38,8 @@ import { GUARANTEE_SCOPE, BAND_STOPS, AA_LARGE, AA_BODY } from '../src/engine/to
 // the translucency weights a state layer built on highlighter-26 may take: the engine
 // emits no opacity ladder (C68), and this audit holds the highlighter under these weights
 // so a semantic layer that composites it over a paper keeps the pen text bar. The weights
-// are the ladder the retired interaction register climbed (research/semantic-layer/).
+// are the rungs of the interaction register kept in research/semantic-layer/
+// (interaction.ts INTERACTION_RUNGS).
 const STATE_LAYER_WEIGHTS = [0.08, 0.12, 0.16, 0.24, 0.32] as const
 import { compositeHex } from '../src/engine/alphaPapers'
 import { FIXTURES } from './fixture'
@@ -52,10 +50,10 @@ const NEUTRAL_LEVELS: readonly NeutralLevel[] = ['default', 'medium', 'pure', 'b
 const enc = (c: number) => { c = Math.max(0, Math.min(1, c)); return c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055 }
 const seedHex = (L: number, C: number, H: number) => '#' + oklchToLinearRgb(L, C, H).map(c => Math.round(enc(c) * 255).toString(16).padStart(2, '0')).join('')
 
-// surfaces (array index = stop-1) and highlighter stops, by the guarantee bands
-const PAPERS = [1, 2, 3] as const          // paper-1 / 97 / 95 (paper-0 poles below)
-const CHALKS = [4, 5, 6, 7] as const       // chalk-8 / 89 / 85 / 80
-const HIGHLIGHTER = 8, PENCIL = 9, PENS = [10, 11] as const   // + pen-100, the resolved extreme (below)
+// grounds (array index = stop-1) and the contrast stops, by the guarantee bands
+const PAPERS = [1, 2, 3] as const          // paper-1 / 3 / 5 (the paper-0 pole below)
+const CHALKS = [4, 5, 6, 7] as const       // chalk-8 / 11 / 15 / 20
+const HIGHLIGHTER = 8, PENCIL = 9, PENS = [10, 11] as const   // + pen-100, the neutral's literal pole (below)
 const PEN_NAME = { 10: 'pen-58', 11: 'pen-70' } as const
 const nameOf = (st: number) => ['paper-1', 'paper-3', 'paper-5', 'chalk-8', 'chalk-11', 'chalk-15', 'chalk-20'][st - 1]
 const BAR = { highlighter: 3.0, text: 4.5 }
@@ -73,7 +71,7 @@ function check(hex: string, tag: string, opts: { exact?: boolean; archetypeOverr
   seeds++
   const theme = resolveTheme({ primaryHex: hex, name: 'brand', deriveSecondary: true, ...opts })
   // the apca-lane resolution, for the stamp/on pairing only (its quiet fills differ; the
-  // five band claims stay measured on the shipped wcag lane as before)
+  // five band claims are measured on the shipped wcag lane)
   const themeApca = resolveTheme({ primaryHex: hex, name: 'brand', deriveSecondary: true, ...opts, contrastProfile: 'apca' })
   const brand = theme.themed.scale
   for (const level of NEUTRAL_LEVELS) {
@@ -93,15 +91,14 @@ function check(hex: string, tag: string, opts: { exact?: boolean; archetypeOverr
     const nArr = mode === 'light' ? neutral.light : neutral.dark
     const nP0 = mode === 'light' ? neutral.paper0 : neutral.paper0Dark
     const yOf = (s: { L: number; C: number; H: number }) => shippedY(s.L, s.C, s.H)
-    // pen-100 is the LITERAL pole again (owner 2026-08-31, walking back the 2026-08-28
-    // resolver) — the claim measures the shipped field, which now IS the pole; a
-    // missing field falls back to the same pole so a partial build still gates
+    // pen-100 is the LITERAL pole, and the claim measures the shipped field; a missing
+    // field falls back to the same pole so a partial build still gates
     const nI0 = mode === 'light' ? neutral.pen100 : neutral.pen100Dark
     const penPoleY = nI0 ? yOf(nI0) : mode === 'light' ? 0 : 1
     for (const f of fams) {
       const arr = mode === 'light' ? f.scale.light : f.scale.dark
       // the claim's scope, both directions: a chromatic family's stops read against its own
-      // surfaces and the neutral's; the neutral's read against its own and EVERY chromatic
+      // grounds and the neutral's; the neutral's read against its own and EVERY chromatic
       // family's. Grounds are labeled by token name so the worst pair prints as a pair.
       const surfaces = (stops: readonly number[]): Array<[string, number]> => {
         const out: Array<[string, number]> = []
@@ -149,12 +146,11 @@ function check(hex: string, tag: string, opts: { exact?: boolean; archetypeOverr
         if (f.name === 'neutral') seen('pen-100 vs state rung', contrastRatio(penPoleY, cy), where(at), BAR.text)
       }
     }
-    // stamp/on over the quiet cta fill (owner ruling 2026-08-29): the soft composite is
-    // engine-gated per mode (softOnCtaPasses) — wherever it SHIPS it holds 4.5 on every
-    // fill state, and a gated-off fill's solid pole holds 4.5 at rest, the regular button
-    // law. Both branches measured here in the shipped 8-bit basis so the pairing cannot
-    // silently regress (the round-2 PoC finding: the old default-model bypass shipped a
-    // 2.83:1 dark pressed composite).
+    // stamp/on over the quiet cta fill: the soft composite is engine-gated per mode
+    // (softOnCtaPasses). Wherever it SHIPS it holds 4.5 on every fill state, and a
+    // gated-off fill's solid pole holds 4.5 at rest, the regular button law. Both
+    // branches are measured here in the shipped 8-bit basis so the pairing cannot
+    // silently regress.
     const q8 = (v: number) => Math.round(Math.min(1, Math.max(0, v)) * 255) / 255
     const lin = (v: number) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
     const relY = (r: number, g: number, b: number) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
@@ -176,8 +172,8 @@ function check(hex: string, tag: string, opts: { exact?: boolean; archetypeOverr
           seen('stamp/on soft vs fill', contrastRatio(textY, relY(fr, fg, fb)), `${tag} ${mode} ${lv}${qn} state ${i}`, BAR.text)
         })
       } else {
-        // apca lane's solid pole = the Lc dialect (report-only, pending the owner's lane
-        // ruling); the wcag lane's is gated hard at 4.5
+        // the apca lane's solid pole is judged on Lc alone and is report-only (CATALOG
+        // C81); the wcag lane's is gated hard at 4.5
         const cell = qn.includes('apca') ? 'stamp/on solid (apca · report)' : 'stamp/on solid vs fill'
         seen(cell, contrastRatio(pole, shippedY(states[0].L, states[0].C, states[0].H)), `${tag} ${mode} ${lv}${qn} rest`, qn.includes('apca') ? 0 : BAR.text)
       }
@@ -191,9 +187,8 @@ for (const fx of FIXTURES) check(fx.hex, fx.slug, { exact: fx.exact, archetypeOv
 
 // REPORT-ONLY: the `full-chroma` register releases the ramp's vividness cap and its violet-band
 // chalk-20 sinks below the bound the neutral pens are clamped to
-// (CHROMATIC_W80_WORST_SHIP_Y). The owner removed its checkbox from every UI 2026-09-01; the
-// GenerateOptions lever remains for instruments, outside the guarantee. Measured so the
-// residual stays visible; never gated.
+// (CHROMATIC_W80_WORST_SHIP_Y). No UI offers it; the GenerateOptions lever remains for
+// instruments, outside the guarantee. Measured so the residual stays visible; never gated.
 function reportFullChroma(hex: string, tag: string) {
   const theme = resolveTheme({ primaryHex: hex, name: 'brand', deriveSecondary: true, style: 'full-chroma' })
   const neutral = generateNeutralScale(theme.themed.scale.brandH)

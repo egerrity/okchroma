@@ -34,15 +34,13 @@ async function main() {
     outfile: 'dist/build-script.js',
   })
 
-  // 2. Run the generator to produce signals.css (the only fixed CSS output left —
-  // per-brand CSS is generated live in-browser by the demo pages, and the neutral
-  // is generated per brand too, so neither is written to disk here).
+  // 2. Run the generator to produce signals.css, the only fixed CSS output: per-brand CSS
+  // is generated live in-browser by the demo pages, and the neutral is generated per brand
+  // too, so neither is written to disk here.
   console.log('Generating tokens...')
   execSync('node dist/build-script.js', { stdio: 'inherit' })
 
-  // 3. Bundle the demo (browser). The calibration rigs (collision /
-  // signal-lab / neutral-lab) were removed 2026-06-11 — engine work done;
-  // git history has them if a future calibration pass needs them.
+  // 3. Bundle the demo (browser): one entry point.
   const demoBuildCtx = await esbuild.context({
     entryPoints: [
       { in: 'demo/index.tsx', out: 'demo' },
@@ -114,8 +112,8 @@ async function buildPlugin() {
   console.log('Plugin built → plugin/dist/plugin-code.js + plugin/dist/plugin-ui.html')
 }
 
-// Plugin v2 (extended collections, internal) — same two-thread build as v1, its own
-// manifest/dist so the published plugin is never touched.
+// The extended plugin (unlisted): the same two-thread build as the community plugin, with
+// its own manifest and dist so the published plugin is never touched.
 async function buildPluginExt() {
   await esbuild.build({
     entryPoints: ['plugin-ext/code.ts'],
@@ -139,7 +137,7 @@ async function buildPluginExt() {
   console.log('Plugin-ext built → plugin-ext/dist/plugin-ext-code.js + plugin-ext/dist/plugin-ext-ui.html')
 }
 
-// The Mapper (Unify -> okchroma converter, stage 1 = inspect) — same two-thread build.
+// The Mapper (Unify -> okchroma converter): the same two-thread build.
 async function buildPluginUnify() {
   await esbuild.build({
     entryPoints: ['plugin-unify/code.ts'],

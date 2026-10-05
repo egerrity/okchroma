@@ -1,34 +1,30 @@
-// Audit fixture — a small, intentional color set for the engine's own instruments
-// (dark-audit, band-audit, divergence-audit, smoothness-audit, ext-override-audit,
-// figma-verify). Replaces the old 32-drink representative set (src/brands.ts,
-// src/secondaries.ts — deleted): those fed a hidden demo gallery as well as the audits,
-// so they carried demo-facing concerns (display names, a `demo` flag, a nav picker).
-// This fixture has exactly one job — exercise the engine — so entries are named for
-// WHAT THEY EXERCISE, not what they'd look like in a product picker.
+// Audit fixture: a small, intentional color set for the engine's own instruments (the
+// audits under scripts/). The fixture has exactly one job, to exercise the engine, so
+// entries are named for WHAT THEY EXERCISE, not what they'd look like in a product picker.
 //
 // Coverage: every archetype band (near-black/dark/rich/vivid/bright/light, via L), the
 // red-band and orange-side colliders, a warning-adjacent gold, an achromatic/near-neutral
-// input, and both style-lever registers (`deeper`, plus the archetypeOverride escape
-// hatch). Hexes are copied EXACTLY from the retired drink set (same slugs' hex values)
-// so a re-bless stays value-comparable against snapshots blessed under that set.
+// input, the `deeper` style lever and one archetypeOverride. The hexes are frozen: the
+// blessed snapshots are keyed to these slugs and hold these values, so changing a hex
+// moves every snapshot that reads it. Two entries sit outside the band their section
+// header names: near-black-purple classifies dark and pastel-pink classifies bright.
 
 export interface Fixture {
   name: string
   slug: string
   hex: string
-  // Ship the exact hex, skip recommended-mode adjustments (preventive
-  // shear, rung-1 archetype moves). Collisions resolve at the component
-  // level only (rung 3).
+  // Ship the hex as given: the brand's ramp and stamp take none of the recommended-mode
+  // moves (no on-fill enforcement, no red-band solve, no dark chroma curve or dark red
+  // cool). The signals still move around it.
   exact?: boolean
-  // Replaces the computed rung-1 direction with a specific archetype,
-  // keeping shear and the rest of recommended mode.
+  // Anchors the stamp at the named band's median lightness in place of the seed's own.
+  // The red-band solve is off for it; enforcement and the clearance stay on.
   archetypeOverride?: 'near-black' | 'dark' | 'rich' | 'vivid' | 'bright' | 'light'
-  // Style lever, set by a human at intake (decision doc 2026-06-11).
-  // Modulates style registers ONLY where the color sits in the ambiguous
-  // semi-muted warm band (flag × band, never flag alone); truth decisions
-  // and universal rules run after and regardless. Unset = default.
-  //   deeper      band colors resolve DOWN: deeper, browner, never brighter
-  //   full-chroma band colors stay loud: never mute, never cream
+  // Style lever. Unset = default.
+  //   deeper      acts only where the seed sits in the semi-muted warm band (flag × band,
+  //               never the flag alone): there it raises the ramp's envelope blend weight
+  //   full-chroma releases the ramp's vividness cap and the brand's dark stamp trim, on
+  //               any hue
   style?: 'default' | 'deeper' | 'full-chroma'
 }
 
