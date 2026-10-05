@@ -7,7 +7,7 @@
 // both route. Link is parked (the known tricky case) — those land unmatched.
 
 import { FAMILY } from '../src/engine/tokenDescriptions'
-import { stopTokenName, STAMP_LEAF, PAPER_0 as POLE_PAPER } from '../src/engine/tokenNames'
+import { stopTokenName, STAMP_LEAF, PAPER_0 as POLE_PAPER, COLOR_GROUP } from '../src/engine/tokenNames'
 
 // the ladder leaves by stop index (tokenNames SHARED_NAMES — ascending index =
 // descending lightness), so a stop relabel flows from that one table into every
@@ -30,21 +30,23 @@ export interface Rule {
 export const SURFACE = (plane: 'dim' | 'low' | 'mid' | 'high') => `utility/surface/${plane}`
 
 /** the on-color register per family (an ALIAS row in the ext register — resolves live) */
-export const CTA_ON = (family: string) => `base/${family}/${STAMP_LEAF.ON}`
+export const CTA_ON = (family: string) => `${COLOR_GROUP}/${family}/${STAMP_LEAF.ON}`
 export const BRAND_CTA_ON = CTA_ON(FAMILY.brandPrimary)
 export const isCtaContext = (anc: string): boolean => /button|btn|cta/i.test(anc)
 
 // leaves are FLAT since the band flattening (owner 2026-08-12): the engine token
 // name (the stopTokenName spelling) IS the leaf, no dash→slash transform any more
-const fam = (family: string) => (toks: string[]) => toks.map(t => `base/${family}/${t}`)
+const fam = (family: string) => (toks: string[]) => toks.map(t => `${COLOR_GROUP}/${family}/${t}`)
 
 const PRIMARY_BAND = [M74, I53, I42, I30]
 const SPOTLIGHT_BAND = [M74, I53]
 const CHALKS = [W92, W89, W85, W80]
 const PAPERS = [P99, P97, P95]
+// the offsets are rows the extended plugin no longer writes; a file that holds them
+// holds them under base/, the word they were stamped with (CATALOG C72)
 const OFFSET_08 = 'base/alpha/away-from-bg/08'
 const OFFSET_16 = 'base/alpha/away-from-bg/16'
-const PAPER_0 = 'base/neutral/' + POLE_PAPER
+const PAPER_0 = `${COLOR_GROUP}/neutral/` + POLE_PAPER
 
 const n = fam(FAMILY.neutral)
 // signal identities live under their ROLE prefixes in the ext register

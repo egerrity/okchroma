@@ -9,20 +9,26 @@
 // solve axis = the mode. No alias maps, no dedup keys, no profile forks, no sister
 // extensions.
 //
-// THE ZONE: every path payload.ts emits carries the base/ ownership prefix
-// (payload.registerPath), the engine-owned rows: base/<fam>/paper-1 …,
-// base/<fam>/stamp/*, base/link/*, base/absolute/*. The engine emits primitives only
-// (CATALOG C68): a file applied earlier keeps its utility/ shelf, its planes, its alpha
-// rows and its absolute black and white as orphans, never deleted; rows that aliased
-// them take their raw values (the conversion pass below). RENAMED_GROUPS' strips recover
-// every earlier spelling through legacyCandidates; no value import of registerPath here
+// THE GROUP: every path payload.ts emits sits under the color group
+// (payload.registerPath, tokenNames.COLOR_GROUP): color/<fam>/paper-1 …,
+// color/<fam>/stamp/*, color/link/*, color/absolute/*. The group is the category, not
+// an ownership mark: hand-authored color roles may share it, and an engine row is known
+// by its PATH_KEY stamp, never by its name. The engine emits primitives only (CATALOG
+// C68): a file applied earlier keeps its utility/ shelf, its planes, its alpha rows and
+// its absolute black and white as orphans under the names they had, never deleted or
+// moved; rows that aliased them take their raw values (the conversion pass below).
+// RENAMED_GROUPS' strips recover every earlier spelling through legacyCandidates,
+// base/ (the group's previous word) among them; no value import of registerPath here
 // (see the zero-engine-in-the-bundle note on the describeToken import).
 
 import type { FlatTok, TokenColumns, Column } from './payload'
 import { LEGACY_COLUMN_NAME, RETIRED_COLUMN_NAMES } from './payload'
-import { STAMP_LEAF } from '../src/engine/tokenNames'
+import { STAMP_LEAF, COLOR_GROUP } from '../src/engine/tokenNames'
 // zero-import text module — safe here, drags nothing of the engine into the sandbox bundle
 import { describeToken } from '../src/engine/tokenDescriptions'
+
+// where every engine row's path starts (the word payload.registerPath prepends)
+const ROOT = `${COLOR_GROUP}/`
 
 figma.showUI(__html__, { width: 720, height: 640, title: 'OKChroma Extended' })
 
@@ -81,8 +87,10 @@ const COLUMNS: Column[] = ['light', 'dark']
 // poles, the transparent row, the soft ink, the stroke rungs). The engine no longer emits
 // them; a file that holds them keeps them as orphans, and a live row still aliasing one
 // takes its raw value in the conversion pass, provided the alias resolves to exactly what
-// the payload would write. Declared locally: a value import from payload would drag the
-// engine into the sandbox bundle.
+// the payload would write. These paths keep base/, the word the rows were stamped under:
+// nothing renames or restamps an orphan, so the group's current word never finds one.
+// Declared locally: a value import from payload would drag the engine into the sandbox
+// bundle.
 const RETIRED_ALIAS_TARGETS = [
   'base/absolute/black', 'base/absolute/white', 'base/alpha/transparent', 'base/alpha/ink',
   'base/alpha/away-from-bg/06', 'base/alpha/away-from-bg/08', 'base/alpha/away-from-bg/16',
@@ -100,19 +108,20 @@ const RETIRED_ALIAS_TARGETS = [
 // each hex is a prior round's canonical output for that row. Extend this map whenever
 // an engine round moves canonical signal values. Keys are matched against the
 // CANONICAL path (the post-migration map key, independent of any user display rename).
-// ⚠️ Keys must spell the CURRENT canonical path exactly (zone prefix, flat leaf): a key
-// in a retired spelling never matches the post-migration key and disarms silently (C56).
+// ⚠️ Keys must spell the CURRENT canonical path exactly (the color group, flat leaf): a
+// key in a retired spelling never matches the post-migration key and disarms silently
+// (C56). The group comes from ROOT, so a change of its word carries the keys with it.
 const RETIRED_SIGNAL_VALUES: Record<string, string[]> = {
-  'base/critical/highlighter-26': ['#e06146'],
-  'base/warning/highlighter-26': ['#c67a00'],
-  'base/warning/pencil-47': ['#a56000'],
-  'base/positive/pencil-47': ['#1c7e36'],
-  'base/positive/stamp/fill': ['#63c373', '#67c777'],
-  'base/positive/stamp/fill-hover': ['#52b364', '#77d786'],
-  'base/positive/stamp/fill-pressed': ['#42a355', '#87e896'],
-  'base/info/stamp/fill': ['#afa3ff'],
-  'base/info/stamp/fill-hover': ['#a093ee', '#bfb7ff'],
-  'base/info/stamp/fill-pressed': ['#9184dd', '#cfcaff'],
+  [ROOT + 'critical/highlighter-26']: ['#e06146'],
+  [ROOT + 'warning/highlighter-26']: ['#c67a00'],
+  [ROOT + 'warning/pencil-47']: ['#a56000'],
+  [ROOT + 'positive/pencil-47']: ['#1c7e36'],
+  [ROOT + 'positive/stamp/fill']: ['#63c373', '#67c777'],
+  [ROOT + 'positive/stamp/fill-hover']: ['#52b364', '#77d786'],
+  [ROOT + 'positive/stamp/fill-pressed']: ['#42a355', '#87e896'],
+  [ROOT + 'info/stamp/fill']: ['#afa3ff'],
+  [ROOT + 'info/stamp/fill-hover']: ['#a093ee', '#bfb7ff'],
+  [ROOT + 'info/stamp/fill-pressed']: ['#9184dd', '#cfcaff'],
 }
 // half-8-bit-step tolerance: Figma stores floats; a retired hex must match to the channel
 const rgbaMatchesHex = (cur: { r: number; g: number; b: number; a?: number }, hex: string): boolean => {
@@ -209,8 +218,8 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // ── LINK-INVERSE REGROUP: the inverse trio lives INSIDE the link group; a file
   // applied under the short-lived solo link-inverse group build holds these
   // spellings. Multi-segment leaves — the suffix match carries the group word, so
-  // base/link/inverse finds a file's base/link-inverse/default and renames it in
-  // place.
+  // the link/inverse/enabled row finds a file's link-inverse/default and renames it
+  // in place.
   ['link-inverse/default', 'link/inverse/enabled'],
   ['link-inverse/hover', 'link/inverse/hover'],
   ['link-inverse/pressed', 'link/inverse/pressed'],
@@ -433,54 +442,62 @@ const RENAMED_LEAVES: Array<[string, string]> = [
 // ROLE names (critical/warning/positive/info) — the re-pointable in-between tier.
 // Theme-side entries point STRAIGHT at the final role homes (legacyCandidates expands
 // one group hop only — a chained info-color→blue→info table would strand pre-C17
-// files on the middle name). system/info-color → base/blue is DEAD — no file has ever
+// files on the middle name). system/info-color → blue is DEAD — no file has ever
 // carried a blue/* identity group under any register (v1's primitive-lane spelling
 // never shipped a real row here) — kept only for cross-plugin path parity in
 // legacyCandidates.
 //
-// THE ZONES: every path carries an ownership-zone prefix (payload.registerPath).
+// THE GROUP WORD: every path starts with ROOT (payload.registerPath).
 // legacyCandidates' one-hop rule means recovering every vintage needs each old era
-// covered from the NEW spelling: the primitive/ register strips (the one-register
-// era, when the system rows sat under primitive/system/), the register-less system/
-// strips, the universal strip (the root spellings of the system rows — sink, link, …,
-// reached via RENAMED_LEAVES' leaf-variant composition), and the semantic/ era — a
-// universal register swap for the cta bands and signal roles plus exact entries for
-// link and the surfaces, which that era parked OUTSIDE system/ (semantic/link/*,
-// semantic/surface/*). The signal-role entries compose with RENAMED_LEAVES to reach
-// the oldest flat spellings (e.g. red/highlight-8).
+// covered from the NEW spelling, so every target below is spelled through ROOT and
+// follows its word: the base/ spellings (the word the group carried before color, an
+// ownership zone, with either spelling of the brand families), the primitive/ register
+// strips (the one-register era, when the system rows sat under primitive/system/),
+// the register-less system/ strips, the universal strip (the root spellings of the
+// system rows — sink, link, …, reached via RENAMED_LEAVES' leaf-variant
+// composition), and the semantic/ era — a universal register swap for the cta bands
+// and signal roles plus an exact entry for link, which that era parked OUTSIDE
+// system/ (semantic/link/*). The signal-role entries compose with RENAMED_LEAVES to
+// reach the oldest flat spellings (e.g. red/highlight-8). utility/ was the zone word
+// beside base/: nothing emits a utility/ path, so those targets produce no candidate,
+// and the rows they once recovered stay where a file has them.
 const RENAMED_GROUPS: Array<[string, string]> = [
-  // the family rename: brand-primary → brand, brand-secondary → brand-alt
-  // (trailing slashes keep base/brand/ from ever matching base/brand-alt/ paths)
-  ['base/brand-primary/', 'base/brand/'],
-  ['base/brand-secondary/', 'base/brand-alt/'],
-  ['system/info-color/', 'base/blue/'],
-  // the primitive/ register era — the system rows are split by zone, so BOTH zone
+  // the group's previous word: a file last applied under it holds every engine row
+  // there, stamp and name alike
+  ['base/', ROOT],
+  // the family rename, for a base/ file that still spells the families the old way:
+  // brand-primary → brand, brand-secondary → brand-alt (trailing slashes keep brand/
+  // from ever matching brand-alt/ paths)
+  ['base/brand-primary/', ROOT + 'brand/'],
+  ['base/brand-secondary/', ROOT + 'brand-alt/'],
+  ['system/info-color/', ROOT + 'blue/'],
+  // the primitive/ register era — the system rows were split by zone, so BOTH zone
   // targets carry the old prefix (misses are harmless; candidates that never existed
   // simply never hit)
-  ['primitive/', 'base/'],
-  ['primitive/system/', 'base/'],
+  ['primitive/', ROOT],
+  ['primitive/system/', ROOT],
   ['primitive/system/', 'utility/'],
   // the pre-A1 system/ spellings (no register)
-  ['system/', 'base/'],
+  ['system/', ROOT],
   ['system/', 'utility/'],
   // pre-regroup root spellings (sink, scrim, link, … — reached via RENAMED_LEAVES'
   // leaf-variant composition)
-  ['', 'base/'],
+  ['', ROOT],
   ['', 'utility/'],
   // the A1 semantic/ era
-  ['semantic/', 'base/'],
-  ['semantic/link/', 'base/link/'],
+  ['semantic/', ROOT],
+  ['semantic/link/', ROOT + 'link/'],
   ['semantic/surface/', 'utility/surface/'],
   // signal-role rename era
-  ['info-color/', 'base/info/'],
-  ['red/', 'base/critical/'],
-  ['yellow/', 'base/warning/'],
-  ['green/', 'base/positive/'],
-  ['blue/', 'base/info/'],
+  ['info-color/', ROOT + 'info/'],
+  ['red/', ROOT + 'critical/'],
+  ['yellow/', ROOT + 'warning/'],
+  ['green/', ROOT + 'positive/'],
+  ['blue/', ROOT + 'info/'],
 ]
 // Every legacy spelling of `path`: old leaf, old group, and old group + old leaf composed
 // (a file untouched since before both a group and a leaf rename needs the composed
-// lookup — e.g. base/critical/pencil-47 → red/ink-11, through the role rename and the
+// lookup — e.g. the critical pencil-47 row → red/ink-11, through the role rename and the
 // leaf relabels).
 function legacyCandidates(path: string): string[] {
   const out: string[] = []
@@ -496,6 +513,13 @@ function legacyCandidates(path: string): string[] {
   }
   return out
 }
+
+// A paper-3 row of the current generation is the live paper-3. Another stop's lookup
+// reaches that spelling through the index-era leaf entry (['paper-3', 'paper-5']) and must
+// pass over the row; paper-3's own lookup reaches it through a group rename (the same
+// leaf under an earlier group word) and takes it.
+const isLivePaper3OfAnotherStop = (legacyPath: string, row: figma.Variable, path: string): boolean =>
+  legacyPath.endsWith('/paper-3') && !path.endsWith('/paper-3') && row.getPluginData(GEN_KEY) === GEN_CURRENT
 
 // Invisible-rename normalization (the defect: the base GROUP renamed and restored with
 // a trailing space leaves every unstamped row unfindable — the apply then reads as
@@ -733,8 +757,8 @@ figma.ui.onmessage = async (msg) => {
       // posture probe reads through the rename tables (a pre-banding base still
       // spells it brand-secondary/paper-1; read-only, no renames here) —
       // legacyCandidates recovers every older spelling behind the flat leaf.
-      const baseHasSecondary = baseVars.has('base/brand-alt/paper-1')
-        || legacyCandidates('base/brand-alt/paper-1').some(p => baseVars.has(p))
+      const baseHasSecondary = baseVars.has(ROOT + 'brand-alt/paper-1')
+        || legacyCandidates(ROOT + 'brand-alt/paper-1').some(p => baseVars.has(p))
       const extsOfBase = baseMatch ? extensions.filter(e => e.rootVariableCollectionId === baseMatch!.id) : []
       // case-insensitive identity: "l1-near-black" typed by hand must overwrite
       // L1-near-black, never create a sibling that differs only by case
@@ -805,7 +829,35 @@ figma.ui.onmessage = async (msg) => {
       // Every base row is brand-overridable: the family rows, and the non-family rows
       // tokenNames.EXT_OVERRIDABLE_SYSTEM names (the link trios and the seed absolutes).
       // one helper so every exclusion site stays in sync
-      const isBrandSecondary = (p: string) => p.startsWith('base/brand-alt/')
+      const isBrandSecondary = (p: string) => p.startsWith(ROOT + 'brand-alt/')
+
+      // A HAND-MADE ROW AT AN ENGINE PATH, while the engine's own row still answers to an
+      // earlier spelling of that path (the group's previous word, an old leaf). ensure()
+      // takes the exact name before any legacy candidate, so it would stamp the hand-made
+      // row and leave the real one behind with its bindings and its brand overrides. The
+      // real row is known by its stamp; an unstamped row with no stamped counterpart is
+      // the pre-stamp fallback's to adopt, as ever. Read-only: the apply stops here, before
+      // anything is written, and names the rows.
+      const shadowing: string[] = baseMatch
+        ? baseTokens[activeCols[0]]
+            .map((t: FlatTok) => t.path)
+            .filter((p: string) => {
+              const exact = baseVars.get(p)
+              if (!exact || exact.getPluginData(PATH_KEY)) return false
+              return legacyCandidates(p).some(lp => {
+                const row = baseVars.get(lp)
+                return !!row && !!row.getPluginData(PATH_KEY) && !isLivePaper3OfAnotherStop(lp, row, p)
+              })
+            })
+        : []
+      if (shadowing.length) {
+        figma.ui.postMessage({ type: 'error', message:
+          `Can’t apply: ${shadowing.length} variable(s) in “${baseMatch!.name}” sit at names this plugin writes `
+          + `(${shadowing.slice(0, 3).join(', ')}${shadowing.length > 3 ? ', …' : ''}) but were not made by it, `
+          + 'while its own rows still carry their earlier names. Rename or delete those variables, then apply again. Nothing was changed.' })
+        return
+      }
+
       const newRows: string[] = baseMatch
         ? baseTokens[activeCols[0]]
             .map((t: FlatTok) => t.path)
@@ -815,18 +867,17 @@ figma.ui.onmessage = async (msg) => {
             // count them as new; and abs-secondary follows the SECONDARY POSTURE
             // (the ensure loop skips it when off — counting it would fire a confirm
             // + extension backfill on every apply, forever).
-            .filter((p: string) => !(p === 'base/absolute/brand' && baseVars.has('brand-primary/identity')))
-            .filter((p: string) => !(p === 'base/absolute/brand-alt'
+            .filter((p: string) => !(p === ROOT + 'absolute/brand' && baseVars.has('brand-primary/identity')))
+            .filter((p: string) => !(p === ROOT + 'absolute/brand-alt'
               && (baseVars.has('brand-secondary/identity') || !(baseHasSecondary || hasSecondary))))
             // C49: a path an textUpshift will FILL by rename is not new — and a vacating
             // ink/10 name is new even though a row currently squats on it (the strong
             // pen moves out; the between stop that replaces it needs the full new-row
             // treatment: confirm + extension backfill so every brand carries its own).
             // ⚠️ textUpshifts entries are OLD-spelling ('<fam>/ink/N', pre-register — the
-            // vintage this C49 detection targets predates A1) while p here is the
-            // zone-prefixed emitted path; pen rows are always base/ (a scale row, never
-            // a utility row), so the comparison hardcodes the prefix rather than value-
-            // importing payload.registerPath (would drag the engine into the sandbox
+            // vintage this C49 detection targets predates A1) while p here is the emitted
+            // path under the color group, so the comparison prepends ROOT rather than
+            // value-importing payload.registerPath (would drag the engine into the sandbox
             // bundle — see the header comment).
             // Stage B (names only): textUpshifts computes in the PRE-Stage-B leaf
             // spelling above (ink/10, ink/11, ink/12 — stop index, not display name; the
@@ -834,8 +885,8 @@ figma.ui.onmessage = async (msg) => {
             // Map the upshift leaf through the leaf rename before comparing; small local
             // map (index-keyed), no payload value-import (keeps the engine out of the
             // sandbox bundle).
-            .filter((p: string) => !textUpshifts.some(([, to]) => 'base/' + stageBInkLeaf(to) === p))
-            .filter((p: string) => textUpshifts.some(([from]) => 'base/' + stageBInkLeaf(from) === p)
+            .filter((p: string) => !textUpshifts.some(([, to]) => ROOT + stageBInkLeaf(to) === p))
+            .filter((p: string) => textUpshifts.some(([from]) => ROOT + stageBInkLeaf(from) === p)
               || (!baseVars.has(p) && !legacyCandidates(p).some(lp => baseVars.has(lp))))
         : []
 
@@ -948,7 +999,7 @@ figma.ui.onmessage = async (msg) => {
       // and the link group (whose prefix carries both trios).
       const isRoleRow = (p: string): boolean =>
         /\/stamp\//.test(p)
-        || p.startsWith('base/link/')
+        || p.startsWith(ROOT + 'link/')
       const withSecondary = baseHasSecondary || hasSecondary
       const seedByCol = new Map<Column, Map<string, FlatTok>>(
         activeCols.map(c => [c, new Map(baseTokens[c].map(t => [t.path, t]))]))
@@ -966,12 +1017,14 @@ figma.ui.onmessage = async (msg) => {
         if (v && v.name !== path && isEngineSpelling(v.name, path)) v.name = path
         if (!v) for (const legacyPath of legacyCandidates(path)) {
           const legacy = baseVars.get(legacyPath)
-          // The same collision from the other side: a `paper-3` candidate that CARRIES
-          // the current generation is the live paper-3 (written or claimed this apply),
-          // never paper-5's index-era vintage. On a fresh base nothing older answers
-          // paper-5's earlier candidates, so without this its lookup consumes the
-          // paper-3 row created a moment before and the ramp ships one stop short.
-          if (legacy && legacyPath.endsWith('/paper-3') && legacy.getPluginData(GEN_KEY) === GEN_CURRENT) continue
+          // The same collision from the other side: for any other stop, a `paper-3`
+          // candidate that CARRIES the current generation is the live paper-3 (written or
+          // claimed this apply), never paper-5's index-era vintage. On a fresh base nothing
+          // older answers paper-5's earlier candidates, so without this its lookup consumes
+          // the paper-3 row created a moment before and the ramp ships one stop short.
+          // paper-3's own lookup keeps the candidate: it is the row itself under an
+          // earlier group word.
+          if (legacy && isLivePaper3OfAnotherStop(legacyPath, legacy, path)) continue
           if (legacy) {
             if (legacy.name === legacyPath || isEngineSpelling(legacy.name, path)) legacy.name = path
             baseVars.delete(legacyPath); baseVars.set(path, legacy); v = legacy; break
@@ -985,10 +1038,10 @@ figma.ui.onmessage = async (msg) => {
         v.setSharedPluginData('okchroma', PATH_KEY, path)
         v.description = describeToken(path) // restamped every apply — regenerated, never hand-kept
         // Web code syntax = the hyphenated display name — follows a rename; raw kebab, no var(--…)
-        // zone prefixes stay OUT of dev-facing names: the code
-        // syntax matches the CSS var modulo the leading --, and a row migrating zones
-        // never breaks an engineer's reference
-        v.setVariableCodeSyntax('WEB', v.name.replace(/^base\//, '').toLowerCase().replace(/[\s/]+/g, '-'))
+        // the color group stays OUT of dev-facing names: the CSS custom property does not
+        // carry it, so the code syntax matches the CSS var modulo the leading --, and a
+        // change of the group's word never breaks an engineer's reference
+        v.setVariableCodeSyntax('WEB', (v.name.startsWith(ROOT) ? v.name.slice(ROOT.length) : v.name).toLowerCase().replace(/[\s/]+/g, '-'))
         v.scopes = descopeOn && !isRoleRow(path) ? [] : ['ALL_SCOPES']
         return v
       }
@@ -1029,10 +1082,10 @@ figma.ui.onmessage = async (msg) => {
       // leaf); the renamed var keeps its id, bindings and overrides survive. SOURCES
       // stay the old bare spelling ('brand-primary/identity' never carried a register —
       // it is retired by this very migration, not renamed by A1); only the TARGETS carry
-      // the base/ zone prefix.
+      // the color group.
       for (const [oldPath, newPath] of [
-        ['brand-primary/identity', 'base/absolute/brand'],
-        ['brand-secondary/identity', 'base/absolute/brand-alt'],
+        ['brand-primary/identity', ROOT + 'absolute/brand'],
+        ['brand-secondary/identity', ROOT + 'absolute/brand-alt'],
       ] as const) {
         const v = baseVars.get(oldPath)
         if (v && !baseVars.has(newPath)) {
@@ -1042,7 +1095,7 @@ figma.ui.onmessage = async (msg) => {
         }
       }
       for (const t of baseTokens[activeCols[0]]) { // all columns share the path set
-        if (!withSecondary && (isBrandSecondary(t.path) || t.path === 'base/absolute/brand-alt')) continue
+        if (!withSecondary && (isBrandSecondary(t.path) || t.path === ROOT + 'absolute/brand-alt')) continue
         const before = createdVars
         const v = ensure(t.path)
         if (createdVars > before || rebuildBase) seedFresh(v, t.path) // fresh variable (or a rebuild) → seed every active column
@@ -1088,7 +1141,7 @@ figma.ui.onmessage = async (msg) => {
           // current value. Same conservatism as the signal refresh: any other value is a
           // designer's own and is left alone. Rows from before the tint round hold
           // earlier-era values, don't match, and stay — the explicit rebuild covers them.
-          if (retiredNeutralByCol && path.startsWith('base/neutral/')) {
+          if (retiredNeutralByCol && path.startsWith(ROOT + 'neutral/')) {
             const old = retiredNeutralByCol.get(activeCols[i])!.get(path)
             const seed = seedByCol.get(activeCols[i])!.get(path)
             if (old && seed && chEq(cur, old) && !chEq(cur, seed)) {
@@ -1170,7 +1223,7 @@ figma.ui.onmessage = async (msg) => {
       for (const t of brandTokens[activeCols[0]]) {
         // every row is overridable: the family rows, the link trios (each brand's own
         // resolved values) and the seed absolutes
-        if (secondaryMode === 'none' && (isBrandSecondary(t.path) || t.path === 'base/absolute/brand-alt')) continue
+        if (secondaryMode === 'none' && (isBrandSecondary(t.path) || t.path === ROOT + 'absolute/brand-alt')) continue
         work.push(t.path)
       }
       // A base row applied under the old aliasing idioms may still resolve through ONE
@@ -1230,9 +1283,8 @@ figma.ui.onmessage = async (msg) => {
       // old-named = rows still answering to a retired spelling after the heal ran;
       // a non-zero count here IS the diagnosis and names its own evidence.
       // stale = stamped identity says one path, the display name spells an ENGINE
-      // vintage of it (never a custom name; suffix-matching raw old spellings false-
-      // positived on rows like base/alpha/transparent whose CURRENT leaf is also a
-      // retired flat source)
+      // vintage of it (never a custom name; matching raw old spellings by suffix would
+      // flag a row like alpha/transparent, whose own leaf is also a retired flat source)
       const postVars = (await figma.variables.getLocalVariablesAsync()).filter(v => v.variableCollectionId === base.id)
       const oldNamed = postVars.filter(v => {
         const stamp = v.getPluginData(PATH_KEY)

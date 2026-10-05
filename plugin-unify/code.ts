@@ -8,6 +8,7 @@
 // 2026-08-11: too many subjective decisions for anything coarser).
 
 import { allCandidatePaths } from './mapping'
+import { COLOR_GROUP } from '../src/engine/tokenNames'
 
 figma.showUI(__html__, { width: 720, height: 720, themeColors: true })
 
@@ -92,6 +93,9 @@ async function resolveValues(v: figma.Variable): Promise<Record<string, { hex: s
 // ── okchroma target lookup (shared stamp first, default-spelled name fallback) ──
 const SHARED_NS = 'okchroma'
 const SHARED_KEY = 'okchroma-ext-path'
+// where a target's name starts: the color group the extended plugin writes its rows
+// under, and base/ and utility/, the words the rows it no longer writes still carry
+const TARGET_ROOTS = [`${COLOR_GROUP}/`, 'base/', 'utility/']
 async function buildTargetMap(): Promise<Map<string, figma.Variable>> {
   const map = new Map<string, figma.Variable>()
   const all = await figma.variables.getLocalVariablesAsync()
@@ -99,7 +103,7 @@ async function buildTargetMap(): Promise<Map<string, figma.Variable>> {
     let stamped = ''
     try { stamped = v.getSharedPluginData(SHARED_NS, SHARED_KEY) } catch { /* older builds */ }
     if (stamped) { map.set(stamped, v); continue }
-    if ((v.name.startsWith('base/') || v.name.startsWith('utility/')) && !map.has(v.name)) map.set(v.name, v)
+    if (TARGET_ROOTS.some(r => v.name.startsWith(r)) && !map.has(v.name)) map.set(v.name, v)
   }
   return map
 }

@@ -4,7 +4,7 @@ import { stopHex, brandCss, signalsCss } from '../../src/engine/cssRender'
 import { resolveTheme, SIGNAL_SCALES } from '../../src/engine/resolve'
 import { neutralTintHue } from '../../src/engine/colorEngine'
 import { themeToFigma, groupEntries, type FigmaGroup, type FigmaColorToken, type FigmaLeaf } from '../../src/engine/figmaRender'
-import { stopTokenName, SCALE_STOP_COUNT, cssVarName } from '../../src/engine/tokenNames'
+import { stopTokenName, SCALE_STOP_COUNT, cssVarName, COLOR_GROUP } from '../../src/engine/tokenNames'
 import { describeToken, canonicalize, FAMILY, CSS_FAMILY, type Family } from '../../src/engine/tokenDescriptions'
 import { SIGNALS } from '../../src/engine/signals'
 import { ROOT_L_LIGHT } from '../../src/engine/stopTable'
@@ -139,7 +139,7 @@ function RosterTable({ rows, cssColumn }: { rows: RosterRow[]; cssColumn: boolea
 // absolute/, so they show with the link trios instead.
 export function FamilyRoster({ cssColumn = true }: { cssColumn?: boolean }) {
   const [fam, setFam] = useState<string>(FAMILY.brandPrimary)
-  const rows = useMemo(() => roster().filter(r => r.path.startsWith(`base/${fam}/`)), [fam])
+  const rows = useMemo(() => roster().filter(r => r.path.startsWith(`${COLOR_GROUP}/${fam}/`)), [fam])
   return (
     <figure className="d2-fig">
       <label className="d2-select-line">Family{' '}
@@ -158,7 +158,7 @@ export function FamilyRoster({ cssColumn = true }: { cssColumn?: boolean }) {
 
 // The rows outside the families: the two link trios and the two seed absolutes.
 export function SystemRoster() {
-  const rows = useMemo(() => roster().filter(r => !/^base\/(neutral|brand|brand-alt|critical|warning|positive|info)\//.test(r.path)), [])
+  const rows = useMemo(() => roster().filter(r => !FAMILY_ORDER.some(f => r.path.startsWith(`${COLOR_GROUP}/${f}/`))), [])
   return (
     <figure className="d2-fig">
       <RosterTable rows={rows} cssColumn />
@@ -170,14 +170,14 @@ export function SystemRoster() {
   )
 }
 
-// ── Naming anatomy: base/neutral/pencil-47, segment by segment ───────────────
+// ── Naming anatomy: color/neutral/pencil-47, segment by segment ──────────────
 // Every segment is read off the name tables, never typed: a rename or renumber
 // redraws the figure.
 export function NamingAnatomy() {
   const PENCIL = 9
   const [instrument, digit] = stopTokenName(PENCIL).split('-')
   const cols = [
-    { seg: 'base', title: 'ZONE', lines: ['extended plugin only:', 'base/ engine-owned'] },
+    { seg: COLOR_GROUP, title: 'GROUP', lines: ['the category: the extended', 'plugin writes it, the token', 'file on request, CSS never'] },
     { seg: FAMILY.neutral, title: 'FAMILY', lines: ['neutral, brand, brand-alt,', 'critical, warning,', 'positive, info'] },
     { seg: instrument, title: 'INSTRUMENT', lines: ['paper, chalk,', 'highlighter, pencil, pen:', 'the law the stop serves'] },
     { seg: digit, title: 'NUMBER', lines: ['100 − round(light rootL × 100)', `= 100 − round(${ROOT_L_LIGHT[PENCIL]} × 100)`, 'bigger = stronger'] },
@@ -187,7 +187,7 @@ export function NamingAnatomy() {
   const width = cols.length * colW + (cols.length - 1) * gap
   return (
     <figure className="d2-ramp">
-      <svg viewBox={`0 0 ${width} 190`} className="d2-anatomy" role="img" aria-label={`Token path anatomy: base/neutral/${stopTokenName(PENCIL)}`}>
+      <svg viewBox={`0 0 ${width} 190`} className="d2-anatomy" role="img" aria-label={`Token path anatomy: ${COLOR_GROUP}/${FAMILY.neutral}/${stopTokenName(PENCIL)}`}>
         {cols.map((c, i) => (
           <g key={c.seg}>
             <rect x={x(i)} y={boxY} width={colW} height={boxH} rx={8} className="d2-anatomy-box" />
@@ -206,7 +206,7 @@ export function NamingAnatomy() {
         ))}
       </svg>
       <figcaption className="d2-ramp-cap">
-        The extended plugin's full path for one stop. The zone and the family are groups (slashes); the instrument and
+        The extended plugin's full path for one stop. The color group and the family are groups (slashes); the instrument and
         its number are one flat leaf (a hyphen). The engine and CSS name drops the first two segments:{' '}
         <Code>{stopTokenName(PENCIL)}</Code>, the custom property <Code>--{CSS_FAMILY.neutral}-{stopTokenName(PENCIL)}</Code>.
       </figcaption>

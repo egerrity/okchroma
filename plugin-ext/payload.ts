@@ -16,31 +16,34 @@
 //
 // Token shape: the operative `brand-` CATEGORY stays in the token name (brand/*,
 // brand-alt/*), the brand's NAME lives on the extension, so a designer reads
-// kirby → base/brand/paper-1. The signals carry their role names. Every path is the
+// kirby → color/brand/paper-1. The signals carry their role names. Every path is the
 // engine's own grammar (tokenNames.ts: the slash-joined path the Figma tree already
-// spells) under the base/ ownership zone: engine-owned rows, where hand edits are not
-// rebuilt (the apply path is create-once + conservative refresh), so the zone name is
-// the warning. The engine emits primitives only (CATALOG C68); a semantic tier is its
-// own collection beside this one.
+// spells) under the color group (tokenNames.COLOR_GROUP), the category word a consuming
+// system's paths start with. Hand-authored color roles may share the group: the name
+// carries no ownership, and code.ts knows the engine's rows by their stamp. On those rows
+// a hand edit is not rebuilt (the apply path is create-once + conservative refresh). The
+// engine emits primitives only (CATALOG C68).
 
 import { resolveTheme, signalScalesFor, type ResolvedTheme } from '../src/engine/resolve'
 import { themeToFigma, groupEntries, type FigmaGroup, type FigmaColorToken, type FigmaLeaf } from '../src/engine/figmaRender'
 import { SIGNALS } from '../src/engine/signals'
 import { neutralTintHue, type ContrastProfile, type NeutralLevel } from '../src/engine/colorEngine'
+import { COLOR_GROUP } from '../src/engine/tokenNames'
 
 // a row is a color: r/g/b, and an alpha when under one
 export interface FlatTok { path: string; r: number; g: number; b: number; a?: number }
 
-// THE ZONE: every emitted path takes base/ as the final pass in toFlat(). ROLE_BANDS is
-// the descope posture's visible set (a state-carrying role a designer binds; everything
-// else hides when descope is on).
+// THE GROUP: every emitted path takes the color group as the final pass in toFlat().
+// ROLE_BANDS is the descope posture's visible set (a state-carrying role a designer binds;
+// everything else hides when descope is on).
 export const ROLE_BANDS = ['stamp/']
+const ROOT = `${COLOR_GROUP}/`
 export function registerPath(p: string): string {
-  return p.startsWith('base/') ? p : 'base/' + p
+  return p.startsWith(ROOT) ? p : ROOT + p
 }
 
 // The overridable-row rule (EXT_OVERRIDABLE_SYSTEM) lives in src/engine/tokenNames.ts,
-// the zero-import module the sandbox bundle can also consume; re-exported for the audit.
+// the zero-import module the sandbox bundle can also consume.
 export { EXT_OVERRIDABLE_SYSTEM } from '../src/engine/tokenNames'
 
 export type Column = 'light' | 'dark'
@@ -101,7 +104,7 @@ function flatten(node: FigmaGroup, prefix: string, out: FlatTok[]): void {
 
 // Panel order = creation order: the tree's own order, the neutral with its poles, the
 // brand, the alt, the four signals by role, the link trios, the seed absolutes. Every
-// leaf ships as the tree spells it; the zone prefix is the one addition.
+// leaf ships as the tree spells it; the color group is the one addition.
 function toFlat(g: FigmaGroup, includeSecondary: boolean): FlatTok[] {
   const out: FlatTok[] = []
   for (const [k, v] of groupEntries(g)) {
@@ -193,8 +196,9 @@ export function buildRetiredNeutralRows(seedHex: string = BASE_SEED_HEX): TokenC
     { primaryHex: seedHex, name: 'okchroma', primaryMode: 'recommended', secondaryHex: null, deriveSecondary: true },
     'medium', true, true,
   )
+  const neutral = registerPath('neutral/')
   return {
-    light: cols.light.filter(t => t.path.startsWith('base/neutral/')),
-    dark: cols.dark.filter(t => t.path.startsWith('base/neutral/')),
+    light: cols.light.filter(t => t.path.startsWith(neutral)),
+    dark: cols.dark.filter(t => t.path.startsWith(neutral)),
   }
 }
