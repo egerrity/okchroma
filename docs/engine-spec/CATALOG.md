@@ -4,6 +4,45 @@ Fresh tracker. The previous CATALOG was archived with the whole old docs tree in
 ("clean-slate rewrite" 2026-06-27); entries here are code-grounded, logged at find-time,
 fixed holistically after owner sign-off.
 
+## C83 — the npm package carried two declaration files whose sources were gone (FIXED, 2026-10-05)
+
+Found in npm's file list at the 0.8.0 publish. `okchroma-0.8.0.tgz` holds
+`dist-lib/types/engine/interaction.d.ts` and `dist-lib/types/engine/requirements/dtcg.d.ts`,
+and their sources left the tree in the C68 cut (0d3df30). `build:lib` runs esbuild and then
+`tsc -p tsconfig.lib.json` into `dist-lib`. Neither removes a file an earlier build wrote,
+and `package.json` ships the folder whole, so the two declarations the 0.6.1 build wrote
+stayed on the publishing disk and went out with 0.7.0 and 0.8.0. Both tarballs rebuild from
+their tags, with the two files put in place, to the hashes the registry lists, so the two
+files are the whole difference from a clean build. That disk holds no other declaration
+without a source and nothing removes one, so no earlier release carried others.
+
+Effect: none on an import of `okchroma`. `types/index.d.ts` refers to neither file and the
+exports map serves only the package root, so TypeScript's `node16` and `bundler` resolutions
+cannot reach them. Its legacy `node10` resolution ignores the exports map: a type-only
+import of the deep path resolves there, and `interaction.d.ts` then fails the consumer's
+check unless library checks are skipped, because it imports `OpacityRung`, which
+`cssRender.d.ts` no longer exports. A reader of the types folder, a person or an agent,
+finds declarations of the interaction register (`interactionCss`, `interactionTokens`) and
+of the requirement-token emitter (`emitDtcgRamp`), neither of which the package has, and a
+second `DtcgColorValue` whose shape differs from the live one in `dtcgRender.d.ts`.
+
+Fix: `buildLib` in `esbuild.config.js` empties `dist-lib` before either half writes. A new
+gate, `npm run audit:lib` (`scripts/lib-audit.ts`), reads the folder as it stands and builds
+nothing: every file in it is a declaration with its source at the same path under `src/`
+or an entry file `package.json` names, and every entry file `package.json` names is on
+disk. `prepack` runs it after `build:lib`, so a pack or a publish stops on a failure. It is
+not in the deploy workflow: a fresh checkout has no `dist-lib`, so the check cannot fail
+there. The site and the plugin zips are built on that fresh checkout, so the same leftover
+cannot reach them.
+
+Proof: on the publishing disk's state the gate names the two files. After `build:lib` it
+passes, `npm pack --dry-run` lists the 0.8.0 files without the two, and every other file in
+`dist-lib` is byte for byte the published one. A stray file in the folder, a missing
+`types/index.d.ts`, and the two halves of `build:lib` run in the other order each fail the
+gate, and with the halves in the other order a pack stops before it lists a tarball.
+0.7.0 and 0.8.0 keep the two files, since a published version cannot be changed; the next
+publish is the first without them.
+
 ## C75 — `EXT_OVERRIDABLE_SYSTEM` is called by nothing (FOUND, 2026-10-02)
 
 Found while scoping C73. `tokenNames.ts` defines the rule (the link trios and the seed

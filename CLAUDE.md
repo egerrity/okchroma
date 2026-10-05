@@ -38,6 +38,7 @@ npm run figma:verify     # the Figma tree's shape and spot values
 npm run audit:dtcg       # the DTCG documents against the CSS emission and the Figma tree
 npm run tokens:emit -- <hex> [slug]   # writes both DTCG documents to dist/tokens/
 npm run audit:ext        # the extended plugin's override sets (:bless to update)
+npm run audit:lib        # every file dist-lib ships has a source; prepack runs it after build:lib
 npm run docs:lint        # the docs' vocabulary rules; runs in CI
 npm run plugin:build · plugin-ext:build · plugin-unify:build
 ```
