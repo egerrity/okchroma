@@ -8,7 +8,7 @@ structure, ships as at least a minor.
 
 Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git log.
 
-## 0.8.0 — unpublished
+## 0.8.0 — 2026-10-05
 
 - **A root group on the DTCG documents, opt-in.** `tokensToDtcg(tokens, { rootGroup: 'color' })`
   nests every path under the named group and writes every alias with it
