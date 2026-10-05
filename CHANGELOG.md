@@ -8,7 +8,7 @@ structure, ships as at least a minor.
 
 Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git log.
 
-## 0.8.2 — unpublished
+## 0.8.2 — 2026-10-05
 
 - **Two declaration files leave the package.** 0.7.0, 0.8.0 and 0.8.1 carry
   `dist-lib/types/engine/interaction.d.ts` and
