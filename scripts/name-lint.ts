@@ -19,6 +19,7 @@
 import * as fs from 'fs'
 import { buildBaseColumns, BASE_SEED_HEX } from '../plugin-ext/payload'
 import { describeToken, canonicalize } from '../src/engine/tokenDescriptions'
+import { COLOR_GROUP } from '../src/engine/tokenNames'
 import { resolveTheme } from '../src/engine/resolve'
 import { brandCss, signalsCss } from '../src/engine/cssRender'
 
@@ -29,7 +30,7 @@ if (!sub) { console.error('usage: npm run name-lint -- <substring>'); process.ex
 // spelling is the community plugin's home of the same rows
 const isRoleRow = (p: string): boolean =>
   /\/stamp\//.test(p)
-  || p.startsWith('base/link/') || p.startsWith('link/') || p.startsWith('system/link/')
+  || p.startsWith(`${COLOR_GROUP}/link/`) || p.startsWith('link/') || p.startsWith('system/link/')
 const flag = (p: string): string => (isRoleRow(p) ? 'pickable' : 'hidden  ')
 
 // ── the ext register's real names: the payload ──

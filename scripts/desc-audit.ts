@@ -20,12 +20,12 @@
 import * as fs from 'fs'
 import { buildBaseColumns } from '../plugin-ext/payload'
 import { describeToken, describeDocument, canonicalize, AA_LARGE, AA_BODY, BAND_STOPS } from '../src/engine/tokenDescriptions'
-import { stopTokenName } from '../src/engine/tokenNames'
+import { stopTokenName, COLOR_GROUP } from '../src/engine/tokenNames'
 
 // the two live phrases, imported so a rewrite cannot leave this gate matching nothing
 const PHRASES = [AA_LARGE, AA_BODY]
 
-// the extended plugin's paths carry the base/ zone; the canonical form strips it
+// the extended plugin's paths carry the color group; the canonical form strips it
 const paths = buildBaseColumns().light.map(t => t.path)
 // the community plugin spells the brand families and the link and seed rows its own way;
 // same rows, so the same rules must hold on those spellings too, derived from the
@@ -67,8 +67,10 @@ if (contrastLines === 0) fail('(gate)', 'conformance-phrase gate matched zero li
 // The vocabulary is derived from the real paths, so a future token name joins the ban
 // automatically. No path carries "cta", so the bodies' deliberate "CTA" prose (kept so a
 // designer's cta query lands on the action rows) needs no exception. "aaa" stays allowed
-// because the conformance phrases carry the WCAG level words.
-const ALLOWED_FOREIGN = new Set(['aaa'])
+// because the conformance phrases carry the WCAG level words. The color group's word is
+// allowed too: in the extended plugin it starts every row's name, so a search for it lands
+// on every row whatever the bodies say, and no other spelling carries it as a label.
+const ALLOWED_FOREIGN = new Set(['aaa', COLOR_GROUP])
 const vocab = new Set<string>()
 for (const p of paths) for (const w of p.toLowerCase().split(/[/-]/)) if (/^[a-z]{3,}$/.test(w)) vocab.add(w)
 for (const p of paths) {
