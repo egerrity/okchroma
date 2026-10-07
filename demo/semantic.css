@@ -88,29 +88,30 @@
   --brand-bg-faint:              var(--brand-paper-3);
   --brand-bg-subtle:             var(--brand-chalk-11);
   --brand-bg-subtle-hover:       var(--brand-chalk-15);
-  --brand-bg-emphasis:           var(--brand-stamp-fill);
-  --brand-bg-emphasis-hover:     var(--brand-stamp-fill-hover);
-  --brand-bg-emphasis-pressed:   var(--brand-stamp-fill-pressed);
+  --brand-bg-emphasis:           var(--brand-stamp-0);
+  --brand-bg-emphasis-hover:     var(--brand-stamp-1);
+  --brand-bg-emphasis-pressed:   var(--brand-stamp-2);
 
   --brand-border-subtle:         var(--brand-chalk-8);
   --brand-border-subtle-hover:   var(--brand-chalk-11);
   --brand-border-default:            var(--brand-chalk-15);
   --brand-border-default-hover:      var(--brand-highlighter-26);
-  --brand-border-emphasis:       var(--brand-stamp-fill);
-  --brand-border-emphasis-hover: var(--brand-stamp-fill-hover);
+  --brand-border-emphasis:       var(--brand-stamp-0);
+  --brand-border-emphasis-hover: var(--brand-stamp-1);
 
   /* the system link (one trio per theme; aliases the primary's pen stops unless a custom
-     link color de-conflicts it; emitted per brand under link/default) */
-  --fg-link:         var(--link-default-enabled);
-  --fg-link-hover:   var(--link-default-hover);
-  --fg-link-pressed: var(--link-default-pressed);
+     link color de-conflicts it; emitted per brand as link/default-0 to default-2, the
+     posture at a step; the state words are this layer's) */
+  --fg-link:         var(--link-default-0);
+  --fg-link-hover:   var(--link-default-1);
+  --fg-link-pressed: var(--link-default-2);
 
   /* the inverse link trio: the same link seed re-solved for text on inverted surfaces
      (a pen-70 fill); always its own emitted values, since no stop is anchored against
      that ground and so there is no alias posture */
-  --fg-link-inverse:         var(--link-inverse-enabled);
-  --fg-link-inverse-hover:   var(--link-inverse-hover);
-  --fg-link-inverse-pressed: var(--link-inverse-pressed);
+  --fg-link-inverse:         var(--link-inverse-0);
+  --fg-link-inverse-hover:   var(--link-inverse-1);
+  --fg-link-inverse-pressed: var(--link-inverse-2);
 }
 
 /* ─── role.secondary (the brand's secondary ramp; mirrors brand when none) ──── */
@@ -125,16 +126,16 @@
   --brand-alt-bg-faint:              var(--brand-alt-paper-3);
   --brand-alt-bg-subtle:             var(--brand-alt-chalk-11);
   --brand-alt-bg-subtle-hover:       var(--brand-alt-chalk-15);
-  --brand-alt-bg-emphasis:           var(--brand-alt-stamp-fill);
-  --brand-alt-bg-emphasis-hover:     var(--brand-alt-stamp-fill-hover);
-  --brand-alt-bg-emphasis-pressed:   var(--brand-alt-stamp-fill-pressed);
+  --brand-alt-bg-emphasis:           var(--brand-alt-stamp-0);
+  --brand-alt-bg-emphasis-hover:     var(--brand-alt-stamp-1);
+  --brand-alt-bg-emphasis-pressed:   var(--brand-alt-stamp-2);
 
   --brand-alt-border-subtle:         var(--brand-alt-chalk-8);
   --brand-alt-border-subtle-hover:   var(--brand-alt-chalk-11);
   --brand-alt-border-default:           var(--brand-alt-chalk-15);
   --brand-alt-border-default-hover:     var(--brand-alt-highlighter-26);
-  --brand-alt-border-emphasis:       var(--brand-alt-stamp-fill);
-  --brand-alt-border-emphasis-hover: var(--brand-alt-stamp-fill-hover);
+  --brand-alt-border-emphasis:       var(--brand-alt-stamp-0);
+  --brand-alt-border-emphasis-hover: var(--brand-alt-stamp-1);
 }
 
 /* ─── Signal roles ──────────────────────────────────────────────────────────

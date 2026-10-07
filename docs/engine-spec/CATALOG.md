@@ -4,6 +4,82 @@ Fresh tracker. The previous CATALOG was archived with the whole old docs tree in
 ("clean-slate rewrite" 2026-06-27); entries here are code-grounded, logged at find-time,
 fixed holistically after owner sign-off.
 
+## C84 — THE ENGINE EMITS NO STATE WORDS: THE STAMP AND LINK ROWS ARE POSITIONS (RULED, 2026-10-07)
+
+The consumer grammar settled in the token generator's session rules that a primitive's
+last segment is a position, and that a state is a word of the semantic layer, where the
+consumer names it and publishes it (`bg/<family>/solid/hover` aliases the step). The
+engine's eleven state-bearing rows per theme broke that rule on every output: the stamp
+rows nested as a `stamp/` group with `fill`, `fill-hover`, `fill-pressed`, `edge`, `on`
+(hyphenated in CSS), and the link rows as `link/default/` and `link/inverse/` groups with
+`enabled`, `hover`, `pressed`.
+
+The owner's ruling. The engine emits no state words. Every row it writes is a group and
+one word, and the word is a position: a band at a lightness (`pen-70`), the stamp at a step
+(`stamp-0` the fill at rest, `stamp-1` one step from rest, `stamp-2` two steps,
+`stamp-edge`, `stamp-on`), a link posture at a step (`default-0`, `default-1`, `default-2`;
+`inverse-0`, `inverse-1`, `inverse-2`). The `stamp/`, `link/default/` and `link/inverse/`
+groups go; the rows sit flat beside the bands and in the link group. The seed absolutes
+are unchanged: reference values that already fit the shape. Not `color/bg/<family>/…`,
+which would write into the consumer's property-first groups; not `stamp/0`, a row named
+by a bare digit, which reads only inside its folder, is reordered by JavaScript objects
+and collides with the consumer's three-digit step rule; not `paper/1`, for the same
+reasons. The grounds: it is honest to the math, since the fill steps ride one rule with
+one apparent step per state and the link trios ride `hoverL` and `pressedL`, where
+pressed is hover's direction doubled, so rest, hover and pressed are steps 0, 1 and 2 of
+one progression in both cases; and with the two groups flat the engine has one rule to
+state and one shape for a consumer to parse. The release is a minor, 0.9.0, the first
+with CSS renames since 0.7.0.
+
+What changed. `tokenNames.ts`: the five stamp constants hold the new words, the
+flat-to-nested table and `STAMP_LEAF` are gone (there is no nested spelling to map to),
+`familyPath` returns the family and the leaf, and the link path is the posture at the step
+each state is emitted as (`LINK_STEP`, `linkLeaf`). The identifiers keep the engine's
+internal vocabulary, the way the internals still say `cta`. `figmaRender.ts` writes every
+leaf flat and the six link rows in one group; `putLeaf` leaves with the nesting.
+`tokenDescriptions.ts` keys the bodies by the new words and says the position, never the
+state: the fill at rest, one step from rest, two steps from rest, and the same for a link
+posture; no other body changed. Both plugins' rename tables gain the eleven previous
+spellings as sources and every older entry is retargeted to the new homes, so the table
+stays one hop deep; the extended plugin's role-row test and the signal-value heal keys read
+the flat names; the community plugin's link leaves and stamp recognition read them too.
+`docs-lint` retires the state spellings in the docs and the demo's stylesheet, with the
+demo's own `--fg-link-inverse-*` names left alone because they are the consumer's. The
+demo's semantic layer aliases the steps under its own state names, which is the worked
+example of the rule.
+
+Proof, through the real pipeline against a baseline at 6090ad2. Over 183 cases (the 15
+fixtures in every posture plus the agnostic sweep): the CSS emission is the baseline with
+the 27 names respelled, every Figma tree the baseline with 41 paths respelled, the DTCG
+documents in both forms the baseline with the same paths and aliases respelled over
+89,304 tokens, and the extended plugin's payload over 17 column sets the same; zero value
+differences anywhere. The descriptions differ on 39 paths and nowhere else: the 35 stamp
+rows and the four link steps (the rest rows keep their bodies). The override snapshot is
+the old one respelled: 3,571 paths, 1,095 of them renamed, zero column sets differ. The
+ladder-order gate in `audit:ext` never matched a stamp row, so the rename cannot disarm
+it. The 22 package gates pass unchanged. On the fake-figma harness
+(`scratch/fake-figma/ext-stamp-positions.ts`, the previous plugin frozen from 6090ad2), a
+file built by the previous plugin (two brands, one with a secondary, a stamp row and a
+link row renamed by hand, a stamp row's group retyped with stray case and spaces) and
+re-applied by the new plugin ends identical to the same file re-applied by the previous
+plugin once the names are respelled, over all 125 variables and collections with their
+overrides: 41 rows renamed in place with their ids, none created, the two custom names
+kept with their identity moved, the retyped row healed, the 35 stamp rows and the six link
+rows still pickable under the descope posture with the papers hidden, the brand's
+overrides unchanged, no duplicate name, and a second apply changing nothing. The same
+from the vintage before the chalk and highlighter words. An unstamped hand-made row at
+`color/brand/stamp-0` stops the apply before any write and is named. The community
+plugin's harness migrates a stamp-and-link vintage file with every id kept and no old
+name left; its re-apply reply carries a `TypeError` the frozen plugin throws on the same
+harness, so it predates this round and is a harness gap, not a finding of it. Real Figma
+has not run the migration: the owner checks the plugin on a copy of a work file before
+anything is published.
+
+Untouched on purpose: the community plugin's hidden link primitives keep their flat
+`link`, `link-hover`, `link-pressed` leaves; they are unbound and never an emitted name.
+The generation stamp stays, as it did through the group rename. `research/` keeps the
+old spellings as history.
+
 ## C83 — the npm package carried two declaration files whose sources were gone (FIXED, 2026-10-05)
 
 Found in npm's file list at the 0.8.0 publish. `okchroma-0.8.0.tgz` holds

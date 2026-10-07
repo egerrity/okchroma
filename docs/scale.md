@@ -114,10 +114,11 @@ frozen bounds in [`requirements/resolve.ts`](../src/engine/requirements/resolve.
   clears); in dark they raise L up off the near-black paper. Declaring them means any future
   seed or tuning that would break legibility fails the gate (`npm run req:audit`,
   `npm run audit:guarantee`) instead of shipping.
-- Off the scale: the stamp (`stamp/fill`, `stamp/fill-hover`, `stamp/fill-pressed`,
-  `stamp/edge`, `stamp/on`) is a set of roles, not stops: the pulled-out button fill, its
-  states, its always-rendered edge, and its text. The text-style action is the text stops
-  read directly (rest `pencil-47`, hover `pen-58`, pressed `pen-70`).
+- Off the scale: the stamp (`stamp-0`, `stamp-1`, `stamp-2`, `stamp-edge`, `stamp-on`)
+  is a set of roles, not stops: the pulled-out button fill at rest and at one and two
+  steps, its always-rendered edge, and its text. The names are positions; a semantic
+  layer names the states. The text-style action is the text stops read directly (rest
+  `pencil-47`, one step `pen-58`, two steps `pen-70`).
 - The poles: `paper-0` is resolved (white in light; in dark the deep, brand-tinted plane one
   seam below `paper-1`) and `pen-100` is the literal anchor (#000000 light / #ffffff dark).
   Both flip with the mode; neither is a per-brand ladder stop. They exist under `neutral` only.
@@ -127,7 +128,7 @@ frozen bounds in [`requirements/resolve.ts`](../src/engine/requirements/resolve.
 
 ## On-fill text
 
-A fill that carries text ships its text color: `stamp/on`, the one on-fill token every family
+A fill that carries text ships its text color: `stamp-on`, the one on-fill token every family
 emits. The only criterion is that it passes. The preference is which pole reads better on the fill
 (judged with APCA, `onTextIsWhite` in [`colorMath.ts`](../src/engine/colorMath.ts)); the
 law is WCAG 4.5:1 on the chosen pole, with the fill re-solving darker only when white is

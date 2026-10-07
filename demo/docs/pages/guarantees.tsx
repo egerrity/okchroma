@@ -118,7 +118,7 @@ export function Body() {
       <H2>The stamp fill and its text</H2>
       <UL>
         <LI>
-          <b>The pole.</b> <Code>stamp/on</Code> is white or black. The preference is which pole reads better on the
+          <b>The pole.</b> <Code>stamp-on</Code> is white or black. The preference is which pole reads better on the
           fill (judged with APCA). The law is WCAG: the chosen pole must pass <K v={RATIO_FLOOR} d={1} />:1. If white
           is preferred and misses, the pole flips to black when black passes and reads clearly; otherwise the fill
           darkens until white clears 4.6:1 (the solve margin). A last check at the fill that ships flips the pole
@@ -139,7 +139,7 @@ export function Body() {
           secondary that fails it keeps the solid pole.
         </LI>
         <LI>
-          <b>The edge.</b> <Code>stamp/edge</Code> resolves to a stroke when the fill reads under APCA |Lc|{' '}
+          <b>The edge.</b> <Code>stamp-edge</Code> resolves to a stroke when the fill reads under APCA |Lc|{' '}
           <K v={CTA_BORDER_LC_FLOOR} d={0} /> against the page. This is a taste gate, not an accessibility claim:
           buttons carry no non-text contrast requirement against the page.
         </LI>
@@ -165,7 +165,7 @@ export function Body() {
       <Table
         head={['script', 'sweep', 'what it proves']}
         rows={[
-          [<Code>audit:guarantee</Code>, '72 hues × 3 chromas at L 0.62, plus the 15 audit fixtures; 7 families; 4 neutral tint levels; both modes', 'the five claims above on the shipped 8-bit pair, both directions; highlighter-26 as a translucent state layer over every paper at the weights the audit holds; the quiet stamp/on composite at 4.5:1 on every state; the full-chroma residual, reported'],
+          [<Code>audit:guarantee</Code>, '72 hues × 3 chromas at L 0.62, plus the 15 audit fixtures; 7 families; 4 neutral tint levels; both modes', 'the five claims above on the shipped 8-bit pair, both directions; highlighter-26 as a translucent state layer over every paper at the weights the audit holds; the quiet stamp-on composite at 4.5:1 on every step; the full-chroma residual, reported'],
           [<Code>req:audit</Code>, '24 hues × 3 chromas at L 0.62; both modes', 'every declared requirement holds; the ladder is monotonic through the highlighter; the pencil sits past the highlighter; the pens order; every stop is in gamut and a valid hex; the stamp anchor respects its floor and hue; hover and pressed travel one way; the on-fill pole is valid'],
           [<Code>audit:cta-apca</Code>, 'agnostic hue × lightness × chroma grids, every stamp surface', `the booster holds: every stamp fill reads Lc ${CO_LC} (critical ${CRITICAL_CLEARANCE_LC}), light and dark`],
           [<Code>band-audit</Code>, 'agnostic hue × chroma × L, plus the fixtures', `band order (${stopTokenName(9)} past ${stopTokenName(8)}); ${PAPER_0} on ${stopTokenName(9)} at 4.5:1; ${stopTokenName(8)} at 3:1 on its declared paper in both modes; the neutral stamp's state law and soft composite; a blessed value snapshot`],

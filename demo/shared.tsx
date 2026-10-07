@@ -35,9 +35,9 @@ function accentModeCss(mode: AccentMode, primary: Family, subtle: Family): strin
   const prim = (f: Family): string => (f === 'brand' ? CSS_FAMILY.brandPrimary : CSS_FAMILY.brandSecondary)
   const PRIMARY_ROLES: Array<[string, string]> = [
     ['fg', 'pen-70'], ['fg-hover', 'pencil-47'], ['fg-alt', 'pencil-47'], ['fg-alt-hover', 'pen-70'], ['fg-on-emphasis', 'stamp-on'],
-    ['bg-emphasis', 'stamp-fill'], ['bg-emphasis-hover', 'stamp-fill-hover'], ['bg-emphasis-pressed', 'stamp-fill-pressed'],
+    ['bg-emphasis', 'stamp-0'], ['bg-emphasis-hover', 'stamp-1'], ['bg-emphasis-pressed', 'stamp-2'],
     ['border-default', 'chalk-15'], ['border-default-hover', 'highlighter-26'],
-    ['border-emphasis', 'stamp-fill'], ['border-emphasis-hover', 'stamp-fill-hover'],
+    ['border-emphasis', 'stamp-0'], ['border-emphasis-hover', 'stamp-1'],
   ]
   const SUBTLE_ROLES: Array<[string, string]> = [
     ['bg-faint', 'paper-3'], ['bg-subtle', 'chalk-11'], ['bg-subtle-hover', 'chalk-15'],
@@ -86,16 +86,16 @@ export const COMPONENT_CSS = `
 /* the LOW-HIERARCHY button: the neutral's quiet scale-fed cta (stop 4/5). The
    secondary-showcase slots fall back to this when no secondary exists — a
    subtle slot reads neutral until a secondary claims it, never brand-again. */
-.u-btn-neutral { background: var(--neutral-stamp-fill); color: var(--neutral-stamp-on); border-color: var(--neutral-stamp-edge); }
-.u-btn-neutral:hover { background: var(--neutral-stamp-fill-hover); }
-.u-btn-neutral:active { background: var(--neutral-stamp-fill-pressed); }
-/* the SECONDARY fill trio (--brand-alt-stamp-fill/-hover/-pressed + stamp-on), shown beside the
+.u-btn-neutral { background: var(--neutral-stamp-0); color: var(--neutral-stamp-on); border-color: var(--neutral-stamp-edge); }
+.u-btn-neutral:hover { background: var(--neutral-stamp-1); }
+.u-btn-neutral:active { background: var(--neutral-stamp-2); }
+/* the SECONDARY fill trio (--brand-alt-stamp-0/-1/-2 + stamp-on), shown beside the
    brand cta wherever that is showcased. cta-border carries the gated stroke at this
    family's rung, transparent when the gate does not fire, and the outline style's own
    unconditional ring (where the ring IS the component). Always set, so layout never shifts. */
-.u-btn-secondary { background: var(--brand-alt-stamp-fill); color: var(--brand-alt-stamp-on); border-color: var(--brand-alt-stamp-edge); }
-.u-btn-secondary:hover { background: var(--brand-alt-stamp-fill-hover); }
-.u-btn-secondary:active { background: var(--brand-alt-stamp-fill-pressed); }
+.u-btn-secondary { background: var(--brand-alt-stamp-0); color: var(--brand-alt-stamp-on); border-color: var(--brand-alt-stamp-edge); }
+.u-btn-secondary:hover { background: var(--brand-alt-stamp-1); }
+.u-btn-secondary:active { background: var(--brand-alt-stamp-2); }
 .u-btn-ghost { background: transparent; color: var(--brand-fg); }
 .u-btn-ghost:hover { background: var(--brand-bg-subtle); }
 /* Universal destructive rule (designer decision): destructive BUTTONS never

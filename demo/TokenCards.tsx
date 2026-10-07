@@ -49,9 +49,9 @@ export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; 
     { prefix: 'positive', label: 'positive' },
     { prefix: 'info', label: 'info' },
   ]
-  const cell = (prefix: string, tok: 'stamp-fill' | 'stamp-fill-hover' | 'stamp-fill-pressed') => (
+  const cell = (prefix: string, tok: 'stamp-0' | 'stamp-1' | 'stamp-2') => (
     <div title={`--${cssPrefix(prefix)}-${tok}`} style={{
-      flex: tok === 'stamp-fill' ? 1.6 : 1, height: 44, boxSizing: 'border-box',
+      flex: tok === 'stamp-0' ? 1.6 : 1, height: 44, boxSizing: 'border-box',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       background: `var(--${cssPrefix(prefix)}-${tok})`, color: `var(--${cssPrefix(prefix)}-stamp-on)`,
       fontSize: 13, fontWeight: 600,
@@ -70,9 +70,9 @@ export function CtaRow({ hasSecondary, shifted = [] }: { hasSecondary: boolean; 
       {families.map(f => (
         <div key={f.prefix} style={{ flex: '1 1 104px', maxWidth: 220 }}>
           <div style={{ display: 'flex', borderRadius: 8, overflow: 'hidden' }}>
-            {cell(f.prefix, 'stamp-fill')}
-            {cell(f.prefix, 'stamp-fill-hover')}
-            {cell(f.prefix, 'stamp-fill-pressed')}
+            {cell(f.prefix, 'stamp-0')}
+            {cell(f.prefix, 'stamp-1')}
+            {cell(f.prefix, 'stamp-2')}
           </div>
           <div style={{ display: 'flex', marginTop: 7 }}>
             {textCell(f.prefix, 'pencil-47')}
@@ -141,7 +141,7 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
       </p>
 
       {/* cta in context — the pill (hidden on signals, where cta lives in the alert).
-          Hover swaps stamp-fill → stamp-fill-hover; holding the button shows stamp-fill-pressed. Beside it,
+          Hover swaps stamp-0 for stamp-1; holding the button shows stamp-2. Beside it,
           the TEXT-STYLE cta (the pen stops as states — the action color's 4.5 text
           rendition, a text button; never underlined, never a hyperlink — links are the
           system link trio). */}
@@ -154,14 +154,14 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
             onMouseUp={() => setCtaPressed(false)}
             style={{
               width: 184, boxSizing: 'border-box', textAlign: 'center',
-              background: ctaPressed ? v('stamp-fill-pressed') : ctaHover ? v('stamp-fill-hover') : v('stamp-fill'), color: v('stamp-on'),
+              background: ctaPressed ? v('stamp-2') : ctaHover ? v('stamp-1') : v('stamp-0'), color: v('stamp-on'),
               // filled buttons carry NO stroke (the label identifies the button — WCAG 1.4.11
               // doesn't require a boundary); only the OUTLINE style keeps its ring, where the
               // boundary IS the component. Transparent border keeps layout identical.
               border: `1.5px solid ${outlineCta ? v('stamp-edge') : 'transparent'}`,
               borderRadius: 999, padding: '12px 28px', fontSize: 15, fontWeight: 600, fontFamily: 'inherit',
               cursor: 'pointer',
-            }}>{ctaPressed ? 'stamp-fill-pressed held' : ctaHover ? 'stamp-fill-hover' : 'stamp button'}</button>
+            }}>{ctaPressed ? 'stamp-2 held' : ctaHover ? 'stamp-1' : 'stamp button'}</button>
           <button
             onMouseEnter={() => setLinkState('hover')}
             onMouseLeave={() => setLinkState('rest')}
@@ -184,7 +184,7 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
           <div style={{ ...boxBody, color: v('pen-70') }}>Body copy in pen on a chalk fill.</div>
         </div>
         {isSignal ? (
-          <div style={{ ...box, background: v('stamp-fill'), display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+          <div style={{ ...box, background: v('stamp-0'), display: 'flex', gap: 10, alignItems: 'flex-start' }}>
             <span style={{ flexShrink: 0, marginTop: 1, lineHeight: 0, color: v('stamp-on') }}><Icon size={18} color={v('stamp-on')} /></span>
             <div>
               <div style={{ ...boxLabel, color: v('stamp-on') }}>alert &middot; cta</div>
@@ -228,7 +228,7 @@ export function TokenCards({ prefix, kind, outlineCta, insetControls }: { prefix
                   onMouseLeave={() => setInvLinkState('rest')}
                   onMouseDown={() => setInvLinkState('pressed')}
                   onMouseUp={() => setInvLinkState('hover')}
-                  title={`--link-inverse-${invLinkState === 'pressed' ? 'pressed' : invLinkState === 'hover' ? 'hover' : 'enabled'}`}
+                  title={`--link-inverse-${invLinkState === 'pressed' ? 2 : invLinkState === 'hover' ? 1 : 0}`}
                   style={{
                     color: invLinkState === 'pressed' ? 'var(--fg-link-inverse-pressed)' : invLinkState === 'hover' ? 'var(--fg-link-inverse-hover)' : 'var(--fg-link-inverse)',
                     textDecoration: 'underline', textUnderlineOffset: 2,

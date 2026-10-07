@@ -11,7 +11,8 @@
 //
 // THE GROUP: every path payload.ts emits sits under the color group
 // (payload.registerPath, tokenNames.COLOR_GROUP): color/<fam>/paper-1 …,
-// color/<fam>/stamp/*, color/link/*, color/absolute/*. The group is the category, not
+// color/<fam>/stamp-0 … stamp-on, color/link/*, color/absolute/*. Every row is a group and
+// one word, the word a position; no row carries a state word. The group is the category, not
 // an ownership mark: hand-authored color roles may share it, and an engine row is known
 // by its PATH_KEY stamp, never by its name. The engine emits primitives only (CATALOG
 // C68): a file applied earlier keeps its utility/ shelf, its planes, its alpha rows and
@@ -23,7 +24,7 @@
 
 import type { FlatTok, TokenColumns, Column } from './payload'
 import { LEGACY_COLUMN_NAME, RETIRED_COLUMN_NAMES } from './payload'
-import { STAMP_LEAF, COLOR_GROUP } from '../src/engine/tokenNames'
+import { COLOR_GROUP } from '../src/engine/tokenNames'
 // zero-import text module — safe here, drags nothing of the engine into the sandbox bundle
 import { describeToken } from '../src/engine/tokenDescriptions'
 
@@ -83,7 +84,7 @@ const DESCOPE_KEY = 'okchroma-ext-descope'
 // Mirrors payload.COLUMNS (type-only import keeps the engine out of the sandbox bundle).
 // Column order IS the mode-dropdown order: the default lane leads, pairs group by prefix.
 const COLUMNS: Column[] = ['light', 'dark']
-// The rows earlier applies aliased the stamp/on and stamp/edge leaves onto (the absolute
+// The rows earlier applies aliased the stamp-on and stamp-edge rows onto (the absolute
 // poles, the transparent row, the soft ink, the stroke rungs). The engine no longer emits
 // them; a file that holds them keeps them as orphans, and a live row still aliasing one
 // takes its raw value in the conversion pass, provided the alias resolves to exactly what
@@ -116,12 +117,12 @@ const RETIRED_SIGNAL_VALUES: Record<string, string[]> = {
   [ROOT + 'warning/highlighter-26']: ['#c67a00'],
   [ROOT + 'warning/pencil-47']: ['#a56000'],
   [ROOT + 'positive/pencil-47']: ['#1c7e36'],
-  [ROOT + 'positive/stamp/fill']: ['#63c373', '#67c777'],
-  [ROOT + 'positive/stamp/fill-hover']: ['#52b364', '#77d786'],
-  [ROOT + 'positive/stamp/fill-pressed']: ['#42a355', '#87e896'],
-  [ROOT + 'info/stamp/fill']: ['#afa3ff'],
-  [ROOT + 'info/stamp/fill-hover']: ['#a093ee', '#bfb7ff'],
-  [ROOT + 'info/stamp/fill-pressed']: ['#9184dd', '#cfcaff'],
+  [ROOT + 'positive/stamp-0']: ['#63c373', '#67c777'],
+  [ROOT + 'positive/stamp-1']: ['#52b364', '#77d786'],
+  [ROOT + 'positive/stamp-2']: ['#42a355', '#87e896'],
+  [ROOT + 'info/stamp-0']: ['#afa3ff'],
+  [ROOT + 'info/stamp-1']: ['#a093ee', '#bfb7ff'],
+  [ROOT + 'info/stamp-2']: ['#9184dd', '#cfcaff'],
 }
 // half-8-bit-step tolerance: Figma stores floats; a retired hex must match to the channel
 const rgbaMatchesHex = (cur: { r: number; g: number; b: number; a?: number }, hex: string): boolean => {
@@ -142,6 +143,24 @@ const rgbaMatchesHex = (cur: { r: number; g: number; b: number; a?: number }, he
 // before any candidate, so the ascending walk would hand the vacating row to the
 // wrong stop; see the textUpshifts pre-pass in the apply handler.
 const RENAMED_LEAVES: Array<[string, string]> = [
+  // ── THE POSITIONS: no state word in a row's name. The five stamp rows sit flat in the
+  // family (stamp/fill → stamp-0, the fill at rest; fill-hover → stamp-1, one step; fill-
+  // pressed → stamp-2, two steps; edge → stamp-edge; on → stamp-on) and the link states
+  // fold into the posture (default/enabled → default-0, hover → default-1, pressed →
+  // default-2; the same for inverse). Names only, same values. These entries are exactly
+  // what a file applied before the change holds as its real variables; every older
+  // vintage below re-targets straight at the same homes (one hop).
+  ['stamp/fill', 'stamp-0'],
+  ['stamp/fill-hover', 'stamp-1'],
+  ['stamp/fill-pressed', 'stamp-2'],
+  ['stamp/edge', 'stamp-edge'],
+  ['stamp/on', 'stamp-on'],
+  ['link/default/enabled', 'link/default-0'],
+  ['link/default/hover', 'link/default-1'],
+  ['link/default/pressed', 'link/default-2'],
+  ['link/inverse/enabled', 'link/inverse-0'],
+  ['link/inverse/hover', 'link/inverse-1'],
+  ['link/inverse/pressed', 'link/inverse-2'],
   // ── THE CHALK/HIGHLIGHTER RENAME: the tinted band takes the chalk word and the
   // 3:1 stop takes highlighter, the word that also names the translucent state rungs
   // seeded from it. Names only, same indices, same values. CURRENT-name entries
@@ -187,16 +206,14 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // Name only, same index, same values; older mark-vintage sources already point
   // straight at highlighter-26 (the one-hop rule).
   ['mark-74', 'highlighter-26'],
-  // link nesting (the instruments round): the flat trio + the inverse leaves fold
-  // into state subgroups — link/{default,inverse}/{enabled,hover,pressed}; enabled
-  // is the rest leaf (default is the group word). Vintage link sources below
-  // retarget straight at the new homes (one hop).
-  ['link/default', 'link/default/enabled'],
-  ['link/hover', 'link/default/hover'],
-  ['link/pressed', 'link/default/pressed'],
-  ['link/inverse', 'link/inverse/enabled'],
-  ['link/inverse-hover', 'link/inverse/hover'],
-  ['link/inverse-pressed', 'link/inverse/pressed'],
+  // the instruments-round link spellings (the flat trio and the inverse three): the
+  // posture-at-a-step rows find them (one hop).
+  ['link/default', 'link/default-0'],
+  ['link/hover', 'link/default-1'],
+  ['link/pressed', 'link/default-2'],
+  ['link/inverse', 'link/inverse-0'],
+  ['link/inverse-hover', 'link/inverse-1'],
+  ['link/inverse-pressed', 'link/inverse-2'],
   // the offset ladder's word (the instruments round): direction relative to the page
   // background, two-digit rungs harmonizing with shadow-04/08/12. The vintage
   // offset-XX sources below retarget straight at the new homes (one hop).
@@ -209,34 +226,33 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['absolute/primary', 'absolute/brand'],
   ['absolute/alt', 'absolute/brand-alt'],
   // solid → stamp (the instruments round): the solid-rename generation is a vintage;
-  // the cta-era sources below already re-target straight to stamp/ (one hop).
-  ['solid/fill', 'stamp/fill'],
-  ['solid/fill-hover', 'stamp/fill-hover'],
-  ['solid/fill-pressed', 'stamp/fill-pressed'],
-  ['solid/edge', 'stamp/edge'],
-  ['solid/on', 'stamp/on'],
+  // the cta-era sources below already re-target straight at the stamp rows (one hop).
+  ['solid/fill', 'stamp-0'],
+  ['solid/fill-hover', 'stamp-1'],
+  ['solid/fill-pressed', 'stamp-2'],
+  ['solid/edge', 'stamp-edge'],
+  ['solid/on', 'stamp-on'],
   // ── LINK-INVERSE REGROUP: the inverse trio lives INSIDE the link group; a file
   // applied under the short-lived solo link-inverse group build holds these
   // spellings. Multi-segment leaves — the suffix match carries the group word, so
-  // the link/inverse/enabled row finds a file's link-inverse/default and renames it
-  // in place.
-  ['link-inverse/default', 'link/inverse/enabled'],
-  ['link-inverse/hover', 'link/inverse/hover'],
-  ['link-inverse/pressed', 'link/inverse/pressed'],
+  // the link/inverse-0 row finds a file's link-inverse/default and renames it in
+  // place.
+  ['link-inverse/default', 'link/inverse-0'],
+  ['link-inverse/hover', 'link/inverse-1'],
+  ['link-inverse/pressed', 'link/inverse-2'],
   // ── SOLID RENAME + OWNERSHIP ZONES: the cta words → the solid/ state group;
   // overlays fold into overlay/; planes sunken|base → dim|mid; scrim → abs-black-060;
   // the offset ladder drops its word; the system rows re-home by zone (leaf reshapes
   // here, zone prefixes in RENAMED_GROUPS). These entries must precede the
   // band-flattening batch below: they are exactly what a band-flattening-vintage
   // file holds as its variables.
-  // link/enabled is that vintage's rest leaf; its home is the nested
-  // link/default/enabled (same word, one group deeper)
-  ['link/enabled', 'link/default/enabled'],
-  ['cta/enabled', 'stamp/fill'],
-  ['cta/hover', 'stamp/fill-hover'],
-  ['cta/pressed', 'stamp/fill-pressed'],
-  ['cta/border', 'stamp/edge'],
-  ['cta/on', 'stamp/on'],
+  // link/enabled is that vintage's rest leaf; its home is link/default-0
+  ['link/enabled', 'link/default-0'],
+  ['cta/enabled', 'stamp-0'],
+  ['cta/hover', 'stamp-1'],
+  ['cta/pressed', 'stamp-2'],
+  ['cta/border', 'stamp-edge'],
+  ['cta/on', 'stamp-on'],
   // the paper overlays are PARKED — nothing emits or refreshes paper-LL-overlay.
   // These entries consolidate every shipped spelling (the flat original and the
   // short-lived overlay/ subgroup build) onto the parked flat name, the cta-ink
@@ -337,11 +353,11 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['ink/53-r450', 'pencil-47'],
   ['ink/42-r650', 'pen-58'],
   ['ink/30-r700', 'pen-70'],
-  ['cta', 'stamp/fill'],
-  ['cta-hover', 'stamp/fill-hover'],
-  ['cta-pressed', 'stamp/fill-pressed'],
-  ['cta-border', 'stamp/edge'],
-  ['on-cta', 'stamp/on'],
+  ['cta', 'stamp-0'],
+  ['cta-hover', 'stamp-1'],
+  ['cta-pressed', 'stamp-2'],
+  ['cta-border', 'stamp-edge'],
+  ['on-cta', 'stamp-on'],
   // cta-ink is DEAD (the trio was pure aliases onto the pen stops; the band
   // flattening deleted it). These entries keep their RETIRED banded homes on
   // purpose — the highlight-9 precedent: an old flat row is still FOUND and
@@ -355,10 +371,10 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // ── the oldest vintages, pointed STRAIGHT at the final homes (the
   // one-hop rule). Renumber entries shift names DOWN; safe in ascending order
   // with self-deleting consumed keys — new ink/10 eats old ink-11 first.
-  ['cta-stroke', 'stamp/edge'],
+  ['cta-stroke', 'stamp-edge'],
   // the decorative stroke's alpha row under its cta-border spelling: it belongs to the
   // alpha ladder beside shadow-04/08/12 and is not cta-specific. Only ever resolves
-  // under the alpha/ group, so it cannot collide with the ['cta-border','stamp/edge']
+  // under the alpha/ group, so it cannot collide with the ['cta-border','stamp-edge']
   // entry above — candidates are prefix-scoped. A file that imported the row under
   // this spelling adopts it in place rather than gaining a duplicate.
   ['alpha/cta-border', 'alpha/away-from-bg/08'],
@@ -400,8 +416,8 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['blue-7eb5fb', 'cyan-side-7eb5fb'],
   // cta semantic rename (states, never options), retargeted to the stamp state
   // homes; no cta-3 — the numbered vintage had no pressed state.
-  ['cta-1', 'stamp/fill'],
-  ['cta-2', 'stamp/fill-hover'],
+  ['cta-1', 'stamp-0'],
+  ['cta-2', 'stamp-1'],
   // stop-3 rename (the elevation round) retargeted to its final flat home. Pure
   // relabel, same color.
   ['wash-3', 'paper-5'],
@@ -434,9 +450,9 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['pop', 'surface/high'],
   ['transparent', 'alpha/transparent'],
   ['scrim', 'abs-black-060'],
-  ['link', 'link/default/enabled'],
-  ['link-hover', 'link/default/hover'],
-  ['link-pressed', 'link/default/pressed'],
+  ['link', 'link/default-0'],
+  ['link-hover', 'link/default-1'],
+  ['link-pressed', 'link/default-2'],
 ]
 // Group renames (old prefix → new), same in-place idiom. The bind-surface rows carry
 // ROLE names (critical/warning/positive/info) — the re-pointable in-between tier.
@@ -995,10 +1011,10 @@ figma.ui.onmessage = async (msg) => {
       // the role rows always keep ALL_SCOPES. Off exposes everything. Re-stamped every
       // apply regardless of rebuildBase, so a scope hand-edited in Figma's own panel
       // always reverts on the next apply.
-      // The role-row band list: the stamp/ state band (payload.ROLE_BANDS' one entry)
-      // and the link group (whose prefix carries both trios).
+      // The role rows: the five stamp rows, flat in their family (payload.ROLE_BANDS'
+      // one leaf prefix), and the link group (whose prefix carries both trios).
       const isRoleRow = (p: string): boolean =>
-        /\/stamp\//.test(p)
+        /\/stamp-/.test(p)
         || p.startsWith(ROOT + 'link/')
       const withSecondary = baseHasSecondary || hasSecondary
       const seedByCol = new Map<Column, Map<string, FlatTok>>(
@@ -1045,8 +1061,8 @@ figma.ui.onmessage = async (msg) => {
         v.scopes = descopeOn && !isRoleRow(path) ? [] : ['ALL_SCOPES']
         return v
       }
-      // Every value is a raw write: the engine emits primitives only, and the stamp/on
-      // pole, the soft on-text at alpha and the stamp/edge stroke or transparent are the
+      // Every value is a raw write: the engine emits primitives only, and the stamp-on
+      // pole, the soft on-text at alpha and the stamp-edge stroke or transparent are the
       // generated values themselves, never an alias onto a system row (C68).
       const chEq = (a: { r: number; g: number; b: number; a?: number } | undefined,
         b: { r: number; g: number; b: number; a?: number } | undefined): boolean =>
@@ -1100,7 +1116,7 @@ figma.ui.onmessage = async (msg) => {
         const v = ensure(t.path)
         if (createdVars > before || rebuildBase) seedFresh(v, t.path) // fresh variable (or a rebuild) → seed every active column
       }
-      // A base applied under the aliasing idioms holds stamp/on and stamp/edge leaves as
+      // A base applied under the aliasing idioms holds stamp-on and stamp-edge rows as
       // ALIASES onto rows the engine no longer emits (the absolute poles, the transparent
       // row, the soft ink, the stroke rungs). Convert OUR aliases back to raw values:
       // only where the alias resolves to exactly what the payload would write now, so
@@ -1155,7 +1171,7 @@ figma.ui.onmessage = async (msg) => {
       // confirmed above): seed them for EVERY base variable, additively. Figma's addMode
       // copies the DEFAULT mode's values into a new mode, so an unseeded new column
       // would silently read the default column's values everywhere. Runs AFTER the
-      // ensure loop so legacy names have migrated (cta-1→stamp/fill) and new rows
+      // ensure loop so legacy names have migrated (cta-1→stamp-0) and new rows
       // exist; pre-existing columns are never touched (fresh
       // vars were seeded above — re-setting the same seed here is idempotent). Variables
       // whose paths are NOT in the current token set (stale/orphaned) can't be seeded —

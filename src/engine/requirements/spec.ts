@@ -71,7 +71,7 @@ export type StopReq = {
   require?: Require
 }
 
-// off-scale roles — the stamp FILL trio (stamp-fill / stamp-fill-hover / stamp-fill-pressed,
+// off-scale roles — the stamp FILL trio (stamp-0 / stamp-1 / stamp-2: rest, one step, two steps,
 // the emitted spelling since 2026-09-02; the internal ResolvedRamp/GeneratedScale fields keep
 // their cta property names, which never surface in any output): anchor = the seed's OWN
 // lightness floored at floorL (product intent: dark fills must not sink; light has no floor);

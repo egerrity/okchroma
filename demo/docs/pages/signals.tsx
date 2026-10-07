@@ -151,7 +151,7 @@ export function Body() {
       </P>
       <H3>The link</H3>
       <UL>
-        <LI><b>Default:</b> <Code>--link-default-enabled</Code>, <Code>--link-default-hover</Code>, <Code>--link-default-pressed</Code> alias the primary's {stopTokenName(9)}, {stopTokenName(10)}, {stopTokenName(11)}.</LI>
+        <LI><b>Default:</b> <Code>--link-default-0</Code>, <Code>--link-default-1</Code>, <Code>--link-default-2</Code> (the link at rest, one step, two steps) alias the primary's {stopTokenName(9)}, {stopTokenName(10)}, {stopTokenName(11)}.</LI>
         <LI><b>Custom seed:</b> the hex seeds a throwaway resolve and the shipped trio is that resolve's three text stops (the default seed when the option turns on is <Code>{DEFAULT_LINK_HEX}</Code>).</LI>
         <LI><b>Inverse:</b> the same seed re-solved for text on {stopTokenName(11)} fills, each pen ground replaced by the worst shipped {stopTokenName(11)} (light L <K v={PEN_70_GROUND.wcag.light.L} />, dark L <K v={PEN_70_GROUND.wcag.dark.L} />), with the modes crossed: the light-mode inverse trio is light text on a dark fill, which is the dark ramp's construction, so it is read off the dark ramp, and vice versa. No alias posture exists for it; the values always ship raw.</LI>
       </UL>

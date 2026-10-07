@@ -7,7 +7,7 @@ variables, every token spelled the same way in each.
 
 Every family (neutral, brand, brand-alt, critical, warning, positive, info) carries the
 same scale: 3 papers, 4 chalks, 1 highlighter, 1 pencil, 2 pens, plus the stamp (the
-solid fill with its hover and pressed states, its edge, and its text). The neutral adds
+solid fill at rest and at one and two steps, its edge, and its text). The neutral adds
 the two poles. Two link trios and the two brand seeds complete the set. Light and dark
 resolve together and ship on the same names, so a token is mapped once and holds for any
 brand.
@@ -60,18 +60,21 @@ example: [Install and API](https://egerrity.github.io/okchroma/#/docs/install).
 
 ## What it emits
 
-Every token has one path, and every output spells it: `brand/stamp/fill`,
-`neutral/paper-0`, `link/default/enabled`, `absolute/brand`. Joined with hyphens it is the
-CSS custom property (`--brand-stamp-fill`); joined with slashes it is the Figma variable
-and the DTCG token path. A consumer whose paths start with the category puts a `color`
-group in front: the extended plugin writes `color/brand/stamp/fill`, and the DTCG
-documents nest under the same word when asked. The CSS names never carry it.
+Every token has one path, and every output spells it: `brand/stamp-0`,
+`neutral/paper-0`, `link/default-0`, `absolute/brand`. A path is a group and one word, and
+the word is a position: a band at a lightness, the stamp at a step, a link posture at a
+step. No name carries a state word; a semantic layer names the states and aliases the
+steps. Joined with hyphens the path is the CSS custom property (`--brand-stamp-0`); joined
+with slashes it is the Figma variable and the DTCG token path. A consumer whose paths
+start with the category puts a `color` group in front: the extended plugin writes
+`color/brand/stamp-0`, and the DTCG documents nest under the same word when asked. The
+CSS names never carry it.
 
 | Group | Tokens |
 |---|---|
-| `neutral` | `paper-0`, `paper-1`, `paper-3`, `paper-5`, `chalk-8`, `chalk-11`, `chalk-15`, `chalk-20`, `highlighter-26`, `pencil-47`, `pen-58`, `pen-70`, `pen-100`, and the stamp: `stamp/fill`, `stamp/fill-hover`, `stamp/fill-pressed`, `stamp/edge`, `stamp/on` |
+| `neutral` | `paper-0`, `paper-1`, `paper-3`, `paper-5`, `chalk-8`, `chalk-11`, `chalk-15`, `chalk-20`, `highlighter-26`, `pencil-47`, `pen-58`, `pen-70`, `pen-100`, and the stamp: `stamp-0`, `stamp-1`, `stamp-2`, `stamp-edge`, `stamp-on` |
 | `brand`, `brand-alt`, `critical`, `warning`, `positive`, `info` | the same eleven stops and the same five stamp tokens |
-| `link` | `default/enabled`, `default/hover`, `default/pressed` for text on the papers; `inverse/enabled`, `inverse/hover`, `inverse/pressed` for text on the pen ground |
+| `link` | `default-0`, `default-1`, `default-2` for text on the papers; `inverse-0`, `inverse-1`, `inverse-2` for text on the pen ground; the link at rest, one step from rest, two steps |
 | `absolute` | `brand`, `brand-alt`: the seeds as given, reference values |
 
 What each name means, which stop to read for which job, and the rules for an agent
@@ -84,9 +87,10 @@ borders and illustration, never text; the highlighter is the non-text contrast s
 rings, icons, large text, and the one stop to build translucent state layers on); the
 pencil and the pens are text, and the pencil doubles as the emphasis fill.
 
-**The stamp.** `stamp/fill` is the call-to-action fill, re-solved per family and theme;
-`fill-hover` and `fill-pressed` are its states; `stamp/on` is the text over it, the pole
-that passes (the pole at alpha on a quiet fill); `stamp/edge` is a stroke that resolves to
+**The stamp.** `stamp-0` is the call-to-action fill at rest, re-solved per family and
+theme; `stamp-1` and `stamp-2` are the fill one and two steps from rest, one apparent step
+each; `stamp-on` is the text over it, the pole that passes (the pole at alpha on a quiet
+fill); `stamp-edge` is a stroke that resolves to
 a visible offset only where the fill sits close to the page, else transparent, so a
 component renders the border unconditionally and layout never shifts.
 

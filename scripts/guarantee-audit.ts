@@ -70,7 +70,7 @@ let seeds = 0
 function check(hex: string, tag: string, opts: { exact?: boolean; archetypeOverride?: any; style?: any } = {}) {
   seeds++
   const theme = resolveTheme({ primaryHex: hex, name: 'brand', deriveSecondary: true, ...opts })
-  // the apca-lane resolution, for the stamp/on pairing only (its quiet fills differ; the
+  // the apca-lane resolution, for the stamp-on pairing only (its quiet fills differ; the
   // five band claims are measured on the shipped wcag lane)
   const themeApca = resolveTheme({ primaryHex: hex, name: 'brand', deriveSecondary: true, ...opts, contrastProfile: 'apca' })
   const brand = theme.themed.scale
@@ -146,7 +146,7 @@ function check(hex: string, tag: string, opts: { exact?: boolean; archetypeOverr
         if (f.name === 'neutral') seen('pen-100 vs state rung', contrastRatio(penPoleY, cy), where(at), BAR.text)
       }
     }
-    // stamp/on over the quiet cta fill: the soft composite is engine-gated per mode
+    // stamp-on over the quiet cta fill: the soft composite is engine-gated per mode
     // (softOnCtaPasses). Wherever it SHIPS it holds 4.5 on every fill state, and a
     // gated-off fill's solid pole holds 4.5 at rest, the regular button law. Both
     // branches are measured here in the shipped 8-bit basis so the pairing cannot
@@ -169,12 +169,12 @@ function check(hex: string, tag: string, opts: { exact?: boolean; archetypeOverr
           const e = srgbEmitChannels(st)
           const fr = q8(e.r), fg = q8(e.g), fb = q8(e.b)
           const textY = relY(pole * a + fr * (1 - a), pole * a + fg * (1 - a), pole * a + fb * (1 - a))
-          seen('stamp/on soft vs fill', contrastRatio(textY, relY(fr, fg, fb)), `${tag} ${mode} ${lv}${qn} state ${i}`, BAR.text)
+          seen('stamp-on soft vs fill', contrastRatio(textY, relY(fr, fg, fb)), `${tag} ${mode} ${lv}${qn} step ${i}`, BAR.text)
         })
       } else {
         // the apca lane's solid pole is judged on Lc alone and is report-only (CATALOG
         // C81); the wcag lane's is gated hard at 4.5
-        const cell = qn.includes('apca') ? 'stamp/on solid (apca · report)' : 'stamp/on solid vs fill'
+        const cell = qn.includes('apca') ? 'stamp-on solid (apca · report)' : 'stamp-on solid vs fill'
         seen(cell, contrastRatio(pole, shippedY(states[0].L, states[0].C, states[0].H)), `${tag} ${mode} ${lv}${qn} rest`, qn.includes('apca') ? 0 : BAR.text)
       }
     }

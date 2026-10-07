@@ -7,7 +7,6 @@ import { FIXTURES, FIXTURE_SECONDARIES } from './fixture'
 import { SIGNALS } from '../src/engine/signals'
 import { resolveBrand, resolveTheme, SIGNAL_SCALES, SOFT_ON_CTA_ALPHA } from '../src/engine/resolve'
 import { themeToFigma } from '../src/engine/figmaRender'
-import { STAMP_STATE_LEAVES } from '../src/engine/tokenNames'
 import { brandCss, signalsCss, ctaNeedsBorder, ctaPageLc, pageStopFor } from '../src/engine/cssRender'
 import { generateNeutralScale } from '../src/engine/colorEngine'
 
@@ -27,18 +26,18 @@ const figma = themeToFigma(r, { secondary, neutralLevel: 'default', signals })
 const fails: string[] = []
 const ok = (cond: boolean, msg: string) => { if (!cond) fails.push(msg) }
 
-// leaf access rides figmaRender's own flat-to-nested table (tokenNames.ts), never a
-// local copy: lockstep copies are the silent-drift class this file exists to catch
-const leaf = (g: any, flat: string): any =>
-  (STAMP_STATE_LEAVES[flat] ?? flat)
-    .split('/').reduce((cur: any, seg: string) => cur?.[seg], g)
+// every leaf is flat in its group: a leaf is read by its one word. The names are spelled
+// here as ground truth on purpose, so a vocabulary change has to be deliberate here too.
+const leaf = (g: any, flat: string): any => g?.[flat]
 
-// Every family is emitted uniformly: the 11 scale stops, the off-scale stamp fill trio,
-// the edge and the on-text. The tree is spelled in the one grammar (tokenNames.ts): the
-// signals under their role names, the alt as brand-alt, the link trios under
-// link/default and link/inverse, the seed absolutes under absolute/. Nothing else: no
-// system group, no identity leaf (C68).
-const CTA_FAMILY = ['stamp-fill', 'stamp-fill-hover', 'stamp-fill-pressed']
+// Every family is emitted uniformly: the 11 scale stops, the off-scale stamp fill trio
+// (the fill at rest and at one and two steps), the edge and the on-text. The tree is
+// spelled in the one grammar (tokenNames.ts): the signals under their role names, the alt
+// as brand-alt, the six link rows flat in the link group (default-0 to default-2,
+// inverse-0 to inverse-2), the seed absolutes under absolute/. Nothing else: no system
+// group, no identity leaf (C68), no state word anywhere.
+const CTA_FAMILY = ['stamp-0', 'stamp-1', 'stamp-2']
+const LINK_LEAVES = ['default-0', 'default-1', 'default-2', 'inverse-0', 'inverse-1', 'inverse-2']
 const FAMILY_KEYS = ['neutral', 'brand', 'brand-alt', 'critical', 'warning', 'positive', 'info']
 for (const mode of ['light', 'dark'] as const) {
   const m = figma[mode] as any
@@ -49,7 +48,7 @@ for (const mode of ['light', 'dark'] as const) {
     const tokens = ['paper-1', 'paper-3', 'paper-5', 'chalk-8', 'chalk-11', 'chalk-15', 'chalk-20', 'highlighter-26', 'pencil-47', 'pen-58', 'pen-70', ...CTA_FAMILY, 'stamp-edge', 'stamp-on']
     for (const t of tokens) ok(!!leaf(m[fam], t), `${mode}.${fam}.${t} missing`)
     ok(!m[fam]['identity'], `${mode}.${fam}.identity is still emitted (the seeds live under absolute/)`)
-    for (const gone of ['highlight-9', 'on-highlight', 'cta-ink/enabled', 'paper-99-overlay'])
+    for (const gone of ['highlight-9', 'on-highlight', 'cta-ink', 'paper-99-overlay', 'stamp', 'stamp-fill'])
       ok(!leaf(m[fam], gone), `${mode}.${fam}.${gone} is still emitted`)
     // the soft on-text, the quiet-fill rule: the neutral's fill is the scale-fed
     // chalk-level fill, so its button text is the pole at alpha, the register the
@@ -64,7 +63,7 @@ for (const mode of ['light', 'dark'] as const) {
       ok(onCta.alpha === 1, `${mode}.${fam} on-cta must stay a SOLID pole (got alpha ${onCta.alpha}) — the soft register is the quiet fills only`)
     // signals carry a distinct loud fill, diverged from the emphasis fill
     if (['critical', 'warning', 'positive', 'info'].includes(fam))
-      ok(leaf(m[fam], 'stamp-fill').$value.hex !== leaf(m[fam], 'pencil-47').$value.hex,
+      ok(leaf(m[fam], 'stamp-0').$value.hex !== leaf(m[fam], 'pencil-47').$value.hex,
         `${mode}.${fam} cta should DIVERGE from pencil-47 (signals routed through the scale)`)
     // every leaf's components name the same 8-bit color as its hex
     const walk = (g: any, path: string) => {
@@ -80,20 +79,22 @@ for (const mode of ['light', 'dark'] as const) {
   // the neutral's poles, in ladder position
   ok(!!m.neutral['paper-0'] && !!m.neutral['pen-100'], `${mode}.neutral poles missing`)
   ok(!m.brand['paper-0'], `${mode}.brand carries a pole (neutral only)`)
+  // the link group: six flat leaves and nothing else, no posture subgroup
+  ok(Object.keys(m.link ?? {}).join(',') === LINK_LEAVES.join(','), `${mode}.link leaves are ${Object.keys(m.link ?? {}).join(',')}, expected ${LINK_LEAVES.join(',')}`)
   // the seed absolutes: the inputs as given
   ok(m.absolute?.brand?.$value.hex === brand.hex.toLowerCase(), `${mode}.absolute.brand ${m.absolute?.brand?.$value.hex} != the seed ${brand.hex.toLowerCase()}`)
   ok(m.absolute?.['brand-alt']?.$value.hex === (sec ?? brand.hex).toLowerCase(), `${mode}.absolute.brand-alt != the secondary seed`)
   ok(!m.system, `${mode}.system is still emitted (the engine emits primitives only)`)
 }
 // Color token shape (brand cta is the off-scale fill)
-const bcta = leaf((figma.light as any).brand, 'stamp-fill')
+const bcta = leaf((figma.light as any).brand, 'stamp-0')
 ok(bcta.$type === 'color', 'brand/cta not type color')
 ok(bcta.$value && bcta.$value.colorSpace === 'srgb' && Array.isArray(bcta.$value.components) && bcta.$value.components.length === 3, 'brand/cta $value not srgb-components object')
 // Spot value vs known engine output (the near-black indigo fixture's brand fill: light
 // #07074f; dark #a4bafa, the dark clearance lightening the fill until its pole clears
 // the legibility booster).
-ok(leaf((figma.light as any).brand, 'stamp-fill').$value.hex === '#07074f', `brand/cta light hex ${leaf((figma.light as any).brand, 'stamp-fill').$value.hex} != #07074f`)
-ok(leaf((figma.dark as any).brand, 'stamp-fill').$value.hex === '#a4bafa', `brand/cta dark hex ${leaf((figma.dark as any).brand, 'stamp-fill').$value.hex} != #a4bafa`)
+ok(leaf((figma.light as any).brand, 'stamp-0').$value.hex === '#07074f', `brand/cta light hex ${leaf((figma.light as any).brand, 'stamp-0').$value.hex} != #07074f`)
+ok(leaf((figma.dark as any).brand, 'stamp-0').$value.hex === '#a4bafa', `brand/cta dark hex ${leaf((figma.dark as any).brand, 'stamp-0').$value.hex} != #a4bafa`)
 // Identical token names across modes
 // deep key walk: a shallow compare would only see the group names
 const keyTree = (g: any): any => g?.$type ? 1 : Object.fromEntries(Object.keys(g ?? {}).map(k => [k, keyTree(g[k])]))
@@ -123,21 +124,21 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
   const canon = themeToFigma(red, { secondary: null, neutralLevel: 'default', signals: canonSignals })
   for (const mode of ['light', 'dark'] as const) {
     const b = (esc[mode] as any).brand, n = (esc[mode] as any).neutral, p = (plain[mode] as any).brand
-    ok(leaf(b, 'stamp-fill').$value.hex === leaf(n, 'pen-70').$value.hex, `${mode} escape cta ${leaf(b, 'stamp-fill').$value.hex} != neutral pen-70 ${leaf(n, 'pen-70').$value.hex}`)
-    ok(leaf(b, 'stamp-fill').$value.hex !== leaf(p, 'stamp-fill').$value.hex, `${mode} escape cta did not move off the brand cta`)
+    ok(leaf(b, 'stamp-0').$value.hex === leaf(n, 'pen-70').$value.hex, `${mode} escape cta ${leaf(b, 'stamp-0').$value.hex} != neutral pen-70 ${leaf(n, 'pen-70').$value.hex}`)
+    ok(leaf(b, 'stamp-0').$value.hex !== leaf(p, 'stamp-0').$value.hex, `${mode} escape cta did not move off the brand cta`)
     // the pen stops stay the brand's own: the escape is fill-trio-only
     for (const pen of ['pencil-47', 'pen-58', 'pen-70'])
       ok(leaf(b, pen).$value.hex === leaf(p, pen).$value.hex, `${mode} escape ${pen} ${leaf(b, pen).$value.hex} != the brand's own ${leaf(p, pen).$value.hex} (the pens must stay)`)
     ok(leaf(b, 'paper-1').$value.hex === leaf(p, 'paper-1').$value.hex, `${mode} escape touched the ramp`)
-    ok((esc[mode] as any).link.default.enabled.$value.hex === leaf(p, 'pencil-47').$value.hex, `${mode} default link should stay on the brand's pencil-47`)
+    ok((esc[mode] as any).link['default-0'].$value.hex === leaf(p, 'pencil-47').$value.hex, `${mode} default link should stay on the brand's pencil-47`)
     // the red reset: under the escape the critical group ships canonical, byte-equal to
     // the canonical emit, different from this brand's variant
-    for (const leafName of ['stamp-fill', 'stamp-fill-hover', 'stamp-fill-pressed', 'highlighter-26', 'pencil-47']) {
+    for (const leafName of ['stamp-0', 'stamp-1', 'stamp-2', 'highlighter-26', 'pencil-47']) {
       ok(leaf((esc[mode] as any).critical, leafName).$value.hex === leaf((canon[mode] as any).critical, leafName).$value.hex,
         `${mode} escape critical/${leafName} ${leaf((esc[mode] as any).critical, leafName).$value.hex} != canonical ${leaf((canon[mode] as any).critical, leafName).$value.hex} (the escape must reset red)`)
     }
-    ok(leaf((esc[mode] as any).critical, 'stamp-fill').$value.hex !== leaf((plain[mode] as any).critical, 'stamp-fill').$value.hex
-      || leaf((plain[mode] as any).critical, 'stamp-fill').$value.hex === leaf((canon[mode] as any).critical, 'stamp-fill').$value.hex,
+    ok(leaf((esc[mode] as any).critical, 'stamp-0').$value.hex !== leaf((plain[mode] as any).critical, 'stamp-0').$value.hex
+      || leaf((plain[mode] as any).critical, 'stamp-0').$value.hex === leaf((canon[mode] as any).critical, 'stamp-0').$value.hex,
       `${mode} escape red cta still matches the VARIANT (the probe's filter regressed)`)
   }
   ok(leaf((esc.light as any).brand, 'stamp-on').$value.hex === '#ffffff', `escape light on-cta should be white on the near-black fill (got ${leaf((esc.light as any).brand, 'stamp-on').$value.hex})`)
@@ -171,34 +172,36 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
 
 // THE SYSTEM LINK: one trio per theme for text on the papers (the default posture is
 // the primary's pen stops verbatim; a custom seed is its own pen-register resolution)
-// and one for text on the pen ground, under link/default and link/inverse with the
-// three state leaves.
+// and one for text on the pen ground, six flat leaves in the link group: the posture at
+// a step, default-0 the link at rest, default-1 and default-2 the steps; inverse-0 to
+// inverse-2 the same on the pen ground.
 {
   for (const mode of ['light', 'dark'] as const) {
     const l = (figma[mode] as any).link, b = (figma[mode] as any).brand
-    for (const posture of ['default', 'inverse']) for (const state of ['enabled', 'hover', 'pressed'])
-      ok(!!l?.[posture]?.[state], `${mode}.link.${posture}.${state} missing`)
-    ok(l.default.enabled.$value.hex === leaf(b, 'pencil-47').$value.hex, `${mode} default link ${l.default.enabled.$value.hex} != brand pencil-47 ${leaf(b, 'pencil-47').$value.hex}`)
+    for (const name of LINK_LEAVES) ok(!!l?.[name]?.$type, `${mode}.link.${name} missing`)
+    ok(!l?.default && !l?.inverse, `${mode}.link still nests a posture group`)
+    ok(l['default-0'].$value.hex === leaf(b, 'pencil-47').$value.hex, `${mode} default link ${l['default-0'].$value.hex} != brand pencil-47 ${leaf(b, 'pencil-47').$value.hex}`)
+    ok(l['default-1'].$value.hex === leaf(b, 'pen-58').$value.hex && l['default-2'].$value.hex === leaf(b, 'pen-70').$value.hex, `${mode} default link steps are not the brand's pen-58 and pen-70`)
   }
   const custom = themeToFigma(r, { secondary, neutralLevel: 'default', signals, linkHex: '#0B57D0' })
   for (const mode of ['light', 'dark'] as const) {
     const l = (custom[mode] as any).link, b = (custom[mode] as any).brand
-    ok(l.default.enabled.$value.hex !== leaf(b, 'pencil-47').$value.hex, `${mode} custom link should differ from the brand's pencil-47`)
+    ok(l['default-0'].$value.hex !== leaf(b, 'pencil-47').$value.hex, `${mode} custom link should differ from the brand's pencil-47`)
   }
-  ok((custom.light as any).link.default.enabled.$value.hex === '#2a5cb4', `custom link light hex ${(custom.light as any).link.default.enabled.$value.hex} != #2a5cb4 (the #0B57D0 seed through the wcag register, gamut-mapped emit)`)
+  ok((custom.light as any).link['default-0'].$value.hex === '#2a5cb4', `custom link light hex ${(custom.light as any).link['default-0'].$value.hex} != #2a5cb4 (the #0B57D0 seed through the wcag register, gamut-mapped emit)`)
 
   // the inverse trio: the same seed re-solved for text on the pen-70 ground, always raw
   // values (no alias posture). The light-mode inverse is a light color (dark-ramp
   // construction) so it must differ from the light-mode link; the custom seed must move
   // the inverse with it.
   for (const mode of ['light', 'dark'] as const) {
-    const inv = (figma[mode] as any).link.inverse
-    ok(inv.enabled.$value.hex !== (figma[mode] as any).link.default.enabled.$value.hex,
+    const l = (figma[mode] as any).link
+    ok(l['inverse-0'].$value.hex !== l['default-0'].$value.hex,
       `${mode} inverse link should differ from the link on the same seed`)
   }
-  ok((figma.light as any).link.inverse.enabled.$value.hex !== (figma.dark as any).link.inverse.enabled.$value.hex,
+  ok((figma.light as any).link['inverse-0'].$value.hex !== (figma.dark as any).link['inverse-0'].$value.hex,
     'inverse link should differ across modes (each mode solves against its own ground)')
-  ok((custom.light as any).link.inverse.enabled.$value.hex !== (figma.light as any).link.inverse.enabled.$value.hex,
+  ok((custom.light as any).link['inverse-0'].$value.hex !== (figma.light as any).link['inverse-0'].$value.hex,
     'a custom link seed should re-seed the inverse trio too')
 }
 
@@ -229,23 +232,24 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
   }
 }
 
-// LEAF-ROUTING coverage: ramp leaves are flat in the family group (a nested band group
-// reappearing is the regression); the stamp state group nests.
+// LEAF-ROUTING coverage: every leaf is flat in its group (a nested band group or a stamp
+// group reappearing is the regression).
 {
   for (const mode of ['light', 'dark'] as const) {
     ok(!!(figma[mode] as any).neutral['paper-0'], `${mode}.neutral.paper-0 missing (flat home)`)
     ok(!(figma[mode] as any).neutral['paper']?.['100'], `${mode}.neutral has a BANDED paper/100 leaf (flatten regression)`)
     ok(!(figma[mode] as any).neutral['ink']?.['53-aa'], `${mode}.neutral has a BANDED ink/53-aa leaf (flatten regression)`)
-    ok(!!leaf((figma[mode] as any).brand, 'stamp-edge'), `${mode}.brand.cta/border missing (state home)`)
+    ok(!!leaf((figma[mode] as any).brand, 'stamp-edge')?.$type, `${mode}.brand.stamp-edge missing (flat home)`)
+    ok(!(figma[mode] as any).brand['stamp'], `${mode}.brand has a stamp group (the rows are flat)`)
   }
   const outline = themeToFigma(r, { secondary, secondaryStyle: 'outline', neutralLevel: 'default', signals })
   for (const mode of ['light', 'dark'] as const) {
     const sg = (outline[mode] as any)['brand-alt']
-    ok(leaf(sg, 'stamp-fill').$value.alpha === 0, `${mode} outline cta/enabled should be transparent`)
-    ok(!!leaf(sg, 'stamp-edge') && leaf(sg, 'stamp-edge').$value.alpha === 1, `${mode} outline stamp/edge should carry highlighter-26 (opaque)`)
-    ok(leaf(sg, 'stamp-edge').$value.hex === leaf(sg, 'highlighter-26').$value.hex, `${mode} outline stamp/edge != its highlighter-26`)
-    ok(leaf(sg, 'stamp-on').$value.hex === leaf(sg, 'pencil-47').$value.hex, `${mode} outline cta/on should be the family pencil-47`)
-    ok(!sg['stamp-fill'] || !sg['stamp-fill'].$type, `${mode} outline left a FLAT cta leaf (band regression)`)
+    ok(leaf(sg, 'stamp-0').$value.alpha === 0, `${mode} outline stamp-0 should be transparent`)
+    ok(!!leaf(sg, 'stamp-edge') && leaf(sg, 'stamp-edge').$value.alpha === 1, `${mode} outline stamp-edge should carry highlighter-26 (opaque)`)
+    ok(leaf(sg, 'stamp-edge').$value.hex === leaf(sg, 'highlighter-26').$value.hex, `${mode} outline stamp-edge != its highlighter-26`)
+    ok(leaf(sg, 'stamp-on').$value.hex === leaf(sg, 'pencil-47').$value.hex, `${mode} outline stamp-on should be the family pencil-47`)
+    ok(!sg['stamp'], `${mode} outline re-expression left a stamp group (the rows are flat)`)
   }
 }
 
@@ -307,4 +311,4 @@ ok(JSON.stringify(keyTree((figma.light as any).brand)) === JSON.stringify(keyTre
 }
 
 if (fails.length) { console.error('FAIL:\n' + fails.map(f => '  - ' + f).join('\n')); process.exit(1) }
-console.log('PASS — themeToFigma: the seven families, the link trios and the seed absolutes in the one grammar, light+dark, srgb components equal to the hex, spot hexes match, keys aligned across modes.')
+console.log('PASS — themeToFigma: the seven families, the six link rows and the seed absolutes in the one grammar, every leaf flat and no state word, light+dark, srgb components equal to the hex, spot hexes match, keys aligned across modes.')

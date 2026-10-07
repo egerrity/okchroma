@@ -34,9 +34,9 @@ import { COLOR_GROUP } from '../src/engine/tokenNames'
 export interface FlatTok { path: string; r: number; g: number; b: number; a?: number }
 
 // THE GROUP: every emitted path takes the color group as the final pass in toFlat().
-// ROLE_BANDS is the descope posture's visible set (a state-carrying role a designer binds;
-// everything else hides when descope is on).
-export const ROLE_BANDS = ['stamp/']
+// ROLE_BANDS is the descope posture's visible set: the leaf prefix of the five stamp rows,
+// flat in their family (a role a designer binds; everything else hides when descope is on).
+export const ROLE_BANDS = ['stamp-']
 const ROOT = `${COLOR_GROUP}/`
 export function registerPath(p: string): string {
   return p.startsWith(ROOT) ? p : ROOT + p

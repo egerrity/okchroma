@@ -192,7 +192,7 @@ function themeInput(name: string) {
 }
 
 // the demo's top-card matrix: every family × ID + the 11 stops + the cta pair (light mode).
-// Stop 8 renders AS a stroke (it's the boundary stop); fill cells carry the family's stamp/edge.
+// Stop 8 renders AS a stroke (it's the boundary stop); fill cells carry the family's stamp-edge.
 // Cells iterate the scale's ACTUAL stops — a stop change reshapes the grid instead of
 // throwing into updatePreview's catch.
 function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
@@ -248,23 +248,23 @@ function renderMatrix(t: ResolvedTheme, nScale: GeneratedScale) {
       const pencil9 = hx(st(9))
       const c8 = st(8)
       const rgb = `${Math.round(c8.r * 255)},${Math.round(c8.g * 255)},${Math.round(c8.b * 255)}`
-      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${pencil9}" title="stamp/fill (outline)">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${pencil9};background:rgba(${rgb},0.09)" title="stamp/fill-hover (outline)">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${pencil9};background:rgba(${rgb},0.18)" title="stamp/fill-pressed (outline)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${pencil9}" title="stamp-0 (outline)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${pencil9};background:rgba(${rgb},0.09)" title="stamp-1 (outline)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="border:1.5px solid ${s8};color:${pencil9};background:rgba(${rgb},0.18)" title="stamp-2 (outline)">Aa</div>`)
     } else if (row.escape) {
       // the neutral cta escape: the fill trio previews the brand-neutral's pen register
       const cp = contrastProfile === 'apca' ? ('apca' as const) : undefined
       const esc = escapeCtaFamily(nScale, 'light', cp)
       const on = pole(esc.onFillIsWhite)
-      cells.push(`<div class="mx-aa" style="background:${hx(esc.cta)};color:${on}" title="stamp/fill (neutral escape)">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="background:${hx(esc.ctaHover)};color:${on}" title="stamp/fill-hover (neutral escape)">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="background:${hx(esc.ctaPressed)};color:${on}" title="stamp/fill-pressed (neutral escape)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(esc.cta)};color:${on}" title="stamp-0 (neutral escape)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(esc.ctaHover)};color:${on}" title="stamp-1 (neutral escape)">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(esc.ctaPressed)};color:${on}" title="stamp-2 (neutral escape)">Aa</div>`)
     } else {
       // filled cta cells carry NO stroke (filled is filled); only outline shows its ring
       const on = pole(row.scale.onFillTextIsWhite)
-      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.cta)};color:${on}" title="stamp/fill">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaHover)};color:${on}" title="stamp/fill-hover">Aa</div>`)
-      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaPressed)};color:${on}" title="stamp/fill-pressed">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.cta)};color:${on}" title="stamp-0">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaHover)};color:${on}" title="stamp-1">Aa</div>`)
+      cells.push(`<div class="mx-aa" style="background:${hx(row.scale.ctaPressed)};color:${on}" title="stamp-2">Aa</div>`)
     }
     // (no text-cta columns: the text-style cta is the pen stops, already rendered as
     // scale cells above.)

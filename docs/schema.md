@@ -30,21 +30,24 @@ the groups.
 neutral
 ├─ paper-0, paper-1, paper-3, paper-5, chalk-8, chalk-11, chalk-15, chalk-20,
 │  highlighter-26, pencil-47, pen-58, pen-70, pen-100
-└─ stamp: fill, fill-hover, fill-pressed, edge, on
+└─ stamp-0, stamp-1, stamp-2, stamp-edge, stamp-on
 brand, brand-alt, critical, warning, positive, info
 ├─ the same eleven stops
-└─ stamp: fill, fill-hover, fill-pressed, edge, on
+└─ stamp-0, stamp-1, stamp-2, stamp-edge, stamp-on
 link
-├─ default: enabled, hover, pressed        text on the papers
-└─ inverse: enabled, hover, pressed        text on the pen ground
+├─ default-0, default-1, default-2        text on the papers
+└─ inverse-0, inverse-1, inverse-2        text on the pen ground
 absolute
 └─ brand, brand-alt                        the seeds as given, reference values
 ```
 
-A path joined with hyphens is the CSS custom property (`brand.stamp.fill` is
-`--brand-stamp-fill`, `neutral.paper-0` is `--neutral-paper-0`, `link.default.enabled`
-is `--link-default-enabled`); joined with slashes it is the Figma variable
-(`brand/stamp/fill`). One grammar, every output.
+Every path is a group and one word, and the word is a position: a band at a lightness,
+the stamp at a step (`stamp-0` the fill at rest, `stamp-1` one step from rest, `stamp-2`
+two steps), a link posture at a step. No name carries a state word; a semantic layer names
+the states and aliases the steps. A path joined with hyphens is the CSS custom property
+(`brand.stamp-0` is `--brand-stamp-0`, `neutral.paper-0` is `--neutral-paper-0`,
+`link.default-0` is `--link-default-0`); joined with slashes it is the Figma variable
+(`brand/stamp-0`). One grammar, every output.
 
 ## A token
 
@@ -97,10 +100,10 @@ color
 ```
 
 Every path gains the group as its first segment and nothing else changes:
-`color.brand.stamp.fill`. An alias is written with it (`{color.brand.pencil-47}`), so it
+`color.brand.stamp-0`. An alias is written with it (`{color.brand.pencil-47}`), so it
 still resolves inside the same document. Joined with slashes the path is the variable the
-extended plugin writes (`color/brand/stamp/fill`). The CSS custom property never carries
-the group: it stays `--brand-stamp-fill`. A description does not name the group either.
+extended plugin writes (`color/brand/stamp-0`). The CSS custom property never carries
+the group: it stays `--brand-stamp-0`. A description does not name the group either.
 
 The group is one segment, lower-case words and digits joined by hyphens; anything else
 throws. Without the option the grammar's groups sit at the document root.

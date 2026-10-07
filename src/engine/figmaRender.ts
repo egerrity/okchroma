@@ -1,11 +1,11 @@
 // The Figma tree: one group tree per mode, every leaf a color token in the DTCG shape,
-// every path spelled through the one grammar in tokenNames.ts (`brand/stamp/fill`,
-// `neutral/paper-0`, `link/default/enabled`, `absolute/brand`). The extended plugin
-// flattens this tree into variable paths under the color group; the leaf order is the
-// panel order.
+// every path spelled through the one grammar in tokenNames.ts (`brand/stamp-0`,
+// `neutral/paper-0`, `link/default-0`, `absolute/brand`). The extended plugin flattens
+// this tree into variable paths under the color group; the leaf order is the panel
+// order.
 import { toHex, ctaNeedsBorder, pageStopFor, ctaBorderRung, OFFSET_ALPHAS, type OffsetRung } from './cssRender'
 import { srgbEmitChannels } from './colorMath'
-import { stopTokenName, tokenOrder, STAMP_FILL, STAMP_FILL_HOVER, STAMP_FILL_PRESSED, STAMP_EDGE, STAMP_ON, STAMP_STATE_LEAVES, PAPER_0, PEN_100, LINK_GROUP, LINK_STATES, ABSOLUTE_GROUP, type LinkPosture, type LinkState } from './tokenNames'
+import { stopTokenName, tokenOrder, STAMP_FILL, STAMP_FILL_HOVER, STAMP_FILL_PRESSED, STAMP_EDGE, STAMP_ON, PAPER_0, PEN_100, LINK_GROUP, LINK_STATES, linkLeaf, ABSOLUTE_GROUP, type LinkPosture, type LinkState } from './tokenNames'
 import { CSS_FAMILY } from './tokenDescriptions'
 import { generateNeutralScale, type GeneratedScale, type ColorStop, type NeutralLevel, type ContrastProfile } from './colorEngine'
 import { OUTLINE_HOVER_ALPHA, OUTLINE_PRESSED_ALPHA, SOFT_ON_CTA_ALPHA, softOnCtaPasses, escapeCtaFamily, resolveLinkTrio, resolveLinkInverseTrio, type ResolvedBrand, type SecondaryStyle } from './resolve'
@@ -49,34 +49,19 @@ function colorFromHexString(hex: string): FigmaColorToken {
   return color(parseInt(h.slice(0, 2), 16) / 255, parseInt(h.slice(2, 4), 16) / 255, parseInt(h.slice(4, 6), 16) / 255)
 }
 
-// Leaf shape: ramp tokens sit flat in the family group (paper-1, chalk-8, highlighter-26,
-// pencil-47, the poles); only the stamp/ state group nests. Its table lives in
-// tokenNames.ts, the one flat-to-nested source every consumer rides.
-function bandedLeaf(flat: string): string {
-  return STAMP_STATE_LEAVES[flat] ?? flat
-}
+// Leaf shape: every leaf sits flat in its group, one word (paper-1, chalk-8,
+// highlighter-26, pencil-47, the poles, stamp-0, stamp-edge; default-0 in the link
+// group). No group nests below the family.
 // Order-aware entries for a FigmaGroup: JS enumerates integer-index string keys ascending,
-// before any string keys, regardless of insertion order. No leaf is a bare-digit key
-// today, but a consumer that walks a group for panel-order-sensitive output uses this
-// rule so the shape does not depend on that incidental fact.
+// before any string keys, regardless of insertion order. No leaf is a bare-digit key (the
+// stamp steps are hyphenated words), but a consumer that walks a group for
+// panel-order-sensitive output uses this rule so the shape does not depend on that fact.
 export function groupEntries(g: FigmaGroup): Array<[string, FigmaLeaf | FigmaGroup]> {
   const entries = Object.entries(g)
   const digitLeading = (k: string) => /^\d/.test(k)
   if (entries.length > 1 && entries.every(([k]) => digitLeading(k)))
     return entries.sort((a, b) => parseInt(b[0], 10) - parseInt(a[0], 10))
   return entries
-}
-
-// set a token at its banded home inside a family group (used by rampGroup and by the
-// outline and escape re-expressions, so every write lands in the same shape)
-export function putLeaf(g: FigmaGroup, flat: string, tok: FigmaLeaf): void {
-  const path = bandedLeaf(flat).split('/')
-  let cur = g
-  for (const seg of path.slice(0, -1)) {
-    if (!(seg in cur) || '$type' in (cur[seg] as FigmaColorToken | FigmaGroup)) cur[seg] = {}
-    cur = cur[seg] as FigmaGroup
-  }
-  cur[path[path.length - 1]] = tok
 }
 
 function rampGroup(
@@ -93,18 +78,18 @@ function rampGroup(
   const g: FigmaGroup = {}
   const leaves = stops.map(s => ({ name: stopTokenName(s.stop), tok: colorFromStop(s) }))
     .sort((a, b) => tokenOrder(a.name) - tokenOrder(b.name))
-  for (const l of leaves) putLeaf(g, l.name, l.tok)
-  // the stamp family: states, never options. Engine internals keep the cta spelling; the
-  // emitted word is stamp.
-  if (extra?.cta) putLeaf(g, STAMP_FILL, colorFromStop(extra.cta))
-  if (extra?.ctaHover) putLeaf(g, STAMP_FILL_HOVER, colorFromStop(extra.ctaHover))
-  if (extra?.ctaPressed) putLeaf(g, STAMP_FILL_PRESSED, colorFromStop(extra.ctaPressed))
+  for (const l of leaves) g[l.name] = l.tok
+  // the stamp rows: the fill at rest and at one and two steps, the edge, the on-text.
+  // Engine internals keep the cta and state spelling; the emitted word is the position.
+  if (extra?.cta) g[STAMP_FILL] = colorFromStop(extra.cta)
+  if (extra?.ctaHover) g[STAMP_FILL_HOVER] = colorFromStop(extra.ctaHover)
+  if (extra?.ctaPressed) g[STAMP_FILL_PRESSED] = colorFromStop(extra.ctaPressed)
   // the edge pairs with the fill trio: the safety stroke when the fill would vibrate
   // against the page, else transparent. The rule lives in cssRender.ctaNeedsBorder and the
   // rung in cssRender.ctaBorderRung, so both emitters decide identically. The outline
   // secondary overrides this with its own highlighter-26 unconditionally.
-  if (extra?.cta) putLeaf(g, STAMP_EDGE, extra.ctaBorder ?? TRANSPARENT_TOKEN)
-  putLeaf(g, STAMP_ON, pole(onFillWhite))
+  if (extra?.cta) g[STAMP_EDGE] = extra.ctaBorder ?? TRANSPARENT_TOKEN
+  g[STAMP_ON] = pole(onFillWhite)
   return g
 }
 
@@ -190,22 +175,22 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     if (input.secondaryStyle === 'outline' && input.secondary) {
       const s8 = secondary[mode].find(s => s.stop === 8)
       const s9 = secondary[mode].find(s => s.stop === 9)
-      putLeaf(secondaryGroup, STAMP_FILL, TRANSPARENT_TOKEN)
+      secondaryGroup[STAMP_FILL] = TRANSPARENT_TOKEN
       if (s8) {
         const e = srgbEmitChannels(s8)
-        putLeaf(secondaryGroup, STAMP_FILL_HOVER, color(e.r, e.g, e.b, OUTLINE_HOVER_ALPHA))
-        putLeaf(secondaryGroup, STAMP_FILL_PRESSED, color(e.r, e.g, e.b, OUTLINE_PRESSED_ALPHA))
-        putLeaf(secondaryGroup, STAMP_EDGE, colorFromStop(s8))
+        secondaryGroup[STAMP_FILL_HOVER] = color(e.r, e.g, e.b, OUTLINE_HOVER_ALPHA)
+        secondaryGroup[STAMP_FILL_PRESSED] = color(e.r, e.g, e.b, OUTLINE_PRESSED_ALPHA)
+        secondaryGroup[STAMP_EDGE] = colorFromStop(s8)
       }
       // the on-text is the family's pencil-47, not a pole; the pen stops stay untouched
-      if (s9) putLeaf(secondaryGroup, STAMP_ON, colorFromStop(s9))
+      if (s9) secondaryGroup[STAMP_ON] = colorFromStop(s9)
     }
     // the soft on-text, the quiet-fill rule (C47): a low-hierarchy fill's button text is
     // the pole at SOFT_ON_CTA_ALPHA, composited by the consumer over the fill's current
     // state. The carriers mirror cssRender: the neutral unconditionally, and every
     // non-outline secondary wherever softOnCtaPasses keeps the composite over the text bar
     // on every fill state. Loud fills keep the solid pole.
-    const softOnCta = (g: FigmaGroup, white: boolean) => putLeaf(g, STAMP_ON, pole(white, SOFT_ON_CTA_ALPHA[mode]))
+    const softOnCta = (g: FigmaGroup, white: boolean) => { g[STAMP_ON] = pole(white, SOFT_ON_CTA_ALPHA[mode]) }
     softOnCta(neutralGroup, mode === 'light' ? nScale.onFillTextIsWhite : nScale.onFillTextIsWhiteDark)
     if (input.secondary && input.secondaryStyle !== 'outline' && softOnCtaPasses(input.secondary, mode))
       softOnCta(secondaryGroup, mode === 'light' ? secondaryOnFillLight : secondaryOnFillDark)
@@ -216,15 +201,15 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
     const esc = input.ctaEscape ? escapeCtaFamily(nScale, mode, input.contrastProfile) : null
     if (esc) {
       for (const g of input.secondary ? [brandGroup] : [brandGroup, secondaryGroup]) {
-        putLeaf(g, STAMP_FILL, colorFromStop(esc.cta))
-        putLeaf(g, STAMP_FILL_HOVER, colorFromStop(esc.ctaHover))
-        putLeaf(g, STAMP_FILL_PRESSED, colorFromStop(esc.ctaPressed))
-        putLeaf(g, STAMP_ON, pole(esc.onFillIsWhite))
+        g[STAMP_FILL] = colorFromStop(esc.cta)
+        g[STAMP_FILL_HOVER] = colorFromStop(esc.ctaHover)
+        g[STAMP_FILL_PRESSED] = colorFromStop(esc.ctaPressed)
+        g[STAMP_ON] = pole(esc.onFillIsWhite)
       }
     }
     // the system link: one trio per theme for text on the papers (a custom seed's own
     // resolution, else the primary's pen stops verbatim, value-equal to what the plugins
-    // alias) and one for text on the pen ground
+    // alias) and one for text on the pen ground; each row is the posture at a step
     const scaleTextAt = (n: number) => {
       const s = scale[mode].find(x => x.stop === n)
       if (!s) throw new Error(`themeToFigma link: the brand scale has no pen stop ${n}`)
@@ -236,7 +221,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
           ? (mode === 'light' ? [lt.link, lt.linkHover, lt.linkPressed] : [lt.linkDark, lt.linkHoverDark, lt.linkPressedDark])
           : [scaleTextAt(9), scaleTextAt(10), scaleTextAt(11)])
         : (mode === 'light' ? [invLt.link, invLt.linkHover, invLt.linkPressed] : [invLt.linkDark, invLt.linkHoverDark, invLt.linkPressedDark])
-      return Object.fromEntries(LINK_STATES.map((state: LinkState, i) => [state, colorFromStop(t[i])]))
+      return Object.fromEntries(LINK_STATES.map((state: LinkState, i) => [linkLeaf(posture, state), colorFromStop(t[i])]))
     }
     const g: FigmaGroup = {
       [CSS_FAMILY.neutral]: neutralGroup,
@@ -253,7 +238,7 @@ export function themeToFigma(r: ResolvedBrand, input: ThemeInput): { light: Figm
         ctaFamily(sig.scale, mode, role),
       )
     }
-    g[LINK_GROUP] = { default: trio('default'), inverse: trio('inverse') }
+    g[LINK_GROUP] = { ...trio('default'), ...trio('inverse') }
     // the seed absolutes: the inputs as given, reference values never used as UI colors.
     // The alt mirrors the brand's seed when no secondary ramp exists.
     g[ABSOLUTE_GROUP] = {

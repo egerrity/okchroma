@@ -148,13 +148,13 @@ interface Body {
 // ── the shared family scale — per-STOP text, the title line carries the family,
 // TINT carries the per-family theming half
 const PAPER: Body = { req: 'backgrounds, inverted text', theming: f => TINT[f], collides: true, ground: groundLine('paper') }
-// "decorative borders", not "edges": edge is a label word (stamp/edge) and a label word in
+// "decorative borders", not "edges": edge is a label word (stamp-edge) and a label word in
 // a foreign row's body floods that word's search results. A row may carry a label word
 // only when it is in its own path.
 const CHALK: Body = { req: 'decorative borders, inverted text, illos, signal hierarchy', theming: f => TINT[f], collides: true, ground: groundLine('chalk') }
 const solved = (f: Family) => `${TINT[f]}; re-solved to clear its floor`
-// (Leaf keys are flat, paper-1 never paper/99, except the stamp/ state group, keyed by
-// its nested spelling.) The overlay rows are parked: nothing emits them, so these bodies
+// (Leaf keys are flat, paper-1 never paper/99; the stamp rows are flat beside the bands.)
+// The overlay rows are parked: nothing emits them, so these bodies
 // are dormant and kept for the comeback. Translucent twins of the papers, solved so the
 // reading holds on the neutral papers; anywhere else the backdrop decides, stated because
 // it is the token's conformance boundary.
@@ -182,17 +182,18 @@ const SCALE: Record<string, Body> = {
   // ("heavy-emphasis": "high" and "low" are plane words in the community plugin and
   // "strong" carries "on")
   'pen-70': { req: 'heavy-emphasis text, inverted backgrounds', contrast: AA_BODY, claim: claimOf('pen'), theming: solved, collides: true },
-  // the stamp family. "CTA" stays in these bodies on purpose: it is not a token label, so
+  // the stamp rows, each a position: the fill at rest and at one and two steps, the edge,
+  // the on-text. No body names a state; a consumer's semantic layer names the states and
+  // aliases the steps. "CTA" stays in these bodies on purpose: it is not a token label, so
   // it floods nothing, and a designer's "cta" query lands on these rows.
   // the usage lines are the owner's guidance, for the document rendering: the fill is
   // misused as a standalone color in the wild
-  'stamp/fill': { req: 'CTAs', theming: f => `fully re-solved per theme and family${COLOR_WORD[f]}`,
-    use: 'primary button fills; optional for avatars, badges and other elements that carry text. Not a standalone color: it has no contrast guarantee of its own, only its on-text has one. Use it alone or with its hover and pressed states. Always bordered with its edge' },
-  'stamp/fill-hover': { req: 'CTA pointer-over state', theming: f => `follows its rest fill${COLOR_WORD[f]}`, use: 'the pointer-over state of the fill, with the fill; for nothing else. Always bordered with the edge' },
-  'stamp/fill-pressed': { req: 'CTA pressed state', theming: f => `follows its rest fill${COLOR_WORD[f]}`, use: 'the pressed state of the fill, with the fill; for nothing else. Always bordered with the edge' },
-  'stamp/edge': { req: 'min APCA visibility', theming: f => `draws for CTAs that sit close to the page; strength per family tier${COLOR_WORD[f]}`, use: 'the border of the fill and its states, always rendered with them and never without them (it resolves to transparent unless the fill sits close to the page); for nothing else' },
-  // ("fill" is a label word and foreign here)
-  'stamp/on': { req: 'text over the CTA color', contrast: `${AA_BODY} over its CTA`, theming: f => `whichever pole passes; quiet CTAs take the soft pole${COLOR_WORD[f]}`, use: 'the only text color over the fill; never elsewhere' },
+  'stamp-0': { req: 'CTAs, the fill at rest', theming: f => `fully re-solved per theme and family${COLOR_WORD[f]}`,
+    use: 'primary button fills; optional for avatars, badges and other elements that carry text. Not a standalone color: it has no contrast guarantee of its own, only its on-text has one. Use it alone or with the two steps above it. Always bordered with its edge' },
+  'stamp-1': { req: 'CTAs, the fill one step from rest', theming: f => `follows the fill at rest${COLOR_WORD[f]}`, use: 'the fill one step from rest, with the fill at rest; for nothing else. Always bordered with the edge' },
+  'stamp-2': { req: 'CTAs, the fill two steps from rest', theming: f => `follows the fill at rest${COLOR_WORD[f]}`, use: 'the fill two steps from rest, with the fill at rest; for nothing else. Always bordered with the edge' },
+  'stamp-edge': { req: 'min APCA visibility', theming: f => `draws for CTAs that sit close to the page; strength per family tier${COLOR_WORD[f]}`, use: 'the border of the fill at every step, always rendered with it and never without it (it resolves to transparent unless the fill sits close to the page); for nothing else' },
+  'stamp-on': { req: 'text over the CTA color', contrast: `${AA_BODY} over its CTA`, theming: f => `whichever pole passes; quiet CTAs take the soft pole${COLOR_WORD[f]}`, use: 'the only text color over the fill at every step; never elsewhere' },
 }
 
 // ── rows only the neutral carries ────────────────────────────────────────────
@@ -204,19 +205,20 @@ const NEUTRAL_ONLY: Record<string, Body> = {
   'pen-100': { req: 'max-emphasis text', contrast: AA_BODY, claim: () => `${AA_BODY} on every paper and chalk of every family` },
 }
 
-// ── the link trios and the seed absolutes, keyed by full path ──────────────
+// ── the link rows and the seed absolutes, keyed by full path ───────────────
 // ("link" is legal in these bodies: it is the rows' own path word. "pen" stays out: it is
 // a label word elsewhere and would flood that search; "inverted backgrounds" is the
-// established phrasing for that ground.)
-const LINK = (state: string, contrast: string): Body => ({
-  req: 'links' + state,
+// established phrasing for that ground.) A link row is its posture at a step: the body
+// says the step, never a state.
+const LINK = (step: string, contrast: string): Body => ({
+  req: 'links' + step,
   contrast,
   claim: () => `${contrast} on every paper of the neutral`,
   theming: 'rides the theme’s link color; custom seed re-solves; overridable per theme',
   use: 'hyperlinks; not a text-style CTA, which is the text stops read as states',
 })
-const LINK_INVERSE = (state: string, contrast: string): Body => ({
-  req: 'links over inverted backgrounds' + state,
+const LINK_INVERSE = (step: string, contrast: string): Body => ({
+  req: 'links over inverted backgrounds' + step,
   contrast,
   claim: () => `${contrast} on any family's pen-70`,
   theming: 'same seed as the link, re-solved for inverted backgrounds; overridable per theme',
@@ -226,12 +228,12 @@ const LINK_INVERSE = (state: string, contrast: string): Body => ({
 const SYSTEM: Record<string, Body> = {
   'absolute/brand': { req: 'identity seed reference', theming: 'the theme’s own input, as given', use: 'a reference value (logos, swatches of the input); never a UI color, it carries no contrast guarantee' },
   'absolute/brand-alt': { req: 'identity seed reference', theming: 'the theme’s paired input, as given', use: 'a reference value (logos, swatches of the input); never a UI color, it carries no contrast guarantee' },
-  'link/default/enabled': LINK('', AA_BODY),
-  'link/default/hover': LINK(' pointer-over', AA_BODY),
-  'link/default/pressed': LINK(' pressed', AA_BODY),
-  'link/inverse/enabled': LINK_INVERSE('', AA_BODY),
-  'link/inverse/hover': LINK_INVERSE(' pointer-over', AA_BODY),
-  'link/inverse/pressed': LINK_INVERSE(' pressed', AA_BODY),
+  'link/default-0': LINK('', AA_BODY),
+  'link/default-1': LINK(', one step from rest', AA_BODY),
+  'link/default-2': LINK(', two steps from rest', AA_BODY),
+  'link/inverse-0': LINK_INVERSE('', AA_BODY),
+  'link/inverse-1': LINK_INVERSE(', one step from rest', AA_BODY),
+  'link/inverse-2': LINK_INVERSE(', two steps from rest', AA_BODY),
 }
 
 // Both plugins' user-facing path shapes: the extended plugin writes the grammar

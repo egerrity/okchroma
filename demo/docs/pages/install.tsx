@@ -85,8 +85,8 @@ const css = brandCss(
 const tokens = themeTokens({ slug: 'acme', brand: theme.themed, secondary: theme.secondary?.scale ?? null, secondaryStyle: theme.secondary?.style, neutralH })
 const { light, dark } = tokensToDtcg(tokens)
 // two Design Tokens Format Module 2025.10 documents on identical paths:
-// { neutral: { 'paper-0': {...}, ..., stamp: { fill, 'fill-hover', 'fill-pressed', edge, on } }, brand, 'brand-alt',
-//   critical, warning, positive, info, link: { default: { enabled, hover, pressed }, inverse: {...} }, absolute: { brand, 'brand-alt' } }
+// { neutral: { 'paper-0': {...}, ..., 'stamp-0', 'stamp-1', 'stamp-2', 'stamp-edge', 'stamp-on' }, brand, 'brand-alt',
+//   critical, warning, positive, info, link: { 'default-0', 'default-1', 'default-2', 'inverse-0', ... }, absolute: { brand, 'brand-alt' } }
 // every token: { $type: 'color', $value: { colorSpace: 'srgb', components, alpha, hex } | '{brand.pencil-47}', $description }`}</Pre>
       <P>
         One document per mode, every primitive once, with the same description the Figma variable carries. A path joined

@@ -29,15 +29,16 @@ from the seed.
 
 - `color/neutral/*`: `paper-0` to `pen-100` in ladder order, the stamp rows.
 - `color/brand/*` and, when the file carries a secondary, `color/brand-alt/*`: the eleven
-  stops and `stamp/fill`, `stamp/fill-hover`, `stamp/fill-pressed`, `stamp/edge`,
-  `stamp/on`. The brand's name lives on the extension; the paths stay generic, so a designer
+  stops and `stamp-0`, `stamp-1`, `stamp-2`, `stamp-edge`, `stamp-on` (the fill at rest
+  and at one and two steps, the edge, the text; the names are positions, a semantic layer
+  names the states). The brand's name lives on the extension; the paths stay generic, so a designer
   binds `color/brand/paper-1` once and re-themes by switching the extension.
 - `color/critical/*`, `color/warning/*`, `color/positive/*`, `color/info/*`: the four
   signals under their role names, canonical in the base; a brand's collision-shifted signal
   becomes that brand's override.
-- `color/link/default/*` and `color/link/inverse/*`: the link trio for text on the papers
-  and the trio re-solved for text on the pen ground, each with `enabled`, `hover`,
-  `pressed`.
+- `color/link/default-0` to `default-2` and `color/link/inverse-0` to `inverse-2`: the
+  link trio for text on the papers and the trio re-solved for text on the pen ground, each
+  the posture at rest, one step from rest, two steps.
 - `color/absolute/brand` and `color/absolute/brand-alt`: the seeds as given, reference
   values.
 
@@ -47,8 +48,8 @@ base theme" overwrites it. The name does not mark them. The group is shared: han
 color roles (planes, shadows, a scrim) can sit under `color/` beside these rows, and the
 plugin knows its own rows by the identity it stamps on each, never by the name.
 
-Every value is a raw write: `stamp/on` is the pole (or the pole at alpha on a quiet fill),
-`stamp/edge` the pole at the family's rung or transparent. Nothing aliases a system row.
+Every value is a raw write: `stamp-on` is the pole (or the pole at alpha on a quiet fill),
+`stamp-edge` the pole at the family's rung or transparent. Nothing aliases a system row.
 A file applied by an earlier version keeps its `utility/` shelf, its planes, its
 `base/alpha/*` rows and its absolute black and white as orphans, under the names they had;
 the plugin never deletes or moves a variable it no longer writes, and a live row that

@@ -2,7 +2,7 @@
 
 // zero-import text modules — safe here, drag nothing of the engine into the sandbox bundle
 import { describeToken } from '../src/engine/tokenDescriptions'
-import { STAMP_LEAF } from '../src/engine/tokenNames'
+import { STAMP_FILL, STAMP_EDGE, STAMP_ON } from '../src/engine/tokenNames'
 
 figma.showUI(__html__, { width: 720, height: 640, title: 'OKChroma' })
 
@@ -76,6 +76,24 @@ const profileStamp = (profile: Profile) =>
 // up, so the direct map.get never wrongly hits a stale same-name variable. Any
 // renumber must keep that ascending order.
 const RENAMED_LEAVES: Array<[string, string]> = [
+  // ── THE POSITIONS: no state word in a row's name. The five stamp rows sit flat in the
+  // family (stamp/fill → stamp-0, the fill at rest; fill-hover → stamp-1, one step; fill-
+  // pressed → stamp-2, two steps; edge → stamp-edge; on → stamp-on) and the link states
+  // fold into the posture (default/enabled → default-0, hover → default-1, pressed →
+  // default-2; the same for inverse). Names only, same values. These entries are exactly
+  // what a file applied before the change holds as its real variables; every older
+  // vintage below re-targets straight at the same homes (one hop).
+  ['stamp/fill', 'stamp-0'],
+  ['stamp/fill-hover', 'stamp-1'],
+  ['stamp/fill-pressed', 'stamp-2'],
+  ['stamp/edge', 'stamp-edge'],
+  ['stamp/on', 'stamp-on'],
+  ['link/default/enabled', 'link/default-0'],
+  ['link/default/hover', 'link/default-1'],
+  ['link/default/pressed', 'link/default-2'],
+  ['link/inverse/enabled', 'link/inverse-0'],
+  ['link/inverse/hover', 'link/inverse-1'],
+  ['link/inverse/pressed', 'link/inverse-2'],
   // ── THE CHALK/HIGHLIGHTER RENAME: the tinted band takes the chalk word and the
   // 3:1 stop takes highlighter, the word that also names the translucent state rungs
   // seeded from it. Names only, same indices, same values. CURRENT-name entries
@@ -123,16 +141,14 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // Name only, same index, same values; every older mark-vintage source below
   // already points straight at highlighter-26 (the one-hop rule).
   ['mark-74', 'highlighter-26'],
-  // link nesting (the instruments round): the flat trio + the inverse leaves fold
-  // into state subgroups — link/{default,inverse}/{enabled,hover,pressed}. The rest
-  // leaf is enabled (nesting needs a rest leaf; default is the group word). Every
-  // vintage link source below retargets straight at the new homes (one hop).
-  ['link/default', 'link/default/enabled'],
-  ['link/hover', 'link/default/hover'],
-  ['link/pressed', 'link/default/pressed'],
-  ['link/inverse', 'link/inverse/enabled'],
-  ['link/inverse-hover', 'link/inverse/hover'],
-  ['link/inverse-pressed', 'link/inverse/pressed'],
+  // the instruments-round link spellings (the flat trio and the inverse three): the
+  // posture-at-a-step rows find them (one hop).
+  ['link/default', 'link/default-0'],
+  ['link/hover', 'link/default-1'],
+  ['link/pressed', 'link/default-2'],
+  ['link/inverse', 'link/inverse-0'],
+  ['link/inverse-hover', 'link/inverse-1'],
+  ['link/inverse-pressed', 'link/inverse-2'],
   // the offset ladder's word (the instruments round): direction relative to the page
   // background, two-digit rungs harmonizing with shadow-04/08/12. The vintage
   // offset-XX sources below retarget straight at the new homes (one hop).
@@ -140,34 +156,33 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['alpha/008', 'alpha/away-from-bg/08'],
   ['alpha/016', 'alpha/away-from-bg/16'],
   // solid → stamp (the instruments round): the solid-rename generation is a vintage;
-  // the cta-era sources below already re-target straight to stamp/ (one hop).
-  ['solid/fill', 'stamp/fill'],
-  ['solid/fill-hover', 'stamp/fill-hover'],
-  ['solid/fill-pressed', 'stamp/fill-pressed'],
-  ['solid/edge', 'stamp/edge'],
-  ['solid/on', 'stamp/on'],
+  // the cta-era sources below already re-target straight at the stamp rows (one hop).
+  ['solid/fill', 'stamp-0'],
+  ['solid/fill-hover', 'stamp-1'],
+  ['solid/fill-pressed', 'stamp-2'],
+  ['solid/edge', 'stamp-edge'],
+  ['solid/on', 'stamp-on'],
   // ── LINK-INVERSE REGROUP: the inverse trio lives INSIDE the link group; a file
   // applied under the short-lived solo link-inverse group build holds these
   // spellings. Multi-segment leaves — the suffix match carries the group word, so
-  // system/link/inverse finds a file's system/link-inverse/default and renames it
+  // system/link/inverse-0 finds a file's system/link-inverse/default and renames it
   // in place.
-  ['link-inverse/default', 'link/inverse/enabled'],
-  ['link-inverse/hover', 'link/inverse/hover'],
-  ['link-inverse/pressed', 'link/inverse/pressed'],
+  ['link-inverse/default', 'link/inverse-0'],
+  ['link-inverse/hover', 'link/inverse-1'],
+  ['link-inverse/pressed', 'link/inverse-2'],
   // ── SOLID RENAME + REGROUPS: the cta words → the solid/ state group
   // (fill/fill-hover/fill-pressed/edge/on); the paper overlays fold into the
   // overlay/ subgroup; planes sunken|base → dim|mid; scrim → abs-black-060; the
   // offset ladder drops its word (006/008/016). These entries must precede the
   // band-flattening batch below: they are exactly what a band-flattening-vintage
   // file holds as its real variables.
-  // link/enabled is that vintage's rest leaf; its home is the nested
-  // link/default/enabled (same word, one group deeper)
-  ['link/enabled', 'link/default/enabled'],
-  ['cta/enabled', 'stamp/fill'],
-  ['cta/hover', 'stamp/fill-hover'],
-  ['cta/pressed', 'stamp/fill-pressed'],
-  ['cta/border', 'stamp/edge'],
-  ['cta/on', 'stamp/on'],
+  // link/enabled is that vintage's rest leaf; its home is link/default-0
+  ['link/enabled', 'link/default-0'],
+  ['cta/enabled', 'stamp-0'],
+  ['cta/hover', 'stamp-1'],
+  ['cta/pressed', 'stamp-2'],
+  ['cta/border', 'stamp-edge'],
+  ['cta/on', 'stamp-on'],
   // the paper overlays are PARKED — nothing emits or refreshes paper-LL-overlay.
   // These entries consolidate every shipped spelling (the flat original and the
   // short-lived overlay/ subgroup build) onto the parked flat name, the cta-ink
@@ -193,8 +208,9 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['alpha/offset-16', 'alpha/away-from-bg/16'],
   // ── BAND FLATTENING: ramp leaves sit FLAT in the family group — paper-1, chalk-8,
   // highlighter-26, pencil-47 … (band word + hyphen + level, the engine's own token
-  // names). The band nesting (paper/99 …) is a retired vintage; only the state
-  // groups (stamp/, link/) nest. These entries MUST precede everything below:
+  // names). The band nesting (paper/99 …) is a retired vintage; the stamp rows are
+  // flat in the family too, and the link rows flat in the link group. These entries
+  // MUST precede everything below:
   // legacyCandidates tries entries in table order, and the banded spellings are
   // exactly what a Stage-B-era file holds as its real variables.
   ['paper/100', 'paper-0'],
@@ -269,11 +285,11 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['ink/53-r450', 'pencil-47'],
   ['ink/42-r650', 'pen-58'],
   ['ink/30-r700', 'pen-70'],
-  ['cta', 'stamp/fill'],
-  ['cta-hover', 'stamp/fill-hover'],
-  ['cta-pressed', 'stamp/fill-pressed'],
-  ['cta-border', 'stamp/edge'],
-  ['on-cta', 'stamp/on'],
+  ['cta', 'stamp-0'],
+  ['cta-hover', 'stamp-1'],
+  ['cta-pressed', 'stamp-2'],
+  ['cta-border', 'stamp-edge'],
+  ['on-cta', 'stamp-on'],
   ['on-highlight', 'highlight/on'],
   // cta-ink is DEAD (the trio was pure aliases onto the pen stops; the band
   // flattening deleted it). These entries keep their RETIRED banded homes on
@@ -293,7 +309,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   // ink/10 (the between stop, C49); the Stage-B batch above resolves
   // pencil-47 off such a file's own ink/9 FIRST, so this entry only fires once
   // that candidate is absent — it never steals a real between-stop row.
-  ['cta-stroke', 'stamp/edge'],
+  ['cta-stroke', 'stamp-edge'],
   ['ink/10', 'pencil-47'],
   ['ink-11', 'pencil-47'],
   ['ink-12', 'pen-70'],
@@ -306,8 +322,8 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['blue-7eb5fb', 'cyan-side-7eb5fb'],
   // cta semantic rename (states, never options), retargeted to the stamp state
   // homes; no cta-3 — the numbered vintage had no pressed state.
-  ['cta-1', 'stamp/fill'],
-  ['cta-2', 'stamp/fill-hover'],
+  ['cta-1', 'stamp-0'],
+  ['cta-2', 'stamp-1'],
   // stop-3 rename (the elevation round) retargeted to its final flat home — it is a
   // surface plane in both themes. Pure relabel, same color.
   ['wash-3', 'paper-5'],
@@ -347,9 +363,9 @@ const RENAMED_LEAVES: Array<[string, string]> = [
   ['pop', 'surface/high'],
   ['transparent', 'alpha/transparent'],
   ['scrim', 'alpha/abs-black-060'],
-  ['link', 'link/default/enabled'],
-  ['link-hover', 'link/default/hover'],
-  ['link-pressed', 'link/default/pressed'],
+  ['link', 'link/default-0'],
+  ['link-hover', 'link/default-1'],
+  ['link-pressed', 'link/default-2'],
 ]
 // Group renames (old path prefix → new), migrated in place like the leaves.
 // The THEME groups carry ROLE names (info, critical, …) — signals are the
@@ -361,7 +377,7 @@ const RENAMED_LEAVES: Array<[string, string]> = [
 // info-color→blue→info table would strand pre-C17 files on the middle name).
 // the offset ladder's rung alphas, keyed by row name (mirrors plugin-ext/code.ts —
 // duplicated by the same sandbox rule: an import from cssRender would drag the engine
-// into this bundle). Used by the stamp/edge router to turn a leaf's own alpha into
+// into this bundle). Used by the stamp-edge router to turn a leaf's own alpha into
 // its system/alpha row.
 const RUNG_ALPHAS: Record<string, number> = { 'away-from-bg/06': 0.06, 'away-from-bg/08': 0.08, 'away-from-bg/16': 0.16 }
 
@@ -715,13 +731,13 @@ figma.ui.onmessage = async (msg) => {
         { path: 'system/alpha/transparent', light: { r: 1, g: 1, b: 1, a: 0 }, dark: { r: 1, g: 1, b: 1, a: 0 } },
         // the SOFT ON-CTA primitive (the C43 addendum): the on-text pole at the
         // engine's SOFT_ON_CTA_ALPHA register — black@.75 light, white@.80 dark. A
-        // quiet cta's stamp/on aliases this row wherever the engine ships it soft
+        // quiet cta's stamp-on aliases this row wherever the engine ships it soft
         // (gated per mode — the derived model ships soft in light, the solid pole in
         // dark).
         { path: 'system/alpha/ink', light: { r: 0, g: 0, b: 0, a: 0.75 }, dark: { r: 1, g: 1, b: 1, a: 0.8 } },
         // the OFFSET LADDER (the C41 stroke ladder, as Figma rows). Black in light,
         // WHITE in dark, constant alpha per rung (a stroke sits on the fill, so unlike
-        // the shadows it does not scale up in dark). The stamp/edge writer below
+        // the shadows it does not scale up in dark). The stamp-edge writer below
         // aliases these.
         { path: 'system/alpha/away-from-bg/06', light: { r: 0, g: 0, b: 0, a: 0.06 }, dark: { r: 1, g: 1, b: 1, a: 0.06 } },
         { path: 'system/alpha/away-from-bg/08', light: { r: 0, g: 0, b: 0, a: 0.08 }, dark: { r: 1, g: 1, b: 1, a: 0.08 } },
@@ -808,18 +824,18 @@ figma.ui.onmessage = async (msg) => {
         v.scopes = [] // primitives hidden from every picker (re-applies fix older files too)
         const dk = darkMap.get(t.path)
         // a TRUE pole (the engine's on-colors are exactly white or black); an outline
-        // secondary's stamp/on is the family's pencil-47 instead — alias the sibling,
+        // secondary's stamp-on is the family's pencil-47 instead — alias the sibling,
         // not a pole (the sibling is looked up by its post-C33 name; a pre-renumber
         // ink/10 target would alias the WRONG stop).
-        // (Recognition rides tokenNames.STAMP_LEAF (C56) so a rename breaks this build
-        // instead of disarming the aliasing — a hardcoded leaf literal would silently
-        // match nothing after a rename.)
+        // (Recognition rides tokenNames' STAMP_ON and STAMP_EDGE (C56) so a rename breaks
+        // this build instead of disarming the aliasing — a hardcoded leaf literal would
+        // silently match nothing after a rename.)
         const isPole = (c: { r: number; g: number; b: number }) => {
           const sum = c.r + c.g + c.b
           return sum > 2.97 || sum < 0.03
         }
-        if (t.path === STAMP_LEAF.ON) {
-          const sibling9 = primByName.get(path.slice(0, -STAMP_LEAF.ON.length) + 'pencil-47')
+        if (t.path === STAMP_ON) {
+          const sibling9 = primByName.get(path.slice(0, -STAMP_ON.length) + 'pencil-47')
           // the SOFT ON-CTA (the C43 addendum): a POLE AT PARTIAL ALPHA is the
           // default-model secondary's soft text → alias system/alpha/ink. Checked
           // BEFORE the solid-pole case — isPole ignores alpha here, so without this the
@@ -842,8 +858,8 @@ figma.ui.onmessage = async (msg) => {
             v.setValueForMode(pLight, figma.variables.createVariableAlias(transparent))
             v.setValueForMode(pDark, figma.variables.createVariableAlias(transparent))
           }
-        } else if (t.path === STAMP_LEAF.EDGE) {
-          const sibling8 = primByName.get(path.slice(0, -STAMP_LEAF.EDGE.length) + 'highlighter-26')
+        } else if (t.path === STAMP_EDGE) {
+          const sibling8 = primByName.get(path.slice(0, -STAMP_EDGE.length) + 'highlighter-26')
           const transparent = primByName.get('system/alpha/transparent')
           // the OFFSET ROUTER (the ext strokeFor idiom): a
           // firing edge carries its family's rung IN ITS OWN ALPHA — a value lookup,
@@ -932,7 +948,7 @@ figma.ui.onmessage = async (msg) => {
         // the value guard matches and the relationship stays live in Figma). Fill
         // hover/pressed stay raw derived values.
         const pairs: Array<[string, string]> = [
-          [STAMP_LEAF.FILL, 'pen-70'],
+          [STAMP_FILL, 'pen-70'],
           ['pencil-47', 'pencil-47'], ['pen-58', 'pen-58'], ['pen-70', 'pen-70'],
         ]
         for (const [leaf, neutralLeaf] of pairs) {
@@ -1097,13 +1113,14 @@ figma.ui.onmessage = async (msg) => {
       // the pen stops themselves); CUSTOM (the link payload group, dedup'd by seed hex
       // like signal variants) aliases the shared link primitive instead.
       const linkGrp = shared.find(g => g.theme === 'link')
-      // theme leaves live under system/link/* with STATE names; the shared link PRIM
+      // theme leaves live under system/link/* as the posture at a step (default-0 the
+      // link at rest, default-1 one step, default-2 two steps); the shared link PRIM
       // keeps flat link/link-hover/link-pressed leaves (third column) — prims are
-      // hidden and unbound, renaming them buys nothing.
+      // hidden and unbound, so their spelling is not an emitted name.
       const LINK_LEAVES = [
-        ['link/default/enabled', 'pencil-47', 'link'],
-        ['link/default/hover', 'pen-58', 'link-hover'],
-        ['link/default/pressed', 'pen-70', 'link-pressed'],
+        ['link/default-0', 'pencil-47', 'link'],
+        ['link/default-1', 'pen-58', 'link-hover'],
+        ['link/default-2', 'pen-70', 'link-pressed'],
       ] as const
       // ANY missing leaf triggers the backfill (gating on the rest leaf alone would let
       // a hand-deleted link-hover/link-pressed pair recreate black in other modes
@@ -1154,12 +1171,12 @@ figma.ui.onmessage = async (msg) => {
       // these values — so the ui ALWAYS ships a seed-keyed prim and every posture aliases
       // it (the custom-link idiom, made unconditional).
       const linkInvGrp = shared.find(g => g.theme === 'link-inverse')
-      // theme leaves live INSIDE the link group, under the inverse state subgroup:
-      // link/inverse/{enabled,hover,pressed}, beside the default trio above
+      // theme leaves live in the link group as the inverse posture at a step
+      // (inverse-0, inverse-1, inverse-2), beside the default rows above
       const LINK_INVERSE_LEAVES = [
-        ['link/inverse/enabled', 'link'],
-        ['link/inverse/hover', 'link-hover'],
-        ['link/inverse/pressed', 'link-pressed'],
+        ['link/inverse-0', 'link'],
+        ['link/inverse-1', 'link-hover'],
+        ['link/inverse-2', 'link-pressed'],
       ] as const
       if (linkInvGrp) {
         const invIsNew = LINK_INVERSE_LEAVES.some(([themeLeaf]) => !themeByName.has(`system/${themeLeaf}`))
@@ -1285,7 +1302,7 @@ figma.ui.onmessage = async (msg) => {
           }
           const neutralTarget = aliasTarget('neutral/paper-1')
           const neutralKey = neutralTarget?.startsWith('system/neutral/') ? neutralTarget.split('/')[2] : null
-          const linkTarget = aliasTarget('link/default/enabled')
+          const linkTarget = aliasTarget('link/default-0')
           const linkMatch = linkTarget?.match(/^system\/link\/([0-9a-fA-F]{6})\/link$/)
           reconstructed.push({ brand: m.name, primaryHex, altHex, neutralKey, linkSeed: linkMatch?.[1] ?? null, profile })
         }

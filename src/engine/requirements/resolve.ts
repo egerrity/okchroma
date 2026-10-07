@@ -1,7 +1,7 @@
 // resolve.ts — the requirement-token RESOLVER. Executes the pure declaration (spec.ts) by dispatching each
 // stop/role to a NAMED producer implementation (producers.ts — verbatim engine math). Per scale stop:
 // PRODUCER (hue → chroma → L) → REQUIRE (contrast clamp, iterated) → REFINE (chroma yields to gamut at emit).
-// Off-scale ROLES (stamp-fill / stamp-fill-hover / stamp-fill-pressed) and the on-color booleans follow the engine's exact evaluation order:
+// Off-scale ROLES (stamp-0 / stamp-1 / stamp-2: the fill at rest and at one and two steps) and the on-color booleans follow the engine's exact evaluation order:
 // dark cta anchor BEFORE the dark stops (the torsion anchors at it), on-fill judged PRE-enforcement, the
 // enforce re-solve last. Total: an unmet require yields an explicit `unresolvable`, never a silent fudge.
 //

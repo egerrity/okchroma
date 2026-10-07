@@ -15,7 +15,9 @@ is a value the engine calculates from the seed: the seven color families with th
 stops and stamp tokens, the neutral's poles, the two link trios, the two seed absolutes.
 Nothing static or aliased is emitted; a semantic layer is the consumer's, authored on the
 primitives. One grammar spells every row in every output (`tokenNames.ts`): a path such as
-`brand/stamp/fill`, hyphen-joined for CSS and slash-joined for Figma and DTCG.
+`brand/stamp-0`, a group and one word, the word a position (a band at a lightness, the
+stamp at a step, a link posture at a step), hyphen-joined for CSS and slash-joined for
+Figma and DTCG. No emitted name carries a state word.
 
 - **CSS custom properties**: `brandCss` / `neutralCss` (per family, light + dark blocks)
   and `signalsCss` (the brand-independent signal block, the one static output
@@ -187,7 +189,7 @@ Facts worth stating plainly:
 // the declaration (pure data, src/engine/requirements/spec.ts)
 ModeSpec       = { stops: StopReq[], roles: RoleReq[], ons: { onFill: OnReq } }
 StopReq        = { stop, rootL, group, produce: { hue, L, chroma }, satFraction?, baseC?, chromaMult?, textMaxC?, chromaFloor?, require? }
-RoleReq        = { role: 'stamp-fill' | 'stamp-fill-hover' | 'stamp-fill-pressed', produce, floorL, chromaMult }
+RoleReq        = { role: 'stamp-0' | 'stamp-1' | 'stamp-2', produce, floorL, chromaMult }
 OnReq          = { metric: 'apca-pole', enforce, ratioFloor?, coEnforceLc?, enforceLc? }
 
 // the resolved output (the public contract, src/engine/colorEngine.ts)

@@ -38,56 +38,50 @@ export function stopTokenName(stop: number): string {
 export const PAPER_0 = 'paper-0'
 export const PEN_100 = 'pen-100'
 
-// The stamp family: flat engine identity = hyphenated CSS var body; in Figma the family
-// nests as the stamp/ state group. STAMP_STATE_LEAVES is the one flat-to-nested table
-// every consumer rides (figmaRender, both plugins, figma-verify). Engine internals still
-// say cta; the emitted word is stamp.
-export const STAMP_FILL = 'stamp-fill'
-export const STAMP_FILL_HOVER = 'stamp-fill-hover'
-export const STAMP_FILL_PRESSED = 'stamp-fill-pressed'
+// The stamp family: five rows per family, each one word, flat beside the bands in every
+// output. The three fills are positions on one progression (stateFillL in archetypes.ts,
+// one apparent step per state for every family): stamp-0 is the fill at rest, stamp-1 the
+// fill one step from rest, stamp-2 two steps. No row carries a state word; a consumer's
+// semantic layer names the states and aliases the steps. The identifiers keep the engine's
+// internal vocabulary (cta, hover, pressed), the way the internals still say cta; the
+// emitted word is the position. Consumers that recognize a row by its name import these,
+// so a rename breaks their build instead of silently disarming a check.
+export const STAMP_FILL = 'stamp-0'
+export const STAMP_FILL_HOVER = 'stamp-1'
+export const STAMP_FILL_PRESSED = 'stamp-2'
 export const STAMP_EDGE = 'stamp-edge'
 export const STAMP_ON = 'stamp-on'
-export const STAMP_STATE_LEAVES: Record<string, string> = {
-  [STAMP_FILL]: 'stamp/fill',
-  [STAMP_FILL_HOVER]: 'stamp/fill-hover',
-  [STAMP_FILL_PRESSED]: 'stamp/fill-pressed',
-  [STAMP_EDGE]: 'stamp/edge',
-  [STAMP_ON]: 'stamp/on',
-}
-// the nested Figma spellings, for consumers that recognize rows by their written path;
-// importing these instead of spelling the strings means a rename breaks the build instead
-// of silently disarming a check
-export const STAMP_LEAF = {
-  FILL: STAMP_STATE_LEAVES[STAMP_FILL],
-  FILL_HOVER: STAMP_STATE_LEAVES[STAMP_FILL_HOVER],
-  FILL_PRESSED: STAMP_STATE_LEAVES[STAMP_FILL_PRESSED],
-  EDGE: STAMP_STATE_LEAVES[STAMP_EDGE],
-  ON: STAMP_STATE_LEAVES[STAMP_ON],
-} as const
 
 // ── THE ONE GRAMMAR ──────────────────────────────────────────────────────────
-// Every emitted row has one path. Joined with hyphens it is the CSS custom property
-// (`--brand-stamp-fill`, `--neutral-paper-0`, `--link-default-enabled`); joined with
-// slashes it is the Figma path and the DTCG token path (`brand/stamp/fill`,
-// `neutral/paper-0`, `link/default/enabled`). The path decides the spelling; no emitter
-// spells a name by hand. Family rows are [family, leaf] with the stamp nested; the
-// neutral's poles sit in the neutral group; the link trios and the two seed absolutes
-// are their own groups (C68).
+// Every emitted row has one path: a group and one word, and the word is a position (a
+// band at a lightness, the stamp at a step, a link posture at a step). Joined with
+// hyphens it is the CSS custom property (`--brand-stamp-0`, `--neutral-paper-0`,
+// `--link-default-0`); joined with slashes it is the Figma path and the DTCG token path
+// (`brand/stamp-0`, `neutral/paper-0`, `link/default-0`). The path decides the spelling;
+// no emitter spells a name by hand. Family rows are [family, leaf]; the neutral's poles
+// sit in the neutral group; the link rows and the two seed absolutes are their own groups
+// (C68).
 export type TokenPath = readonly string[]
 export const cssVarName = (path: TokenPath): string => `--${path.join('-')}`
 export const figmaPathOf = (path: TokenPath): string => path.join('/')
-/** a family row: a scale stop, a pole, or a stamp token (nested under stamp/) */
-export const familyPath = (family: string, leaf: string): string[] =>
-  [family, ...(STAMP_STATE_LEAVES[leaf] ?? leaf).split('/')]
+/** a family row: a scale stop, a pole, or a stamp row, flat in the family group */
+export const familyPath = (family: string, leaf: string): string[] => [family, leaf]
 
 // the system link: one trio for text on the papers, one re-solved for text on the pen
-// ground, each with the three states
+// ground. The engine's three states are the steps of one progression (hoverL and
+// pressedL in archetypes.ts: pressed continues hover's direction, doubled), so a link row
+// is its posture at a step, one word: default-0 is the link at rest, default-1 one step
+// from rest, default-2 two steps; the same for inverse.
 export const LINK_GROUP = 'link'
 export const LINK_POSTURES = ['default', 'inverse'] as const
 export type LinkPosture = (typeof LINK_POSTURES)[number]
 export const LINK_STATES = ['enabled', 'hover', 'pressed'] as const
 export type LinkState = (typeof LINK_STATES)[number]
-export const linkPath = (posture: LinkPosture, state: LinkState): string[] => [LINK_GROUP, posture, state]
+/** the step each state is emitted as: rest 0, one step 1, two steps 2 */
+export const LINK_STEP: Record<LinkState, number> = { enabled: 0, hover: 1, pressed: 2 }
+/** the one word a link row has: its posture at its step (`default-1`) */
+export const linkLeaf = (posture: LinkPosture, state: LinkState): string => `${posture}-${LINK_STEP[state]}`
+export const linkPath = (posture: LinkPosture, state: LinkState): string[] => [LINK_GROUP, linkLeaf(posture, state)]
 
 // the seed absolutes: the brand inputs as given, reference values, never UI colors
 export const ABSOLUTE_GROUP = 'absolute'
@@ -106,7 +100,7 @@ export const absolutePath = (family: string): string[] => [ABSOLUTE_GROUP, famil
 export const COLOR_GROUP = 'color'
 
 // Brand-varying rows outside the families are the only non-family paths an extension may
-// override: the link trios and the seed absolutes.
+// override: the link rows and the seed absolutes.
 export const EXT_OVERRIDABLE_SYSTEM = (p: string): boolean =>
   p.startsWith(`${COLOR_GROUP}/${LINK_GROUP}/`) || p.startsWith(`${COLOR_GROUP}/${ABSOLUTE_GROUP}/`)
 

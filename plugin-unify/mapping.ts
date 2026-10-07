@@ -7,7 +7,7 @@
 // both route. Link is parked (the known tricky case) — those land unmatched.
 
 import { FAMILY } from '../src/engine/tokenDescriptions'
-import { stopTokenName, STAMP_LEAF, PAPER_0 as POLE_PAPER, COLOR_GROUP } from '../src/engine/tokenNames'
+import { stopTokenName, STAMP_ON, PAPER_0 as POLE_PAPER, COLOR_GROUP } from '../src/engine/tokenNames'
 
 // the ladder leaves by stop index (tokenNames SHARED_NAMES — ascending index =
 // descending lightness), so a stop relabel flows from that one table into every
@@ -30,7 +30,7 @@ export interface Rule {
 export const SURFACE = (plane: 'dim' | 'low' | 'mid' | 'high') => `utility/surface/${plane}`
 
 /** the on-color register per family (an ALIAS row in the ext register — resolves live) */
-export const CTA_ON = (family: string) => `${COLOR_GROUP}/${family}/${STAMP_LEAF.ON}`
+export const CTA_ON = (family: string) => `${COLOR_GROUP}/${family}/${STAMP_ON}`
 export const BRAND_CTA_ON = CTA_ON(FAMILY.brandPrimary)
 export const isCtaContext = (anc: string): boolean => /button|btn|cta/i.test(anc)
 

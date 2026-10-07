@@ -8,6 +8,70 @@ structure, ships as at least a minor.
 
 Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git log.
 
+## 0.9.0 — unpublished
+
+- **The engine emits no state words.** Every row is a group and one word, and the word is
+  a position: a band at a lightness (`pen-70`), the stamp at a step, a link posture at a
+  step. The five stamp rows per family are `stamp-0` (the fill at rest), `stamp-1` (one
+  step from rest), `stamp-2` (two steps), `stamp-edge` and `stamp-on`, flat in the family
+  beside the stops. The six link rows are `default-0`, `default-1`, `default-2`,
+  `inverse-0`, `inverse-1`, `inverse-2`, flat in the `link` group. The `stamp/`,
+  `link/default/` and `link/inverse/` groups are gone from the Figma tree and the DTCG
+  documents. The states are a semantic layer's to name: `hover` aliases `stamp-1`,
+  `pressed` aliases `stamp-2`, and the same on the links. The seed absolutes
+  (`absolute/brand`, `absolute/brand-alt`) are unchanged. No value moves: the diff
+  against the previous release is the renames and the descriptions below.
+- **Twenty-seven CSS names rename in place**, values unchanged. For each of the seven
+  families (`neutral`, `brand`, `brand-alt`, `critical`, `warning`, `positive`, `info`):
+
+  | before | after |
+  |---|---|
+  | `--<family>-stamp-fill` | `--<family>-stamp-0` |
+  | `--<family>-stamp-fill-hover` | `--<family>-stamp-1` |
+  | `--<family>-stamp-fill-pressed` | `--<family>-stamp-2` |
+
+  `--<family>-stamp-edge` and `--<family>-stamp-on` keep their names. The link rows:
+
+  | before | after |
+  |---|---|
+  | `--link-default-enabled` | `--link-default-0` |
+  | `--link-default-hover` | `--link-default-1` |
+  | `--link-default-pressed` | `--link-default-2` |
+  | `--link-inverse-enabled` | `--link-inverse-0` |
+  | `--link-inverse-hover` | `--link-inverse-1` |
+  | `--link-inverse-pressed` | `--link-inverse-2` |
+
+- **Forty-one Figma and DTCG paths rename**, the same rows: `<family>/stamp/fill`,
+  `stamp/fill-hover`, `stamp/fill-pressed`, `stamp/edge`, `stamp/on` become
+  `<family>/stamp-0`, `stamp-1`, `stamp-2`, `stamp-edge`, `stamp-on` in all seven
+  families, and `link/default/enabled`, `hover`, `pressed` and `link/inverse/enabled`,
+  `hover`, `pressed` become `link/default-0` to `default-2` and `link/inverse-0` to
+  `inverse-2`. In the DTCG documents the same paths with dots, and in an alias
+  (`{brand.stamp-0}`).
+- **The descriptions of those rows say the position, not a state.** The fill one step
+  from rest, the fill two steps from rest, the link one step from rest; the Figma
+  rendering and the document rendering both. No other description changes.
+- **The API.** `STAMP_FILL`, `STAMP_FILL_HOVER` and `STAMP_FILL_PRESSED` keep their
+  names and now hold `stamp-0`, `stamp-1`, `stamp-2`; `linkPath` builds the new paths;
+  `familyPath` returns the family and the leaf. `STAMP_STATE_LEAVES` and `STAMP_LEAF`
+  are removed: there is no nested spelling to map to. `LINK_STEP` (the step each link
+  state is emitted as) and `linkLeaf` are added. `putLeaf` leaves `figmaRender`.
+- **The extended plugin migrates a file in place.** On the next apply every stamp and
+  link row is found by the identity the plugin stamped on it and renamed, so bindings and
+  brand overrides survive; a row renamed by hand keeps its name and its identity moves; a
+  row the engine no longer writes stays as it was. Rows the previous version wrote under
+  any earlier spelling migrate in the same lookup. The apply stops before writing when an
+  unstamped variable sits at a name an engine row has to move to. Under the descope
+  posture the five stamp rows and the six link rows stay pickable. The community plugin
+  carries the same migration.
+- **What a consumer does.** CSS: rename the twenty-seven custom properties above; a
+  semantic layer that aliased `--brand-stamp-fill-hover` as its hover now aliases
+  `--brand-stamp-1`. DTCG and Figma: the same rows at the paths above; anything that
+  reads the extended plugin's variable names, or the path it stamps on each variable,
+  reads the new names after one re-apply (on a copy of the file first). JavaScript:
+  nothing, unless it imported `STAMP_STATE_LEAVES` or `STAMP_LEAF`, which have no
+  replacement because no output nests the stamp any more.
+
 ## 0.8.2 — 2026-10-05
 
 - **Two declaration files leave the package.** 0.7.0, 0.8.0 and 0.8.1 carry

@@ -898,8 +898,8 @@ export default function UnifyCompare() {
             <div data-brand={focus.slug} data-theme={dark ? 'dark' : 'light'}>
               <ForkComposition
                 page={DIST_PAGE[distMode]} heading="var(--brand-pencil-47)" body="var(--brand-pen-70)"
-                ring="var(--brand-highlighter-26)" fill="var(--brand-stamp-fill)" onFill="var(--brand-stamp-on)"
-                linkC="var(--link-default-enabled)" textBtn="var(--brand-pencil-47)" />
+                ring="var(--brand-highlighter-26)" fill="var(--brand-stamp-0)" onFill="var(--brand-stamp-on)"
+                linkC="var(--link-default-0)" textBtn="var(--brand-pencil-47)" />
             </div>
           </div>
         </section>

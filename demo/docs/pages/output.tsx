@@ -59,15 +59,17 @@ export function Body() {
 
       <H2>The stamp roles</H2>
       <P>
-        Off the scale, every family carries a stamp: the pulled-out solid fill and what sits on it. In Figma the five
-        nest under <Code>stamp/</Code>; in CSS they are hyphenated.
+        Off the scale, every family carries a stamp: the pulled-out solid fill and what sits on it. The five rows sit
+        flat in the family in every output, and each name is a position, never a state: the fill at rest, one step
+        from rest, two steps from rest, the edge, the text. A semantic layer names the states (hover, pressed) and
+        aliases the steps.
       </P>
       <Table
         head={['token', 'what it is', 'rule']}
         rows={[
-          [<Code>{STAMP_FILL}</Code>, 'the solid button fill', "the seed's own lightness and hue, moved only by the on-fill law, the legibility booster, and the red collision solve; floored in dark so it lifts, never sinks"],
-          [<Code>{STAMP_FILL_HOVER}</Code>, 'hover state', 'a flat step of 0.05 L away from the mode’s ground (toward black in light, white in dark), reversed for fills that sit near the far pole'],
-          [<Code>{STAMP_FILL_PRESSED}</Code>, 'pressed state', 'the same direction, twice the step'],
+          [<Code>{STAMP_FILL}</Code>, 'the solid button fill at rest', "the seed's own lightness and hue, moved only by the on-fill law, the legibility booster, and the red collision solve; floored in dark so it lifts, never sinks"],
+          [<Code>{STAMP_FILL_HOVER}</Code>, 'the fill one step from rest', 'a flat step of 0.05 L away from the mode’s ground (toward black in light, white in dark), reversed for fills that sit near the far pole'],
+          [<Code>{STAMP_FILL_PRESSED}</Code>, 'the fill two steps from rest', 'the same direction, twice the step'],
           [<Code>{STAMP_EDGE}</Code>, 'a low-visibility stroke', <>the page-polarity pole (black in light, white in dark) at the family's rung (primary and signals <K v={OFFSET_ALPHAS[ctaBorderRung('brand')]} pct d={0} />, secondary <K v={OFFSET_ALPHAS[ctaBorderRung(CSS_FAMILY.brandSecondary)]} pct d={0} />, neutral <K v={OFFSET_ALPHAS[ctaBorderRung(CSS_FAMILY.neutral)]} pct d={0} />) when the fill reads under APCA |Lc| <K v={CTA_BORDER_LC_FLOOR} d={0} /> against the page; otherwise transparent. A literal in every output. Always render it, so layout never shifts</>],
           [<Code>{STAMP_ON}</Code>, 'the text over the fill', <>white or black, whichever passes; quiet fills (the neutral, and a secondary whose composite stays legal on every state) carry the pole at alpha, <K v={SOFT_ON_CTA_ALPHA.light} pct d={0} /> light / <K v={SOFT_ON_CTA_ALPHA.dark} pct d={0} /> dark</>],
         ]}
@@ -95,11 +97,12 @@ export function Body() {
 
       <H2>The grammar</H2>
       <P>
-        Every row has one path, and every output spells it: <Code>brand/stamp/fill</Code>, <Code>neutral/paper-0</Code>,{' '}
-        <Code>link/default/enabled</Code>, <Code>absolute/brand</Code>. Joined with hyphens it is the CSS custom property
-        (<Code>--brand-stamp-fill</Code>, <Code>--neutral-paper-0</Code>, <Code>--link-default-enabled</Code>); joined with
-        slashes it is the Figma variable and the DTCG token path. The neutral's poles sit in the neutral group; the link
-        trios and the seed absolutes are their own groups. Nothing is emitted outside these: no planes, no shadows, no
+        Every row has one path, and every output spells it: <Code>brand/stamp-0</Code>, <Code>neutral/paper-0</Code>,{' '}
+        <Code>link/default-0</Code>, <Code>absolute/brand</Code>. A path is a group and one word, and the word is a
+        position: a band at a lightness, the stamp at a step, a link posture at a step. Joined with hyphens it is the
+        CSS custom property (<Code>--brand-stamp-0</Code>, <Code>--neutral-paper-0</Code>, <Code>--link-default-0</Code>);
+        joined with slashes it is the Figma variable and the DTCG token path. The neutral's poles sit in the neutral
+        group; the link rows and the seed absolutes are their own groups. Nothing is emitted outside these: no planes, no shadows, no
         opacity or alpha ladders, no absolute black or white. Those belong to the semantic layer a consumer authors on
         the primitives; the demo's own <Code>demo/semantic.css</Code> is a worked example.
       </P>

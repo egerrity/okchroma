@@ -26,10 +26,11 @@ import { brandCss, signalsCss } from '../src/engine/cssRender'
 const sub = process.argv[2]?.toLowerCase()
 if (!sub) { console.error('usage: npm run name-lint -- <substring>'); process.exit(1) }
 
-// the ext descope posture (mirrors plugin-ext/code.ts isRoleRow); the system/link
-// spelling is the community plugin's home of the same rows
+// the ext descope posture (mirrors plugin-ext/code.ts isRoleRow): the five stamp rows,
+// flat in their family, and the link rows; the system/link spelling is the community
+// plugin's home of the same rows
 const isRoleRow = (p: string): boolean =>
-  /\/stamp\//.test(p)
+  /\/stamp-/.test(p)
   || p.startsWith(`${COLOR_GROUP}/link/`) || p.startsWith('link/') || p.startsWith('system/link/')
 const flag = (p: string): string => (isRoleRow(p) ? 'pickable' : 'hidden  ')
 

@@ -29,7 +29,7 @@ const STOPS = Array.from({ length: SCALE_STOP_COUNT }, (_, i) => stopTokenName(i
 
 /**
  * Every primitive's path, in document order: the neutral with its poles, the brand, the
- * alt, the four signals by role, the link trios, the seed absolutes. This roster is the
+ * alt, the four signals by role, the link rows, the seed absolutes. This roster is the
  * definition of what the engine emits; the emitters and the audit ride it.
  */
 export function tokenPaths(): TokenPath[] {
@@ -52,7 +52,7 @@ export function tokenPaths(): TokenPath[] {
 
 const byName = (): Map<string, TokenPath> => new Map(tokenPaths().map(p => [cssVarName(p).slice(2), p]))
 
-/** the path of a structured-emit name (`brand-stamp-fill`), or undefined when it is not a primitive */
+/** the path of a structured-emit name (`brand-stamp-0`), or undefined when it is not a primitive */
 export function tokenPathOf(name: string): TokenPath | undefined {
   return byName().get(name)
 }

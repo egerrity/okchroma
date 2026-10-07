@@ -53,8 +53,13 @@ should be stable is a finding, not something to bless.
   `highlighter-26`, `pencil-47`, `pen-58/70`. The neutral adds the poles `paper-0` and
   `pen-100`. The instrument word is the job; the number is 100 minus the light rootL,
   bigger is stronger.
-- **The stamp**: `stamp-fill`, `stamp-fill-hover`, `stamp-fill-pressed`, `stamp-edge`,
-  `stamp-on`. Say "CTA" out loud; write `stamp`. Engine internals still say `cta`.
+- **The stamp**: `stamp-0`, `stamp-1`, `stamp-2`, `stamp-edge`, `stamp-on`: the fill at
+  rest, one step from rest, two steps from rest, the edge, the text. Say "CTA" out loud;
+  write `stamp`. Engine internals still say `cta`, `hover` and `pressed`.
+- **The link**: `link/default-0|1|2` and `link/inverse-0|1|2`, the posture at a step.
+- The engine emits no state words (owner, 2026-10-07). Every emitted name is a group and
+  one word, and the word is a position: a band at a lightness, the stamp at a step, a link
+  posture at a step. The states are the consumer's to name in its semantic layer.
 - **Families**: `neutral`, `brand`, `brand-alt`, `critical`, `warning`, `positive`, `info`.
   Signals are named by role on every emitted surface, never error/success/danger. The
   engine keeps red/yellow/green/blue internally.

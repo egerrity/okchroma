@@ -38,7 +38,7 @@ Every scale token here is a primitive. What is unusual is that the requirement i
 
 The token name is `stamp`. Say "CTA" out loud when talking about these (the engine's own internal fields still call them that), but the variable name is `stamp`.
 
-`stamp-fill`, `stamp-fill-hover`, `stamp-fill-pressed`: the call-to-action fill and its states. These sit off the scale and are fully re-solved per theme and family; never substitute a scale stop for them. (In Figma these nest under a `stamp` group: `stamp/fill`, `stamp/fill-hover`, `stamp/fill-pressed`.)
+`stamp-0`, `stamp-1`, `stamp-2`: the call-to-action fill at rest, one step from rest, and two steps from rest. The names are positions, never states: the engine emits no state word, and the semantic layer names the states and aliases the steps (`hover` onto `stamp-1`, `pressed` onto `stamp-2`). These sit off the scale and are fully re-solved per theme and family; never substitute a scale stop for them. In Figma and in the DTCG documents they sit flat in the family beside the stops (`brand/stamp-0`).
 
 `stamp-edge`: a gated outline stroke. It resolves to a visible offset only in themes where the CTA fill sits close to the page; otherwise it resolves to transparent. Always render the border with it, never conditionally add or remove the border, so layout never shifts.
 
@@ -46,7 +46,7 @@ The token name is `stamp`. Say "CTA" out loud when talking about these (the engi
 
 ## The grammar
 
-Every token has one path, and every output spells it: `brand/stamp/fill`, `neutral/paper-0`, `link/default/enabled`, `absolute/brand`. Joined with hyphens it is the CSS custom property (`--brand-stamp-fill`, `--neutral-paper-0`, `--link-default-enabled`, `--absolute-brand`); joined with slashes it is the Figma variable and the DTCG token path. Family rows are the family word plus the leaf, with the stamp nested; the neutral's poles sit in the neutral group; the link trios and the seed absolutes are their own groups. The extended Figma plugin writes every path under a `color` group (`color/brand/stamp/fill`), and the DTCG documents nest under the same group when the caller asks for it (`color.brand.stamp.fill`, and `{color.brand.stamp.fill}` in an alias). The CSS custom properties never carry the group.
+Every token has one path, and every output spells it: `brand/stamp-0`, `neutral/paper-0`, `link/default-0`, `absolute/brand`. A path is a group and one word, and the word is a position: a band at a lightness, the stamp at a step, a link posture at a step. Joined with hyphens it is the CSS custom property (`--brand-stamp-0`, `--neutral-paper-0`, `--link-default-0`, `--absolute-brand`); joined with slashes it is the Figma variable and the DTCG token path. Family rows are the family word plus the leaf, the stamp rows flat beside the stops; the neutral's poles sit in the neutral group; the link rows and the seed absolutes are their own groups. The extended Figma plugin writes every path under a `color` group (`color/brand/stamp-0`), and the DTCG documents nest under the same group when the caller asks for it (`color.brand.stamp-0`, and `{color.brand.stamp-0}` in an alias). The CSS custom properties never carry the group.
 
 ## Families and CSS variable prefixes
 
@@ -62,11 +62,11 @@ Every token has one path, and every output spells it: `brand/stamp/fill`, `neutr
 
 Signal families are named by role, always `critical`/`warning`/`positive`/`info`, never `error`/`success`/`danger`. Signal stops may be shifted from the canonical value to stay visually distinct from the brand; that is by design, do not "correct" them.
 
-Example composed names: `--brand-chalk-11`, `--critical-pen-58`, `--neutral-highlighter-26`, `--brand-alt-stamp-fill-hover`.
+Example composed names: `--brand-chalk-11`, `--critical-pen-58`, `--neutral-highlighter-26`, `--brand-alt-stamp-1`.
 
 ## The link trios and the seeds
 
-- `--link-default-enabled`, `--link-default-hover`, `--link-default-pressed`: the system link color for text on normal surfaces; without a custom link seed they alias the primary's `pencil-47`, `pen-58`, `pen-70`. `--link-inverse-enabled`, `--link-inverse-hover`, `--link-inverse-pressed`: the same seed, re-solved for text on inverted (`pen-70`-filled) surfaces, always its own values. A link is not a text-style CTA; do not restyle links with the text stops. Emitted by `brandCss`.
+- `--link-default-0`, `--link-default-1`, `--link-default-2`: the system link color for text on normal surfaces, at rest, one step from rest, two steps from rest; without a custom link seed they alias the primary's `pencil-47`, `pen-58`, `pen-70`. `--link-inverse-0`, `--link-inverse-1`, `--link-inverse-2`: the same seed, re-solved for text on inverted (`pen-70`-filled) surfaces, always its own values. The names are positions; the semantic layer names the states (`hover` onto `-1`, `pressed` onto `-2`). A link is not a text-style CTA; do not restyle links with the text stops. Emitted by `brandCss`.
 - `--absolute-brand`, `--absolute-brand-alt`: the raw seeds as given, reference values, never UI colors. In Figma, `absolute/brand` and `absolute/brand-alt`.
 
 ## What the semantic layer authors
@@ -89,6 +89,6 @@ The engine emits no elevation planes, shadows, scrim, opacity or alpha ladders, 
 1. Never hardcode a hex. Every color in UI code is a token reference.
 2. Text comes from the text stops (`pencil-47`/`pen-58`/`pen-70`), or `stamp-on` over a CTA fill. The WCAG guarantee is documented per stop, not spelled in the name; do not run your own contrast checks or add compensating colors.
 3. The same token is used in both light and dark. Theming moves the values, not the references; never swap to a different stop for dark mode.
-4. States move along the scale in the order the names imply: rest, hover, pressed follow `stamp-fill`/`stamp-fill-hover`/`stamp-fill-pressed`, and text-style CTAs follow `pencil-47`/`pen-58`/`pen-70`. A state on a paper or an inverted ground is `highlighter-26` at a translucency the semantic layer defines.
+4. States are steps along one progression, and the semantic layer names them: rest, hover, pressed are `stamp-0`/`stamp-1`/`stamp-2` on a CTA fill, `link/default-0`/`-1`/`-2` on a link, and text-style CTAs follow `pencil-47`/`pen-58`/`pen-70`. Never invent a step the engine did not emit. A state on a paper or an inverted ground is `highlighter-26` at a translucency the semantic layer defines.
 5. Do not invent intermediate values (no ad-hoc opacities, no color-mix between stops). The one sanctioned translucency is `highlighter-26` as a state layer. If a needed value seems missing, that is a design-system question, not something to patch locally.
 6. Contrast is stated as WCAG conformance levels in each variable's description, never as ratios, and never encoded in the name.

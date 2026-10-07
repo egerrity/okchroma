@@ -421,7 +421,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
             <label className="ct-swatch-btn" title="Open color picker">
               {/* the swatch always shows the RESOLVED secondary — in derived mode that's
                   the subtle tint the engine produced, not the primary hex in the input */}
-              <span className="ct-swatch" style={{ background: derived ? 'var(--brand-alt-stamp-fill)' : (secondary ?? 'var(--neutral-chalk-11)') }} />
+              <span className="ct-swatch" style={{ background: derived ? 'var(--brand-alt-stamp-0)' : (secondary ?? 'var(--neutral-chalk-11)') }} />
               <input type="color" value={secondary ?? primary} onChange={e => { setSecState('custom'); setSecondaryInput(e.target.value.toUpperCase()) }} />
             </label>
             {/* derived: the input TRACKS the primary live (that's what derived means) and is
@@ -496,7 +496,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
                   keeps the field's own takeover from racing it to the default blue. */}
               <label className="ct-swatch-btn" title="Pick a custom link color"
                 onClick={e => e.stopPropagation()}>
-                <span className="ct-swatch" style={{ background: 'var(--link-default-enabled)' }} />
+                <span className="ct-swatch" style={{ background: 'var(--link-default-0)' }} />
                 <input type="color" value={(linkCustom ? normalizeHex(linkInput) : normalizeHex(computed.linkFromPrimaryHex)) ?? DEFAULT_LINK_HEX}
                   onChange={e => { linkBundled.current = false; setLinkInput(e.target.value.toUpperCase()); setLinkCustom(true) }} />
               </label>
@@ -522,7 +522,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
                 else if (!on && linkBundled.current && normalizeHex(linkInput)?.toLowerCase() === DEFAULT_LINK_HEX.toLowerCase()) {
                   linkBundled.current = false; setLinkCustom(false)
                 }
-              }} style={{ accentColor: 'var(--brand-stamp-fill)', width: 14, height: 14, cursor: 'pointer' }} />
+              }} style={{ accentColor: 'var(--brand-stamp-0)', width: 14, height: 14, cursor: 'pointer' }} />
               <span>Use neutral primary cta</span>
             </label>
           )}
@@ -532,7 +532,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
             title="Buttons whose fill sits too close to the page get a faint stroke so they read as buttons rather than as another sheet of paper. Neutral, secondary and primary each get their own weight. Turn this off to ship every cta borderless."
             style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 24, fontSize: 12, fontWeight: 600, cursor: 'pointer', userSelect: 'none', color: 'var(--fg-default)' }}
           >
-            <input type="checkbox" checked={ctaBorder} onChange={e => setCtaBorder(e.target.checked)} style={{ accentColor: 'var(--brand-stamp-fill)', width: 14, height: 14, cursor: 'pointer' }} />
+            <input type="checkbox" checked={ctaBorder} onChange={e => setCtaBorder(e.target.checked)} style={{ accentColor: 'var(--brand-stamp-0)', width: 14, height: 14, cursor: 'pointer' }} />
             <span>Outline low-contrast buttons</span>
           </label>
         </div>
@@ -618,7 +618,7 @@ export default function CustomTheme({ dark, view }: { dark: boolean; view: View 
     if (stop === 'pencil-47') return <div style={{ ...aa, background: cv(stop), color: 'var(--neutral-paper-0)' }}>Aa</div>
     // filled cta cells carry NO stroke (filled is filled — same call as the buttons);
     // only the OUTLINE secondary shows its ring, where the boundary IS the component
-    if (stop.startsWith('stamp-fill')) {
+    if (/^stamp-[012]$/.test(stop)) {
       const ring = prefix === 'secondary' && computed.t.secondary?.style === 'outline'
       return <div style={{ ...aa, boxSizing: 'border-box', background: cv(stop), color: cv('stamp-on'), border: ring ? `1.5px solid ${cv('stamp-edge')}` : undefined }}>Aa</div>
     }
@@ -1228,7 +1228,7 @@ function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typ
       <div style={{
         display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 12,
         borderRadius: 8, padding: '9px 12px', fontSize: 12.5,
-        background: v('stamp-fill'), color: v('stamp-on'),
+        background: v('stamp-0'), color: v('stamp-on'),
       }}>
         <Icon size={15} style={{ flexShrink: 0, marginTop: 1 }} aria-hidden />
         <span>{alert}</span>
@@ -1238,15 +1238,15 @@ function SignalCard({ sig, Icon, alert, hasSecondary }: { sig: string; Icon: typ
           secondary chalk-11 · secondary cta · neutral cta */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
         <button style={{ ...btn, background: 'var(--brand-chalk-11)', color: 'var(--brand-pen-70)' }}>Chalk 89</button>
-        <button style={{ ...btn, background: 'var(--brand-stamp-fill)', color: 'var(--brand-stamp-on)' }}>Primary cta</button>
-        <button style={{ ...btn, background: 'var(--critical-stamp-fill)', color: 'var(--critical-stamp-on)' }}>Critical cta</button>
+        <button style={{ ...btn, background: 'var(--brand-stamp-0)', color: 'var(--brand-stamp-on)' }}>Primary cta</button>
+        <button style={{ ...btn, background: 'var(--critical-stamp-0)', color: 'var(--critical-stamp-on)' }}>Critical cta</button>
       </div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {hasSecondary && <>
           <button style={{ ...btn, background: 'var(--brand-alt-chalk-11)', color: 'var(--brand-alt-pen-70)' }}>Chalk 89</button>
-          <button style={{ ...btn, background: 'var(--brand-alt-stamp-fill)', color: 'var(--brand-alt-stamp-on)', borderColor: 'var(--brand-alt-stamp-edge)' }}>Secondary cta</button>
+          <button style={{ ...btn, background: 'var(--brand-alt-stamp-0)', color: 'var(--brand-alt-stamp-on)', borderColor: 'var(--brand-alt-stamp-edge)' }}>Secondary cta</button>
         </>}
-        <button style={{ ...btn, background: 'var(--neutral-stamp-fill)', color: 'var(--neutral-stamp-on)' }}>Neutral cta</button>
+        <button style={{ ...btn, background: 'var(--neutral-stamp-0)', color: 'var(--neutral-stamp-on)' }}>Neutral cta</button>
       </div>
     </section>
   )
@@ -1388,7 +1388,7 @@ const PAGE_CSS = `
 .dash-user { display: flex; align-items: center; gap: 10px; padding-top: 14px; border-top: 1px solid var(--neutral-chalk-11); }
 .dash-avatar {
   width: 30px; height: 30px; border-radius: 999px; flex-shrink: 0;
-  background: var(--brand-stamp-fill); color: var(--brand-stamp-on);
+  background: var(--brand-stamp-0); color: var(--brand-stamp-on);
   display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600;
 }
 .dash-main { padding: 20px 24px 40px; min-width: 0; min-height: 0; overflow-y: auto; scrollbar-width: none;}
@@ -1402,7 +1402,7 @@ const PAGE_CSS = `
   display: flex; gap: 8px; align-items: center; margin-bottom: 16px;
   /* the trial banner is an alert CALLOUT — it rides its signal's CTA register
      (alerts use cta in signals), not the chalk (owner-caught 2026-07-24) */
-  background: var(--info-stamp-fill); color: var(--info-stamp-on);
+  background: var(--info-stamp-0); color: var(--info-stamp-on);
   border-radius: 12px; padding: 10px 14px; font-size: 12px;
 }
 .dash-info a { color: inherit; font-weight: 600; margin-left: auto; }
@@ -1625,7 +1625,7 @@ const PAGE_CSS = `
 .ct-swatch.sm { width: 13px; height: 13px; }
 .ct-popover {
   position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; width: 230px;
-  background: var(--surface-mid); border: 1.5px solid var(--brand-stamp-fill); border-radius: 12px;
+  background: var(--surface-mid); border: 1.5px solid var(--brand-stamp-0); border-radius: 12px;
   padding: 12px; box-shadow: var(--elev-float);
   display: flex; flex-direction: column; gap: 8px; align-items: flex-start;
 }
