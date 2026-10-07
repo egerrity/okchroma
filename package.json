@@ -1,6 +1,6 @@
 {
   "name": "okchroma",
-  "version": "0.8.2",
+  "version": "0.9.0",
   "license": "MIT",
   "description": "Color-system engine: one brand hex in, a light and dark set of color primitives out, with the contrast requirements solved during generation; emitted as CSS custom properties, DTCG documents, and Figma variables",
   "repository": {
