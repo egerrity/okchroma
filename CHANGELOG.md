@@ -8,7 +8,7 @@ structure, ships as at least a minor.
 
 Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git log.
 
-## 0.9.0 — unpublished
+## 0.9.0 — 2026-10-07
 
 - **The engine emits no state words.** Every row is a group and one word, and the word is
   a position: a band at a lightness (`pen-70`), the stamp at a step, a link posture at a
