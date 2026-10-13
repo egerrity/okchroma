@@ -9,8 +9,10 @@ The seed is one brand hex. The options add a second seed or derive a companion f
 first, pin a family's fill to a lightness anchor, and pick the contrast profile. They are
 listed with the API: [Install and API](https://egerrity.github.io/okchroma/#/docs/install).
 
-The engine emits base tokens only. The semantic layer is the consumer's to write, and
-[docs/agents.md](docs/agents.md) says which base token each semantic token reads.
+okchroma writes base tokens, designed for use under any semantic layer, including one
+that must cover many themes. It writes no semantic tokens. The semantic tokens in this
+repo, in [demo/semantic.css](demo/semantic.css), style the demo site and are not engine
+output.
 
 ## Install
 
