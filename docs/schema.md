@@ -1,10 +1,10 @@
 # The DTCG documents
 
-`tokensToDtcg` emits the engine's primitives as two documents in the Design Tokens Format
+`tokensToDtcg` emits the engine's base tokens as two documents in the Design Tokens Format
 Module 2025.10 shape, one for light and one for dark, on identical paths. The format is
 the Design Tokens Community Group's; the color value shape is its Color Module and the
-way two modes join is its Resolver Module. It is a W3C Community Group report, not a W3C
-Standard.
+way two modes join is its Resolver Module. The format is a W3C Community Group report; the W3C
+has not standardized it.
 
 ```ts
 import { resolveTheme, themeTokens, tokensToDtcg } from 'okchroma'
@@ -19,7 +19,7 @@ and `dist/tokens/acme.dark.tokens.json`.
 
 ## What the documents hold
 
-Every primitive the engine emits, once: the seven color families (`neutral`, `brand`,
+Every base token the engine emits, once: the seven color families (`neutral`, `brand`,
 `brand-alt`, `critical`, `warning`, `positive`, `info`), each with its scale stops and
 its five stamp tokens; the neutral's two poles; the two link trios; the two seed
 absolutes. The roster is `tokenPaths()`, and the emitter throws if the structured emit
@@ -41,13 +41,16 @@ absolute
 └─ brand, brand-alt                        the seeds as given, reference values
 ```
 
-Every path is a group and one word, and the word is a position: a band at a lightness,
-the stamp at a step (`stamp-0` the fill at rest, `stamp-1` one step from rest, `stamp-2`
-two steps), a link posture at a step. No name carries a state word; a semantic layer names
-the states and aliases the steps. A path joined with hyphens is the CSS custom property
-(`brand.stamp-0` is `--brand-stamp-0`, `neutral.paper-0` is `--neutral-paper-0`,
-`link.default-0` is `--link-default-0`); joined with slashes it is the Figma variable
-(`brand/stamp-0`). One grammar, every output.
+A path is a group and a leaf, and the leaf is a position: a band at a lightness, the stamp
+at a step (`stamp-0` the fill at rest, `stamp-1` one step from rest, `stamp-2` two steps),
+a link posture at a step. No name carries a state word; a semantic layer names the states
+and aliases the steps. Each output spells the same name its own way:
+
+| Output | Spelling | `brand/stamp-0` becomes |
+|---|---|---|
+| DTCG token | nested as `group.leaf`, referenced as `{group.leaf}` | `{brand.stamp-0}` |
+| CSS custom property | `--group-leaf` | `--brand-stamp-0` |
+| Figma variable | `group/leaf` | `brand/stamp-0` |
 
 ## A token
 
@@ -138,7 +141,7 @@ two generated files.
 
 Nothing the engine does not calculate from the seed: no elevation planes, shadows, scrim,
 opacity or alpha ladders, no absolute black or white, no state layer rows. Those are a
-semantic layer's to author on the primitives; the demo's own `demo/semantic.css` is a
+semantic layer's to write on the base tokens; the demo's own `demo/semantic.css` is a
 worked example.
 
 ## Verification
