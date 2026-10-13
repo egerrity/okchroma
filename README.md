@@ -106,12 +106,15 @@ a consumer's semantic layer names the states and aliases the positions.
 | Leaf | Pattern | Example |
 |---|---|---|
 | a scale stop | `{instrument}-{number}` | `pen-58` |
-| the stamp | `stamp-{step}`, the steps `0`, `1`, `2`, `edge`, `on` | `stamp-0` |
-| a link | `{posture}-{step}`, the postures `default` and `inverse`, the steps `0`, `1`, `2` | `default-1` |
+| a stamp fill | `stamp-{step}` | `stamp-0` |
+| the stamp's edge and text | `stamp-edge`, `stamp-on` | `stamp-on` |
+| a link | `{posture}-{step}`, the postures `default` and `inverse` | `default-1` |
 | a seed | the family word | `brand-alt` |
 
-The instrument is the job (paper, chalk, highlighter, pencil, pen). The number is 100
-minus the light-mode lightness target, so a bigger number is a stronger color.
+The instrument is the job. On the scale (paper, chalk, highlighter, pencil, pen) the
+number is 100 minus the light-mode lightness target, so a bigger number is a stronger
+color. In the brand identity (stamp, link) the number is the step from rest: 0 at rest,
+1 one step away, 2 two steps.
 
 Each output spells the same name its own way:
 
