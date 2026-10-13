@@ -1,10 +1,10 @@
 import React from 'react'
-import { H2, P, UL, LI, Code, Lead, DocLink, K } from '../prose'
+import { H2, P, UL, LI, Code, Lead, DocLink, K, Table } from '../prose'
 import { RampSet, FamilyRoster, REF_SEED } from '../figures'
 import { STOP_8_NONTEXT_CONTRAST, PENCIL_9_CONTRAST, PEN_10_CONTRAST } from '../../../src/engine/stopTable'
 import { MODE_SPECS } from '../../../src/engine/requirements/spec'
 import { CRITICAL_CLEARANCE_LC } from '../../../src/engine/requirements/profiles'
-import { SCALE_STOP_COUNT, PAPER_0, PEN_100 } from '../../../src/engine/tokenNames'
+import { PAPER_0, PEN_100 } from '../../../src/engine/tokenNames'
 
 const CO_LC = MODE_SPECS.light.ons.onFill.coEnforceLc!
 
@@ -14,85 +14,88 @@ export function Body() {
   return (
     <>
       <Lead>
-        okchroma is a color-system engine. Give it one brand hex, or two, and it resolves a complete
-        light and dark token system whose contrast requirements are solved during generation, then
-        emits it as CSS custom properties or Figma variables.
+        okchroma is a color engine. A fixed set of formulas generates a color system's base tokens
+        from a seed color and a set of options. Each token gets a light and a dark value, and the
+        contrast requirements are solved while the values are generated. The set is emitted as CSS
+        custom properties, as DTCG documents, and as Figma variables.
       </Lead>
 
-      <H2>What goes in, what comes out</H2>
+      <H2>The input</H2>
       <P>
-        Input: a primary hex. Optionally a secondary hex (or one derived from the primary), a neutral
-        tint source and strength, a custom link seed, and a few levers: exact mode, an archetype
-        override, the deeper style. The full input type is on the{' '}
+        The engine needs one brand hex. The options add a second seed or derive a companion from the
+        first, set the neutral's tint and its strength, give the link its own seed, pin a family's
+        fill to a lightness anchor, and pick the contrast profile. The full input is on the{' '}
         <DocLink page="install">Install and API</DocLink> page.
       </P>
+
+      <H2>The token roster</H2>
       <P>
-        Output: one resolved theme. Seven families (neutral, brand, brand-alt, critical, warning,
-        positive, info), each carrying the same <K v={SCALE_STOP_COUNT} d={0} />-stop scale plus its
-        stamp tokens; the neutral adds the two poles, <Code>{PAPER_0}</Code> and <Code>{PEN_100}</Code>;
-        two link trios and the two seed absolutes complete the set. Every token is a primitive: a
-        value the engine calculates from the seed. Light and dark resolve together and ship on the
-        same names, spelled in one grammar across every output:
+        Every family emits the same set of names, so a name says the token's job whichever family
+        carries it. The families are neutral, brand, brand-alt, critical, warning, positive and info;
+        the neutral adds the two poles, <Code>{PAPER_0}</Code> and <Code>{PEN_100}</Code>. The link
+        rows and the two seeds sit outside the families. Each name carries a light and a dark value.
       </P>
-      <UL>
-        <LI><b>CSS custom properties</b>: <Code>brandCss</Code> emits a light block and a dark block per brand; <Code>signalsCss</Code> emits the brand-independent signal block once.</LI>
-        <LI><b>Figma variables</b>: <Code>themeToFigma</Code> emits a light and a dark group tree; the extended plugin writes it into a file.</LI>
-        <LI><b>DTCG documents</b>: <Code>tokensToDtcg</Code> emits one Design Tokens Format Module document per mode, every token with its description.</LI>
-      </UL>
       <RampSet />
+      <P>
+        One family's rows, computed live for seed {REF_SEED}, the engine's own default. Paths are the
+        extended plugin's; the CSS column is the same row's custom property. The link rows and the
+        seeds are on the <DocLink page="output">Output contract</DocLink> page.
+      </P>
+      <FamilyRoster />
+
+      <H2>The outputs</H2>
+      <UL>
+        <LI>CSS custom properties: <Code>brandCss</Code> writes a light block and a dark block per brand; <Code>signalsCss</Code> writes the brand-independent signal block once.</LI>
+        <LI>DTCG documents: <Code>tokensToDtcg</Code> writes one document per mode, each token with its description.</LI>
+        <LI>Figma variables: <Code>themeToFigma</Code> returns a light and a dark group tree; the extended plugin writes them into a file.</LI>
+      </UL>
 
       <H2>What the engine guarantees</H2>
       <P>
-        Every family's scale is the same law, so a band means the same thing on every brand. Each band
-        carries one flat claim, checked on the pair that ships (8-bit sRGB), against the family's own
-        grounds and the neutral's, in both modes:
+        Every family has the same scale, so a band means the same thing on every brand. Each band
+        carries one claim, checked in both modes on the 8-bit sRGB values that ship, against the
+        papers and chalks of its own family and of the neutral; each row says which.
       </P>
-      <UL>
-        <LI><b>paper</b>: grounds. No contrast claim of their own; every contrast band is cleared against them.</LI>
-        <LI><b>chalk</b>: grounds for subtle states and decoration, never text. The pen band is cleared against them.</LI>
-        <LI><b>highlighter</b>: <K v={STOP_8_NONTEXT_CONTRAST} d={1} />:1 on every paper. The bar for anything that must be visible to operate the interface: focus rings, icons, borders, large text.</LI>
-        <LI><b>pencil</b>: <K v={PENCIL_9_CONTRAST} d={1} />:1 on every paper. Regular text and the emphasis fill.</LI>
-        <LI><b>pen</b>: <K v={PEN_10_CONTRAST} d={1} />:1 on every paper and every chalk, both directions. Text that must hold on tinted grounds.</LI>
-      </UL>
+      <Table
+        head={['Band', 'Job', 'Guarantee']}
+        rows={[
+          ['paper', 'background', 'none; the contrast bands are measured against the papers'],
+          ['chalk', 'decorative border, illustration, ground for inverted text; never text', 'none; the pens are measured against the chalks'],
+          ['highlighter', 'focus ring, icon, border, large text', <><K v={STOP_8_NONTEXT_CONTRAST} d={1} />:1 on the papers, the non-text bar</>],
+          ['pencil', 'regular text; the emphasis fill', <><K v={PENCIL_9_CONTRAST} d={1} />:1 on the papers</>],
+          ['pen', 'text on tinted grounds; inverted background', <><K v={PEN_10_CONTRAST} d={1} />:1 on the papers and the chalks, both directions</>],
+        ]}
+      />
       <P>
-        The stamp's text passes 4.5:1 on its fill. On top of that law, the engine uses APCA in one
-        place, as a legibility booster on the stamp: the fill is nudged until its text reads at Lc{' '}
-        <K v={CO_LC} d={0} /> (critical <K v={CRITICAL_CLEARANCE_LC} d={0} />). The exact statements,
-        the frozen worst-case bounds behind "every paper", what is not promised, and the audit scripts
-        that prove it are on the <DocLink page="guarantees">Guarantees</DocLink> page.
+        The stamp's text reads on its fill at 4.5:1. APCA is used once: the stamp fill also moves
+        until its text clears Lc <K v={CO_LC} d={0} /> (Lc <K v={CRITICAL_CLEARANCE_LC} d={0} /> on
+        critical). The full claims and their audits: <DocLink page="guarantees">Guarantees</DocLink>.
       </P>
 
-      <H2>Three things it does differently</H2>
+      <H2>How the values are solved</H2>
       <UL>
         <LI>
-          <b>A stop reads the same on every brand.</b> In light mode each stop's lightness is solved per hue so its
-          apparent lightness, with the Helmholtz-Kohlrausch effect corrected, hits one shared target. In dark mode the
-          paper and chalk stops land on one shared luminance ladder, and the pen stops are solved the same way as light.
+          A stop reads the same on every brand. In light mode each stop's lightness is solved per hue so
+          its apparent lightness, with the Helmholtz-Kohlrausch effect corrected, hits one shared target.
+          In dark mode the paper and chalk stops land on one shared luminance ladder, and the pen stops
+          are solved the same way as light.
         </LI>
         <LI>
-          <b>Primitives are broad, not agnostic.</b> Each stop is made for a purpose and the purpose is in its name and
-          its description: the instrument word is the law it serves, the number is where it sits, the conformance line
-          states the WCAG level it clears.
+          Each base token is made for a purpose, and the purpose is in its name and its description: the
+          instrument word is the job, the number places it on the ladder, and the description states the
+          WCAG level it clears.
         </LI>
         <LI>
-          <b>Contrast is solved during generation.</b> The requirements are declared per band and enforced while the
-          ramp resolves, against the resolved grounds, not checked afterwards when a semantic layer aliases the stops.
+          The contrast requirements are declared per band and enforced while the ramp resolves, against
+          the resolved grounds.
         </LI>
       </UL>
-
-      <H2>What a family ships</H2>
-      <P>
-        Every swatch below is computed live for seed {REF_SEED}, the engine's own default. Paths are the extended
-        plugin's; the CSS column is the custom property the same row ships as. The full roster with the link trios
-        and the seed absolutes is on the <DocLink page="output">Output contract</DocLink> page.
-      </P>
-      <FamilyRoster />
 
       <H2>Where to next</H2>
       <UL>
         <LI><DocLink page="install">Install and API</DocLink>: the npm package, the entry points, an end-to-end example.</LI>
         <LI><DocLink page="output">Output contract</DocLink>: the naming grammar, families and prefixes, modes and selectors, a live CSS block and Figma tree.</LI>
-        <LI><DocLink page="guarantees">Guarantees</DocLink>: every claim stated exactly, and how it is verified.</LI>
+        <LI><DocLink page="guarantees">Guarantees</DocLink>: each claim as stated, and how it is verified.</LI>
         <LI><DocLink page="generation">How the theme is generated</DocLink>: the pipeline in execution order, with the constants and the code that runs each step.</LI>
         <LI><DocLink page="signals">Signals and companions</DocLink> and the <DocLink page="reference">Reference</DocLink>: glossary, constants, option types.</LI>
       </UL>
