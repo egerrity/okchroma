@@ -11,7 +11,8 @@ import { perceptualRungL, grayApparentL, meanBoost } from '../../../src/engine/p
 import { ARCHETYPES, stateStepL } from '../../../src/engine/archetypes'
 import { SIGNALS } from '../../../src/engine/signals'
 import { SOFT_ON_CTA_ALPHA, DEFAULT_SECONDARY } from '../../../src/engine/resolve'
-import { CTA_BORDER_LC_FLOOR, OFFSET_ALPHAS } from '../../../src/engine/cssRender'
+import { CTA_BORDER_LC_FLOOR, OFFSET_ALPHAS, ctaBorderRung } from '../../../src/engine/cssRender'
+import { CSS_FAMILY } from '../../../src/engine/tokenDescriptions'
 import { P2_D } from '../../../src/engine/p2'
 import { stopTokenName, PAPER_0, PEN_100, STAMP_FILL, STAMP_FILL_HOVER, STAMP_FILL_PRESSED, STAMP_EDGE, STAMP_ON } from '../../../src/engine/tokenNames'
 
@@ -35,7 +36,7 @@ export function Body() {
     <>
       <Lead>
         The pipeline in execution order. Each step names the mechanism, the constants it reads (rendered
-        from the engine, never typed), and the function that runs it.
+        from the engine), and the function that runs it.
       </Lead>
       <Pre>{`resolveTheme(input)                                   src/engine/resolve.ts
 ├─ resolveBrand(primaryHex)                            the primary, with the signal policy
@@ -51,10 +52,10 @@ export function Body() {
       <H2 id="step-1">1. The theme is seeded</H2>
       <P>
         A primary hex, and optionally a secondary. With no secondary and <Code>deriveSecondary</Code> on, the
-        secondary is derived from the primary (step 8). The neutral seeds from a tint hue rather than a hex: the
-        primary's by default, the secondary's, or a custom hex's hue. The four signals seed from fixed hexes and are
-        generated once when the module loads (<Code>SIGNAL_SCALES</Code>), then re-generated per brand only as a
-        collision variant:
+        secondary is derived from the primary (step 8). The neutral seeds from a tint hue: the primary's by
+        default, the secondary's, or a custom hex's hue. The four signals seed from fixed hexes and are generated
+        once when the module loads (<Code>SIGNAL_SCALES</Code>), then re-generated per brand only as a collision
+        variant:
       </P>
       <Table
         head={['signal', 'emitted as', 'seed', 'L', 'C', 'H']}
@@ -65,17 +66,17 @@ export function Body() {
       <P>
         <Code>hexToOklch</Code> (colorMath.ts) decodes the seed. Every judgement from here on, chroma clamping, WCAG
         luminance, APCA luminance, the apparent-lightness solve, runs in the master gamut, Display P3
-        (<Code>MASTER_GAMUT = '{MASTER_GAMUT}'</Code>). Only the emit converts back: a hex is the sRGB clamp-down of the
-        resolved color, chroma reduced at constant lightness and hue, and a stop whose chroma exceeds sRGB also ships a{' '}
+        (<Code>MASTER_GAMUT = '{MASTER_GAMUT}'</Code>). Only the emit converts back: a hex is the resolved color brought
+        into sRGB by reducing chroma at constant lightness and hue, and a stop whose chroma exceeds sRGB also ships a{' '}
         <Code>color(display-p3)</Code> override in CSS.
       </P>
       <P>
         <Code>buildContext</Code> (producers.ts) then derives the per-seed state every producer reads:
       </P>
       <UL>
-        <LI><b>Vividness</b> v = min(1, C / reference), reference = min(<K v={VIVID_C} />, the gamut's median chroma capacity at the seed's lightness). The cap is what keeps every vivid seed on the same ladder chroma; the lightness-aware reference is what keeps a pastel at its own ceiling from reading as a gray. A seed under C <K v={HUE_NOISE_C} /> is hue noise: no drift, no repel, no bell.</LI>
-        <LI><b>Mutedness</b> (1 − v) / 0.55, and the warm envelope weight u that only the semi-muted warm seeds carry (a sigmoid toward the red-torsion center, a cream gate above H 105).</LI>
-        <LI><b>The archetype</b>, by the seed's lightness, one of six anchors. It labels the seed; only an override pins the stamp to the band's median.</LI>
+        <LI>Vividness v = min(1, C / reference), reference = min(<K v={VIVID_C} />, the gamut's median chroma capacity at the seed's lightness). The cap keeps every vivid seed on the same ladder chroma; the lightness-aware reference keeps a pastel at its own ceiling from reading as a gray. A seed under C <K v={HUE_NOISE_C} /> is hue noise: no drift, no repel, no bell.</LI>
+        <LI>Mutedness (1 − v) / 0.55, and the warm envelope weight u that only the semi-muted warm seeds carry (a sigmoid toward the red-torsion center, a cream gate above H 105).</LI>
+        <LI>The archetype, by the seed's lightness, one of six anchors. It labels the seed; only an override pins the stamp to the band's median.</LI>
       </UL>
       <Table
         head={['archetype', 'L from', 'L to', 'median']}
@@ -85,9 +86,9 @@ export function Body() {
       <H2 id="step-3">3. The light ramp is generated</H2>
       <H3>Lightness: the apparent-lightness solve</H3>
       <P>
-        Each stop declares a lightness target (<Code>ROOT_L_LIGHT</Code>, stopTable.ts). A stop is not placed at its
-        target; it is placed at the measured lightness where its <i>apparent</i> lightness equals a shared target:
-        the gray at rootL plus the mean Helmholtz-Kohlrausch boost at the stop's chroma, averaged over 18 hues
+        Each stop declares a lightness target (<Code>ROOT_L_LIGHT</Code>, stopTable.ts). The target is the input to
+        the solve: the stop is placed at the measured lightness where its <i>apparent</i> lightness equals a shared
+        target, the gray at rootL plus the mean Helmholtz-Kohlrausch boost at the stop's chroma, averaged over 18 hues
         (<Code>perceptualRungL</Code>, perceptualL.ts; the Nayatani 1997 model in <Code>apparentL</Code>). A saturated
         color looks brighter than a gray of the same luminance by a hue-dependent amount, large for blue, red and violet,
         small for yellow-green, so a high-boost hue is placed lower and a low-boost hue higher, and the stop reads the
@@ -109,8 +110,8 @@ export function Body() {
       />
       <P>
         Stop 0 is fixed at its extreme (white). The paper and chalk targets grow apart geometrically, about
-        1.25× per step, which is what keeps every seam open without a separation floor: the resolver still supports a
-        declared minimum-separation requirement, but the shipped declaration carries none.
+        1.25× per step, which keeps every seam open without a separation floor: the resolver still supports a
+        declared minimum-separation requirement, and the shipped declaration carries none.
       </P>
       <H3>Hue: the seed hue plus two shifts</H3>
       <P>
@@ -118,17 +119,17 @@ export function Body() {
       </P>
       <UL>
         <LI>
-          <b>The warm drift.</b> Warm seeds rotate toward the hue that stays clean at each lightness, a table from{' '}
+          The warm drift. Warm seeds rotate toward the hue that stays clean at each lightness, a table from{' '}
           <K v={GOLD_SPINE[0][1]} d={0} deg /> at L <K v={GOLD_SPINE[0][0]} d={2} /> to <K v={GOLD_SPINE[GOLD_SPINE.length - 1][1]} d={0} deg /> at
           L <K v={GOLD_SPINE[GOLD_SPINE.length - 1][0]} d={2} /> (<Code>GOLD_SPINE</Code>). The drift is{' '}
           <K v={WARM_TORSION.travel} d={2} /> of the difference between the spine hue at the stop's lightness and at the
           seed's, weighted by a gaussian at 83° (σ 28°) plus the muted-warm term, fading to zero between H{' '}
           <K v={LIGHT_DRIFT_COOL_HI} d={0} /> and <K v={LIGHT_DRIFT_COOL_HI + LIGHT_DRIFT_COOL_RANGE} d={0} /> so a lemon keeps
           its hue, and by the seed's distance from the spine (gaussian, σ <K v={SPINE_OFFPATH_SIGMA} d={0} deg />). Capped at
-          ±(<K v={WARM_TORSION.capDeg} d={0} /> + 8u) degrees. Dark gold and orange stay gold instead of going olive.
+          ±(<K v={WARM_TORSION.capDeg} d={0} /> + 8u) degrees, so dark gold and orange stay gold.
         </LI>
         <LI>
-          <b>The red repel.</b> <Code>redRepelShiftDeg</Code> (colorMath.ts): a seed near the red signal's hue
+          The red repel. <Code>redRepelShiftDeg</Code> (colorMath.ts): a seed near the red signal's hue
           (<K v={RED_PIVOT_H} d={1} deg />) rotates its stops away from it by the nearest side, cooler below the pivot and
           warmer above, <K v={RED_COOL_DEG} d={1} deg /> scaled by a weight that fades with distance, with a{' '}
           <K v={RED_PIVOT_EXIT_DEG} d={0} deg /> floor right at the pivot. The stamp fill is exempt (it carries the identity
@@ -144,14 +145,14 @@ export function Body() {
         declared lift for warm brands: centered at H <K v={BRAND_BELL_H} d={0} /> (σ <K v={BRAND_BELL_SIGMA} d={0} deg />), up
         to +<K v={BRAND_BELL_AMOUNT} pct d={0} />, ramping from nothing at L <K v={BRAND_BELL_L_LO} d={2} /> to full at L{' '}
         <K v={BRAND_BELL_L_HI} d={2} />, tapered out near the red signal (σ <K v={BRAND_BELL_RED_SIGMA} d={0} deg /> around{' '}
-        <K v={BRAND_BELL_RED_H} d={1} deg />) so it never spends red's separation. Signals take the gold boost instead of
-        the bell.
+        <K v={BRAND_BELL_RED_H} d={1} deg />) so it never spends red's separation. Signals take the gold boost; the bell
+        is for brands.
       </P>
       <P>
         For the pencil and pen stops (<Code>placeLightText</Code>): chroma = min(textMult × seed chroma, textMaxC), the
         text register ceiling in the table above; the solve consumes the normalized value. At emit every stop's chroma is
         clamped to the gamut at its final lightness and hue (<Code>clampChromaToGamut</Code>). Clamping reduces chroma
-        only; hue never bends from clipping.
+        only, at constant hue.
       </P>
 
       <H2 id="step-4">4. The dark ramp is generated</H2>
@@ -170,9 +171,9 @@ export function Body() {
         ]}
       />
       <P>
-        The band lift is computed, not declared: <Code>smoothedBandLift</Code> (producers.ts) places the interior so
-        the band's log-contrast shares between the dark ground and the held top ({stopTokenName(7)} at{' '}
-        <K v={DARK_BAND_TOP_LIFT} />) equal light's shares between white and {stopTokenName(7)}. The lifts today:
+        The band lift is computed: <Code>smoothedBandLift</Code> (producers.ts) places the interior so the band's
+        log-contrast shares between the dark ground and the held top ({stopTokenName(7)} at{' '}
+        <K v={DARK_BAND_TOP_LIFT} />) equal light's shares between white and {stopTokenName(7)}. The lifts:
       </P>
       <Table
         head={ladder.slice(0, 7).map(i => stopTokenName(i))}
@@ -182,8 +183,8 @@ export function Body() {
         The dark torsion path (<Code>torsionedHue</Code>, colorMath.ts) is the warm drift's dark twin: weight{' '}
         {WARM_TORSION.weight.map(([h, w]) => `${h}°→${w}`).join(', ')}, travel <K v={WARM_TORSION.travel} d={2} />, cap{' '}
         <K v={WARM_TORSION.capDeg} d={0} deg />, anchored at the dark stamp's lightness. Signal ramps re-derive{' '}
-        <K v={DARK_SIGNAL_WARM_DRIFT} d={2} /> of the light drift at each dark stop's own lightness, so warning stays warm
-        instead of reading olive; brands keep a mode-stable hue.
+        <K v={DARK_SIGNAL_WARM_DRIFT} d={2} /> of the light drift at each dark stop's own lightness, so warning stays warm;
+        brands keep a mode-stable hue.
       </P>
       <Table
         head={['dark stop', 'dark rootL', 'chroma share (sat)', 'text register']}
@@ -192,8 +193,8 @@ export function Body() {
           SCALE_C_DARK[i].textMult !== undefined ? <>min(<K v={SCALE_C_DARK[i].textMult!} /> × seed C, <K v={SCALE_C_DARK[i].textMaxC!} />), floor <K v={SCALE_C_DARK[i].chromaFloor!} /></> : ''])}
       />
       <P>
-        The dark stamp fill does not carry: it anchors at max(seed L, floor), so a too-dark fill lifts and a vivid one is
-        never pulled down. Floors: brands <K v={DARK_BRAND_FILL_MIN_L} d={2} />, the default <K v={DARK_CTA_MIN_L} d={2} /> (the
+        The dark stamp fill anchors at max(seed L, floor): a too-dark fill lifts and a vivid one keeps its lightness.
+        Floors: brands <K v={DARK_BRAND_FILL_MIN_L} d={2} />, the default <K v={DARK_CTA_MIN_L} d={2} /> (the
         red and yellow signals), green <K v={SIGNALS.find(s => s.name === 'green')!.darkFillMinL!} d={2} />, blue{' '}
         <K v={SIGNALS.find(s => s.name === 'blue')!.darkFillMinL!} d={2} />. Its chroma is the seed's × a trim for brands
         (<Code>darkCtaTrim</Code>: global <K v={DARK_CTA_C.brand.globalTrim} d={2} />, lobes at{' '}
@@ -203,10 +204,10 @@ export function Body() {
 
       <H2 id="step-5">5. Requirements</H2>
       <P>
-        Each stop resolves in three phases: <b>produce</b> (hue, chroma, lightness as above), <b>require</b> (a declared
-        floor binds), <b>refine</b> (chroma yields to the gamut at emit). The declaration is pure data
-        (requirements/spec.ts); the resolver executes it (requirements/resolve.ts). Stops resolve in order, so a floor
-        references the resolved ground it names, never a cached value.
+        Each stop resolves in three phases: produce (hue, chroma, lightness as above), require (a declared floor
+        binds), refine (chroma yields to the gamut at emit). The declaration is pure data (requirements/spec.ts); the
+        resolver executes it (requirements/resolve.ts). Stops resolve in order, so a floor references the resolved
+        ground it names, never a cached value.
       </P>
       <Table
         head={['stop', 'light', 'dark']}
@@ -215,30 +216,30 @@ export function Body() {
           reqText(MODE_SPECS.dark.stops.find(s => s.stop === i)?.require)])}
       />
       <UL>
-        <LI><b>Grounds.</b> The highlighter and the pencil solve against {stopTokenName(3)}, the nearest paper, so clearing it clears every paper; {stopTokenName(10)} against {stopTokenName(7)}, the darkest chalk; {stopTokenName(11)} against {stopTokenName(3)}. The inverse link family replaces every pen ground with the worst shipped {stopTokenName(11)}.</LI>
-        <LI><b>Light.</b> The floor clamps lightness down: L = min(L, the highest L that clears the ratio against the ground's luminance), iterated to a fixed point (up to six passes, since chroma and hue move with L). The scale solve carries a +0.05 ratio margin so the gamut-trimmed emit still clears; the pen solve does not.</LI>
-        <LI><b>Dark.</b> The floor raises lightness: if the placement misses the target, bisection walks L up until it clears (+0.05). The highlighter solves from the ground up every time; the pens usually clear from the scaffold.</LI>
-        <LI><b>Legality on both renditions.</b> The ratio a floor judges is the minimum over the P3 rendition and the sRGB clamp-down (<Code>legalRatio</Code>), so a pass holds on any display.</LI>
-        <LI><b>The shipped pair.</b> After the analytic solve, the 8-bit sRGB pair (stop and ground, both quantized) is checked, together with the cross-family bounds on the <DocLink page="guarantees" section="what-every-paper-means">Guarantees</DocLink> page; a stop that misses walks away from its ground in steps of 0.001 L until it clears.</LI>
-        <LI><b>Fail loud.</b> A floor that still cannot be met marks the stop <Code>unresolvable</Code>; the requirement gate then fails.</LI>
+        <LI>Grounds. The highlighter and the pencil solve against {stopTokenName(3)}, the nearest paper, so clearing it clears every paper; {stopTokenName(10)} against {stopTokenName(7)}, the darkest chalk; {stopTokenName(11)} against {stopTokenName(3)}. The inverse link rows replace every pen ground with the worst shipped {stopTokenName(11)}.</LI>
+        <LI>Light. The floor clamps lightness down: L = min(L, the highest L that clears the ratio against the ground's luminance), iterated to a fixed point (up to six passes, since chroma and hue move with L). The scale solve carries a +0.05 ratio margin so the gamut-trimmed emit still clears; the pen solve does not.</LI>
+        <LI>Dark. The floor raises lightness: if the placement misses the target, bisection walks L up until it clears (+0.05). The highlighter solves from the ground up every time; the pens usually clear from the scaffold.</LI>
+        <LI>Legality on both renditions. The ratio a floor judges is the minimum over the P3 rendition and the sRGB clamp-down (<Code>legalRatio</Code>), so a pass holds on any display.</LI>
+        <LI>The shipped pair. After the analytic solve, the 8-bit sRGB pair (stop and ground, both quantized) is checked, together with the cross-family bounds on the <DocLink page="guarantees" section="what-every-paper-means">Guarantees</DocLink> page; a stop that misses walks away from its ground in steps of 0.001 L until it clears.</LI>
+        <LI>A floor that still cannot be met marks the stop <Code>unresolvable</Code>, and the requirement gate fails.</LI>
       </UL>
 
       <H2 id="step-6">6. The stamp is generated</H2>
       <P>
-        The stamp is not a stop. It anchors at the seed's own lightness, so it can sit anywhere on the ladder, and it is
-        the one value that differs per family. In evaluation order (requirements/resolve.ts, the roles block):
+        The stamp sits off the scale. It anchors at the seed's own lightness, so it can sit anywhere on the ladder, and
+        it is the one value that differs per family. In evaluation order (requirements/resolve.ts, the roles block):
       </P>
       <UL>
-        <LI><b>The pole, judged first.</b> <Code>onTextIsWhite</Code> (colorMath.ts) at the seed: the pole that reads better on the fill (judged with APCA). The chosen pole must pass <K v={ONS.ratioFloor!} d={1} />:1; if white is preferred and misses, it flips to black when black passes and reads clearly.</LI>
-        <LI><b>The enforce re-solve.</b> If white is still preferred and misses 4.5:1, the fill darkens until white clears 4.6:1 (<Code>ctaLightL</Code>). A brand within two rings of the red region is not darkened toward red; it flips to black instead when black already passes.</LI>
-        <LI><b>The booster.</b> The one place APCA is used: once the law is met, the fill moves in the chosen pole's direction until that pole reads APCA Lc <K v={CO_LC} d={0} /> (critical <K v={CRITICAL_CLEARANCE_LC} d={0} />), firing at the bar + <K v={APCA_ENFORCE_MARGIN_LC} d={1} /> and solving +<K v={APCA_SOLVE_MARGIN_LC} d={1} /> past it, capped at L <K v={CTA_CLEARANCE_CAPS[0]} d={2} /> and <K v={CTA_CLEARANCE_CAPS[1]} d={2} />; 4.5:1 is never capped (<Code>ctaDualGateL</Code>). A legibility nudge on the stamp, not a requirement.</LI>
-        <LI><b>The red exit.</b> A fill inside the red signal's region leaves it by the nearest edge that has a passing pole (<Code>solveBrandExit</Code>; step 7).</LI>
-        <LI><b>States.</b> Hover and pressed step <K v={stateStepL(0.5, 'light', 1)} d={2} /> and <K v={stateStepL(0.5, 'light', 2)} d={2} /> L away from the mode's ground (<Code>stateFillL</Code>, archetypes.ts), toward black in light and white in dark, reversed for fills below L <K v={ARCHETYPES.find(a => a.name === 'rich')!.min} d={2} /> in light or above L <K v={ARCHETYPES.find(a => a.name === 'light')!.min} d={2} /> in dark, which have no room to travel.</LI>
-        <LI><b>Dark.</b> The anchor is max(seed L, floor) (step 4); the derived secondary uses a flat register instead, an apparent distance of <K v={DEFAULT_SECONDARY.darkFlatGapApp} d={0} /> above the dark ground. Then the same enforce, booster and exit run on the dark geometry; the dark exit is keyed on a side-by-side metric (P2, bar <K v={P2_D} d={2} />).</LI>
-        <LI><b>The pole, judged last.</b> At the fill that ships: if the chosen pole misses 4.5:1 and the other clears, it flips.</LI>
-        <LI><b>The edge.</b> <Code>{STAMP_EDGE}</Code> resolves to the family's alpha rung (primary and signals <K v={OFFSET_ALPHAS[16]} pct d={0} />, secondary <K v={OFFSET_ALPHAS[6]} pct d={0} />, neutral <K v={OFFSET_ALPHAS[8]} pct d={0} />) when the fill reads under APCA |Lc| <K v={CTA_BORDER_LC_FLOOR} d={0} /> against the page (the neutral's {stopTokenName(2)} in light, {stopTokenName(1)} in dark), else transparent. Taste, not accessibility.</LI>
-        <LI><b>Quiet fills.</b> The neutral's stamp and a secondary's carry <Code>{STAMP_ON}</Code> as the pole at alpha, <K v={SOFT_ON_CTA_ALPHA.light} pct d={0} /> light / <K v={SOFT_ON_CTA_ALPHA.dark} pct d={0} /> dark, where the composite clears 4.5:1 on rest, hover and pressed (<Code>softOnCtaPasses</Code>); the neutral always does, a failing secondary keeps the solid pole.</LI>
-        <LI><b>The text-style action</b> has no separate tokens: it is {stopTokenName(9)} at rest, {stopTokenName(10)} on hover, {stopTokenName(11)} pressed.</LI>
+        <LI>The pole, judged first. <Code>onTextIsWhite</Code> (colorMath.ts) at the seed: the pole that reads better on the fill (judged with APCA). The chosen pole must pass <K v={ONS.ratioFloor!} d={1} />:1; if white is preferred and misses, it flips to black when black passes and reads clearly.</LI>
+        <LI>The enforce re-solve. If white is still preferred and misses 4.5:1, the fill darkens until white clears 4.6:1 (<Code>ctaLightL</Code>). A brand within two rings of the red region is not darkened toward red; it flips to black when black already passes.</LI>
+        <LI>The booster. The one place APCA is used: once the law is met, the fill moves in the chosen pole's direction until that pole reads APCA Lc <K v={CO_LC} d={0} /> (critical <K v={CRITICAL_CLEARANCE_LC} d={0} />), firing at the bar + <K v={APCA_ENFORCE_MARGIN_LC} d={1} /> and solving +<K v={APCA_SOLVE_MARGIN_LC} d={1} /> past it, capped at L <K v={CTA_CLEARANCE_CAPS[0]} d={2} /> and <K v={CTA_CLEARANCE_CAPS[1]} d={2} />; 4.5:1 is never capped (<Code>ctaDualGateL</Code>). A legibility nudge, with no requirement attached.</LI>
+        <LI>The red exit. A fill inside the red signal's region leaves it by the nearest edge that has a passing pole (<Code>solveBrandExit</Code>; step 7).</LI>
+        <LI>The steps. One step and two steps from rest are <K v={stateStepL(0.5, 'light', 1)} d={2} /> and <K v={stateStepL(0.5, 'light', 2)} d={2} /> L away from the mode's ground (<Code>stateFillL</Code>, archetypes.ts), toward black in light and white in dark, reversed for fills below L <K v={ARCHETYPES.find(a => a.name === 'rich')!.min} d={2} /> in light or above L <K v={ARCHETYPES.find(a => a.name === 'light')!.min} d={2} /> in dark, which have no room to travel.</LI>
+        <LI>Dark. The anchor is max(seed L, floor) (step 4); the derived secondary uses a flat register, an apparent distance of <K v={DEFAULT_SECONDARY.darkFlatGapApp} d={0} /> above the dark ground. Then the same enforce, booster and exit run on the dark geometry; the dark exit is keyed on a side-by-side metric (P2, bar <K v={P2_D} d={2} />).</LI>
+        <LI>The pole, judged last. At the fill that ships: if the chosen pole misses 4.5:1 and the other clears, it flips.</LI>
+        <LI>The edge. <Code>{STAMP_EDGE}</Code> resolves to the family's alpha rung (primary and signals <K v={OFFSET_ALPHAS[ctaBorderRung('brand')]} pct d={0} />, secondary <K v={OFFSET_ALPHAS[ctaBorderRung(CSS_FAMILY.brandSecondary)]} pct d={0} />, neutral <K v={OFFSET_ALPHAS[ctaBorderRung(CSS_FAMILY.neutral)]} pct d={0} />) when the fill reads under APCA |Lc| <K v={CTA_BORDER_LC_FLOOR} d={0} /> against the page (the neutral's {stopTokenName(2)} in light, {stopTokenName(1)} in dark), else transparent. A taste gate; no accessibility claim.</LI>
+        <LI>Quiet fills. The neutral's stamp and a secondary's carry <Code>{STAMP_ON}</Code> as the pole at alpha, <K v={SOFT_ON_CTA_ALPHA.light} pct d={0} /> light / <K v={SOFT_ON_CTA_ALPHA.dark} pct d={0} /> dark, where the composite clears 4.5:1 on rest, one step and two steps (<Code>softOnCtaPasses</Code>); the neutral always does, a failing secondary keeps the solid pole.</LI>
+        <LI>The text-style action has no separate tokens: it is {stopTokenName(9)} at rest, {stopTokenName(10)} one step away, {stopTokenName(11)} two steps.</LI>
       </UL>
       <P>
         The five tokens: <Code>{STAMP_FILL}</Code>, <Code>{STAMP_FILL_HOVER}</Code>, <Code>{STAMP_FILL_PRESSED}</Code>,{' '}
@@ -252,8 +253,8 @@ export function Body() {
         the signal's chalk stops, in either mode, is within the gate, and the brand is vivid enough to collide. Red
         has its own machinery, the joint solve: the brand's stamp exits red's region by its nearest edge, and the red
         signal re-seats on the far side of the brand when canonical red would still sit too close. A residual overlap
-        ships as advice, never a silent move. The thresholds, the per-signal resolutions and the red solve's rules are on
-        the <DocLink page="signals">Signals and companions</DocLink> page.
+        is reported as a note; the engine does not move it. The thresholds, the per-signal resolutions and the red
+        solve's rules are on the <DocLink page="signals">Signals and companions</DocLink> page.
       </P>
       <P>
         The membership metric for red (<Code>redSolveDist</Code>) is a weighted distance from red's stamp: darker persists
@@ -266,13 +267,13 @@ export function Body() {
 
       <H2 id="step-8">8. Companions</H2>
       <UL>
-        <LI><b>The derived secondary</b> is the primary's seed lifted toward the light pole by <K v={DEFAULT_SECONDARY.kL} pct d={0} /> of the room up to L <K v={DEFAULT_SECONDARY.lRoom} d={2} />, chroma <K v={DEFAULT_SECONDARY.kC} pct d={0} /> of the seed's and at most <K v={DEFAULT_SECONDARY.kR} pct d={0} /> of the gamut ceiling at the landing, hue unchanged, kept at least <K v={DEFAULT_SECONDARY.minGapApp} d={0} /> apparent-L off white, then resolved as a normal ramp with the flat dark stamp register. A supplied hex with the default style keeps its own ramp and takes only the stamp trio from this transform; exact ships everything as given; outline is exact with the fill re-expressed at emit.</LI>
-        <LI><b>The neutral</b> is a near-gray at the tint hue run through the same generator with its own chroma curve, at one of four strengths. Its stamp is quiet: the rest fill is the scale's own {stopTokenName(4)}, lifted in dark until it clears the high plane, with the states stepped from it.</LI>
-        <LI><b>The link</b> aliases the primary's three text stops; a custom seed resolves its own; the inverse trio re-solves the same seed for text on {stopTokenName(11)} fills.</LI>
+        <LI>The derived secondary is the primary's seed lifted toward the light pole by <K v={DEFAULT_SECONDARY.kL} pct d={0} /> of the room up to L <K v={DEFAULT_SECONDARY.lRoom} d={2} />, chroma <K v={DEFAULT_SECONDARY.kC} pct d={0} /> of the seed's and at most <K v={DEFAULT_SECONDARY.kR} pct d={0} /> of the gamut ceiling at the landing, hue unchanged, kept at least <K v={DEFAULT_SECONDARY.minGapApp} d={0} /> apparent-L off white, then resolved as a normal ramp with the flat dark stamp register. A supplied hex with the default style keeps its own ramp and takes only the stamp trio from this transform; exact ships everything as given; outline is exact with the fill re-expressed at emit.</LI>
+        <LI>The neutral is a near-gray at the tint hue run through the same generator with its own chroma curve, at one of four strengths. Its stamp is quiet: the rest fill is the scale's own {stopTokenName(4)}, lifted in dark until it clears the high plane, with the steps taken from it.</LI>
+        <LI>The link aliases the primary's three text stops; a custom seed resolves its own; the inverse rows re-solve the same seed for text on {stopTokenName(11)} fills.</LI>
       </UL>
       <P>Constants and offerings are on the <DocLink page="signals" section="companions">Signals and companions</DocLink> page.</P>
 
-      <H2 id="step-9">9. Your levers</H2>
+      <H2 id="step-9">9. The options</H2>
       <UL>
         <LI><Code>primaryMode: 'exact'</Code>: the stamp fill and identity ship as typed; on-fill enforcement, the dark red repel and the dark chroma trim are off; the ramp still resolves under every floor and the signals still move.</LI>
         <LI><Code>primaryArchetype</Code>: pins the stamp's anchor to the band's median lightness and leaves the ramp alone; the red joint solve is off (it is pair-calibrated).</LI>
