@@ -14,12 +14,12 @@ export function Body() {
       <H2>Install</H2>
       <Pre>{`npm install okchroma`}</Pre>
       <P>
-        The package ships an ESM build, a CommonJS build, and TypeScript declarations under one export
-        (<Code>import</Code> and <Code>require</Code> conditions). It emits primitives only: the color families,
-        the link trios and the seed absolutes. A semantic layer (roles, planes, shadows, state layers) is the
-        consumer's, authored on these; the demo's own <Code>demo/semantic.css</Code> is a worked example. Its
-        one runtime dependency (helmlab, a perceptual distance metric used by the red collision solve) is bundled
-        at build time, so the published package declares none. Node 18 or later; the engine has no DOM dependency.
+        The package ships an ESM build, a CommonJS build and TypeScript declarations under one export, with{' '}
+        <Code>import</Code> and <Code>require</Code> conditions. It writes base tokens only: the color families,
+        the link rows and the two seeds. It writes no semantic tokens; the semantic tokens in the repo,{' '}
+        <Code>demo/semantic.css</Code>, style the demo site. Its one library, helmlab, a perceptual distance
+        metric the red collision solve uses, is bundled at build time, so the published package declares no
+        dependency. Node 18 or later; no DOM.
       </P>
 
       <H2>The entry points</H2>
@@ -71,13 +71,16 @@ const css = brandCss(
 ) + '\\n' + signalsCss()          // the brand-independent :root block, once per page`}</Pre>
       <P>
         In the page: put the CSS in a stylesheet, set <Code>data-brand="acme"</Code> on the element the theme applies to,
-        and toggle <Code>data-theme="dark"</Code> on it for dark mode. <Code>signalsCss()</Code> is the same for every brand,
-        so it is emitted once (the repo's <Code>npm run generate</Code> writes it to <Code>dist/signals.css</Code>).
-        The same values come as one object per mode from <Code>themeTokens</Code>, with every <Code>var()</Code> resolved.{' '}
-        <Code>neutralCss(selector, brandH, level)</Code> emits a neutral alone, for chrome that carries no brand.{' '}
-        <Code>neutralTintHue(primaryH, source?, secondaryH?, customHex?)</Code> resolves the neutral's tint hue: no source, the primary's;{' '}
-        <Code>'secondary'</Code> follows the secondary's hue; <Code>'custom'</Code> takes the hue of a hex.
-        Selectors, blocks, and the P3 override are on the <DocLink page="output" section="modes-and-selectors">Output contract</DocLink> page.
+        and toggle <Code>data-theme="dark"</Code> on it for dark mode.
+      </P>
+      <UL>
+        <LI><Code>signalsCss()</Code> is the same for every brand, so it is emitted once. In the repo, <Code>npm run generate</Code> writes it to <Code>dist/signals.css</Code>.</LI>
+        <LI><Code>themeTokens</Code> returns the same values as one object per mode, every <Code>var()</Code> resolved.</LI>
+        <LI><Code>neutralCss(selector, brandH, level)</Code> emits a neutral alone, for chrome that carries no brand.</LI>
+        <LI><Code>neutralTintHue(primaryH, source?, secondaryH?, customHex?)</Code> resolves the neutral's tint hue: with no source, the primary's; <Code>'secondary'</Code> follows the secondary's hue; <Code>'custom'</Code> takes the hue of a hex.</LI>
+      </UL>
+      <P>
+        Selectors, blocks and the P3 override are on the <DocLink page="output" section="modes-and-selectors">Output contract</DocLink> page.
       </P>
       <H3>Emit DTCG documents</H3>
       <Pre>{`import { themeTokens, tokensToDtcg } from 'okchroma'
@@ -89,14 +92,13 @@ const { light, dark } = tokensToDtcg(tokens)
 //   critical, warning, positive, info, link: { 'default-0', 'default-1', 'default-2', 'inverse-0', ... }, absolute: { brand, 'brand-alt' } }
 // every token: { $type: 'color', $value: { colorSpace: 'srgb', components, alpha, hex } | '{brand.pencil-47}', $description }`}</Pre>
       <P>
-        One document per mode, every primitive once, with the same description the Figma variable carries. A path joined
-        with hyphens is the CSS custom property, joined with slashes the Figma path. Values are the sRGB pair the CSS
-        carries; where the CSS writes a reference the document writes the alias. The repo's{' '}
+        One document per mode, every base token once, with the same description the Figma variable carries. A path
+        joined with hyphens is the CSS custom property; joined with slashes it is the Figma path. Values are the sRGB
+        colors the CSS carries; where the CSS writes a reference the document writes the alias. The repo's{' '}
         <Code>npm run tokens:emit -- '#E93D82' acme</Code> writes both files, and <Code>docs/schema.md</Code> is the
         format's reference, including how the two modes join through a resolver document. A consumer whose paths
         start with the category passes <Code>{"tokensToDtcg(tokens, { rootGroup: 'color' })"}</Code>, or{' '}
-        <Code>--root color</Code> to the script: every path and every alias gains that group in front, and nothing
-        else changes.
+        <Code>--root color</Code> to the script, and every path and alias gains that group in front.
       </P>
       <H3>Emit Figma variables</H3>
       <Pre>{`import { themeToFigma, SIGNALS, SIGNAL_SCALES } from 'okchroma'
@@ -123,8 +125,8 @@ const { light, dark } = themeToFigma(theme.themed, {
         <LI><Code>resolveBrand(hex, name, opts)</Code>: one family with the signal policy (collisions, shifts, the red complement) but no secondary.</LI>
         <LI><Code>generateScale(hex, name, forcedArchetype, opts)</Code>: the pure scale, no signal policy. Returns a <Code>GeneratedScale</Code>: <Code>light[]</Code>, <Code>dark[]</Code>, the stamp trio per mode, the on-fill booleans, the poles, <Code>identityHex</Code>.</LI>
         <LI><Code>generateNeutralScale(brandH, level)</Code>: the neutral for a tint hue.</LI>
-        <LI><Code>resolveLinkTrio(hex)</Code>, <Code>resolveLinkInverseTrio(hex)</Code>: the link states from a seed, on papers and on pen-70 fills.</LI>
-        <LI><Code>stopHex(stop)</Code>: the sRGB hex a stop ships as. The vocabulary (<Code>stopTokenName</Code>, <Code>STAMP_FILL</Code>, <Code>PAPER_0</Code>, <Code>linkPath</Code>, <Code>absolutePath</Code>) and the grammar (<Code>familyPath</Code>, <Code>cssVarName</Code>, <Code>figmaPathOf</Code>, <Code>tokenPaths</Code>) are exported so a consumer never spells a token name; a rename then breaks the build instead of mis-mapping.</LI>
+        <LI><Code>resolveLinkTrio(hex)</Code>, <Code>resolveLinkInverseTrio(hex)</Code>: the link steps from a seed, on papers and on pen-70 fills.</LI>
+        <LI><Code>stopHex(stop)</Code>: the sRGB hex a stop ships as. The vocabulary (<Code>stopTokenName</Code>, <Code>STAMP_FILL</Code>, <Code>PAPER_0</Code>, <Code>linkPath</Code>, <Code>absolutePath</Code>) and the grammar (<Code>familyPath</Code>, <Code>cssVarName</Code>, <Code>figmaPathOf</Code>, <Code>tokenPathOf</Code>) are exported, so a consumer imports a name and a rename breaks its build at compile time.</LI>
         <LI><Code>describeToken(path)</Code> and <Code>describeDocument(path)</Code>: the description text of any row, as the Figma variable carries it and as the DTCG documents carry it (the same lines plus each claim's ground and a usage line).</LI>
       </UL>
 
@@ -135,7 +137,7 @@ npm run demo:build      # writes dist/signals.css and bundles the demo
 npx serve .             # open http://localhost:3000/demo/index.html
 npm run dev             # watch mode`}</Pre>
       <P>
-        <Code>npm run typecheck</Code> runs the compiler. The audit gates (<Code>npm run req:audit</Code>,{' '}
+        <Code>npm run typecheck</Code> runs the compiler. The audit scripts (<Code>npm run req:audit</Code>,{' '}
         <Code>npm run audit:guarantee</Code>, and the rest) are listed with what each proves on the{' '}
         <DocLink page="guarantees" section="how-it-is-verified">Guarantees</DocLink> page.
       </P>
@@ -143,20 +145,20 @@ npm run dev             # watch mode`}</Pre>
       <H2>The Figma plugins</H2>
       <UL>
         <LI>
-          <b>OKChroma Extended</b> is the shipped Figma front-end. It requires the Figma desktop app and a Figma Enterprise plan
-          (it writes extended variable collections: one base collection with light and dark modes, plus one extension per
-          brand that overrides only what differs). Download and install steps:{' '}
+          OKChroma Extended is the shipped Figma plugin. It needs the Figma desktop app and a Figma Enterprise plan,
+          because it writes extended variable collections: one collection with light and dark modes, and an extension
+          per brand that overrides only what differs. Download and install steps:{' '}
           <A href="https://egerrity.github.io/okchroma/install.html">install page</A>. It builds from source with{' '}
           <Code>npm run plugin-ext:build</Code>.
         </LI>
         <LI>
-          <b>OKChroma</b> (the community plugin, <Code>plugin/</Code>) is withdrawn from download until it carries the
-          rename table that migrates an existing file across the scale change of July 2026. It still builds from source
-          with <Code>npm run plugin:build</Code>; a fresh file gets the current shape.
+          OKChroma (the community plugin, <Code>plugin/</Code>) is not offered for download. It has no rename table
+          for the last scale change, so updating an installed copy would leave the old names in the file. It builds
+          from source with <Code>npm run plugin:build</Code>; a fresh file gets the current shape.
         </LI>
       </UL>
       <Note>
-        The demo is a preview of the engine's output, not part of it. The product is the engine and what it emits.
+        The demo is a preview of the engine's output. The product is the engine and what it writes.
       </Note>
     </>
   )
