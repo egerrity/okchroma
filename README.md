@@ -128,8 +128,8 @@ Which token to use for which job: [docs/agents.md](docs/agents.md).
 
 ## The outputs
 
-- CSS: `brandCss` writes a `[data-brand="acme"]` block and a
-  `[data-brand="acme"][data-theme="dark"]` block; `signalsCss` writes the
+- CSS: `brandCss` writes a `[data-brand="your-brand"]` block and a
+  `[data-brand="your-brand"][data-theme="dark"]` block; `signalsCss` writes the
   brand-independent signal block at `:root`. Values are sRGB hexes, or `rgba()` where a
   token carries alpha. A stop whose chroma exceeds sRGB gets a `color(display-p3 …)`
   override behind a browser gate. In the repo, `npm run generate` writes the signal block
@@ -139,7 +139,7 @@ Which token to use for which job: [docs/agents.md](docs/agents.md).
 - DTCG: `tokensToDtcg` returns one document per mode. Each token has a `$type`, an sRGB
   `$value` (or an alias where the CSS writes a reference) and a `$description`; a
   resolver document joins the two modes. The format: [docs/schema.md](docs/schema.md).
-  In the repo, `npm run tokens:emit -- '#E93D82' acme` writes both files; `--root color`
+  In the repo, `npm run tokens:emit -- '#E93D82' your-brand` writes both files; `--root color`
   (or `{ rootGroup: 'color' }` in code) nests the paths under that group.
 - Figma: `themeToFigma` returns a light and a dark group tree on the same paths; the
   extended plugin writes them into a file.
