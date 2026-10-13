@@ -1,19 +1,19 @@
 # OKChroma Extended (plugin-ext)
 
-The shipped Figma front-end. It runs the engine inside Figma and writes the resolved system
+The shipped Figma plugin. It runs the engine inside Figma and writes the resolved system
 into a file as extended variable collections, a Figma Enterprise feature: one base
 collection with light and dark modes, plus one extension per brand that overrides only what
-differs. On any other plan the plugin detects the missing API and reports it instead of
-writing.
+differs. On any other plan the plugin detects the missing API and reports it, and writes
+nothing.
 
 It is not listed on Figma Community. Install it by download from the site's install page
 (built fresh from `main` on every push) or build it from source; see Install below.
 
 ## The two axes
 
-- **Brand = which extension is applied.** One extension collection per brand, so the
+- Brand is which extension is applied. One extension collection per brand, so the
   frame-side collection picker stays a flat list (`theme, acme, …`).
-- **Mode = the base's columns:** `light` and `dark`, solved under WCAG. Every apply
+- Mode is the base's columns, `light` and `dark`, solved under WCAG. Every apply
   writes both; there is no profile picker. Files written when the columns were
   `wcag · wcag-dark · apca · apca-dark` are adopted in place: the first pair is renamed to
   `light` and `dark` (the mode ids survive, so bindings do), and the two APCA columns are
@@ -24,7 +24,7 @@ It is not listed on Figma Community. Install it by download from the site's inst
 Every path starts with `color/`, the category: a design system whose variable paths start
 with their category (`space/400`, `radius/200`) reads color the same way. Inside the group
 the paths are the engine's one grammar, the same spelling the CSS custom properties and the
-DTCG documents carry. The engine emits primitives only: every row is a value it calculates
+DTCG documents carry. The engine emits base tokens only: every row is a value it calculates
 from the seed.
 
 - `color/neutral/*`: `paper-0` to `pen-100` in ladder order, the stamp rows.
@@ -64,10 +64,10 @@ populated once; later applies add missing rows, restamp descriptions and scopes,
 a base row only when its value exactly matches a retired canonical value the engine itself
 once wrote. Descriptions come from `src/engine/tokenDescriptions.ts`.
 
-With the "Hide primitive scale from pickers" checkbox on (the default), the state-carrying
-roles (`stamp/` in every family, the link rows) are pickable in every Figma color picker
-and every other row is hidden. Off exposes everything. The posture is
-file-wide, stored on the base collection, and re-stamped on every apply.
+With the "Hide primitive scale from pickers" checkbox on (the default), the stamp rows and
+the link rows are pickable in every Figma color picker and every other row is hidden. Off
+exposes everything. The setting is file-wide, stored on the base collection, and
+re-stamped on every apply.
 
 ## Per brand
 
