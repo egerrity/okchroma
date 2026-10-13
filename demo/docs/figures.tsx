@@ -292,8 +292,8 @@ export function FigmaTree() {
       </details>
       <figcaption className="d2-ramp-cap">
         Live: <Code>themeToFigma(theme.themed, {'{'} secondary, neutralH, signals {'}'}).light</Code> for seed {REF_SEED}.
-        The dark tree has the same shape with the dark values. Every group is spelled in the one grammar: the signals by
-        role, the six link rows flat under link/, the seeds under absolute/; every leaf one word, a position. Joined with slashes a path
+        The dark tree has the same shape with the dark values. The groups follow the grammar: the signals by
+        role, the six link rows flat under link/, the seeds under absolute/; each leaf is one word, a position. Joined with slashes a path
         is the Figma variable; joined with hyphens it is the CSS custom property.
       </figcaption>
     </figure>
