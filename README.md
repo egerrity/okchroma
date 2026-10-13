@@ -149,7 +149,7 @@ Which token to use for which job: [docs/agents.md](docs/agents.md).
 The docs site renders the mechanisms with live values from the engine:
 [egerrity.github.io/okchroma/#/docs](https://egerrity.github.io/okchroma/#/docs).
 
-- [Overview](https://egerrity.github.io/okchroma/#/docs/overview): what goes in, what comes out, the token roster.
+- [Overview](https://egerrity.github.io/okchroma/#/docs/overview): the input the engine needs, and the token roster it makes from it.
 - [Output contract](https://egerrity.github.io/okchroma/#/docs/output): the naming grammar, families and prefixes, modes and selectors, a live CSS block and Figma tree.
 - [Guarantees](https://egerrity.github.io/okchroma/#/docs/guarantees): each claim as stated, and how it is verified.
 - [How the theme is generated](https://egerrity.github.io/okchroma/#/docs/generation): the pipeline in execution order, with the constants and the code that runs each step.
