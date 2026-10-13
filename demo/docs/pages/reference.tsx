@@ -36,21 +36,21 @@ export function Body() {
         head={['term', 'meaning']}
         rows={[
           ['stop', <>one of the {SCALE_STOP_COUNT} positions of the scale, plus the two poles. Indexed 1 to 11 inside the engine; named by instrument and number outside it</>],
-          ['instrument (band)', 'paper, chalk, highlighter, pencil, pen: the law a stop serves. The name says what the stop is for, not where it sits'],
-          ['rootL', 'the declared lightness target a stop is solved from (the scaffold). Not the emitted lightness'],
+          ['instrument (band)', 'paper, chalk, highlighter, pencil, pen: the job a stop does. The word says what the stop is for; the number says where it sits'],
+          ['rootL', 'the declared lightness target a stop is solved from (the scaffold); the emitted lightness differs per hue'],
           ['apparent lightness', 'lightness as seen: OKLCH L corrected for the Helmholtz-Kohlrausch effect (a saturated color reads brighter than a gray of equal luminance). The light ramp solves every stop in this space'],
           ['luminance (Y)', 'relative luminance, the photometric quantity WCAG ratios are computed from. The dark paper and chalk stops are placed by luminance parity'],
           ['the shipped pair', 'a stop and its ground as they ship: both quantized to 8-bit sRGB. The value a browser and an audit tool measure; every claim is judged on it'],
           ['produce, require, refine', 'the three phases a stop resolves through: the producers place it (hue, chroma, lightness), a declared floor binds, chroma yields to the gamut at emit'],
-          ['producer', 'a named placement rule (warm-drift, perceptual, ladder). A reference to a versioned resolver capability, never a formula in the token file'],
+          ['producer', 'a named placement rule (warm-drift, perceptual, ladder). The declaration names it as a resolver capability; the formula lives in the resolver'],
           ['requirement (floor)', 'a declared contrast the stop must clear against a resolved ground. A floor: a placement that already clears does not move'],
           ['anchor, ground', 'the resolved stop a requirement is solved against: paper-5 for the highlighter, the pencil and pen-70; chalk-20 for pen-58'],
           ['bound', 'a frozen worst-case ground (the darkest neutral paper any theme ships, and so on) the resolver holds a stop against, because the paired family is not in view during a solve'],
-          ['seam', 'the lightness gap between adjacent stops. Held open by the ladder shape, not by a floor'],
+          ['seam', 'the lightness gap between adjacent stops. The ladder shape holds it open; no floor does'],
           ['pole', 'pure white or pure black. The on-text candidates; also the two ladder extremes'],
-          ['stamp', 'the pulled-out solid fill and its states, edge and text. Off the scale; the one per-family differentiator. The engine\'s internal fields still call it cta'],
+          ['stamp', 'the solid fill off the scale, with its steps, its edge and its text. The one per-family differentiator. The engine\'s internal fields still call it cta'],
           ['quiet fill', "a stamp that sits near the page: the neutral's, and the derived secondary's. Its text is the pole at alpha"],
-          ['booster', 'the one use of APCA: a legibility nudge on the stamp fill, applied after the WCAG law is met; never a claim'],
+          ['booster', 'the one use of APCA: a legibility nudge on the stamp fill, applied after the WCAG law is met, with no claim attached'],
           ['archetype', "one of six lightness bands a seed falls in. An override pins the stamp to the band's median"],
           ['absolute', 'the seeds as given, emitted untouched under absolute/brand and absolute/brand-alt; reference values, never UI colors'],
           ['carry (delta)', 'the dark model: the dark ramp derived from the resolved light ramp'],
@@ -58,10 +58,10 @@ export function Body() {
           ['repel', 'the hue rotation a near-red seed takes away from the red signal'],
           ['collision', 'a brand close enough to a signal that the two read as one family; decided on the chalk stops'],
           ['variant', "a signal re-generated from an alternate seed to stay distinct from the brand; replaces the signal's ramp in the emitted theme"],
-          ['primitive', 'a value the engine calculates from the seed. Everything the engine emits is one; planes, shadows, opacity and state layers are a semantic layer\'s, authored on the primitives'],
-          ['grammar', 'the one path every row has (brand/stamp-0, neutral/paper-0, link/default-0, absolute/brand), a group and one word, the word a position: hyphen-joined it is the CSS custom property, slash-joined the Figma variable and the DTCG token path'],
+          ['base token', 'a value the engine calculates from the seed. Everything the engine emits is one; the semantic layer is the consumer\'s, written on the base tokens'],
+          ['grammar', 'the name of a row: a group and a leaf (brand/stamp-0, neutral/paper-0, link/default-0, absolute/brand), the leaf a position. Hyphen-joined it is the CSS custom property; slash-joined it is the Figma variable and the DTCG token path'],
           ['color group', "the category word a color path starts with where a naming grammar puts the category first: the extended plugin writes every row under color/, the DTCG documents nest under it on request, the CSS names never carry it"],
-          ['descope', 'the plugin posture that hides non-role rows from Figma pickers'],
+          ['descope', 'the plugin setting that hides the scale rows and the seeds from Figma pickers'],
         ]}
       />
 
@@ -126,7 +126,7 @@ export function Body() {
       <H3>archetypes.ts, collision.ts, signalShift.ts, p2.ts</H3>
       <Table head={['name', 'value', 'what it is']} rows={[
         [<Code>ARCHETYPES</Code>, ARCHETYPES.map(a => `${a.name} ${a.min} to ${a.max}`).join(', '), 'the six lightness bands'],
-        [<Code>stateStepL</Code>, <>{k(stateStepL(0.5, 'light', 1), 2)} hover, {k(stateStepL(0.5, 'light', 2), 2)} pressed</>, 'the flat state step in L'],
+        [<Code>stateStepL</Code>, <>{k(stateStepL(0.5, 'light', 1), 2)} one step, {k(stateStepL(0.5, 'light', 2), 2)} two steps</>, 'the flat step in L'],
         [<Code>HUE_COLLISION_CHALK_DEG</Code>, <>{k(HUE_COLLISION_CHALK_DEG, 0)}°</>, 'the hue collision gate'],
         [<Code>HUE_COLLISION_MIN_V</Code>, k(HUE_COLLISION_MIN_V, 1), 'the vividness qualifier'],
         [<Code>YELLOW_SPLIT_H</Code>, <>{k(YELLOW_SPLIT_H, 0)}°</>, 'below: lemon'],
