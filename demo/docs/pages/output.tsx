@@ -1,8 +1,8 @@
 import React from 'react'
 import { H2, H3, P, UL, LI, Code, Pre, Lead, Table, DocLink, K } from '../prose'
-import { NamingAnatomy, FamilyRoster, SystemRoster, CssSample, FigmaTree, REF_SEED } from '../figures'
-import { ROOT_L_LIGHT, ROOT_L_DARK, PENCIL_9_CONTRAST } from '../../../src/engine/stopTable'
-import { PAPER0_DARK_ROOT_L } from '../../../src/engine/requirements/spec'
+import { NamingAnatomy, RampSet, FamilyRoster, SystemRoster, CssSample, FigmaTree, REF_SEED } from '../figures'
+import { ROOT_L_LIGHT, ROOT_L_DARK, STOP_8_NONTEXT_CONTRAST, PENCIL_9_CONTRAST, PEN_10_CONTRAST } from '../../../src/engine/stopTable'
+import { PAPER0_DARK_ROOT_L, MODE_SPECS } from '../../../src/engine/requirements/spec'
 import { stopTokenName, PAPER_0, PEN_100, SCALE_STOP_COUNT, STAMP_FILL, STAMP_FILL_HOVER, STAMP_FILL_PRESSED, STAMP_EDGE, STAMP_ON } from '../../../src/engine/tokenNames'
 import { FAMILY, CSS_FAMILY } from '../../../src/engine/tokenDescriptions'
 import { SIGNALS } from '../../../src/engine/signals'
@@ -14,6 +14,7 @@ export const slug = 'output'
 export const title = 'Output contract'
 
 const stops = Array.from({ length: SCALE_STOP_COUNT }, (_, i) => i + 1)
+const CO_LC = MODE_SPECS.light.ons.onFill.coEnforceLc!
 
 export function Body() {
   return (
@@ -32,22 +33,41 @@ export function Body() {
         in its description and a claim on the <DocLink page="guarantees">Guarantees</DocLink> page.
       </P>
 
+      <H2>The bands</H2>
+      <P>
+        The scale has five bands, and the brand identity two instruments beside it. A band is a job; a stop is a
+        lightness within it, the same job at a different strength.
+      </P>
+      <RampSet />
+      <Table
+        head={['band', 'role', 'paired with', 'contrast minimum guaranteed']}
+        rows={[
+          ['paper', 'background; the ground the contrast bands are measured against', 'the highlighter, the pencil and the pens on it', 'none of its own'],
+          ['chalk', 'decorative border, illustration, ground for inverted text; never text', 'the pens on it', 'none of its own'],
+          ['highlighter', 'focus ring, icon, border, large text; at a translucency, the state layer', 'on the papers', <><K v={STOP_8_NONTEXT_CONTRAST} d={1} />:1, the non-text bar</>],
+          ['pencil', 'regular text; the emphasis fill', <>on the papers; as a fill, <Code>{PAPER_0}</Code> is its text</>, <><K v={PENCIL_9_CONTRAST} d={1} />:1</>],
+          ['pen', 'text; inverted background', 'on the papers and the chalks, both directions', <><K v={PEN_10_CONTRAST} d={1} />:1, both directions</>],
+          ['stamp', 'the call-to-action fill at rest, one step and two steps from rest; its edge; its text', <><Code>{STAMP_ON}</Code> on the three fills; the edge against the page</>, <><Code>{STAMP_ON}</Code> at <K v={PENCIL_9_CONTRAST} d={1} />:1 on each fill, and the fill moves until it clears Lc <K v={CO_LC} d={0} /></>],
+          ['link', 'link text at rest, one step and two steps from rest', 'default on the papers; inverse on the pen ground', <><K v={PENCIL_9_CONTRAST} d={1} />:1 on its ground</>],
+        ]}
+      />
+
       <H2>The scale, per family</H2>
       <P>
         Every family carries these <K v={SCALE_STOP_COUNT} d={0} /> stops. The lightness targets are the ladders
         the solver starts from; the emitted lightness differs per hue, so the number names the target and the
-        value is solved. The role column is the description the plugin writes.
+        value is solved. The conformance column is the line the plugin writes in the description.
       </P>
       <Table
-        head={['token', 'index', 'light target', 'dark target', 'role', 'conformance']}
+        head={['token', 'index', 'light target', 'dark target', 'conformance']}
         rows={[
-          [<Code>{PAPER_0}</Code>, '0', <K v={1} />, <K v={PAPER0_DARK_ROOT_L} />, 'the ladder floor: white in light; in dark, one seam below paper-1 (neutral only)', ''],
+          [<Code>{PAPER_0}</Code>, '0', <K v={1} />, <K v={PAPER0_DARK_ROOT_L} />, ''],
           ...stops.map(i => {
             const name = stopTokenName(i)
             const d = describeParts(`${FAMILY.brandPrimary}/${name}`)
-            return [<Code>{name}</Code>, String(i), <K v={ROOT_L_LIGHT[i]} />, <K v={ROOT_L_DARK[i]} />, d.role, d.conformance ?? '']
+            return [<Code>{name}</Code>, String(i), <K v={ROOT_L_LIGHT[i]} />, <K v={ROOT_L_DARK[i]} />, d.conformance ?? '']
           }),
-          [<Code>{PEN_100}</Code>, '12', <K v={0} />, <K v={1} />, 'the literal pole: black in light, white in dark (neutral only)', describeParts(`${FAMILY.neutral}/${PEN_100}`).conformance ?? ''],
+          [<Code>{PEN_100}</Code>, '12', <K v={0} />, <K v={1} />, describeParts(`${FAMILY.neutral}/${PEN_100}`).conformance ?? ''],
         ]}
       />
       <P>
