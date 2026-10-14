@@ -1,13 +1,12 @@
 # The scale
 
-One brand color in, a full ramp out: 3 papers, 4 chalks, 1 highlighter, 1 pencil, and 2
-pens, plus the two poles (neutral only) and the off-scale stamp with its on-text color.
-Every name follows one pattern, `instrument-NN`: the instrument word (`paper`,
-`chalk`, `highlighter`, `pencil`, `pen`) says which law the stop serves; the number places
-it on the ladder. The engine carries internal stop indices 1 to 11 for its own machinery,
-but those indices are not the names: a stop is addressed by what it is, not by its position.
-Each stop has a reserved role and a contrast guarantee, so the same name does the same
-thing on every brand.
+The scale is the set of stops every family emits: the papers, the chalks, the highlighter,
+the pencil and the pens, plus the two poles (neutral only) and the stamp with its text. A
+name is `instrument-NN`: the instrument word (`paper`, `chalk`, `highlighter`, `pencil`,
+`pen`) is the stop's job, and the number is 100 minus its light-mode lightness target. The
+engine indexes the stops 1 to 11 internally; the index is not the name. Each stop has a
+reserved role and a contrast guarantee, so the same name does the same thing on every
+brand.
 
 The site is the source for the scale's mechanism and claims:
 [Output contract](https://egerrity.github.io/okchroma/#/docs/output),
@@ -21,13 +20,9 @@ file is the repo-side summary with the code pointers.
 |---|---|---|
 | `paper` | 0 · 1 · 3 · 5 | grounds: backgrounds and the planes a semantic layer builds on them; no contrast obligation of their own |
 | `chalk` | 8 · 11 · 15 · 20 | grounds: decorative borders, inverted text, illustration; never text |
-| `highlighter` | 26 | **3:1 on every paper**: focus rings, icons, borders, large text. The bar for anything that must be visible to operate the interface (the WCAG non-text contrast requirement). As a translucent layer it is the state layer over any ground; the pens hold 4.5:1 on the composite over every paper |
-| `pencil` | 47 | **4.5:1 on every paper**: regular text, AA; also the emphasis fill |
-| `pen` | 58 · 70 · 100 | **4.5:1 on every paper and chalk of its own family or of the neutral, both directions**: text that must hold on tinted grounds, AA |
-
-The promise in one line: pen writes on paper and chalk, and on highlighter at a state
-rung; pencil writes on paper; highlighter writes large and draws on paper, and marks over
-paper at a rung.
+| `highlighter` | 26 | 3:1 on every paper: focus rings, icons, borders, large text. The bar for anything that must be visible to operate the interface (the WCAG non-text contrast requirement). As a translucent layer it is the state layer over any ground; the pens hold 4.5:1 on the composite over every paper |
+| `pencil` | 47 | 4.5:1 on every paper: regular text, AA; also the emphasis fill |
+| `pen` | 58 · 70 · 100 | 4.5:1 on every paper and chalk of its own family or of the neutral, both directions: text that must hold on tinted grounds, AA |
 
 "On every paper" means the family's own papers and the worst paper the family's generated
 neutral can produce across all hues; for the neutral's own stops it means the neutral's
@@ -37,7 +32,7 @@ so clears every paper by ladder order; `pen-70` is declared against a paper at a
 target and clears the chalks by sitting past `pen-58`. The neutral's pens are also
 cleared against the worst `chalk-20` any chromatic family can produce. The promise is a
 guaranteed minimum of 4.5:1 (AA) on every text stop. Where the engine places a stop above
-it, the surplus is placement, not a promise, and no AAA claim is made anywhere.
+it, the surplus is placement; the promise stays at 4.5:1, and no AAA claim is made.
 
 ## The number
 
@@ -46,8 +41,7 @@ The number is the stop's declared light rootL, rounded, then inverted:
 invert) and it is never re-rounded after inversion. So `paper-0` is pure white (rootL 1.00),
 `paper-1` is rootL 0.987, `highlighter-26` is rootL 0.738, `pen-70` is rootL 0.300, and `pen-100`
 is the black pole. Bigger means stronger. A future stop names itself by the same three steps
-from its own declared rootL. Renames are recorded in [CHANGELOG.md](../CHANGELOG.md);
-every rename has been names only, no value has moved through one.
+from its own declared rootL. A rename moves no value; [CHANGELOG.md](../CHANGELOG.md) records each one.
 
 ### Reading a name
 
@@ -60,13 +54,13 @@ its number with a hyphen, so the token name itself is one flat leaf. Read left t
 |---|---|---|
 | group | `color` | the category: the extended plugin writes every row under it, and the DTCG documents nest under it when asked |
 | family | `neutral` | which family the stop belongs to: neutral, brand, brand-alt, or a signal |
-| instrument | `pencil` | which law the stop serves |
+| instrument | `pencil` | the stop's job |
 | number | `47` | 100 − the stop's light rootL × 100, rounded |
 
 The plain engine and CSS name drops the first two segments (the CSS never carries the
 group, and there is one family per emitted block): `pencil-47`, and the CSS custom property
-is `--neutral-pencil-47`. One spelling everywhere (engine identity, Figma leaf, CSS
-variable body) is the rule.
+is `--neutral-pencil-47`. The leaf is spelled the same in the engine, the Figma variable and the CSS custom
+property.
 
 Code: the declaration is [`spec.ts`](../src/engine/requirements/spec.ts) (per-stop rootL,
 producers, and requirements: the edit surface); the ladders it draws from are in
@@ -96,8 +90,8 @@ from; the emitted lightness differs per hue.
 | `pen-70` | 11 | 0.300 | 0.919 | 7:1 against `paper-5` (the promise is 4.5) | heavy-emphasis text, inverted backgrounds |
 | `pen-100` | 12 | 0.000 | 1.000 | – | the literal pole: black in light, white in dark (neutral only) |
 
-Paper and chalk carry no declared requirement: their seam distinctness is a property
-of the `ROOT_L_LIGHT` ladder's own shape, not a runtime floor. The near-white gaps grow
+Paper and chalk carry no declared requirement: their seam distinctness comes from the
+`ROOT_L_LIGHT` ladder's shape, and no runtime floor holds it. The near-white gaps grow
 geometrically (about 1.25× per step), so `paper-3` already stands roughly 0.017 ΔE off
 `paper-1` by construction, with no push or clamp applied at resolve time. The resolver still
 supports a declared minimum-separation requirement for portable specs, but the shipped
@@ -109,14 +103,14 @@ the pencil and `pen-70`; `chalk-20` for `pen-58`. Every stop from the highlighte
 additionally held against the worst paper the family's generated neutral can produce (the
 frozen bounds in [`requirements/resolve.ts`](../src/engine/requirements/resolve.ts)).
 
-- A requirement is a floor, not a re-placement: a hue whose produced placement already
-  clears it does not move. In light the floors clamp L down (the lightest L that still
+- A requirement is a floor: a hue whose produced placement already clears it does not
+  move. In light the floors clamp L down (the lightest L that still
   clears); in dark they raise L up off the near-black paper. Declaring them means any future
   seed or tuning that would break legibility fails the gate (`npm run req:audit`,
-  `npm run audit:guarantee`) instead of shipping.
-- Off the scale: the stamp (`stamp-0`, `stamp-1`, `stamp-2`, `stamp-edge`, `stamp-on`)
-  is a set of roles, not stops: the pulled-out button fill at rest and at one and two
-  steps, its always-rendered edge, and its text. The names are positions; a semantic
+  `npm run audit:guarantee`), so nothing ships.
+- Off the scale: the stamp rows (`stamp-0`, `stamp-1`, `stamp-2`, `stamp-edge`, `stamp-on`)
+  are the button fill at rest and at one and two steps, its edge, rendered
+  unconditionally, and its text. The names are positions; a semantic
   layer names the states. The text-style action is the text stops read directly (rest
   `pencil-47`, one step `pen-58`, two steps `pen-70`).
 - The poles: `paper-0` is resolved (white in light; in dark the deep, brand-tinted plane one

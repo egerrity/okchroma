@@ -1,52 +1,74 @@
 # okchroma for agents
 
-A reference for coding agents working in a project that consumes okchroma tokens. It explains what the token names mean and how to pick the right one. It is not a spec of the engine; the engine source and the docs site ([egerrity.github.io/okchroma/#/docs](https://egerrity.github.io/okchroma/#/docs)) are the sources of truth.
+A reference for coding agents working in a project that consumes okchroma tokens. It explains what the token names mean and how to pick the right one. The engine source and the docs site ([egerrity.github.io/okchroma/#/docs](https://egerrity.github.io/okchroma/#/docs)) are the sources of truth; this file is the consumer's reference.
 
 ## The one-scale model
 
-Every color family emits the same scale: eleven stops plus a small set of pulled-out tokens. The scale shape is identical across all families, so anything you learn about `neutral` applies to `brand`, `brand-alt`, `critical`, `warning`, `positive`, and `info`. The only per-family differentiated value is the stamp (the solid fill).
+Every family emits the same scale: eleven stops plus the stamp rows. What you learn about `neutral` applies to `brand`, `brand-alt`, `critical`, `warning`, `positive`, and `info`. The stamp (the solid fill) is the one value solved per family.
 
-Everything the engine emits is a primitive: a value it calculates from the seed. There are no semantic tokens in the output, no elevation planes, shadows, opacity ladders or state-layer rows. Those are the consuming system's to author on the primitives, and this file tells you which primitive each of those decisions should read.
+Everything the engine emits is a base token: a value it calculates from the seed. The output has no semantic tokens. The semantic layer is the consuming system's to write on the base tokens, and the last section of this file says which base token each semantic decision reads.
 
 A scale token name reads as `instrument-number`:
 
 - The instrument word tells you the job (paper, chalk, highlighter, pencil, pen).
 - The number is `100 − round(light rootL × 100)`: derive, round, invert, in that order and never re-rounded. Bigger means stronger: `paper-0` is white, `pen-100` is black. A future stop names itself the same way.
-- Names carry no WCAG conformance suffix. The guarantee exists; it is stated in the variable's description, not the name. See the guarantee listed per stop below.
+- A name carries no conformance word. The guarantee is stated in the variable's description; see the guarantee listed per stop below.
 
-## These are primitives
+## These are base tokens
 
-In a conventional token architecture, primitives are raw named values (`blue-500`) with no promises attached, and a semantic layer above them assigns meaning and accessibility (`text-primary`). okchroma's scale tokens do not fit that split, and reading them as semantic tokens will mislead you.
-
-Every scale token here is a primitive. What is unusual is that the requirement is built into the primitive itself: the name states a contract (instrument, lightness rung), and the engine solves the actual color value per brand and per theme so that the contract holds, including a specific WCAG guarantee carried in the description. `pen-58` is not "the text color role"; it is a primitive whose generated value is guaranteed to clear 4.5:1 against every paper and chalk of its family and of the neutral, whatever seed color the brand supplies.
+A conventional primitive (`blue-500`) carries no promise, and the semantic token above it (`text-primary`) carries the meaning. Here the base token carries the requirement: the name states the contract (the instrument and the lightness rung), the engine solves the value per brand and per mode so the contract holds, and the description states the WCAG level. `pen-58` is a base token whose value clears 4.5:1 against every paper and chalk of its family and of the neutral, whatever seed the brand supplies. Read it as a base token with a guarantee, and alias it from the semantic layer.
 
 ## The scale
 
-**paper: `paper-1`, `paper-3`, `paper-5`.** Backgrounds and inverted text. No contrast claim of their own; every contrast stop is cleared against them. `paper-5` is the darkest light paper (the lightest dark paper), the one the contrast stops are solved against.
+paper (`paper-1`, `paper-3`, `paper-5`). Backgrounds and inverted text. No contrast claim of their own; every contrast stop is cleared against them. `paper-5` is the darkest light paper (the lightest dark paper), the one the contrast stops are solved against.
 
-**chalk: `chalk-8`, `chalk-11`, `chalk-15`, `chalk-20`.** Decorative borders, grounds for inverted text, illustration, signal hierarchy. Never text. The pens are cleared against them; the highlighter and the pencil are not. Interactive states are not chalk's job: they are `highlighter-26` at an opacity rung.
+chalk (`chalk-8`, `chalk-11`, `chalk-15`, `chalk-20`). Decorative borders, grounds for inverted text, illustration, signal hierarchy. Never text. The pens are cleared against them; the highlighter and the pencil are not. Interactive states are `highlighter-26` at an opacity rung; chalk is not for states.
 
-**highlighter: `highlighter-26`.** Focus rings, icons, borders, large text. AA large text and UI elements: 3:1 against every paper of its family and of the neutral. As a translucent layer it is the state layer over any paper or inverted ground: hover, pressed, and selected are this one stop at a translucency the semantic layer chooses, never a chalk step. AA body text holds under such a layer: the pen band clears 4.5:1 on the composite over every paper of its family and of the neutral, up to the weight the guarantee audit measures (roughly a third).
+highlighter (`highlighter-26`). Focus rings, icons, borders, large text. AA large text and UI elements: 3:1 against every paper of its family and of the neutral. As a translucent layer it is the state layer over any paper or inverted ground: hover, pressed, and selected are this one stop at a translucency the semantic layer chooses, never a chalk step. AA body text holds under such a layer: the pen band clears 4.5:1 on the composite over every paper of its family and of the neutral, up to the weight the guarantee audit measures (roughly a third).
 
-**pencil: `pencil-47`.** Regular text, and the emphasis fill. AA body text: 4.5:1 against every paper of its family and of the neutral. Its on-text, when used as a fill, is `paper-0`.
+pencil (`pencil-47`). Regular text, and the emphasis fill. AA body text: 4.5:1 against every paper of its family and of the neutral. Its on-text, when used as a fill, is `paper-0`.
 
-**pen: `pen-58`, `pen-70`.** Regular and heavy-emphasis text, inverted backgrounds. AA body text: 4.5:1 against every paper and every chalk of its family and of the neutral, both directions.
+pen (`pen-58`, `pen-70`). Regular and heavy-emphasis text, inverted backgrounds. AA body text: 4.5:1 against every paper and every chalk of its family and of the neutral, both directions.
 
-**near-poles (neutral only): `paper-0`, `pen-100`.** The scale's extended endpoints, beyond `paper-1` and `pen-70`, emitted inside the neutral family (`--neutral-paper-0`, `--neutral-pen-100`). `paper-0` is engine-resolved: white in light (rootL 1.0, zero chroma) and, in dark, the deep brand-tinted plane one seam below `paper-1`. `pen-100` is the literal pole: pure black in light, pure white in dark, no tint. `pen-100` is the max-emphasis text anchor and flips with the mode; prefer `pen-70` for running text. There is no mode-invariant absolute black or white token; where a pole is needed as a value (an on-text, a stroke), the engine writes the hex.
+poles (neutral only: `paper-0`, `pen-100`). The scale's extended endpoints, beyond `paper-1` and `pen-70`, emitted inside the neutral family (`--neutral-paper-0`, `--neutral-pen-100`). `paper-0` is engine-resolved: white in light (rootL 1.0, zero chroma) and, in dark, the deep brand-tinted plane one seam below `paper-1`. `pen-100` is the literal pole: pure black in light, pure white in dark, no tint. `pen-100` is the max-emphasis text anchor and flips with the mode; prefer `pen-70` for running text. There is no mode-invariant absolute black or white token; where a pole is needed as a value (an on-text, a stroke), the engine writes the hex.
 
 ## The stamp tokens (the CTA family)
 
-The token name is `stamp`. Say "CTA" out loud when talking about these (the engine's own internal fields still call them that), but the variable name is `stamp`.
+The token name is `stamp`; the engine's internal fields still say CTA.
 
-`stamp-0`, `stamp-1`, `stamp-2`: the call-to-action fill at rest, one step from rest, and two steps from rest. The names are positions, never states: the engine emits no state word, and the semantic layer names the states and aliases the steps (`hover` onto `stamp-1`, `pressed` onto `stamp-2`). These sit off the scale and are fully re-solved per theme and family; never substitute a scale stop for them. In Figma and in the DTCG documents they sit flat in the family beside the stops (`brand/stamp-0`).
+`stamp-0`, `stamp-1`, `stamp-2`: the call-to-action fill at rest, one step from rest, and two steps from rest. The names are positions: the engine emits no state word, and the semantic layer names the states and aliases the steps (`hover` onto `stamp-1`, `pressed` onto `stamp-2`). These sit off the scale and are re-solved per theme and family; do not substitute a scale stop for them. In Figma and in the DTCG documents they sit flat in the family beside the stops (`brand/stamp-0`).
 
-`stamp-edge`: a gated outline stroke. It resolves to a visible offset only in themes where the CTA fill sits close to the page; otherwise it resolves to transparent. Always render the border with it, never conditionally add or remove the border, so layout never shifts.
+`stamp-edge`: a gated outline stroke. It resolves to a visible offset where the CTA fill sits close to the page, and to transparent elsewhere. Render the border with it unconditionally, so layout never shifts.
 
 `stamp-on`: the only sanctioned text color over a CTA fill. It is whichever pole passes on that fill; do not compute or pick your own. On the neutral, and on a secondary whose fill is quiet enough, it is the pole at alpha (an `rgba()` value composited over the fill), so it must be painted over the fill it belongs to.
 
 ## The grammar
 
-Every token has one path, and every output spells it: `brand/stamp-0`, `neutral/paper-0`, `link/default-0`, `absolute/brand`. A path is a group and one word, and the word is a position: a band at a lightness, the stamp at a step, a link posture at a step. Joined with hyphens it is the CSS custom property (`--brand-stamp-0`, `--neutral-paper-0`, `--link-default-0`, `--absolute-brand`); joined with slashes it is the Figma variable and the DTCG token path. Family rows are the family word plus the leaf, the stamp rows flat beside the stops; the neutral's poles sit in the neutral group; the link rows and the seed absolutes are their own groups. The extended Figma plugin writes every path under a `color` group (`color/brand/stamp-0`), and the DTCG documents nest under the same group when the caller asks for it (`color.brand.stamp-0`, and `{color.brand.stamp-0}` in an alias). The CSS custom properties never carry the group.
+A name is a group and a leaf:
+
+```
+group/leaf
+```
+
+The group is a family, `link`, or `absolute`. The leaf names a position, never a state; the semantic layer names the states and aliases the positions.
+
+| Leaf | Pattern | Example |
+|---|---|---|
+| a scale stop | `{instrument}-{number}` | `pen-58` |
+| a stamp fill | `stamp-{step}` | `stamp-0` |
+| the stamp's edge and text | `stamp-edge`, `stamp-on` | `stamp-on` |
+| a link | `{posture}-{step}`, the postures `default` and `inverse` | `default-1` |
+| a seed | the family word | `brand-alt` |
+
+On the scale the number is 100 minus the light-mode lightness target, so a bigger number is a stronger color. In the brand identity (stamp, link) the number is the step from rest: 0 at rest, 1 one step away, 2 two steps. Each output spells the same name its own way:
+
+| Output | Spelling | `brand/stamp-0` becomes |
+|---|---|---|
+| CSS custom property | `--group-leaf` | `--brand-stamp-0` |
+| Figma variable | `group/leaf`; the extended plugin writes it under `color/` | `color/brand/stamp-0` |
+| DTCG token | nested as `group.leaf`, referenced as `{group.leaf}`; `rootGroup: 'color'` nests it under `color` | `{brand.stamp-0}` |
+
+The neutral's poles sit in the neutral group. The CSS names never carry the color group.
 
 ## Families and CSS variable prefixes
 
@@ -60,18 +82,18 @@ Every token has one path, and every output spells it: `brand/stamp-0`, `neutral/
 | positive | `--positive-` | success signal |
 | info | `--info-` | informational signal |
 
-Signal families are named by role, always `critical`/`warning`/`positive`/`info`, never `error`/`success`/`danger`. Signal stops may be shifted from the canonical value to stay visually distinct from the brand; that is by design, do not "correct" them.
+Signal families are named by role: `critical`, `warning`, `positive`, `info`. Signal stops may be shifted from the canonical value to stay visually distinct from the brand; that is by design, do not "correct" them.
 
 Example composed names: `--brand-chalk-11`, `--critical-pen-58`, `--neutral-highlighter-26`, `--brand-alt-stamp-1`.
 
-## The link trios and the seeds
+## The link rows and the seeds
 
-- `--link-default-0`, `--link-default-1`, `--link-default-2`: the system link color for text on normal surfaces, at rest, one step from rest, two steps from rest; without a custom link seed they alias the primary's `pencil-47`, `pen-58`, `pen-70`. `--link-inverse-0`, `--link-inverse-1`, `--link-inverse-2`: the same seed, re-solved for text on inverted (`pen-70`-filled) surfaces, always its own values. The names are positions; the semantic layer names the states (`hover` onto `-1`, `pressed` onto `-2`). A link is not a text-style CTA; do not restyle links with the text stops. Emitted by `brandCss`.
+- `--link-default-0`, `--link-default-1`, `--link-default-2`: the system link color for text on the papers, at rest, one step from rest, two steps from rest; without a custom link seed they alias the primary's `pencil-47`, `pen-58`, `pen-70`. `--link-inverse-0`, `--link-inverse-1`, `--link-inverse-2`: the same seed, re-solved for text on inverted (`pen-70`-filled) grounds, always its own values. The names are positions; the semantic layer names the states (`hover` onto `-1`, `pressed` onto `-2`). A link has its own rows; do not restyle links with the text stops. Emitted by `brandCss`.
 - `--absolute-brand`, `--absolute-brand-alt`: the raw seeds as given, reference values, never UI colors. In Figma, `absolute/brand` and `absolute/brand-alt`.
 
 ## What the semantic layer authors
 
-The engine emits no elevation planes, shadows, scrim, opacity or alpha ladders, disabled opacity, or state-layer rows. A design system authors those on the primitives; the demo's own `demo/semantic.css` is a worked example. The primitive each decision should read:
+The engine emits no semantic tokens. A design system writes them on the base tokens; the demo's own `demo/semantic.css` is a worked example. The base token each decision reads:
 
 - Elevation planes: the neutral papers, the same four stops in reversed order per mode, so elevation always moves toward `paper-0`'s side of the ramp (light descends `paper-5`, `paper-3`, `paper-1`, `paper-0` as elevation rises; dark ascends `paper-0`, `paper-1`, `paper-3`, `paper-5`).
 - Shadows and scrims: black at a translucency; dark needs a heavier weight than light. Shadows are always dark, never glows.
@@ -82,13 +104,13 @@ The engine emits no elevation planes, shadows, scrim, opacity or alpha ladders, 
 
 `themeTokens` returns the values the CSS carries as one object: every name with its light value and its dark value, `var()` references resolved, plus the list of names that do not vary by mode. It reads the engine's own CSS emission back, so it cannot disagree with it. Consumers with no cascade, native styling engines and theme objects, read this instead of parsing CSS.
 
-`tokensToDtcg` turns that object into two Design Tokens Format Module 2025.10 documents, light and dark, on identical paths: every primitive once, `$type` color, an sRGB `$value` whose components and hex are the same 8-bit color (or an alias where the CSS writes a reference), and a `$description` written for an agent: the token's requirement, its conformance level in plain English with the ground it holds against, what clears a ground and at which level, a usage line on the stamp tokens, the links and the seeds, and how the theme moves it. The grounds are the guarantee audit's own scope, so a description never claims more than the gate holds. The format, and how the two modes join through a resolver document, is in `docs/schema.md`. Called with `{ rootGroup: 'color' }`, it nests every path under that group and writes every alias with it; values, descriptions and CSS names are the same either way.
+`tokensToDtcg` turns that object into two Design Tokens Format Module 2025.10 documents, light and dark, on identical paths: every base token once, `$type` color, an sRGB `$value` whose components and hex are the same 8-bit color (or an alias where the CSS writes a reference), and a `$description` written for an agent: the token's requirement, its conformance level in plain English with the ground it holds against, what clears a ground and at which level, a usage line on the stamp tokens, the links and the seeds, and how the theme moves it. The grounds are the guarantee audit's own scope, so a description never claims more than the gate holds. The format, and how the two modes join through a resolver document, is in `docs/schema.md`. Called with `{ rootGroup: 'color' }`, it nests every path under that group and writes every alias with it; values, descriptions and CSS names are the same either way.
 
 ## Rules for agents
 
 1. Never hardcode a hex. Every color in UI code is a token reference.
-2. Text comes from the text stops (`pencil-47`/`pen-58`/`pen-70`), or `stamp-on` over a CTA fill. The WCAG guarantee is documented per stop, not spelled in the name; do not run your own contrast checks or add compensating colors.
-3. The same token is used in both light and dark. Theming moves the values, not the references; never swap to a different stop for dark mode.
+2. Text comes from the text stops (`pencil-47`/`pen-58`/`pen-70`), or `stamp-on` over a CTA fill. The WCAG guarantee is in each stop's description, and the name carries none; do not run your own contrast checks or add compensating colors.
+3. The same token is used in both light and dark. Theming moves the values; the references stay. Do not swap to a different stop for dark mode.
 4. States are steps along one progression, and the semantic layer names them: rest, hover, pressed are `stamp-0`/`stamp-1`/`stamp-2` on a CTA fill, `link/default-0`/`-1`/`-2` on a link, and text-style CTAs follow `pencil-47`/`pen-58`/`pen-70`. Never invent a step the engine did not emit. A state on a paper or an inverted ground is `highlighter-26` at a translucency the semantic layer defines.
-5. Do not invent intermediate values (no ad-hoc opacities, no color-mix between stops). The one sanctioned translucency is `highlighter-26` as a state layer. If a needed value seems missing, that is a design-system question, not something to patch locally.
-6. Contrast is stated as WCAG conformance levels in each variable's description, never as ratios, and never encoded in the name.
+5. Do not invent intermediate values (no ad-hoc opacities, no color-mix between stops). The one sanctioned translucency is `highlighter-26` as a state layer. If a needed value seems missing, that is a design-system question; do not patch it locally.
+6. Contrast is stated as a WCAG conformance level in each variable's description, in words; the name carries none.

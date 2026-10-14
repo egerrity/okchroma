@@ -29,7 +29,7 @@ export function Body() {
   return (
     <>
       <Lead>
-        The four signals, how a brand collides with them and what moves; then the companions: the secondary's three
+        The four signals, how a brand collides with them and what moves; then the companions: the secondary's
         postures, the neutral, and the link.
       </Lead>
 
@@ -79,15 +79,15 @@ export function Body() {
 
       <H2>The red solve</H2>
       <P>
-        Red is different: it is the error color, its identity is sacred, and a brand that reads as red is a product
-        problem. Two movers, one geometry (<Code>solveBrandExit</Code>, producers.ts; <Code>redComplementVariant</Code>,
+        Red has its own machinery: it is the error color, its identity is held, and a brand that reads as red is a
+        product problem. Two movers, one geometry (<Code>solveBrandExit</Code>, producers.ts; <Code>redComplementVariant</Code>,
         resolve.ts).
       </P>
       <UL>
-        <LI><b>Membership.</b> The brand's stamp at the seed's own lightness sits inside red's region when the weighted distance from red's stamp (<Code>redSolveDist</Code>) is at most <K v={RED_GATE.G} d={3} />, or when it sits in the brick band (H <K v={RED_SOLVE.brickHLo} d={0} /> to <K v={RED_SOLVE.brickHHi} d={0} />, L <K v={RED_SOLVE.brickLLo} d={2} /> to <K v={RED_SOLVE.brickLHi} d={2} />, vivid). Release is the radius plus a ring of <K v={RED_SOLVE.ring} d={3} />.</LI>
-        <LI><b>The exit.</b> The stamp travels along lightness, in steps of 0.002 L, to the nearest release point that has a passing text pole; the direction rules: a noticeably magenta seed lightens unless deep; a gold-side vivid seed flips up to bright orange; an on-hue vivid seed takes the dark throw; an on-hue red that would drift up keeps the light landing only above L <K v={RED_SOLVE.trueRedBrightCut} d={2} />. A dark landing inside the brick band takes a diagonal (a few degrees cooler, <K v={1 - RED_SOLVE.brickDesat} pct d={0} /> less chroma, <K v={RED_SOLVE.brickExtraDeep} d={2} /> deeper). The direction is decided where a text pole reads well (judged with APCA); the WCAG 4.5:1 law and the booster's bar then ride along the decided direction.</LI>
-        <LI><b>The complement.</b> The red signal then re-seats on the opposite side of the brand's final stamp, from a deep core (L {RED_SOLVE.coreL.join(', ')}) or a light edge tier (L {RED_SOLVE.edgeL.join(', ')}), at hues {RED_SOLVE.redHuesWarmBrand.join('°, ')}° beside a warm brand, first clean candidate wins. Clean means: past the side-by-side bar (P2 <K v={P2_D} d={2} /> below the brand, <K v={P2_D_UP} d={2} /> above), outside red's release radius from the brand, and with a pole that passes 4.5:1 and clears the booster's bar for red (Lc <K v={CRITICAL_CLEARANCE_LC} d={0} />). Only the fill trio moves; the red ramp and the dark side stay canonical.</LI>
-        <LI><b>Dark.</b> The dark stamp runs the same exit on the dark geometry, keyed on the side-by-side metric alone (bar <K v={P2_D} d={2} />), because the at-a-glance metric is blind to vibrating dark pairs.</LI>
+        <LI>Membership. The brand's stamp at the seed's own lightness sits inside red's region when the weighted distance from red's stamp (<Code>redSolveDist</Code>) is at most <K v={RED_GATE.G} d={3} />, or when it sits in the brick band (H <K v={RED_SOLVE.brickHLo} d={0} /> to <K v={RED_SOLVE.brickHHi} d={0} />, L <K v={RED_SOLVE.brickLLo} d={2} /> to <K v={RED_SOLVE.brickLHi} d={2} />, vivid). Release is the radius plus a ring of <K v={RED_SOLVE.ring} d={3} />.</LI>
+        <LI>The exit. The stamp travels along lightness, in steps of 0.002 L, to the nearest release point that has a passing text pole; the direction rules: a noticeably magenta seed lightens unless deep; a gold-side vivid seed flips up to bright orange; an on-hue vivid seed takes the dark throw; an on-hue red that would drift up keeps the light landing only above L <K v={RED_SOLVE.trueRedBrightCut} d={2} />. A dark landing inside the brick band takes a diagonal (a few degrees cooler, <K v={1 - RED_SOLVE.brickDesat} pct d={0} /> less chroma, <K v={RED_SOLVE.brickExtraDeep} d={2} /> deeper). The direction is decided where a text pole reads well (judged with APCA); the WCAG 4.5:1 law and the booster's bar then ride along the decided direction.</LI>
+        <LI>The complement. The red signal then re-seats on the opposite side of the brand's final stamp, from a deep core (L {RED_SOLVE.coreL.join(', ')}) or a light edge tier (L {RED_SOLVE.edgeL.join(', ')}), at hues {RED_SOLVE.redHuesWarmBrand.join('°, ')}° beside a warm brand, first clean candidate wins. Clean means: past the side-by-side bar (P2 <K v={P2_D} d={2} /> below the brand, <K v={P2_D_UP} d={2} /> above), outside red's release radius from the brand, and with a pole that passes 4.5:1 and clears the booster's bar for red (Lc <K v={CRITICAL_CLEARANCE_LC} d={0} />). Only the fill trio moves; the red ramp and the dark side stay canonical.</LI>
+        <LI>Dark. The dark stamp runs the same exit on the dark geometry, keyed on the side-by-side metric alone (bar <K v={P2_D} d={2} />), because the at-a-glance metric is blind to vibrating dark pairs.</LI>
       </UL>
       <P>
         The side-by-side metric is helmlab's perceptual difference, the engine's one runtime dependency, calibrated on
@@ -123,9 +123,9 @@ export function Body() {
         <K v={DEFAULT_SECONDARY.kR} pct d={0} /> of the gamut ceiling at the landing; hue unchanged; at least{' '}
         <K v={DEFAULT_SECONDARY.minGapApp} d={0} /> apparent-L off white. For the reference seed {REF_SEED} the derived seed is{' '}
         <SwatchCell color={derivedHex} label={derivedHex} />. Its dark stamp sits a flat <K v={DEFAULT_SECONDARY.darkFlatGapApp} d={0} />{' '}
-        apparent-L above the dark ground instead of the prominence floor, even across hues. Quiet fills carry{' '}
+        apparent-L above the dark ground, even across hues; the prominence floor does not apply. Quiet fills carry{' '}
         <Code>{STAMP_ON}</Code> at alpha (<K v={SOFT_ON_CTA_ALPHA.light} pct d={0} /> / <K v={SOFT_ON_CTA_ALPHA.dark} pct d={0} />) where the
-        composite passes on every state.
+        composite passes on every step.
       </P>
       <H3>The neutral</H3>
       <P>
@@ -145,15 +145,15 @@ export function Body() {
         <SwatchCell color={stopHex(neutral.cta)} label={stopHex(neutral.cta)} />, dark{' '}
         <SwatchCell color={stopHex(neutral.ctaDark)} label={stopHex(neutral.ctaDark)} /> at hue 0), lifted in dark until it
         clears <K v={NEUTRAL_CTA_DARK_POP_CLEARANCE} d={1} />:1 against the dark {stopTokenName(2)}, the highest plane its buttons sit on;
-        hover and pressed step from the rest like every other fill; <Code>{STAMP_ON}</Code> is always the pole at alpha.
+        the steps are taken from the rest fill like every other fill; <Code>{STAMP_ON}</Code> is always the pole at alpha.
         The neutral's pens and its {stopTokenName(8)} and {stopTokenName(9)} are additionally cleared against every chromatic
         family's grounds (the symmetric claim on the <DocLink page="guarantees">Guarantees</DocLink> page).
       </P>
       <H3>The link</H3>
       <UL>
-        <LI><b>Default:</b> <Code>--link-default-0</Code>, <Code>--link-default-1</Code>, <Code>--link-default-2</Code> (the link at rest, one step, two steps) alias the primary's {stopTokenName(9)}, {stopTokenName(10)}, {stopTokenName(11)}.</LI>
-        <LI><b>Custom seed:</b> the hex seeds a throwaway resolve and the shipped trio is that resolve's three text stops (the default seed when the option turns on is <Code>{DEFAULT_LINK_HEX}</Code>).</LI>
-        <LI><b>Inverse:</b> the same seed re-solved for text on {stopTokenName(11)} fills, each pen ground replaced by the worst shipped {stopTokenName(11)} (light L <K v={PEN_70_GROUND.wcag.light.L} />, dark L <K v={PEN_70_GROUND.wcag.dark.L} />), with the modes crossed: the light-mode inverse trio is light text on a dark fill, which is the dark ramp's construction, so it is read off the dark ramp, and vice versa. No alias posture exists for it; the values always ship raw.</LI>
+        <LI>Default: <Code>--link-default-0</Code>, <Code>--link-default-1</Code>, <Code>--link-default-2</Code> (the link at rest, one step, two steps) alias the primary's {stopTokenName(9)}, {stopTokenName(10)}, {stopTokenName(11)}.</LI>
+        <LI>Custom seed: the hex seeds a throwaway resolve and the shipped trio is that resolve's three text stops (the default seed when the option turns on is <Code>{DEFAULT_LINK_HEX}</Code>).</LI>
+        <LI>Inverse: the same seed re-solved for text on {stopTokenName(11)} fills, each pen ground replaced by the worst shipped {stopTokenName(11)} (light L <K v={PEN_70_GROUND.wcag.light.L} />, dark L <K v={PEN_70_GROUND.wcag.dark.L} />), with the modes crossed: the light-mode inverse trio is light text on a dark fill, which is the dark ramp's construction, so it is read off the dark ramp, and vice versa. It has no alias form; the values ship raw.</LI>
       </UL>
       <P>
         The stamp tokens on every companion are the same five: <Code>{STAMP_FILL}</Code>, <Code>{STAMP_FILL_HOVER}</Code>,{' '}

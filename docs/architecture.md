@@ -8,13 +8,13 @@ explains the mechanisms with values rendered from the engine:
 
 ## 1. System overview
 
-OKChroma is a color-system engine. It resolves a set of color primitives around a primary
+OKChroma is a color-system engine. It resolves a set of base tokens around a primary
 seed color (and optionally a secondary), in light and dark together, with the contrast
-requirements solved during generation, and emits it from one resolved theme. A primitive
+requirements solved during generation, and emits it from one resolved theme. A base token
 is a value the engine calculates from the seed: the seven color families with their scale
 stops and stamp tokens, the neutral's poles, the two link trios, the two seed absolutes.
-Nothing static or aliased is emitted; a semantic layer is the consumer's, authored on the
-primitives. One grammar spells every row in every output (`tokenNames.ts`): a path such as
+Nothing static or aliased is emitted; a semantic layer is the consumer's, written on the
+base tokens. One grammar spells every row in every output (`tokenNames.ts`): a path such as
 `brand/stamp-0`, a group and one word, the word a position (a band at a lightness, the
 stamp at a step, a link posture at a step), hyphen-joined for CSS and slash-joined for
 Figma and DTCG. No emitted name carries a state word.
@@ -252,7 +252,7 @@ mechanism; the constants are rendered live on the site's
   lightness (`GOLD_SPINE`), 0.55 of the difference, weighted by a gaussian at 83° plus the
   muted-warm term, fading out between H 88 and 104, capped at 24 + 8u degrees (light,
   `lightHueAt`); the dark twin is `torsionedHue` on `WARM_TORSION`, anchored at the dark
-  stamp. Dark gold and orange stay gold instead of going olive or brown.
+  stamp. Dark gold and orange stay gold.
 - **The red repel, nearest side.** A seed near the red signal's hue (33.3°) rotates its
   stops away from it, cooler below the pivot and warmer above, 10.8° scaled by a fading
   weight with a 14° floor at the pivot (`redRepelShiftDeg`). The stamp is exempt (identity
@@ -292,12 +292,12 @@ mechanism; the constants are rendered live on the site's
   only when white is preferred and cannot be flipped.
 - **The booster.** The one use of APCA: once the law is met, brand and signal fills are
   nudged in the chosen pole's direction until the text reads at APCA Lc 65 (critical 50).
-  A legibility nudge on the stamp, never a claim.
+  A legibility nudge on the stamp, with no claim attached.
 - **Quiet fills.** The neutral's stamp, and a secondary's where the composite stays legal
   on every state, carry the pole at alpha (0.75 light, 0.80 dark; `softOnCtaPasses`).
 - **The stamp edge.** The page-polarity pole at the family's rung (16 / 6 / 8 by family),
   a literal in every output, when the fill reads under APCA |Lc| 15 against the page, else
-  transparent; a taste gate, not an accessibility claim.
+  transparent; a taste gate, with no accessibility claim.
 
 **Differentiation (brand versus signals)**
 
@@ -323,7 +323,7 @@ mechanism; the constants are rendered live on the site's
 - A near-gray seed at the tint hue through the same generator with its own chroma curve
   (`neutralChromaCurve`: lifts across the papers, peaks at the first chalks, tapers
   through the pens, warm hues damped), at four strengths (pure, default, medium, branded).
-  The tint hue is a stored source, never a frozen value (`neutralTintHue`).
+  The tint hue is a stored source, re-resolved on every apply (`neutralTintHue`).
 - Its stamp is quiet: the rest fill is the scale's own `chalk-8`, lifted in dark until
   it clears 1.2:1 against the dark `paper-3`; hover and pressed step from the rest by the
   shared state rule; the on-text is always the pole at alpha.
@@ -343,14 +343,14 @@ tree's own, the one grammar. The group carries no ownership: hand-authored color
 share it, and an engine row is known by its identity stamp, never by its name. A hand edit
 to an engine row is deliberately not rebuilt by a re-apply. The group is stripped from the
 Web code syntax, so a developer's name matches the CSS custom property. A file applied
-before the engine went primitives-only keeps its utility shelf, its planes, its alpha rows
+before the engine emitted base tokens only keeps its utility shelf, its planes, its alpha rows
 and its absolute black and white as orphans under the names they had; a live row that
 aliased one takes its raw value where the alias resolves to exactly what the payload
 writes.
 
 **Roles and the picker.** The ramp stops and the seed absolutes are single resolved colors
-with no state; the roles are the state-carrying rows: `stamp/` inside each family and
-`color/link/` (default and inverse) (`isRoleRow` in `code.ts`). The descope posture (the
+with no state; the role rows are the stamp rows inside each family and the `color/link/`
+rows (`isRoleRow` in `code.ts`). The descope setting (the
 "Hide primitive scale from pickers" checkbox, default on) sets every non-role variable's
 scopes to none and keeps the roles at all scopes. It is file state on the base collection,
 re-stamped on every apply, so a scope hand-edited in Figma reverts on the next run.

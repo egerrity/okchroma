@@ -4,6 +4,27 @@ Fresh tracker. The previous CATALOG was archived with the whole old docs tree in
 ("clean-slate rewrite" 2026-06-27); entries here are code-grounded, logged at find-time,
 fixed holistically after owner sign-off.
 
+## C85 — agents read the demo's semantic layer as engine output (OPEN, 2026-10-13)
+
+The engine writes base tokens only. The demo's semantic layer, `demo/semantic.css`
+(planes, shadows, roles), styles the demo site. Both sit in one tree, and the demo file
+is dense with token names, so an agent searching the repo for a name lands there before
+it reaches `src/engine/tokenNames.ts` or the docs, and takes the demo's aliases for
+engine rows. The owner meets this whenever she works on something else in the repo.
+
+Two shapes of fix, neither taken. A repo split makes the demo a consumer of the npm
+package, the way the sibling PoCs are, and exercises every published version; the cost
+is that the docs site renders live values by importing from `src/`, and one push to
+`main` builds the site and both plugin zips in one workflow, so after a split the site
+shows a published version only and an engine change needs two commits in two repos. The
+cheaper shape keeps one repo and adds a rule to the "How to work here" section of
+`CLAUDE.md`: nothing under `demo/` is engine output, and a token name is read from
+`src/engine/tokenNames.ts` or `docs/agents.md`. The README's base-token paragraph says
+the same for readers.
+
+Logged as a follow-up, not pressing (owner, 2026-10-13). The rule is the first thing to
+try; the split stays a question.
+
 ## C84 — THE ENGINE EMITS NO STATE WORDS: THE STAMP AND LINK ROWS ARE POSITIONS (RULED, 2026-10-07)
 
 The consumer grammar settled in the token generator's session rules that a primitive's
