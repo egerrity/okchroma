@@ -220,7 +220,7 @@ export function Body() {
         <LI>Light. The floor clamps lightness down: L = min(L, the highest L that clears the ratio against the ground's luminance), iterated to a fixed point (up to six passes, since chroma and hue move with L). The scale solve carries a +0.05 ratio margin so the gamut-trimmed emit still clears; the pen solve does not.</LI>
         <LI>Dark. The floor raises lightness: if the placement misses the target, bisection walks L up until it clears (+0.05). The highlighter solves from the ground up every time; the pens usually clear from the scaffold.</LI>
         <LI>Legality on both renditions. The ratio a floor judges is the minimum over the P3 rendition and the sRGB clamp-down (<Code>legalRatio</Code>), so a pass holds on any display.</LI>
-        <LI>The shipped pair. After the analytic solve, the 8-bit sRGB pair (stop and ground, both quantized) is checked, together with the cross-family bounds on the <DocLink page="guarantees" section="what-every-paper-means">Guarantees</DocLink> page; a stop that misses walks away from its ground in steps of 0.001 L until it clears.</LI>
+        <LI>The shipped pair. After the analytic solve, the 8-bit sRGB pair (stop and ground, both quantized) is checked, together with the cross-family bounds on the <DocLink page="guarantees" section="which-papers-and-chalks">Guarantees</DocLink> page; a stop that misses walks away from its ground in steps of 0.001 L until it clears.</LI>
         <LI>A floor that still cannot be met marks the stop <Code>unresolvable</Code>, and the requirement gate fails.</LI>
       </UL>
 
