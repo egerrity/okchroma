@@ -45,9 +45,9 @@ export function Body() {
           ['paper', 'background; the ground the contrast bands are measured against', 'highlighter, pencil, pen', <>none of its own; it is the ground the others clear: the highlighter at <K v={STOP_8_NONTEXT_CONTRAST} d={1} />:1, the pencil and the pens at <K v={PENCIL_9_CONTRAST} d={1} />:1</>],
           ['chalk', 'decorative border, illustration, ground for inverted text; never text', 'pen', <>none of its own; the pens clear it at <K v={PEN_10_CONTRAST} d={1} />:1</>],
           ['highlighter', 'focus ring, icon, border, large text; at a translucency, the state layer', 'paper', <><K v={STOP_8_NONTEXT_CONTRAST} d={1} />:1, AA large text and UI elements</>],
-          ['pencil', 'regular text; the emphasis fill', <>paper; as a fill, <Code>{PAPER_0}</Code></>, <><K v={PENCIL_9_CONTRAST} d={1} />:1</>],
+          ['pencil', 'regular text; the emphasis fill', 'paper', <><K v={PENCIL_9_CONTRAST} d={1} />:1</>],
           ['pen', 'text; inverted background', 'paper, chalk', <><K v={PEN_10_CONTRAST} d={1} />:1, both directions</>],
-          ['stamp', 'maximum brand expression: the fill closest to the brand color, at rest and at one and two steps; its edge; its text', <>itself (<Code>{STAMP_ON}</Code>); the edge, against the page</>, <>within the family: <Code>{STAMP_ON}</Code> at <K v={PENCIL_9_CONTRAST} d={1} />:1 on each fill, and the fill moves until the text clears Lc <K v={CO_LC} d={0} />. None against a ground; the edge adds legibility there and the fill keeps its color</>],
+          ['stamp', 'maximum brand expression: the fill closest to the brand color, at rest and at one and two steps; its edge; its text', <>itself (<Code>{STAMP_ON}</Code>); edge: paper</>, <>within the family: <Code>{STAMP_ON}</Code> at <K v={PENCIL_9_CONTRAST} d={1} />:1 on each fill, and the fill moves until the text clears Lc <K v={CO_LC} d={0} />. None against a ground; the edge adds legibility there and the fill keeps its color</>],
           ['link', 'link text at rest, one step and two steps from rest', 'default: paper; inverse: pen', <><K v={PENCIL_9_CONTRAST} d={1} />:1 on its ground</>],
         ]}
       />
