@@ -42,8 +42,8 @@ export function Body() {
       <Table
         head={['band', 'role', 'paired with', 'contrast minimum guaranteed']}
         rows={[
-          ['paper', 'background; the ground the contrast bands are measured against', 'the highlighter, the pencil and the pens on it', 'none of its own'],
-          ['chalk', 'decorative border, illustration, ground for inverted text; never text', 'the pens on it', 'none of its own'],
+          ['paper', 'background; the ground the contrast bands are measured against', 'the highlighter, the pencil and the pens on it', <>none of its own; it is the ground the others clear: the highlighter at <K v={STOP_8_NONTEXT_CONTRAST} d={1} />:1, the pencil and the pens at <K v={PENCIL_9_CONTRAST} d={1} />:1</>],
+          ['chalk', 'decorative border, illustration, ground for inverted text; never text', 'the pens on it', <>none of its own; the pens clear it at <K v={PEN_10_CONTRAST} d={1} />:1</>],
           ['highlighter', 'focus ring, icon, border, large text; at a translucency, the state layer', 'on the papers', <><K v={STOP_8_NONTEXT_CONTRAST} d={1} />:1, the non-text bar</>],
           ['pencil', 'regular text; the emphasis fill', <>on the papers; as a fill, <Code>{PAPER_0}</Code> is its text</>, <><K v={PENCIL_9_CONTRAST} d={1} />:1</>],
           ['pen', 'text; inverted background', 'on the papers and the chalks, both directions', <><K v={PEN_10_CONTRAST} d={1} />:1, both directions</>],
