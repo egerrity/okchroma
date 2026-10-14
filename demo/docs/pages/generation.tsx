@@ -38,6 +38,17 @@ export function Body() {
         The pipeline in execution order. Each step names the mechanism, the constants it reads (rendered
         from the engine), and the function that runs it.
       </Lead>
+      <P>
+        In short: the seed hex is decoded to OKLCH. Each stop of the light ramp is placed at the measured
+        lightness where its apparent lightness meets a shared target, with its hue drifted and its chroma
+        clamped by declared rules, and each declared contrast requirement is enforced against the resolved
+        ground it names. The dark ramp is derived from the resolved light ramp: the papers and chalks on one
+        luminance ladder, the highlighter and the pens re-solved and floored. The stamp is solved off the
+        scale at the seed's own lightness; its text is whichever pole passes, and the fill moves until that
+        text reads. The brand is then checked against the four signals, and a signal that collides is
+        re-generated as a variant. Last, the secondary and the neutral run through the same generator, and
+        the emitters write the rows.
+      </P>
       <Pre>{`resolveTheme(input)                                   src/engine/resolve.ts
 ├─ resolveBrand(primaryHex)                            the primary, with the signal policy
 │  ├─ generateScale(hex)                               src/engine/colorEngine.ts, the adapter
