@@ -47,7 +47,7 @@ export function Body() {
           ['highlighter', 'focus ring, icon, border, large text; at a translucency, the state layer', 'on the papers', <><K v={STOP_8_NONTEXT_CONTRAST} d={1} />:1, the non-text bar</>],
           ['pencil', 'regular text; the emphasis fill', <>on the papers; as a fill, <Code>{PAPER_0}</Code> is its text</>, <><K v={PENCIL_9_CONTRAST} d={1} />:1</>],
           ['pen', 'text; inverted background', 'on the papers and the chalks, both directions', <><K v={PEN_10_CONTRAST} d={1} />:1, both directions</>],
-          ['stamp', 'the call-to-action fill at rest, one step and two steps from rest; its edge; its text', <><Code>{STAMP_ON}</Code> on the three fills; the edge against the page</>, <><Code>{STAMP_ON}</Code> at <K v={PENCIL_9_CONTRAST} d={1} />:1 on each fill, and the fill moves until it clears Lc <K v={CO_LC} d={0} /></>],
+          ['stamp', 'maximum brand expression: the fill closest to the brand color, at rest and at one and two steps; its edge; its text', <>itself: <Code>{STAMP_ON}</Code> on the fill. Against a ground only the edge, which appears where the fill sits close to the page</>, <>within the family: <Code>{STAMP_ON}</Code> at <K v={PENCIL_9_CONTRAST} d={1} />:1 on each fill, and the fill moves until the text clears Lc <K v={CO_LC} d={0} />. None against a ground; the edge adds legibility there and the fill keeps its color</>],
           ['link', 'link text at rest, one step and two steps from rest', 'default on the papers; inverse on the pen ground', <><K v={PENCIL_9_CONTRAST} d={1} />:1 on its ground</>],
         ]}
       />
