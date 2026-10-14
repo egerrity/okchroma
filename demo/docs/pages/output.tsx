@@ -38,18 +38,20 @@ export function Body() {
         lightness within it, the same job at a different strength.
       </P>
       <RampSet />
-      <Table
-        head={['band', 'role', 'paired with', 'contrast minimum guaranteed']}
-        rows={[
-          ['paper', 'background; the ground the contrast bands are measured against', 'highlighter, pencil, pen', <><K v={STOP_8_NONTEXT_CONTRAST} d={1} />:1 (highlighter), <K v={PENCIL_9_CONTRAST} d={1} />:1 (pencil, pen)</>],
-          ['chalk', 'decorative border, illustration, ground for inverted text; never text', 'pen', <><K v={PEN_10_CONTRAST} d={1} />:1 (pen)</>],
-          ['highlighter', 'focus ring, icon, border, large text; at a translucency, the state layer', 'paper', <><K v={STOP_8_NONTEXT_CONTRAST} d={1} />:1, AA large text and UI elements</>],
-          ['pencil', 'regular text; the emphasis fill', 'paper', <><K v={PENCIL_9_CONTRAST} d={1} />:1</>],
-          ['pen', 'text; inverted background', 'paper, chalk', <><K v={PEN_10_CONTRAST} d={1} />:1</>],
-          ['stamp', 'maximum brand expression: the fill closest to the brand color, at rest and at one and two steps; its edge; its text', <>itself (<Code>{STAMP_ON}</Code>); edge: paper</>, <><Code>{STAMP_ON}</Code> is <K v={PENCIL_9_CONTRAST} d={1} />:1 against <Code>{STAMP_FILL}</Code> to <Code>{STAMP_FILL_PRESSED}</Code>. None outside its own family and band</>],
-          ['link', 'link text at rest, one step and two steps from rest', 'default: paper; inverse: pen', <><K v={PENCIL_9_CONTRAST} d={1} />:1</>],
-        ]}
-      />
+      <table className="d2-table">
+        <thead><tr><th>band</th><th>general role</th><th>paired with</th><th>contrast minimum</th><th>WCAG level</th></tr></thead>
+        <tbody>
+          <tr><td rowSpan={2}>paper</td><td rowSpan={2}>background; the ground the contrast bands are measured against</td><td>pencil, pen</td><td><K v={PENCIL_9_CONTRAST} d={1} />:1</td><td>AA standard text</td></tr>
+          <tr><td>highlighter</td><td><K v={STOP_8_NONTEXT_CONTRAST} d={1} />:1</td><td>AA large text and UI elements</td></tr>
+          <tr><td>chalk</td><td>decorative border, illustration, ground for inverted text; never text</td><td>pen</td><td><K v={PEN_10_CONTRAST} d={1} />:1</td><td>AA standard text</td></tr>
+          <tr><td>highlighter</td><td>focus ring, icon, border, large text; at a translucency, the state layer</td><td>paper</td><td><K v={STOP_8_NONTEXT_CONTRAST} d={1} />:1</td><td>AA large text and UI elements</td></tr>
+          <tr><td>pencil</td><td>regular text; the emphasis fill</td><td>paper</td><td><K v={PENCIL_9_CONTRAST} d={1} />:1</td><td>AA standard text</td></tr>
+          <tr><td>pen</td><td>text; inverted background</td><td>paper, chalk</td><td><K v={PEN_10_CONTRAST} d={1} />:1</td><td>AA standard text</td></tr>
+          <tr><td rowSpan={2}>stamp</td><td rowSpan={2}>maximum brand expression: the fill closest to the brand color, at rest and at one and two steps; its edge; its text</td><td>itself (<Code>{STAMP_ON}</Code>)</td><td><K v={PENCIL_9_CONTRAST} d={1} />:1</td><td>AA standard text</td></tr>
+          <tr><td>edge: paper</td><td>APCA minimum legibility</td><td>n/a</td></tr>
+          <tr><td>link</td><td>link text at rest, one step and two steps from rest</td><td>default: paper; inverse: pen</td><td><K v={PENCIL_9_CONTRAST} d={1} />:1</td><td>AA standard text</td></tr>
+        </tbody>
+      </table>
 
       <H2>The scale, per family</H2>
       <P>
