@@ -77,7 +77,8 @@ export type StopReq = {
 // lightness floored at floorL (product intent: dark fills must not sink; light has no floor);
 // hue constant (the fill carries brand identity, no torsion); hover/pressed = stateFillL()
 // of the resolved fill (a flat ±0.05 / ±0.10 step away from the mode's ground, reversed
-// near the far pole — archetypes.ts).
+// near the far pole, or where a dark step would take the on-text pole under the lane's
+// bar — archetypes.ts, producers.stepKeepsPole, C86).
 // (The PEN trio was deleted 2026-08-12: the text-register cta is the pen stops 9/10/11,
 // whose guarantees ride their own requires.)
 // Role NAMES ride tokenNames.ts so a rename cannot drift from the emitted vocabulary;

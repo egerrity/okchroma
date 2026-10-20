@@ -29,7 +29,7 @@ export type { ColorStop } from './colorMath'
 import { resolveRamp, CHROMATIC_W80_WORST_SHIP_Y, CHROMATIC_P3_WORST_SHIP_Y, type ResolvedStop } from './requirements/resolve'
 import { MODE_SPECS, type ModeSpec } from './requirements/spec'
 import { withProfile, DEFAULT_APCA_LC_MAP, CTA_ONFILL_ENFORCE_LC, type ContrastProfile } from './requirements/profiles'
-import { whiteTextLcAt, findLForWhiteTextLc, APCA_SOLVE_MARGIN_LC } from './requirements/producers'
+import { whiteTextLcAt, findLForWhiteTextLc, APCA_SOLVE_MARGIN_LC, stepKeepsPole } from './requirements/producers'
 export type { ContrastProfile } from './requirements/profiles'
 
 export interface GeneratedScale {
@@ -329,18 +329,6 @@ export function generateNeutralScale(
   if (popLift > 1e-6) {
     scale.ctaDark = makeStop(9, scale.dark[3].L + popLift, scale.dark[3].C, scale.dark[3].H)
   }
-  // Hover/pressed ride the shared fill-state rule from the (lifted) rest — the same
-  // apparent step every family takes (owner 2026-07-28; the old stop-5/6 aliases gave
-  // the neutral ramp-sized steps no other family got).
-  const nState = (stop: number, mode: 'light' | 'dark', rest: ColorStop, k: 1 | 2) => {
-    // states carry the REST's own hue — the fed stop's torsioned H, not the raw brandH
-    const L = stateFillL(rest.L, mode, k)
-    return makeStop(stop, L, curve(L, mode), rest.H)
-  }
-  scale.ctaHover = nState(10, 'light', scale.cta, 1)
-  scale.ctaPressed = nState(11, 'light', scale.cta, 2)
-  scale.ctaHoverDark = nState(10, 'dark', scale.ctaDark, 1)
-  scale.ctaPressedDark = nState(11, 'dark', scale.ctaDark, 2)
   // the quiet-fill override above touches only the fill trio — the pen stops (the text
   // register) stay resolver-minted.
   // the scale-fed neutral cta can't move, so on-text is judgment only: apca profile keeps
@@ -353,6 +341,20 @@ export function generateNeutralScale(
   const onFloor = 4.5
   scale.onFillTextIsWhite = onTextIsWhite(apcaY(scale.cta.r, scale.cta.g, scale.cta.b), scale.cta.L, scale.cta.C, scale.cta.H, onEnforce, onFloor)
   scale.onFillTextIsWhiteDark = onTextIsWhite(apcaY(scale.ctaDark.r, scale.ctaDark.g, scale.ctaDark.b), scale.ctaDark.L, scale.ctaDark.C, scale.ctaDark.H, onEnforce, onFloor)
+  // Hover/pressed ride the shared fill-state rule from the (lifted) rest — the same
+  // apparent step every family takes (owner 2026-07-28; the old stop-5/6 aliases gave
+  // the neutral ramp-sized steps no other family got). The steps keep the pole (C86): the
+  // rule reads the quiet fill's law, the ratio floor on the solid pole, at the pressed
+  // landing; the soft composite is gated on its own (softOnCtaPasses).
+  const nState = (stop: number, mode: 'light' | 'dark', rest: ColorStop, k: 1 | 2, white: boolean) => {
+    // states carry the REST's own hue — the fed stop's torsioned H, not the raw brandH
+    const L = stateFillL(rest.L, mode, k, stepKeepsPole(mode, white, l => curve(l, mode), rest.H, { ratioFloor: onFloor }))
+    return makeStop(stop, L, curve(L, mode), rest.H)
+  }
+  scale.ctaHover = nState(10, 'light', scale.cta, 1, scale.onFillTextIsWhite)
+  scale.ctaPressed = nState(11, 'light', scale.cta, 2, scale.onFillTextIsWhite)
+  scale.ctaHoverDark = nState(10, 'dark', scale.ctaDark, 1, scale.onFillTextIsWhiteDark)
+  scale.ctaPressedDark = nState(11, 'dark', scale.ctaDark, 2, scale.onFillTextIsWhiteDark)
   return scale
 }
 
@@ -397,13 +399,6 @@ export function generateSubtleSecondary(
   })
   const asCta = (stop: number, src: ColorStop) => makeStop(stop, src.L, src.C, src.H)
   const mk = (stop: number, L: number, mode: 'light' | 'dark') => makeStop(stop, L, curve(L, mode), scale.brandH)
-  // states = the shared fill-state rule from the rest fill (owner 2026-07-28),
-  // whether the rest was pinned (opts.ctaL) or fed from the scale's stop 4 —
-  // and they carry the REST's own hue (a fed stop's H is torsioned off brandH)
-  const st = (stop: number, mode: 'light' | 'dark', rest: ColorStop, k: 1 | 2) => {
-    const L = stateFillL(rest.L, mode, k)
-    return makeStop(stop, L, curve(L, mode), rest.H)
-  }
   if (opts?.ctaL) {
     scale.cta = mk(9, opts.ctaL.light, 'light')
     scale.ctaDark = mk(9, opts.ctaL.dark, 'dark')
@@ -411,10 +406,6 @@ export function generateSubtleSecondary(
     scale.cta = asCta(9, scale.light[3])
     scale.ctaDark = asCta(9, scale.dark[3])
   }
-  scale.ctaHover = st(10, 'light', scale.cta, 1)
-  scale.ctaPressed = st(11, 'light', scale.cta, 2)
-  scale.ctaHoverDark = st(10, 'dark', scale.ctaDark, 1)
-  scale.ctaPressedDark = st(11, 'dark', scale.ctaDark, 2)
   // quiet cta, judgment only (same law as the neutral's): apca keeps the pole PREFERENCE,
   // wcag adds the mixing flip — the 4.5 conformance floor rides both profiles here (owner
   // 2026-08-29, "apca is the optimizer only; the text needs to pass WCAG"). NOTE this is
@@ -425,5 +416,18 @@ export function generateSubtleSecondary(
   const onFloor = 4.5
   scale.onFillTextIsWhite = onTextIsWhite(apcaY(scale.cta.r, scale.cta.g, scale.cta.b), scale.cta.L, scale.cta.C, scale.cta.H, onEnforce, onFloor)
   scale.onFillTextIsWhiteDark = onTextIsWhite(apcaY(scale.ctaDark.r, scale.ctaDark.g, scale.ctaDark.b), scale.ctaDark.L, scale.ctaDark.C, scale.ctaDark.H, onEnforce, onFloor)
+  // states = the shared fill-state rule from the rest fill (owner 2026-07-28),
+  // whether the rest was pinned (opts.ctaL) or fed from the scale's stop 4 —
+  // and they carry the REST's own hue (a fed stop's H is torsioned off brandH).
+  // The steps keep the pole (C86): the rule reads the quiet fill's law, the ratio
+  // floor on the solid pole, at the pressed landing.
+  const st = (stop: number, mode: 'light' | 'dark', rest: ColorStop, k: 1 | 2, white: boolean) => {
+    const L = stateFillL(rest.L, mode, k, stepKeepsPole(mode, white, l => curve(l, mode), rest.H, { ratioFloor: onFloor }))
+    return makeStop(stop, L, curve(L, mode), rest.H)
+  }
+  scale.ctaHover = st(10, 'light', scale.cta, 1, scale.onFillTextIsWhite)
+  scale.ctaPressed = st(11, 'light', scale.cta, 2, scale.onFillTextIsWhite)
+  scale.ctaHoverDark = st(10, 'dark', scale.ctaDark, 1, scale.onFillTextIsWhiteDark)
+  scale.ctaPressedDark = st(11, 'dark', scale.ctaDark, 2, scale.onFillTextIsWhiteDark)
   return scale
 }

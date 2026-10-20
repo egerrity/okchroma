@@ -165,7 +165,9 @@ for (const { name, hex, scale } of items) {
 // paper, the plane its buttons sit on, which the constant calls pop; never black).
 // Light stays exactly stop-fed. STATES: hover and pressed take the shared fill-state
 // step from the (lifted) rest (archetypes.stateStepL, one flat step for hover and two
-// for pressed); light darkens, dark lightens. The gate asserts: rest feeding + pop
+// for pressed); light darkens, dark lightens (the pole's floor that can reverse a loud
+// dark fill's steps, C86, never trips on the quiet fill: its soft pole clears every step,
+// asserted below). The gate asserts: rest feeding + pop
 // clearance (minimal, never below the fed stop) + the state steps and directions
 // against stateStepL itself. ──
 const NEUTRAL_HUES = [30, 90, 143, 210, 270, 320]

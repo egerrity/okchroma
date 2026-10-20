@@ -14,13 +14,14 @@
 //   pen (58/70/100)          4.5 against highlighter-26 at every state rung, composited
 //                            over every paper in scope (the translucent state layers)
 //
-// Plus the STAMP/ON pairing: a quiet cta's shipped on-text (the soft composite where
-// softOnCtaPasses gates it in, the solid pole at rest where it is gated out), measured as
-// a WCAG ratio in the shipped basis. The neutral is read on the wcag lane, the derived
-// brand-alt on both solver lanes. GATES: the soft composite (both lanes: the checker's
-// bar is the 4.5 ratio in both, C47) and the wcag lane's solid fallback. The APCA lane's
-// solid fallback is REPORT-ONLY: that lane judges its pole on Lc alone and the pole can
-// read under 4.5; whether its quiet text takes the ratio floor is undecided (CATALOG C81).
+// Plus the STAMP/ON pairing (C86): every family's shipped on-text over its fill at rest,
+// one step and two steps, measured as a WCAG ratio in the shipped basis. A quiet cta (the
+// neutral, a secondary) ships the soft composite where softOnCtaPasses gates it in and the
+// solid pole where it is gated out; the loud fills (brand, the signals) ship the solid
+// pole. The wcag lane's rows are GATED at 4.5, both modes, every step; the soft composite
+// is gated on both lanes (the checker's bar is the 4.5 ratio in both, C47). The APCA
+// lane's solid pole is REPORT-ONLY: that lane judges its pole on Lc alone and the pole
+// can read under 4.5; whether its text takes the ratio floor is undecided (CATALOG C81).
 //
 // Basis: the SHIPPED 8-bit pair (shippedY both sides, the value every browser and audit
 // tool measures). Sweep: agnostic hue×chroma seeds + the audit fixtures, every family
@@ -146,24 +147,33 @@ function check(hex: string, tag: string, opts: { exact?: boolean; archetypeOverr
         if (f.name === 'neutral') seen('pen-100 vs state rung', contrastRatio(penPoleY, cy), where(at), BAR.text)
       }
     }
-    // stamp-on over the quiet cta fill: the soft composite is engine-gated per mode
-    // (softOnCtaPasses). Wherever it SHIPS it holds 4.5 on every fill state, and a
-    // gated-off fill's solid pole holds 4.5 at rest, the regular button law. Both
-    // branches are measured here in the shipped 8-bit basis so the pairing cannot
-    // silently regress.
+    // stamp-on over every family's fill at rest, one step and two steps (C86): the pairing
+    // the token's description claims. A quiet fill ships the soft composite where
+    // softOnCtaPasses gates it in and the solid pole where it is gated out; a loud fill
+    // ships the solid pole. Every branch is measured in the shipped 8-bit basis so the
+    // pairing cannot silently regress at any step. The apca lane's loud and quiet fills
+    // ride along as report-only rows (C81).
     const q8 = (v: number) => Math.round(Math.min(1, Math.max(0, v)) * 255) / 255
     const lin = (v: number) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
     const relY = (r: number, g: number, b: number) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
-    const quiet: Array<[string, GeneratedScale]> = [
-      ['neutral', neutral],
-      ...(theme.secondary ? [['brand-alt', theme.secondary.scale] as [string, GeneratedScale]] : []),
-      ...(themeApca.secondary ? [['brand-alt apca', themeApca.secondary.scale] as [string, GeneratedScale]] : []),
+    const apcaOverrides = new Map(themeApca.signalOverrides.map(o => [o.name, o.scale]))
+    const sigApca = signalScalesFor('apca')
+    // [name, scale, apca lane]; a quiet name is the neutral's or a secondary's
+    const paired: Array<[string, GeneratedScale, boolean]> = [
+      ...fams.map(f => [f.name, f.scale, false] as [string, GeneratedScale, boolean]),
+      ['brand apca', themeApca.themed.scale, true],
+      ...(themeApca.secondary ? [['brand-alt apca', themeApca.secondary.scale, true] as [string, GeneratedScale, boolean]] : []),
+      ...(['red', 'yellow', 'green', 'blue'] as const).map(n => {
+        const entry = sigApca.get(n)!
+        return [`${entry.def.emitName} apca`, apcaOverrides.get(n) ?? entry.scale, true] as [string, GeneratedScale, boolean]
+      }),
     ]
-    for (const [qn, qs] of quiet) {
+    for (const [qn, qs, apca] of paired) {
       const white = mode === 'light' ? qs.onFillTextIsWhite : qs.onFillTextIsWhiteDark
       const pole = white ? 1 : 0
       const states = mode === 'light' ? [qs.cta, qs.ctaHover, qs.ctaPressed] : [qs.ctaDark, qs.ctaHoverDark, qs.ctaPressedDark]
-      if (softOnCtaPasses(qs, mode)) {
+      const quiet = qn.startsWith('neutral') || qn.startsWith('brand-alt')
+      if (quiet && softOnCtaPasses(qs, mode)) {
         const a = SOFT_ON_CTA_ALPHA[mode]
         states.forEach((st, i) => {
           const e = srgbEmitChannels(st)
@@ -173,9 +183,10 @@ function check(hex: string, tag: string, opts: { exact?: boolean; archetypeOverr
         })
       } else {
         // the apca lane's solid pole is judged on Lc alone and is report-only (CATALOG
-        // C81); the wcag lane's is gated hard at 4.5
-        const cell = qn.includes('apca') ? 'stamp-on solid (apca · report)' : 'stamp-on solid vs fill'
-        seen(cell, contrastRatio(pole, shippedY(states[0].L, states[0].C, states[0].H)), `${tag} ${mode} ${lv}${qn} rest`, qn.includes('apca') ? 0 : BAR.text)
+        // C81); the wcag lane's is gated hard at 4.5 at every step
+        const cell = apca ? 'stamp-on solid (apca · report)' : 'stamp-on solid vs fill'
+        states.forEach((st, i) =>
+          seen(cell, contrastRatio(pole, shippedY(st.L, st.C, st.H)), `${tag} ${mode} ${lv}${qn} step ${i}`, apca ? 0 : BAR.text))
       }
     }
   }

@@ -4,7 +4,7 @@
 // and proven byte-identical at cutover (commit c7542b7); the blessed snapshots are the standing gate — do not
 // "simplify" an expression here without eye-check + re-bless.
 import { classifyArchetype, medianLForArchetype, type Archetype } from '../archetypes'
-import { clampChromaToGamut, wcagY, legalRatio, findMaxLForContrast, findLForContrast, findLForContrastUp, apcaY, apcaLc, encodedChannels } from '../constraints'
+import { clampChromaToGamut, wcagY, legalRatio, findMaxLForContrast, findLForContrast, findLForContrastUp, apcaY, apcaLc, encodedChannels, contrastRatio, shippedY } from '../constraints'
 import { perceptualRungL, apparentL, grayApparentL, solveLForApparent, lstarFromY } from '../perceptualL'
 import {
   hexToOklch, maxChromaAt, medianGamutCAt, goldSpineHue, torsionedHue, gauss, sigmoid, hueDelta, oklabDist, redGateDist, RED_GATE,
@@ -679,6 +679,38 @@ export function ctaDarkDualGateL(
   const l45 = legalRatio(startL, C, darkH, 0) >= 4.5 ? startL : findLForContrastUp(startL, C, darkH, 0, 4.6)
   const lLc = findLForBlackTextLc(startL, C, darkH, coLc + APCA_SOLVE_MARGIN_LC, capHiL)
   return Math.max(l45, Math.min(lLc, capHiL))
+}
+
+// ================= the steps keep the pole (C86) =================
+// The on-text pole is chosen at rest and the state fills are produced from rest by the step
+// rule (archetypes.stateFillL). The floor the rest fill has rides the steps: this builds the
+// legality read the rule consults on a candidate landing, in the lane's own currency.
+//   wcag  the chosen pole at the declared ratio floor, on every rendition that ships: the
+//         D1 both-renditions read (legalRatio) and the 8-bit hex the audits measure (shippedY,
+//         the C44 basis)
+//   apca  the chosen pole at the Lc threshold, the lane's law as the gate reads it. Not the
+//         fire margin: that margin exists for the rest fill's solve, which can land on the
+//         bar; a step is a direction decision, and a bar above the law would reverse fills
+//         whose steps already pass it.
+// Chroma is the role's own at the candidate L, gamut-clamped as emitRole clamps it. Undefined
+// where the spec declares neither law; the rule is then the lightness bounds alone.
+// Dark only. A light step under its law is CATALOG C87, open for the owner.
+export function stepKeepsPole(
+  mode: 'light' | 'dark', white: boolean, chromaAt: (L: number) => number, H: number,
+  law: { ratioFloor?: number; enforceLc?: number },
+): ((L: number) => boolean) | undefined {
+  if (mode === 'light') return undefined
+  if (law.enforceLc !== undefined) {
+    const bar = law.enforceLc
+    const lcAt = white ? whiteTextLcAt : blackTextLcAt
+    return (L: number) => lcAt(L, chromaAt(L), H) >= bar
+  }
+  if (law.ratioFloor === undefined) return undefined
+  const floor = law.ratioFloor, poleY = white ? 1.0 : 0
+  return (L: number) => {
+    const C = clampChromaToGamut(L, chromaAt(L), H)
+    return Math.min(legalRatio(L, C, H, poleY), contrastRatio(shippedY(L, C, H), poleY)) >= floor
+  }
 }
 
 // on-fill (dark): judged at the emitted (gamut-clamped) base ctaDark, PRE-enforcement (:424–425).

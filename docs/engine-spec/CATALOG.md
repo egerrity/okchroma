@@ -4,6 +4,129 @@ Fresh tracker. The previous CATALOG was archived with the whole old docs tree in
 ("clean-slate rewrite" 2026-06-27); entries here are code-grounded, logged at find-time,
 fixed holistically after owner sign-off.
 
+## C87 — the light steps read under their lane's bar, in one custom secondary (wcag) and in the apca lane's black-text fills (OPEN, 2026-10-20)
+
+Found while landing C86. The step rule's legality read is held to dark by owner instruction
+(`stepKeepsPole` returns no read for light), and the same sweep that proves dark shows two
+light residuals, both present before C86 and unchanged by it. In the wcag lane one row:
+the custom secondary `#B18D0B` (the `rich-green` fixture's accent, a gold under black text)
+reads 4.47 at `stamp-2` in light, the one row of 623 under 4.5 at any light step; its rest
+and one-step fills pass. In the apca lane the black-text fills lose Lc at the darkened
+light steps the way white-text fills lose it at the lightened dark steps: 187 of 448 solid-
+pole family rows read under Lc 60 at `stamp-1` and again at `stamp-2` (positive and info
+in every theme, eight brands, one critical), worst 38 at the pressed critical of one hue.
+The wcag ratio holds on all of them (0 of 623 under 4.5 at step 2), so the shipped lane is
+clean apart from the one gold. `req:audit`'s own path (`resolveRamp` with no clearance)
+adds one wcag row of its own, the brand at H225 C0.2 reading 4.43 at `stamp-2` in light;
+the shipped path's clearance lifts that fill and it does not appear in the theme sweep.
+
+The same rule fixes both by lightening the light steps: removing the mode condition in
+`stepKeepsPole` moves 3 wcag rows (the gold's two steps and its `stamp-on`, which then
+passes soft) and about 680 apca-lane light rows (every black-text family's steps reverse
+toward the page). The owner's call, because it moves light values, the apca lane's in
+bulk, and that lane is the community plugin's default. `req:audit` prints both counts
+under "the steps keep the pole" on every run; `audit:guarantee` gates the wcag lane's
+light steps and passes, since its sweep derives the secondary rather than taking the
+fixture's custom accent.
+
+## C88 — the divergence snapshot is stale on the neutral's light chalk-20 and highlighter-26, under the gate's tolerance (OPEN, 2026-10-20)
+
+Found while landing C86. `scripts/divergence-snapshot.json` was last blessed at `384ee98`
+(2026-09-01). The neutral's light stop 7 and stop 8 (chalk-20, highlighter-26) at every
+level and hue the audit snapshots now resolve about 0.003 L below the blessed values (for
+instance pure h30 stop 7 0.628 to 0.625, stop 8 0.530 to 0.526), under the audit's 0.015
+tolerance, so the gate has reported clean while the recorded values no longer describe
+the build. A float-precision probe of HEAD's own code (`c8b3e3a`) resolves the same
+values as the C86 branch, so the drift predates C86 and belongs to a neutral change after
+the bless. Which commit moved them is not traced here. The C86 landing patched the
+snapshot by row rather than re-blessing it whole, so these rows still hold the 2026-09-01
+values. Re-bless after the owner's look, or trace the commit first.
+
+## C86 — the stamp text's description claims the steps; the engine judges the pole at rest, and in dark the white pole falls under at the steps (RULED, 2026-10-20)
+
+Two facts that disagree. The on-fill requirement (`ONS.onFill` in
+`src/engine/requirements/spec.ts`) is judged against the fill at rest: the rest fill
+re-solves until the pole reads 4.5, and the one- and two-step fills are produced from it
+by the state step with no on-text floor of their own. C19 recorded that posture (the fill
+trio's pressed "carries no contrast requirement of its own, the same posture hover always
+had") and added a report-only read of the rest-chosen pole on the pressed fill to
+`reqtoken-audit` (its §5d), printed on every `npm run req:audit` beneath the gate's
+`failures: 0`. At C19's landing the read showed ten apca-lane seeds under 4.5 and the
+wcag lane clean. The dark state direction then changed (the dark steps move toward the
+paper pole: `10fc89e`, 2026-08-29, and the law as `band-audit` asserts it, `2278b8f`,
+2026-08-31), and the same read today prints 140 of 288 under 4.5, every one of them dark,
+at about 3.08, with the gate still reporting no failures. The second fact is the
+description: `stamp-on`'s use line says "the only text color over the fill at every
+step". That wording entered in the rename round (`ae63b54`, 2026-10-07); before it the
+line said "over the fill" and the contrast line, unchanged, says AA body text "over its
+CTA". So the claim at the steps is newer than the values, and the values have read under
+it, visibly, since the dark direction changed.
+
+Measured at HEAD through `npm run tokens:emit -- 044baf sample` (the real pipeline), the
+WCAG ratio of `stamp-on` over the fill in dark mode: critical 4.60 at rest, 3.73 one step
+from rest, 3.07 two steps; brand-alt 5.91 at rest, 4.80, 3.90. okchroma 0.9.0 ships the
+same values. Light mode holds at every step in every family, because the light steps
+darken under a white pole. A family whose dark on-text is the black pole gains at the
+steps and is unaffected. The guarantee audit's two stamp-on rows sweep the brand-alt
+register only, so it stays green; the PoC checkers defer engine-paired rows to the engine
+by design.
+
+Found while drafting the MUI palette map in the tokens generator (`docs/mui-palette.md`
+there), whose semantic rows alias `stamp-1` and `stamp-2` as the solid ground at hover and
+pressed with `stamp-on` as their text, on the description's claim.
+
+Two shapes of fix, neither taken. The dark step producers take the on-fill floor the rest
+fill has, so a white-on family's steps re-solve under their text (the enforcement path
+`ctaDarkEnforcedL` exists for rest), and §5d becomes a gate. Or the description's use line
+goes back to "over the fill", the consumers' rows say rest only, and §5d stays a report.
+The owner's call; the red-band cluster is off-limits without her word.
+
+RULED (owner, 2026-10-20): the first shape. The on-text floor the rest fill has rides the
+steps in dark, and the rule is generalized from a lightness condition to the contrast
+condition: `stateFillL` (`src/engine/archetypes.ts`) takes a legality read, and a direction
+whose pressed landing fails it reverses, the same shape as the two archetype bounds.
+`stepKeepsPole` (`src/engine/requirements/producers.ts`) builds the read in the lane's own
+currency: the wcag lane's declared ratio floor on the chosen pole over every rendition that
+ships (the both-renditions read and the 8-bit hex), the apca lane's Lc threshold as the gate
+reads it (not the fire margin, which exists for the rest fill's solve and would reverse the
+dark warning's steps back into the gamut wash `10fc89e` fixed). The resolver
+(`src/engine/requirements/resolve.ts`) now builds the state trio once, after the final pole
+judgement, from the fill and the pole that ship; the neutral and the subtle secondary
+(`colorEngine.ts`) and the escape family (`resolve.ts`) judge the pole before the steps and
+hand the rule the quiet fill's law, the 4.5 ratio on the solid pole. A dark fill under the
+white pole whose lightened pressed fill would read under the bar now steps toward the pen
+pole; a black-text dark fill keeps lightening. Light is untouched by owner instruction; its
+own step reads are C87.
+
+Measured at landing through the real pipeline (`resolveTheme` into the emitters, 24 hues ×
+3 chromas × both lanes, the two seeds `044baf` and `431c5b`, the audit fixtures with their
+secondaries; 43,432 rows): 692 rows moved, every one a dark `stamp-1` or `stamp-2` (critical
+in every theme, brand-alt in 87, brand in 77, the last mostly the apca lane's white-pole
+brands) or one of eight dark `brand-alt/stamp-on` rows that went from the solid white pole
+to the soft pole, because `softOnCtaPasses` reads all three states and the darkened steps
+now carry the composite. Light: 0 rows in both lanes. The wcag lane's `stamp-on` over the
+dark steps reads 0 of 623 family rows under 4.5 at every step (108 and 168 before); the two
+seeds' critical reads 4.60 / 5.68 / 6.96 and brand-alt 5.91 / 7.33 / 9.11. The apca lane's
+solid pole reads 0 of 532 under Lc 60 at the dark steps (85 and 174 before). The yellow
+machinery, the red band, the scale and every rest fill are byte-identical. Against the dark
+page the flipped steps lose separation instead of gaining it. The derived brand-alt's
+pressed fill sits under the edge gate's floor (APCA |Lc| 15) against the dark `paper-1` in
+every moved wcag row, 79 of 79 (the two seeds read 11 and 10, the sweep's worst 9.5; 33 to
+34 before), and its one-step fill in 3, while `stamp-edge` is gated on the rest fill, which
+reads about 20 there, and stays transparent. Critical's pressed fill reads 19 at worst and
+the apca lane's moved rows stay above 23. Whether the edge gate should read the steps is the
+owner's question, logged here, not changed.
+
+Gates: `req:audit` §5d is a gate (`step-on-text`, both steps, dark, each lane under its own
+law; its report line counts the steps the pole's floor reversed and the light reads under
+the bar, C87); `audit:guarantee` reads `stamp-on` over every family's three steps in both
+modes, the wcag lane gated at 4.5 and the apca lane's solid pole report-only (C81). The
+divergence snapshot carries the red signal's dark one-step and two-step fills at their new
+values and nothing else (patched by row, not re-blessed whole: a whole re-bless would have
+absorbed C88); the extended plugin's override-set snapshot re-blessed for the two brands
+whose dark `brand-alt/stamp-on` went soft; the band and dark snapshots did not move.
+`stamp-on`'s description is unchanged and now true.
+
 ## C85 — agents read the demo's semantic layer as engine output (OPEN, 2026-10-13)
 
 The engine writes base tokens only. The demo's semantic layer, `demo/semantic.css`

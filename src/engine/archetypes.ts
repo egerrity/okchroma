@@ -55,8 +55,9 @@ export function stateStepL(restL: number, _mode: 'light' | 'dark', k: 1 | 2): nu
   return k * STATE_HOVER_K
 }
 
-// The ARCHETYPE OVERRIDES, one per mode, both bounds read from ARCHETYPES: a fill
-// with no real room to travel in its mode's natural direction reverses instead.
+// The OVERRIDES: a fill with no real room to travel in its mode's natural direction
+// reverses instead. Two lightness bounds, one per mode, both read from ARCHETYPES, and
+// the text's bound, read by the caller's predicate.
 //  · LIGHT (owner 2026-07-28, restoring the original hoverL switch): natural travel
 //    is toward black, so a fill below the 'rich' floor (the original 0.40 switch)
 //    LIGHTENS — it has no dark left to travel into.
@@ -70,18 +71,26 @@ export function stateStepL(restL: number, _mode: 'light' | 'dark', k: 1 | 2): nu
 //    (The 2026-07-28 removal of this same bound answered a different law — under
 //    the retired Weber magnitude the flip travelled ΔL* up to 28 and darkened
 //    yellow to olive; the flat delta moves .05/.10 and keeps the hue.)
+//  · THE TEXT (C86): the on-text pole is chosen at rest, and a step that would take it
+//    under the lane's bar has no room either. `keepsPole` is that read at a candidate
+//    landing (producers.stepKeepsPole builds it in the lane's own currency); a direction
+//    that fails it reverses, the same shape as the two bounds above. In dark this is the
+//    white-text fill: lightening costs the white pole contrast, so its steps go toward
+//    the pen pole. A black-text dark fill gains at the steps and keeps lightening; a light
+//    fill under a white pole gains by darkening. Without the predicate the rule is the
+//    lightness bounds alone.
 const OVERRIDE_LIGHT_BELOW = ARCHETYPES.find(a => a.name === 'rich')!.min  // 0.40
 const OVERRIDE_DARK_ABOVE = ARCHETYPES.find(a => a.name === 'light')!.min  // 0.85
 
-export function stateFillL(restL: number, mode: 'light' | 'dark', k: 1 | 2): number {
+export function stateFillL(restL: number, mode: 'light' | 'dark', k: 1 | 2, keepsPole?: (L: number) => boolean): number {
   const natural: 1 | -1 = mode === 'dark' ? 1 : -1 // away from the mode's ground
   const overridden = mode === 'light' ? restL < OVERRIDE_LIGHT_BELOW : restL > OVERRIDE_DARK_ABOVE
   const preferred: 1 | -1 = overridden ? (-natural as 1 | -1) : natural
   // direction commits on the PRESSED (2×) budget so hover and pressed can never
-  // split directions when only the smaller step fits before the rail.
+  // split directions when only the smaller step fits before the rail or keeps the pole.
   const fits = (d: 1 | -1) => {
     const p = restL + d * stateStepL(restL, mode, 2)
-    return p >= STATE_L_MIN && p <= STATE_L_MAX
+    return p >= STATE_L_MIN && p <= STATE_L_MAX && (keepsPole?.(p) ?? true)
   }
   const dir: 1 | -1 = fits(preferred) ? preferred : fits(-preferred as 1 | -1) ? (-preferred as 1 | -1) : preferred
   const L = restL + dir * stateStepL(restL, mode, k)
