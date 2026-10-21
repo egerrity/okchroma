@@ -71,7 +71,7 @@ steps and is unaffected. The guarantee audit's two stamp-on rows sweep the brand
 register only, so it stays green; the PoC checkers defer engine-paired rows to the engine
 by design.
 
-Found while drafting the MUI palette map in the tokens generator (`docs/mui-palette.md`
+Found while drafting the MUI reference in the tokens generator (`docs/color-by-component-mui.md`
 there), whose semantic rows alias `stamp-1` and `stamp-2` as the solid ground at hover and
 pressed with `stamp-on` as their text, on the description's claim.
 
