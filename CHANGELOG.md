@@ -8,7 +8,7 @@ structure, ships as at least a minor.
 
 Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git log.
 
-## Unreleased
+## 0.9.1 — 2026-10-21
 
 - **The stamp text holds at every dark step.** A dark fill whose text is the white pole
   no longer lightens one and two steps from rest past the text bar: the step turns toward
