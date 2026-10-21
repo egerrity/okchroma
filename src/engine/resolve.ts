@@ -20,6 +20,7 @@ import { hexToOklch, hueDelta, makeStop, maxChromaAt, onTextIsWhite, RED_SOLVE, 
 import { apparentL, grayApparentL, solveCForApparent, solveLForApparent } from './perceptualL'
 import { subtleSecondaryChromaCurve } from './neutralCurve'
 import { stateFillL } from './archetypes'
+import { stepKeepsPole } from './requirements/producers'
 import { p2Diff, P2_D, P2_D_UP } from './p2'
 import {
   buildContext, whiteTextLcAt, apcaYAt, onFillIsWhiteDarkAt,
@@ -583,13 +584,15 @@ export function escapeCtaFamily(
   if (!strongText) throw new Error('escapeCtaFamily: the neutral scale has no ink-11 stop')
   const mk = (stop: number, L: number) => makeStop(stop, L, strongText.C, strongText.H)
   const cta = mk(9, strongText.L)
-  // states via the shared fill rule; the near-white dark register is the archetype
-  // override case — its dark states DARKEN (the mirror of everyone else's lighten)
-  const ctaHover = mk(10, stateFillL(strongText.L, mode, 1))
-  const ctaPressed = mk(11, stateFillL(strongText.L, mode, 2))
   const onEnforce = contrastProfile !== 'apca'
   const onFloor = contrastProfile === 'apca' ? undefined : 4.5
   const onFillIsWhite = onTextIsWhite(apcaY(cta.r, cta.g, cta.b), cta.L, cta.C, cta.H, onEnforce, onFloor)
+  // states via the shared fill rule, keeping the pole (C86); the near-white dark register
+  // is the archetype override case — its dark states DARKEN (the mirror of everyone
+  // else's lighten)
+  const keepsPole = stepKeepsPole(mode, onFillIsWhite, () => strongText.C, strongText.H, { ratioFloor: onFloor })
+  const ctaHover = mk(10, stateFillL(strongText.L, mode, 1, keepsPole))
+  const ctaPressed = mk(11, stateFillL(strongText.L, mode, 2, keepsPole))
   // scope (owner 2026-08-13, reverting the 2026-08-12 pen de-chroma): the escape moves
   // ONLY this fill trio + on-cta. The brand's pen stops 9/10/11 — the text register,
   // and the default link that aliases them — keep the brand's own chroma.

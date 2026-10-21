@@ -21,7 +21,7 @@ import {
   darkScaleChromaAt, darkTextChromaAt, placeDark, placeDarkDelta, deltaDarkTargetL, deltaLiftChroma, deltaDarkPlace, flatDarkCtaL, smoothedBandLift,
   onFillIsWhiteLight, onFillIsWhiteDarkAt, ctaLightL, ctaDarkEnforcedL,
   ctaLightLApca, ctaDarkEnforcedLApca, solveBrandExit, solveDarkCtaExit, ctaDualGateL, ctaDarkDualGateL,
-  apcaYAt, findMaxLForApcaLc, APCA_SOLVE_MARGIN_LC, APCA_TOL_LC, APCA_ENFORCE_MARGIN_LC,
+  apcaYAt, findMaxLForApcaLc, APCA_SOLVE_MARGIN_LC, APCA_TOL_LC, APCA_ENFORCE_MARGIN_LC, stepKeepsPole,
 } from './producers'
 
 // hex = the sRGB clamp-down of the resolved stop (gamut-map by chroma-reduction, §4B)
@@ -495,7 +495,10 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
   // Lc bar). One source for every on-fill pole judgement in this function, replacing the lone
   // hardcoded 4.5 at the light post-move re-judge.
   const onFloor = enforceLc !== undefined ? undefined : spec.ons.onFill.ratioFloor
-  let cta: ResolvedRole, ctaHover: ResolvedRole, ctaPressed: ResolvedRole, onFillIsWhite: boolean
+  let cta: ResolvedRole, onFillIsWhite: boolean
+  // the state roles' chroma at a landing L and their hue, set by each branch for the trio
+  // built after the final pole judgement (below)
+  let stateC: { hover: (L: number) => number; pressed: (L: number) => number }, stateH: number
   if (mode === 'light') {
     // on-fill judged PRE-enforcement at fill9 (:271–273); the enforce re-solve feeds FROM it (:354–358)
     onFillIsWhite = onFillIsWhiteLight(ctx, enforceLc !== undefined ? false : onFillEnforce)
@@ -558,15 +561,14 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       }
     }
     cta = emitRole(STAMP_FILL,light9L, ctaCFor(light9L) * ctaCMul, ctaH)
-    const hCFor = (L: number) => ctx.cAt('light', L, (hoverReq?.chromaMult ?? 1) * ctx.brandC) * ctaCMul
-    const pCFor = (L: number) => ctx.cAt('light', L, (pressedReq?.chromaMult ?? 1) * ctx.brandC) * ctaCMul
-    const hL = stateFillL(light9L, 'light', 1)
-    const pL = stateFillL(light9L, 'light', 2)
-    ctaHover = emitRole(STAMP_FILL_HOVER,hL, hCFor(hL), ctaH)
-    ctaPressed = emitRole(STAMP_FILL_PRESSED,pL, pCFor(pL), ctaH)
-    if (light9L !== ctx.scaleL) { cta.enforced = true; ctaHover.enforced = true; ctaPressed.enforced = true }
+    stateC = {
+      hover: (L: number) => ctx.cAt('light', L, (hoverReq?.chromaMult ?? 1) * ctx.brandC) * ctaCMul,
+      pressed: (L: number) => ctx.cAt('light', L, (pressedReq?.chromaMult ?? 1) * ctx.brandC) * ctaCMul,
+    }
+    stateH = ctaH
+    if (light9L !== ctx.scaleL) cta.enforced = true
     if (repelled) {
-      cta.repelled = true; ctaHover.repelled = true; ctaPressed.repelled = true
+      cta.repelled = true
       // the shipped pole re-judged AT the exited fill (the pre-enforce judge ran at scaleL).
       // Under wcag the conformance floor rides the re-judge (owner 2026-07-10, "not darkening
       // the text at a wide enough range"): the moved fill sits where the enforce-darken can
@@ -594,24 +596,16 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     // C12 v8: the dark cta rides IDENTITY hue (darkCtaH) — coolRedDark's shift is retired
     // from the cta (owner ruling; research: identity-hue dark ctas never fire the gate).
     const dCFor = (L: number) => ctx.cAt('dark', L, d.darkC9)
-    const dTrio = (baseL: number): [number, number] =>
-      [stateFillL(baseL, 'dark', 1), stateFillL(baseL, 'dark', 2)]
+    stateC = { hover: dCFor, pressed: dCFor }
+    stateH = ctx.darkCtaH
     cta = emitRole(STAMP_FILL,cta9L, dCFor(cta9L), ctx.darkCtaH)
-    {
-      const [hL, pL] = dTrio(cta9L)
-      ctaHover = emitRole(STAMP_FILL_HOVER,hL, dCFor(hL), ctx.darkCtaH)
-      ctaPressed = emitRole(STAMP_FILL_PRESSED,pL, dCFor(pL), ctx.darkCtaH)
-    }
     onFillIsWhite = onFillIsWhiteDarkAt(cta.L, cta.C, cta.H, enforceLc !== undefined ? false : onFillEnforce)
     const enforcedL = enforceLc !== undefined
       ? ctaDarkEnforcedLApca(ctx, cta, onFillIsWhite, onFillEnforce, enforceLc)
       : ctaDarkEnforcedL(ctx, cta, onFillIsWhite, onFillEnforce)
     if (enforcedL !== null) {
       cta = emitRole(STAMP_FILL,enforcedL, dCFor(enforcedL), ctx.darkCtaH)
-      const [hL, pL] = dTrio(enforcedL)
-      ctaHover = emitRole(STAMP_FILL_HOVER,hL, dCFor(hL), ctx.darkCtaH)
-      ctaPressed = emitRole(STAMP_FILL_PRESSED,pL, dCFor(pL), ctx.darkCtaH)
-      cta.enforced = true; ctaHover.enforced = true; ctaPressed.enforced = true
+      cta.enforced = true
     }
     // C42 — the DARK clearance (owner 2026-08-02): dark ctas carry the same Lc law as light
     // (dark's flat register had never been held to any Lc bar). Runs BEFORE the exit, the
@@ -622,10 +616,7 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       const clearedL = ctaDarkDualGateL(cta, ctx.darkCtaH, onFillIsWhite, onFillEnforce, coLc + APCA_ENFORCE_MARGIN_LC, capLoL, capHiL)
       if (Math.abs(clearedL - cta.L) > 1e-9) {
         cta = emitRole(STAMP_FILL,clearedL, dCFor(clearedL), ctx.darkCtaH)
-        const [hL, pL] = dTrio(clearedL)
-        ctaHover = emitRole(STAMP_FILL_HOVER,hL, dCFor(hL), ctx.darkCtaH)
-        ctaPressed = emitRole(STAMP_FILL_PRESSED,pL, dCFor(pL), ctx.darkCtaH)
-        cta.enforced = true; ctaHover.enforced = true; ctaPressed.enforced = true
+        cta.enforced = true
       }
     }
     // C12 dark (owner 2026-07-11, "dark falls out like every cta"; supersedes the v6 "no dark
@@ -639,11 +630,8 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
       const exitL = solveDarkCtaExit(cta, dCFor, ctx.darkCtaH, ctx.opts.ctaSolve.redDark, enforceLc, coLc)
       if (exitL !== null) {
         cta = emitRole(STAMP_FILL,exitL, dCFor(exitL), ctx.darkCtaH)
-        const [hL, pL] = dTrio(exitL)
-        ctaHover = emitRole(STAMP_FILL_HOVER,hL, dCFor(hL), ctx.darkCtaH)
-        ctaPressed = emitRole(STAMP_FILL_PRESSED,pL, dCFor(pL), ctx.darkCtaH)
-        cta.enforced = true; ctaHover.enforced = true; ctaPressed.enforced = true
-        cta.repelled = true; ctaHover.repelled = true; ctaPressed.repelled = true
+        cta.enforced = true
+        cta.repelled = true
         // the pole re-judged AT the exited fill (mirrors the light repelled re-judge: wcag
         // rides the 4.5 conformance floor; apca's move delivered a passing pole in-travel)
         onFillIsWhite = onFillIsWhiteDarkAt(cta.L, cta.C, cta.H,
@@ -673,6 +661,20 @@ export function resolveRamp(hex: string, mode: 'light' | 'dark', spec?: ModeSpec
     const other = legalRatio(cta.L, cta.C, cta.H, onFillIsWhite ? 0 : 1.0)
     if (chosen < onFloor && other >= onFloor) onFillIsWhite = !onFillIsWhite
   }
+
+  // ---- THE STEPS, from the fill and the pole that ship (C86). One step and two steps are
+  // the state rule over the rest fill (stateFillL) with the role's own chroma at the landing.
+  // The rule consults the lane's legality read on the pressed landing (stepKeepsPole): a
+  // direction that would take the chosen pole under its bar reverses, so the floor the rest
+  // fill carries holds at every step. Built after the final pole judgement because the read
+  // depends on the pole; the enforced and repelled marks ride along from the rest.
+  const keepsPole = stepKeepsPole(mode, onFillIsWhite, stateC.pressed, stateH, { ratioFloor: onFloor, enforceLc })
+  const hL = stateFillL(cta.L, mode, 1, keepsPole)
+  const pL = stateFillL(cta.L, mode, 2, keepsPole)
+  const ctaHover = emitRole(STAMP_FILL_HOVER, hL, stateC.hover(hL), stateH)
+  const ctaPressed = emitRole(STAMP_FILL_PRESSED, pL, stateC.pressed(pL), stateH)
+  if (cta.enforced) { ctaHover.enforced = true; ctaPressed.enforced = true }
+  if (cta.repelled) { ctaHover.repelled = true; ctaPressed.repelled = true }
 
   // (the cta-ink trio DELETED, owner 2026-08-12. C49 had already reduced it to pure
   // references onto stops 9/10/11 — every legibility guarantee rides the stops' own

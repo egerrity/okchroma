@@ -116,7 +116,7 @@ flowchart TD
 | Stop tables | `stopTable.ts` | `ROOT_L_LIGHT` / `ROOT_L_DARK`, `SCALE_C_LIGHT` / `SCALE_C_DARK` (one chroma table per mode), `DARK_CTA_C` (the dark stamp chroma register: brand trimmed, signal identity), the contrast bars, `DARK_BAND_TOP_LIFT`, `GOLD_SPINE` and `WARM_TORSION`, the dark fill floors, `PEN_70_GROUND`, `NEUTRAL_CTA_DARK_POP_CLEARANCE`. |
 | Dark chroma policy | `darkChromaCurve.ts` | `darkChromaCurve` (the equalizer) and `darkCtaTrim` (computed from `DARK_CTA_C`). |
 | Signal identities | `signals.ts` | The four signals by identity (red, yellow, green, blue) with their role names, seeds, hue shifts and dark floors; `SIGNAL_EMIT_NAME`. |
-| Archetypes | `archetypes.ts` | The six lightness bands, `classifyArchetype`, and the state rule `stateFillL` (the flat step, reversed near the far pole). |
+| Archetypes | `archetypes.ts` | The six lightness bands, `classifyArchetype`, and the state rule `stateFillL` (the flat step, reversed near the far pole or where a dark step would take the on-text under its floor). |
 | Neutral curve | `neutralCurve.ts` | `neutralChromaCurve` (the tint shape, the warm damp, the four levels) and the subtle secondary's curve. |
 | Token vocabulary | `tokenNames.ts` | The one name table and the one grammar: the stops, the poles, the stamp leaves (flat and nested), the path builders (`familyPath`, `linkPath`, `absolutePath`) and their projections (`cssVarName`, `figmaPathOf`), the extended plugin's overridable-row rule, `tokenOrder`. Zero imports, so both plugin sandboxes can bundle it. |
 | Descriptions | `tokenDescriptions.ts` | The `FAMILY` and `CSS_FAMILY` rosters, the per-row description text in two renderings (`describeToken` for Figma, `describeDocument` for the DTCG documents with each claim's ground and the usage lines, from `GUARANTEE_SCOPE`), `canonicalize` (zone and community spellings onto the grammar). Zero imports; `desc-audit` enforces the text rules. |
@@ -289,7 +289,9 @@ mechanism; the constants are rendered live on the site's
   1.25× per step, so every seam stays open without a separation floor.
 - **On-fill text by one criterion: it passes.** `onTextIsWhite` prefers the pole that reads
   better (judged with APCA); the chosen pole must pass 4.5:1 or it flips; the fill darkens
-  only when white is preferred and cannot be flipped.
+  only when white is preferred and cannot be flipped. The steps keep the pole in dark: a
+  step that would take the chosen pole under 4.5:1 reverses toward the pen pole
+  (`stepKeepsPole`), so `stamp-on` holds at rest, one step and two steps.
 - **The booster.** The one use of APCA: once the law is met, brand and signal fills are
   nudged in the chosen pole's direction until the text reads at APCA Lc 65 (critical 50).
   A legibility nudge on the stamp, with no claim attached.

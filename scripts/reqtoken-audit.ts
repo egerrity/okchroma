@@ -16,6 +16,7 @@ import { APCA_TOL_LC, apcaYAt } from '../src/engine/requirements/producers'
 import { clampChromaToGamut, wcagY, contrastRatio, oklchToLinearRgb, apcaLc, apcaY, shippedY } from '../src/engine/constraints'
 import { resolveBrand, resolveLinkInverseTrio } from '../src/engine/resolve'
 import { PEN_70_GROUND } from '../src/engine/stopTable'
+import { stateFillL } from '../src/engine/archetypes'
 
 const enc = (c: number) => { c = Math.max(0, Math.min(1, c)); return c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055 }
 const oklchToHex = (L: number, C: number, H: number) => '#' + oklchToLinearRgb(L, C, H).map(c => Math.round(enc(c) * 255).toString(16).padStart(2, '0')).join('')
@@ -27,9 +28,11 @@ const SEED_L = 0.62
 type Fail = { seed: string; mode: string; check: string; detail: string; sev: number }
 const fails: Fail[] = []
 let seedsChecked = 0
-// report-only (5d): rest-chosen on-cta pole read on the pressed fill
-let pressedPoleChecked = 0
-const pressedPoleUnder: string[] = []
+// 5d's report lines: steps whose direction the pole's floor reversed, and light step reads
+// under the lane's bar (not gated, CATALOG C87), per lane and mode
+const stepsReversed: Record<string, number> = {}
+const lightStepsUnder: Record<string, number> = {}
+const lightStepsUnderRows: string[] = []
 
 const PROFILES: ContrastProfile[] = ['wcag', 'apca']
 for (const profile of PROFILES)
@@ -133,16 +136,31 @@ for (const H of HUES) for (const C of CHROMAS) {
     const hoverUp = ctaHover.L > cta.L
     if ((ctaPressed.L > cta.L) !== hoverUp || Math.abs(ctaPressed.L - cta.L) < Math.abs(ctaHover.L - cta.L) - 1e-9)
       fails.push({ seed: id, mode, check: 'pressed-travel', detail: `cta L${cta.L.toFixed(3)} hover L${ctaHover.L.toFixed(3)} pressed L${ctaPressed.L.toFixed(3)}`, sev: 10 })
-    // 5d. REPORT-ONLY: the on-cta pole is chosen at rest and is not re-judged on a state
-    //    fill, and pressed travels twice hover's distance, so this reads the rest pole on
-    //    the PRESSED fill and prints how many fall under 4.5. Nothing is gated, and the
-    //    count is this path's (see the header).
-    {
-      const pY = wcagY(ctaPressed.L, clampChromaToGamut(ctaPressed.L, ctaPressed.C, ctaPressed.H), ctaPressed.H)
-      const got = r.ons.onFillIsWhite ? contrastRatio(1.0, pY) : contrastRatio(pY, 0)
-      pressedPoleChecked++
-      if (got < 4.5) pressedPoleUnder.push(`${id} ${mode} (${got.toFixed(2)})`)
-    }
+    // 5d. THE STEPS KEEP THE POLE (C86). The on-cta pole is chosen at rest and the state
+    //    fills are produced from it, so the rest pole is read on BOTH step fills under the
+    //    lane's law: the wcag lane's 4.5 on the shipped 8-bit pair, the apca lane's Lc
+    //    threshold. Dark is gated: the step rule reverses a step that would take the pole
+    //    under the bar (producers.stepKeepsPole). Light is counted, not gated: its steps
+    //    ride the lightness bounds alone until the owner rules on C87 (CATALOG), and the
+    //    count prints with the report line below.
+    ;[ctaHover, ctaPressed].forEach((st, i) => {
+      const C = clampChromaToGamut(st.L, st.C, st.H)
+      let short: string | null = null
+      if (spec.ons.onFill.enforceLc !== undefined) {
+        const got = Math.abs(apcaLc(r.ons.onFillIsWhite ? 1.0 : 0.0, apcaYAt(st.L, C, st.H)))
+        if (got < spec.ons.onFill.enforceLc - 0.1) short = `stamp-${i + 1} on-text |Lc| ${got.toFixed(1)} < ${spec.ons.onFill.enforceLc}`
+      } else {
+        const got = r.ons.onFillIsWhite ? contrastRatio(1.0, shippedY(st.L, C, st.H)) : contrastRatio(shippedY(st.L, C, st.H), 0)
+        if (got < 4.5) short = `stamp-${i + 1} on-text ${got.toFixed(2)} < 4.5`
+      }
+      if (short === null) return
+      if (mode === 'dark') fails.push({ seed: id, mode, check: 'step-on-text', detail: short, sev: 15 })
+      else { lightStepsUnder[profile] = (lightStepsUnder[profile] ?? 0) + 1; lightStepsUnderRows.push(`${id} ${short}`) }
+    })
+    // the report line's count: a step whose direction the pole's floor reversed (the
+    // lightness bounds alone would have sent it the other way)
+    if (Math.sign(ctaPressed.L - cta.L) !== Math.sign(stateFillL(cta.L, mode, 2) - cta.L))
+      stepsReversed[`${profile} ${mode}`] = (stepsReversed[`${profile} ${mode}`] ?? 0) + 1
     // 6. ons: the chosen pole must be the passing one — if enforce is declared and the chosen pole fails
     //    WCAG 4.5 while the OTHER pole passes it with |Lc| ≥ 45, the choice is wrong (true dead zone excepted)
     const onSpec = spec.ons.onFill
@@ -233,10 +251,11 @@ for (const mode of ['light', 'dark'] as const) {
   console.log(`  ${mode}: appL spread [${stopNums.join(' ')}] = ${spreads.map(v => v.toFixed(1)).join(' ')}  max ${Math.max(...spreads).toFixed(1)}`)
 }
 
-// 5d report: pressed-fill pole coverage (report-only — see the check note)
-console.log(`\n=== on-cta pole on the PRESSED fill (wcag 4.5 read, report-only) ===`)
-console.log(`  ${pressedPoleChecked} checked · under 4.5: ${pressedPoleUnder.length}`)
-if (pressedPoleUnder.length) pressedPoleUnder.slice(0, 10).forEach(x => console.log(`    ${x}`))
+// 5d report: the steps and the pole (dark is gated in the loop; light is counted, C87)
+console.log(`\n=== the steps keep the pole (C86) ===`)
+console.log(`  steps reversed by the pole's floor: ${PROFILES.flatMap(p => (['light', 'dark'] as const).map(m => `${p} ${m} ${stepsReversed[`${p} ${m}`] ?? 0}`)).join(' · ')}`)
+console.log(`  light step reads under the lane's bar (not gated, CATALOG C87): ${PROFILES.map(p => `${p} ${lightStepsUnder[p] ?? 0}`).join(' · ')}`)
+lightStepsUnderRows.slice(0, 6).forEach(x => console.log(`    ${x}`))
 
 // report
 const byCheck: Record<string, number> = {}
