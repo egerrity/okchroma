@@ -8,6 +8,15 @@ structure, ships as at least a minor.
 
 Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git log.
 
+## Unreleased
+
+- **The stamp text holds at every dark step.** A dark fill whose text is the white pole
+  no longer lightens one and two steps from rest past the text bar: the step turns toward
+  the pen pole instead, the way a bright dark fill already did. The critical family's and
+  a quiet brand-alt's dark `stamp-1` and `stamp-2` move; light is unchanged; no key is
+  added, renamed or removed. The requirement audit's pressed-fill read is now a gate, and
+  the guarantee audit sweeps the stamp text at every step in both modes (C86).
+
 ## 0.9.0 — 2026-10-07
 
 - **The engine emits no state words.** Every row is a group and one word, and the word is
