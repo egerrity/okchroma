@@ -72,16 +72,21 @@ export function Body() {
         ]}
       />
       <P>
-        A variant is a full re-generation of the signal from the variant seed under the signal options; it replaces the
-        signal's ramp in the emitted theme (a <Code>signalOverride</Code>, emitted inside the brand's CSS block and as
-        the brand extension's override rows in Figma). It never re-enters the brand's generation.
+        A yellow, green or blue variant is a full re-generation of the signal from the variant seed under the signal
+        options; it replaces the signal's ramp in the emitted theme (a <Code>signalOverride</Code>, emitted inside the
+        brand's CSS block and as the brand extension's override rows in Figma). A red variant replaces only the light
+        stamp trio and its text; the ramp and the dark side stay canonical. No variant re-enters the brand's generation.
       </P>
 
       <H2>The red solve</H2>
       <P>
-        Red has its own machinery: it is the error color, its identity is held, and a brand that reads as red is a
-        product problem. Two movers, one geometry (<Code>solveBrandExit</Code>, producers.ts; <Code>redComplementVariant</Code>,
-        resolve.ts).
+        Red is generated differently from the other three signals. Yellow, green and blue yield by moving hue and
+        keeping their lightness, because a warning, a positive or an info fill survives a hue move. The critical fill
+        does not: a destructive control is a deep red with light text in every system surveyed, and a red that
+        lightens until its text flips to dark, or drifts into orange, stops reading as the error color. So red holds
+        its hue family and its text pole, moves one lightness band at most, and the brand yields first: a brand that
+        reads as red is a product problem. Two movers, one geometry (<Code>solveBrandExit</Code>, producers.ts;
+        <Code>redComplementVariant</Code>, resolve.ts).
       </P>
       <UL>
         <LI>Membership. The brand's stamp at the seed's own lightness sits inside red's region when the weighted distance from red's stamp (<Code>redSolveDist</Code>) is at most <K v={RED_GATE.G} d={3} />, or when it sits in the brick band (H <K v={RED_SOLVE.brickHLo} d={0} /> to <K v={RED_SOLVE.brickHHi} d={0} />, L <K v={RED_SOLVE.brickLLo} d={2} /> to <K v={RED_SOLVE.brickLHi} d={2} />, vivid). Release is the radius plus a ring of <K v={RED_SOLVE.ring} d={3} />.</LI>
