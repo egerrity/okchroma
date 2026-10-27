@@ -8,7 +8,7 @@ structure, ships as at least a minor.
 
 Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git log.
 
-## Unreleased
+## 0.9.2 — 2026-10-27
 
 - **The critical stamp beside a near-red brand keeps white text.** Where canonical red
   would vibrate beside the brand's stamp, the critical light stamp no longer lightens into
