@@ -16,7 +16,6 @@ export const P2_D = 0.12           // down exits + variants (her down-marks: .12
 // categorical and already lives in the gate's weights) but dead-zone geometry: the apca
 // text dead zone starts ~L0.70 and a .12-up delivery would land past it (no passing pole).
 export const P2_D_UP = 0.11
-export const P2_D_FALLBACK = 0.115 // her mean mark — variant fallback when the domain traps
 
 // helmlab judges sRGB hexes — the same rendition all of her calibration pages showed.
 const gm = (v: number) => { const x = Math.min(1, Math.max(0, v)); return x <= 0.0031308 ? 12.92 * x : 1.055 * x ** (1 / 2.4) - 0.055 }

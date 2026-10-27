@@ -8,6 +8,18 @@ structure, ships as at least a minor.
 
 Deeper engineering history lives in `docs/engine-spec/CATALOG.md` and the git log.
 
+## Unreleased
+
+- **The critical stamp beside a near-red brand keeps white text.** Where canonical red
+  would vibrate beside the brand's stamp, the critical light stamp no longer lightens into
+  a coral with dark text. It regenerates as one of three hue sets (the canonical hue, a
+  cool red, a gold-side red) at its own lightness band, or one band deeper when the brand
+  stamp shares it, and the set furthest from the brand stamp ships. The light `stamp-0`,
+  `stamp-1`, `stamp-2` and `stamp-on` of the critical family move for near-red brands;
+  dark and every other family are unchanged; no key is added, renamed or removed. The
+  requirement audit reports the light brand and critical stamps under the side-by-side
+  bar (C89).
+
 ## 0.9.1 — 2026-10-21
 
 - **The stamp text holds at every dark step.** A dark fill whose text is the white pole

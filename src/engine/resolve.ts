@@ -2,7 +2,7 @@
 
 import { generateScale, generateSubtleSecondary, type GeneratedScale, type ContrastProfile, type ColorStop } from './colorEngine'
 import { darkChromaCurve } from './darkChromaCurve'
-import type { Archetype } from './archetypes'
+import { ARCHETYPES, classifyArchetype, type Archetype } from './archetypes'
 import { SIGNALS, type SignalDef } from './signals'
 import { DARK_BRAND_FILL_MIN_L, PEN_70_GROUND } from './stopTable'
 import {
@@ -22,10 +22,7 @@ import { subtleSecondaryChromaCurve } from './neutralCurve'
 import { stateFillL } from './archetypes'
 import { stepKeepsPole } from './requirements/producers'
 import { p2Diff, P2_D, P2_D_UP } from './p2'
-import {
-  buildContext, whiteTextLcAt, apcaYAt, onFillIsWhiteDarkAt,
-  findLForWhiteTextLc, findLForBlackTextLc, APCA_ENFORCE_MARGIN_LC, APCA_SOLVE_MARGIN_LC,
-} from './requirements/producers'
+import { whiteTextLcAt, apcaYAt, onFillIsWhiteDarkAt, APCA_ENFORCE_MARGIN_LC } from './requirements/producers'
 import { CTA_ONFILL_ENFORCE_LC, CRITICAL_CLEARANCE_LC } from './requirements/profiles'
 
 type SignalScales = Map<SignalDef['name'], { def: SignalDef; scale: GeneratedScale }>
@@ -84,17 +81,18 @@ function hueCollisionPending(scale: GeneratedScale, sigScales: SignalScales): Si
   return pending
 }
 
-// C12 v8 — the RED COMPLEMENT (owner-settled 2026-07-10; model = joint-solve-model.md,
-// c12 archive — git history only): red moves for B, the vibration problem — positioned inside her
-// calibrated zones (deep core L.45–.49 or the light edge tier L.65–.75; the .50–.58 middle
-// is ring territory and NEVER used — canonical itself lives there, which is why a lightened
-// brand ALWAYS takes a deep-core red), on the OPPOSITE side of the brand's final cta,
-// cool-first beside warm brands, first-clean-wins in preference order. Clean = the P2 bar
-// (.12 deep / .11 light) + solve-metric release + a passing pole. The variant cta is PINNED
-// (makeStop, never re-enforced — enforcement would collapse it back onto canonical red;
-// generateSubtleSecondary's ctaL pin is the precedent); ramp, chalks, pens and the ENTIRE
-// dark side stay canonical red verbatim (the dark canonical carries its own C42 clearance).
-// Returns null = canonical red already stands clean beside this brand.
+// The red complement, the variant the critical family ships beside a brand whose stamp
+// collides with canonical red (the vibration half of the C12 pair; the brand's own exit is
+// solveBrandExit, producers.ts). Canonical red stands where it is clean beside the brand's
+// final stamp: past the side-by-side bar, outside the solve release, with a pole that passes
+// the lane and clears critical's clearance bar. Otherwise the red regenerates as one of three
+// hue sets (RED_SOLVE.setHues) at one lightness band and the set furthest from the brand
+// stamp by the side-by-side measure ships. The band is red's own unless the brand stamp sits
+// in it, then the band below: the neighbor that keeps white text (the band above flips the
+// pole, which no destructive fill ships). The set scales come from the signal builder's own
+// call with the archetype pinned, the way the lemon variant pins one; only the light stamp
+// trio and its on-text move, the ramp, chalks, pens and the entire dark side stay canonical.
+// Returns null = canonical red stands.
 const blackLcAt = (L: number, C: number, H: number): number =>
   Math.abs(apcaLc(apcaYAt(0, 0, 0), apcaYAt(L, clampChromaToGamut(L, C, H), H)))
 // the red pair-cleanliness DISTANCES alone (poleOk is the candidate's own legality, judged
@@ -103,83 +101,66 @@ const blackLcAt = (L: number, C: number, H: number): number =>
 const redCleanBeside = (brandCta: { L: number; C: number; H: number }, c: { L: number; C: number; H: number }): boolean =>
   p2Diff(brandCta, c) >= (c.L < brandCta.L ? P2_D : P2_D_UP)
   && redSolveDist(brandCta, c) >= RED_GATE.G + RED_SOLVE.ring
+
+// the red hue sets per lane, at red's own band and at the band below, built once per profile
+// like the canonical signal scales. Key: `${set}:${band}`.
+type RedSets = Map<string, GeneratedScale>
+const redSetsCache = new Map<string, RedSets>()
+const redSetKey = (set: string, band: Archetype) => `${set}:${band}`
+const bandBelow = (band: Archetype): Archetype => {
+  const i = ARCHETYPES.findIndex(a => a.name === band)
+  return ARCHETYPES[Math.max(0, i - 1)].name
+}
+function redSetsFor(red: { def: SignalDef; scale: GeneratedScale }, contrastProfile?: ContrastProfile): RedSets {
+  const cacheKey = contrastProfile ?? 'wcag'
+  const hit = redSetsCache.get(cacheKey)
+  if (hit) return hit
+  const own = classifyArchetype(red.scale.cta.L)
+  const sets: RedSets = new Map()
+  for (const [set, hue] of Object.entries(RED_SOLVE.setHues)) for (const band of [own, bandBelow(own)]) {
+    sets.set(redSetKey(set, band), generateScale(red.def.hex, red.def.name, band === own ? undefined : band, {
+      hueShiftDeg: hue - red.def.H,
+      darkChromaCurve, darkCtaC: 'signal', darkFillMinL: red.def.darkFillMinL,
+      enforceOnFillContrast: true, suppressRedCool: true, goldBoost: true, signalWarmDrift: true,
+      contrastProfile, apcaClearance: true, apcaClearanceLc: CRITICAL_CLEARANCE_LC,
+    }))
+  }
+  redSetsCache.set(cacheKey, sets)
+  return sets
+}
+
 function redComplementVariant(
   brandCta: { L: number; C: number; H: number },
-  seed: { L: number; C: number; H: number },
   brandWentUp: boolean,
   red: { def: SignalDef; scale: GeneratedScale },
   contrastProfile?: ContrastProfile,
 ): { scale: GeneratedScale; note: string } | null {
-  const rctx = buildContext(red.def.hex, {
-    darkChromaCurve, darkCtaC: 'signal', darkFillMinL: red.def.darkFillMinL,
-    enforceOnFillContrast: true, suppressRedCool: true, goldBoost: true, signalWarmDrift: true, contrastProfile,
-  } as any)
   const redCta = red.scale.cta
-  const at = (L: number, H: number) => ({ L, C: clampChromaToGamut(L, rctx.cAt('light', L, rctx.brandC), H), H })
-  // C42 (owner 2026-08-02, supersedes the C23 either-pole gate): candidates are judged at
-  // the SHIPPABLE pole under critical's clearance bar (CRITICAL_CLEARANCE_LC 50 — the
-  // identity carve-out). The old gate accepted a zone when EITHER pole reached the bar,
-  // but the wcag 4.5 floor then flipped the shipped pole to one it never checked — the
-  // coral shipped black at Lc 42. Now: the pole that would ship must pass 4.5 (wcag lane)
-  // AND clear the bar; a candidate short of the bar SLIDES pole-preserving up to it before
-  // the distance gates judge it (the value falls out of the pipeline, no post-pick patch).
+  // the trigger judges canonical red at the pole that would ship: it must pass the lane's
+  // floor and clear critical's clearance bar (CRITICAL_CLEARANCE_LC, the identity carve-out)
   const fireLc = CRITICAL_CLEARANCE_LC + APCA_ENFORCE_MARGIN_LC
-  const shipsWhite = (c: { L: number; C: number; H: number }): boolean =>
-    onFillIsWhiteDarkAt(c.L, c.C, c.H, true, contrastProfile === 'apca' ? undefined : 4.5)
   const poleOk = (c: { L: number; C: number; H: number }): boolean => {
-    const white = shipsWhite(c)
+    const white = onFillIsWhiteDarkAt(c.L, c.C, c.H, true, contrastProfile === 'apca' ? undefined : 4.5)
     const lc = white ? whiteTextLcAt(c.L, c.C, c.H) : blackLcAt(c.L, c.C, c.H)
     const legal = contrastProfile === 'apca' || legalRatio(c.L, c.C, c.H, white ? 1.0 : 0) >= 4.5
     return legal && lc >= fireLc
   }
-  const slideToBar = (c: { L: number; C: number; H: number }): { L: number; C: number; H: number } | null => {
-    if (poleOk(c)) return c
-    const L2 = shipsWhite(c)
-      ? findLForWhiteTextLc(c.L, c.C, c.H, fireLc + APCA_SOLVE_MARGIN_LC)
-      : findLForBlackTextLc(c.L, c.C, c.H, fireLc + APCA_SOLVE_MARGIN_LC, 0.92)
-    const c2 = at(L2, c.H)
-    return poleOk(c2) ? c2 : null
+  if (!brandWentUp && redCleanBeside(brandCta, redCta) && poleOk(redCta)) return null
+  const own = classifyArchetype(redCta.L)
+  const band = classifyArchetype(brandCta.L) === own ? bandBelow(own) : own
+  const sets = redSetsFor(red, contrastProfile)
+  let pick: { set: string; scale: GeneratedScale; d: number } | null = null
+  for (const set of Object.keys(RED_SOLVE.setHues)) {
+    const scale = sets.get(redSetKey(set, band))!
+    const d = p2Diff(brandCta, scale.cta)
+    if (!pick || d > pick.d) pick = { set, scale, d }
   }
-  const clean = (c: { L: number; C: number; H: number }): boolean =>
-    redCleanBeside(brandCta, c) && poleOk(c)
-  if (!brandWentUp && clean(redCta)) return null
-  const hues = hueDelta(seed.H, redCta.H) <= RED_SOLVE.redHueMagentaDh
-    ? RED_SOLVE.redHuesMagentaBrand : RED_SOLVE.redHuesWarmBrand
-  const wantLighter = brandCta.L <= redCta.L
-  const tiers = wantLighter
-    ? [[...RED_SOLVE.edgeL], RED_SOLVE.coreL.filter(l => l > brandCta.L)]
-    : [[...RED_SOLVE.coreL], [...RED_SOLVE.edgeL]]
-  let pick: { L: number; C: number; H: number } | null = null
-  outer: for (const tier of tiers) {
-    const ls = [...tier].sort((a, b) => wantLighter ? a - b : b - a)
-    for (const L of ls) for (const H of hues) {
-      // C42: the candidate slides to critical's bar first; side + distances judge the fill
-      // that would actually ship (a slide can carry a core candidate past its tier stop —
-      // the bar outranks the grid)
-      const c = slideToBar(at(L, H))
-      if (!c) continue
-      const onSide = wantLighter ? c.L > brandCta.L : c.L < brandCta.L
-      if (!onSide || !clean(c)) continue
-      pick = c
-      break outer
-    }
-  }
-  if (!pick) return null // no clean complement in her zones — canonical stands, sweeps flag the pair
-  const cta = makeStop(redCta.stop, pick.L, rctx.cAt('light', pick.L, rctx.brandC), pick.H)
-  const vCFor = (L: number) => rctx.cAt('light', L, rctx.brandC)
-  const hL = stateFillL(pick.L, 'light', 1)
-  const ctaHover = makeStop(red.scale.ctaHover.stop, hL, vCFor(hL), pick.H)
-  const pL = stateFillL(pick.L, 'light', 2)
-  const ctaPressed = makeStop(red.scale.ctaPressed.stop, pL, vCFor(pL), pick.H)
-  // pinned mints skip the producer's enforce-darken, so the wcag conformance floor rides
-  // the pole judge (a light coral variant must flip to black text, not ship white sub-4.5)
-  const onFillTextIsWhite = onFillIsWhiteDarkAt(cta.L, cta.C, cta.H, true, contrastProfile === 'apca' ? undefined : 4.5)
-  // the text register rides the canonical red ramp's pen stops — the variant moves only the fill trio
+  const { cta, ctaHover, ctaPressed, onFillTextIsWhite } = pick!.scale
   return {
     scale: { ...red.scale, cta, ctaHover, ctaPressed, onFillTextIsWhite },
-    // naming candidates only — the identity name is the owner's call at bless. No hue suffix:
-    // the plugin's note parser mints Figma variable paths from this string.
-    note: `red → ${pick.L < redCta.L ? 'rich' : 'coral'} L${pick.L.toFixed(2)}`,
+    // the community plugin shows the part after the arrow as a display label; the hex is
+    // the variant's identity there, so the note carries no value
+    note: `red → ${pick!.set} at ${band}`,
   }
 }
 
@@ -297,7 +278,7 @@ export function resolveBrand(
   // solve is pair-calibrated).
   if (solving || (opts?.exact && signalMoves && !opts?.archetypeOverride)) {
     const brandWentUp = !!scale.ctaRepelled?.light && scale.cta.L > seedO.L + 1e-6
-    const v = redComplementVariant(scale.cta, seedO, brandWentUp, sigScales.get('red')!, opts?.contrastProfile)
+    const v = redComplementVariant(scale.cta, brandWentUp, sigScales.get('red')!, opts?.contrastProfile)
     if (v) signalOverrides.push({ name: 'red', scale: v.scale, note: v.note })
   }
 
@@ -734,7 +715,7 @@ export function resolveTheme(input: {
     const red = sigScales.get('red')!
     const primaryRed = mergedOverrides.find(o => o.name === 'red')
     if (!primaryRed) {
-      const v = redComplementVariant(secScale.cta, hexToOklch(secSeedHex), false, red, cp)
+      const v = redComplementVariant(secScale.cta, false, red, cp)
       // primary-wins verification: the secondary-calibrated variant must also sit clean
       // beside the primary's cta (its own poleOk was judged where it was built)
       if (v && redCleanBeside(primary.scale.cta, v.scale.cta)) adopt('red', v.scale, `${v.note} (for the secondary)`)

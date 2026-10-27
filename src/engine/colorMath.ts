@@ -122,8 +122,8 @@ export function inRedVividArc(L: number, C: number, H: number): boolean {
 // full model = joint-solve-model.md, c12 archive — git history only; every constant below is her
 // verdict-calibrated candidate from the accepted 50-row exhibit) ──────────────────────────
 // A (error-look): a brand whose cta sits inside the true-red region exits via the NEAREST
-// release edge — severity = depth into the region. B (vibration): the RED signal complements
-// from her calibrated zones, opposite side of the brand. Two movers, one geometry.
+// release edge — severity = depth into the region. B (vibration): the RED signal regenerates
+// as the hue set furthest from the brand stamp (setHues below, C89). Two movers, one geometry.
 export const RED_SOLVE = {
   // the region: her v7 metric widened dark-ward + the dead-zone lip (nothing lands on it,
   // nothing de-collides from it)
@@ -142,12 +142,11 @@ export const RED_SOLVE = {
   // park there → the DIAGONAL (soft cool + slight desat + extra depth, never the hard cool)
   brickHLo: 20, brickHHi: 50, brickLLo: 0.36, brickLHi: 0.52, brickVividMin: 0.55,
   brickCool: -4, brickCoolGold: -3, brickDesat: 0.85, brickExtraDeep: 0.02,
-  // red's usable zones (her density map, error-range-checks.json): deep core or the light
-  // edge tier — the .50-.58 middle is ring territory, canonical itself lives there, so a
-  // lightened brand ALWAYS gets a deep-core red. Cool-first beside warm brands.
-  coreL: [0.49, 0.47, 0.45], edgeL: [0.65, 0.68, 0.71, 0.75],
-  redHuesWarmBrand: [28, 24, 33.3, 38], redHuesMagentaBrand: [33.3, 38, 28],
-  redHueMagentaDh: -15,
+  // the red complement's hue sets (resolve.ts redComplementVariant): the canonical hue and
+  // the two ends of the error band the field ships, read through this engine (the cool end
+  // near Primer's danger, the gold side near USWDS's error). The set furthest from the brand
+  // stamp by the side-by-side measure ships.
+  setHues: { true: 33.3, cool: 24, 'gold-side': 38 },
 } as const
 // the v8 SOLVE metric: her v7 confusability shape with the widened dark reach
 export function redSolveDist(c: { L: number; C: number; H: number }, red: { L: number; C: number; H: number }): number {

@@ -14,7 +14,8 @@ import { MODE_SPECS } from '../src/engine/requirements/spec'
 import { withProfile, type ContrastProfile } from '../src/engine/requirements/profiles'
 import { APCA_TOL_LC, apcaYAt } from '../src/engine/requirements/producers'
 import { clampChromaToGamut, wcagY, contrastRatio, oklchToLinearRgb, apcaLc, apcaY, shippedY } from '../src/engine/constraints'
-import { resolveBrand, resolveLinkInverseTrio } from '../src/engine/resolve'
+import { resolveBrand, resolveLinkInverseTrio, signalScalesFor } from '../src/engine/resolve'
+import { p2Diff, P2_D, P2_D_UP } from '../src/engine/p2'
 import { PEN_70_GROUND } from '../src/engine/stopTable'
 import { stateFillL } from '../src/engine/archetypes'
 
@@ -256,6 +257,27 @@ console.log(`\n=== the steps keep the pole (C86) ===`)
 console.log(`  steps reversed by the pole's floor: ${PROFILES.flatMap(p => (['light', 'dark'] as const).map(m => `${p} ${m} ${stepsReversed[`${p} ${m}`] ?? 0}`)).join(' · ')}`)
 console.log(`  light step reads under the lane's bar (not gated, CATALOG C87): ${PROFILES.map(p => `${p} ${lightStepsUnder[p] ?? 0}`).join(' · ')}`)
 lightStepsUnderRows.slice(0, 6).forEach(x => console.log(`    ${x}`))
+
+// the red complement's reading (C89, report only): the light brand stamp beside the critical
+// stamp that ships, the variant or canonical, under the side-by-side bar. The pick is the
+// furthest of the hue sets and ships whether or not it clears the bar, so the rows under it
+// print here instead of failing.
+console.log(`\n=== the light brand and critical stamps, side by side (C89, not gated) ===`)
+for (const profile of PROFILES) {
+  const under: string[] = []
+  let pairs = 0
+  for (const H of HUES) for (const C of CHROMAS) {
+    const hex = oklchToHex(SEED_L, C, H)
+    const r = resolveBrand(hex, 'brand', { contrastProfile: profile })
+    const red = r.signalOverrides.find(o => o.name === 'red')?.scale ?? signalScalesFor(profile).get('red')!.scale
+    const b = r.scale.cta, c = red.cta
+    const d = p2Diff(b, c), bar = c.L < b.L ? P2_D : P2_D_UP
+    pairs++
+    if (d < bar) under.push(`${profile} H${H} C${C} brand L${b.L.toFixed(2)} critical L${c.L.toFixed(2)} p2 ${d.toFixed(3)} < ${bar}`)
+  }
+  console.log(`  ${profile}: ${under.length} of ${pairs} pairs under the bar`)
+  under.slice(0, 6).forEach(x => console.log(`    ${x}`))
+}
 
 // report
 const byCheck: Record<string, number> = {}

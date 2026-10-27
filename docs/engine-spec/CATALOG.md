@@ -4,6 +4,53 @@ Fresh tracker. The previous CATALOG was archived with the whole old docs tree in
 ("clean-slate rewrite" 2026-06-27); entries here are code-grounded, logged at find-time,
 fixed holistically after owner sign-off.
 
+## C89 — the red complement lightened into a coral no destructive button ships; it now regenerates as the furthest hue set, one band at most (RULED, 2026-10-27)
+
+**Found (owner, 2026-10-26):** beside a near-red brand the shipped complement re-seated the
+critical stamp in the light edge tier at hue 28 or 33.3 (L 0.72, black text, the coral), and
+she read it as coral pink that had lost the error look. A survey of the field (research note
+of 2026-10-26, outside the repo) found no system that ships a light or coral fill with dark
+text as its destructive button, and none that uses orange for it: every destructive fill is
+a deep red with white text, and orange where present is a warning grade below red. The
+error reds the field ships span hue 24 to 37 read through this engine; canonical red (33.3)
+sits inside that band. The coral was the lightness the critical clearance bar demanded of a
+black-text candidate, not the hue.
+
+**Exhibits (scratch/exhibits, gitignored):** cool-first against gold-ward hues; canonical hue
+lightened; the common signal model (hue gate, sibling swap); the text-pole flip at the law
+point and at the pole rule's Lc 45 guard; then the archetype push with three hue sets, every
+set beside every row, and the pick. Her rulings along the way: oranges are not red's
+business; the brand's own exit is the same on both sides; one unmoved exact-mode red in every
+column; the pole flip and the hue moves each lost the error look; the engine picks one set.
+
+**RULED:** the red keeps white text and keeps its own lightness band (vivid, the canonical
+stamp at L 0.585) unless the brand stamp sits in that band, then it steps to the band below
+(rich, L 0.475), the neighbor that keeps white text; the band above flips the pole. Three
+hue sets, the canonical hue and the two ends of the field's error band (`RED_SOLVE.setHues`:
+true 33.3, cool 24, gold-side 38), generated through the signal builder's own call with the
+archetype pinned the way yellow's lemon variant pins one; the set furthest from the brand
+stamp by the side-by-side measure ships, whether or not it clears the bar. Only the light
+stamp trio and its on-text move; the ramp and the dark side stay canonical. The trigger is
+unchanged: canonical red stands where it clears the side-by-side bar and the release ring
+with a passing pole (her call, 2026-10-27: the bar stays in the trigger; it fires alone in
+7 of 3000 swept seeds, all exact-mode bright warm reds).
+
+**Removed with the round:** the candidate veto and its slide to the clearance bar, the core
+and edge lightness tiers, the two hue lists and the magenta split (`RED_SOLVE`), and
+`P2_D_FALLBACK`, which nothing called.
+
+**Measured at landing:** 290 seeds × 2 modes through `resolveBrand` into `brandCss`: only
+`critical-stamp-0/1/2/on` move, light blocks only, the same 51 rows fire before and after;
+the pick is gold-side at vivid in 29 rows, cool at vivid in 12, cool or gold-side at rich in
+5 each. The extended plugin's override sets lose `color/critical/stamp-on` in four fixtures
+(the pick carries white text like canonical; re-blessed). The dark audit's three pen
+convergence failures predate the change. `req:audit` gains a report line: light brand and
+critical stamps under the side-by-side bar.
+
+**Open:** the ring (which brands get a variant at all) is the owner's dial, untouched here.
+A hue set moves the dark stamp too if dark ever follows the pick; dark stays canonical by
+her ruling (the dark exhibit, 2026-10-27).
+
 ## C87 — the light steps read under their lane's bar, in one custom secondary (wcag) and in the apca lane's black-text fills (OPEN, 2026-10-20)
 
 Found while landing C86. The step rule's legality read is held to dark by owner instruction
@@ -1478,6 +1525,8 @@ write-up pushed at 5e440ff, removed from the tree in the research cleanup, git h
   calibrated zones — deep core L .45–.49 or the light edge tier .65–.75 (the .50–.58 middle is
   ring territory, canonical lives there) — opposite side of the brand's FINAL cta; cool-first
   beside warm brands; brand-up ⇒ deep red always. Canonical red never lightens.
+  *(Superseded 2026-10-27 by C89: the zones, the hue lists and the candidate veto are gone;
+  the red regenerates as the furthest of three hue sets at one band. The trigger is unchanged.)*
 - **TRUE-RED DIRECTION (2026-07-11, f7245df):** the vivid ≥ .85 carve shipped high-L/less-vivid
   true reds the exact-mode-safety pattern (brand bright salmon + red deep) instead of the dark
   throw. Her 27 marks decode to a BRIGHTNESS cutoff, not vividness: an on-hue red drifting UP

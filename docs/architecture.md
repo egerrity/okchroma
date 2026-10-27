@@ -310,10 +310,11 @@ mechanism; the constants are rendered live on the site's
   reference). The stamp ΔE test (`checkCollision`) is audit-only.
 - **The red joint solve.** A brand whose stamp sits inside the red region
   (`redSolveDist` within `RED_GATE.G`, or the brick band) exits by the nearest release edge
-  with a passing pole, under the direction rules; the red signal complements from the far
-  side of the brand's final stamp, from its deep core or light edge tier, when canonical red
-  would still vibrate beside it (the side-by-side metric). Dark runs the same exit keyed on
-  the side-by-side metric alone.
+  with a passing pole, under the direction rules; where canonical red is not clean beside
+  the brand's final stamp (the side-by-side bar, the release ring, a passing pole), the red
+  signal regenerates as one of three hue sets at one lightness band, its own or the band
+  below when the brand stamp shares it, and the set furthest from the brand stamp by the
+  side-by-side measure ships. Dark runs the same exit keyed on the side-by-side metric alone.
 - **Signal shifts.** Yellow to lemon below H 96; green's teal-side or yellow-side variant
   split at 147°; blue's cyan-side variant at or above 273° (the magenta side is unreachable
   with the shipped seeds).

@@ -119,7 +119,7 @@ export function Body() {
         [<Code>RED_BAND_LO_H</Code>, <>{k(RED_BAND_LO_H, 0)}°</>, 'the red band’s lower edge'],
         [<Code>RED_WARM_EXIT_H</Code>, <>{k(RED_WARM_EXIT_H, 0)}°</>, 'where the warm-side repel fades'],
         [<Code>RED_GATE</Code>, <>wDark {k(RED_GATE.wDark, 2)}, wLight {k(RED_GATE.wLight, 2)}, wDust {k(RED_GATE.wDust, 2)}, wGoldArc {k(RED_GATE.wGoldArc, 2)}, G {k(RED_GATE.G, 3)}</>, 'the at-a-glance red-family metric and its radius'],
-        [<Code>RED_SOLVE</Code>, <>wDark {k(RED_SOLVE.wDark, 2)}, ring {k(RED_SOLVE.ring, 3)}, core L {list(RED_SOLVE.coreL)}, edge L {list(RED_SOLVE.edgeL)}, bright cut {k(RED_SOLVE.trueRedBrightCut, 2)}, brick H {RED_SOLVE.brickHLo} to {RED_SOLVE.brickHHi}, L {RED_SOLVE.brickLLo} to {RED_SOLVE.brickLHi}</>, 'the joint solve’s geometry'],
+        [<Code>RED_SOLVE</Code>, <>wDark {k(RED_SOLVE.wDark, 2)}, ring {k(RED_SOLVE.ring, 3)}, set hues {Object.entries(RED_SOLVE.setHues).map(([n, h]) => `${n} ${h}`).join(', ')}, bright cut {k(RED_SOLVE.trueRedBrightCut, 2)}, brick H {RED_SOLVE.brickHLo} to {RED_SOLVE.brickHHi}, L {RED_SOLVE.brickLLo} to {RED_SOLVE.brickLHi}</>, 'the joint solve’s geometry'],
         [<Code>RED_KEEP_BOX</Code>, <>H {RED_KEEP_BOX.hLo} to {RED_KEEP_BOX.hHi}, C ≥ {RED_KEEP_BOX.cMin}, L {RED_KEEP_BOX.lLo} to {RED_KEEP_BOX.lHi}</>, 'brands whose identity is a credible error color'],
         [<Code>DARK_FLOOR_FULL_C</Code>, <>{k(DARK_FLOOR_FULL_C, 3)} (muted max {k(DARK_FLOOR_MUTED_MAX_C, 2)})</>, 'the dark chroma-floor strength ramp'],
       ] as Row[]} />
