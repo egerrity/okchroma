@@ -262,8 +262,9 @@ export function Body() {
         The resolved brand is compared with the four signals. One test decides the whole-ramp remedies for yellow,
         green and blue (<Code>checkHueCollision</Code>, collision.ts): the smallest hue distance between the brand's and
         the signal's chalk stops, in either mode, is within the gate, and the brand is vivid enough to collide. Red
-        has its own machinery, the joint solve: the brand's stamp exits red's region by its nearest edge, and the red
-        signal re-seats on the far side of the brand when canonical red would still sit too close. A residual overlap
+        has its own machinery, the joint solve: the brand's stamp exits red's region by its nearest edge, and where
+        canonical red would still sit too close the red signal regenerates as the hue set furthest from the brand's
+        stamp, at its own lightness band or the band below. A residual overlap
         is reported as a note; the engine does not move it. The thresholds, the per-signal resolutions and the red
         solve's rules are on the <DocLink page="signals">Signals and companions</DocLink> page.
       </P>
