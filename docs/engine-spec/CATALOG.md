@@ -4,6 +4,63 @@ Fresh tracker. The previous CATALOG was archived with the whole old docs tree in
 ("clean-slate rewrite" 2026-06-27); entries here are code-grounded, logged at find-time,
 fixed holistically after owner sign-off.
 
+## C90 — helmlab is the engine's one third-party metric, held at 0.14.0 by the lockfile and the bundle; copy it in, pin it exactly, or leave it (OPEN, 2026-10-29)
+
+**Found (owner's question, 2026-10-29):** she asked what helmlab does in the engine and
+whether the engine can do without it; the dependency had read as an evaluation, not a
+runtime part. Its runtime use was cleared at C12 (2026-07-10) and landed the same day.
+
+**What it does:** `p2.ts` wraps the library's `difference` method, its COMBVD-fitted
+perceptual distance, as `p2Diff`, the side-by-side measure. The bars `P2_D` 0.12 and
+`P2_D_UP` 0.11 are that library's units at 0.14.0, calibrated on the owner's nine
+flush-strip marks (C12). Three call sites, every one the brand stamp beside the red stamp:
+`solveDarkCtaExit` (the dark stamp exit, membership and release), `redCleanBeside` (the red
+complement trigger) and the C89 pick of the furthest hue set. Nothing else calls it: the
+light brand exit, the P1 gate, the hue collision read, the warning variant and the yellow,
+green and blue shifts are hand-written. `audit` and `req:audit` read it in report lines.
+
+**How it ships:** a devDependency at `^0.14.0`, lockfile at 0.14.0, bundled into `dist-lib`
+by `build:lib` and into both plugin bundles, so the published package and the plugins
+declare no dependency and consumers never install it. The code the one call runs is a
+forward transform (hex to sRGB to XYZ, then eleven stages on 72 fitted numbers, a 379-row
+neutral correction table and a fixed 28.2 degree rotation) and a distance formula that
+re-adds the table's offset: about 150 lines of TypeScript plus the two tables, MIT.
+
+**Measured (scratch sweep through `resolveBrand`, 36 hues × 4 chromas × 2 seed lightnesses
+× both lanes, 576 seeds; scripts in `scratch/helmlab-standin/`, gitignored):** the dark exit
+fires on 9 seeds, the red complement ships on 24, 2040 distinct pairs judged. The engine's
+own `oklabDist` as a stand-in, its bar refitted for best agreement, orders the pairs like
+the library (Spearman 0.968) but disagrees on 6 percent of them, all between 0.10 and 0.14
+on the library's scale, where the bars sit; the pipeline on that stand-in moves 18 dark
+stamps (largest 0.096 L), 19 red complements and 18 on-text poles, no light stamp. The
+library without its neutral table nudges a distance by 0.0008 (median) to 0.006 (largest)
+and flips 28 bar decisions at 0.12 and 82 at 0.11; the pipeline on it moves 2 dark stamps
+(0.096 L, pole flipped) and 1 red complement. No stand-in and no partial copy reproduces
+the shipped values; the library as published, or a copy of it to the last digit, does.
+
+**Exposure as it stands:** a published npm version cannot be altered, so what ships cannot
+change from outside. Two paths remain. The caret admits 0.14.x patch releases, so a
+regenerated lockfile or `npm update` could pull a different fit and the bars would then
+mean something else; the snapshot gates show the moved values when run, and they are not
+in the push workflow. An unpublish of 0.14.0, which npm would not block because the
+published okchroma declares no dependency on it, would leave a fresh clone unable to build
+until the metric is replaced; published okchroma versions keep working.
+
+**Options (the owner defers the call to an engineer, 2026-10-29):**
+
+1. Leave it. No change; both paths stay open.
+2. Pin it exactly, `"helmlab": "0.14.0"`. Closes the update path; the unpublish path stays.
+3. Copy the metric into `src/engine/` under its MIT notice (the copyright line and the
+   permission text, the version and source commit in the header), keeping the operation
+   order; verify the copy bitwise against the library over the pairs the engine judges and
+   a random hex sweep, then the pipeline dump and every snapshot byte-identical; remove the
+   devDependency; update section 8 of `docs/architecture.md`, the install and signals pages
+   (they say "one runtime dependency"), the `esbuild.config.js` comment and the `p2.ts`
+   header. Closes both paths. Upstream fixes stop, which is the intent: a newer fit would
+   move the units the bars are in and need re-marking.
+
+Under every option the bars stay in 0.14.0 units. A newer helmlab is not a drop-in.
+
 ## C89 — the red complement lightened into a coral no destructive button ships; it now regenerates as the furthest hue set, one band at most (RULED, 2026-10-27)
 
 **Found (owner, 2026-10-26):** beside a near-red brand the shipped complement re-seated the

@@ -392,12 +392,16 @@ in `research/semantic-layer/`.
 ## 8. Dependencies
 
 The published package declares no dependencies: helmlab (the side-by-side metric in
-`p2.ts`) is bundled in at build time. Everything else in `src/` is hand-written: OKLCH ↔
-sRGB, gamut clamping, WCAG and APCA luminance, the Helmholtz-Kohlrausch model.
+`p2.ts`) is bundled in at build time. The lockfile holds it at 0.14.0 and the bars `P2_D`
+and `P2_D_UP` are calibrated in that version's units, so a newer release is not a drop-in.
+Whether to copy the metric into the engine, pin the version exactly, or leave it as it is
+stands open; the measurements behind that choice are in `engine-spec/CATALOG.md` under the
+helmlab entry. Everything else in `src/` is hand-written: OKLCH ↔ sRGB, gamut clamping,
+WCAG and APCA luminance, the Helmholtz-Kohlrausch model.
 
 | Package | Why it is here |
 |---|---|
-| helmlab | the side-by-side perceptual distance (`p2.ts`); bundled into the package |
+| helmlab | the side-by-side perceptual distance (`p2.ts`); bundled into the package; held at 0.14.0 |
 | esbuild | the only build tool: the token generator, the demo, the plugins, the library, the audit scripts |
 | typescript, @types/* | `npm run typecheck` |
 | react, react-dom, lucide-react | the demo only; the engine never imports them |
